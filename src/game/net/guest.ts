@@ -12,7 +12,7 @@ import { Room } from '../room';
 import { World, type Entity, type EType } from '../world';
 import { applyCharOp, cloneChar, type CharOp } from './charSync';
 import { CH, INTERP_DELAY_S, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
-import { ENEMY_STATES, F, PLAYER_STATES, POSES, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
+import { CONTROL_BITS, ENEMY_STATES, F, PLAYER_STATES, POSES, STATUS_BITS, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
 import type { NetChannel, Transport } from './transport';
 import type { Character, EliteAffix, SaveFile } from '../types';
 
@@ -319,6 +319,15 @@ export class NetGuest {
       e.hp.dead = (r.flags & F.dead) !== 0;
       e.hp.invulnUntil = r.flags & F.invuln ? t + 0.2 : 0;
       e.hp.staggerUntil = r.flags & F.stagger ? t + 0.2 : 0;
+    }
+    // statuses and controls for the particles and icons (the guest's own come exactly from its self state)
+    if (e.st && e !== this.me) {
+      STATUS_BITS.forEach((k, i) => {
+        e.st!.active[k] = r.status & (1 << i) ? t + 0.3 : 0;
+      });
+      CONTROL_BITS.forEach((k, i) => {
+        e.st!.controls[k] = r.status & (1 << (5 + i)) ? t + 0.3 : 0;
+      });
     }
     if (e.en) {
       const en = e.en;

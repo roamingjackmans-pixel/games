@@ -3,10 +3,13 @@
 Items deferred during a session, with the reason. Every item is picked up before the build is called done
 (BUILD_BRIEF §0). Empty means nothing is deferred.
 
-## Engine gaps reported by the zone content pass (fix before M8 integration)
+**Nothing is deferred.** The engine gaps the zone content pass reported were fixed before M8 (commit acc7e8a);
+the approximations made while building are recorded as decisions (D41–D71), and the known limits are in the
+README.
 
-- [x] `triggers()` in enemies/ai.ts: hpBelow/firstSight triggers with cooldownS ≥ ~100 never fire (the -100 default fails the cooldown check). Ghoul Leaper's Mist Step is dead.
-- [x] Passive pull (Maw) is switched off while an attack with `pullSpeed` is active; it should keep pulling and pause only in the last 0.2 s of the telegraph.
-- [x] `placePockets` can place a safe pocket over a pit / void tile (Abyss rooms).
-- [x] Traits not implemented (weaponPick: look only, D53): `revealedByHoly` (Holy hits set revealedUntil), `fadeAfterAttackS` (invulnerable after each attack), `weaponPick` (Hollow Joe rolls a weapon: set the draw variant and swap the combo).
-- [x] Swarm move style (kept, D53) is not flying: Void Motes walk around pits (acceptable; note in DECISIONS if kept).
+Not built, by choice (recorded so nobody looks for them):
+
+- The optional in-game text chat (NETCODE §3 lists it as optional): the protocol carries `chat`, there is no
+  chat box.
+- Balance against human play: the bot harness cannot stand in for a competent player at bosses
+  (docs/BALANCE_REPORT.md); tuning past the two fixes in D71 waits for the owner's play (docs/OWNER_CHECKS.md).

@@ -1,4 +1,4 @@
-// Snapshots (NETCODE §4). Every entity a guest draws is a fixed 25-byte record (position, pose, flags, hp
+// Snapshots (NETCODE §4). Every entity a guest draws is a fixed 27-byte record (position, pose, flags, hp
 // permille, combo progress…) plus a JSON "meta" block that is only sent when it changes (what the entity
 // is: enemy type, player gear, telegraph shapes, pickup contents). Room tiles travel the same way. The guest
 // rebuilds real Entity objects from these so the normal renderer and HUD draw them unchanged.
@@ -10,7 +10,10 @@ export const POSES = ['idle', 'windup', 'attack', 'recover', 'swing', 'cast', 'o
 export const ENEMY_STATES = ['spawning', 'idle', 'alert', 'approach', 'kite', 'windup', 'attack', 'recover', 'stagger', 'reposition', 'held', 'channel', 'dormant', 'ceiling', 'submerged', 'stealth', 'invisible', 'dead'] as const;
 export const PLAYER_STATES = ['idle', 'attack', 'dodge', 'skill', 'cast', 'flask', 'stagger', 'held', 'falling', 'consumable', 'channel', 'charge', 'dashing'] as const;
 const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
-const REC = 25;
+const REC = 27;
+/** statusMask bits: the five statuses, then the six controls (NETCODE §4) */
+export const STATUS_BITS = ['burn', 'chill', 'shock', 'bleed', 'poison'] as const;
+export const CONTROL_BITS = ['freeze', 'blind', 'hexed', 'silence', 'root', 'hold'] as const;
 
 export const F = {
   flash: 1,
@@ -49,6 +52,7 @@ export interface Rec {
   cIdx: number;
   cPhase: number;
   cK: number;
+  status: number;
 }
 
 const q = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, Math.round(v)));
@@ -97,6 +101,15 @@ export function recordOf(e: Entity, now: number): Rec {
   } else if (e.pr?.lob) {
     extra = q((e.pr.lob.t / Math.max(0.01, e.pr.lob.dur)) * 1000, 0, 1000);
   } else if (e.it?.used) flags |= F.used;
+  let status = 0;
+  if (e.st) {
+    STATUS_BITS.forEach((k, i) => {
+      if (e.st!.active[k] > now) status |= 1 << i;
+    });
+    CONTROL_BITS.forEach((k, i) => {
+      if (e.st!.controls[k] > now) status |= 1 << (5 + i);
+    });
+  }
   return {
     id: e.id,
     kind: Math.max(0, ETYPES.indexOf(e.type)),
@@ -116,6 +129,7 @@ export function recordOf(e: Entity, now: number): Rec {
     cIdx: q(cIdx, 0, 255),
     cPhase,
     cK,
+    status,
   };
 }
 
@@ -138,6 +152,7 @@ function writeRec(v: DataView, o: number, r: Rec): void {
   v.setUint8(o + 22, r.cIdx);
   v.setUint8(o + 23, r.cPhase);
   v.setUint8(o + 24, r.cK);
+  v.setUint16(o + 25, r.status);
 }
 
 function readRec(v: DataView, o: number): Rec {
@@ -160,6 +175,7 @@ function readRec(v: DataView, o: number): Rec {
     cIdx: v.getUint8(o + 22),
     cPhase: v.getUint8(o + 23),
     cK: v.getUint8(o + 24),
+    status: v.getUint16(o + 25),
   };
 }
 
