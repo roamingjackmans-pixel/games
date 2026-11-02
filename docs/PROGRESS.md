@@ -8,9 +8,9 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 ## M0 — Repo, tooling, deploy pipeline
 - [x] Vite + TS scaffold, lint, vitest, playwright, scripts — 5013bff 2026-11-02
 - [x] `.gitignore` (incl. `docs/OWNER_PRIVATE.md`), git init, first commit — 5013bff 2026-11-02
-- [x] `gh repo create DungeonJoe --public --source . --push` — 5013bff 2026-11-02 (github.com/roamingjackmans-pixel/DungeonJoe)
+- [x] `gh repo create DungeonJoe --public --source . --push` — 5013bff 2026-11-02 (github.com/roamingjackmans-pixel/DungeonJoe, renamed to github.com/roamingjackmans-pixel/games for /games/dungeonjoe/, D48)
 - [x] `.github/workflows/deploy.yml`, `public/404.html`, README — 5013bff 2026-11-02
-- [x] Owner reminded: Settings → Pages → Source: GitHub Actions — 5013bff 2026-11-02 (also in the final message)
+- [x] Owner reminded: Settings → Pages → Source: GitHub Actions (on the `games` repo) — 5013bff 2026-11-02 (also in the final message)
 
 ## M1 — Engine core
 - [x] loop, canvas scaling, DPR, fullscreen — 3420a78 2026-11-02

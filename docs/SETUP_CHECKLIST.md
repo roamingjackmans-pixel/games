@@ -43,7 +43,7 @@ git config --global user.name "Joseph Jackman"; git config --global user.email "
 
 ## 5. One thing only you can do (after M0 creates the repo)
 
-On GitHub: **DungeonJoe repo → Settings → Pages → Build and deployment → Source: GitHub Actions**.
+On GitHub: **games repo (was DungeonJoe, D48) → Settings → Pages → Build and deployment → Source: GitHub Actions**.
 Until this is set, the deploy workflow cannot publish. You can do it as soon as the repo appears (the
 build keeps going without it) or at the end.
 

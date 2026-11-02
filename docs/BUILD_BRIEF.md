@@ -50,7 +50,7 @@ a clear message only if something is missing.
 
 ## 2. Target
 
-A static web game at `https://josephjackman.com/DungeonJoe/` that fully implements GAME_DESIGN.md with
+A static web game at `https://josephjackman.com/games/dungeonjoe/` that fully implements GAME_DESIGN.md with
 all content in the content docs: 8 zones, 64 enemies, Elite affixes, 8 bosses (final with 3 phases),
 the tutorial hall with The Instructor, 16 weapon classes × 3 skills, 8 shields, 9 casting tools, 24
 armor sets, rings, affixes, legendary powers, 12 gem families × 5 tiers, consumables, 28 spells, 10
@@ -89,7 +89,7 @@ C:\dev\DungeonJoe\
 
 ## 4. Tooling
 
-- `npm create vite@latest` (vanilla-ts) then strip the template. `vite.config.ts`: `base: '/DungeonJoe/'`,
+- `npm create vite@latest` (vanilla-ts) then strip the template. `vite.config.ts`: `base: '/games/dungeonjoe/'`,
   `build.target: 'es2022'`, sourcemaps on. `tsconfig`: `strict`, `noUncheckedIndexedAccess`,
   `exactOptionalPropertyTypes`.
 - ESLint (typescript-eslint, a custom rule or `no-restricted-properties` banning `Math.random` under
@@ -117,7 +117,7 @@ Build: scaffold per §3–4; `index.html` with the canvas and overlay root; a pl
 limits); `.gitignore` first, then `git init -b main`, first commit, `gh repo create DungeonJoe --public
 --source . --push`, workflow committed. Tell the owner (in PROGRESS.md and the final message) to set
 **Settings → Pages → Source: GitHub Actions** on the new repo once; the workflow then publishes to
-`https://josephjackman.com/DungeonJoe/`.
+`https://josephjackman.com/games/dungeonjoe/`.
 Tests: vitest smoke; Playwright boot smoke.
 Done when: `npm run dev` shows the placeholder; the repo exists on GitHub; the workflow file is in place.
 
@@ -273,7 +273,7 @@ Done when: all tests green, the harness report is committed under `docs/BALANCE_
 ### M16 — Deploy, docs, handoff
 Build: `README.md` final; `docs/OWNER_CHECKS.md` (a play checklist for the owner: 25 things to try,
 each one sentence); `docs/PROGRESS.md` all ticked; `docs/TODO.md` empty or justified; push; confirm the
-workflow run is green (`gh run list`); confirm `https://josephjackman.com/DungeonJoe/` loads (the
+workflow run is green (`gh run list`); confirm `https://josephjackman.com/games/dungeonjoe/` loads (the
 owner must have set Pages → Source: GitHub Actions; if the site 404s, say so in the final message).
 Done when: the live URL plays the game.
 

@@ -1,6 +1,7 @@
-# Builds the game and publishes dist/ to GitHub Pages on every push to main.
-# The site shows up at josephjackman.com/DungeonJoe/ because this repo is named "DungeonJoe"
-# and the account's user site has the josephjackman.com custom domain.
+# Builds the game and publishes it to GitHub Pages on every push to main.
+# This repo is named "games", so its Pages site is josephjackman.com/games/ (the account's user site
+# has the josephjackman.com custom domain). The game is published in the dungeonjoe/ folder of that
+# site, so it lives at josephjackman.com/games/dungeonjoe/ (D48). deploy/index.html is the /games/ hub.
 # One-time owner step: repo Settings → Pages → Build and deployment → Source: GitHub Actions.
 name: Deploy to GitHub Pages
 
@@ -35,9 +36,16 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - name: Assemble the /games/ site
+        run: |
+          mkdir -p site/dungeonjoe
+          cp -r dist/. site/dungeonjoe/
+          cp deploy/index.html site/index.html
+          cp deploy/404.html site/404.html
+          touch site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: site
       - id: deployment
         uses: actions/deploy-pages@v4

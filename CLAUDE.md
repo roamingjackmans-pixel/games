@@ -5,7 +5,7 @@ Binding of Isaac and Diablo 3: top-down procedurally generated arena rooms, six 
 Slicey, Brain, Prayer), weapons with three cooldown skills, spells on staffs and talismans, bonfires and a
 flask, red (unblockable) and blue (piercing, un-dodgeable) attacks, loot rarities and gems, mimics, ten
 classes, ten save files, New Game+, and four-player online co-op. Hosted at
-`https://josephjackman.com/DungeonJoe/` on GitHub Pages.
+`https://josephjackman.com/games/dungeonjoe/` on GitHub Pages.
 
 ## How we work
 
@@ -36,7 +36,7 @@ classes, ten save files, New Game+, and four-player online co-op. Hosted at
 ## Stack (locked, D6–D8, D13)
 
 Vite + TypeScript strict · Canvas 2D · no framework, no engine · Trystero (WebRTC) · Web Audio
-synthesis · Vitest · Playwright · GitHub Actions → GitHub Pages (`base: '/DungeonJoe/'`).
+synthesis · Vitest · Playwright · GitHub Actions → GitHub Pages (`base: '/games/dungeonjoe/'`).
 
 ## Rules that are easy to break
 
@@ -53,7 +53,7 @@ synthesis · Vitest · Playwright · GitHub Actions → GitHub Pages (`base: '/D
 ```powershell
 npm run dev          # Vite dev server (preview it in the desktop app's browser pane)
 npm run build        # production build to dist/ (deployed by .github/workflows/deploy.yml)
-npm run preview      # serve dist/ locally under /DungeonJoe/
+npm run preview      # serve dist/ locally under /games/dungeonjoe/
 npm run typecheck; npm run lint; npm test
 npm run test:e2e     # Playwright (boot, create character, tutorial, loopback co-op join, save round-trip)
 npm run validate:data

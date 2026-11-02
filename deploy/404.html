@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dungeon Joe</title>
+    <script>
+      // Deep links under /games/dungeonjoe/ fall back to the game's entry page.
+      (function () {
+        var base = '/games/dungeonjoe/';
+        var path = window.location.pathname;
+        if (path.indexOf(base) === 0 && path !== base) {
+          window.location.replace(base + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+  </head>
+  <body style="background:#14121a;color:#efe6d2;font-family:'Segoe UI',system-ui,sans-serif;padding:40px">
+    <p>Joe took a wrong turn. <a style="color:#e6b84a" href="/games/dungeonjoe/">Back to the stairs.</a></p>
+  </body>
+</html>

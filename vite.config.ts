@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
 export default defineConfig({
-  base: '/DungeonJoe/',
+  base: '/games/dungeonjoe/',
   define: {
     __GAME_VERSION__: JSON.stringify(pkg.version),
   },

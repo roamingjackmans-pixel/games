@@ -10,14 +10,14 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
   use: {
-    baseURL: `http://localhost:${PORT}/DungeonJoe/`,
+    baseURL: `http://localhost:${PORT}/games/dungeonjoe/`,
     viewport: { width: 1280, height: 720 },
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 720 } } }],
   webServer: {
     command: `npx vite --port ${PORT} --strictPort`,
-    url: `http://localhost:${PORT}/DungeonJoe/`,
+    url: `http://localhost:${PORT}/games/dungeonjoe/`,
     reuseExistingServer: true,
     timeout: 60_000,
   },

@@ -5,7 +5,7 @@ Six stats (HP, Stamina, Bonk, Slicey, Brain, Prayer), weapons with three cooldow
 and talismans, bonfires and a flask, red attacks you cannot block and blue attacks you cannot dodge,
 mimics, gems, ten classes, ten save files, New Game+, and four-player online co-op.
 
-Lives at `https://josephjackman.com/DungeonJoe/` (GitHub Pages).
+Lives at `https://josephjackman.com/games/dungeonjoe/` (GitHub Pages).
 
 **Status:** in development (see `docs/PROGRESS.md`). The design package is in `docs/`:
 
@@ -33,9 +33,9 @@ Needs Node 24. Commands are Windows PowerShell 5.1 (chain with `;`).
 
 ```powershell
 cd C:\dev\DungeonJoe; npm install
-npm run dev            # http://localhost:5173/DungeonJoe/
+npm run dev            # http://localhost:5173/games/dungeonjoe/
 npm run build          # production build to dist/
-npm run preview        # serve dist/ at http://localhost:4173/DungeonJoe/
+npm run preview        # serve dist/ at http://localhost:4173/games/dungeonjoe/
 npm run typecheck; npm run lint; npm test
 npm run test:e2e       # Playwright (Chromium; first time: npx playwright install chromium)
 npm run validate:data
