@@ -1,7 +1,7 @@
 # Dungeon Joe — Build progress
 
 > **Next session starts here:** M0–M2 done (repo is github.com/roamingjackmans-pixel/games, live path /games/dungeonjoe/, D48).
-> M3 done. Continue at M4 (procgen, rooms, waves, bonfires, tutorial). Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug
+> M4 done. Zones 2–8 rosters/draws/rooms are being written by four content agents (files under src/data/enemies, src/engine/draw/enemies, src/data/rooms); M8/M10–M12 integrate them. Continue at M5 (items, loot, inventory, gems, shop). Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
 
@@ -43,14 +43,14 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] tests; browser check — 6028d79 2026-11-02 — 12 enemy tests (validation, budget ≤ 2 over 30 s with 12 enemies, elite rate 8%±1, each Crypt enemy fights and dies, Raise Dead, mimic dormant/wake/bite). Browser: all 8 Crypt enemies + mimic + Arcane/Shielded elites rendered and fighting in the arena.
 
 ## M4 — Procgen, rooms, waves, chests, bonfires, minimap, zone flow
-- [ ] layout generator, specials placement, boss anteroom/room
-- [ ] 10 Crypt templates, interior rules, validation
-- [ ] mix picker, threat budgets, waves, ambush rooms, room clear
-- [ ] chests, reliquary room, merchant room shell, bonfires (ids), stairs, title cards
-- [ ] minimap + map screen, room transitions
-- [ ] tutorial hall + The Instructor (drop stubbed)
-- [ ] death screen, Shardpile, respawn, first-rest rule
-- [ ] tests; browser check
+- [x] layout generator, specials placement, boss anteroom/room — 0949d39 2026-11-02
+- [x] 10 Crypt templates, interior rules, validation — 0949d39 2026-11-02
+- [x] mix picker, threat budgets, waves, ambush rooms, room clear — 0949d39 2026-11-02
+- [x] chests, reliquary room, merchant room shell, bonfires (ids), stairs, title cards — 0949d39 2026-11-02
+- [x] minimap + map screen, room transitions — 0949d39 2026-11-02
+- [x] tutorial hall + The Instructor (drop stubbed) — 0949d39 2026-11-02
+- [x] death screen, Shardpile, respawn, first-rest rule — 0949d39 2026-11-02
+- [x] tests; browser check — 0949d39 2026-11-02 — procgen (1,000 seeds × 8 zones, reachability, dead-end boss, mixes, ≤ 12 live, mimic 5%±0.5%, Shard tuning zone 1), session tests. Browser (no-HMR server on 5174): hall → start bonfire; first rest 240/240 + flask, second rest nothing; combat room locks, waves, clears; death → pile 621 → respawn full → recovered 621; treasure chest; anteroom bonfire + locked boss door. Fixed: negative spawn-tell radius on 1.5 s tells.
 
 ## M5 — Items, loot, inventory, gems, Stardust, shop
 - [ ] item generator (rarity, slot, ilvl, affixes, sockets, legendaries, names, flavor)
