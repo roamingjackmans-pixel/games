@@ -25,6 +25,7 @@ import type { Entity } from '../world';
 import { neighbourId } from '../procgen/zone';
 import { openInventory } from '../../ui/menus/inventory';
 import { openBonfire } from '../../ui/menus/bonfire';
+import { renderSpellTab } from '../../ui/menus/spells';
 import { buyConsumable, buyGem, buyItem, cycleQuickSlot, levelUp, rerollGem, respec, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
 import { shopGem, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
 import { refreshDerived, toggleTwoHand } from '../player/player';
@@ -220,6 +221,7 @@ export class RunScene extends WorldScene {
             return '';
           },
         },
+        extraTabs: [{ label: 'Spells', render: (el, rr) => renderSpellTab(el, c, changed, rr) }],
         openInventory: () => this.showInventory(() => open()),
         close: () => this.closeOverlay(),
       });
@@ -238,6 +240,7 @@ export class RunScene extends WorldScene {
       derived: () => p.pl!.derived,
       changed: () => refreshDerived(p),
       toggleTwoHand: () => toggleTwoHand(this.w, p),
+      extraTabs: [{ label: 'Spells', render: (el) => renderSpellTab(el, p.pl!.char, () => refreshDerived(p), () => (this.overlay as HTMLElement & { rerender?: () => void })?.rerender?.()) }],
       close: () => {
         this.closeOverlay();
         onClose?.();

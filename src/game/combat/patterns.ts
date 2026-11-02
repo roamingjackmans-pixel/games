@@ -270,6 +270,8 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
       // one circle lands on each player (the threat), the rest scatter
       const targets = p.within ? [] : c.players.slice(0, p.n);
       for (const t of targets) shapes.push({ k: 'circle', x: t.x, y: t.y, r: p.r });
+      // circles "around a point" always include the point itself (Volley, Rain, Comet Barrage)
+      if (p.within && (p.anchor === 'aim' || p.anchor === 'target' || p.anchor === 'point')) shapes.push({ k: 'circle', x: ax, y: ay, r: p.r });
       while (shapes.length < p.n) {
         let x: number;
         let y: number;

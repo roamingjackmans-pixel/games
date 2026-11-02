@@ -73,7 +73,7 @@ base so they stay useful early and fall off late; weapons with S scaling start w
 | **Longsword** | B / B | 9 / 9 | Medium | 3: 300/110/280 ×1.0, ×1.0, 400/120/380 ×1.3 | 38 | 15 | 25 | arc(110°, 105) | 2.0 | The true hybrid. "A sword. Long." |
 | **Spear** | C / B | 8 / 10 | Medium | 3: 260/100/260 ×0.9 thrust, ×0.9, 380/120/360 ×1.3 | 38 | 14 | 20 | thrust(30, 150) | 2.0 | Can attack while two-hand guarding with *Phalanx*. |
 | **Battleaxe** | A / D | 11 / 7 | Medium-slow | 3: 340/120/320 ×1.0, ×1.1, 450/140/430 ×1.4 | 44 | 18 | 35 | arc(120°, 100) | 2.5 | Bonk with a little Slicey. |
-| **Mace** | B / E | 11 / 5 | Medium-slow | 2: 360/120/340 ×1.1, 460/140/440 ×1.4 | 46 | 18 | 45 | arc(100°, 95) | 3.0 | 20% of damage is Holy. |
+| **Mace** | B / E | 11 / 3 (tuned, D55) | Medium-slow | 2: 360/120/340 ×1.1, 460/140/440 ×1.4 | 46 | 18 | 45 | arc(100°, 95) | 3.0 | 20% of damage is Holy. |
 | **Halberd** | A / C | 10 / 10 | Medium-slow | 3: 340/130/340 ×1.0 sweep, ×1.0 thrust, 480/150/460 ×1.4 | 44 | 17 | 30 | arc(140°, 135) / thrust(30, 160) | 2.5 | The great hybrid: mostly Bonk, real Slicey. |
 | **Twin Axes** | C / B | 10 / 10 | Fast | 3: 220/100/210 ×0.8, ×0.8, 320/110/320 ×1.2 | 34 | 12 | 18 | arc(100°, 90) | 1.5 | Berserker's weapon. |
 

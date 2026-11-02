@@ -368,6 +368,18 @@ export function drawProjectile(ctx: CanvasRenderingContext2D, e: Entity, x: numb
       poly(ctx, [-8, -2, 8, -2, 8, 2, -8, 2], '#7a5232', OUTLINE, 1.5);
       poly(ctx, [4, -2, 8, -10, 12, -2], '#c9ced6', OUTLINE, 1.5);
       break;
+    case 'p_crescent':
+      ctx.strokeStyle = '#efe6ff';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(-6, 0, e.radius, -1.1, 1.1);
+      ctx.stroke();
+      glow(ctx, 0, 0, e.radius * 1.6, '#c8c0ff', 0.6);
+      break;
+    case 'p_magic':
+      glow(ctx, 0, 0, e.radius * 3.2, c, 0.9);
+      blob(ctx, 0, 0, e.radius * 0.8, e.radius * 0.8, { fill: '#ffffff', outlineW: 0 });
+      break;
     case 'e_bone':
       ctx.rotate(now * 12);
       ctx.fillStyle = '#e8e1c8';

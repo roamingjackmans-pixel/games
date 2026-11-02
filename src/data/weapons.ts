@@ -237,7 +237,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: 'mace',
     name: 'Mace',
     grades: { bonk: 'B', slicey: 'E' },
-    req: { bonk: 11, slicey: 5 },
+    req: { bonk: 11, slicey: 3 },
     speedClass: 'mediumslow',
     combo: [sw(360, 120, 340, 1.1, arc(100, 95), 14), sw(460, 140, 440, 1.4, arc(100, 95), 18)],
     base1: 46,

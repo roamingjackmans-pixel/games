@@ -633,7 +633,9 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     }
   }
   const wantBlock = holdToBlock ? held(inp, 'block') : pl.blockToggled;
-  pl.blocking = wantBlock && pl.state === 'idle' && pl.derived.canBlock && !pl.channel && !pl.charge;
+  // Phalanx: thrust while holding a two-hand guard
+  const phalanx = !!e.buffs?.some((b) => b.id === 'phalanx' && b.until > now) && (pl.derived.twoHanded || !pl.derived.shield);
+  pl.blocking = wantBlock && (pl.state === 'idle' || (phalanx && pl.state === 'attack')) && pl.derived.canBlock && !pl.channel && !pl.charge;
 
   // actions from idle
   if (pl.state === 'idle' && !pl.channel && !pl.charge) {

@@ -97,6 +97,8 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
   if (e.root) spec.root = e.root;
   if (e.pull) spec.pullToSource = true;
   if (e.undeadMult) spec.undeadMult = e.undeadMult;
+  if (e.onlyUndead) spec.onlyUndead = true;
+  if (e.onKill) spec.onKillEffects = e.onKill;
   spec.reviveValue = ctx.isSpell ? 0.25 : spec.reviveValue;
   spec.sourceTag = ctx.tag;
   return spec;
@@ -497,8 +499,9 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       break;
     case 'chain': {
       const hit = new Set<number>();
-      let fx = ctx.x;
-      let fy = ctx.y;
+      // a player's chain starts at the cursor (the bolt is near-instant at 900 px/s)
+      let fx = ctx.team === 0 ? ctx.aimX : ctx.x;
+      let fy = ctx.team === 0 ? ctx.aimY : ctx.y;
       let k = 1;
       for (let j = 0; j <= e.jumps; j++) {
         let best: Entity | null = null;

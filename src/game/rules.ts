@@ -78,11 +78,14 @@ export function installRules(w: World, o: RulesOpts = {}): void {
       const d = killer.pl.derived;
       if (d.powers.has('second_wind') && killer.stam) killer.stam.cur = Math.min(killer.stam.max, killer.stam.cur + 20);
       for (const b of killer.buffs ?? []) {
-        if (b.stackOn === 'kill' && b.until > w2.time) b.stacks = Math.min(b.maxStacks, b.stacks + 1);
+        if (b.stackOn !== 'kill' || b.until <= w2.time) continue;
+        b.stacks = Math.min(b.maxStacks, b.stacks + 1);
+        if (b.onStack) runEffects(w2, b.onStack, selfCtx(killer, 'stack'));
       }
       w2.hooks.onPlayerKill?.(w2, killer, e);
     }
   };
+  w.hooks.onSpecKill = (w2, attacker, _victim, effects, tag) => runEffects(w2, effects, selfCtx(attacker, tag));
   w.hooks.onPlayerDowned = (w2, p) => {
     if (o.onPlayerDown) o.onPlayerDown(w2, p);
     else {
@@ -140,6 +143,24 @@ export function installRules(w: World, o: RulesOpts = {}): void {
         tag: a.id,
       });
     }
+  };
+}
+
+function selfCtx(p: Entity, tag: string): Parameters<typeof runEffects>[2] {
+  return {
+    sourceId: p.id,
+    team: p.team === 0 ? 0 : 1,
+    x: p.x,
+    y: p.y,
+    aimX: p.pl?.aimX ?? p.x,
+    aimY: p.pl?.aimY ?? p.y,
+    targetId: 0,
+    powerMult: 1,
+    isSpell: false,
+    isSkill: true,
+    baseDamage: p.pl?.derived.weaponPower ?? 0,
+    windupS: 0,
+    tag,
   };
 }
 

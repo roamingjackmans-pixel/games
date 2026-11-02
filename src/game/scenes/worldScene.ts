@@ -12,6 +12,7 @@ import { allBaseIds } from '../items/bases';
 import { generateItem } from '../items/generate';
 import { Rng } from '../../engine/rng';
 import { ENEMIES } from '../../data/enemies';
+import { SPELLS } from '../../data/spells';
 import { spawnUnit } from '../enemies/spawn';
 import { refreshDerived } from '../player/player';
 import { levelFromStats } from '../player/character';
@@ -231,7 +232,10 @@ export abstract class WorldScene implements Scene {
     return generateItem(new Rng(`debug|${baseId}|${rarity}|${lv}|${this.w.tick}`), { source: 'boss', ilvl: lv, zone: Math.min(8, lv), rarity, baseId });
   }
   protected learnAll(): string {
-    return 'Not available in this scene.';
+    const p = this.local;
+    if (!p) return 'No player.';
+    for (const id of Object.keys(SPELLS)) if (!p.pl!.char.knownSpells.includes(id)) p.pl!.char.knownSpells.push(id);
+    return `Known spells: ${p.pl!.char.knownSpells.length}.`;
   }
   protected bossDef(_id: string): unknown {
     return null;

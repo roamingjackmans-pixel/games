@@ -547,6 +547,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   const pl = attacker?.pl;
   let mult = 1;
   let crit = false;
+  if (spec.onlyUndead && !(en.def.undead || en.def.zone === 8)) return 0;
   if (en.state === 'dormant') {
     // attacking a mimic first wakes it as a mid-tier enemy (GAME_DESIGN §6.5)
     wakeMimic(w, e);
@@ -672,6 +673,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   en.hitTimes = en.hitTimes.filter((t) => t > now - 1).concat(now);
   w.hooks.onEnemyHurt?.(w, e, attacker);
   checkDeath(w, e, attacker?.id ?? 0);
+  if (hp.dead && attacker && spec.onKillEffects) w.hooks.onSpecKill?.(w, attacker, e, spec.onKillEffects, spec.sourceTag ?? '');
   if (pl && attacker) w.hooks.onPlayerHitEnemy?.(w, attacker, e, total, spec);
   return total;
 }

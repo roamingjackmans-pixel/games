@@ -535,7 +535,7 @@ export interface WorldHooks {
   onPlayerKill?(w: World, p: Entity, victim: Entity): void;
   onMimicWake?(w: World, e: Entity): void;
   onMimicBite?(w: World, p: Entity, mimic: Entity): void;
-  onSpecKill?(w: World, attacker: Entity, victim: Entity, effects: EffectDef[]): void;
+  onSpecKill?(w: World, attacker: Entity, victim: Entity, effects: EffectDef[], tag: string): void;
   /** room/wave logic, called once per tick after combat (rooms system) */
   onTick?(w: World, dt: number): void;
 }
