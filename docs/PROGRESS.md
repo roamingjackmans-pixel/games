@@ -1,6 +1,6 @@
 # Dungeon Joe — Build progress
 
-> **Next session starts here:** M0–M7 done. Continue at M8 (boss framework, then the Caretaker, Mother Spore, the Bloatking).
+> **Next session starts here:** M0–M8 done. Continue at M9 (online co-op, NETCODE.md). Bosses 4–8 follow the zone 1–3 pattern: src/data/bosses/*, src/data/rooms/bosses.ts, src/engine/draw/bosses/*.
 > Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug (or ?arena, ?new&class=cleric&seed=X). For long scripted playtests use the no-HMR server (vite.stable.config.ts, port 5174) and window.__dj.loop.advance(s).
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
@@ -80,12 +80,12 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] tests; browser check — 0bdcc8c 2026-11-02 (tests/unit/save.test.ts; create → reload → slots → export/import into slot 3 → pause → settings)
 
 ## M8 — Boss framework, Caretaker, Zones 2–3
-- [ ] BossDef phases, boss bar, intro, lock, drops, bosses-beaten → flask
-- [ ] The Caretaker
-- [ ] Fungal Caverns: 8 enemies, 10 templates, hazards, Mother Spore
-- [ ] Drowned Sewers: 8 enemies, 10 templates, water/grates/Flood, The Bloatking
-- [ ] stairs + zone transitions
-- [ ] tests; browser check (zones 1–3 end to end)
+- [x] BossDef phases, boss bar, intro, lock, drops, bosses-beaten → flask — 34b5fde 2026-11-02 (D58)
+- [x] The Caretaker — 34b5fde 2026-11-02
+- [x] Fungal Caverns: 8 enemies, 10 templates, hazards, Mother Spore — 34b5fde 2026-11-02 (roster and rooms from acc7e8a)
+- [x] Drowned Sewers: 8 enemies, 10 templates, water/grates/Flood, The Bloatking — 34b5fde 2026-11-02 (roster and rooms from acc7e8a)
+- [x] stairs + zone transitions — 34b5fde 2026-11-02
+- [x] tests; browser check (zones 1–3 end to end) — 34b5fde 2026-11-02 (tests/unit/bosses.test.ts; each boss fought in the browser through both phases, kill → banner → loot → stairs → next zone)
 
 ## M9 — Online co-op
 - [ ] Trystero adapter + Loopback, lobby, room codes, version check
