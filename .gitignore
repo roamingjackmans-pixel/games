@@ -1,0 +1,25 @@
+# Dependencies and builds
+node_modules/
+dist/
+.vite/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Private (debug code) — never commit
+docs/OWNER_PRIVATE.md
+
+# Test output
+playwright-report/
+test-results/
+coverage/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

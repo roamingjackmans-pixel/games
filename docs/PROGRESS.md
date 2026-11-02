@@ -1,0 +1,123 @@
+# Dungeon Joe — Build progress
+
+> **Next session starts here:** nothing built yet. Start at M0. (Update this line at the end of every
+> session: where things stand, what was verified in the browser, what is half-done.)
+
+Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
+
+## M0 — Repo, tooling, deploy pipeline
+- [ ] Vite + TS scaffold, lint, vitest, playwright, scripts
+- [ ] `.gitignore` (incl. `docs/OWNER_PRIVATE.md`), git init, first commit
+- [ ] `gh repo create DungeonJoe --public --source . --push`
+- [ ] `.github/workflows/deploy.yml`, `public/404.html`, README
+- [ ] Owner reminded: Settings → Pages → Source: GitHub Actions
+
+## M1 — Engine core
+- [ ] loop, canvas scaling, DPR, fullscreen
+- [ ] input: keyboard, mouse, gamepad, bindings, InputFrame
+- [ ] rng streams, math, scene manager, particles, tween, text
+- [ ] draw parts + glow pre-render
+- [ ] audio mixer + Sfx synth + unlock
+- [ ] settings persistence
+- [ ] debug menu (SHA-256 gate) with all listed tools
+- [ ] tests; browser check
+
+## M2 — Player, combat core, telegraphs
+- [ ] world/ECS + system order
+- [ ] movement, stamina, dodge (5 s ring)
+- [ ] combos for Longsword, Greathammer, Twin Daggers, Bow; hitboxes
+- [ ] block, stability, guard break, parry, riposte, two-hand + weapon guard
+- [ ] damage pipeline, types, defenses, 5 statuses, poise/stagger, hitstop, numbers
+- [ ] all pattern primitives + telegraph drawing + hit tests + escapability helper
+- [ ] Red / Piercing rules
+- [ ] HUD v1
+- [ ] tests; browser check with scripted dummy
+
+## M3 — Enemy framework, Zone 1, Elites, Mimic
+- [ ] EnemyDef/AttackDef loader + validator
+- [ ] AI state machine, move styles, special budget, aggro, swarms, front guards, on-death, summons, spawn tells
+- [ ] 8 Elite affixes
+- [ ] 8 Mossy Crypt enemies with draw functions
+- [ ] Mimic
+- [ ] scaling formulas
+- [ ] tests; browser check
+
+## M4 — Procgen, rooms, waves, chests, bonfires, minimap, zone flow
+- [ ] layout generator, specials placement, boss anteroom/room
+- [ ] 10 Crypt templates, interior rules, validation
+- [ ] mix picker, threat budgets, waves, ambush rooms, room clear
+- [ ] chests, reliquary room, merchant room shell, bonfires (ids), stairs, title cards
+- [ ] minimap + map screen, room transitions
+- [ ] tutorial hall + The Instructor (drop stubbed)
+- [ ] death screen, Shardpile, respawn, first-rest rule
+- [ ] tests; browser check
+
+## M5 — Items, loot, inventory, gems, Stardust, shop
+- [ ] item generator (rarity, slot, ilvl, affixes, sockets, legendaries, names, flavor)
+- [ ] drops + instancing hooks, pickups, loot beams
+- [ ] inventory/character screen, requirements penalties, tooltips, quick swap
+- [ ] armor sets, rings
+- [ ] gems: socket/unsocket/upgrade/re-roll, Stardust, selling
+- [ ] bonfire menu: rest (first-rest rule), level up, respec, gem bench, shop, warp
+- [ ] consumables + quick-use
+- [ ] Instructor drop real
+- [ ] tests; browser check
+
+## M6 — 16 weapon classes, 48 skills, casting, 28 spells
+- [ ] all WeaponDefs + draw functions
+- [ ] all skills + unlock tiers + cooldown UI
+- [ ] casting tools, spell loadout screen, school/requirement locks
+- [ ] 14 Brain spells, 14 Prayer spells, reliquaries
+- [ ] EffectDef system
+- [ ] tests; browser check
+
+## M7 — Classes, creation, title, slots, settings, screens
+- [ ] 10 classes
+- [ ] title, save slots (10), export/import, delete
+- [ ] character creation with seed + preview
+- [ ] settings: video, audio, rebinding (kb + pad), accessibility, aim assist, hold/toggle block
+- [ ] pause menu, autosave schedule, migrations, beforeunload
+- [ ] tests; browser check
+
+## M8 — Boss framework, Caretaker, Zones 2–3
+- [ ] BossDef phases, boss bar, intro, lock, drops, bosses-beaten → flask
+- [ ] The Caretaker
+- [ ] Fungal Caverns: 8 enemies, 10 templates, hazards, Mother Spore
+- [ ] Drowned Sewers: 8 enemies, 10 templates, water/grates/Flood, The Bloatking
+- [ ] stairs + zone transitions
+- [ ] tests; browser check (zones 1–3 end to end)
+
+## M9 — Online co-op
+- [ ] Trystero adapter + Loopback, lobby, room codes, version check
+- [ ] inputs, snapshots, keyframes, events, commands
+- [ ] prediction/reconciliation, interpolation
+- [ ] authority split, instanced loot/Shards, HP scaling
+- [ ] downed/ghost/revive-by-attack, Last Rites, Ghost Lantern, wipe
+- [ ] per-player first-rest, progress credit, advance-to-zone on solo load
+- [ ] player cards, return to lobby, disconnects, ?net=test
+- [ ] loopback tests, Playwright join; real two-window check
+
+## M10 — Zones 4–5
+- [ ] Hollow Forest: enemies, templates, hazards, Vexthorn
+- [ ] Ashen Forge: enemies, templates, hazards, Foreman Ignatius
+
+## M11 — Zones 6–7
+- [ ] Frozen Reliquary: enemies, templates, hazards, Saint Aurelia
+- [ ] Clockwork Citadel: enemies, templates, hazards, Archmagister Tock
+
+## M12 — The Abyss, The Landlord, credits, NG+
+- [ ] Abyss enemies, templates, void edges, Hollow Joes
+- [ ] The Landlord (3 phases, shrinking platform)
+- [ ] credits, NG+ bonfire and cycle scaling
+
+## M13 — Gary, reliquaries, merchant room, no-refill test, Tears, rings/legendaries verified
+- [ ] all items
+
+## M14 — Audio and VFX pass
+- [ ] full sound list, zone music, boss music, VFX list, intro cards, colorblind/high-contrast, juice
+
+## M15 — Balance, performance, QA
+- [ ] Shard tuning test green, simulation harness + BALANCE_REPORT.md, 60 fps profile, leak check, Playwright regression
+
+## M16 — Deploy, docs, handoff
+- [ ] README final, OWNER_CHECKS.md, TODO.md empty/justified, workflow green, live URL confirmed
