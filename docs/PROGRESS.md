@@ -1,6 +1,6 @@
 # Dungeon Joe — Build progress
 
-> **Next session starts here:** M0–M6 done; zones 1–8 rosters, draws and rooms all committed. Continue at M7 (classes, title, save slots, settings, pause, autosave).
+> **Next session starts here:** M0–M7 done. Continue at M8 (boss framework, then the Caretaker, Mother Spore, the Bloatking).
 > Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug (or ?arena, ?new&class=cleric&seed=X). For long scripted playtests use the no-HMR server (vite.stable.config.ts, port 5174) and window.__dj.loop.advance(s).
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
@@ -72,12 +72,12 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] tests; browser check — 7d61843 2026-11-02 — 50 skill/spell tests (data rules, every class kit valid, all 48 skills and 28 spells resolve headless, CDR ≤ 50%, attack speed ≤ ×1.6, school/tool locks, spell power from Brain + tool). Browser (arena): all 16 weapons given via debug at Legendary ilvl 7, every Q/E/R fired; damaging skills hit (e.g. Earthshaker 984, Meteor Lunge 1118, Charged Swing 1490), buffs applied; staff spells cast (Arcane Bolt, Meteor, Chain Lightning), talisman Heal healed, two-handing refused to cast.
 
 ## M7 — Classes, creation, title, slots, settings, screens
-- [ ] 10 classes
-- [ ] title, save slots (10), export/import, delete
-- [ ] character creation with seed + preview
-- [ ] settings: video, audio, rebinding (kb + pad), accessibility, aim assist, hold/toggle block
-- [ ] pause menu, autosave schedule, migrations, beforeunload
-- [ ] tests; browser check
+- [x] 10 classes — 0bdcc8c 2026-11-02 (kits checked in browser against CONTENT_SPELLS_CLASSES §3)
+- [x] title, save slots (10), export/import, delete — 0bdcc8c 2026-11-02
+- [x] character creation with seed + preview — 0bdcc8c 2026-11-02
+- [x] settings: video, audio, rebinding (kb + pad), accessibility, aim assist, hold/toggle block — 0bdcc8c 2026-11-02
+- [x] pause menu, autosave schedule, migrations, beforeunload — 0bdcc8c 2026-11-02
+- [x] tests; browser check — 0bdcc8c 2026-11-02 (tests/unit/save.test.ts; create → reload → slots → export/import into slot 3 → pause → settings)
 
 ## M8 — Boss framework, Caretaker, Zones 2–3
 - [ ] BossDef phases, boss bar, intro, lock, drops, bosses-beaten → flask
