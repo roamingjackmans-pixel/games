@@ -100,12 +100,14 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     rawDamage(s.w, s.localPlayer!, 1e9, 'physical', 0);
     expect(s.save.world.shardpile?.amount).toBe(30);
   });
-  it('the boss anteroom has a bonfire and a locked boss door', () => {
+  it('the boss anteroom has a bonfire and an open door to the boss', () => {
     const s = session();
     s.enterRoom(s.layout.anteroomId, 'bonfire');
     expect(bonfireOf(s)).toBeDefined();
-    const locked = Object.values(s.w.room.doors).filter((d) => d.exists && d.locked);
-    expect(locked.length).toBe(1);
+    const toBoss = (['n', 's', 'e', 'w'] as Side[]).find((d) => neighbourId(s.layout, s.node.id, d)?.id === s.layout.bossId);
+    expect(toBoss).toBeDefined();
+    expect(s.w.room.doors[toBoss!].locked).toBe(false);
+    expect(s.w.room.doors[toBoss!].open).toBe(true);
   });
   it('a new character starts in the tutorial hall and leaves it into the start room', () => {
     const s = session(true);

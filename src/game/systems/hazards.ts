@@ -22,6 +22,8 @@ export interface HazardDef {
   /** a trap: the first body inside is caught (control + hit) and the hazard is used up */
   trap?: { control: { id: 'root'; durationS: number }; dmg: number };
   hitsTeam: 'enemies' | 'players' | 'both';
+  /** standing inside clears this status (Mother Spore's glowing pools) */
+  cures?: 'poison';
 }
 
 export const HAZARDS: Record<HazardId, HazardDef> = {
@@ -45,6 +47,8 @@ export const HAZARDS: Record<HazardId, HazardDef> = {
   regenAura: { dmg: 0, tickS: 1, color: '#7ad0a0', hitsTeam: 'players' },
   timeDilation: { dmg: 0, tickS: 0.25, slow: 0.4, color: '#b08de8', hitsTeam: 'enemies' },
   gravityWell: { dmg: 0, tickS: 0.1, color: '#6a3ab0', hitsTeam: 'enemies' },
+  curePool: { dmg: 0, tickS: 1, slow: 0.3, cures: 'poison', color: '#7af0d0', hitsTeam: 'players' },
+  emberMoss: { dmg: 0.15, tickS: 0.5, status: { id: 'burn', buildup: 10 }, color: '#ff8a2a', hitsTeam: 'players' },
   bearTrap: { dmg: 0, tickS: 0.1, color: '#8a8a8a', hitsTeam: 'both', armS: 1, trap: { control: { id: 'root', durationS: 1.5 }, dmg: 1.0 } },
 };
 
@@ -175,6 +179,10 @@ export function updateHazards(w: World, _dt: number): void {
           v.en.slowMult = Math.min(v.en.slowMult < 1 && v.en.slowUntil > now ? v.en.slowMult : 1, 1 - hz.slowPct);
         }
         if (v.pl && hz.team !== 0) v.pl.timeSlow = Math.min(v.pl.timeSlow, 1 - hz.slowPct);
+      }
+      if (def.cures && v.pl && v.st) {
+        v.st.meters[def.cures] = 0;
+        v.st.active[def.cures] = 0;
       }
       if (hz.pull && v.en && !v.en.isBoss) {
         const dx = h.x - v.x;

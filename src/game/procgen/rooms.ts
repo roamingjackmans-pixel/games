@@ -1,10 +1,11 @@
 // Build a Room (tiles + doors) and its markers from a layout node (PROCGEN §3, §8).
 import { stream } from '../../engine/rng';
 import { ROOM_TEMPLATES } from '../../data/rooms';
+import { BOSS_ARENAS } from '../../data/rooms/bosses';
 import { ROOM_ANTEROOM, ROOM_BOSS, ROOM_MERCHANT, ROOM_RELIQUARY, ROOM_START, ROOM_TREASURE, ROOM_TUTORIAL } from '../../data/rooms/special';
 import { zoneDef } from '../../data/zones';
 import { Room, T, tileCenter, ROOM_H, ROOM_W, type Side } from '../room';
-import { mirrorTemplate, type RoomTemplate } from './templates';
+import { mirrorTemplate } from './templates';
 import type { RoomNode, ZoneLayout } from './zone';
 
 export interface RoomMarkers {
@@ -18,10 +19,13 @@ export interface RoomMarkers {
   exit: [number, number] | null;
   stations: { n: number; x: number; y: number }[];
   dummies: { kind: string; x: number; y: number }[];
+  /** boss arenas: the boss's spot, the stairs, open graves, pools */
+  boss: [number, number] | null;
+  stairs: [number, number] | null;
+  graves: [number, number][];
+  pools: [number, number][];
 }
 
-/** Boss arenas registered by boss data (M8+): template per arena id. */
-export const BOSS_ARENAS: Record<string, RoomTemplate> = {};
 
 function templateFor(layout: ZoneLayout, node: RoomNode, arenaId?: string): { rows: string[]; mirror: boolean } {
   switch (node.kind) {
@@ -53,7 +57,7 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
   const room = Room.fromAscii(rows);
   room.id = `${layout.seed}|${node.id}`;
   room.hazardKind = zoneDef(layout.zone).hazardKind;
-  const m: RoomMarkers = { spawns: [], chests: [], bonfire: null, reliquary: null, merchant: null, start: null, instructor: null, exit: null, stations: [], dummies: [] };
+  const m: RoomMarkers = { spawns: [], chests: [], bonfire: null, reliquary: null, merchant: null, start: null, instructor: null, exit: null, stations: [], dummies: [], boss: null, stairs: null, graves: [], pools: [] };
   for (let y = 0; y < ROOM_H; y++) {
     for (let x = 0; x < ROOM_W; x++) {
       const ch = rows[y]?.[x] ?? '#';
@@ -68,6 +72,12 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
       else if (ch === 'E') m.exit = c;
       else if (ch >= '1' && ch <= '9') m.stations.push({ n: Number(ch), x: c[0], y: c[1] });
       else if ('abcdf'.includes(ch)) m.dummies.push({ kind: ch, x: c[0], y: c[1] });
+      else if (ch === 'K') m.boss = c;
+      else if (ch === 'H') m.stairs = c;
+      // arena marks take the floor they sit on (water arenas stay wet)
+      if ('KHw'.includes(ch) && rows[y]?.[x - 1] === '~') room.set(x, y, T.Hazard);
+      else if (ch === 'g') m.graves.push(c);
+      else if (ch === 'w') m.pools.push(c);
     }
   }
   // thin props by 20% (PROCGEN §3) — deterministic per room

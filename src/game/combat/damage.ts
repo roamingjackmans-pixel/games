@@ -1,6 +1,7 @@
 // The damage pipeline (GAME_DESIGN §3.1, §5.2–5.6, §6.3): players hit enemies, enemies hit players.
 // Red: block and parry fail (guard break), i-frames work. Piercing: i-frames fail, block works, parry fails.
 import { damageAfterDefense, reviveRequirement } from './formulas';
+import { bossPhaseCheck } from './bossPhase';
 import { addBuff, behind, buffSum, frontOf, hasControl, statusActive } from './state';
 import { DAMAGE_TYPES, type ControlId, type DamageType, type StatusId } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
@@ -190,9 +191,11 @@ export function rawDamage(w: World, e: Entity, amount: number, type: DamageType,
   if (!e.hp || e.hp.dead || amount <= 0) return;
   if (e.pl && (w.god || e.pl.downed || e.pl.deadUntilRest)) return;
   if (e.en?.gary) return;
+  if (e.en?.isBoss && e.en.phaseTransitionUntil > w.time) return;
   e.hp.hp -= amount;
   e.hp.lastHitBy = sourceId || e.hp.lastHitBy;
   if (showNumber) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius, amount, type, crit: false, toPlayer: !!e.pl, targetId: e.id });
+  if (e.en?.isBoss) bossPhaseCheck(w, e);
   checkDeath(w, e, sourceId);
 }
 
@@ -628,6 +631,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   hp.hp -= total;
   hp.lastHitAt = now;
   hp.lastHitBy = attacker?.id ?? 0;
+  if (en.isBoss) bossPhaseCheck(w, e);
   e.anim.flashUntil = now + 0.08;
   if (traits.revealedByHoly && (spec.dmg.holy ?? 0) > 0) en.revealedUntil = now + traits.revealedByHoly;
   const shown = total;

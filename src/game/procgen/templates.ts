@@ -3,6 +3,7 @@
 //   o  prop (blocks movement, not projectiles)      ~  zone hazard tile (walkable, hurts or slows)
 //   _  pit (cannot walk; falling in = 30% max HP)   G  raised grate (Sewers: safe from waves)
 //   S  enemy spawn point (≥ 200 px from any door)   C  chest spot      D  door (2 per side, fixed spots)
+//   boss arenas only: K boss spot, H stairs spot, g open grave (pit + summon spot), w pool spot
 import { ROOM_H, ROOM_W, doorTiles, type Side } from '../room';
 
 export interface RoomTemplate {
@@ -17,15 +18,15 @@ export interface TemplateIssue {
   msg: string;
 }
 
-const PASSABLE = new Set(['.', '~', 'G', 'S', 'C', 'D', 'B']);
-const KNOWN = new Set(['#', '.', 'P', 'o', '~', '_', 'G', 'S', 'C', 'D', 'B', 'V']);
+const PASSABLE = new Set(['.', '~', 'G', 'S', 'C', 'D', 'B', 'K', 'H', 'w']);
+const KNOWN = new Set(['#', '.', 'P', 'o', '~', '_', 'G', 'S', 'C', 'D', 'B', 'V', 'K', 'H', 'w', 'g']);
 
 function at(rows: string[], x: number, y: number): string {
   return rows[y]?.[x] ?? '#';
 }
 
 /** Validate one template against the PROCGEN §3 rules. */
-export function validateTemplate(t: RoomTemplate): TemplateIssue[] {
+export function validateTemplate(t: RoomTemplate, o: { arena?: boolean } = {}): TemplateIssue[] {
   const out: TemplateIssue[] = [];
   const bad = (msg: string): void => {
     out.push({ id: t.id, msg });
@@ -108,7 +109,7 @@ export function validateTemplate(t: RoomTemplate): TemplateIssue[] {
       if (at(t.rows, x, y) === 'S') spawns.push([x, y]);
       if (at(t.rows, x, y) === 'C') chests.push([x, y]);
     }
-  if (spawns.length < 4) bad(`has ${spawns.length} spawn points (needs ≥ 4)`);
+  if (spawns.length < 4 && !o.arena) bad(`has ${spawns.length} spawn points (needs ≥ 4)`);
   for (const [sx, sy] of spawns) {
     for (const s of DOOR_SIDES)
       for (const [dx, dy] of doorTiles(s)) {
@@ -119,7 +120,14 @@ export function validateTemplate(t: RoomTemplate): TemplateIssue[] {
       }
     if (!seen.has(`${sx},${sy}`)) bad(`spawn ${sx},${sy} is unreachable`);
   }
-  if (chests.length < 1) bad('has no chest spot C');
+  if (chests.length < 1 && !o.arena) bad('has no chest spot C');
+  // boss arenas: the boss spot and the stairs must be reachable
+  if (o.arena)
+    for (const ch of ['K', 'H']) {
+      let found = false;
+      for (let y = 0; y < ROOM_H; y++) for (let x = 0; x < ROOM_W; x++) if (at(t.rows, x, y) === ch) found = seen.has(`${x},${y}`) || found;
+      if (!found) bad(`arena has no reachable '${ch}'`);
+    }
   for (const [cx, cy] of chests) if (!seen.has(`${cx},${cy}`)) bad(`chest spot ${cx},${cy} is unreachable`);
   return out;
 }

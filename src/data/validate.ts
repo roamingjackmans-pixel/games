@@ -1,8 +1,10 @@
 // Data validation (CONTENT_ENEMIES §13, CONTENT_SPELLS_CLASSES §4, D38): run at startup in dev and by tests.
 import { ENEMIES } from './enemies';
+import { BOSSES } from './bosses';
+import { BOSS_ARENAS } from './rooms/bosses';
 import { ZONES } from './zones';
 import { checkEscapable } from '../game/combat/patterns';
-import { CONTROL_IDS, STATUS_IDS, type AttackDef, type EffectDef, type EnemyDef, type PatternDef } from '../game/types';
+import { CONTROL_IDS, STATUS_IDS, type AttackDef, type BossDef, type EffectDef, type EnemyDef, type PatternDef } from '../game/types';
 import { hasKind } from '../game/procgen/mix';
 
 export interface ValidationIssue {
@@ -69,6 +71,28 @@ export function validateEnemy(d: EnemyDef, issues: ValidationIssue[]): void {
   if (!d.flavor) issues.push({ where, msg: 'no flavor line' });
 }
 
+/** CONTENT_ENEMIES §13 item 5: every boss has Red, Piercing and ≥ 2 [AREA] attacks and a phase-2 table. */
+export function validateBoss(d: BossDef, issues: ValidationIssue[]): void {
+  const where = `boss ${d.id}`;
+  if (d.phases.length < 2) issues.push({ where, msg: 'needs a phase-2 table' });
+  let prev = 100;
+  d.phases.forEach((p, i) => {
+    const last = i === d.phases.length - 1;
+    if (last ? p.untilHpPct !== 0 : !(p.untilHpPct > 0 && p.untilHpPct < prev)) issues.push({ where, msg: `phase ${i + 1} threshold ${p.untilHpPct} is out of order` });
+    prev = p.untilHpPct;
+    if (!p.attacks.some((a) => a.kind === 'red')) issues.push({ where, msg: `phase ${i + 1} has no Red attack` });
+    if (!p.attacks.some((a) => a.kind === 'pierce')) issues.push({ where, msg: `phase ${i + 1} has no Piercing attack` });
+    if (i > 0 && p.attacks.filter((a) => !d.phases[i - 1]!.attacks.some((b) => b.id === a.id)).length < 2) issues.push({ where, msg: `phase ${i + 1} adds fewer than 2 new attacks` });
+  });
+  const unique = new Map<string, AttackDef>();
+  for (const p of d.phases) for (const a of p.attacks) unique.set(`${a.id}|${JSON.stringify(a.pattern ?? null)}`, a);
+  const areas = new Set([...unique.values()].filter((a) => a.area).map((a) => a.id));
+  if (areas.size < 2) issues.push({ where, msg: `only ${areas.size} [AREA] attacks (needs ≥ 2)` });
+  for (const a of unique.values()) validateAttack(`${where}/${a.id}`, a, issues);
+  if (!BOSS_ARENAS[d.arenaId]) issues.push({ where, msg: `unknown arena ${d.arenaId}` });
+  if (!d.draw || !d.flavor || !d.introTitle) issues.push({ where, msg: 'needs a draw id, flavor line and intro title' });
+}
+
 export interface ValidateOpts {
   /** require the full 8-enemy rosters (false while content is still being added) */
   requireAllZones?: boolean;
@@ -93,6 +117,15 @@ export function validateData(o: ValidateOpts = {}): ValidationIssue[] {
     if (reds < 2) issues.push({ where: `zone ${z.id}`, msg: `only ${reds} Red users (needs ≥ 2)` });
     if (pierces < 2) issues.push({ where: `zone ${z.id}`, msg: `only ${pierces} Piercing users (needs ≥ 2)` });
     for (const s of z.statusImmune) if (![...STATUS_IDS, ...CONTROL_IDS].includes(s as never)) issues.push({ where: `zone ${z.id}`, msg: `unknown immunity ${s}` });
+  }
+  for (const z of ZONES) {
+    const b = BOSSES[z.boss];
+    if (!b) {
+      if (o.requireAllZones) issues.push({ where: `zone ${z.id}`, msg: `boss ${z.boss} is not registered` });
+      continue;
+    }
+    if (b.zone !== z.id) issues.push({ where: `zone ${z.id}`, msg: `${b.id} says zone ${b.zone}` });
+    validateBoss(b, issues);
   }
   return issues;
 }

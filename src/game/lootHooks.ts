@@ -7,6 +7,7 @@ export interface LootHooks {
   chest(s: GameSession, p: Entity, chestId: string, kind: 'small' | 'treasure' | 'mimic' | 'boss', x: number, y: number): void;
   reliquary(s: GameSession, p: Entity, x: number, y: number): void;
   instructor(s: GameSession, x: number, y: number): void;
+  boss(s: GameSession, x: number, y: number, bossId: string): void;
 }
 
 export const lootHooks: LootHooks = {
@@ -20,5 +21,6 @@ export const lootHooks: LootHooks = {
   },
   reliquary: () => undefined,
   instructor: () => undefined,
+  boss: () => undefined,
 };
 

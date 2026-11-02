@@ -4,7 +4,7 @@ import '../../engine/draw/enemies';
 import '../../engine/draw/props';
 import { app } from '../../app';
 import { mixer } from '../../engine/audio/mixer';
-import { music } from '../../engine/audio/music';
+import { music, type MusicSeed } from '../../engine/audio/music';
 import { playSfx } from '../../engine/audio/sfx';
 import { getStore } from '../../engine/settings';
 import { drawText } from '../../engine/text';
@@ -20,7 +20,7 @@ import { WorldScene } from './worldScene';
 import { GameSession } from '../session';
 import { writeSave } from '../save/storage';
 import type { DebugApi } from '../debug/menu';
-import type { SaveFile } from '../types';
+import type { BossDef, SaveFile } from '../types';
 import type { Entity } from '../world';
 import { neighbourId } from '../procgen/zone';
 import { openInventory } from '../../ui/menus/inventory';
@@ -41,6 +41,8 @@ export class RunScene extends WorldScene {
   session: GameSession;
   private fade = 0;
   private title: { zone: number; names: string[]; until: number } | null = null;
+  private bossCard: { def: BossDef; until: number } | null = null;
+  private bossSeeds = new Map<string, MusicSeed>();
   private signText: string | null = null;
   private overlay: HTMLElement | null = null;
   private overlayKind: '' | 'death' | 'bonfire' | 'map' | 'inventory' | 'pause' | 'settings' = '';
@@ -71,6 +73,12 @@ export class RunScene extends WorldScene {
         this.signText = t;
       },
       tutorialGoal: () => undefined,
+      bossIntro: (def) => {
+        this.bossCard = { def, until: performance.now() / 1000 + 2.6 };
+        music.play('boss', this.bossSeed(def), 1);
+      },
+      bossPhase: (def, phase) => music.play('boss', this.bossSeed(def), phase + 1),
+      bossDefeated: () => music.play('off', null),
     });
     this.w = this.session.w;
   }
@@ -102,6 +110,17 @@ export class RunScene extends WorldScene {
     } catch {
       // storage full: keep playing; the next save may succeed
     }
+  }
+
+  /** One stable seed object per boss (the music player compares seeds by identity). */
+  private bossSeed(def: BossDef): MusicSeed {
+    let s = this.bossSeeds.get(def.id);
+    if (!s) {
+      const z = zoneDef(this.session.layout.zone).music;
+      s = { root: def.music.root, tempo: def.music.tempo, bright: def.music.bright, scale: z.scale, wave: z.wave };
+      this.bossSeeds.set(def.id, s);
+    }
+    return s;
   }
 
   private updateMusic(): void {
@@ -422,6 +441,22 @@ export class RunScene extends WorldScene {
       drawText(ctx, z.name.toUpperCase(), 640, 320, { size: 52, align: 'center', weight: 'bold', alpha: Math.max(0, k), color: z.palette.accent });
       drawText(ctx, this.title.names.join(' · '), 640, 356, { size: 16, align: 'center', alpha: Math.max(0, k), color: '#efe6d2' });
       drawText(ctx, z.tagline, 640, 384, { size: 14, align: 'center', alpha: Math.max(0, k) * 0.8, color: '#a59c8a' });
+    }
+    // boss name card (inputs are held for the first 1.5 s by the session)
+    if (this.bossCard && now < this.bossCard.until) {
+      const { def, until } = this.bossCard;
+      const k = Math.max(0, Math.min(1, (until - now) / 0.6, (now - (until - 2.6)) / 0.3));
+      ctx.save();
+      ctx.globalAlpha = k;
+      const g = ctx.createLinearGradient(0, 230, 0, 420);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(0.5, 'rgba(0,0,0,0.7)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 230, 1280, 190);
+      ctx.restore();
+      drawText(ctx, def.introTitle, 640, 330, { size: 60, align: 'center', weight: 'bold', alpha: k, color: def.palette?.[1] ?? '#e6b84a' });
+      drawText(ctx, def.introSub, 640, 366, { size: 17, align: 'center', alpha: k * 0.9, color: '#efe6d2' });
     }
     // room transition fade (0.3 s)
     if (this.fade > 0) {

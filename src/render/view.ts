@@ -37,6 +37,8 @@ export class WorldView {
     private settings: () => Settings,
   ) {}
 
+  banner: { text: string; sub: string; until: number } | null = null;
+
   /** Consume the world's events: sounds, particles, numbers, shake, messages. */
   consume(w: World, events: GameEvent[]): void {
     const st = this.settings();
@@ -86,6 +88,9 @@ export class WorldView {
           break;
         case 'shardGain':
           p.burst(ev.x, ev.y, 6, 120, 0.5, 2, '#9ad0ff', 'glow');
+          break;
+        case 'levelBanner':
+          this.banner = { text: ev.text, sub: ev.sub ?? '', until: now + 4 };
           break;
         default:
           break;
@@ -157,6 +162,11 @@ export class WorldView {
         p.spawn(ev.x, ev.y, 0, 0, 0.8, 10, '#e6b84a', 'ring', { grow: 160 });
         p.burst(ev.x, ev.y, 20, 140, 0.9, 3, '#ffd27a', 'glow', -Math.PI / 2, 1.2, { grav: -40 });
         break;
+      case 'burst':
+        p.spawn(ev.x, ev.y, 0, 0, 0.9, 14, c, 'ring', { grow: (ev.r ?? 120) * 2.5 });
+        p.burst(ev.x, ev.y, ev.n ?? 30, 320, 1.0, 5, c, 'glow');
+        p.burst(ev.x, ev.y, 14, 160, 1.2, 12, '#3a3030', 'smoke');
+        break;
       case 'explosion':
         p.burst(ev.x, ev.y, 24, 300, 0.6, 5, c, 'glow');
         p.burst(ev.x, ev.y, 12, 120, 0.9, 10, '#3a3030', 'smoke');
@@ -194,6 +204,11 @@ export class WorldView {
     this.underlay?.(ctx, w, now);
     // hazards
     for (const e of w.entities.values()) if (e.type === 'hazard' && !e.removed) drawHazardEntity(ctx, e, now, HAZARDS[e.hz!.hazard].color);
+    // a dimmed arena (boss phases): the floor darkens, telegraphs and bodies stay readable on top
+    if (w.roomMods.dark > 0) {
+      ctx.fillStyle = `rgba(4,2,8,${Math.min(0.8, w.roomMods.dark)})`;
+      ctx.fillRect(0, 0, 1280, 720);
+    }
     // telegraphs
     for (const e of w.entities.values()) if (e.type === 'telegraph' && !e.removed) drawTelegraph(ctx, w, e, st.video.highContrastTelegraphs, now);
     // walls (Guardian Wall)
@@ -260,6 +275,18 @@ export class WorldView {
     if (this.darkness > 0) {
       ctx.fillStyle = `rgba(0,0,0,${this.darkness})`;
       ctx.fillRect(0, 0, 1280, 720);
+    }
+    // banner (boss defeated)
+    if (this.banner && this.banner.until > rt) {
+      const left = this.banner.until - rt;
+      const a = Math.min(1, left / 0.8, (4 - left) / 0.4);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(0, 262, 1280, 120);
+      ctx.restore();
+      drawText(ctx, this.banner.text, 640, 326, { size: 54, align: 'center', weight: 'bold', color: '#e6b84a', alpha: Math.max(0, a) });
+      if (this.banner.sub) drawText(ctx, this.banner.sub, 640, 360, { size: 18, align: 'center', color: '#efe6d2', alpha: Math.max(0, a) });
     }
     // messages
     let my = 140;

@@ -19,7 +19,8 @@ export function enemyAttackSpec(e: Entity, atk: AttackDef, mult = 1): DamageSpec
   spec.control = atk.control ?? null;
   spec.knockback = atk.knockback ?? 0;
   const isProj = atk.pattern?.kind === 'projectile';
-  spec.parryable = atk.kind === 'normal' ? (atk.parryable ?? !en.def.swarm) : false;
+  // bosses can be parried only on attacks marked parryable (GAME_DESIGN §5.4)
+  spec.parryable = atk.kind === 'normal' ? (atk.parryable ?? (!en.def.swarm && !en.isBoss)) : false;
   if (isProj && atk.kind === 'normal') spec.parryable = atk.parryable ?? true;
   spec.grab = atk.grab ?? null;
   spec.pull = atk.pull ?? null;

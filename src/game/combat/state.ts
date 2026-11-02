@@ -42,7 +42,7 @@ export function speedMult(e: Entity, w: World): number {
   if (e.pl) m *= e.pl.timeSlow;
   m *= 1 + buffSum(e, 'moveSpeedPct', now);
   m *= 1 + buffSum(e, 'speedMult', now);
-  if (w.roomMods.floodUntil > now && !(e.flying || (e.pl && w.room.isGrateAt(e.x, e.y)))) m *= 1 - w.roomMods.floodSlow;
+  if (w.roomMods.floodUntil > now && !e.en?.isBoss && !(e.flying || (e.pl && w.room.isGrateAt(e.x, e.y)))) m *= 1 - w.roomMods.floodSlow;
   return Math.max(0.05, m);
 }
 

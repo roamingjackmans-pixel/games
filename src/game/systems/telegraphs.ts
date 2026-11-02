@@ -31,6 +31,7 @@ function applyHit(w: World, t: Entity, target: Entity): void {
   if (target.pl) hitPlayer(w, tg.ownerId, target, spec, tg.area && tg.kind === 'pierce' ? fromX : ox, tg.area && tg.kind === 'pierce' ? fromY : oy);
   else if (target.en) {
     if (tg.team === 1) {
+      if (target.en.isBoss) return;
       // enemy friendly fire (Bloated Carrier) uses the raw spec against other enemies
       const dmg = Object.values(spec.dmg).reduce((a, b) => a + (b ?? 0), 0);
       target.hp!.hp -= dmg;

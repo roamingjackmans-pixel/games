@@ -22,7 +22,11 @@ import { rollShopPiece } from './bonfire/shop';
 import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, rawDamage } from './combat/damage';
 import { reviveRequirement } from './combat/formulas';
-import type { Character, EliteAffix, SaveFile } from './types';
+import { BOSSES } from '../data/bosses';
+import { flaskMaxFor } from './combat/formulas';
+import { applyArenaChanges } from './boss/arena';
+import { spawnHazard } from './systems/hazards';
+import type { BossDef, Character, EliteAffix, SaveFile } from './types';
 
 export interface SessionListener {
   roomEntered?(node: RoomNode, zoneChanged: boolean): void;
@@ -34,7 +38,15 @@ export interface SessionListener {
   chestOpened?(p: Entity, chestId: string): void;
   tutorialGoal?(goal: string): void;
   sign?(text: string | null): void;
+  bossIntro?(def: BossDef, boss: Entity): void;
+  bossPhase?(def: BossDef, phase: number): void;
+  bossDefeated?(def: BossDef): void;
 }
+
+/** The boss name card holds inputs for this long (GAME_DESIGN §7). */
+export const BOSS_INTRO_S = 1.5;
+/** Spell reliquary after a boss (GAME_DESIGN §7). */
+const BOSS_RELIQUARY_CHANCE = 0.25;
 
 export { lootHooks, type LootHooks } from './lootHooks';
 
@@ -59,7 +71,7 @@ export class GameSession {
   waveIdx = 0;
   waveSize = 0;
   waveIds: number[] = [];
-  roomPhase: 'peace' | 'armed' | 'fighting' | 'cleared' = 'peace';
+  roomPhase: 'peace' | 'armed' | 'fighting' | 'boss' | 'cleared' = 'peace';
   lockAt = 0;
   entry: [number, number] = [640, 368];
   players: SessionPlayer[] = [];
@@ -91,6 +103,7 @@ export class GameSession {
         this.save.stats.kills++;
         if (e.en?.elite) this.save.stats.elitesKilled++;
         if (e.en?.def.traits?.mimic && e.en.mimicChestId) this.mimicKilled(e);
+        if (e.en?.isBoss) this.bossKilled(e);
         if (e.en?.def.id === INSTRUCTOR.id) {
           this.save.world.instructorKilled = true;
           lootHooks.instructor(this, e.x, e.y);
@@ -103,6 +116,7 @@ export class GameSession {
     });
     this.w.hooks.onTick = (_w, dt) => this.tick(dt);
     this.w.hooks.onInteract = () => undefined; // interactions are polled in tick()
+    this.w.hooks.onBossPhase = (_w, e, phase) => this.onBossPhase(e, phase);
     this.w.hooks.onPlayerParried = () => this.goal('parry');
     this.w.hooks.onPlayerBlocked = () => this.goal('block');
     this.w.hooks.onMimicWake = (_w, e) => {
@@ -184,8 +198,9 @@ export class GameSession {
     w.zone = this.layout.zone;
     w.cycle = this.save.character.cycle;
     w.specialBudget = w.zone <= 3 ? 2 : 3;
-    const built = buildRoom(this.layout, node);
+    const built = buildRoom(this.layout, node, node.kind === 'boss' ? this.bossDef?.arenaId : undefined);
     w.room = built.room;
+    w.spots = { graves: built.markers.graves };
     this.node = node;
     this.markers = built.markers;
     ws.roomId = roomId;
@@ -211,11 +226,13 @@ export class GameSession {
       this.lockAt = node.kind === 'ambush' ? w.time : 0;
     }
     this.spawnRoomContent(node, built.markers, cleared);
-    // boss anteroom: the boss door stays locked until the boss framework (M8) arms it
     this.applyDoorLocks();
     if (node.kind === 'tutorial') this.setupTutorial(built.markers);
-    else this.tutorial = null;
-    w.inputLock = w.time + 0.2;
+    else if (this.tutorial) {
+      this.tutorial = null;
+      this.listener.sign?.(null);
+    }
+    w.inputLock = Math.max(w.inputLock, w.time + 0.2);
     this.listener.roomEntered?.(node, zoneChanged);
     if (zoneChanged || this.titlePending) {
       this.titlePending = node.kind === 'tutorial';
@@ -241,15 +258,117 @@ export class GameSession {
       // the start room's south door is the tutorial hall: shut behind you
       if (node.kind === 'start' && s === 's' && this.layout.tutorialId) d.locked = true;
       if (!n && !this.layout.links[`${node.id}|${s}`]) d.locked = true;
+      // the boss room shuts behind the party until the boss is dead
+      if (this.roomPhase === 'boss') d.locked = true;
       d.open = !d.locked && this.roomPhase !== 'fighting';
     }
     void ws;
     room.version++;
   }
 
-  /** Overridden by the boss module (M8): whether the boss door may be opened. */
+  /** The anteroom's boss door: always open; the boss room itself locks on entry (GAME_DESIGN §7). */
   bossDoorOpen(): boolean {
-    return false;
+    return true;
+  }
+
+  /** This zone's boss (CONTENT_ENEMIES §11). */
+  get bossDef(): BossDef | null {
+    return BOSSES[zoneDef(this.layout.zone).boss] ?? null;
+  }
+
+  // ------------------------------------------------------------------ the boss room (GAME_DESIGN §7)
+
+  private bossReliquaryRolled(): boolean {
+    const c = this.save.character;
+    return stream(this.layout.seed, `bossReliquary:${this.layout.zone}:${c.cycle}`).chance(BOSS_RELIQUARY_CHANCE);
+  }
+
+  private setupBossRoom(m: RoomMarkers): void {
+    const def = this.bossDef;
+    const w = this.w;
+    const ws = this.save.world;
+    if (!def) return;
+    for (const [x, y] of m.pools) spawnHazard(w, 'curePool', [{ k: 'circle', x, y, r: 60 }], 1e6, 1, 0);
+    if (ws.bossesBeatenThisCycle.includes(this.layout.zone)) {
+      this.spawnBossLeftovers(m);
+      return;
+    }
+    const zd = zoneDef(this.layout.zone);
+    const [bx, by] = m.boss ?? [640, 300];
+    const e = spawnEnemy(w, def, bx, by, { tellS: BOSS_INTRO_S, zone: this.layout.zone, zoneResist: zd.resist, zoneImmune: zd.statusImmune });
+    w.bossId = e.id;
+    w.refreshLists();
+    this.roomPhase = 'boss';
+    w.inputLock = w.time + BOSS_INTRO_S;
+    w.sfx('doorLock');
+    w.sfx('bossRoar', bx);
+    this.listener.bossIntro?.(def, e);
+  }
+
+  /** The stairs (and the reliquary if one rolled) in a beaten boss's arena. */
+  private spawnBossLeftovers(m: RoomMarkers): void {
+    const w = this.w;
+    const ws = this.save.world;
+    const [sx, sy] = m.stairs ?? [640, 380];
+    if (this.layout.zone < 8) w.spawn('interact', sx, sy, { radius: 26, drawId: 'stairs', it: { kind: 'stairs', key: `z${this.layout.zone}-stairs`, label: 'Descend', used: false, holdS: 0 } });
+    const key = `${this.node.id}-reliquary`;
+    if (this.bossReliquaryRolled() && !ws.reliquariesOpened.includes(key)) {
+      const [rx, ry] = w.room.nearestFloor(sx + 140, sy, 20);
+      w.spawn('interact', rx, ry, { radius: 20, drawId: 'reliquary', it: { kind: 'reliquary', key, label: 'Open the reliquary', used: false, holdS: HOLD_S } });
+    }
+  }
+
+  private onBossPhase(e: Entity, phase: number): void {
+    const def = e.en!.def as unknown as BossDef;
+    const ph = def.phases[phase];
+    if (ph?.arena) applyArenaChanges(this.w, ph.arena, e);
+    this.listener.bossPhase?.(def, phase);
+  }
+
+  private bossKilled(e: Entity): void {
+    const def = e.en!.def as unknown as BossDef;
+    const w = this.w;
+    const ws = this.save.world;
+    if (!ws.bossesBeatenThisCycle.includes(this.layout.zone)) ws.bossesBeatenThisCycle.push(this.layout.zone);
+    for (const sp of this.players) {
+      const c = sp.char;
+      c.bossesBeaten++;
+      c.flaskMax = Math.max(c.flaskMax, flaskMaxFor(c.bossesBeaten, false));
+      c.highestZoneBeaten = Math.max(c.highestZoneBeaten, this.layout.zone);
+    }
+    this.save.stats.bossKills++;
+    // the court leaves with its king
+    for (const o of w.livingEnemies()) {
+      if (o === e) continue;
+      o.en!.quietDeath = true;
+      o.hp!.dead = true;
+      w.fx('dust', o.x, o.y, { n: 10 });
+      w.remove(o);
+    }
+    // its telegraphs and its arena hazards (burning moss, puddles) go out with it
+    for (const h of w.entities.values()) {
+      if (h.type === 'telegraph' && h.tg?.team === 1) w.remove(h);
+      if (h.type === 'hazard' && h.hz?.team === 1 && h.hz.hazard !== 'curePool') w.remove(h);
+    }
+    w.roomMods.dark = 0;
+    w.roomMods.floodUntil = 0;
+    w.bossId = 0;
+    this.roomPhase = 'cleared';
+    if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
+    lootHooks.boss(this, e.x, e.y, def.id);
+    w.emit({ t: 'levelBanner', text: 'BOSS DEFEATED', sub: def.name });
+    w.emit({ t: 'shake', amount: 14 });
+    w.sfx('bossRoar', e.x, 0.8, 0.6);
+    const m = this.markers;
+    const node = this.node;
+    w.schedule(2, () => {
+      if (this.node !== node) return;
+      this.spawnBossLeftovers(m);
+      this.applyDoorLocks();
+      w.sfx('doorOpen');
+    });
+    this.listener.bossDefeated?.(def);
+    this.listener.autosave?.('boss');
   }
 
   private spawnRoomContent(node: RoomNode, m: RoomMarkers, cleared: boolean): void {
@@ -296,6 +415,7 @@ export class GameSession {
       w.spawn('interact', m.reliquary[0], m.reliquary[1], { radius: 20, drawId: 'reliquary', it: { kind: 'reliquary', key: node.id, label: 'Open the reliquary', used: false, holdS: HOLD_S } });
     }
     if (node.kind === 'merchant' && m.merchant) this.spawnMerchant(m.merchant[0], m.merchant[1]);
+    if (node.kind === 'boss') this.setupBossRoom(m);
     // the Shardpile
     const sp = ws.shardpile;
     if (sp && sp.zone === this.layout.zone && sp.roomId === node.id && sp.amount > 0) {

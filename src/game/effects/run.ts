@@ -392,8 +392,10 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       const alive = w.enemies.filter((x) => !x.hp?.dead && x.en?.summonerId === src.id && x.en.def.id === e.enemyId).length;
       const max = e.max ?? 99;
       const n = Math.min(e.count, Math.max(0, max - alive));
+      const graves = e.at === 'graves' ? (w.spots.graves ?? []) : [];
       for (let i = 0; i < n; i++) {
-        const [x, y] = placeNear(w, src.x, src.y, 140, def.radius);
+        const g = graves.length ? graves[w.combat.int(0, graves.length - 1)]! : null;
+        const [x, y] = g ? placeNear(w, g[0], g[1], 56, def.radius) : placeNear(w, src.x, src.y, 140, def.radius);
         const s = effectHooks.spawnSummon?.(w, src, def, x, y, e.lifetimeS);
         if (s?.en) s.en.summonerId = src.id;
       }

@@ -8,3 +8,4 @@ import './forge';
 import './reliquary';
 import './citadel';
 import './abyss';
+import '../bosses';

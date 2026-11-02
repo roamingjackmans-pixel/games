@@ -19,6 +19,8 @@ export type ItemKind = 'weapon' | 'shield' | 'staff' | 'talisman' | 'armor' | 'r
 export type AttackKind = 'normal' | 'red' | 'pierce' | 'utility';
 export type Team = 0 | 1 | 2; // 0 players, 1 enemies, 2 neutral
 export type HazardId =
+  | 'curePool'
+  | 'emberMoss'
   | 'poisonCloud'
   | 'firePuddle'
   | 'acid'

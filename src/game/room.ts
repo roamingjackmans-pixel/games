@@ -297,6 +297,7 @@ export function charToTile(ch: string): number {
     case '~':
       return T.Hazard;
     case '_':
+    case 'g': // an open grave (boss arenas): a pit that is also a summon spot
       return T.Pit;
     case 'G':
       return T.Grate;

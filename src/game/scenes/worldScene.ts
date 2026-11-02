@@ -5,6 +5,7 @@ import { mixer } from '../../engine/audio/mixer';
 import type { Scene } from '../../engine/scene';
 import { WorldView } from '../../render/view';
 import { drawHud } from '../../ui/hud';
+import { drawBossBar, newBossBarState } from '../../ui/bossBar';
 import { registerDebugApi, type DebugApi } from '../debug/menu';
 import { refreshDebugPanel } from '../../ui/menus/debug';
 import { stepWorld } from '../sim';
@@ -25,6 +26,7 @@ export abstract class WorldScene implements Scene {
   view: WorldView;
   local: Entity | null = null;
   ghostHp = 1;
+  bossBar = newBossBarState();
   /** menus open: gameplay input off, solo sim paused */
   menuOpen = false;
 
@@ -75,6 +77,7 @@ export abstract class WorldScene implements Scene {
       this.ghostHp = Math.max(hpFrac, this.ghostHp - realDt * 0.4);
       drawHud(ctx, w, this.local, a.settings, { ghostHp: this.ghostHp });
     }
+    drawBossBar(ctx, w, this.bossBar, realDt);
     this.renderTop(ctx, alpha, realDt);
     mixer.setDuck(1);
   }

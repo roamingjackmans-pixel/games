@@ -578,6 +578,8 @@ export class World {
   lootCounter: Record<string, number> = {};
   inputLock = 0;
   bossId = 0;
+  /** named spots of the current room (boss arenas: graves the Caretaker summons from) */
+  spots: Record<string, [number, number][]> = {};
   /** effects waiting for their delay (sequence steps, dash landings, channels) */
   scheduled: { at: number; run: () => void }[] = [];
   /** fallen non-elite enemies this room (Raise Dead) */

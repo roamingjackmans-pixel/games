@@ -132,3 +132,33 @@ export function instructorDrops(c: DropContext, x: number, y: number): void {
     dropItem(w, pl.playerId, item, x, y);
   }
 }
+
+/**
+ * A boss (GAME_DESIGN §7, §8.2): per player a Rare+ item, a second Rare+ roll at 50%, one gem, 10% a Tear of
+ * Undoing, and some Stardust. The arena's spell reliquary is rolled by the session (it is a world object).
+ */
+export function bossDrops(c: DropContext, bossId: string, x: number, y: number): void {
+  const w = c.w;
+  const ilvl = itemLevelFor(c.zone, c.cycle);
+  for (const p of w.players) {
+    const pl = p.pl!;
+    if (pl.deadUntilRest) continue;
+    const pid = pl.playerId;
+    const rng = stream(c.seed, `loot:${pid}:boss:${bossId}:${c.cycle}`);
+    const rolls = rng.chance(DROP_CHANCE.bossSecond) ? 2 : 1;
+    for (let i = 0; i < rolls; i++) {
+      const item = generateItem(rng, { source: 'boss', ilvl, zone: c.zone, minRarity: 'rare' });
+      const [ix, iy] = scatter(rng, x, y, 60);
+      dropItem(w, pid, item, ix, iy);
+    }
+    const tier = Math.min(5, Math.ceil(c.zone / 3) + c.cycle) as 1 | 2 | 3 | 4 | 5;
+    const [gx, gy] = scatter(rng, x, y, 60);
+    spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, tier), amount: 1, rarity: 'rare' });
+    if (rng.chance(TEAR_CHANCE.boss)) {
+      const [tx, ty] = scatter(rng, x, y, 60);
+      spawnPickup(w, tx, ty, { kind: 'tear', forPlayer: pid, amount: 1, rarity: 'legendary' });
+    }
+    const [sx, sy] = scatter(rng, x, y, 60);
+    spawnPickup(w, sx, sy, { kind: 'stardust', forPlayer: pid, amount: Math.round(150 * c.zone * (1 + pl.derived.stardustFind)), rarity: 'uncommon' });
+  }
+}
