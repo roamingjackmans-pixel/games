@@ -1,6 +1,11 @@
 // Boss arenas (CONTENT_ENEMIES §11): 40 × 22 like every room. Extra marks: K boss spot, H stairs (after the
 // kill), g open grave (a pit the Caretaker summons from), w pool spot (Mother Spore's glowing pools).
 import type { RoomTemplate } from '../../game/procgen/templates';
+import { VEXTHORN_ARENA } from '../bosses/forest';
+import { FOREMAN_IGNATIUS_ARENA } from '../bosses/forge';
+import { SAINT_AURELIA_ARENA } from '../bosses/reliquary';
+import { ARCHMAGISTER_TOCK_ARENA } from '../bosses/citadel';
+import { THE_LANDLORD_ARENA } from '../bosses/abyss';
 
 export const BOSS_ARENAS: Record<string, RoomTemplate> = {
   crypt_arena: {
@@ -85,3 +90,6 @@ export const BOSS_ARENAS: Record<string, RoomTemplate> = {
     ],
   },
 };
+
+// zones 4–8 keep their arenas next to their boss sheets
+for (const a of [VEXTHORN_ARENA, FOREMAN_IGNATIUS_ARENA, SAINT_AURELIA_ARENA, ARCHMAGISTER_TOCK_ARENA, THE_LANDLORD_ARENA]) if (a) BOSS_ARENAS[a.id] = a;

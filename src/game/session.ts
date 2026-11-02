@@ -25,6 +25,7 @@ import { reviveRequirement } from './combat/formulas';
 import { BOSSES } from '../data/bosses';
 import { flaskMaxFor } from './combat/formulas';
 import { applyArenaChanges } from './boss/arena';
+import { startPhaseSummons, tickPhaseSummons } from './boss/summons';
 import { spawnHazard } from './systems/hazards';
 import type { BossDef, Character, EliteAffix, SaveFile } from './types';
 
@@ -322,6 +323,7 @@ export class GameSession {
     const def = e.en!.def as unknown as BossDef;
     const ph = def.phases[phase];
     if (ph?.arena) applyArenaChanges(this.w, ph.arena, e);
+    startPhaseSummons(this.w, e);
     this.listener.bossPhase?.(def, phase);
   }
 
@@ -455,6 +457,10 @@ export class GameSession {
       this.playtimeAcc -= Math.floor(this.playtimeAcc);
     }
     if (this.dead) return;
+    if (this.roomPhase === 'boss') {
+      const b = w.get(w.bossId);
+      if (b && !b.hp?.dead) tickPhaseSummons(w, b);
+    }
     // arming: lock the doors once the party is inside, then spawn waves
     if (this.roomPhase === 'armed' && this.plan) {
       const lead = w.livingPlayers()[0];

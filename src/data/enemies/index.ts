@@ -9,6 +9,11 @@ import { FORGE } from './forge';
 import { RELIQUARY } from './reliquary';
 import { CITADEL } from './citadel';
 import { ABYSS } from './abyss';
+import { VEXTHORN_PARTS } from '../bosses/forest';
+import { FOREMAN_IGNATIUS_PARTS } from '../bosses/forge';
+import { SAINT_AURELIA_PARTS } from '../bosses/reliquary';
+import { ARCHMAGISTER_TOCK_PARTS } from '../bosses/citadel';
+import { THE_LANDLORD_PARTS } from '../bosses/abyss';
 
 export const ENEMIES: Record<string, EnemyDef> = {
   ...SPECIAL_ENEMIES,
@@ -20,6 +25,12 @@ export const ENEMIES: Record<string, EnemyDef> = {
   ...RELIQUARY,
   ...CITADEL,
   ...ABYSS,
+  // boss-only bodies and summons (fey lights, ice mirrors, a second body…)
+  ...VEXTHORN_PARTS,
+  ...FOREMAN_IGNATIUS_PARTS,
+  ...SAINT_AURELIA_PARTS,
+  ...ARCHMAGISTER_TOCK_PARTS,
+  ...THE_LANDLORD_PARTS,
 };
 
 export function enemyDef(id: string): EnemyDef {
