@@ -16,6 +16,9 @@ import { smallChest, treasureChest } from './procgen/chests';
 import { spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
 import { spawnPlayer, refreshDerived } from './player/player';
 import { installRules } from './rules';
+import { lootHooks } from './lootHooks';
+import './loot';
+import { rollShopPiece } from './bonfire/shop';
 import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, rawDamage } from './combat/damage';
 import { reviveRequirement } from './combat/formulas';
@@ -33,26 +36,7 @@ export interface SessionListener {
   sign?(text: string | null): void;
 }
 
-/** Loot hooks (filled by the loot module in M5; defaults keep M4 playable). */
-export interface LootHooks {
-  enemyDrops(s: GameSession, e: Entity, killerId: number): void;
-  chest(s: GameSession, p: Entity, chestId: string, kind: 'small' | 'treasure' | 'mimic' | 'boss', x: number, y: number): void;
-  reliquary(s: GameSession, p: Entity, x: number, y: number): void;
-  instructor(s: GameSession, x: number, y: number): void;
-}
-
-export const lootHooks: LootHooks = {
-  enemyDrops: () => undefined,
-  chest: (s, _p, _id, _k, x, y) => {
-    for (const pl of s.w.players) {
-      const c = pl.pl!.char;
-      c.consumables.throwing_knife = Math.min(10, (c.consumables.throwing_knife ?? 0) + 2);
-    }
-    s.w.fx('levelup', x, y);
-  },
-  reliquary: () => undefined,
-  instructor: () => undefined,
-};
+export { lootHooks, type LootHooks } from './lootHooks';
 
 export interface SessionPlayer {
   char: Character;
@@ -652,6 +636,7 @@ export class GameSession {
       this.w.fx('levelup', p.x, p.y);
     }
     ws.respawnBonfireId = bonfireId;
+    rollShopPiece(ws, bonfireId, this.layout.zone, this.save.character.cycle);
     // zone enemies respawn (bosses, opened chests and killed mimics stay done)
     ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss' || id === this.node.id);
     this.downs[pid] = 0;
@@ -768,6 +753,20 @@ export class GameSession {
     this.layout = this.layoutFor(z);
     this.enterRoom(this.layout.startId, 'bonfire', true);
     this.listener.autosave?.('zone');
+  }
+
+  /** Warp to a discovered bonfire (any zone of this playthrough). */
+  warp(bonfireId: string): boolean {
+    const m = /^z([0-9]+)-(start|boss)$/.exec(bonfireId);
+    if (!m || !this.save.world.bonfiresDiscovered.includes(bonfireId)) return false;
+    const z = Number(m[1]);
+    if (z !== this.layout.zone) {
+      this.save.world.zone = z;
+      this.layout = this.layoutFor(z);
+    }
+    const room = m[2] === 'start' ? this.layout.startId : this.layout.anteroomId;
+    this.enterRoom(room, 'bonfire', z !== this.w.zone);
+    return true;
   }
 
   // ------------------------------------------------------------------ mimics

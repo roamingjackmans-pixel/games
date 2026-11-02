@@ -9,12 +9,13 @@ import { registerDebugApi, type DebugApi } from '../debug/menu';
 import { refreshDebugPanel } from '../../ui/menus/debug';
 import { stepWorld } from '../sim';
 import { allBaseIds } from '../items/bases';
-import { makeItem } from '../items/make';
+import { generateItem } from '../items/generate';
+import { Rng } from '../../engine/rng';
 import { ENEMIES } from '../../data/enemies';
 import { spawnUnit } from '../enemies/spawn';
 import { refreshDerived } from '../player/player';
 import { levelFromStats } from '../player/character';
-import type { ConsumableId, EliteAffix, EnemyDef, Rarity, StatId } from '../types';
+import type { ConsumableId, EliteAffix, EnemyDef, Item, Rarity, StatId } from '../types';
 import type { Entity, World } from '../world';
 
 export abstract class WorldScene implements Scene {
@@ -225,8 +226,9 @@ export abstract class WorldScene implements Scene {
     };
   }
 
-  protected makeDebugItem(baseId: string, rarity: Rarity, ilvl: number) {
-    return makeItem(baseId, rarity, Math.max(1, Math.floor(ilvl)));
+  protected makeDebugItem(baseId: string, rarity: Rarity, ilvl: number): Item {
+    const lv = Math.max(1, Math.floor(ilvl));
+    return generateItem(new Rng(`debug|${baseId}|${rarity}|${lv}|${this.w.tick}`), { source: 'boss', ilvl: lv, zone: Math.min(8, lv), rarity, baseId });
   }
   protected learnAll(): string {
     return 'Not available in this scene.';

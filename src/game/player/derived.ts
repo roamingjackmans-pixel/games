@@ -303,7 +303,7 @@ export function computeDerived(c: Character): Derived {
     weaponItem: main,
     weaponIlvl,
     weaponMeetsReq,
-    skillsUnlocked: main && weaponMeetsReq ? skillsUnlocked(weaponIlvl, legendaryWeapon) : 0,
+    skillsUnlocked: main && weaponMeetsReq ? Math.min(3, skillsUnlocked(weaponIlvl, legendaryWeapon) + (main.bonusSkills ?? 0)) : 0,
     weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded) * (weaponMeetsReq ? 1 : 0.4),
     dmgPct,
     flat,

@@ -1,24 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { generateZone, neighbourId, type ZoneLayout } from '../../src/game/procgen/zone';
-import { planRoom, planShards, MAX_LIVE, MAX_PER_WAVE } from '../../src/game/procgen/waves';
+import { planRoom, MAX_LIVE, MAX_PER_WAVE } from '../../src/game/procgen/waves';
 import { rollMimic } from '../../src/game/procgen/chests';
 import { mixValid } from '../../src/game/procgen/mix';
 import { ENEMIES, rosterOf } from '../../src/data/enemies';
-import { ROLE_STATS, SHARD_SCALE, zoneShardFactor } from '../../src/data/roles';
-import { enemyShardMult, levelCostRange } from '../../src/game/combat/formulas';
+import { zoneShardNeed, zoneShardYield } from '../../src/game/procgen/tuning';
 import type { Side } from '../../src/game/room';
-
-const EXPECTED_LEVEL = [1, 12, 22, 32, 42, 52, 62, 72, 80];
-
-export function zoneShardYield(z: number, seeds = 200): number {
-  let tot = 0;
-  for (let s = 0; s < seeds; s++) {
-    const L = generateZone(`S${s}`, z, {});
-    for (const r of L.rooms)
-      tot += planShards(planRoom(L, r), (id) => ROLE_STATS[ENEMIES[id]!.role].shards * SHARD_SCALE * zoneShardFactor(z) * (ENEMIES[id]!.mult?.shards ?? 1) * enemyShardMult(z, 0));
-  }
-  return tot / seeds;
-}
 
 function reachableAll(L: ZoneLayout): boolean {
   const seen = new Set([L.startId]);
@@ -83,7 +70,7 @@ describe('procgen (PROCGEN §9)', () => {
     for (let z = 1; z <= 8; z++) {
       if (rosterOf(z).length < 8) continue;
       const avg = zoneShardYield(z, 100);
-      const need = levelCostRange(EXPECTED_LEVEL[z - 1]!, EXPECTED_LEVEL[z]!);
+      const need = zoneShardNeed(z);
       const ratio = avg / need;
       expect(ratio, `zone ${z}: yield ${avg.toFixed(0)} vs needed ${need} (ratio ${ratio.toFixed(2)})`).toBeGreaterThan(0.8);
       expect(ratio, `zone ${z}: yield ${avg.toFixed(0)} vs needed ${need} (ratio ${ratio.toFixed(2)})`).toBeLessThan(1.2);

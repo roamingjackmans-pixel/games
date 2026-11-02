@@ -538,6 +538,8 @@ export interface Item {
   affixes: { id: string; value: number }[];
   sockets: (Gem | null)[];
   legendaryPower?: string;
+  /** extra unlocked skills (The Instructor's drop has all 3) */
+  bonusSkills?: number;
 }
 
 export type ConsumableId =
@@ -599,7 +601,7 @@ export interface WorldState {
   bossesBeatenThisCycle: number[];
   garyGone: boolean;
   garyStock: Record<string, GaryStockEntry[]>;
-  shopStock: Record<string, { item: Item | null }>;
+  shopStock: Record<string, { item: Item | null; rolls?: number; sold?: boolean }>;
   shardpile?: { zone: number; roomId: string; x: number; y: number; amount: number };
   bossReliquary?: string[];
   instructorKilled?: boolean;

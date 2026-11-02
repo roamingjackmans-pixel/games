@@ -35,7 +35,7 @@ export const SHARD_SCALE = 5;
  * Per-zone Shard value factor (tuned, GAME_DESIGN §2.3): a full clear of a zone pays for its ten levels
  * within ±20%. Recomputed by tests/unit/procgen.test.ts whenever rosters or budgets change.
  */
-export const ZONE_SHARD_FACTOR: Record<number, number> = { 1: 0.46, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1 };
+export const ZONE_SHARD_FACTOR: Record<number, number> = { 1: 0.46, 2: 0.35, 3: 0.34, 4: 0.26, 5: 0.27, 6: 0.24, 7: 0.26, 8: 0.19 };
 
 export function zoneShardFactor(zone: number): number {
   return ZONE_SHARD_FACTOR[Math.max(1, Math.min(8, zone))] ?? 1;

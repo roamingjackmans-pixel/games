@@ -23,6 +23,13 @@ import type { DebugApi } from '../debug/menu';
 import type { SaveFile } from '../types';
 import type { Entity } from '../world';
 import { neighbourId } from '../procgen/zone';
+import { openInventory } from '../../ui/menus/inventory';
+import { openBonfire } from '../../ui/menus/bonfire';
+import { buyConsumable, buyGem, buyItem, cycleQuickSlot, levelUp, rerollGem, respec, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
+import { shopGem, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
+import { refreshDerived, toggleTwoHand } from '../player/player';
+import { stream } from '../../engine/rng';
+import { toast } from '../../ui/dom';
 
 export class RunScene extends WorldScene {
   readonly name = 'run';
@@ -31,7 +38,7 @@ export class RunScene extends WorldScene {
   private title: { zone: number; names: string[]; until: number } | null = null;
   private signText: string | null = null;
   private overlay: HTMLElement | null = null;
-  private overlayKind: '' | 'death' | 'bonfire' | 'map' = '';
+  private overlayKind: '' | 'death' | 'bonfire' | 'map' | 'inventory' = '';
   private revealMap = false;
   private saveDebounce = 0;
 
@@ -99,7 +106,14 @@ export class RunScene extends WorldScene {
     this.view.propStyle = zoneDef(this.session.layout.zone).props;
     if (!this.overlay) {
       if (a.input.consumeLocal('map')) this.showMap();
+      else if (a.input.consumeLocal('inventory')) this.showInventory();
+      else if (a.input.consumeLocal('cycleQuick') && this.local) {
+        const q = cycleQuickSlot(this.local.pl!.char);
+        toast(q ? `Quick-use: ${q.replace('_', ' ')}` : 'No consumables.', 1200);
+      }
     } else if (this.overlayKind === 'map' && (a.input.consumeLocal('map') || a.input.consumeLocal('pause'))) this.closeOverlay();
+    else if (this.overlayKind === 'inventory' && (a.input.consumeLocal('inventory') || a.input.consumeLocal('pause'))) this.closeOverlay();
+    else if (this.overlayKind === 'bonfire' && a.input.consumeLocal('pause')) this.closeOverlay();
     this.saveDebounce -= dt;
   }
 
@@ -145,22 +159,91 @@ export class RunScene extends WorldScene {
     this.menuOpen = true;
   }
 
-  /** Bonfire menu (M5 replaces this with the full menu). */
-  showBonfire(_p: Entity, id: string, first: boolean): void {
+  /** The bonfire menu: level up, respec, gem bench, shop, warp. */
+  showBonfire(p: Entity, id: string, first: boolean): void {
     this.closeOverlay();
-    const l = layer('dim');
-    l.setAttribute('data-testid', 'bonfire-menu');
-    const panel = h(
-      'div',
-      { class: 'panel col', style: 'width:420px' },
-      h('h2', null, 'Bonfire'),
-      h('div', { class: first ? 'good' : 'dim-text' }, first ? 'You rest. HP and Thermos restored.' : 'The embers are warm, but restore nothing. Enemies have returned.'),
-      h('div', { class: 'small dim-text' }, `Respawn point set: ${id}`),
-      btn('Leave', () => this.closeOverlay(), 'primary'),
-    );
-    l.appendChild(panel);
-    this.overlay = l;
-    this.overlayKind = 'bonfire';
+    const c = p.pl!.char;
+    const ws = this.save.world;
+    const s = this.session;
+    const zone = s.layout.zone;
+    const cyc = c.cycle;
+    const changed = (): void => refreshDerived(p);
+    const r = (o: { msg: string }): string => {
+      changed();
+      return o.msg;
+    };
+    const rng = stream(ws.seed, `reroll:${c.stardust}:${c.gems.length}:${s.w.tick}`);
+    const open = (): void => {
+      this.overlay?.remove();
+      this.overlay = openBonfire({
+        char: c,
+        bonfireId: id,
+        firstRest: first,
+        shopGem: shopGem(ws.seed, zone, cyc),
+        shopPiece: shopPiece(ws, id, zone, cyc),
+        discovered: ws.bonfiresDiscovered.map((b) => ({
+          id: b,
+          label: `${ZONES[Number(b.slice(1, b.indexOf('-'))) - 1]?.name ?? b} — ${b.endsWith('start') ? 'entrance' : 'before the boss'}`,
+          used: ws.bonfiresUsed.includes(b),
+        })),
+        ops: {
+          levelUp: (st) => {
+            const o = levelUp(c, st);
+            if (o.ok) {
+              this.w.fx('levelup', p.x, p.y);
+              this.w.sfx('levelUp', p.x);
+              this.persist();
+            }
+            return r(o);
+          },
+          respec: () => r(respec(c)),
+          socket: (it, si, gi) => r(socketGem(c, it, si, gi)),
+          unsocket: (it, si) => r(unsocketGem(c, it, si)),
+          upgradeGem: (gi) => r(upgradeGem(c, gi)),
+          rerollGem: (gi) => r(rerollGem(c, gi, rng)),
+          sellItem: (it) => r(sellItem(c, it)),
+          sellGem: (gi) => r(sellGem(c, gi)),
+          sellConsumable: (cid) => r(sellConsumable(c, cid)),
+          buyConsumable: (cid) => r(buyConsumable(c, cid)),
+          buyGem: () => r(buyGem(c, shopGem(ws.seed, zone, cyc), shopGemPrice())),
+          buyPiece: () => {
+            const piece = shopPiece(ws, id, zone, cyc);
+            if (!piece) return 'Sold out.';
+            const o = buyItem(c, piece, shopItemPrice(piece));
+            if (o.ok) ws.shopStock[id]!.sold = true;
+            return r(o);
+          },
+          warp: (b) => {
+            this.closeOverlay();
+            s.warp(b);
+            this.local = s.localPlayer;
+            return '';
+          },
+        },
+        openInventory: () => this.showInventory(() => open()),
+        close: () => this.closeOverlay(),
+      });
+      this.overlayKind = 'bonfire';
+      this.menuOpen = true;
+    };
+    open();
+  }
+
+  showInventory(onClose?: () => void): void {
+    const p = this.local;
+    if (!p) return;
+    this.overlay?.remove();
+    this.overlay = openInventory({
+      char: p.pl!.char,
+      derived: () => p.pl!.derived,
+      changed: () => refreshDerived(p),
+      toggleTwoHand: () => toggleTwoHand(this.w, p),
+      close: () => {
+        this.closeOverlay();
+        onClose?.();
+      },
+    });
+    this.overlayKind = 'inventory';
     this.menuOpen = true;
   }
 

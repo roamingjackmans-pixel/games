@@ -83,7 +83,7 @@ Expected character level at zone end (solo, first cycle): 12 · 22 · 32 · 42 �
 100% ± 20% of the Shards needed to go from the zone's expected entry level to its expected exit level
 using the §3.3 cost curve and CONTENT_ENEMIES §1 Shard values. A unit test computes the expected yield
 from the PROCGEN threat budgets and the role costs and fails outside the band. If it fails, retune the
-**Shard values** (not the curve) and record "(tuned)".
+**Shard values** (not the curve) and record "(tuned)". (tuned: a per-zone Shard factor, D51)
 
 ## 3. Stats
 
