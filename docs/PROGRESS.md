@@ -1,6 +1,6 @@
 # Dungeon Joe — Build progress
 
-> **Next session starts here:** M0–M15 done. Continue at M16 (README, OWNER_CHECKS.md, TODO, workflow, live URL, final message).
+> **Next session starts here:** M0–M15 done, M16 done except the live URL: it needs the owner to enable Pages (Settings → Pages → Source: GitHub Actions on the games repo) and a re-run of the latest workflow; then confirm https://josephjackman.com/games/dungeonjoe/ loads and tick the last M16 sub-item.
 > Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug (or ?arena, ?new&class=cleric&seed=X). For long scripted playtests use the no-HMR server (vite.stable.config.ts, port 5174) and window.__dj.loop.advance(s).
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
@@ -120,4 +120,7 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] Shard tuning test green, simulation harness + BALANCE_REPORT.md, 60 fps profile, leak check, Playwright regression — a257e18 2026-11-02 (tests/sim; 15 enemies + 4 players + 1,200 particles: 2.5 ms per frame average, 5.4 ms p95; tests/sim/leak.sim.ts; tests/e2e/flows.spec.ts)
 
 ## M16 — Deploy, docs, handoff
-- [ ] README final, OWNER_CHECKS.md, TODO.md empty/justified, workflow green, live URL confirmed
+- [ ] README final, OWNER_CHECKS.md, TODO.md empty/justified, workflow green, live URL confirmed — waiting on one owner step (below)
+  - [x] README final, docs/OWNER_CHECKS.md, docs/TODO.md justified — 2e3fc88 2026-11-02
+  - [x] workflow: install, type check, lint, tests and build green on every push — 2e3fc88 2026-11-02 (gh run list)
+  - [ ] deploy step and live URL: the workflow stops at actions/configure-pages because Pages is not enabled on the games repo; https://josephjackman.com/games/dungeonjoe/ returns 404 until the owner sets Settings → Pages → Source: GitHub Actions, then re-runs the latest workflow (or pushes anything)
