@@ -114,6 +114,8 @@ export class TitleScene implements Scene {
       'main',
       h('h2', null, 'Main menu'),
       last ? btn(`Continue — ${last.character.name} (Lv ${last.character.level}${last.character.cycle ? `, Cycle ${last.character.cycle + 1}` : ''})`, () => titleHooks.start?.(last, 'solo'), 'primary big') : null,
+      btn('Host a game', () => this.coop('host'), 'big'),
+      btn('Join a game', () => this.coop('join'), 'big'),
       btn('Characters (10 slots)', () => this.slots(), 'big'),
       btn('New character', () => this.pickEmpty(), 'big'),
       btn('Settings', () => {
@@ -124,11 +126,47 @@ export class TitleScene implements Scene {
         });
       }, 'big'),
       btn('Credits', () => titleHooks.credits?.(), 'big'),
-      h('div', { class: 'small dim-text', style: 'max-width:340px' }, 'Co-op: pick a character, then Host or Join. Up to 4 players, browser to browser.'),
+      h('div', { class: 'small dim-text', style: 'max-width:340px' }, 'Co-op: up to 4 players, browser to browser. The host shares a 6-letter code; everyone brings their own character.'),
     );
   }
 
-  private pickEmpty(): void {
+  /** Host or Join from the main menu (D74): one character goes straight in; several get a picker; none, create one. */
+  coop(mode: 'host' | 'join'): void {
+    const store = getStore();
+    const saves = listSaves(store).filter((x): x is SaveFile => !!x);
+    if (saves.length === 0) {
+      toast(mode === 'host' ? 'Make a character to host with.' : 'Make a character to join with.');
+      this.pickEmpty(mode);
+      return;
+    }
+    if (saves.length === 1) {
+      titleHooks.start?.(saves[0]!, mode);
+      return;
+    }
+    // the last played character first
+    const last = readMeta(store).lastSlot;
+    saves.sort((a, b) => (b.slot === last ? 1 : 0) - (a.slot === last ? 1 : 0));
+    const list = h('div', { class: 'col', style: 'gap:6px;max-height:480px;overflow:auto;min-width:460px' });
+    for (const sv of saves) {
+      const c = sv.character;
+      list.appendChild(
+        h(
+          'div',
+          { class: 'card row', 'data-testid': `coop-pick-${sv.slot}` },
+          h('div', { class: 'grow' }, h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`), h('div', { class: 'small dim-text' }, mode === 'host' ? `Your world: ${ZONES[sv.world.zone - 1]?.name ?? ''}` : 'Keeps everything earned in the host’s world')),
+          btn(mode === 'host' ? 'Host' : 'Join', () => titleHooks.start?.(sv, mode), 'tiny primary'),
+        ),
+      );
+    }
+    this.view(
+      'coop',
+      h('h2', null, mode === 'host' ? 'Host a game — with which character?' : 'Join a game — with which character?'),
+      list,
+      h('div', { class: 'row' }, btn('New character', () => this.pickEmpty(mode)), btn('Back', () => this.main())),
+    );
+  }
+
+  private pickEmpty(mode: StartMode = 'solo'): void {
     const saves = listSaves(getStore());
     const i = saves.findIndex((s) => !s);
     if (i < 0) {
@@ -136,7 +174,7 @@ export class TitleScene implements Scene {
       this.slots();
       return;
     }
-    this.create(i + 1);
+    this.create(i + 1, mode);
   }
 
   slots(): void {
@@ -220,7 +258,7 @@ export class TitleScene implements Scene {
     );
   }
 
-  create(slot: number): void {
+  create(slot: number, mode: StartMode = 'solo'): void {
     let classId: ClassId = 'knight';
     const name = h('input', { value: app().settings.net.name || 'Joe', maxlength: '16', 'data-testid': 'create-name' });
     const seed = h('input', { placeholder: 'blank = random', maxlength: '24', 'data-testid': 'create-seed' });
@@ -255,14 +293,14 @@ export class TitleScene implements Scene {
       writeSave(getStore(), save);
       app().settings.net.name = nm;
       app().saveSettings();
-      titleHooks.start?.(save, 'solo');
+      titleHooks.start?.(save, mode);
     };
     this.view(
       'create',
       h('h2', null, `New character — slot ${slot}`),
       h('div', { class: 'row', style: 'align-items:flex-start;gap:16px' }, canvas, h('div', { class: 'col', style: 'gap:8px' }, h('div', { class: 'row' }, h('div', { style: 'width:60px' }, 'Name'), name), classes, blurb, stats)),
       h('div', { class: 'row' }, h('div', { style: 'width:60px' }, 'Seed'), seed, h('div', { class: 'small dim-text' }, 'Same seed, same dungeon.')),
-      h('div', { class: 'row' }, btn('Start', start, 'primary', false), btn('Back', () => this.main())),
+      h('div', { class: 'row' }, btn(mode === 'host' ? 'Create and host' : mode === 'join' ? 'Create and join' : 'Start', start, 'primary', false), btn('Back', () => this.main())),
     );
     const startBtn = this.root?.querySelector<HTMLButtonElement>('button.primary');
     startBtn?.setAttribute('data-testid', 'create-start');

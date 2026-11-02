@@ -109,6 +109,22 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     expect(s.w.room.doors[toBoss!].locked).toBe(false);
     expect(s.w.room.doors[toBoss!].open).toBe(true);
   });
+  it('nobody dies in the Training Hall (D73), but they can in the first room after it', () => {
+    const s = session(true);
+    const p = s.localPlayer!;
+    const instructor = [...s.w.entities.values()].find((e) => e.en?.def.id === 'the_instructor')!;
+    rawDamage(s.w, p, 1e9, 'physical', instructor.id);
+    expect(s.dead).toBe(false);
+    expect(p.hp!.hp).toBe(1);
+    run(s, 2);
+    rawDamage(s.w, p, 1e9, 'fire', 0);
+    expect(s.dead).toBe(false);
+    expect(p.hp!.hp).toBe(1);
+    s.enterRoom(s.layout.startId, 'e');
+    rawDamage(s.w, p, 1e9, 'physical', 0);
+    expect(s.dead).toBe(true);
+  });
+
   it('a new character starts in the tutorial hall and leaves it into the start room', () => {
     const s = session(true);
     expect(s.node.kind).toBe('tutorial');

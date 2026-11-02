@@ -220,6 +220,6 @@ export const TUTORIAL_STATIONS: TutorialStation[] = [
   { n: 5, sign: 'PARRY: tap block just as the swing lands. A parried enemy takes a ×3 riposte.', goal: 'parry' },
   { n: 6, sign: 'RED attacks cannot be blocked or parried. DODGE through them (Space / A). One dodge per 5 seconds.', goal: 'dodgeRed' },
   { n: 7, sign: 'BLUE attacks ignore dodging. Walk out of the drawn area before it lands.', goal: 'escapePierce' },
-  { n: 8, sign: 'TWO-HAND with Shift: bigger hits (Bonk and Slicey ×1.5), no shield, weapon guard only.', goal: 'twoHand' },
+  { n: 8, sign: 'TWO-HAND with Shift: your Bonk counts ×1.5 for damage and requirements; no shield, weapon guard only.', goal: 'twoHand' },
   { n: 9, sign: "DRINK from Joe's Thermos (C / X). It refills when you die, or the first time you rest at a bonfire.", goal: 'flask' },
 ];

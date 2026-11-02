@@ -922,6 +922,14 @@ export class GameSession {
   // ------------------------------------------------------------------ death (solo) and respawn
 
   private onPlayerDown(p: Entity): void {
+    // nobody dies in the Training Hall (D73): the hit leaves you at 1 HP with a moment to recover
+    if (this.node?.kind === 'tutorial') {
+      p.hp!.hp = 1;
+      p.hp!.dead = false;
+      p.hp!.invulnUntil = Math.max(p.hp!.invulnUntil, this.w.time + 1.5);
+      this.w.emit({ t: 'msg', text: 'The Instructor: "Up you get. Again."', forPlayer: p.pl!.playerId, color: '#e6d08a' });
+      return;
+    }
     if (this.players.length > 1) {
       this.downPlayer(p);
       return;

@@ -36,11 +36,13 @@ on GitHub, in the `games` repository: **Settings → Pages → Build and deploym
 
 ## Playing together (online co-op, up to 4)
 
-1. Everyone opens the game and picks (or creates) a character on the title screen: **Characters**.
-2. The host presses **Host** on their character. The lobby shows a 6-letter room code.
-3. Friends press **Join** on their own character and type the code. Public relays can take a few seconds
-   ("finding your friend…"); **Retry** if it stalls.
-4. The host presses **Start**. Everyone appears at the host's bonfire in the host's world.
+1. The host presses **Host a game** on the title screen (and picks a character if they have several, or makes
+   one). The lobby shows a 6-letter room code.
+2. Friends press **Join a game**, pick their own character and type the code. Public relays can take a few
+   seconds ("finding your friend…"); **Retry** if it stalls.
+3. The host presses **Start**. Everyone appears at the host's bonfire in the host's world.
+
+(Host and Join are also on each character card under **Characters**.)
 
 Guests keep everything they earn (Shards, loot, levels, spells, gems, flask upgrades). A boss beaten together
 also counts in a guest's own world when it is that guest's next zone. Fallen players become ghosts:

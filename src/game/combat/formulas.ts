@@ -48,9 +48,9 @@ export function scalingCurve(s: number): number {
 
 export const GRADE_MULT: Record<Grade, number> = { S: 1.2, A: 1.0, B: 0.75, C: 0.5, D: 0.25, E: 0.1, '-': 0 };
 
-/** effective stat for scaling and requirements (two-handing counts Bonk/Slicey ×1.5, capped at 99) */
-export function effStat(stat: number, twoHanded: boolean): number {
-  return twoHanded ? Math.min(99, stat * 1.5) : stat;
+/** Two-handing counts Bonk ×1.5 (capped at 99) for scaling and requirements; Slicey is unchanged (D72). */
+export function effBonk(bonk: number, twoHanded: boolean): number {
+  return twoHanded ? Math.min(99, bonk * 1.5) : bonk;
 }
 
 /** Weapon base damage at an item level: base1 × (1 + 0.45 (ilvl − 1)) */
@@ -58,9 +58,9 @@ export function weaponBase(base1: number, ilvl: number): number {
   return base1 * (1 + 0.45 * (ilvl - 1));
 }
 
-/** Multiplier from stat scaling: 1 + Σ grade × f(effStat) */
+/** Multiplier from stat scaling: 1 + Σ grade × f(stat), with Bonk ×1.5 while two-handing */
 export function scalingMult(grades: { bonk: Grade; slicey: Grade }, stats: Pick<Stats, 'bonk' | 'slicey'>, twoHanded: boolean): number {
-  return 1 + GRADE_MULT[grades.bonk] * scalingCurve(effStat(stats.bonk, twoHanded)) + GRADE_MULT[grades.slicey] * scalingCurve(effStat(stats.slicey, twoHanded));
+  return 1 + GRADE_MULT[grades.bonk] * scalingCurve(effBonk(stats.bonk, twoHanded)) + GRADE_MULT[grades.slicey] * scalingCurve(stats.slicey);
 }
 
 /** weaponDamage = base × (1 + Σ grade × f(effStat)) × attackMultiplier × mods; 40% below requirement */

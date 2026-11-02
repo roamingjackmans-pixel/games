@@ -115,7 +115,7 @@ scaling curve  f(s) = 1 − 0.982^s        (f(10)=.17 f(20)=.30 f(40)=.52 f(60)=
 grade multipliers: S 1.2 · A 1.0 · B 0.75 · C 0.5 · D 0.25 · E 0.1 · – 0
 
 weaponDamage = base × (1 + Σ_stat grade(stat) × f(effStat)) × attackMultiplier × gear/gem/affix mods
-   effStat = min(99, stat × 1.5) for Bonk and Slicey while two-handing, otherwise stat
+   effStat = min(99, Bonk × 1.5) for Bonk while two-handing, otherwise the stat as it is (D72)
 spellPower   = spellBase × (1 + 1.2 × f(Brain))  × toolMult        (Brain spells)
 healPower    = spellBase × (1 + 1.0 × f(Prayer)) × toolMult        (Prayer spells)
    toolMult  = toolGrade × (1 + 0.35 × (toolIlvl − 1))   (CONTENT_ITEMS §6; spells have no other level scaling)
@@ -125,8 +125,8 @@ damageTaken  = incoming × 100 / (100 + Def[type]) × status/affix mods
 
 ### 3.2 Requirements (D37)
 
-Every weapon, shield and casting tool lists minimum stats. Two-handing counts Bonk and Slicey at ×1.5
-toward requirements.
+Every weapon, shield and casting tool lists minimum stats. Two-handing counts Bonk at ×1.5 toward
+requirements (D72).
 
 - Weapon below requirement: swings at **40% damage**, **skills locked**, a red "!" on the slot.
 - Shield below requirement: guards at **half** its block values, cannot parry.
@@ -233,8 +233,8 @@ weapon active frames: Greathammer, Greataxe, Colossal Sword, Club, Mace, Battlea
 skills/spells that grant it) ignores interruptions from any hit. Grabs and holds interrupt regardless.
 Effects described as "+N poise" for players raise the interruption threshold by N% of max HP.
 
-**Two-handing** (Shift): the off-hand is disabled (no shield, no casting). Bonk and Slicey count ×1.5 for
-scaling and requirements. Holding block performs a **weapon guard**: 45% physical, 15% elemental,
+**Two-handing** (Shift): the off-hand is disabled (no shield, no casting). Bonk (strength) counts ×1.5
+for scaling and requirements; Slicey does not change (D72). Holding block performs a **weapon guard**: 45% physical, 15% elemental,
 stability 12 (stamina drains fast). No parry.
 
 ### 5.5 Damage types and statuses (D21)

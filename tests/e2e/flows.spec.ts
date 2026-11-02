@@ -49,3 +49,22 @@ test('create a character, play the tutorial hall, pause, save and continue after
   expect(await where()).toBe('start');
   expect(errors).toEqual([]);
 });
+
+test('Host a game and Join a game from the main menu, with no characters yet (D74)', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto('./?net=bc');
+  await page.getByRole('button', { name: 'Host a game' }).click();
+  await page.getByTestId('create-name').fill('Hosty');
+  await page.getByRole('button', { name: 'Create and host' }).click();
+  await expect.poll(() => scene(page), { timeout: 10000 }).toBe('lobby');
+  await expect(page.getByTestId('room-code')).toHaveText(/^[A-HJ-NP-Z2-9]{6}$/);
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.getByTestId('title')).toBeVisible();
+  // one character now: Join goes straight to the join screen with it
+  await page.getByRole('button', { name: 'Join a game' }).click();
+  await expect.poll(() => scene(page), { timeout: 10000 }).toBe('lobby');
+  await expect(page.getByTestId('code-input')).toBeVisible();
+  await expect(page.getByText('Joining as Hosty')).toBeVisible();
+  expect(errors).toEqual([]);
+});

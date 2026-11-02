@@ -61,9 +61,13 @@ describe('formulas (GAME_DESIGN §3)', () => {
     const full = weaponDamage(62, 1, { bonk: 'S', slicey: '-' }, { bonk: 14, slicey: 5 }, false, 1);
     const low = weaponDamage(62, 1, { bonk: 'S', slicey: '-' }, { bonk: 14, slicey: 5 }, false, 1, 1, false);
     expect(low / full).toBeCloseTo(0.4);
-    // two-handing counts Bonk ×1.5
+    // two-handing counts Bonk ×1.5 (D72)…
     const two = weaponDamage(62, 1, { bonk: 'S', slicey: '-' }, { bonk: 14, slicey: 5 }, true, 1);
     expect(two).toBeGreaterThan(full);
+    expect(two).toBeCloseTo(weaponDamage(62, 1, { bonk: 'S', slicey: '-' }, { bonk: 21, slicey: 5 }, false, 1), 6);
+    // …and Slicey not at all
+    const fast = weaponDamage(40, 1, { bonk: '-', slicey: 'S' }, { bonk: 5, slicey: 20 }, false, 1);
+    expect(weaponDamage(40, 1, { bonk: '-', slicey: 'S' }, { bonk: 5, slicey: 20 }, true, 1)).toBeCloseTo(fast, 6);
   });
   it('level cost curve matches the documented points', () => {
     expect(levelCost(1)).toBe(77);
@@ -85,12 +89,15 @@ describe('formulas (GAME_DESIGN §3)', () => {
     expect(enemyHpMult(1, 0, 2)).toBeCloseTo(2.5);
     expect(enemyHpMult(1, 0, 4)).toBeCloseTo(5.5);
   });
-  it('requirements rise on the primary stat and two-handing counts ×1.5', () => {
+  it('requirements rise on the primary stat and two-handing counts Bonk ×1.5 (not Slicey)', () => {
     const gh = makeItem('greathammer', 'common', 3);
     const r = itemRequirements(gh);
     expect(r.bonk).toBe(18);
     expect(meetsRequirements(r, { bonk: 12, slicey: 0, brain: 0, prayer: 0 }, false)).toBe(false);
     expect(meetsRequirements(r, { bonk: 12, slicey: 0, brain: 0, prayer: 0 }, true)).toBe(true);
+    const slice = { bonk: 0, slicey: 14, brain: 0, prayer: 0 };
+    expect(meetsRequirements(slice, { bonk: 0, slicey: 10, brain: 0, prayer: 0 }, true)).toBe(false);
+    expect(meetsRequirements(slice, { bonk: 0, slicey: 14, brain: 0, prayer: 0 }, true)).toBe(true);
   });
 });
 

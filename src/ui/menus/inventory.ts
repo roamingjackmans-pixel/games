@@ -116,7 +116,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
         ...kv('HP', `${d.maxHp}`),
         ...kv('Stamina', `${d.maxStam}`),
         ...kv('Bonk', `${d.stats.bonk}${c.twoHanded ? ` (×1.5 = ${Math.min(99, Math.floor(d.stats.bonk * 1.5))})` : ''}`),
-        ...kv('Slicey', `${d.stats.slicey}${c.twoHanded ? ` (×1.5 = ${Math.min(99, Math.floor(d.stats.slicey * 1.5))})` : ''}`),
+        ...kv('Slicey', `${d.stats.slicey}`),
         ...kv('Brain', d.stats.brain),
         ...kv('Prayer', d.stats.prayer),
         ...kv('Weapon power', Math.round(d.weaponPower), d.weaponMeetsReq ? '' : 'bad'),

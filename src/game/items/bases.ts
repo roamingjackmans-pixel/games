@@ -63,8 +63,8 @@ export function itemRequirements(item: Pick<Item, 'baseId' | 'ilvl'>): Requireme
   return r;
 }
 
-/** Two-handing counts Bonk and Slicey ×1.5 toward requirements (D37). */
+/** Two-handing counts Bonk ×1.5 toward requirements (D72); Slicey, Brain and Prayer count as they are. */
 export function meetsRequirements(req: Requirements, stats: { bonk: number; slicey: number; brain: number; prayer: number }, twoHanded: boolean): boolean {
-  const k = twoHanded ? 1.5 : 1;
-  return stats.bonk * k >= req.bonk && stats.slicey * k >= req.slicey && stats.brain >= req.brain && stats.prayer >= req.prayer;
+  const bonk = twoHanded ? stats.bonk * 1.5 : stats.bonk;
+  return bonk >= req.bonk && stats.slicey >= req.slicey && stats.brain >= req.brain && stats.prayer >= req.prayer;
 }
