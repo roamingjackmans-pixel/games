@@ -1,7 +1,7 @@
 # Dungeon Joe — Build progress
 
 > **Next session starts here:** M0–M2 done (repo is github.com/roamingjackmans-pixel/games, live path /games/dungeonjoe/, D48).
-> Continue at M3 (enemy framework + Mossy Crypt roster). Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug
+> M3 done. Continue at M4 (procgen, rooms, waves, bonfires, tutorial). Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
 
@@ -34,13 +34,13 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] tests; browser check with scripted dummy — 5f42d31 2026-11-02 — browser (loop.advance in the hidden pane): dummy swing blocked 2 HP vs 20 unblocked; Red stomp guard-breaks when blocked, 0 dmg when dodged; Piercing ring escaped by position; greathammer first hit 0.57 s vs daggers 0.18 s; bow tap 12 vs charged 22. 35 unit tests.
 
 ## M3 — Enemy framework, Zone 1, Elites, Mimic
-- [ ] EnemyDef/AttackDef loader + validator
-- [ ] AI state machine, move styles, special budget, aggro, swarms, front guards, on-death, summons, spawn tells
-- [ ] 8 Elite affixes
-- [ ] 8 Mossy Crypt enemies with draw functions
-- [ ] Mimic
-- [ ] scaling formulas
-- [ ] tests; browser check
+- [x] EnemyDef/AttackDef loader + validator — 6028d79 2026-11-02
+- [x] AI state machine, move styles, special budget, aggro, swarms, front guards, on-death, summons, spawn tells — 6028d79 2026-11-02
+- [x] 8 Elite affixes — 6028d79 2026-11-02
+- [x] 8 Mossy Crypt enemies with draw functions — 6028d79 2026-11-02
+- [x] Mimic — 6028d79 2026-11-02
+- [x] scaling formulas — 6028d79 2026-11-02
+- [x] tests; browser check — 6028d79 2026-11-02 — 12 enemy tests (validation, budget ≤ 2 over 30 s with 12 enemies, elite rate 8%±1, each Crypt enemy fights and dies, Raise Dead, mimic dormant/wake/bite). Browser: all 8 Crypt enemies + mimic + Arcane/Shielded elites rendered and fighting in the arena.
 
 ## M4 — Procgen, rooms, waves, chests, bonfires, minimap, zone flow
 - [ ] layout generator, specials placement, boss anteroom/room
