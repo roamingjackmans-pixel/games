@@ -31,6 +31,10 @@ import { shopGem, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop
 import { refreshDerived, toggleTwoHand } from '../player/player';
 import { stream } from '../../engine/rng';
 import { toast } from '../../ui/dom';
+import { openSettings } from '../../ui/menus/settings';
+
+/** Scene switches the run scene asks for (wired in main.ts, avoids import cycles). */
+export const runHooks: { toTitle?: () => void; credits?: (s: GameSession) => void } = {};
 
 export class RunScene extends WorldScene {
   readonly name = 'run';
@@ -39,7 +43,8 @@ export class RunScene extends WorldScene {
   private title: { zone: number; names: string[]; until: number } | null = null;
   private signText: string | null = null;
   private overlay: HTMLElement | null = null;
-  private overlayKind: '' | 'death' | 'bonfire' | 'map' | 'inventory' = '';
+  private overlayKind: '' | 'death' | 'bonfire' | 'map' | 'inventory' | 'pause' | 'settings' = '';
+  private pendingSave = false;
   private revealMap = false;
   private saveDebounce = 0;
 
@@ -55,7 +60,13 @@ export class RunScene extends WorldScene {
       titleCard: (zone, names) => {
         this.title = { zone, names, until: performance.now() / 1000 + 3.5 };
       },
-      autosave: () => this.persist(),
+      autosave: (reason) => {
+        if (reason === 'pickup') {
+          // pickups save at most every 2 s
+          this.pendingSave = true;
+          this.saveDebounce = 2;
+        } else this.persist();
+      },
       sign: (t) => {
         this.signText = t;
       },
@@ -105,8 +116,13 @@ export class RunScene extends WorldScene {
     this.local = this.session.localPlayer;
     this.view.palette = zoneDef(this.session.layout.zone).palette;
     this.view.propStyle = zoneDef(this.session.layout.zone).props;
+    if (this.pendingSave && this.saveDebounce <= 0) {
+      this.pendingSave = false;
+      this.persist();
+    }
     if (!this.overlay) {
-      if (a.input.consumeLocal('map')) this.showMap();
+      if (a.input.consumeLocal('pause')) this.showPause();
+      else if (a.input.consumeLocal('map')) this.showMap();
       else if (a.input.consumeLocal('inventory')) this.showInventory();
       else if (a.input.consumeLocal('cycleQuick') && this.local) {
         const q = cycleQuickSlot(this.local.pl!.char);
@@ -115,6 +131,7 @@ export class RunScene extends WorldScene {
     } else if (this.overlayKind === 'map' && (a.input.consumeLocal('map') || a.input.consumeLocal('pause'))) this.closeOverlay();
     else if (this.overlayKind === 'inventory' && (a.input.consumeLocal('inventory') || a.input.consumeLocal('pause'))) this.closeOverlay();
     else if (this.overlayKind === 'bonfire' && a.input.consumeLocal('pause')) this.closeOverlay();
+    else if (this.overlayKind === 'pause' && a.input.consumeLocal('pause')) this.closeOverlay();
     this.saveDebounce -= dt;
   }
 
@@ -250,6 +267,44 @@ export class RunScene extends WorldScene {
     this.menuOpen = true;
   }
 
+  showPause(): void {
+    this.closeOverlay();
+    const l = layer('dim');
+    l.setAttribute('data-testid', 'pause-menu');
+    const c = this.save.character;
+    const where = `${c.name} · level ${c.level} · ${zoneDef(this.session.layout.zone).name}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`;
+    l.appendChild(
+      h(
+        'div',
+        { class: 'panel col', style: 'width:380px' },
+        h('h2', null, 'Paused'),
+        h('div', { class: 'small dim-text' }, where),
+        btn('Resume', () => this.closeOverlay(), 'primary big'),
+        btn('Inventory', () => this.showInventory(), 'big'),
+        btn('Map', () => this.showMap(), 'big'),
+        btn(
+          'Settings',
+          () => {
+            this.overlay?.remove();
+            this.overlay = openSettings(() => this.showPause());
+            this.overlayKind = 'settings';
+          },
+          'big',
+        ),
+        btn('Save and quit to title', () => this.quitToTitle(), 'big'),
+      ),
+    );
+    this.overlay = l;
+    this.overlayKind = 'pause';
+    this.menuOpen = true;
+  }
+
+  quitToTitle(): void {
+    this.persist();
+    this.closeOverlay();
+    runHooks.toTitle?.();
+  }
+
   private showMap(): void {
     this.closeOverlay();
     const l = layer('dim');
@@ -374,6 +429,7 @@ export class RunScene extends WorldScene {
       ctx.fillRect(0, 0, 1280, 720);
       this.fade = Math.max(0, this.fade - realDt / 0.3);
     }
+    if (app().settings.video.showFps) drawText(ctx, `${app().loop.fps.toFixed(0)} fps`, 1270, 150, { size: 12, align: 'right', mono: true, color: '#a59c8a' });
     if (this.session.node.kind === 'tutorial') drawText(ctx, 'TRAINING HALL — the exit is on the right. The big man is optional.', 640, 40, { size: 14, align: 'center', color: '#a59c8a' });
   }
 

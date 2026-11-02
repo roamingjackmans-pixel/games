@@ -169,7 +169,7 @@ Defaults (rebindable). Keyboard + mouse is the "host" layout; gamepad maps every
 | Two-hand toggle | Shift (tap) | Right stick click |
 | Inventory / character | Tab | Back (View) |
 | Map | M | Hold Back |
-| Pause / menu | Esc | Start |
+| Pause / menu | Esc or P | Start |
 | Debug menu | Ctrl+Shift+D (then the owner code) | — |
 
 Gamepad right-stick aim: the character faces the stick direction; when the stick is neutral, melee

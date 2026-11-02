@@ -51,6 +51,7 @@ export abstract class WorldScene implements Scene {
     const a = app();
     const w = this.w;
     a.input.gameplayEnabled = !this.menuOpen;
+    w.hitstopEnabled = a.settings.video.hitstop;
     if (this.local?.pl) {
       const inp = a.input.sample(this.local.x, this.local.y);
       this.local.pl.input = inp;

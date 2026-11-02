@@ -33,7 +33,7 @@ export function defaultKeyboard(): KeyboardBindings {
     swapWeapon: ['KeyX'],
     inventory: ['Tab', 'KeyI'],
     map: ['KeyM'],
-    pause: ['Escape'],
+    pause: ['Escape', 'KeyP'],
     cycleQuick: ['WheelDown', 'KeyT'],
   };
 }

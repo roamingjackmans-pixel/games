@@ -21,6 +21,9 @@ export class InputManager {
   aimAssist = 0.6;
   /** when false (a menu is open) gameplay buttons and movement read as zero */
   gameplayEnabled = true;
+  /** toggle-block mode (settings): a block press latches the guard on and off */
+  blockToggle = false;
+  private blockLatched = false;
   lastDevice: Device = 'kbm';
   mouseX = 640;
   mouseY = 360;
@@ -211,6 +214,10 @@ export class InputManager {
       }
       // a press that started and ended between samples still counts as pressed this frame
       buttons |= pressedBits & ~ACTION_BIT.twoHand;
+      if (this.blockToggle) {
+        if (pressedBits & ACTION_BIT.block) this.blockLatched = !this.blockLatched;
+        buttons = this.blockLatched ? buttons | ACTION_BIT.block : buttons & ~ACTION_BIT.block;
+      }
     }
     this.edge.clear();
     this.padEdge.clear();

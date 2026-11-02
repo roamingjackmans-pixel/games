@@ -555,6 +555,8 @@ export class World {
   playerCount = 1;
   hooks: WorldHooks = {};
   god = false;
+  /** hitstop freeze frames (Settings → Video) */
+  hitstopEnabled = true;
   /** host simulates; guests only mirror */
   authoritative = true;
   /** special budget per room (GAME_DESIGN §6.2) */

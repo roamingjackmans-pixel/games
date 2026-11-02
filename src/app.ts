@@ -7,6 +7,7 @@ import { SceneManager } from './engine/scene';
 import { loadSettings, saveSettings, type Settings } from './engine/settings';
 import { Tweens } from './engine/tween';
 import { mixer } from './engine/audio/mixer';
+import { pollMenuPad } from './ui/menuPad';
 
 export interface App {
   canvas: GameCanvas;
@@ -38,6 +39,7 @@ export function createApp(canvasEl: HTMLCanvasElement, overlay: HTMLElement): Ap
   const loop = new Loop({
     frame: (now) => {
       input.pollGamepad(now / 1000);
+      pollMenuPad(input, now / 1000);
     },
     update: (dt) => {
       scenes.update(dt);
@@ -62,6 +64,7 @@ export function createApp(canvasEl: HTMLCanvasElement, overlay: HTMLElement): Ap
       const s = a.settings;
       input.setBindings(s.controls.keyboard, s.controls.gamepad);
       input.aimAssist = s.controls.aimAssist;
+      input.blockToggle = !s.controls.holdToBlock;
       mixer.setVolumes(s.audio.master, s.audio.sfx, s.audio.music);
       loop.frameCap = s.video.frameCap;
       if (Math.abs(canvas.resolutionScale - s.video.scale) > 0.01) canvas.setResolutionScale(s.video.scale);

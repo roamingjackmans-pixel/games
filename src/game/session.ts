@@ -65,6 +65,8 @@ export class GameSession {
   players: SessionPlayer[] = [];
   listener: SessionListener = {};
   interactHold = new Map<number, { target: number; t: number }>();
+  /** The zone title card waits until the party leaves the Training Hall. */
+  private titlePending = false;
   tutorial: { goals: Set<string>; sx: number; sy: number; aim0: number; poked: boolean; dummy: Record<string, number>; instructorId: number } | null = null;
   pendingTransition: { roomId: string; entry: Side | 'bonfire' | 'start' } | null = null;
   deathLine = DEATH_LINES[0]!;
@@ -215,9 +217,12 @@ export class GameSession {
     else this.tutorial = null;
     w.inputLock = w.time + 0.2;
     this.listener.roomEntered?.(node, zoneChanged);
-    if (zoneChanged) {
-      const names = this.layout.mix.map((id) => ENEMIES[id]?.name ?? id);
-      this.listener.titleCard?.(this.layout.zone, names);
+    if (zoneChanged || this.titlePending) {
+      this.titlePending = node.kind === 'tutorial';
+      if (!this.titlePending) {
+        const names = this.layout.mix.map((id) => ENEMIES[id]?.name ?? id);
+        this.listener.titleCard?.(this.layout.zone, names);
+      }
     }
   }
 
@@ -582,6 +587,7 @@ export class GameSession {
   collectLoot(p: Entity, e: Entity): boolean {
     const pk = e.pk!;
     const c = p.pl!.char;
+    this.listener.autosave?.('pickup');
     if (pk.kind === 'item' && pk.item) {
       if (c.bag.length >= 60) return false;
       c.bag.push(pk.item);

@@ -335,7 +335,7 @@ function swingHits(w: World, e: Entity): void {
     c.hit.add(en.id);
     const dealt = hitEnemy(w, e, en, spec, e.x, e.y, { heavy, light: true });
     if (dealt > 0 || en.en?.gary) any = true;
-    if (dealt > 0) {
+    if (dealt > 0 && w.hitstopEnabled) {
       en.hitstopUntil = w.time + hitstopMs(e) / 1000;
     }
   }
@@ -347,7 +347,7 @@ function swingHits(w: World, e: Entity): void {
   }
   // destructible things (tendril lines, mirrors) are enemies too; props are not
   if (any) {
-    e.hitstopUntil = w.time + hitstopMs(e) / 1000;
+    if (w.hitstopEnabled) e.hitstopUntil = w.time + hitstopMs(e) / 1000;
     w.emit({ t: 'hitstop', ms: hitstopMs(e), ids: [e.id] });
     w.emit({ t: 'shake', amount: heavy ? 5 : 2 });
   }
