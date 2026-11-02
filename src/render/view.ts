@@ -18,6 +18,14 @@ export interface InteractDrawer {
   (ctx: CanvasRenderingContext2D, e: Entity, now: number, localPlayerId: string): void;
 }
 
+const STATUS_MOTES: ['burn' | 'chill' | 'shock' | 'bleed' | 'poison', string, number][] = [
+  ['burn', '#ff7a1a', -60],
+  ['chill', '#cfeaff', -15],
+  ['shock', '#ffe14a', -30],
+  ['bleed', '#a01828', 50],
+  ['poison', '#7ad040', -35],
+];
+
 export class WorldView {
   shake = 0;
   shakeX = 0;
@@ -30,6 +38,8 @@ export class WorldView {
   /** extra overlay hook (bosses' arena decorations, etc.) */
   underlay: ((ctx: CanvasRenderingContext2D, w: World, now: number) => void) | null = null;
   darkness = 0;
+  /** white flash on a boss phase change (ART_AUDIO §4) */
+  private flash = 0;
   private lastHitSoundAt = 0;
 
   constructor(
@@ -86,8 +96,23 @@ export class WorldView {
           p.spawn(ev.x, ev.y, 0, 0, 0.35, 10, '#ffffff', 'ring', { grow: 120 });
           this.shake = Math.max(this.shake, 4 * st.video.shake);
           break;
-        case 'shardGain':
+        case 'shardGain': {
           p.burst(ev.x, ev.y, 6, 120, 0.5, 2, '#9ad0ff', 'glow');
+          // a trail of motes flies to the HUD's Shard counter (ART_AUDIO §4); only for our own Shards
+          if (ev.playerId && ev.playerId !== this.localPlayerId) break;
+          const tx = 130;
+          const ty = 98;
+          const n = Math.min(10, 3 + Math.floor(Math.log10(Math.max(1, ev.amount)) * 2));
+          for (let i = 0; i < n; i++) {
+            const life = 0.45 + i * 0.04;
+            const sx = ev.x + (Math.random() - 0.5) * 24;
+            const sy = ev.y + (Math.random() - 0.5) * 24;
+            p.spawn(sx, sy, (tx - sx) / life, (ty - sy) / life, life, 3, '#9ad0ff', 'glow', { drag: 0 });
+          }
+          break;
+        }
+        case 'bossPhase':
+          this.flash = 0.7;
           break;
         case 'levelBanner':
           this.banner = { text: ev.text, sub: ev.sub ?? '', until: now + 4 };
@@ -195,10 +220,20 @@ export class WorldView {
       ctx.strokeStyle = withAlpha('#b08d3c', 0.5);
       ctx.lineWidth = rf.rOut - rf.rIn;
       ctx.setLineDash([18, 14]);
-      ctx.lineDashOffset = -now * rf.speed * 2;
+      // the dashes travel with the floor (speed is px/s along the ring)
+      ctx.lineDashOffset = -now * rf.speed;
       ctx.beginPath();
       ctx.arc(rf.x, rf.y, (rf.rIn + rf.rOut) / 2, 0, Math.PI * 2);
       ctx.stroke();
+      // brass rims mark where the moving floor starts and ends
+      ctx.setLineDash([]);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = withAlpha('#d4b060', 0.8);
+      for (const rr of [rf.rIn, rf.rOut]) {
+        ctx.beginPath();
+        ctx.arc(rf.x, rf.y, rr, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       ctx.restore();
     }
     this.underlay?.(ctx, w, now);
@@ -256,6 +291,15 @@ export class WorldView {
       const y = e.py + (e.y - e.py) * alpha;
       drawProjectile(ctx, e, x, y, rt);
     }
+    // status particles while a status runs: embers, frost motes, sparks, red drips, green bubbles (ART_AUDIO §4)
+    for (const e of list) {
+      const st = e.st;
+      if (!st || e.hp?.dead) continue;
+      for (const [s, color, vy] of STATUS_MOTES) {
+        if (st.active[s] <= now || Math.random() > 0.18) continue;
+        this.particles.spawn(e.x + (Math.random() - 0.5) * e.radius * 1.6, e.y - e.radius * 0.3 + (Math.random() - 0.5) * e.radius, (Math.random() - 0.5) * 20, vy, 0.7, 2.5, color, 'glow', { drag: 1 });
+      }
+    }
     this.particles.draw(ctx);
     if (overlays.hitbox) debugHitboxes(ctx, w);
     if (overlays.ai) {
@@ -275,6 +319,12 @@ export class WorldView {
     if (this.darkness > 0) {
       ctx.fillStyle = `rgba(0,0,0,${this.darkness})`;
       ctx.fillRect(0, 0, 1280, 720);
+    }
+    // phase transition flash
+    if (this.flash > 0) {
+      ctx.fillStyle = `rgba(255,250,240,${Math.min(0.8, this.flash)})`;
+      ctx.fillRect(0, 0, 1280, 720);
+      this.flash = Math.max(0, this.flash - realDt * 1.6);
     }
     // banner (boss defeated)
     if (this.banner && this.banner.until > rt) {

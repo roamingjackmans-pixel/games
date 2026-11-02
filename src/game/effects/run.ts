@@ -7,6 +7,7 @@ import { addRevive, applyControl, checkDeath, cleanse, emptySpec, grantBarrier, 
 import { spawnTelegraphs } from '../combat/telegraph';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, resolvePattern, type PatternCtx, type Shape } from '../combat/patterns';
 import { spawnHazard } from '../systems/hazards';
+import { collapseFloor } from '../boss/platform';
 import type { BuffStat, DamageType, EffectDef, EnemyDef, PatternDef, Team } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
 
@@ -245,6 +246,15 @@ function targets(w: World, eff: EffectDef, ctx: EffectCtx, src: Entity | undefin
   }
 }
 
+/** A random spot just inside one of the room's walls. */
+function edgePoint(w: World): [number, number] {
+  const side = w.combat.int(0, 3);
+  if (side === 0) return [w.combat.range(ROOM_MIN_X + 40, ROOM_MAX_X - 40), ROOM_MIN_Y + 40];
+  if (side === 1) return [w.combat.range(ROOM_MIN_X + 40, ROOM_MAX_X - 40), ROOM_MAX_Y - 40];
+  if (side === 2) return [ROOM_MIN_X + 40, w.combat.range(ROOM_MIN_Y + 40, ROOM_MAX_Y - 40)];
+  return [ROOM_MAX_X - 40, w.combat.range(ROOM_MIN_Y + 40, ROOM_MAX_Y - 40)];
+}
+
 function placeNear(w: World, x: number, y: number, r: number, radius: number): [number, number] {
   for (let i = 0; i < 16; i++) {
     const a = w.combat.range(-Math.PI, Math.PI);
@@ -394,7 +404,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       const n = Math.min(e.count, Math.max(0, max - alive));
       const graves = e.at === 'graves' ? (w.spots.graves ?? []) : [];
       for (let i = 0; i < n; i++) {
-        const g = graves.length ? graves[w.combat.int(0, graves.length - 1)]! : null;
+        // 'edges': they march in from a random point along the walls
+        const g = graves.length ? graves[w.combat.int(0, graves.length - 1)]! : e.at === 'edges' ? edgePoint(w) : null;
         const [x, y] = g ? placeNear(w, g[0], g[1], 56, def.radius) : placeNear(w, src.x, src.y, 140, def.radius);
         const s = effectHooks.spawnSummon?.(w, src, def, x, y, e.lifetimeS);
         if (s?.en) s.en.summonerId = src.id;
@@ -762,6 +773,10 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         src.hp.hp = 0;
         checkDeath(w, src, 0);
       }
+      break;
+    case 'collapseFloor':
+      // the floor inside the pattern falls away into the void for a while (The Landlord's Collapse)
+      collapseFloor(w, e.pattern, e.durationS, patternCtxFor(w, ctx, src));
       break;
     case 'steal': {
       // Pickpocket: take a share of the victim's Shards; killing the thief gives them back

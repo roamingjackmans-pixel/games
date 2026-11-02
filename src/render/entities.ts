@@ -163,6 +163,25 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
       c.restore();
     },
   });
+  // slash arc: the swing drawn as a fading wedge while the hit is live (ART_AUDIO §4)
+  const sw = pl.combo;
+  if (!ghost && sw && sw.phase === 'active' && sw.swing.hitbox.shape === 'arc') {
+    const hb = sw.swing.hitbox;
+    const half = (hb.angleDeg * DEG) / 2;
+    const dir = sw.idx % 2 === 0 ? 1 : -1;
+    const k = Math.min(1, sw.t / Math.max(0.001, sw.dur));
+    const a0 = e.facing - half * dir;
+    const a1 = e.facing + (-half + 2 * half * k) * dir;
+    ctx.save();
+    ctx.globalAlpha = 0.4 * (1 - k * 0.5);
+    ctx.strokeStyle = '#f4f0e6';
+    ctx.lineWidth = 9;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(x, y, Math.min(hb.r, 110) * 0.85, Math.min(a0, a1), Math.max(a0, a1));
+    ctx.stroke();
+    ctx.restore();
+  }
   if (ghost) {
     // revive ring and bleed-out timer
     const frac = Math.min(1, pl.reviveProgress / Math.max(1, pl.reviveNeed));
@@ -217,6 +236,7 @@ export function enemyDrawState(e: Entity, x: number, y: number, now: number, pal
     phase: en.phase,
     variant: en.pieceIndex,
     awake: en.state !== 'dormant',
+    ...(en.gaze !== undefined ? { gaze: en.gaze } : {}),
   };
 }
 
@@ -446,6 +466,25 @@ export function drawHazardEntity(ctx: CanvasRenderingContext2D, e: Entity, now: 
       ctx.arc(s.x, s.y, Math.min(1600, s.rOut), 0, Math.PI * 2);
       ctx.arc(s.x, s.y, s.rIn, 0, Math.PI * 2, true);
       ctx.fill('evenodd');
+    } else if (s.k === 'cone') {
+      // a wedge (Hex Gale's wind) with gusts streaming outward
+      const r = Math.min(1600, s.r);
+      ctx.moveTo(s.x, s.y);
+      ctx.arc(s.x, s.y, r, s.a - s.half, s.a + s.half);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 0.55 * fade;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 7; i++) {
+        const a = s.a - s.half + ((i + 0.5) / 7) * s.half * 2;
+        const k = (now * 1.6 + i * 0.37) % 1;
+        const d0 = r * k;
+        ctx.beginPath();
+        ctx.moveTo(s.x + Math.cos(a) * d0, s.y + Math.sin(a) * d0);
+        ctx.lineTo(s.x + Math.cos(a) * (d0 + 40), s.y + Math.sin(a) * (d0 + 40));
+        ctx.stroke();
+      }
     }
   }
   ctx.restore();

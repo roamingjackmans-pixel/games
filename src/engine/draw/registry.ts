@@ -24,6 +24,8 @@ export interface DrawState {
   phase: number;
   variant: number;
   awake: boolean;
+  /** where the entity's next gaze attack strikes (AttackDef.gazeTurnDeg), for its sweep arrow */
+  gaze?: number;
 }
 
 export type DrawFn = (ctx: CanvasRenderingContext2D, s: DrawState) => void;

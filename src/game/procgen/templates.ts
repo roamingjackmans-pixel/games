@@ -3,12 +3,15 @@
 //   o  prop (blocks movement, not projectiles)      ~  zone hazard tile (walkable, hurts or slows)
 //   _  pit (cannot walk; falling in = 30% max HP)   G  raised grate (Sewers: safe from waves)
 //   S  enemy spawn point (≥ 200 px from any door)   C  chest spot      D  door (2 per side, fixed spots)
-//   boss arenas only: K boss spot, H stairs spot, g open grave (pit + summon spot), w pool spot
+//   boss arenas only: K boss spot, H stairs spot, g open grave (pit + summon spot), w pool spot,
+//   t tree (a prop a charge breaks: one charge per connected clump)
 import { ROOM_H, ROOM_W, doorTiles, type Side } from '../room';
 
 export interface RoomTemplate {
   id: string;
   rows: string[];
+  /** boss arenas: a rotating floor ring (centre and radii in px, speed = px/s along the ring, sign = direction) */
+  rotFloor?: { x: number; y: number; rIn: number; rOut: number; speed: number };
 }
 
 export const DOOR_SIDES: Side[] = ['n', 's', 'e', 'w'];
@@ -19,7 +22,7 @@ export interface TemplateIssue {
 }
 
 const PASSABLE = new Set(['.', '~', 'G', 'S', 'C', 'D', 'B', 'K', 'H', 'w']);
-const KNOWN = new Set(['#', '.', 'P', 'o', '~', '_', 'G', 'S', 'C', 'D', 'B', 'V', 'K', 'H', 'w', 'g']);
+const KNOWN = new Set(['#', '.', 'P', 'o', '~', '_', 'G', 'S', 'C', 'D', 'B', 'V', 'K', 'H', 'w', 'g', 't']);
 
 function at(rows: string[], x: number, y: number): string {
   return rows[y]?.[x] ?? '#';

@@ -22,6 +22,10 @@ export class GameCanvas {
     this.ctx = ctx;
     window.addEventListener('resize', () => this.fit());
     document.addEventListener('fullscreenchange', () => this.fit());
+    // a tab opened in the background has no size yet; fit again when it is first shown
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) this.fit();
+    });
     this.fit();
   }
 

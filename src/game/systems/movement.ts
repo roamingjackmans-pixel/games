@@ -3,9 +3,13 @@
 import { dist } from '../../engine/math';
 import { rawDamage } from '../combat/damage';
 import { HAZARDS } from './hazards';
+import { T } from '../room';
 import type { Entity, World } from '../world';
 
 export const FALL_PIT_PCT = 0.3;
+/** Off a platform's edge into the void (CONTENT_ENEMIES §11 The Landlord's arena). */
+export const FALL_VOID_PCT = 0.5;
+export const FALL_VOID_CLIMB_S = 1.5;
 
 export function startFall(w: World, e: Entity, pct: number, climbS: number): void {
   if (!e.pl || e.pl.falling) return;
@@ -34,23 +38,23 @@ export function updateMovement(w: World, dt: number): void {
         if (hit && e.forced.kind === 'knock') e.forced = null;
       }
     }
-    // the rotating floor ring carries everyone standing on it
+    // the rotating floor ring carries everyone standing on it (speed is px/s along the ring)
     const rf = w.room.rotFloor;
     if (rf && !e.flying) {
       const d = dist(rf.x, rf.y, e.x, e.y);
       if (d >= rf.rIn && d <= rf.rOut) {
-        const a = Math.atan2(e.y - rf.y, e.x - rf.x) + (rf.speed / Math.max(40, d)) * dt * 40;
+        const a = Math.atan2(e.y - rf.y, e.x - rf.x) + (rf.speed / Math.max(40, d)) * dt;
         const nx = rf.x + Math.cos(a) * d;
         const ny = rf.y + Math.sin(a) * d;
         w.room.moveCircle(e, nx - e.x, ny - e.y, false);
       }
     }
-    // pits and void: falling only when the centre is over the hole and not mid-dodge
-    if (e.pl && !e.pl.falling && !e.pl.downed && !e.pl.deadUntilRest && e.pl.state !== 'dodge' && !e.forced) {
-      if (w.room.isFallAt(e.x, e.y)) {
-        const voidFall = w.room.tileAt(e.x, e.y) === 8;
-        startFall(w, e, voidFall ? 0.5 : FALL_PIT_PCT, voidFall ? 1.5 : 0.6);
-      }
+    // falling only when the centre is over the hole: a dodge rolls over a pit, but the void edge cannot be
+    // dodged (50% max HP, 1.5 s to climb back at the nearest edge point)
+    if (e.pl && !e.pl.falling && !e.pl.downed && !e.pl.deadUntilRest && !e.forced) {
+      const t = w.room.tileAt(e.x, e.y);
+      if (t === T.Void) startFall(w, e, FALL_VOID_PCT, FALL_VOID_CLIMB_S);
+      else if (t === T.Pit && e.pl.state !== 'dodge') startFall(w, e, FALL_PIT_PCT, 0.6);
     } else if (e.en && !e.flying && w.room.isFallAt(e.x, e.y) && !e.forced) {
       // enemies knocked into a pit fall and die (bosses are pushed back out)
       if (e.en.isBoss) {

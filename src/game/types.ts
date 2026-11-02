@@ -41,9 +41,15 @@ export type HazardId =
   | 'regenAura'
   | 'timeDilation'
   | 'gravityWell'
-  | 'bearTrap';
+  | 'bearTrap'
+  | 'wind';
 
-export type Anchor = 'self' | 'target' | 'targetPast(1.0)' | 'point' | 'wall' | 'corner' | 'eachPlayer' | 'aim' | 'center';
+/**
+ * 'eachPlayerPast(1.0)': every living player's position 1.0 s ago (from the player position history); on a
+ * `circle` with `count` n it strikes n points 0.1 s apart along each player's path from there toward the
+ * present (Rewind Volley).
+ */
+export type Anchor = 'self' | 'target' | 'targetPast(1.0)' | 'point' | 'wall' | 'corner' | 'eachPlayer' | 'aim' | 'center' | 'eachPlayerPast(1.0)';
 
 /** Optional fields any pattern may add (DATA_MODEL §3). */
 export interface PatternCommon {
@@ -74,11 +80,50 @@ export type PatternDef = PatternCommon &
       }
     | { kind: 'circle'; r: number; anchor: Anchor; count?: number }
     | { kind: 'ring'; rIn: number; rOut: number | 'edge'; anchor: Anchor }
-    | { kind: 'line'; w: number; l: number | 'room'; anchor: Anchor; through?: boolean; count?: number; randomAngles?: boolean; angleOffsetDeg?: number }
+    | {
+        kind: 'line';
+        w: number;
+        l: number | 'room';
+        anchor: Anchor;
+        through?: boolean;
+        count?: number;
+        randomAngles?: boolean;
+        angleOffsetDeg?: number;
+        /** the line runs from the anchor to the aim point (its length ignores `l`): a hammer flying back to its thrower */
+        toAim?: boolean;
+        /** with count: the lines spread evenly around the anchor like spokes, the first along the facing (count 4 = a cross) */
+        spokes?: boolean;
+      }
     | { kind: 'cone'; angleDeg: number; r: number | 'room'; anchor: Anchor; count?: number; rotateDeg?: number }
-    | { kind: 'lanes'; n: number; w: number; orientation: 'vertical' | 'horizontal'; alternate?: boolean; setGapS?: number }
+    | {
+        kind: 'lanes';
+        n: number;
+        w: number;
+        orientation: 'vertical' | 'horizontal';
+        alternate?: boolean;
+        setGapS?: number;
+        /** a boulder rolls down each lane at this speed after the telegraph (lanes alternate ends) instead of the lane striking at once */
+        roll?: { speed: number };
+        /** the lanes stay lit for this long after impact, hitting every `tickS` (bellows jets) */
+        durationS?: number;
+        tickS?: number;
+      }
     | { kind: 'grid'; spacing: number; r: number; checkerboard?: boolean; sets?: number; setGapS?: number; pulses?: number }
-    | { kind: 'sweep'; angleDeg: number; r: number | 'room'; durationS: number; clockwise?: boolean; anchor: Anchor; tickS?: number; w?: number; beamLine?: boolean }
+    | {
+        kind: 'sweep';
+        angleDeg: number;
+        r: number | 'room';
+        durationS: number;
+        clockwise?: boolean;
+        anchor: Anchor;
+        tickS?: number;
+        w?: number;
+        beamLine?: boolean;
+        /** this many sweeps at once (anchor 'corner': distinct corners, the second diagonally opposite the first) */
+        count?: number;
+        /** with count: every other sweep turns the opposite way */
+        opposite?: boolean;
+      }
     | { kind: 'expandingRing'; speed: number; thickness?: number; gaps: number; gapW?: number; anchor: Anchor; gapBehind?: boolean; count?: number; spacingS?: number }
     | { kind: 'randomCircles'; n: number; r: number; within?: number; anchor: Anchor; overS?: number }
     | { kind: 'wave'; w: number; speed: number; from: 'north' | 'south' | 'east' | 'west' | 'random'; safeTiles?: 'G' }
@@ -214,6 +259,8 @@ export type EffectDef = EffectBase &
     | { op: 'steal'; pct: number }
     /** the source dies (self-destructs, detonations) */
     | { op: 'die'; quiet?: boolean }
+    /** the floor inside the pattern falls away into the void for durationS (standing there = the void fall); never under a boss */
+    | { op: 'collapseFloor'; pattern: PatternDef; durationS: number }
   );
 
 export interface AttackMove {
@@ -224,6 +271,11 @@ export interface AttackMove {
   bounces?: number;
   stunOnWallS?: number;
   speed?: number;
+  /** charge: a destructible prop (room.trees) that stops it is used up, and the charger is staggered this long */
+  propStaggerS?: number;
+  /** charge: this many charges in a row, each re-aimed at the target with a fresh telegraph `chargeGapS` before it */
+  charges?: number;
+  chargeGapS?: number;
 }
 
 export interface AttackDef {
@@ -266,6 +318,19 @@ export interface AttackDef {
   onHitEffects?: EffectDef[];
   /** passive triggers: only while the enemy is moving (trails) */
   onlyWhileMoving?: boolean;
+  /** combos: only these hits (0-based) can be parried; the others cannot (overrides `parryable`) */
+  parryableHits?: number[];
+  /**
+   * started, re-aimed at the current target, as soon as this attack's active phase ends (a dive then a nova,
+   * repeated dashes, repeated volleys). Never chosen by the AI on its own; its own cooldown is ignored.
+   */
+  chain?: AttackDef;
+  /** two targets, one bar: performed by the phase's split body (BossPhase.passive.splitBody), never by the boss itself */
+  body?: 'split';
+  /** combos: the attacker turns this many degrees before each later hit instead of re-aiming (a spinning flurry) */
+  comboRotateDeg?: number;
+  /** strikes along the attacker's gaze instead of at the target; the gaze then turns this many degrees (shown as an arrow) */
+  gazeTurnDeg?: number;
 }
 
 export type MoveStyle = 'walk' | 'dash' | 'circle' | 'flank' | 'hover' | 'teleport' | 'stationary' | 'burrow' | 'ceiling' | 'orbit' | 'swarm';
@@ -332,6 +397,10 @@ export interface EnemyTraits {
   reflectsProjectiles?: boolean;
   /** never moves farther than this from where it spawned */
   homeRadius?: number;
+  /** exact max HP, unscaled by zone, cycle or party size (1-HP ice mirrors) */
+  fixedHp?: number;
+  /** never takes damage (decorative boss parts such as corner turrets) */
+  invulnerable?: boolean;
 }
 
 export interface EnemyDef {
@@ -376,10 +445,14 @@ export interface ArenaChange {
     | 'floodAll'
     | 'iceFloor'
     | 'spawnProps'
-    | 'removeProps';
+    | 'removeProps'
+    /** every hazard tile ('~') becomes a live `hazard` (the Forge's lava channel); re-applying replaces the last set */
+    | 'hazardTiles';
   value?: number;
   hazard?: HazardId;
   tiles?: string[];
+  /** thornWalls: damage per touch as a multiple of the boss's hit (else the zone thorn damage) */
+  mult?: number;
 }
 
 export interface SummonDef {
@@ -387,6 +460,8 @@ export interface SummonDef {
   count: number;
   max: number;
   everyS?: number;
+  /** where they appear: around the boss (default) or one in each free room corner (corner turrets) */
+  at?: 'boss' | 'corners';
 }
 
 export interface BossPhase {
@@ -619,6 +694,8 @@ export interface WorldState {
   garyStock: Record<string, GaryStockEntry[]>;
   shopStock: Record<string, { item: Item | null; rolls?: number; sold?: boolean }>;
   shardpile?: { zone: number; roomId: string; x: number; y: number; amount: number };
+  /** co-op guests' Shardpiles in this world, by playerId (only that player can pick one up) */
+  guestPiles?: Record<string, { zone: number; roomId: string; x: number; y: number; amount: number }>;
   bossReliquary?: string[];
   instructorKilled?: boolean;
   /** items left on the floor when the room was left (GAME_DESIGN PROCGEN §4) */

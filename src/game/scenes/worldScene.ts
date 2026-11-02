@@ -29,6 +29,8 @@ export abstract class WorldScene implements Scene {
   bossBar = newBossBarState();
   /** menus open: gameplay input off, solo sim paused */
   menuOpen = false;
+  /** false for a co-op guest: the host simulates, this scene only mirrors */
+  protected simulate = true;
 
   constructor() {
     const a = app();
@@ -59,10 +61,10 @@ export abstract class WorldScene implements Scene {
       this.local.pl.input = inp;
     }
     this.beforeStep(dt);
-    if (!this.menuOpen || w.playerCount > 1) stepWorld(w, dt);
+    if (this.simulate && (!this.menuOpen || w.playerCount > 1)) stepWorld(w, dt);
     this.afterStep(dt);
-    this.view.consume(w, w.events);
-    w.events.length = 0;
+    this.view.consume(this.w, this.w.events);
+    this.w.events.length = 0;
   }
 
   render(ctx: CanvasRenderingContext2D, alpha: number, realDt: number): void {

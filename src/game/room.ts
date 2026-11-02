@@ -18,6 +18,9 @@ export const T = {
   Void: 8,
 } as const;
 
+/** Room.overlay values: Void (the platform shrank) and Collapsed (fallen away for a while) read as T.Void; Crumbling is still floor, about to fall. */
+export const OVERLAY = { None: 0, Void: 1, Collapsed: 2, Crumbling: 3 } as const;
+
 export type Side = 'n' | 's' | 'e' | 'w';
 
 export interface DoorInfo {
@@ -89,9 +92,9 @@ export class Room {
   doors: Record<Side, DoorInfo>;
   /** zone hazard for '~' tiles */
   hazardKind = 'water';
-  /** extra temporary void/pit tiles (Landlord collapse) — 1 = void */
+  /** extra void tiles over the template (OVERLAY: a shrunk platform, a temporary collapse, a crumbling edge) */
   overlay: Uint8Array;
-  /** rotating floor ring (Tock): center, inner/outer radius, angular speed rad/s (sign = direction) */
+  /** rotating floor ring (Tock): center, inner/outer radius, speed in px/s along the ring (sign = direction) */
   rotFloor: { x: number; y: number; rIn: number; rOut: number; speed: number } | null = null;
   /** destructible tree props (Vexthorn): tile index → hits left */
   trees: Map<number, number> = new Map();
@@ -132,7 +135,7 @@ export class Room {
   get(tx: number, ty: number): number {
     if (tx < 0 || ty < 0 || tx >= ROOM_W || ty >= ROOM_H) return T.Wall;
     const o = this.overlay[ty * ROOM_W + tx]!;
-    if (o === 1) return T.Void;
+    if (o === OVERLAY.Void || o === OVERLAY.Collapsed) return T.Void;
     return this.tiles[ty * ROOM_W + tx]!;
   }
 
@@ -187,8 +190,12 @@ export class Room {
     return this.tileAt(x, y) === T.Grate;
   }
 
-  /** Move a circle by (dx, dy) with tile collision (axis-separated). Returns whether it hit a wall. */
-  moveCircle(e: { x: number; y: number; radius: number }, dx: number, dy: number, flying = false, ignoreFall = false): boolean {
+  /**
+   * Move a circle by (dx, dy) with tile collision (axis-separated). Returns whether it hit a wall.
+   * `ignoreFall`: true = pits and void do not block (dodges, knockbacks); 'void' = only the void does not
+   * (a walking player can step off an open platform edge; pits keep their rim).
+   */
+  moveCircle(e: { x: number; y: number; radius: number }, dx: number, dy: number, flying = false, ignoreFall: boolean | 'void' = false): boolean {
     let hit = false;
     const r = Math.max(4, e.radius * 0.8);
     const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 12));
@@ -209,7 +216,7 @@ export class Room {
     return hit;
   }
 
-  circleBlocked(x: number, y: number, r: number, flying = false, ignoreFall = false): boolean {
+  circleBlocked(x: number, y: number, r: number, flying = false, ignoreFall: boolean | 'void' = false): boolean {
     const x0 = Math.floor((x - r) / TILE);
     const x1 = Math.floor((x + r) / TILE);
     const y0 = Math.floor((y - r - ROOM_Y0) / TILE);
@@ -218,7 +225,7 @@ export class Room {
       for (let tx = x0; tx <= x1; tx++) {
         const t = this.get(tx, ty);
         let blocks: boolean;
-        if (ignoreFall && (t === T.Pit || t === T.Void)) blocks = false;
+        if ((ignoreFall === true && t === T.Pit) || (ignoreFall && t === T.Void)) blocks = false;
         else blocks = this.blocksMove(tx, ty, flying);
         if (!blocks) continue;
         // circle vs tile rect
@@ -293,6 +300,7 @@ export function charToTile(ch: string): number {
     case 'P':
       return T.Pillar;
     case 'o':
+    case 't': // a tree (boss arenas): a prop a charge can break (room.trees)
       return T.Prop;
     case '~':
       return T.Hazard;

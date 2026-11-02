@@ -160,6 +160,11 @@ export function flaskMaxFor(bossesBeaten: number, socks: boolean): number {
   return Math.min(5, 1 + Math.floor(Math.min(8, bossesBeaten) / 2) + (socks ? 1 : 0));
 }
 
+/** The Thermos size right now: the character's flask max, +1 with Joe's Lucky Socks on (never above 5). */
+export function flaskCap(c: { flaskMax: number; equipment: { legs: { legendaryPower?: string } | null } }): number {
+  return Math.min(5, c.flaskMax + (c.equipment.legs?.legendaryPower === 'lucky_socks' ? 1 : 0));
+}
+
 /** Stardust for selling a gem: 40 × 3^(tier−1); upgrade = 10× sell; re-roll = 2× sell. */
 export function gemSellValue(tier: number): number {
   return 40 * Math.pow(3, tier - 1);

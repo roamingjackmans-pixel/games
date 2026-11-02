@@ -24,7 +24,17 @@ export type Shape =
   | { k: 'expRing'; x: number; y: number; speed: number; thick: number; gaps: number[]; gapW: number; maxR: number }
   | { k: 'wave'; dir: 'north' | 'south' | 'east' | 'west'; w: number; speed: number; safeGrates: boolean }
   | { k: 'pockets'; pockets: { x: number; y: number; r: number }[] }
-  | { k: 'beam'; x: number; y: number; a: number; w: number; l: number; turn: number };
+  | { k: 'beam'; x: number; y: number; a: number; w: number; l: number; turn: number }
+  /** a boulder of diameter 0.9 w rolling from (x, y) along angle a for l px at speed px/s after impact */
+  | { k: 'roll'; x: number; y: number; a: number; w: number; l: number; speed: number };
+
+/** The four 'corner' anchor points (NW, NE, SW, SE): corner sweeps start here, corner turrets stand here. */
+export const ROOM_CORNERS: readonly [number, number][] = [
+  [ROOM_MIN_X + 20, ROOM_MIN_Y + 20],
+  [ROOM_MAX_X - 20, ROOM_MIN_Y + 20],
+  [ROOM_MIN_X + 20, ROOM_MAX_Y - 20],
+  [ROOM_MAX_X - 20, ROOM_MAX_Y - 20],
+];
 
 export interface TeleSpec {
   shapes: Shape[];
@@ -56,6 +66,27 @@ export interface PatternCtx {
   rng: Rng;
   room: Room | null;
   telegraphS: number;
+  /** each living player's recent positions, oldest first, with their age in seconds (anchor 'eachPlayerPast(1.0)') */
+  pastTrails?: { age: number; x: number; y: number }[][];
+}
+
+/** `n` points 0.1 s apart along each player's path, starting `ageS` seconds ago (repeats where they stood still are dropped). */
+function pastPoints(c: PatternCtx, ageS: number, n: number): [number, number][] {
+  const out: [number, number][] = [];
+  const trails = c.pastTrails ?? c.players.map((p) => [{ age: 0, x: p.x, y: p.y }]);
+  for (const tr of trails) {
+    let last: [number, number] | null = null;
+    for (let i = 0; i < n; i++) {
+      const want = Math.max(0, ageS - i * 0.1);
+      let best: { age: number; x: number; y: number } | null = null;
+      for (const q of tr) if (!best || Math.abs(q.age - want) < Math.abs(best.age - want)) best = q;
+      if (!best) continue;
+      if (last && Math.hypot(best.x - last[0], best.y - last[1]) < 8) continue;
+      last = [best.x, best.y];
+      out.push(last);
+    }
+  }
+  return out.length ? out : [[c.tx, c.ty]];
 }
 
 function spec(shapes: Shape[], o: Partial<TeleSpec> = {}): TeleSpec {
@@ -88,6 +119,8 @@ function anchorPoints(a: Anchor | undefined, c: PatternCtx): [number, number][] 
       return [[c.pastX ?? c.tx, c.pastY ?? c.ty]];
     case 'eachPlayer':
       return c.players.length ? c.players.map((p) => [p.x, p.y] as [number, number]) : [[c.tx, c.ty]];
+    case 'eachPlayerPast(1.0)':
+      return pastPoints(c, 1.0, 1);
     case 'center':
       return [[ROOM_CX, ROOM_CY]];
     case 'corner': {
@@ -138,6 +171,8 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
     case 'projectile':
       return [];
     case 'circle': {
+      // strikes along each player's recent path (Rewind Volley): `count` points 0.1 s apart from 1.0 s ago
+      if (p.anchor === 'eachPlayerPast(1.0)') return [spec(pastPoints(c, 1.0, p.count ?? 1).map(([x, y]): Shape => ({ k: 'circle', x, y, r: p.r })), { area: true })];
       const pts = anchorPoints(p.anchor, c);
       const shapes: Shape[] = [];
       for (const [x, y] of pts) for (let i = 0; i < (p.count ?? 1); i++) {
@@ -160,9 +195,13 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
           let a = c.facing;
           if (p.anchor === 'target' || p.anchor === 'targetPast(1.0)') a = c.facing;
           if (p.randomAngles) a = c.rng.range(-Math.PI, Math.PI);
+          else if (n > 1 && p.spokes) a = c.facing + (i * Math.PI * 2) / n;
           else if (n > 1) a = c.facing + (i - (n - 1) / 2) * ((p.angleOffsetDeg ?? 90) * DEG);
           else if (p.angleOffsetDeg) a += p.angleOffsetDeg * DEG;
-          if (p.through) {
+          if (p.toAim) {
+            // anchor → aim point exactly (a returning hammer's path)
+            shapes.push({ k: 'line', x, y, a: Math.atan2(c.ty - y, c.tx - x), w: p.w, l: Math.max(1, Math.hypot(c.tx - x, c.ty - y)) });
+          } else if (p.through) {
             const l = lenTo(c, x, y, a, 'room');
             shapes.push({ k: 'line', x, y, a, w: p.w, l });
           } else {
@@ -191,19 +230,34 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
             ? ({ k: 'line', x: cc, y: ROOM_MIN_Y - 32, a: Math.PI / 2, w: p.w, l: ROOM_MAX_Y - ROOM_MIN_Y + 64 } as Shape)
             : ({ k: 'line', x: ROOM_MIN_X - 32, y: cc, a: 0, w: p.w, l: ROOM_MAX_X - ROOM_MIN_X + 64 } as Shape),
         );
+      // rolling lanes: a boulder starts at one end of each lane (alternating ends) and rolls to the other
+      const len = vertical ? ROOM_MAX_Y - ROOM_MIN_Y + 64 : ROOM_MAX_X - ROOM_MIN_X + 64;
+      const roll = p.roll;
+      const mkRoll = (centers: number[]): Shape[] =>
+        centers.map((cc, i): Shape => {
+          const back = i % 2 === 1;
+          const a = (vertical ? Math.PI / 2 : 0) + (back ? Math.PI : 0);
+          const x = vertical ? cc : back ? ROOM_MAX_X + 32 : ROOM_MIN_X - 32;
+          const y = vertical ? (back ? ROOM_MAX_Y + 32 : ROOM_MIN_Y - 32) : cc;
+          return { k: 'roll', x, y, a, w: p.w, l: len, speed: roll?.speed ?? 600 };
+        });
+      const make = roll ? mkRoll : mk;
+      const laneOpts: Partial<TeleSpec> = roll ? { area: true, mode: 'once', activeS: len / roll.speed } : { area: true };
+      // lanes that stay lit (bellows jets): they hit every tickS for durationS
+      if (!roll && p.tickS) Object.assign(laneOpts, { mode: 'tick', activeS: p.durationS ?? 1, tickS: p.tickS });
       if (p.alternate) {
         const step = span / (p.n * 2);
         const a: number[] = [];
         const b: number[] = [];
         for (let i = 0; i < p.n * 2; i++) (i % 2 === 0 ? a : b).push(lo + step * (i + 0.5));
         const gap = p.setGapS ?? 0.8;
-        return [spec(mk(a), { area: true }), spec(mk(b), { area: true, delay: gap })];
+        return [spec(make(a), { ...laneOpts }), spec(make(b), { ...laneOpts, delay: gap })];
       }
       const step = span / p.n;
       const off = c.rng.range(-step * 0.25, step * 0.25);
       const centers: number[] = [];
       for (let i = 0; i < p.n; i++) centers.push(lo + step * (i + 0.5) + off);
-      return [spec(mk(centers), { area: true })];
+      return [spec(make(centers), { ...laneOpts })];
     }
     case 'grid': {
       const pts: { x: number; y: number; parity: number }[] = [];
@@ -231,6 +285,7 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
       return [spec(pts.map(circ), { area: true, pulses, pulseGap: 0.8 })];
     }
     case 'sweep': {
+      if ((p.count ?? 1) > 1 || p.anchor !== 'self') return remoteSweeps(p, c);
       const [x, y] = anchorPoints(p.anchor, c)[0]!;
       const arc = p.angleDeg * DEG * (p.clockwise === false ? -1 : 1);
       const a0 = Math.abs(p.angleDeg) >= 360 ? c.facing : c.facing - arc / 2;
@@ -334,6 +389,36 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
       return out;
     }
   }
+}
+
+/**
+ * Sweeps from somewhere other than the attacker (corner turrets), or several at once: each starts pointing
+ * at the target from its own anchor; with anchor 'corner' every sweep gets its own corner (the second one
+ * diagonally opposite the first); `opposite` turns every other sweep the other way.
+ */
+function remoteSweeps(p: Extract<PatternDef, { kind: 'sweep' }>, c: PatternCtx): TeleSpec[] {
+  const n = Math.max(1, p.count ?? 1);
+  const pts: [number, number][] = [];
+  if (p.anchor === 'corner') {
+    const first = c.rng.int(0, 3);
+    const order = [first, 3 - first, ...[0, 1, 2, 3].filter((i) => i !== first && i !== 3 - first)];
+    for (let i = 0; i < n; i++) pts.push([...ROOM_CORNERS[order[i % 4]!]!]);
+  } else for (let i = 0; i < n; i++) pts.push(anchorPoints(p.anchor, c)[0]!);
+  const r = p.r === 'room' ? ROOM_DIAG : p.r;
+  return pts.map(([x, y], i) => {
+    const dir = (p.clockwise === false ? -1 : 1) * (p.opposite && i % 2 === 1 ? -1 : 1);
+    const arc = p.angleDeg * DEG * dir;
+    const self = p.anchor === 'self';
+    const aim = self ? c.facing + (i * Math.PI * 2) / n : Math.atan2(c.ty - y, c.tx - x);
+    const a0 = Math.abs(p.angleDeg) >= 360 ? aim : aim - arc / 2;
+    return spec([{ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }], {
+      mode: p.tickS ? 'tick' : 'once',
+      activeS: p.durationS,
+      tickS: p.tickS ?? 0,
+      area: true,
+      follow: self,
+    });
+  });
 }
 
 /** Expanding-ring gaps: one gap within escape reach of every player (D47), the rest random. */
@@ -458,7 +543,17 @@ export function shapeHit(s: Shape, tau: number, x: number, y: number, r: number,
       for (const p of s.pockets) if (dist(p.x, p.y, x, y) <= p.r - r * 0.3) return false;
       return true;
     }
+    case 'roll': {
+      const [bx, by] = rollPos(s, tau);
+      return circleHit(bx, by, s.w * 0.45, x, y, r);
+    }
   }
+}
+
+/** Where a rolling lane's boulder is at tau seconds after impact. */
+export function rollPos(s: Extract<Shape, { k: 'roll' }>, tau: number): [number, number] {
+  const d = clamp(s.speed * tau, 0, s.l);
+  return [s.x + Math.cos(s.a) * d, s.y + Math.sin(s.a) * d];
 }
 
 // ---------- escapability (GAME_DESIGN §5.6, CONTENT_ENEMIES §13 item 4) ----------

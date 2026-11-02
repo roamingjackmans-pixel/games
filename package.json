@@ -21,6 +21,7 @@
     "deploy": "node scripts/deploy-info.mjs"
   },
   "dependencies": {
+    "@trystero-p2p/mqtt": "0.26.0",
     "trystero": "0.26.0"
   },
   "devDependencies": {

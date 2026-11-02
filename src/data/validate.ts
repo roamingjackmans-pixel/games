@@ -51,6 +51,8 @@ export function validateAttack(where: string, a: AttackDef, issues: ValidationIs
     if (e.op === 'damage' && e.status && !STATUS_IDS.includes(e.status.id)) issues.push({ where, msg: `unknown status ${e.status.id}` });
     if (e.op === 'summon' && !ENEMIES[e.enemyId]) issues.push({ where, msg: `summons unknown enemy ${e.enemyId}` });
   });
+  // a chained follow-up is its own attack (its own kind and telegraph): it is held to the same rules
+  if (a.chain) validateAttack(`${where}>${a.chain.id}`, a.chain, issues);
 }
 
 export function validateEnemy(d: EnemyDef, issues: ValidationIssue[]): void {

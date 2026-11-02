@@ -2,7 +2,7 @@
 // pits, grates, doors. Re-rendered only when the room's tiles or doors change.
 import { OUTLINE, offscreen, shade, withAlpha } from '../engine/draw/parts';
 import { Rng } from '../engine/rng';
-import { ROOM_H, ROOM_W, ROOM_Y0, T, TILE, doorTiles, type Room, type Side } from '../game/room';
+import { OVERLAY, ROOM_H, ROOM_W, ROOM_Y0, T, TILE, doorTiles, type Room, type Side } from '../game/room';
 import type { Palette } from '../game/types';
 
 export const DEFAULT_PALETTE: Palette = {
@@ -83,7 +83,9 @@ function renderRoom(room: Room, pal: Palette, propStyle: string): CanvasImageSou
   for (const s of ['n', 's', 'e', 'w'] as Side[]) for (const [dx, dy] of doorTiles(s)) doorSet.set(`${dx},${dy}`, s);
   for (let ty = 0; ty < ROOM_H; ty++) {
     for (let tx = 0; tx < ROOM_W; tx++) {
-      const t = room.tiles[ty * ROOM_W + tx]!;
+      // fallen floor (a shrunk or collapsed platform) reads as void
+      const ov = room.overlay[ty * ROOM_W + tx]!;
+      const t = ov === OVERLAY.Void || ov === OVERLAY.Collapsed ? T.Void : room.tiles[ty * ROOM_W + tx]!;
       const x = tx * TILE;
       const y = ty * TILE;
       const side = doorSet.get(`${tx},${ty}`);
@@ -117,7 +119,8 @@ function renderRoom(room: Room, pal: Palette, propStyle: string): CanvasImageSou
           ctx.strokeRect(x + 2, y + 2, TILE - 4, TILE - 4);
           break;
         case T.Prop:
-          drawProp(ctx, x, y, propStyle, pal, rng);
+          // breakable trees are drawn as whole clumps after this pass
+          if (!room.trees.has(ty * ROOM_W + tx)) drawProp(ctx, x, y, propStyle, pal, rng);
           break;
         case T.Hazard:
           drawHazardTile(ctx, x, y, room.hazardKind, pal, tx, ty);
@@ -128,11 +131,26 @@ function renderRoom(room: Room, pal: Palette, propStyle: string): CanvasImageSou
           ctx.fillStyle = withAlpha(pal.floor, 0.5);
           if (room.get(tx, ty - 1) !== T.Pit) ctx.fillRect(x, y, TILE, 5);
           break;
-        case T.Void:
+        case T.Void: {
           ctx.clearRect(x, y, TILE, TILE);
           ctx.fillStyle = '#06030a';
           ctx.fillRect(x, y, TILE, TILE);
+          // a far star or two (position from the tile, not the floor rng, so floors keep their speckles)
+          const h = (tx * 73856093) ^ (ty * 19349663);
+          if ((h & 15) === 0) {
+            ctx.fillStyle = withAlpha((h & 16) === 0 ? '#b06bff' : '#e8e4f0', 0.5);
+            ctx.fillRect(x + ((h >> 5) & 27), y + ((h >> 9) & 27), 2, 2);
+          }
+          // the platform's cliff face under a floor tile
+          const above = room.get(tx, ty - 1);
+          if (ty > 0 && above !== T.Void && above !== T.Wall && above !== T.Door) {
+            ctx.fillStyle = shade(pal.floor, 0.55);
+            ctx.fillRect(x, y, TILE, 9);
+            ctx.fillStyle = withAlpha('#7a2bd6', 0.35);
+            ctx.fillRect(x, y + 9, TILE, 2);
+          }
           break;
+        }
         case T.Grate:
           ctx.fillStyle = '#5a5a52';
           ctx.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
@@ -148,9 +166,93 @@ function renderRoom(room: Room, pal: Palette, propStyle: string): CanvasImageSou
         default:
           break;
       }
+      // crumbling floor (about to fall away): violet cracks
+      if (ov === OVERLAY.Crumbling) {
+        ctx.fillStyle = withAlpha('#7a2bd6', 0.18);
+        ctx.fillRect(x, y, TILE, TILE);
+        ctx.strokeStyle = withAlpha('#d6a8ff', 0.7);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + 6 + ((tx * 5) % 9));
+        ctx.lineTo(x + 15, y + 15);
+        ctx.lineTo(x + 28, y + 9 + ((ty * 7) % 11));
+        ctx.moveTo(x + 15, y + 15);
+        ctx.lineTo(x + 12 + ((tx + ty) % 8), y + 29);
+        ctx.stroke();
+      }
     }
   }
+  if (room.trees.size) drawTrees(ctx, room);
   return canvas;
+}
+
+/** Breakable trees (room.trees): one thorny canopy per connected clump of tree tiles. */
+function drawTrees(ctx: CanvasRenderingContext2D, room: Room): void {
+  const seen = new Set<number>();
+  for (const start of room.trees.keys()) {
+    if (seen.has(start) || room.tiles[start] !== T.Prop) continue;
+    const clump: number[] = [];
+    const q = [start];
+    seen.add(start);
+    while (q.length) {
+      const i = q.pop()!;
+      clump.push(i);
+      for (const n of [i - 1, i + 1, i - ROOM_W, i + ROOM_W]) {
+        if (!room.trees.has(n) || seen.has(n) || room.tiles[n] !== T.Prop) continue;
+        seen.add(n);
+        q.push(n);
+      }
+    }
+    let cx = 0;
+    let cy = 0;
+    for (const i of clump) {
+      cx += (i % ROOM_W) * TILE + TILE / 2;
+      cy += Math.floor(i / ROOM_W) * TILE + TILE / 2;
+    }
+    cx /= clump.length;
+    cy /= clump.length;
+    const r = TILE * 0.62 * Math.sqrt(clump.length);
+    // shadow, trunk, then a canopy ringed with thorns
+    ctx.fillStyle = withAlpha('#000000', 0.35);
+    ctx.beginPath();
+    ctx.ellipse(cx + 4, cy + r * 0.5, r * 1.05, r * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#4a3018';
+    ctx.fillRect(cx - r * 0.18, cy, r * 0.36, r * 0.75);
+    ctx.fillStyle = '#2a1a0c';
+    ctx.beginPath();
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2;
+      const rr = k % 2 === 0 ? r * 1.12 : r * 0.92;
+      ctx.lineTo(cx + Math.cos(a) * rr, cy - r * 0.2 + Math.sin(a) * rr * 0.9);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#1f3d22';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - r * 0.2, r * 0.9, r * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#2f5a30';
+    for (const [ox, oy, k] of [
+      [-0.35, -0.45, 0.38],
+      [0.3, -0.35, 0.32],
+      [0.05, 0.05, 0.3],
+    ] as const) {
+      ctx.beginPath();
+      ctx.ellipse(cx + ox * r, cy - r * 0.2 + oy * r * 0.8, r * k, r * k * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // a few amber fey motes in the leaves
+    ctx.fillStyle = '#e6b84a';
+    for (const [ox, oy] of [
+      [-0.4, -0.1],
+      [0.35, -0.55],
+      [0.2, 0.25],
+    ] as const) ctx.fillRect(cx + ox * r - 1.5, cy - r * 0.2 + oy * r - 1.5, 3, 3);
+  }
 }
 
 function drawDoorTile(ctx: CanvasRenderingContext2D, x: number, y: number, open: boolean, pal: Palette, side: Side): void {

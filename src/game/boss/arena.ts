@@ -1,12 +1,25 @@
 // Boss arena changes (DATA_MODEL ArenaChange): applied when a boss phase starts. Each op is generic; the
 // boss data says which ones it uses and with what value.
 import { dist } from '../../engine/math';
-import { ROOM_H, ROOM_W, T, tileCenter } from '../room';
+import { emptySpec } from '../combat/damage';
+import type { Shape } from '../combat/patterns';
+import { attackDamage } from '../enemies/spawn';
+import { ROOM_H, ROOM_W, ROOM_Y0, T, TILE, tileCenter } from '../room';
 import { spawnHazard } from '../systems/hazards';
-import type { ArenaChange } from '../types';
-import type { Entity, World } from '../world';
+import { shrinkPlatform } from './platform';
+import type { ArenaChange, BossDef } from '../types';
+import type { DamageSpec, Entity, World } from '../world';
 
 const FOREVER = 1e6;
+
+/** A hazard hit worth `mult` of the boss's own hit in its current phase (thorn walls that deal ×0.5 on touch). */
+function bossHitSpec(boss: Entity, mult: number): DamageSpec {
+  const spec = emptySpec('normal');
+  spec.parryable = false;
+  const phase = (boss.en!.def as unknown as BossDef).phases?.[boss.en!.phase];
+  spec.dmg.physical = attackDamage(boss, mult) * (phase?.dmgMult ?? 1);
+  return spec;
+}
 
 function floorSpots(w: World): [number, number][] {
   const out: [number, number][] = [];
@@ -78,7 +91,24 @@ function applyArenaChange(w: World, c: ArenaChange, boss: Entity | null): void {
         FOREVER,
         1,
         ownerId,
+        c.mult && boss?.en ? { spec: bossHitSpec(boss, c.mult) } : {},
       );
+      break;
+    }
+    case 'hazardTiles': {
+      // the '~' tiles become a live hazard (merged into one line per row run); re-applying replaces the last set
+      const kind = c.hazard ?? 'lava';
+      for (const h of w.entities.values()) if (h.type === 'hazard' && !h.removed && h.hz?.ownerId === ownerId && h.hz.hazard === kind && h.hz.until >= FOREVER) w.remove(h);
+      const shapes: Shape[] = [];
+      for (let y = 0; y < ROOM_H; y++)
+        for (let x = 0; x < ROOM_W; x++) {
+          if (w.room.get(x, y) !== T.Hazard) continue;
+          let x2 = x;
+          while (x2 + 1 < ROOM_W && w.room.get(x2 + 1, y) === T.Hazard) x2++;
+          shapes.push({ k: 'line', x: x * TILE, y: ROOM_Y0 + y * TILE + TILE / 2, a: 0, w: TILE, l: (x2 - x + 1) * TILE });
+          x = x2;
+        }
+      if (shapes.length) spawnHazard(w, kind, shapes, FOREVER, 1, ownerId);
       break;
     }
     case 'widenLava': {
@@ -92,20 +122,11 @@ function applyArenaChange(w: World, c: ArenaChange, boss: Entity | null): void {
       for (const [x, y] of grow) w.room.set(x, y, T.Hazard);
       break;
     }
-    case 'shrinkPlatform': {
-      // the outer `value` tiles of the arena fall away (temporary void overlay; never the door approaches)
-      const k = c.value ?? 3;
-      for (let y = 1; y < ROOM_H - 1; y++)
-        for (let x = 1; x < ROOM_W - 1; x++) {
-          const edge = Math.min(x - 1, y - 1, ROOM_W - 2 - x, ROOM_H - 2 - y);
-          if (edge >= k) continue;
-          const nearDoor = (Math.abs(x - 19.5) < 2 && (y < 3 || y > ROOM_H - 4)) || (Math.abs(y - 10.5) < 2 && (x < 3 || x > ROOM_W - 4));
-          if (nearDoor) continue;
-          w.room.overlay[y * ROOM_W + x] = 1;
-        }
-      w.room.version++;
+    case 'shrinkPlatform':
+      // value < 1: that fraction of the platform's area falls away (scaled toward its centre); value ≥ 1: that
+      // many outer rows/columns. The edge crumbles for 2 s first; door approaches and the boss's ground stay.
+      shrinkPlatform(w, c.value ?? 0.25, boss);
       break;
-    }
     case 'reverseFloor':
       if (w.room.rotFloor) w.room.rotFloor.speed = -w.room.rotFloor.speed * (c.value ?? 1);
       break;

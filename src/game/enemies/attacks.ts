@@ -9,6 +9,8 @@ import { attackDamage } from './spawn';
 import type { AttackDef, PatternDef } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y } from '../combat/patterns';
+import { ROOM_CX, ROOM_CY, escapeReach } from '../combat/patterns';
+import { ROOM_W, ROOM_Y0, T, TILE, tileCenter, worldToTile } from '../room';
 
 export function enemyAttackSpec(e: Entity, atk: AttackDef, mult = 1): DamageSpec {
   const en = e.en!;
@@ -53,6 +55,8 @@ export function patternCtx(w: World, e: Entity, tx: number, ty: number, teleS: n
     rng: w.combat,
     room: w.room,
     telegraphS: teleS,
+    // every player's recent path, oldest first (Rewind Volley strikes where they were)
+    pastTrails: w.livingPlayers().map((p) => (p.pl?.pastPos.length ? p.pl.pastPos.map((q) => ({ age: w.time - q.t, x: q.x, y: q.y })) : [{ age: 0, x: p.x, y: p.y }])),
   };
 }
 
@@ -73,7 +77,13 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
   const recover = atk.recoverMs / 1000 / slow / phaseSpeed;
   en.cooldowns[atk.id] = now + atk.cooldownS;
   en.lastAttackId = atk.id;
-  if (target) e.facing = Math.atan2(ty - e.y, tx - e.x);
+  if (atk.gazeTurnDeg !== undefined) {
+    // a gaze attack strikes along the attacker's gaze (first use: at the target), which then turns for the next use
+    const g = en.gaze ?? (target ? Math.atan2(ty - e.y, tx - e.x) : e.facing);
+    e.facing = g;
+    const next = g + atk.gazeTurnDeg * DEG;
+    en.gaze = Math.atan2(Math.sin(next), Math.cos(next));
+  } else if (target) e.facing = Math.atan2(ty - e.y, tx - e.x);
   en.attack = {
     def: atk,
     t: 0,
@@ -132,6 +142,7 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
   // telegraphs for area / melee patterns (projectiles have none: the windup pose is their tell)
   if (atk.pattern && atk.pattern.kind !== 'projectile' && atk.pattern.kind !== 'trail') {
     const spec = enemyAttackSpec(e, atk, atk.comboMults?.[0] ?? 1);
+    if (atk.parryableHits) spec.parryable = atk.parryableHits.includes(0);
     let teleS = windup;
     if (mv?.kind === 'leap' || mv?.kind === 'lunge' || mv?.kind === 'charge') teleS = windup + (mv.kind === 'leap' ? active : 0);
     const ctx = patternCtx(w, e, tx, ty, teleS);
@@ -145,7 +156,8 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
       team: 1,
       kind: atk.kind,
       windupS: teleS,
-      spec: mv?.kind === 'charge' || mv?.kind === 'lunge' ? null : spec,
+      // charges and lunges hit with the body; a 0-damage area with no status or control only carries its effects
+      spec: mv?.kind === 'charge' || mv?.kind === 'lunge' || (atk.dmgMult === 0 && !atk.status && !atk.control) ? null : spec,
       ctx,
       onImpact: atk.effects && atk.kind !== 'utility' ? atk.effects : [],
       trackTargetId: target?.id ?? 0,
@@ -211,6 +223,16 @@ function activeMove(w: World, e: Entity, dt: number): void {
     e.y += Math.sin(ang) * Math.min(sp * dt, dist(e.x, e.y, a.aimX, a.aimY));
     e.anim.scale = 1 + Math.sin((a.t / a.active) * Math.PI) * 0.35;
   } else if (mv.kind === 'charge') {
+    // repeated charges: he stands re-aimed while the next telegraph shows
+    if ((a.pauseUntil ?? 0) > now) {
+      a.t = 0;
+      return;
+    }
+    if (a.pauseUntil) {
+      a.pauseUntil = 0;
+      e.anim.tint = null;
+      w.sfx(a.def.kind === 'red' ? 'swingHeavy' : 'swingMedium', e.x);
+    }
     const sp = mv.speed ?? 620;
     const hit = w.room.moveCircle(e, Math.cos(a.angle) * sp * dt, Math.sin(a.angle) * sp * dt, false);
     bodyHits(w, e, 22);
@@ -219,6 +241,23 @@ function activeMove(w: World, e: Entity, dt: number): void {
         a.comboIdx++;
         a.angle = a.angle + Math.PI;
         a.hit.clear();
+        return;
+      }
+      // a breakable prop (a tree) takes the charge: it is used up and the charger reels (the punish window)
+      if (hit && mv.propStaggerS && breakPropAhead(w, e, a.angle)) {
+        a.t = a.active;
+        en.stunUntil = now + mv.propStaggerS;
+        e.hp!.staggerUntil = now + mv.propStaggerS;
+        e.anim.tint = null;
+        w.emit({ t: 'shake', amount: 9 });
+        w.sfx('hitBone', e.x);
+        w.hooks.onChargeEnd?.(w, e, hit);
+        return;
+      }
+      const done = (a.chargesDone ?? 0) + 1;
+      if (mv.charges && done < mv.charges) {
+        a.chargesDone = done;
+        reaimCharge(w, e, mv.chargeGapS ?? 0.5);
         return;
       }
       a.t = a.active; // end the charge
@@ -232,6 +271,81 @@ function activeMove(w: World, e: Entity, dt: number): void {
       w.hooks.onChargeEnd?.(w, e, hit);
     }
   }
+}
+
+/** Between repeated charges: face the (current) target and telegraph the next charge for `gapS`. */
+function reaimCharge(w: World, e: Entity, gapS: number): void {
+  const a = e.en!.attack!;
+  const t = w.get(e.en!.targetId) ?? w.get(a.targetId);
+  if (t && !t.pl?.downed) {
+    e.facing = Math.atan2(t.y - e.y, t.x - e.x);
+    a.angle = e.facing;
+    a.aimX = t.x;
+    a.aimY = t.y;
+  }
+  a.pauseUntil = w.time + gapS;
+  a.t = 0;
+  a.hit.clear();
+  e.anim.tint = a.def.kind === 'red' ? 'red' : a.def.kind === 'pierce' ? 'blue' : null;
+  if (a.def.kind === 'red') w.sfx('redWarning', e.x);
+  if (a.def.pattern) {
+    const teles = spawnTelegraphs(w, a.def.pattern, { ownerId: e.id, team: 1, kind: a.def.kind, windupS: gapS, spec: null, ctx: patternCtx(w, e, a.aimX, a.aimY, gapS), trackTargetId: a.targetId, minActiveS: 1.2 });
+    a.teleIds.push(...teles.map((x) => x.id));
+  }
+}
+
+/** A charge stopped against a breakable prop (room.trees): the prop's whole clump takes one hit. */
+function breakPropAhead(w: World, e: Entity, angle: number): boolean {
+  const room = w.room;
+  if (!room.trees.size) return false;
+  const r = Math.max(4, e.radius * 0.8);
+  const reach = r + 8;
+  const ca = Math.cos(angle);
+  const sa = Math.sin(angle);
+  const [x0, y0] = worldToTile(e.x - reach, e.y - reach);
+  const [x1, y1] = worldToTile(e.x + reach, e.y + reach);
+  let best = -1;
+  let bestDot = -Infinity;
+  for (let ty = y0; ty <= y1; ty++)
+    for (let tx = x0; tx <= x1; tx++) {
+      const idx = ty * ROOM_W + tx;
+      if (!room.trees.has(idx) || room.get(tx, ty) !== T.Prop) continue;
+      const cx = clamp(e.x, tx * TILE, tx * TILE + TILE);
+      const cy = clamp(e.y, ROOM_Y0 + ty * TILE, ROOM_Y0 + ty * TILE + TILE);
+      if (Math.hypot(cx - e.x, cy - e.y) > reach) continue;
+      const dot = (cx - e.x) * ca + (cy - e.y) * sa;
+      if (dot > bestDot) {
+        bestDot = dot;
+        best = idx;
+      }
+    }
+  // only a prop in front of the charge (or square at its side when it slid along) counts
+  if (best < 0 || bestDot < -4) return false;
+  const clump = [best];
+  const seen = new Set(clump);
+  for (let i = 0; i < clump.length; i++) {
+    const c = clump[i]!;
+    for (const n of [c - 1, c + 1, c - ROOM_W, c + ROOM_W]) {
+      if (seen.has(n) || !room.trees.has(n) || room.tiles[n] !== T.Prop) continue;
+      seen.add(n);
+      clump.push(n);
+    }
+  }
+  for (const idx of clump) {
+    const left = (room.trees.get(idx) ?? 1) - 1;
+    if (left > 0) {
+      room.trees.set(idx, left);
+      continue;
+    }
+    room.trees.delete(idx);
+    const tx = idx % ROOM_W;
+    const ty = Math.floor(idx / ROOM_W);
+    room.set(tx, ty, T.Floor);
+    const [cx, cy] = tileCenter(tx, ty);
+    w.fx('burst', cx, cy, { color: '#2f5a30', n: 12, r: 34 });
+    w.fx('dust', cx, cy, { n: 8 });
+  }
+  return true;
 }
 
 function bodyHits(w: World, e: Entity, extra: number): void {
@@ -325,6 +439,7 @@ function comboHit(w: World, e: Entity, atk: AttackDef, idx: number): void {
   if (!atk.pattern || idx === 0) return; // hit 0 is the telegraph's own impact
   const mult = atk.comboMults?.[idx] ?? 1;
   const spec = enemyAttackSpec(e, atk, mult);
+  if (atk.parryableHits) spec.parryable = atk.parryableHits.includes(idx);
   const target = w.get(e.en!.attack!.targetId);
   const tx = target?.x ?? e.x + Math.cos(e.facing) * 80;
   const ty = target?.y ?? e.y + Math.sin(e.facing) * 80;
@@ -341,7 +456,7 @@ export function updateEnemyAttack(w: World, e: Entity, dt: number): void {
   const target = w.get(a.targetId);
   if (a.phase === 'windup') {
     // track the target during the first 60% of the windup, then lock (fair dodge timing)
-    if (target && a.t < a.windup * 0.6 && !a.def.move?.untilWall) {
+    if (target && a.t < a.windup * 0.6 && !a.def.move?.untilWall && a.def.gazeTurnDeg === undefined) {
       const want = Math.atan2(target.y - e.y, target.x - e.x);
       const rate = (en.def.traits?.turnRate ?? 240) * DEG;
       e.facing = turnToward(e.facing, want, rate * dt);
@@ -378,7 +493,8 @@ export function updateEnemyAttack(w: World, e: Entity, dt: number): void {
       const want = Math.min(a.def.comboMults.length - 1, Math.floor(a.t / gap));
       while (a.comboIdx < want) {
         a.comboIdx++;
-        if (target) e.facing = turnToward(e.facing, Math.atan2(target.y - e.y, target.x - e.x), 60 * DEG);
+        if (a.def.comboRotateDeg) e.facing += a.def.comboRotateDeg * DEG;
+        else if (target) e.facing = turnToward(e.facing, Math.atan2(target.y - e.y, target.x - e.x), 60 * DEG);
         comboHit(w, e, a.def, a.comboIdx);
       }
     }
@@ -397,6 +513,12 @@ export function updateEnemyAttack(w: World, e: Entity, dt: number): void {
       if (a.def.stunAfterS) {
         en.stunUntil = now + a.def.stunAfterS;
         e.hp!.staggerUntil = now + a.def.stunAfterS;
+      }
+      // a chained attack starts at once, re-aimed (Judgment's Frost Nova, repeated dashes and volleys)
+      if (a.def.chain && !e.hp!.dead) {
+        const next = w.get(en.targetId) ?? target;
+        startEnemyAttack(w, e, a.def.chain, next && !next.removed && !next.pl?.downed ? next : null);
+        return;
       }
     }
   } else {
@@ -494,6 +616,18 @@ export function patternAllowed(w: World, e: Entity, atk: AttackDef, target: Enti
     return w.livingPlayers().every((pl) => nearestGrate(w, pl.x, pl.y) <= reach);
   }
   return true;
+}
+
+/**
+ * Condition 'ringReachable' (a ring out to the room's edge: everything beyond rIn is hit): every player can get
+ * inside rIn before it lands, under the pattern's pull (GAME_DESIGN §5.6).
+ */
+export function ringReachable(w: World, e: Entity, atk: AttackDef, target: Entity): boolean {
+  const p = atk.pattern;
+  if (!p || p.kind !== 'ring') return true;
+  const [ax, ay] = p.anchor === 'center' ? [ROOM_CX, ROOM_CY] : p.anchor === 'target' || p.anchor === 'aim' || p.anchor === 'point' ? [target.x, target.y] : [e.x, e.y];
+  const reach = escapeReach(atk.windupMs / 1000, p.pullSpeed ?? 0);
+  return w.livingPlayers().every((pl) => dist(pl.x, pl.y, ax, ay) - p.rIn <= reach);
 }
 
 function nearestGrate(w: World, x: number, y: number): number {

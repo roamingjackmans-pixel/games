@@ -192,11 +192,26 @@ export function rawDamage(w: World, e: Entity, amount: number, type: DamageType,
   if (e.pl && (w.god || e.pl.downed || e.pl.deadUntilRest)) return;
   if (e.en?.gary) return;
   if (e.en?.isBoss && e.en.phaseTransitionUntil > w.time) return;
+  if (e.en?.def.traits?.invulnerable) return;
+  // two targets, one bar: a split body's damage (burn, bleed…) lands on the boss it is linked to
+  const host = barHost(w, e);
+  if (host) {
+    if (showNumber) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius, amount, type, crit: false, toPlayer: false, targetId: e.id });
+    rawDamage(w, host, amount, type, sourceId, false);
+    return;
+  }
   e.hp.hp -= amount;
   e.hp.lastHitBy = sourceId || e.hp.lastHitBy;
   if (showNumber) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius, amount, type, crit: false, toPlayer: !!e.pl, targetId: e.id });
   if (e.en?.isBoss) bossPhaseCheck(w, e);
   checkDeath(w, e, sourceId);
+}
+
+/** The boss whose health bar a split body shares (EnemyC.linkedTo on a non-boss), if it still stands. */
+export function barHost(w: World, e: Entity): Entity | null {
+  if (!e.en?.linkedTo || e.en.isBoss) return null;
+  const h = w.get(e.en.linkedTo);
+  return h?.hp && !h.hp.dead ? h : null;
 }
 
 export function heal(w: World, e: Entity, amount: number, show = true): number {
@@ -255,6 +270,8 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   const hp = p.hp!;
   const now = w.time;
   if (pl.downed || pl.deadUntilRest || hp.dead) return 'none';
+  // off the edge, climbing back: out of reach until you are back on the floor
+  if (pl.falling) return 'none';
   if (hp.invulnUntil > now) return 'immune';
   const attacker = w.get(attackerId);
 
@@ -346,6 +363,10 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
     } else stam.cur -= staminaCost;
     w.sfx('block', p.x);
     w.fx('block', p.x + Math.cos(p.facing) * 16, p.y + Math.sin(p.facing) * 16);
+    // Warden (legendary shield): each blocked hit heals allies within 120 px by 1% of their max HP
+    if (d.powers.has('warden')) {
+      for (const a of w.players) if (a !== p && !a.pl!.downed && a.hp && Math.hypot(a.x - p.x, a.y - p.y) <= 120) heal(w, a, a.hp.max * 0.01);
+    }
     // Spiked greatshield: blocking a melee hit deals ×0.5 back
     if (d.shield?.thorns && attacker?.en && !projectile) {
       const back = { ...emptySpec('player'), dmg: { physical: specTotal(spec) * d.shield.thorns } };
@@ -536,6 +557,12 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
     w.fx('immune', e.x, e.y - e.radius);
     return 0;
   }
+  // two targets, one bar: a split body is as invulnerable as its boss during a phase transition
+  const host = barHost(w, e);
+  if (host && host.en!.phaseTransitionUntil > now) {
+    w.fx('immune', e.x, e.y - e.radius);
+    return 0;
+  }
   if (en.gary) {
     en.garyHits++;
     w.hooks.onGaryHit?.(w, e, attacker);
@@ -628,7 +655,12 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
     total -= a;
     w.fx('barrier', e.x, e.y);
   }
-  hp.hp -= total;
+  if (host) {
+    // the hit lands on the shared pool (the boss's phase clamp and death apply there); this body's HP never moves
+    rawDamage(w, host, total, dominantTypeOf(spec), attacker?.id ?? 0, false);
+    host.hp!.lastHitAt = now;
+    if (attacker) host.en!.aggro[attacker.id] = (host.en!.aggro[attacker.id] ?? 0) + total;
+  } else hp.hp -= total;
   hp.lastHitAt = now;
   hp.lastHitBy = attacker?.id ?? 0;
   if (en.isBoss) bossPhaseCheck(w, e);
@@ -646,6 +678,31 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   if (pl) {
     pl.momentum = Math.min(10, pl.momentum + 1);
     pl.hitCounter++;
+    // Thunderclap (legendary weapon): every 4th hit chains Lightning to 3 more enemies at ×0.8
+    if (attacker && pl.derived.powers.has('thunderclap') && pl.hitCounter % 4 === 0 && spec.sourceTag !== 'thunderclap') {
+      const chained = new Set([e.id]);
+      let from: Entity = e;
+      for (let j = 0; j < 3; j++) {
+        let best: Entity | null = null;
+        let bd = 220;
+        for (const o of w.livingEnemies()) {
+          if (chained.has(o.id) || o.en?.gary) continue;
+          const dd = Math.hypot(o.x - from.x, o.y - from.y);
+          if (dd < bd) {
+            bd = dd;
+            best = o;
+          }
+        }
+        if (!best) break;
+        chained.add(best.id);
+        w.fx('line', from.x, from.y, { x2: best.x, y2: best.y, color: '#ffe14a' });
+        const zap = emptySpec('player');
+        zap.dmg = { lightning: total * 0.8 };
+        zap.sourceTag = 'thunderclap';
+        hitEnemy(w, attacker, best, zap, from.x, from.y, { noLifesteal: true });
+        from = best;
+      }
+    }
   }
   // Ghost revive scoring handled by the attack system; poise and stagger:
   if (!en.isBoss || spec.poiseDmg > 0) {

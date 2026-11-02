@@ -9,15 +9,16 @@ import { playSfx } from '../../engine/audio/sfx';
 import { getStore } from '../../engine/settings';
 import { drawText } from '../../engine/text';
 import { glow } from '../../engine/draw/parts';
-import { drawChest } from '../../engine/draw/enemies/crypt';
-import { drawBonfire, drawReliquary, drawSign, drawStairs, drawStationMarker } from '../../engine/draw/props';
 import { ZONES, zoneDef } from '../../data/zones';
 import { ENEMIES } from '../../data/enemies';
-import { TUTORIAL_STATIONS } from '../../data/rooms/special';
 import { btn, clearEl, h, layer } from '../../ui/dom';
 import { drawMap, drawMinimap } from '../../ui/minimap';
+import { drawInteractable } from '../../render/interactables';
+import { drawPartyCards } from '../../ui/party';
 import { WorldScene } from './worldScene';
-import { GameSession } from '../session';
+import { GameSession, beginNextCycle, rarityHex } from '../session';
+import { buyFromGary, garyEntryName, garyStock } from '../bonfire/gary';
+import type { NetHost } from '../net/host';
 import { writeSave } from '../save/storage';
 import type { DebugApi } from '../debug/menu';
 import type { BossDef, SaveFile } from '../types';
@@ -34,7 +35,7 @@ import { toast } from '../../ui/dom';
 import { openSettings } from '../../ui/menus/settings';
 
 /** Scene switches the run scene asks for (wired in main.ts, avoids import cycles). */
-export const runHooks: { toTitle?: () => void; credits?: (s: GameSession) => void } = {};
+export const runHooks: { toTitle?: () => void; credits?: (s: GameSession) => void; toLobby?: (save: SaveFile, net: NetHost) => void; newCycle?: (save: SaveFile) => void } = {};
 
 export class RunScene extends WorldScene {
   readonly name = 'run';
@@ -50,7 +51,10 @@ export class RunScene extends WorldScene {
   private revealMap = false;
   private saveDebounce = 0;
 
-  constructor(public save: SaveFile) {
+  constructor(
+    public save: SaveFile,
+    public net: NetHost | null = null,
+  ) {
     super();
     this.session = new GameSession(save, {
       roomEntered: () => {
@@ -58,7 +62,12 @@ export class RunScene extends WorldScene {
         this.updateMusic();
       },
       playerDied: () => this.showDeath(),
-      bonfire: (p, id, first) => this.showBonfire(p, id, first),
+      bonfire: (p, id, first) => {
+        // a co-op guest's bonfire menu opens on their screen
+        const g = this.net?.guestByEntity(p);
+        if (g) this.net!.sendEvent(g.peerId, { t: 'bonfire', id, first });
+        else this.showBonfire(p, id, first);
+      },
       titleCard: (zone, names) => {
         this.title = { zone, names, until: performance.now() / 1000 + 3.5 };
       },
@@ -79,12 +88,42 @@ export class RunScene extends WorldScene {
       },
       bossPhase: (def, phase) => music.play('boss', this.bossSeed(def), phase + 1),
       bossDefeated: () => music.play('off', null),
+      credits: () => {
+        // the end of the run: everyone in the party sees the credits, then the host finds the NG+ fire
+        this.persist();
+        this.closeOverlay();
+        if (this.net) {
+          this.net.broadcastEvent({ t: 'credits' });
+          this.net.close();
+          this.net = null;
+        }
+        runHooks.credits?.(this.session);
+      },
+      gary: (p) => {
+        if (this.net?.guestByEntity(p)) {
+          this.w.emit({ t: 'msg', text: 'Gary: "One customer at a time. The host first."', forPlayer: p.pl!.playerId, color: '#e6d08a' });
+          return;
+        }
+        this.showGary();
+      },
+      newCycle: () => {
+        beginNextCycle(this.save);
+        this.persist();
+        this.closeOverlay();
+        if (this.net) {
+          this.net.close();
+          this.net = null;
+        }
+        runHooks.newCycle?.(this.save);
+      },
     });
     this.w = this.session.w;
   }
 
   override enter(): void {
     this.session.start();
+    // co-op: the guests waiting in the lobby enter the world now
+    this.net?.start(this.session);
     this.w = this.session.w;
     this.local = this.session.localPlayer;
     this.view.palette = zoneDef(this.session.layout.zone).palette;
@@ -152,6 +191,16 @@ export class RunScene extends WorldScene {
     else if (this.overlayKind === 'bonfire' && a.input.consumeLocal('pause')) this.closeOverlay();
     else if (this.overlayKind === 'pause' && a.input.consumeLocal('pause')) this.closeOverlay();
     this.saveDebounce -= dt;
+    this.net?.beforeTick();
+  }
+
+  protected override afterStep(dt: number): void {
+    this.net?.afterTick(this.w.events, dt);
+  }
+
+  /** Co-op: other players are in this world. */
+  get coop(): boolean {
+    return !!this.net && this.net.guests.size > 0;
   }
 
   // ------------------------------------------------------------------ overlays
@@ -177,10 +226,13 @@ export class RunScene extends WorldScene {
     };
     const b = btn('Get up', respawn, 'primary big');
     b.disabled = true;
+    const coop = this.coop;
+    if (coop) this.net!.broadcastEvent({ t: 'wipe' });
     setTimeout(() => {
       b.disabled = false;
       b.focus();
-    }, 1500);
+      if (coop && this.overlayKind === 'death') respawn();
+    }, coop ? 3000 : 1500);
     l.appendChild(
       h(
         'div',
@@ -267,6 +319,49 @@ export class RunScene extends WorldScene {
     open();
   }
 
+  /** Gary's cart: 3–5 special things for Stardust (GAME_DESIGN §11). */
+  showGary(): void {
+    this.closeOverlay();
+    const p = this.local;
+    if (!p) return;
+    const c = p.pl!.char;
+    const stock = garyStock(this.save.world, this.session.layout.zone, c.cycle);
+    const l = layer('dim');
+    l.setAttribute('data-testid', 'gary');
+    const draw = (msg = ''): void => {
+      clearEl(l);
+      const rows = stock.map((e) => {
+        const color = e.item ? rarityHex(e.item.rarity) : e.kind === 'tear' ? '#9ad0ff' : e.kind === 'gem' ? '#58d6c8' : '#efe6d2';
+        const b = btn(e.sold ? 'Sold' : `${e.price} ✦`, () => {
+          const o = buyFromGary(c, e);
+          if (o.ok) {
+            refreshDerived(p);
+            this.w.sfx('lootRare', p.x);
+            this.persist();
+          }
+          draw(o.msg);
+        }, 'tiny');
+        b.disabled = e.sold;
+        return h('div', { class: 'row', style: 'justify-content:space-between;gap:16px' }, h('span', { style: `color:${color}` }, garyEntryName(e)), b);
+      });
+      l.appendChild(
+        h(
+          'div',
+          { class: 'panel col', style: 'width:460px' },
+          h('h2', null, 'Gary'),
+          h('div', { class: 'small dim-text' }, '"Don’t ask where I got it." · You have ' + c.stardust + ' Stardust.'),
+          ...rows,
+          msg ? h('div', { class: 'small' }, msg) : null,
+          btn('Leave', () => this.closeOverlay(), 'big'),
+        ),
+      );
+    };
+    draw();
+    this.overlay = l;
+    this.overlayKind = 'bonfire';
+    this.menuOpen = true;
+  }
+
   showInventory(onClose?: () => void): void {
     const p = this.local;
     if (!p) return;
@@ -310,7 +405,8 @@ export class RunScene extends WorldScene {
           },
           'big',
         ),
-        btn('Save and quit to title', () => this.quitToTitle(), 'big'),
+        this.net ? btn('Return to lobby (invite more)', () => this.returnToLobby(), 'big') : null,
+        btn(this.net ? 'Save, end the session and quit' : 'Save and quit to title', () => this.quitToTitle(), 'big'),
       ),
     );
     this.overlay = l;
@@ -321,7 +417,20 @@ export class RunScene extends WorldScene {
   quitToTitle(): void {
     this.persist();
     this.closeOverlay();
+    this.net?.close();
+    this.net = null;
     runHooks.toTitle?.();
+  }
+
+  /** Host: everyone back to the lobby (the world is saved; the party re-enters at the host's bonfire). */
+  returnToLobby(): void {
+    const net = this.net;
+    if (!net) return;
+    this.persist();
+    this.closeOverlay();
+    net.toLobby();
+    this.net = null;
+    runHooks.toLobby?.(this.save, net);
   }
 
   private showMap(): void {
@@ -352,31 +461,7 @@ export class RunScene extends WorldScene {
   // ------------------------------------------------------------------ drawing
 
   private drawInteractable(ctx: CanvasRenderingContext2D, e: Entity, now: number, _pid: string): void {
-    const it = e.it!;
-    switch (it.kind) {
-      case 'bonfire':
-        drawBonfire(ctx, e.x, e.y, now, it.data?.unlit ? 'unlit' : this.save.world.bonfiresUsed.includes(it.key) ? 'ember' : 'fresh');
-        break;
-      case 'chest':
-        drawChest(ctx, e.x, e.y, it.used ? Math.min(1, e.anim.poseT * 4 + 0.3) : 0, false, 0, false, false);
-        e.anim.poseT += 1 / 60;
-        break;
-      case 'reliquary':
-        drawReliquary(ctx, e.x, e.y, now, it.used);
-        break;
-      case 'station': {
-        const n = Number(it.data?.n ?? 0);
-        const goal = TUTORIAL_STATIONS.find((s) => s.n === n)?.goal ?? '';
-        drawStationMarker(ctx, e.x, e.y - 40, this.session.tutorialDone(goal), now);
-        drawSign(ctx, e.x, e.y, n);
-        break;
-      }
-      case 'stairs':
-        drawStairs(ctx, e.x, e.y, now, it.data?.up === true);
-        break;
-      default:
-        break;
-    }
+    drawInteractable(ctx, e, now, { bonfireUsed: (k) => this.save.world.bonfiresUsed.includes(k), stationDone: (g) => this.session.tutorialDone(g) });
   }
 
   protected override renderOverlay(ctx: CanvasRenderingContext2D): void {
@@ -429,6 +514,7 @@ export class RunScene extends WorldScene {
   protected override renderTop(ctx: CanvasRenderingContext2D, _alpha: number, realDt: number): void {
     const now = performance.now() / 1000;
     drawMinimap(ctx, { layout: this.session.layout, ws: this.save.world, currentId: this.session.node.id, revealAll: this.revealMap });
+    if (this.w.players.length > 1) drawPartyCards(ctx, this.w, this.local?.pl?.playerId ?? '');
     // zone title card
     if (this.title && now < this.title.until) {
       const k = Math.min(1, (this.title.until - now) / 0.6, (now - (this.title.until - 3.5)) / 0.4);

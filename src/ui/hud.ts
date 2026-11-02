@@ -10,6 +10,7 @@ import { CONSUMABLES } from '../data/consumables';
 import type { Entity, World } from '../game/world';
 import type { ControlId, StatusId } from '../game/types';
 import { buffSum } from '../game/combat/state';
+import { flaskCap } from '../game/combat/formulas';
 
 const STATUS_COLOR: Record<StatusId, string> = { burn: '#ff7a1a', chill: '#9ad0ff', shock: '#ffe14a', bleed: '#c01828', poison: '#7ad040' };
 const CONTROL_LABEL: Record<ControlId, string> = { freeze: 'FROZEN', blind: 'BLIND', hexed: 'HEXED', silence: 'SILENCED', root: 'ROOTED', hold: 'HELD' };
@@ -120,7 +121,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   ctx.fillStyle = '#8a8f98';
   ctx.fillRect(fx + 3, fy - 5, 12, 6);
   ctx.restore();
-  drawText(ctx, `${ch.flaskCur}/${ch.flaskMax}`, fx + 24, fy + 20, { size: 15, weight: 'bold', mono: true });
+  drawText(ctx, `${ch.flaskCur}/${flaskCap(ch)}`, fx + 24, fy + 20, { size: 15, weight: 'bold', mono: true });
   // currencies
   drawText(ctx, `◆ ${Math.floor(ch.shards).toLocaleString('en-US')}`, 110, fy + 20, { size: 15, color: '#9ad0ff', mono: true });
   drawText(ctx, `✦ ${Math.floor(ch.stardust).toLocaleString('en-US')}`, 230, fy + 20, { size: 15, color: '#fff3b0', mono: true });

@@ -57,6 +57,9 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
   const room = Room.fromAscii(rows);
   room.id = `${layout.seed}|${node.id}`;
   room.hazardKind = zoneDef(layout.zone).hazardKind;
+  // a boss arena may carry a rotating floor ring (copied: phase changes reverse it in place)
+  const rf = node.kind === 'boss' && arenaId ? BOSS_ARENAS[arenaId]?.rotFloor : undefined;
+  if (rf) room.rotFloor = { ...rf };
   const m: RoomMarkers = { spawns: [], chests: [], bonfire: null, reliquary: null, merchant: null, start: null, instructor: null, exit: null, stations: [], dummies: [], boss: null, stairs: null, graves: [], pools: [] };
   for (let y = 0; y < ROOM_H; y++) {
     for (let x = 0; x < ROOM_W; x++) {
@@ -86,6 +89,8 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
     for (let y = 1; y < ROOM_H - 1; y++)
       for (let x = 1; x < ROOM_W - 1; x++) if (room.get(x, y) === T.Prop && rng.chance(0.2)) room.set(x, y, T.Floor);
   }
+  // trees ('t'): props a charge can break, one charge per clump (Vexthorn's clearing)
+  for (let y = 0; y < ROOM_H; y++) for (let x = 0; x < ROOM_W; x++) if (rows[y]?.[x] === 't' && room.get(x, y) === T.Prop) room.trees.set(y * ROOM_W + x, 1);
   for (const s of ['n', 's', 'e', 'w'] as Side[]) {
     room.doors[s].exists = node.doors.includes(s);
     room.doors[s].open = room.doors[s].exists;

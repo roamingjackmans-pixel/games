@@ -191,6 +191,24 @@ interface ZoneDef { id: number; name: string; palette: Palette; enemies: string[
 All tables are plain objects validated at startup in dev (`validateData()`), and by the unit tests listed
 in CONTENT_ENEMIES §13 and CONTENT_SPELLS_CLASSES §4.
 
+### 3.1 Vocabulary added during the build (bosses, D58–D69)
+
+- **Patterns:** anchor `eachPlayerPast(1.0)` (strikes along each player's last second of movement); `line.toAim`,
+  `line.spokes`; `lanes.roll { speed }` (boulders) and `lanes.durationS / tickS` (lanes that stay lit);
+  `sweep.count / opposite` (corner sweeps).
+- **AttackDef:** `parryableHits` (which combo hits can be parried), `chain` (an attack that starts when this one
+  ends), `comboRotateDeg`, `gazeTurnDeg` (turns its aim after each use), `body: 'split'` (used by a boss's second
+  body), `move.propStaggerS / charges / chargeGapS`. **EffectDef:** `collapseFloor`. **Traits:** `fixedHp`,
+  `invulnerable`.
+- **BossPhase:** `summons` (with `everyS` and `at: 'boss' | 'corners'`), `passive { pull, splitBody, stationaryAt,
+  scale, projectileSpeedMult }`, `arena` ops `hazardFloor, hazardTiles, iceFloor, darken, floodAll, thornWalls (mult),
+  widenLava, shrinkPlatform, reverseFloor, setTiles, spawnProps, removeProps`.
+- **Hazards:** `curePool`, `emberMoss`, `wind`.
+- **Room templates:** boss arenas add `K` (boss), `H` (stairs), `g` (grave), `w` (pool), `t` (breakable tree) and an
+  optional `rotFloor`; `room.overlay` marks void (1), collapsed (2) and crumbling (3) tiles.
+- **World save:** `guestPiles` (co-op guests' Shardpiles by playerId); `pending.advanceToZone` (9 = The Landlord
+  beaten in a friend's world).
+
 ## 4. Runtime entities (ECS-lite)
 
 A single `World` holds typed arrays of components keyed by entity id (u16, recycled). Components:

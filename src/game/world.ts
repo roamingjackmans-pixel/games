@@ -210,6 +210,9 @@ export interface AttackRun {
   moveDone: boolean;
   hit: Set<number>;
   usedBudget: boolean;
+  /** repeated charges (AttackMove.charges): charges finished so far, and the re-aim pause before the next */
+  chargesDone?: number;
+  pauseUntil?: number;
 }
 
 export interface EnemyC {
@@ -275,6 +278,8 @@ export interface EnemyC {
   linkedTo: number;
   /** projectile speed multiplier from phase passive */
   projSpeedMult: number;
+  /** where this enemy's next gaze attack strikes (AttackDef.gazeTurnDeg); drawn as an arrow */
+  gaze?: number;
   homeX: number;
   homeY: number;
   movedAt: number;

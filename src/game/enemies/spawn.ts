@@ -41,6 +41,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, players) * (o.hpMult ?? 1);
   if (elite) hp *= 3;
   if (def.traits?.invincible) hp = def.mult?.hp ? baseHp * def.mult.hp : 120000;
+  if (def.traits?.fixedHp) hp = def.traits.fixedHp;
   const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
   const speed = (def.speed ?? rs.speed) * (def.mult?.speed ?? 1) * (elite === 'frenzied' ? 1.4 : 1);
   const shards = Math.round(rs.shards * SHARD_SCALE * zoneShardFactor(zone) * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1));
@@ -135,7 +136,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
       poise,
       poiseMax: poise,
       poiseRegenAt: 0,
-      invulnUntil: 0,
+      invulnUntil: def.traits?.invulnerable ? 1e9 : 0,
       barrier: elite === 'shielded' ? hp * 0.25 : 0,
       barrierUntil: elite === 'shielded' ? Infinity : 0,
       staggerUntil: 0,
@@ -160,7 +161,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
 export function rescaleForPlayers(w: World, players: number): void {
   w.playerCount = players;
   for (const e of w.enemies) {
-    if (!e.hp || e.hp.dead || !e.en || e.en.isIllusion || e.en.def.traits?.invincible) continue;
+    if (!e.hp || e.hp.dead || !e.en || e.en.isIllusion || e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
     const frac = e.hp.hp / e.hp.max;
     e.hp.max = e.en.hpScaleBase * (1 + 1.5 * (players - 1));
     e.hp.hp = Math.max(1, frac * e.hp.max);

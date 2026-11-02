@@ -4,7 +4,8 @@
 import { dist } from '../engine/math';
 import { stream } from '../engine/rng';
 import { ENEMIES } from '../data/enemies';
-import { DUMMY_PIERCE, DUMMY_RED, DUMMY_STILL, DUMMY_SWING, INSTRUCTOR, MIMIC } from '../data/enemies/special';
+import { DUMMY_PIERCE, DUMMY_RED, DUMMY_STILL, DUMMY_SWING, GARY, INSTRUCTOR, MIMIC } from '../data/enemies/special';
+import { GARY_HITS_TO_LEAVE, garyStock } from './bonfire/gary';
 import { TUTORIAL_STATIONS } from '../data/rooms/special';
 import { zoneDef } from '../data/zones';
 import { World, type Entity } from './world';
@@ -23,7 +24,8 @@ import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, rawDamage } from './combat/damage';
 import { reviveRequirement } from './combat/formulas';
 import { BOSSES } from '../data/bosses';
-import { flaskMaxFor } from './combat/formulas';
+import { newWorldState } from './save/schema';
+import { flaskCap, flaskMaxFor } from './combat/formulas';
 import { applyArenaChanges } from './boss/arena';
 import { startPhaseSummons, tickPhaseSummons } from './boss/summons';
 import { spawnHazard } from './systems/hazards';
@@ -42,6 +44,27 @@ export interface SessionListener {
   bossIntro?(def: BossDef, boss: Entity): void;
   bossPhase?(def: BossDef, phase: number): void;
   bossDefeated?(def: BossDef): void;
+  /** the stairs up after The Landlord */
+  credits?(): void;
+  /** the NG+ bonfire: the scene saves and restarts the run in the next cycle */
+  newCycle?(): void;
+  /** a player talks to Gary */
+  gary?(p: Entity): void;
+}
+
+/**
+ * New Game+ (GAME_DESIGN §13): next cycle, a new map seed, zone 1, everything on the character kept
+ * (level, gear, spells, gems, flask max, Stardust, Shards), no tutorial. Cycle scaling is applied by the
+ * formulas (enemy HP ×1.6^c, damage ×1.35^c, Shards ×1.8^c, item level +c).
+ */
+export function beginNextCycle(save: SaveFile): void {
+  const c = save.character;
+  c.cycle++;
+  c.tutorialDone = true;
+  c.flaskCur = flaskCap(c);
+  const seed = `${save.world.seed.slice(0, 12)}+${c.cycle}`;
+  save.world = newWorldState(seed);
+  delete save.pending;
 }
 
 /** The boss name card holds inputs for this long (GAME_DESIGN §7). */
@@ -118,6 +141,9 @@ export class GameSession {
     this.w.hooks.onTick = (_w, dt) => this.tick(dt);
     this.w.hooks.onInteract = () => undefined; // interactions are polled in tick()
     this.w.hooks.onBossPhase = (_w, e, phase) => this.onBossPhase(e, phase);
+    this.w.hooks.onRevive = (_w, ghost) => this.revive(ghost);
+    this.w.hooks.onGaryHit = (_w, g) => this.garyHit(g);
+    this.w.hooks.onPlayerDied = (_w, p) => this.bledOut(p);
     this.w.hooks.onPlayerParried = () => this.goal('parry');
     this.w.hooks.onPlayerBlocked = () => this.goal('block');
     this.w.hooks.onMimicWake = (_w, e) => {
@@ -136,6 +162,33 @@ export class GameSession {
     const sp: SessionPlayer = { char, local, entity: null, slot: this.players.length };
     this.players.push(sp);
     return sp;
+  }
+
+  /** A co-op guest arrives (host only): spawn them beside the host and rescale enemy HP (D15). */
+  joinPlayer(char: Character): SessionPlayer {
+    const used = new Set(this.players.map((p) => p.slot));
+    let slot = 0;
+    while (used.has(slot)) slot++;
+    const sp: SessionPlayer = { char, local: false, entity: null, slot };
+    this.players.push(sp);
+    const host = this.localPlayer;
+    const [x, y] = this.w.room.nearestFloor((host?.x ?? this.entry[0]) + 30 * (slot % 2 ? 1 : -1), (host?.y ?? this.entry[1]) + 24, 14);
+    sp.entity = spawnPlayer(this.w, char, slot, false, x, y);
+    this.w.refreshLists();
+    rescaleForPlayers(this.w, this.players.length);
+    return sp;
+  }
+
+  /** A guest leaves (or the host returns to the lobby): their body goes, enemy HP rescales. */
+  removePlayer(playerId: string): void {
+    const i = this.players.findIndex((p) => !p.local && p.char.playerId === playerId);
+    if (i < 0) return;
+    const sp = this.players[i]!;
+    if (sp.entity) this.w.remove(sp.entity);
+    this.players.splice(i, 1);
+    this.w.sweep();
+    rescaleForPlayers(this.w, this.players.length);
+    if (this.players.length > 0 && this.w.players.length > 0 && this.w.players.every((x) => x.pl!.downed || x.pl!.deadUntilRest)) this.wipe();
   }
 
   get localPlayer(): Entity | null {
@@ -173,6 +226,23 @@ export class GameSession {
   /** Start (or resume) the run: tutorial hall for new characters, else the saved respawn bonfire. */
   start(): void {
     const ws = this.save.world;
+    // D31: a zone beaten as a guest moves this world on to the next zone's start bonfire
+    const adv = this.save.pending?.advanceToZone;
+    if (adv && adv > ws.zone && adv <= 8) {
+      ws.zone = adv;
+      ws.roomsCleared = [];
+      ws.respawnBonfireId = `z${adv}-start`;
+      this.save.character.tutorialDone = true;
+    } else if (adv === 9) {
+      // The Landlord fell in a friend's world: this world opens at his empty arena (stairs up, NG+ fire)
+      ws.zone = 8;
+      ws.roomsCleared = [];
+      ws.respawnBonfireId = 'z8-boss';
+      if (!ws.bonfiresDiscovered.includes('z8-boss')) ws.bonfiresDiscovered.push('z8-boss');
+      if (!ws.bossesBeatenThisCycle.includes(8)) ws.bossesBeatenThisCycle.push(8);
+      this.save.character.tutorialDone = true;
+    }
+    if (this.save.pending) delete this.save.pending.advanceToZone;
     this.layout = this.layoutFor(ws.zone);
     if (this.layout.tutorialId && !this.save.character.tutorialDone) {
       this.enterRoom(this.layout.tutorialId, 'start', true);
@@ -312,6 +382,12 @@ export class GameSession {
     const ws = this.save.world;
     const [sx, sy] = m.stairs ?? [640, 380];
     if (this.layout.zone < 8) w.spawn('interact', sx, sy, { radius: 26, drawId: 'stairs', it: { kind: 'stairs', key: `z${this.layout.zone}-stairs`, label: 'Descend', used: false, holdS: 0 } });
+    else {
+      // The Landlord is gone: the lease ends, the stairs go up, and a bonfire offers the next cycle (§13)
+      w.spawn('interact', sx, sy, { radius: 26, drawId: 'stairs', it: { kind: 'stairs', key: 'z8-up', label: 'Climb out', used: false, holdS: 0, data: { up: true } } });
+      const [bx, by] = w.room.nearestFloor(sx - 150, sy, 20);
+      w.spawn('interact', bx, by, { radius: 20, drawId: 'bonfire', it: { kind: 'ngplus', key: 'ngplus', label: `Begin Cycle ${this.save.character.cycle + 2}`, used: false, holdS: HOLD_S } });
+    }
     const key = `${this.node.id}-reliquary`;
     if (this.bossReliquaryRolled() && !ws.reliquariesOpened.includes(key)) {
       const [rx, ry] = w.room.nearestFloor(sx + 140, sy, 20);
@@ -332,13 +408,21 @@ export class GameSession {
     const w = this.w;
     const ws = this.save.world;
     if (!ws.bossesBeatenThisCycle.includes(this.layout.zone)) ws.bossesBeatenThisCycle.push(this.layout.zone);
+    const z = this.layout.zone;
     for (const sp of this.players) {
       const c = sp.char;
       c.bossesBeaten++;
       c.flaskMax = Math.max(c.flaskMax, flaskMaxFor(c.bossesBeaten, false));
-      c.highestZoneBeaten = Math.max(c.highestZoneBeaten, this.layout.zone);
+      // the host's world counts it; a guest only when it is their next zone (D31)
+      if (sp.local) c.highestZoneBeaten = Math.max(c.highestZoneBeaten, z);
+      else if (z === c.highestZoneBeaten + 1) c.highestZoneBeaten = z;
     }
     this.save.stats.bossKills++;
+    // after The Landlord the run resumes at his arena's anteroom (credits, then the NG+ fire)
+    if (z === 8) {
+      ws.respawnBonfireId = 'z8-boss';
+      if (!ws.bonfiresDiscovered.includes('z8-boss')) ws.bonfiresDiscovered.push('z8-boss');
+    }
     // the court leaves with its king
     for (const o of w.livingEnemies()) {
       if (o === e) continue;
@@ -423,6 +507,11 @@ export class GameSession {
     if (sp && sp.zone === this.layout.zone && sp.roomId === node.id && sp.amount > 0) {
       w.spawn('pickup', sp.x, sp.y, { radius: 22, pk: { kind: 'shardpile', forPlayer: this.save.character.playerId, amount: sp.amount, until: 0, rarity: 'common', autoCollectAt: 0 } });
     }
+    // co-op guests' piles: only the guest who dropped one sees and takes it
+    for (const [pid, gp] of Object.entries(ws.guestPiles ?? {})) {
+      if (gp.zone !== this.layout.zone || gp.roomId !== node.id || gp.amount <= 0) continue;
+      w.spawn('pickup', gp.x, gp.y, { radius: 22, pk: { kind: 'shardpile', forPlayer: pid, amount: gp.amount, until: 0, rarity: 'common', autoCollectAt: 0 } });
+    }
     // items left on the floor last time
     const left = ws.leftBehind[node.id];
     if (left) {
@@ -431,10 +520,38 @@ export class GameSession {
     }
   }
 
-  /** Gary's cart (M13 fills the stock). */
+  /** Gary and his cart (GAME_DESIGN §11). Gone for good once he has been hit three times. */
   spawnMerchant(x: number, y: number): void {
-    void x;
-    void y;
+    const w = this.w;
+    if (this.save.world.garyGone) {
+      w.emit({ t: 'msg', text: 'Cart tracks. Gary left.', color: '#a59c8a' });
+      return;
+    }
+    const g = spawnEnemy(w, GARY, x, y, { tellS: 0.05, zone: this.layout.zone });
+    g.facing = Math.PI / 2;
+    w.spawn('interact', x, y, { radius: 34, drawId: '', it: { kind: 'gary', key: 'gary', label: 'Trade', used: false, holdS: 0, data: { garyId: g.id } } });
+    garyStock(this.save.world, this.layout.zone, this.save.character.cycle);
+  }
+
+  private garyHit(gary: Entity): void {
+    const w = this.w;
+    const ws = this.save.world;
+    if (ws.garyGone) return;
+    const n = gary.en!.garyHits;
+    const lines = ['Gary: "Hey."', 'Gary: "I would not."'];
+    if (n < GARY_HITS_TO_LEAVE) {
+      w.emit({ t: 'msg', text: lines[n - 1] ?? 'Gary: "…"', color: '#e6d08a' });
+      return;
+    }
+    ws.garyGone = true;
+    w.emit({ t: 'msg', text: 'Gary: "Alright then."', color: '#e6d08a' });
+    w.sfx('teleport', gary.x);
+    for (const e of w.entities.values()) if (e.it?.kind === 'gary') w.remove(e);
+    w.schedule(0.6, () => {
+      w.fx('teleport', gary.x, gary.y);
+      gary.hp!.dead = true;
+      w.remove(gary);
+    });
   }
 
   private rememberLeftBehind(): void {
@@ -680,7 +797,14 @@ export class GameSession {
         break;
       }
       case 'stairs':
-        this.descend();
+        if (it.data?.up) this.listener.credits?.();
+        else this.descend();
+        break;
+      case 'ngplus':
+        this.listener.newCycle?.();
+        break;
+      case 'gary':
+        this.listener.gary?.(p);
         break;
       default:
         w.hooks.onInteract?.(w, p, target);
@@ -695,8 +819,8 @@ export class GameSession {
     switch (pk.kind) {
       case 'shardpile':
         c.shards += pk.amount;
-        this.save.world.shardpile = undefined as never;
-        delete this.save.world.shardpile;
+        if (p.pl!.playerId === this.save.character.playerId) delete this.save.world.shardpile;
+        else if (this.save.world.guestPiles) delete this.save.world.guestPiles[p.pl!.playerId];
         w.emit({ t: 'msg', text: `Recovered ${Math.floor(pk.amount)} Shards.`, forPlayer: p.pl!.playerId, color: '#9ad0ff' });
         w.sfx('reliquary', e.x, 0.6);
         return true;
@@ -763,11 +887,27 @@ export class GameSession {
     if (first) {
       used.push(bonfireId);
       p.hp!.hp = p.hp!.max;
-      p.pl!.char.flaskCur = p.pl!.char.flaskMax;
+      p.pl!.char.flaskCur = flaskCap(p.pl!.char);
       cleanse(p, ['statuses', 'controls']);
       this.w.fx('levelup', p.x, p.y);
     }
     ws.respawnBonfireId = bonfireId;
+    // players who bled out come back at the fire with full HP and a full Thermos (death refills, D12)
+    for (const sp of this.players) {
+      const e = sp.entity;
+      if (!e?.pl?.deadUntilRest) continue;
+      e.pl.deadUntilRest = false;
+      e.pl.downed = false;
+      e.pl.state = 'idle';
+      e.hp!.dead = false;
+      e.hp!.hp = e.hp!.max;
+      sp.char.flaskCur = flaskCap(sp.char);
+      const [nx, ny] = this.w.room.nearestFloor(p.x + 30, p.y + 20, e.radius);
+      e.x = e.px = nx;
+      e.y = e.py = ny;
+      e.anim.alpha = 1;
+      this.w.emit({ t: 'revived', playerId: e.pl.playerId });
+    }
     rollShopPiece(ws, bonfireId, this.layout.zone, this.save.character.cycle);
     // zone enemies respawn (bosses, opened chests and killed mimics stay done)
     ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss' || id === this.node.id);
@@ -806,6 +946,29 @@ export class GameSession {
     if (this.w.players.every((x) => x.pl!.downed || x.pl!.deadUntilRest)) this.wipe();
   }
 
+  /** A teammate's hits filled a ghost's revive ring: back at 40% HP with 2 s of i-frames (D12). */
+  revive(ghost: Entity): void {
+    const pl = ghost.pl!;
+    if (!pl.downed) return;
+    pl.downed = false;
+    pl.reviveProgress = 0;
+    pl.state = 'idle';
+    ghost.hp!.dead = false;
+    ghost.hp!.hp = ghost.hp!.max * 0.4;
+    ghost.hp!.invulnUntil = this.w.time + 2;
+    ghost.anim.alpha = 1;
+    this.w.emit({ t: 'revived', playerId: pl.playerId });
+    this.w.emit({ t: 'msg', text: `${pl.name} is back up.`, color: '#58d66a' });
+    this.w.sfx('revive', ghost.x);
+    this.w.fx('levelup', ghost.x, ghost.y);
+  }
+
+  /** A ghost's 30 s ran out: dead until the party rests or wipes. */
+  private bledOut(p: Entity): void {
+    this.w.emit({ t: 'msg', text: `${p.pl!.name} is out until the next bonfire.`, color: '#ff6a5a' });
+    if (this.w.players.every((x) => x.pl!.downed || x.pl!.deadUntilRest)) this.wipe();
+  }
+
   /** Party wipe (D12): everyone respawns at the bonfire; each player's Shards drop where they fell. */
   wipe(): void {
     this.w.emit({ t: 'msg', text: 'The party has been evicted.', color: '#ff6a5a' });
@@ -829,6 +992,16 @@ export class GameSession {
     if (c.shards > 0) ws.shardpile = { zone: this.layout.zone, roomId: this.node.id, x: fx, y: fy, amount: c.shards };
     else delete ws.shardpile;
     c.shards = 0;
+    // co-op wipe: every guest's Shards fall where that guest fell
+    for (const sp of this.players) {
+      if (sp.local || !sp.entity) continue;
+      const g = sp.entity;
+      const [gx, gy] = this.node.kind === 'boss' ? this.w.room.nearestFloor(this.entry[0] + 30, this.entry[1], 14) : this.w.room.nearestFloor(g.x, g.y, 14);
+      ws.guestPiles ??= {};
+      if (sp.char.shards > 0) ws.guestPiles[sp.char.playerId] = { zone: this.layout.zone, roomId: this.node.id, x: gx, y: gy, amount: sp.char.shards };
+      else delete ws.guestPiles[sp.char.playerId];
+      sp.char.shards = 0;
+    }
     this.deathLine = DEATH_LINES[this.save.stats.deaths % DEATH_LINES.length]!;
     this.w.sfx('death');
     this.listener.playerDied?.(p);
@@ -841,7 +1014,7 @@ export class GameSession {
     this.dead = false;
     this.w.paused = false;
     for (const sp of this.players) {
-      sp.char.flaskCur = sp.char.flaskMax;
+      sp.char.flaskCur = flaskCap(sp.char);
       if (sp.entity) {
         const e = sp.entity;
         refreshDerived(e);

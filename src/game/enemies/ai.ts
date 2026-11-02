@@ -7,7 +7,8 @@ import { hasControl, speedMult } from '../combat/state';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, ROOM_CX, ROOM_CY } from '../combat/patterns';
 import { runEffects } from '../effects/run';
 import { spawnHazard } from '../systems/hazards';
-import { patternAllowed, startEnemyAttack, teleportAway, updateEnemyAttack } from './attacks';
+import { patternAllowed, ringReachable, startEnemyAttack, teleportAway, updateEnemyAttack } from './attacks';
+import { phasePassive, tickBossPassive } from '../boss/passive';
 import { stepToward } from './pathing';
 import { attackDamage } from './spawn';
 import type { AttackDef, EnemyDef } from '../types';
@@ -47,6 +48,8 @@ function conditionOk(w: World, e: Entity, atk: AttackDef, target: Entity): boole
   if (c === 'constructAlly') return w.livingEnemies().some((x) => x !== e && x.en!.def.construct && x.hp!.hp < x.hp!.max * 0.9);
   if (c === 'linesExist') return [...w.entities.values()].some((x) => !x.removed && ((x.type === 'hazard' && x.hz?.ownerId === e.id) || (x.type === 'enemy' && !x.hp?.dead && x.en?.summonerId === e.id)));
   if (c === 'noFlood') return w.roomMods.floodUntil < w.time;
+  // a ring out to the edge: every player can get inside its inner radius before it lands
+  if (c === 'ringReachable') return ringReachable(w, e, atk, target);
   return true;
 }
 
@@ -88,6 +91,11 @@ function pickTarget(w: World, e: Entity): Entity | null {
   return best;
 }
 
+function linkedSpecialWindup(w: World, id: number): boolean {
+  const a = w.get(id)?.en?.attack;
+  return !!a && a.phase === 'windup' && (a.def.kind === 'red' || a.def.kind === 'pierce');
+}
+
 function chooseAttack(w: World, e: Entity, target: Entity): AttackDef | null {
   const en = e.en!;
   const now = w.time;
@@ -103,8 +111,12 @@ function chooseAttack(w: World, e: Entity, target: Entity): AttackDef | null {
     if ((en.cooldowns[atk.id] ?? 0) > now) continue;
     if (d < atk.range[0] || d > atk.range[1]) continue;
     if (en.isBoss && atk.id === en.lastAttackId && list.filter((a) => !a.trigger).length > 1) continue;
+    // two targets, one bar: the split body performs these, the boss never does
+    if (en.isBoss && atk.body === 'split') continue;
     const special = atk.kind === 'red' || atk.kind === 'pierce';
     if (special && !en.isBoss && budgetUsed >= w.specialBudget) continue;
+    // linked bodies take turns: neither starts a Red/Piercing attack while the other winds one up
+    if (special && en.linkedTo && linkedSpecialWindup(w, en.linkedTo)) continue;
     if (atk.budget !== undefined && usersOf(w, atk.id) >= atk.budget) continue;
     if (!conditionOk(w, e, atk, target)) continue;
     if (!patternAllowed(w, e, atk, target)) continue;
@@ -160,7 +172,9 @@ function moveByStyle(w: World, e: Entity, target: Entity, dt: number): void {
     face();
     return;
   }
-  switch (def.moveStyle) {
+  // a boss phase can root the boss in place (BossPhase.passive.stationaryAt)
+  const style = phasePassive(e)?.stationaryAt ? 'stationary' : def.moveStyle;
+  switch (style) {
     case 'stationary':
       face();
       return;
@@ -327,6 +341,18 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
     w.remove(e);
     return;
   }
+  // a split body (two targets, one bar) goes with the boss it shares the bar with
+  if (en.linkedTo && !en.isBoss) {
+    const host = w.get(en.linkedTo);
+    if (!host || host.hp?.dead) {
+      hp.dead = true;
+      w.fx('dust', e.x, e.y, { n: 10 });
+      w.remove(e);
+      return;
+    }
+    // while the boss is in a phase transition, so is its other body
+    if (host.en && host.en.phaseTransitionUntil > now) return;
+  }
   const def = en.def as EnemyDef;
   const traits = def.traits ?? {};
   e.anim.t += dt;
@@ -344,6 +370,8 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
   if (en.state === 'dormant') return;
   if (en.gary) return;
   if (en.phaseTransitionUntil > now) return;
+  // boss phase passives: pull toward it, a stationary form, size, projectile speed (BossPhase.passive)
+  if (en.isBoss) tickBossPassive(w, e, dt);
 
   // regeneration out of combat (The Instructor)
   if (traits.regenPctPerS && now - hp.lastHitAt > 5) hp.hp = Math.min(hp.max, hp.hp + hp.max * traits.regenPctPerS * dt);

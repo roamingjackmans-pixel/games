@@ -1,6 +1,6 @@
 // Telegraph drawing (ART_AUDIO §3): 22%-alpha fill, 2 px outline, a progress fill that grows over the
 // telegraph time. Red = #ff3b3b; Piercing = #8fd3ff with diagonal stripes; colorblind icons (skull / hollow ring).
-import { sweepAngle, wavePos, ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, type Shape } from '../game/combat/patterns';
+import { rollPos, sweepAngle, wavePos, ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, type Shape } from '../game/combat/patterns';
 import { withAlpha } from '../engine/draw/parts';
 import type { Entity, World } from '../game/world';
 
@@ -258,10 +258,86 @@ export function drawTelegraph(ctx: CanvasRenderingContext2D, w: World, t: Entity
         ctx.stroke();
         break;
       }
+      case 'roll':
+        drawRollLane(ctx, s, color, pierce, pre, p, tau, lw);
+        break;
     }
   }
   ctx.restore();
   void w;
+}
+
+/** A rolling lane: the lane (striped while it telegraphs, with chevrons for the roll direction) and its boulder. */
+function drawRollLane(ctx: CanvasRenderingContext2D, s: Extract<Shape, { k: 'roll' }>, color: string, pierce: boolean, pre: boolean, p: number, tau: number, lw: number): void {
+  const ca = Math.cos(s.a);
+  const sa = Math.sin(s.a);
+  const hw = s.w / 2;
+  ctx.beginPath();
+  ctx.moveTo(s.x - sa * hw, s.y + ca * hw);
+  ctx.lineTo(s.x + ca * s.l - sa * hw, s.y + sa * s.l + ca * hw);
+  ctx.lineTo(s.x + ca * s.l + sa * hw, s.y + sa * s.l - ca * hw);
+  ctx.lineTo(s.x + sa * hw, s.y - ca * hw);
+  ctx.closePath();
+  ctx.fillStyle = withAlpha(color, pre ? 0.12 + p * 0.2 : 0.1);
+  ctx.fill();
+  if (pierce && pre) {
+    const pat = stripePattern(ctx);
+    if (pat) {
+      ctx.fillStyle = pat;
+      ctx.fill();
+    }
+  }
+  ctx.lineWidth = lw;
+  ctx.strokeStyle = withAlpha(color, pre ? 0.9 : 0.35);
+  ctx.stroke();
+  if (pre) {
+    // chevrons pointing the way the boulder will roll
+    ctx.strokeStyle = withAlpha('#ffffff', 0.55 + p * 0.3);
+    ctx.lineWidth = 3;
+    for (let d = 90; d < s.l - 40; d += 160) {
+      const cx = s.x + ca * d;
+      const cy = s.y + sa * d;
+      ctx.beginPath();
+      ctx.moveTo(cx - ca * 12 - sa * 14, cy - sa * 12 + ca * 14);
+      ctx.lineTo(cx + ca * 6, cy + sa * 6);
+      ctx.lineTo(cx - ca * 12 + sa * 14, cy - sa * 12 - ca * 14);
+      ctx.stroke();
+    }
+  }
+  // the boulder (waits at the lane's end, then rolls through)
+  const [bx, by] = rollPos(s, pre ? 0 : tau);
+  const br = s.w * 0.45;
+  const spin = (pre ? 0 : s.speed * tau) / br;
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(spin * (Math.cos(s.a) + Math.sin(s.a) >= 0 ? 1 : -1));
+  ctx.beginPath();
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2;
+    const rr = br * (0.88 + ((i * 37) % 10) / 80);
+    if (i === 0) ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    else ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#8f9aa6';
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#120e14';
+  ctx.stroke();
+  ctx.strokeStyle = '#5f6a76';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-br * 0.5, -br * 0.1);
+  ctx.lineTo(br * 0.1, br * 0.2);
+  ctx.lineTo(br * 0.45, -br * 0.3);
+  ctx.moveTo(-br * 0.2, br * 0.55);
+  ctx.lineTo(br * 0.1, br * 0.2);
+  ctx.stroke();
+  ctx.fillStyle = withAlpha('#e8f4ff', 0.7);
+  ctx.beginPath();
+  ctx.arc(-br * 0.35, -br * 0.4, br * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 /** Skull icon (Red) and hollow ring icon (Piercing) over an attacker in windup (colorblind support, §5.6). */

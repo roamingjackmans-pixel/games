@@ -548,8 +548,10 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   // falling into a pit / off the platform
   if (pl.falling) {
     if (now >= pl.falling.until) {
-      e.x = pl.falling.toX;
-      e.y = pl.falling.toY;
+      // climb back at the edge point picked when you fell (or the nearest floor still there, if it fell away too)
+      const [cx, cy] = w.room.circleBlocked(pl.falling.toX, pl.falling.toY, e.radius) ? w.room.nearestFloor(pl.falling.toX, pl.falling.toY, e.radius) : [pl.falling.toX, pl.falling.toY];
+      e.x = cx;
+      e.y = cy;
       pl.falling = null;
       pl.state = 'idle';
       e.anim.alpha = 1;
@@ -681,7 +683,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     const ix = inp.moveX;
     const iy = inp.moveY;
     mv = Math.min(1, Math.hypot(ix, iy));
-    if (mv > 0.05) w.room.moveCircle(e, ix * speed * dt, iy * speed * dt);
+    // a platform's void edge has no wall: you can walk off it (pits keep their rim)
+    if (mv > 0.05) w.room.moveCircle(e, ix * speed * dt, iy * speed * dt, false, 'void');
     // the rotating floor ring (Tock) carries you along
   }
   if (pl.state !== 'attack' && pl.state !== 'dodge') {

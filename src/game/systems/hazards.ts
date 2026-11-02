@@ -24,6 +24,8 @@ export interface HazardDef {
   hitsTeam: 'enemies' | 'players' | 'both';
   /** standing inside clears this status (Mother Spore's glowing pools) */
   cures?: 'poison';
+  /** wind: players inside are pushed away from the hazard's origin at this speed (px/s; dodging players are not) */
+  push?: number;
 }
 
 export const HAZARDS: Record<HazardId, HazardDef> = {
@@ -50,6 +52,8 @@ export const HAZARDS: Record<HazardId, HazardDef> = {
   curePool: { dmg: 0, tickS: 1, slow: 0.3, cures: 'poison', color: '#7af0d0', hitsTeam: 'players' },
   emberMoss: { dmg: 0.15, tickS: 0.5, status: { id: 'burn', buildup: 10 }, color: '#ff8a2a', hitsTeam: 'players' },
   bearTrap: { dmg: 0, tickS: 0.1, color: '#8a8a8a', hitsTeam: 'both', armS: 1, trap: { control: { id: 'root', durationS: 1.5 }, dmg: 1.0 } },
+  // Hex Gale: 0.375 fodder hits per 0.5 s = ×0.3 of a boss hit per second, pushing 150 px/s
+  wind: { dmg: 0.375, tickS: 0.5, color: '#d8f0e0', hitsTeam: 'players', push: 150 },
 };
 
 export function spawnHazard(w: World, hazard: HazardId, shapes: Shape[], durationS: number, team: Team, ownerId: number, o: Partial<Entity['hz']> = {}): Entity {
@@ -189,6 +193,13 @@ export function updateHazards(w: World, _dt: number): void {
         const dy = h.y - v.y;
         const d = Math.hypot(dx, dy) || 1;
         w.room.moveCircle(v, (dx / d) * hz.pull * _dt, (dy / d) * hz.pull * _dt, v.flying);
+      }
+      // wind pushes players away from where it blows from (they keep control and can walk against it)
+      if (def.push && v.pl && hz.team !== 0 && v.pl.state !== 'dodge') {
+        const dx = v.x - h.x;
+        const dy = v.y - h.y;
+        const d = Math.hypot(dx, dy) || 1;
+        w.room.moveCircle(v, (dx / d) * def.push * _dt, (dy / d) * def.push * _dt);
       }
       const next = hz.nextTick[v.id] ?? 0;
       if (now < next) continue;
