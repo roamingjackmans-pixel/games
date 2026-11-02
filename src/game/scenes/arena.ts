@@ -9,8 +9,13 @@ import { newCharacter } from '../player/character';
 import { spawnPlayer } from '../player/player';
 import { spawnEnemy } from '../enemies/spawn';
 import { TRAINING_DUMMY } from '../../data/enemies/special';
+import '../../engine/draw/enemies/crypt';
 import type { Character, ClassId } from '../types';
 import { stream } from '../../engine/rng';
+import { installRules } from '../rules';
+import { dormantMimicNear, mimicBite } from '../interact';
+import { ENEMIES } from '../../data/enemies';
+import { zoneDef } from '../../data/zones';
 
 export class ArenaScene extends WorldScene {
   readonly name = 'arena';
@@ -36,12 +41,24 @@ export class ArenaScene extends WorldScene {
     this.w = new World('ARENA', room);
     const ch = this.character ?? newCharacter(this.classId, 'Joe', 'local-player', stream('ARENA', 'char'));
     this.local = spawnPlayer(this.w, ch, 0, true, 400, 368);
-    this.w.hooks.onPlayerDowned = (w, e) => {
-      // the arena never kills you: back to full
-      e.hp!.hp = e.hp!.max;
-      w.emit({ t: 'msg', text: 'You would have died. The arena is forgiving.' });
+    installRules(this.w, {
+      onPlayerDown: (w, e) => {
+        // the arena never kills you: back to full
+        e.hp!.hp = e.hp!.max;
+        w.emit({ t: 'msg', text: 'You would have died. The arena is forgiving.' });
+      },
+      zoneFodder: () => ENEMIES.shambler ?? null,
+    });
+    this.w.hooks.onInteract = (w, p) => {
+      const m = dormantMimicNear(w, p);
+      if (m) mimicBite(w, p, m);
     };
     spawnEnemy(this.w, TRAINING_DUMMY, 800, 368, { tellS: 0.2 });
+  }
+
+  protected override spawnContext(): { zone?: number; cycle?: number; zoneResist?: Partial<Record<string, number>>; zoneImmune?: string[] } {
+    const z = zoneDef(1);
+    return { zone: 1, cycle: 0, zoneResist: z.resist, zoneImmune: z.statusImmune };
   }
 
   protected override toArena(): string {

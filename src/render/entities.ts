@@ -311,7 +311,7 @@ export function drawEnemyEntity(ctx: CanvasRenderingContext2D, e: Entity, x: num
   }
   // windup icons (colorblind support)
   const a = en.attack;
-  if (a && a.phase === 'windup' && (a.def.kind === 'red' || a.def.kind === 'pierce')) {
+  if (a && a.phase === 'windup' && (a.def.kind === 'red' || a.def.kind === 'pierce') && (!en.def.swarm || en.pieceIndex === 0)) {
     drawAttackIcon(ctx, x, y - e.radius - 18, a.def.kind, iconScale, now);
   }
   // hp bar for damaged non-boss enemies; elite name

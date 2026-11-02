@@ -49,3 +49,51 @@ export const SPECIAL_ENEMIES: Record<string, EnemyDef> = {
   dummy_poke: DUMMY_POKE,
   dummy_still: DUMMY_STILL,
 };
+
+/** GAME_DESIGN §6.5, CONTENT_ENEMIES §10: a chest that is not a chest. Woken stats scale with the zone. */
+export const MIMIC: EnemyDef = {
+  id: 'mimic',
+  zone: 0,
+  name: 'Mimic',
+  role: 'brute',
+  radius: 22,
+  resist: {},
+  moveStyle: 'walk',
+  preferredRange: 60,
+  special: true,
+  attacks: [
+    { id: 'mimic_bite', name: 'Bite', kind: 'normal', pattern: { kind: 'melee', shape: 'arc', angleDeg: 60, r: 70 }, windupMs: 500, recoverMs: 500, dmgMult: 1.2, type: 'physical', cooldownS: 1.4, range: [0, 70], weight: 3 },
+    {
+      id: 'mimic_chomp',
+      name: 'Chomp',
+      kind: 'red',
+      pattern: { kind: 'line', w: 50, l: 200, anchor: 'self' },
+      move: { kind: 'lunge', distance: 200 },
+      windupMs: 600,
+      recoverMs: 800,
+      dmgMult: 1.8,
+      type: 'physical',
+      cooldownS: 6,
+      range: [60, 240],
+      weight: 2,
+    },
+    {
+      id: 'mimic_tongue',
+      name: 'Tongue Sweep',
+      kind: 'pierce',
+      pattern: { kind: 'sweep', angleDeg: 180, r: 180, durationS: 1.2, anchor: 'self' },
+      windupMs: 1000,
+      recoverMs: 600,
+      dmgMult: 1.0,
+      type: 'physical',
+      cooldownS: 9,
+      range: [0, 190],
+      weight: 2,
+    },
+  ],
+  traits: { mimic: true },
+  flavor: 'Was a chest. Is a problem.',
+  draw: 'mimic',
+  hitSound: 'hitFlesh',
+};
+SPECIAL_ENEMIES.mimic = MIMIC;

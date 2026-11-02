@@ -159,6 +159,18 @@ export function interrupt(w: World, e: Entity, staggerS: number): void {
   }
 }
 
+export function wakeMimic(w: World, e: Entity): void {
+  const en = e.en!;
+  if (en.state !== 'dormant') return;
+  en.state = 'alert';
+  en.mimicChestId = 'awake:' + (en.mimicChestId ?? '');
+  en.thinkAt = w.time + 0.4;
+  e.anim.pose = 'windup';
+  w.sfx('mimicBite', e.x, 0.8);
+  w.emit({ t: 'msg', text: 'The chest has teeth!', color: '#ff9b6a' });
+  w.hooks.onMimicWake?.(w, e);
+}
+
 export function cancelEnemyAttack(w: World, e: Entity): void {
   const en = e.en!;
   if (!en.attack) return;
@@ -535,6 +547,11 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   const pl = attacker?.pl;
   let mult = 1;
   let crit = false;
+  if (en.state === 'dormant') {
+    // attacking a mimic first wakes it as a mid-tier enemy (GAME_DESIGN §6.5)
+    wakeMimic(w, e);
+  }
+  if (traits.mimic && pl?.derived.powers.has('mimics_tooth')) mult *= 2;
   // front guard (whips and Shield Breaker go over it)
   const guard = traits.frontGuard ?? en.def.frontGuard ?? 0;
   if (guard > 0 && !spec.ignoreFrontGuard && frontOf(e, fromX, fromY, traits.frontGuardArcDeg ?? 120) && hp.staggerUntil < now) {

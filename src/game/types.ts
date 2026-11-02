@@ -199,6 +199,10 @@ export type EffectDef = EffectBase &
     | { op: 'split'; enemyId: string; count: number; hpMult: number; dmgMult: number }
     | { op: 'resurrect'; max: number; hpPct: number; channelS: number }
     | { op: 'mirror'; count: number; durationS: number }
+    | { op: 'roomMod'; mod: 'flood' | 'enrage' | 'lateFee' | 'lightning'; durationS: number }
+    | { op: 'pulseHazards'; hazard: HazardId; mult: number; type: DamageType; status?: { id: StatusId; buildup: number } }
+    | { op: 'scatter'; distance: number }
+    | { op: 'eliteSummon'; count: number; max: number }
   );
 
 export interface AttackMove {

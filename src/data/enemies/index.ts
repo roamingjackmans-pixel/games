@@ -1,9 +1,11 @@
 // The enemy table registry: every zone roster plus special (non-roster) enemies.
 import type { EnemyDef } from '../../game/types';
 import { SPECIAL_ENEMIES } from './special';
+import { CRYPT } from './crypt';
 
 export const ENEMIES: Record<string, EnemyDef> = {
   ...SPECIAL_ENEMIES,
+  ...CRYPT,
 };
 
 export function enemyDef(id: string): EnemyDef {

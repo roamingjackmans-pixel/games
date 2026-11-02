@@ -63,6 +63,8 @@ export interface Buff {
   stacks: number;
   maxStacks: number;
   sourceId: number;
+  /** stacks grow on kills or hits (Bloodlust, Rampage) */
+  stackOn?: 'kill' | 'hit';
 }
 
 export interface ComboState {
@@ -518,6 +520,9 @@ export interface WorldHooks {
   onChargeEnd?(w: World, e: Entity, hitWall: boolean): void;
   onEliteSummon?(w: World, e: Entity): void;
   onCeilingDrop?(w: World, e: Entity): void;
+  onPlayerKill?(w: World, p: Entity, victim: Entity): void;
+  onMimicWake?(w: World, e: Entity): void;
+  onMimicBite?(w: World, p: Entity, mimic: Entity): void;
   /** room/wave logic, called once per tick after combat (rooms system) */
   onTick?(w: World, dt: number): void;
 }
@@ -558,6 +563,14 @@ export class World {
   lootCounter: Record<string, number> = {};
   inputLock = 0;
   bossId = 0;
+  /** effects waiting for their delay (sequence steps, dash landings, channels) */
+  scheduled: { at: number; run: () => void }[] = [];
+  /** fallen non-elite enemies this room (Raise Dead) */
+  fallen: { defId: string; x: number; y: number }[] = [];
+
+  schedule(delayS: number, run: () => void): void {
+    this.scheduled.push({ at: this.time + delayS, run });
+  }
 
   constructor(seed: string, room?: Room) {
     this.combat = new Rng(`${seed}|combat`);

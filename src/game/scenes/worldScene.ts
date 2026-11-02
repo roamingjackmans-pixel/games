@@ -11,7 +11,7 @@ import { stepWorld } from '../sim';
 import { allBaseIds } from '../items/bases';
 import { makeItem } from '../items/make';
 import { ENEMIES } from '../../data/enemies';
-import { spawnEnemy } from '../enemies/spawn';
+import { spawnUnit } from '../enemies/spawn';
 import { refreshDerived } from '../player/player';
 import { levelFromStats } from '../player/character';
 import type { ConsumableId, EliteAffix, EnemyDef, Rarity, StatId } from '../types';
@@ -159,7 +159,7 @@ export abstract class WorldScene implements Scene {
         const p = pl();
         const x = Math.max(80, Math.min(1200, p.x + 260));
         const y = p.y;
-        spawnEnemy(self.w, def as never, x, y, { elite: (elite as EliteAffix | null) ?? null, ...self.spawnContext() });
+        spawnUnit(self.w, def as never, x, y, { elite: (elite as EliteAffix | null) ?? null, ...self.spawnContext() });
         return `Spawned ${def.name}${elite ? ` (${elite})` : ''}.`;
       },
       killAll() {
@@ -234,7 +234,7 @@ export abstract class WorldScene implements Scene {
   protected bossDef(_id: string): unknown {
     return null;
   }
-  protected spawnContext(): { zone?: number; cycle?: number } {
+  protected spawnContext(): { zone?: number; cycle?: number; zoneResist?: Partial<Record<string, number>>; zoneImmune?: string[] } {
     return {};
   }
   protected toArena(): string {

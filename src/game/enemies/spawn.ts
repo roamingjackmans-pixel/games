@@ -162,3 +162,19 @@ export function rescaleForPlayers(w: World, players: number): void {
 export function attackDamage(e: Entity, dmgMult: number): number {
   return 18 * e.en!.dmgMult * dmgMult;
 }
+
+let groupCounter = 1;
+
+/** Spawn one roster "unit": a swarm spawns all its pieces as a group; everything else spawns one. */
+export function spawnUnit(w: World, def: EnemyDef | BossDef, x: number, y: number, o: SpawnOpts = {}): Entity[] {
+  const swarm = 'swarm' in def ? def.swarm : undefined;
+  if (!swarm) return [spawnEnemy(w, def, x, y, o)];
+  const gid = groupCounter++;
+  const out: Entity[] = [];
+  for (let i = 0; i < swarm.pieces; i++) {
+    const a = (i / swarm.pieces) * Math.PI * 2;
+    const [px, py] = w.room.nearestFloor(x + Math.cos(a) * 26, y + Math.sin(a) * 26, def.radius);
+    out.push(spawnEnemy(w, def, px, py, { ...o, groupId: gid, pieceIndex: i, elite: null }));
+  }
+  return out;
+}

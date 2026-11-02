@@ -7,6 +7,7 @@ import { updateStatuses } from './systems/statuses';
 import { updateTelegraphs } from './systems/telegraphs';
 import { updateProjectiles } from './systems/projectiles';
 import { updateHazards } from './systems/hazards';
+import './wire';
 import type { World } from './world';
 
 export const SIM_DT = 1 / 60;
@@ -26,6 +27,13 @@ export function stepWorld(w: World, dt = SIM_DT): void {
   updateTelegraphs(w, dt);
   updateProjectiles(w, dt);
   updateHazards(w, dt);
+  if (w.scheduled.length) {
+    const due = w.scheduled.filter((x) => x.at <= w.time);
+    if (due.length) {
+      w.scheduled = w.scheduled.filter((x) => x.at > w.time);
+      for (const d of due) d.run();
+    }
+  }
   w.hooks.onTick?.(w, dt);
   // corpses of dead enemies are removed (the death event already fired)
   for (const e of w.enemies) if (e.hp?.dead && !e.removed) w.remove(e);
