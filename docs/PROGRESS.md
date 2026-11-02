@@ -1,7 +1,7 @@
 # Dungeon Joe — Build progress
 
-> **Next session starts here:** M0–M2 done (repo is github.com/roamingjackmans-pixel/games, live path /games/dungeonjoe/, D48).
-> M4 done. Zones 2–8 rosters/draws/rooms are being written by four content agents (files under src/data/enemies, src/engine/draw/enemies, src/data/rooms); M8/M10–M12 integrate them. M5 done. Zone 8 content is committed; zones 2–7 agent files are still being finished (committed as placeholders). Continue at M6 (weapons, skills, casting, spells). Open engine gaps are listed in docs/TODO.md. Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug
+> **Next session starts here:** M0–M6 done; zones 1–8 rosters, draws and rooms all committed. Continue at M7 (classes, title, save slots, settings, pause, autosave).
+> Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug (or ?arena, ?new&class=cleric&seed=X). For long scripted playtests use the no-HMR server (vite.stable.config.ts, port 5174) and window.__dj.loop.advance(s).
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
 
@@ -64,12 +64,12 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] tests; browser check — 8a7d2fd 2026-11-02 — 14 item tests (rarity weights within 1% over 100k for 6 sources, no duplicate affixes, penalties, Quicksilver attack speed and the ×1.6 cap, gems/Stardust math, level curve, respec, save round-trip). Browser: 4 rooms cleared → 8 drops in common/uncommon/rare + gems; inventory + tooltip; ring equipped (HP 240→282); bonfire level 1→2; Quicksilver T5 socketed → attack speed 1.00→1.18; shop purchase; all of it survived a reload.
 
 ## M6 — 16 weapon classes, 48 skills, casting, 28 spells
-- [ ] all WeaponDefs + draw functions
-- [ ] all skills + unlock tiers + cooldown UI
-- [ ] casting tools, spell loadout screen, school/requirement locks
-- [ ] 14 Brain spells, 14 Prayer spells, reliquaries
-- [ ] EffectDef system
-- [ ] tests; browser check
+- [x] all WeaponDefs + draw functions — 7d61843 2026-11-02
+- [x] all skills + unlock tiers + cooldown UI — 7d61843 2026-11-02
+- [x] casting tools, spell loadout screen, school/requirement locks — 7d61843 2026-11-02
+- [x] 14 Brain spells, 14 Prayer spells, reliquaries — 7d61843 2026-11-02
+- [x] EffectDef system — 7d61843 2026-11-02
+- [x] tests; browser check — 7d61843 2026-11-02 — 50 skill/spell tests (data rules, every class kit valid, all 48 skills and 28 spells resolve headless, CDR ≤ 50%, attack speed ≤ ×1.6, school/tool locks, spell power from Brain + tool). Browser (arena): all 16 weapons given via debug at Legendary ilvl 7, every Q/E/R fired; damaging skills hit (e.g. Earthshaker 984, Meteor Lunge 1118, Charged Swing 1490), buffs applied; staff spells cast (Arcane Bolt, Meteor, Chain Lightning), talisman Heal healed, two-handing refused to cast.
 
 ## M7 — Classes, creation, title, slots, settings, screens
 - [ ] 10 classes
