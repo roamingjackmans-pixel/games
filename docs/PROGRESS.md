@@ -1,6 +1,6 @@
 # Dungeon Joe — Build progress
 
-> **Next session starts here:** M0–M8 done. Continue at M9 (online co-op, NETCODE.md). Bosses 4–8 follow the zone 1–3 pattern: src/data/bosses/*, src/data/rooms/bosses.ts, src/engine/draw/bosses/*.
+> **Next session starts here:** M0–M12 done; M13 code done (Gary, Tears, Lucky Charm, powers, D38 data test) and needs its browser check. Then M14 (audio/VFX polish), M15 (balance harness tests/sim — the bot needs to be a better player before the report means much), M16.
 > Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug (or ?arena, ?new&class=cleric&seed=X). For long scripted playtests use the no-HMR server (vite.stable.config.ts, port 5174) and window.__dj.loop.advance(s).
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
@@ -88,27 +88,27 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] tests; browser check (zones 1–3 end to end) — 34b5fde 2026-11-02 (tests/unit/bosses.test.ts; each boss fought in the browser through both phases, kill → banner → loot → stairs → next zone)
 
 ## M9 — Online co-op
-- [ ] Trystero adapter + Loopback, lobby, room codes, version check
-- [ ] inputs, snapshots, keyframes, events, commands
-- [ ] prediction/reconciliation, interpolation
-- [ ] authority split, instanced loot/Shards, HP scaling
-- [ ] downed/ghost/revive-by-attack, Last Rites, Ghost Lantern, wipe
-- [ ] per-player first-rest, progress credit, advance-to-zone on solo load
-- [ ] player cards, return to lobby, disconnects, ?net=test
-- [ ] loopback tests, Playwright join; real two-window check
+- [x] Trystero adapter + Loopback, lobby, room codes, version check — 240e603 2026-11-02 (D60)
+- [x] inputs, snapshots, keyframes, events, commands — 240e603 2026-11-02 (D61)
+- [x] prediction/reconciliation, interpolation — 240e603 2026-11-02
+- [x] authority split, instanced loot/Shards, HP scaling — 240e603 2026-11-02 (D62)
+- [x] downed/ghost/revive-by-attack, Last Rites, Ghost Lantern, wipe — 240e603 2026-11-02 (D64)
+- [x] per-player first-rest, progress credit, advance-to-zone on solo load — 240e603 2026-11-02
+- [x] player cards, return to lobby, disconnects, ?net=test — 240e603 2026-11-02
+- [x] loopback tests, Playwright join; real two-window check — 240e603 2026-11-02 (tests/unit/net.test.ts, tests/e2e/coop.spec.ts, D63; two browser windows over the public Nostr relays: join, walk, host and guest agree on position)
 
 ## M10 — Zones 4–5
-- [ ] Hollow Forest: enemies, templates, hazards, Vexthorn
-- [ ] Ashen Forge: enemies, templates, hazards, Foreman Ignatius
+- [x] Hollow Forest: enemies, templates, hazards, Vexthorn — 240e603 2026-11-02 (D65; roster/rooms from acc7e8a)
+- [x] Ashen Forge: enemies, templates, hazards, Foreman Ignatius — 240e603 2026-11-02 (D66)
 
 ## M11 — Zones 6–7
-- [ ] Frozen Reliquary: enemies, templates, hazards, Saint Aurelia
-- [ ] Clockwork Citadel: enemies, templates, hazards, Archmagister Tock
+- [x] Frozen Reliquary: enemies, templates, hazards, Saint Aurelia — 240e603 2026-11-02 (D67)
+- [x] Clockwork Citadel: enemies, templates, hazards, Archmagister Tock — 240e603 2026-11-02 (D68)
 
 ## M12 — The Abyss, The Landlord, credits, NG+
-- [ ] Abyss enemies, templates, void edges, Hollow Joes
-- [ ] The Landlord (3 phases, shrinking platform)
-- [ ] credits, NG+ bonfire and cycle scaling
+- [x] Abyss enemies, templates, void edges, Hollow Joes — 240e603 2026-11-02 (D69)
+- [x] The Landlord (3 phases, shrinking platform) — 240e603 2026-11-02 (tests/unit/landlord.test.ts)
+- [x] credits, NG+ bonfire and cycle scaling — 240e603 2026-11-02 (D70, tests/unit/ngplus.test.ts)
 
 ## M13 — Gary, reliquaries, merchant room, no-refill test, Tears, rings/legendaries verified
 - [ ] all items
