@@ -1,6 +1,6 @@
 # Dungeon Joe — Build progress
 
-> **Next session starts here:** M0–M12 done; M13 code done (Gary, Tears, Lucky Charm, powers, D38 data test) and needs its browser check. Then M14 (audio/VFX polish), M15 (balance harness tests/sim — the bot needs to be a better player before the report means much), M16.
+> **Next session starts here:** M0–M15 done. Continue at M16 (README, OWNER_CHECKS.md, TODO, workflow, live URL, final message).
 > Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug (or ?arena, ?new&class=cleric&seed=X). For long scripted playtests use the no-HMR server (vite.stable.config.ts, port 5174) and window.__dj.loop.advance(s).
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
@@ -114,10 +114,10 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] all items — 240e603 2026-11-02 (Gary: stock, purchase, three hits and gone, checked in the browser; Tears from bosses/reliquaries/Gary; Lucky Charm; Warden, Thunderclap, Lucky Socks; tests/unit/data.test.ts guards D38 and dead powers; tests/unit/powers.test.ts)
 
 ## M14 — Audio and VFX pass
-- [ ] full sound list, zone music, boss music, VFX list, intro cards, colorblind/high-contrast, juice
+- [x] full sound list, zone music, boss music, VFX list, intro cards, colorblind/high-contrast, juice — a257e18 2026-11-02 (every ART_AUDIO §5 sound wired, footsteps per surface; slash arcs, Shard trail, status motes, phase flash added in 240e603)
 
 ## M15 — Balance, performance, QA
-- [ ] Shard tuning test green, simulation harness + BALANCE_REPORT.md, 60 fps profile, leak check, Playwright regression
+- [x] Shard tuning test green, simulation harness + BALANCE_REPORT.md, 60 fps profile, leak check, Playwright regression — a257e18 2026-11-02 (tests/sim; 15 enemies + 4 players + 1,200 particles: 2.5 ms per frame average, 5.4 ms p95; tests/sim/leak.sim.ts; tests/e2e/flows.spec.ts)
 
 ## M16 — Deploy, docs, handoff
 - [ ] README final, OWNER_CHECKS.md, TODO.md empty/justified, workflow green, live URL confirmed
