@@ -1,6 +1,6 @@
 // The test arena (debug menu → Test arena): an open room, a scripted training dummy that performs a
 // normal, a Red and a Piercing attack, and whatever the debug menu spawns.
-import '../../engine/draw/enemies/special';
+import '../../engine/draw/enemies';
 import { drawText } from '../../engine/text';
 import { Room, T } from '../room';
 import { World } from '../world';
@@ -9,7 +9,7 @@ import { newCharacter } from '../player/character';
 import { spawnPlayer } from '../player/player';
 import { spawnEnemy } from '../enemies/spawn';
 import { TRAINING_DUMMY } from '../../data/enemies/special';
-import '../../engine/draw/enemies/crypt';
+
 import type { Character, ClassId } from '../types';
 import { stream } from '../../engine/rng';
 import { installRules } from '../rules';

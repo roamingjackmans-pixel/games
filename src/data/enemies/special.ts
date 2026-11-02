@@ -97,3 +97,49 @@ export const MIMIC: EnemyDef = {
   hitSound: 'hitFlesh',
 };
 SPECIAL_ENEMIES.mimic = MIMIC;
+
+/** CONTENT_ENEMIES §10: the tutorial boss you are meant to walk past. ~120,000 HP, hits like a truck. */
+export const INSTRUCTOR: EnemyDef = {
+  id: 'the_instructor',
+  zone: 0,
+  name: 'The Instructor',
+  role: 'brute',
+  mult: { hp: 667, dmg: 2.7, poise: 1000, shards: 0 },
+  speed: 70,
+  radius: 34,
+  resist: {},
+  moveStyle: 'walk',
+  preferredRange: 90,
+  hyperArmor: true,
+  special: true,
+  attacks: [
+    { id: 'instructor_overhead', name: 'Overhead', kind: 'normal', pattern: { kind: 'line', w: 80, l: 160, anchor: 'self' }, windupMs: 1400, recoverMs: 900, dmgMult: 1, type: 'physical', cooldownS: 2.5, range: [0, 170], weight: 3 },
+    { id: 'instructor_stomp', name: 'Stomp', kind: 'red', pattern: { kind: 'circle', r: 140, anchor: 'self' }, windupMs: 1000, recoverMs: 900, dmgMult: 1, type: 'physical', cooldownS: 6, range: [0, 150], weight: 2 },
+    { id: 'instructor_clap', name: 'Clap', kind: 'pierce', pattern: { kind: 'ring', rIn: 60, rOut: 260, anchor: 'self' }, windupMs: 1500, recoverMs: 900, dmgMult: 0.8, type: 'physical', cooldownS: 8, range: [40, 270], weight: 2, area: true },
+  ],
+  traits: { noFlinch: true, regenPctPerS: 0.02, homeRadius: 230, noDrops: true },
+  flavor: 'He has a whistle. He will use it.',
+  draw: 'the_instructor',
+  hitSound: 'hitFlesh',
+};
+SPECIAL_ENEMIES.the_instructor = INSTRUCTOR;
+
+/** CONTENT_ENEMIES §10: Gary, the wandering merchant. Does not attack. Three hits and he leaves. */
+export const GARY: EnemyDef = {
+  id: 'gary',
+  zone: 0,
+  name: 'Gary',
+  role: 'tank',
+  mult: { hp: 6667, shards: 0 },
+  radius: 22,
+  resist: {},
+  moveStyle: 'stationary',
+  preferredRange: 0,
+  special: true,
+  attacks: [],
+  traits: { merchant: true, hideHpBar: true, noDrops: true, noFlinch: true, noShards: true },
+  flavor: 'Sells things. Does not say where he got them.',
+  draw: 'gary',
+  hitSound: 'hitFlesh',
+};
+SPECIAL_ENEMIES.gary = GARY;

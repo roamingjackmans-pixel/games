@@ -4,8 +4,23 @@
     {
       "name": "dungeonjoe-dev",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--port", "5173", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "port": 5173
+    },
+    {
+      "name": "dungeonjoe-stable",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "vite.stable.config.ts"
+      ],
+      "port": 5174
     }
   ]
 }

@@ -317,6 +317,8 @@ export interface EnemyTraits {
   mimic?: boolean;
   /** ice mirrors reflect player projectiles */
   reflectsProjectiles?: boolean;
+  /** never moves farther than this from where it spawned */
+  homeRadius?: number;
 }
 
 export interface EnemyDef {
@@ -601,6 +603,10 @@ export interface WorldState {
   shardpile?: { zone: number; roomId: string; x: number; y: number; amount: number };
   bossReliquary?: string[];
   instructorKilled?: boolean;
+  /** items left on the floor when the room was left (GAME_DESIGN PROCGEN §4) */
+  leftBehind: Record<string, { playerId: string; item: Item; x: number; y: number }[]>;
+  /** awakened mimics that still live (they fight when you return) */
+  bossKilled: number[];
 }
 
 export interface GaryStockEntry {

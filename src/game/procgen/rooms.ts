@@ -1,0 +1,94 @@
+// Build a Room (tiles + doors) and its markers from a layout node (PROCGEN §3, §8).
+import { stream } from '../../engine/rng';
+import { ROOM_TEMPLATES } from '../../data/rooms';
+import { ROOM_ANTEROOM, ROOM_BOSS, ROOM_MERCHANT, ROOM_RELIQUARY, ROOM_START, ROOM_TREASURE, ROOM_TUTORIAL } from '../../data/rooms/special';
+import { zoneDef } from '../../data/zones';
+import { Room, T, tileCenter, ROOM_H, ROOM_W, type Side } from '../room';
+import { mirrorTemplate, type RoomTemplate } from './templates';
+import type { RoomNode, ZoneLayout } from './zone';
+
+export interface RoomMarkers {
+  spawns: [number, number][];
+  chests: [number, number][];
+  bonfire: [number, number] | null;
+  reliquary: [number, number] | null;
+  merchant: [number, number] | null;
+  start: [number, number] | null;
+  instructor: [number, number] | null;
+  exit: [number, number] | null;
+  stations: { n: number; x: number; y: number }[];
+  dummies: { kind: string; x: number; y: number }[];
+}
+
+/** Boss arenas registered by boss data (M8+): template per arena id. */
+export const BOSS_ARENAS: Record<string, RoomTemplate> = {};
+
+function templateFor(layout: ZoneLayout, node: RoomNode, arenaId?: string): { rows: string[]; mirror: boolean } {
+  switch (node.kind) {
+    case 'start':
+      return { rows: ROOM_START.rows, mirror: false };
+    case 'anteroom':
+      return { rows: ROOM_ANTEROOM.rows, mirror: false };
+    case 'treasure':
+      return { rows: ROOM_TREASURE.rows, mirror: false };
+    case 'reliquary':
+      return { rows: ROOM_RELIQUARY.rows, mirror: false };
+    case 'merchant':
+      return { rows: ROOM_MERCHANT.rows, mirror: false };
+    case 'boss':
+      return { rows: (arenaId && BOSS_ARENAS[arenaId]?.rows) || ROOM_BOSS.rows, mirror: false };
+    case 'tutorial':
+      return { rows: ROOM_TUTORIAL.rows, mirror: false };
+    default: {
+      const list = ROOM_TEMPLATES[layout.zone]?.length ? ROOM_TEMPLATES[layout.zone]! : ROOM_TEMPLATES[1]!;
+      const t = list.find((x) => x.id === node.template) ?? list[0]!;
+      return { rows: t.rows, mirror: true };
+    }
+  }
+}
+
+export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string): { room: Room; markers: RoomMarkers } {
+  const tpl = templateFor(layout, node, arenaId);
+  const rows = tpl.mirror ? mirrorTemplate(tpl.rows, node.mirrorH, node.mirrorV) : tpl.rows;
+  const room = Room.fromAscii(rows);
+  room.id = `${layout.seed}|${node.id}`;
+  room.hazardKind = zoneDef(layout.zone).hazardKind;
+  const m: RoomMarkers = { spawns: [], chests: [], bonfire: null, reliquary: null, merchant: null, start: null, instructor: null, exit: null, stations: [], dummies: [] };
+  for (let y = 0; y < ROOM_H; y++) {
+    for (let x = 0; x < ROOM_W; x++) {
+      const ch = rows[y]?.[x] ?? '#';
+      const c = tileCenter(x, y);
+      if (ch === 'S') m.spawns.push(c);
+      else if (ch === 'C') m.chests.push(c);
+      else if (ch === 'B') m.bonfire = c;
+      else if (ch === 'R') m.reliquary = c;
+      else if (ch === 'M') m.merchant = c;
+      else if (ch === 'X') m.start = c;
+      else if (ch === 'I') m.instructor = c;
+      else if (ch === 'E') m.exit = c;
+      else if (ch >= '1' && ch <= '9') m.stations.push({ n: Number(ch), x: c[0], y: c[1] });
+      else if ('abcdf'.includes(ch)) m.dummies.push({ kind: ch, x: c[0], y: c[1] });
+    }
+  }
+  // thin props by 20% (PROCGEN §3) — deterministic per room
+  if (tpl.mirror) {
+    const rng = stream(layout.seed, `props:${layout.zone}:${node.id}`);
+    for (let y = 1; y < ROOM_H - 1; y++)
+      for (let x = 1; x < ROOM_W - 1; x++) if (room.get(x, y) === T.Prop && rng.chance(0.2)) room.set(x, y, T.Floor);
+  }
+  for (const s of ['n', 's', 'e', 'w'] as Side[]) {
+    room.doors[s].exists = node.doors.includes(s);
+    room.doors[s].open = room.doors[s].exists;
+  }
+  // rooms with fewer than 4 spawn points (special rooms) get spots in the corners
+  if (m.spawns.length < 4) {
+    for (const [tx, ty] of [
+      [6, 4],
+      [33, 4],
+      [6, 17],
+      [33, 17],
+    ] as const)
+      if (!room.blocksMove(tx, ty)) m.spawns.push(tileCenter(tx, ty));
+  }
+  return { room, markers: m };
+}

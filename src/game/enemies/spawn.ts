@@ -1,5 +1,5 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
-import { ROLE_STATS, SHARD_SCALE } from '../../data/roles';
+import { ROLE_STATS, SHARD_SCALE, zoneShardFactor } from '../../data/roles';
 import { enemyDmgMult, enemyHpMult, enemyShardMult } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
@@ -43,7 +43,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   if (def.traits?.invincible) hp = def.mult?.hp ? baseHp * def.mult.hp : 120000;
   const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
   const speed = (def.speed ?? rs.speed) * (def.mult?.speed ?? 1) * (elite === 'frenzied' ? 1.4 : 1);
-  const shards = Math.round(rs.shards * SHARD_SCALE * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1));
+  const shards = Math.round(rs.shards * SHARD_SCALE * zoneShardFactor(zone) * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1));
   const radius = (def.radius || rs.radius) * (elite ? 1.3 : 1) * (def.traits?.scale ?? 1);
   const poise = rs.poise * (def.mult?.poise ?? 1);
   const resist = { ...(o.zoneResist ?? {}), ...def.resist };
@@ -110,6 +110,8 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
     garyHits: 0,
     linkedTo: 0,
     projSpeedMult: 1,
+    homeX: x,
+    homeY: y,
   };
   if (o.illusion) {
     hp = 1;

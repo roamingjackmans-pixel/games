@@ -1,0 +1,888 @@
+// The game session: one playthrough's run logic on the authoritative side (solo or co-op host).
+// Rooms, doors, waves, clears, chests, bonfires (first-rest rule, D38), death + Shardpile (D3),
+// the tutorial hall (PROCGEN §8). Headless: no DOM, canvas or audio.
+import { dist } from '../engine/math';
+import { stream } from '../engine/rng';
+import { ENEMIES } from '../data/enemies';
+import { DUMMY_PIERCE, DUMMY_RED, DUMMY_STILL, DUMMY_SWING, INSTRUCTOR, MIMIC } from '../data/enemies/special';
+import { TUTORIAL_STATIONS } from '../data/rooms/special';
+import { zoneDef } from '../data/zones';
+import { World, type Entity } from './world';
+import { entryPoint, OPPOSITE, type Side } from './room';
+import { generateZone, neighbourId, type RoomNode, type ZoneLayout } from './procgen/zone';
+import { buildRoom, type RoomMarkers } from './procgen/rooms';
+import { planRoom, type RoomPlan } from './procgen/waves';
+import { smallChest, treasureChest } from './procgen/chests';
+import { spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
+import { spawnPlayer, refreshDerived } from './player/player';
+import { installRules } from './rules';
+import { dormantMimicNear, mimicBite } from './interact';
+import { cleanse, rawDamage } from './combat/damage';
+import { reviveRequirement } from './combat/formulas';
+import type { Character, EliteAffix, SaveFile } from './types';
+
+export interface SessionListener {
+  roomEntered?(node: RoomNode, zoneChanged: boolean): void;
+  playerDied?(p: Entity): void;
+  bonfire?(p: Entity, bonfireId: string, firstRest: boolean): void;
+  titleCard?(zone: number, mixNames: string[]): void;
+  autosave?(reason: string): void;
+  toast?(text: string, playerId?: string): void;
+  chestOpened?(p: Entity, chestId: string): void;
+  tutorialGoal?(goal: string): void;
+  sign?(text: string | null): void;
+}
+
+/** Loot hooks (filled by the loot module in M5; defaults keep M4 playable). */
+export interface LootHooks {
+  enemyDrops(s: GameSession, e: Entity, killerId: number): void;
+  chest(s: GameSession, p: Entity, chestId: string, kind: 'small' | 'treasure' | 'mimic' | 'boss', x: number, y: number): void;
+  reliquary(s: GameSession, p: Entity, x: number, y: number): void;
+  instructor(s: GameSession, x: number, y: number): void;
+}
+
+export const lootHooks: LootHooks = {
+  enemyDrops: () => undefined,
+  chest: (s, _p, _id, _k, x, y) => {
+    for (const pl of s.w.players) {
+      const c = pl.pl!.char;
+      c.consumables.throwing_knife = Math.min(10, (c.consumables.throwing_knife ?? 0) + 2);
+    }
+    s.w.fx('levelup', x, y);
+  },
+  reliquary: () => undefined,
+  instructor: () => undefined,
+};
+
+export interface SessionPlayer {
+  char: Character;
+  local: boolean;
+  entity: Entity | null;
+  slot: number;
+}
+
+const INTERACT_R = 56;
+const HOLD_S = 0.6;
+const DEATH_LINES = ['JOE DIED', 'JOE HAS FALLEN DOWN THE STAIRS', 'JOE IS LATE FOR WORK', 'JOE DIED. AGAIN.', 'JOE NEEDS A MINUTE'];
+
+export class GameSession {
+  save: SaveFile;
+  w: World;
+  layout!: ZoneLayout;
+  node!: RoomNode;
+  markers!: RoomMarkers;
+  plan: RoomPlan | null = null;
+  waveIdx = 0;
+  waveSize = 0;
+  waveIds: number[] = [];
+  roomPhase: 'peace' | 'armed' | 'fighting' | 'cleared' = 'peace';
+  lockAt = 0;
+  entry: [number, number] = [640, 368];
+  players: SessionPlayer[] = [];
+  listener: SessionListener = {};
+  interactHold = new Map<number, { target: number; t: number }>();
+  tutorial: { goals: Set<string>; sx: number; sy: number; aim0: number; poked: boolean; dummy: Record<string, number>; instructorId: number } | null = null;
+  pendingTransition: { roomId: string; entry: Side | 'bonfire' | 'start' } | null = null;
+  deathLine = DEATH_LINES[0]!;
+  dead = false;
+  /** guests' first-rest and downs bookkeeping lives here too (D38, D12) */
+  downs: Record<string, number> = {};
+  playtimeAcc = 0;
+  lastAutosave = 0;
+  /** treasure room guard / ambush bookkeeping */
+  private guardSpawned = false;
+
+  constructor(save: SaveFile, listener: SessionListener = {}) {
+    this.save = save;
+    this.listener = listener;
+    this.w = new World(save.world.seed);
+    this.w.zone = save.world.zone;
+    this.w.cycle = save.character.cycle;
+    installRules(this.w, {
+      onDrops: (w, e, killer) => lootHooks.enemyDrops(this, e, killer),
+      onPlayerDown: (w, p) => this.onPlayerDown(p),
+      onKillStat: (_w, e) => {
+        this.save.stats.kills++;
+        if (e.en?.elite) this.save.stats.elitesKilled++;
+        if (e.en?.def.traits?.mimic && e.en.mimicChestId) this.mimicKilled(e);
+        if (e.en?.def.id === INSTRUCTOR.id) {
+          this.save.world.instructorKilled = true;
+          lootHooks.instructor(this, e.x, e.y);
+        }
+      },
+      zoneFodder: () => {
+        const mix = this.layout?.mix.map((id) => ENEMIES[id]).filter((d) => !!d && (d.role === 'fodder' || d.role === 'swarm'));
+        return mix?.[0] ?? ENEMIES[zoneDef(this.w.zone).enemies[0]!] ?? null;
+      },
+    });
+    this.w.hooks.onTick = (_w, dt) => this.tick(dt);
+    this.w.hooks.onInteract = () => undefined; // interactions are polled in tick()
+    this.w.hooks.onPlayerParried = () => this.goal('parry');
+    this.w.hooks.onPlayerBlocked = () => this.goal('block');
+    this.w.hooks.onMimicWake = (_w, e) => {
+      const id = e.en?.mimicChestId?.replace('awake:', '');
+      if (id && !this.save.world.mimicsAwake.includes(id)) this.save.world.mimicsAwake.push(id);
+    };
+    this.w.hooks.onMimicBite = () => {
+      this.save.stats.mimicDeaths++;
+    };
+    this.addPlayer(save.character, true);
+  }
+
+  // ------------------------------------------------------------------ players
+
+  addPlayer(char: Character, local: boolean): SessionPlayer {
+    const sp: SessionPlayer = { char, local, entity: null, slot: this.players.length };
+    this.players.push(sp);
+    return sp;
+  }
+
+  get localPlayer(): Entity | null {
+    return this.players.find((p) => p.local)?.entity ?? null;
+  }
+
+  private placePlayers(x: number, y: number): void {
+    for (const sp of this.players) {
+      const ox = (sp.slot % 2) * 30 - 15 * (this.players.length > 1 ? 1 : 0);
+      const oy = Math.floor(sp.slot / 2) * 30 - (this.players.length > 2 ? 15 : 0);
+      const [px, py] = this.w.room.nearestFloor(x + ox, y + oy, 14);
+      if (!sp.entity || sp.entity.removed) {
+        sp.entity = spawnPlayer(this.w, sp.char, sp.slot, sp.local, px, py);
+      } else {
+        sp.entity.x = px;
+        sp.entity.y = py;
+        sp.entity.px = px;
+        sp.entity.py = py;
+        sp.entity.forced = null;
+      }
+    }
+    this.w.refreshLists();
+    rescaleForPlayers(this.w, this.players.length);
+  }
+
+  // ------------------------------------------------------------------ zones and rooms
+
+  layoutFor(zone: number): ZoneLayout {
+    const c = this.save.character;
+    const tutorial = zone === 1 && c.cycle === 0 && !c.tutorialDone;
+    const fewSpells = c.knownSpells.length < 2;
+    return generateZone(this.save.world.seed, zone, { cycle: c.cycle, tutorial, fewSpells });
+  }
+
+  /** Start (or resume) the run: tutorial hall for new characters, else the saved respawn bonfire. */
+  start(): void {
+    const ws = this.save.world;
+    this.layout = this.layoutFor(ws.zone);
+    if (this.layout.tutorialId && !this.save.character.tutorialDone) {
+      this.enterRoom(this.layout.tutorialId, 'start', true);
+    } else {
+      const bonfireRoom = this.layout.byId[ws.respawnBonfireId] ? ws.respawnBonfireId : this.layout.startId;
+      this.enterRoom(bonfireRoom, 'bonfire', true);
+    }
+  }
+
+  /** Move the whole party to another room. */
+  enterRoom(roomId: string, entry: Side | 'bonfire' | 'start', zoneChanged = false): void {
+    const ws = this.save.world;
+    const node = this.layout.byId[roomId];
+    if (!node) throw new Error(`no room ${roomId}`);
+    const w = this.w;
+    // clear the previous room: everything except players
+    this.rememberLeftBehind();
+    for (const e of w.entities.values()) if (e.type !== 'player') w.remove(e);
+    w.sweep();
+    w.scheduled = [];
+    w.fallen = [];
+    w.roomMods = { floodUntil: 0, floodSlow: 0.15, dark: 0, enrageUntil: 0, lateFeeUntil: 0, lightningBonusUntil: 0 };
+    w.bossId = 0;
+    w.zone = this.layout.zone;
+    w.cycle = this.save.character.cycle;
+    w.specialBudget = w.zone <= 3 ? 2 : 3;
+    const built = buildRoom(this.layout, node);
+    w.room = built.room;
+    this.node = node;
+    this.markers = built.markers;
+    ws.roomId = roomId;
+    if (!ws.roomsVisited.includes(roomId)) ws.roomsVisited.push(roomId);
+    // where the party appears
+    let pos: [number, number];
+    if (entry === 'bonfire') pos = built.markers.bonfire ? [built.markers.bonfire[0], built.markers.bonfire[1] + 48] : [640, 400];
+    else if (entry === 'start') pos = built.markers.start ?? [640, 400];
+    else pos = entryPoint(entry);
+    this.entry = pos;
+    this.placePlayers(pos[0], pos[1]);
+    this.interactHold.clear();
+    this.guardSpawned = false;
+    this.plan = null;
+    this.waveIdx = 0;
+    this.waveIds = [];
+    // room content
+    const cleared = ws.roomsCleared.includes(roomId);
+    this.roomPhase = 'peace';
+    if ((node.kind === 'combat' || node.kind === 'ambush') && !cleared) {
+      this.plan = planRoom(this.layout, node);
+      this.roomPhase = 'armed';
+      this.lockAt = node.kind === 'ambush' ? w.time : 0;
+    }
+    this.spawnRoomContent(node, built.markers, cleared);
+    // boss anteroom: the boss door stays locked until the boss framework (M8) arms it
+    this.applyDoorLocks();
+    if (node.kind === 'tutorial') this.setupTutorial(built.markers);
+    else this.tutorial = null;
+    w.inputLock = w.time + 0.2;
+    this.listener.roomEntered?.(node, zoneChanged);
+    if (zoneChanged) {
+      const names = this.layout.mix.map((id) => ENEMIES[id]?.name ?? id);
+      this.listener.titleCard?.(this.layout.zone, names);
+    }
+  }
+
+  /** Door lock rules for the current room. */
+  applyDoorLocks(): void {
+    const room = this.w.room;
+    const ws = this.save.world;
+    const node = this.node;
+    for (const s of ['n', 's', 'e', 'w'] as Side[]) {
+      const d = room.doors[s];
+      if (!d.exists) continue;
+      d.locked = false;
+      const n = neighbourId(this.layout, node.id, s);
+      // the boss door
+      if (n && this.layout.byId[n.id]?.kind === 'boss' && !this.bossDoorOpen()) d.locked = true;
+      // the start room's south door is the tutorial hall: shut behind you
+      if (node.kind === 'start' && s === 's' && this.layout.tutorialId) d.locked = true;
+      if (!n && !this.layout.links[`${node.id}|${s}`]) d.locked = true;
+      d.open = !d.locked && this.roomPhase !== 'fighting';
+    }
+    void ws;
+    room.version++;
+  }
+
+  /** Overridden by the boss module (M8): whether the boss door may be opened. */
+  bossDoorOpen(): boolean {
+    return false;
+  }
+
+  private spawnRoomContent(node: RoomNode, m: RoomMarkers, cleared: boolean): void {
+    const w = this.w;
+    const ws = this.save.world;
+    // bonfire
+    if (m.bonfire && (node.kind === 'start' || node.kind === 'anteroom')) {
+      const id = node.kind === 'start' ? `z${this.layout.zone}-start` : `z${this.layout.zone}-boss`;
+      if (!ws.bonfiresDiscovered.includes(id)) ws.bonfiresDiscovered.push(id);
+      const unlit = node.kind === 'start' && this.layout.tutorialId !== null && !this.save.character.tutorialDone;
+      w.spawn('interact', m.bonfire[0], m.bonfire[1], {
+        radius: 20,
+        drawId: 'bonfire',
+        it: { kind: 'bonfire', key: id, label: unlit ? 'Unlit bonfire' : 'Rest', used: ws.bonfiresUsed.includes(id), holdS: 0, data: { unlit } },
+      });
+    }
+    // chests
+    const noMimics = this.players.some((p) => p.entity?.pl?.derived.powers.has('mimics_tooth'));
+    const chestAt = (plan: { id: string; kind: 'small' | 'treasure'; mimic: boolean }, x: number, y: number): void => {
+      if (ws.chestsOpened.includes(plan.id) || ws.mimicsKilled.includes(plan.id)) return;
+      if (plan.mimic) {
+        const awake = ws.mimicsAwake.includes(plan.id);
+        const e = spawnEnemy(w, MIMIC, x, y, { tellS: 0.05, mimicChestId: awake ? `awake:${plan.id}` : plan.id, zone: this.layout.zone, zoneResist: zoneDef(this.layout.zone).resist });
+        if (awake && e.en) e.en.state = 'alert';
+        return;
+      }
+      w.spawn('interact', x, y, { radius: 18, drawId: 'chest', it: { kind: 'chest', key: plan.id, label: 'Open', used: false, holdS: HOLD_S, chestKind: plan.kind } });
+    };
+    if (node.kind === 'treasure' && m.chests[0]) {
+      const plan = treasureChest(this.layout, node, noMimics);
+      chestAt(plan, m.chests[0][0], m.chests[0][1]);
+      if (plan.guarded && !cleared && !ws.chestsOpened.includes(plan.id)) {
+        // a guard wave: half a normal room's budget from the mix
+        const p = planRoom(this.layout, { ...node, kind: 'combat', depth: Math.max(1, Math.floor(node.depth / 2)) });
+        this.plan = { waves: p.waves.slice(0, 1), ambush: false };
+        this.roomPhase = 'armed';
+      }
+    }
+    if ((node.kind === 'combat' || node.kind === 'ambush') && cleared && m.chests[0]) {
+      const plan = smallChest(this.layout, node, noMimics);
+      if (plan) chestAt(plan, m.chests[0][0], m.chests[0][1]);
+    }
+    if (node.kind === 'reliquary' && m.reliquary && !ws.reliquariesOpened.includes(node.id)) {
+      w.spawn('interact', m.reliquary[0], m.reliquary[1], { radius: 20, drawId: 'reliquary', it: { kind: 'reliquary', key: node.id, label: 'Open the reliquary', used: false, holdS: HOLD_S } });
+    }
+    if (node.kind === 'merchant' && m.merchant) this.spawnMerchant(m.merchant[0], m.merchant[1]);
+    // the Shardpile
+    const sp = ws.shardpile;
+    if (sp && sp.zone === this.layout.zone && sp.roomId === node.id && sp.amount > 0) {
+      w.spawn('pickup', sp.x, sp.y, { radius: 22, pk: { kind: 'shardpile', forPlayer: this.save.character.playerId, amount: sp.amount, until: 0, rarity: 'common', autoCollectAt: 0 } });
+    }
+    // items left on the floor last time
+    const left = ws.leftBehind[node.id];
+    if (left) {
+      for (const l of left) w.spawn('pickup', l.x, l.y, { radius: 14, pk: { kind: 'item', forPlayer: l.playerId, item: l.item, amount: 1, until: 0, rarity: l.item.rarity, autoCollectAt: 0 } });
+      delete ws.leftBehind[node.id];
+    }
+  }
+
+  /** Gary's cart (M13 fills the stock). */
+  spawnMerchant(x: number, y: number): void {
+    void x;
+    void y;
+  }
+
+  private rememberLeftBehind(): void {
+    if (!this.node) return;
+    const items: { playerId: string; item: import('./types').Item; x: number; y: number }[] = [];
+    for (const e of this.w.entities.values()) {
+      if (e.type === 'pickup' && e.pk?.kind === 'item' && e.pk.item && !e.removed) items.push({ playerId: e.pk.forPlayer ?? '', item: e.pk.item, x: e.x, y: e.y });
+    }
+    if (items.length) this.save.world.leftBehind[this.node.id] = items;
+  }
+
+  // ------------------------------------------------------------------ the per-tick room logic
+
+  tick(dt: number): void {
+    const w = this.w;
+    const now = w.time;
+    this.playtimeAcc += dt;
+    if (this.playtimeAcc >= 1) {
+      this.save.stats.playtimeSec += Math.floor(this.playtimeAcc);
+      this.playtimeAcc -= Math.floor(this.playtimeAcc);
+    }
+    if (this.dead) return;
+    // arming: lock the doors once the party is inside, then spawn waves
+    if (this.roomPhase === 'armed' && this.plan) {
+      const lead = w.livingPlayers()[0];
+      const inside = lead ? dist(lead.x, lead.y, this.entry[0], this.entry[1]) > 70 || this.plan.ambush : false;
+      if (inside) {
+        this.roomPhase = 'fighting';
+        this.applyDoorLocks();
+        for (const s of ['n', 's', 'e', 'w'] as Side[]) if (w.room.doors[s].exists) w.room.doors[s].open = false;
+        w.room.version++;
+        w.sfx('doorLock');
+        if (this.plan.ambush) {
+          for (let i = 0; i < this.plan.waves.length; i++) this.spawnWave(i, 1.5);
+          this.waveIdx = this.plan.waves.length;
+        } else {
+          this.spawnWave(0, 1.0);
+          this.waveIdx = 1;
+        }
+      }
+    }
+    if (this.roomPhase === 'fighting' && this.plan) {
+      const alive = this.waveIds.filter((id) => {
+        const e = w.get(id);
+        return e && !e.hp?.dead;
+      }).length;
+      const living = w.livingEnemies().filter((e) => !e.en!.isIllusion && e.en!.state !== 'dormant' && !e.en!.def.special).length + w.enemies.filter((e) => e.en?.state === 'spawning' && !e.hp?.dead).length;
+      if (this.waveIdx < this.plan.waves.length && alive <= Math.floor(this.waveSize * 0.3)) {
+        this.spawnWave(this.waveIdx, 1.0);
+        this.waveIdx++;
+      } else if (this.waveIdx >= this.plan.waves.length && living === 0) {
+        this.clearRoom();
+      }
+    }
+    // pickups: auto-collect
+    for (const e of w.entities.values()) {
+      if (e.type !== 'pickup' || e.removed || !e.pk) continue;
+      for (const p of w.livingPlayers()) {
+        if (e.pk.forPlayer && e.pk.forPlayer !== p.pl!.playerId) continue;
+        if (dist(p.x, p.y, e.x, e.y) > p.radius + e.radius + 4) continue;
+        if (this.collect(p, e)) {
+          w.remove(e);
+          break;
+        }
+      }
+    }
+    // interactions
+    for (const p of w.livingPlayers()) this.interactions(p, dt);
+    // doors → transitions
+    if (!this.pendingTransition) this.checkDoors();
+    if (this.pendingTransition) {
+      const t = this.pendingTransition;
+      this.pendingTransition = null;
+      this.enterRoom(t.roomId, t.entry);
+    }
+    if (this.tutorial) this.tickTutorial();
+    if (now - this.lastAutosave > 30) {
+      this.lastAutosave = now;
+      this.listener.autosave?.('timer');
+    }
+  }
+
+  private spawnWave(i: number, tellS: number): void {
+    const plan = this.plan;
+    if (!plan) return;
+    const wave = plan.waves[i];
+    if (!wave) return;
+    const w = this.w;
+    const zd = zoneDef(this.layout.zone);
+    const rng = stream(this.layout.seed, `spawn:${this.layout.zone}:${this.node.id}:${i}:${this.save.stats.deaths}`);
+    const players = w.livingPlayers();
+    const points = this.markers.spawns.filter((s) => players.every((p) => dist(p.x, p.y, s[0], s[1]) >= 200));
+    const pts = points.length ? points : this.markers.spawns;
+    this.waveIds = [];
+    this.waveSize = 0;
+    let k = rng.int(0, Math.max(0, pts.length - 1));
+    for (const u of wave) {
+      const def = ENEMIES[u.defId];
+      if (!def) continue;
+      const base = pts[k++ % Math.max(1, pts.length)] ?? [640, 368];
+      const jx = base[0] + rng.spread(30);
+      const jy = base[1] + rng.spread(30);
+      const [x, y] = w.room.nearestFloor(jx, jy, def.radius);
+      const ents = spawnUnit(w, def, x, y, { elite: u.elite as EliteAffix | null, tellS, zoneResist: zd.resist, zoneImmune: zd.statusImmune });
+      for (const e of ents) this.waveIds.push(e.id);
+      this.waveSize += ents.length;
+      w.sfx('spawnTell', x, 0.4);
+    }
+  }
+
+  clearRoom(): void {
+    const w = this.w;
+    const ws = this.save.world;
+    this.roomPhase = 'cleared';
+    if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
+    this.applyDoorLocks();
+    w.sfx('doorOpen');
+    w.emit({ t: 'msg', text: 'Room cleared.', color: '#a9b7a0' });
+    const m = this.markers.chests[0];
+    if ((this.node.kind === 'combat' || this.node.kind === 'ambush') && m) {
+      const noMimics = this.players.some((p) => p.entity?.pl?.derived.powers.has('mimics_tooth'));
+      const plan = smallChest(this.layout, this.node, noMimics);
+      if (plan && !ws.chestsOpened.includes(plan.id)) {
+        if (plan.mimic) spawnEnemy(w, MIMIC, m[0], m[1], { tellS: 0.6, mimicChestId: plan.id, zone: this.layout.zone });
+        else w.spawn('interact', m[0], m[1], { radius: 18, drawId: 'chest', it: { kind: 'chest', key: plan.id, label: 'Open', used: false, holdS: HOLD_S, chestKind: 'small' } });
+      }
+    }
+    // dropped Shards are granted instantly; items stay until the room is left (PROCGEN §4)
+  }
+
+  private checkDoors(): void {
+    const w = this.w;
+    for (const p of w.livingPlayers()) {
+      let side: Side | null = null;
+      if (p.y < 16 + 14) side = 'n';
+      else if (p.y > 720 - 14) side = 's';
+      else if (p.x < 14) side = 'w';
+      else if (p.x > 1280 - 14) side = 'e';
+      if (!side) continue;
+      const d = w.room.doors[side];
+      if (!d.exists || !d.open) continue;
+      const n = neighbourId(this.layout, this.node.id, side);
+      if (!n) continue;
+      if (this.node.kind === 'tutorial') this.finishTutorial();
+      this.pendingTransition = { roomId: n.id, entry: n.entry };
+      return;
+    }
+    void OPPOSITE;
+  }
+
+  // ------------------------------------------------------------------ interaction
+
+  /** The interactable a player can use right now (for the "F: Rest" prompt). */
+  interactTarget(p: Entity): Entity | null {
+    let best: Entity | null = null;
+    let bd = INTERACT_R;
+    for (const e of this.w.entities.values()) {
+      if (e.removed) continue;
+      const ok = (e.type === 'interact' && e.it && !e.it.used) || (e.type === 'enemy' && e.en?.state === 'dormant') || (e.type === 'interact' && e.it?.kind === 'bonfire');
+      if (!ok) continue;
+      const d = dist(p.x, p.y, e.x, e.y) - e.radius;
+      if (d < bd) {
+        bd = d;
+        best = e;
+      }
+    }
+    return best;
+  }
+
+  holdProgress(p: Entity): number {
+    const h = this.interactHold.get(p.id);
+    return h ? Math.min(1, h.t / HOLD_S) : 0;
+  }
+
+  private interactions(p: Entity, dt: number): void {
+    const inp = p.pl!.input;
+    const heldI = (inp.buttons & (1 << 11)) !== 0;
+    const pressedI = (inp.pressed & (1 << 11)) !== 0;
+    const target = this.interactTarget(p);
+    if (!target) {
+      this.interactHold.delete(p.id);
+      return;
+    }
+    const needsHold = target.type === 'enemy' || (target.it?.holdS ?? 0) > 0;
+    if (needsHold) {
+      if (!heldI) {
+        this.interactHold.delete(p.id);
+        return;
+      }
+      const h = this.interactHold.get(p.id) ?? { target: target.id, t: 0 };
+      if (h.target !== target.id) {
+        h.target = target.id;
+        h.t = 0;
+      }
+      h.t += dt;
+      this.interactHold.set(p.id, h);
+      if (h.t < HOLD_S) return;
+      this.interactHold.delete(p.id);
+    } else if (!pressedI) return;
+    this.interact(p, target);
+  }
+
+  interact(p: Entity, target: Entity): void {
+    const w = this.w;
+    const ws = this.save.world;
+    if (target.type === 'enemy') {
+      // a dormant mimic: it bites
+      const m = dormantMimicNear(w, p, 90);
+      if (m) mimicBite(w, p, m);
+      return;
+    }
+    const it = target.it!;
+    switch (it.kind) {
+      case 'bonfire': {
+        if (it.data?.unlit) {
+          w.emit({ t: 'msg', text: 'The bonfire is cold. Finish the hall first.', forPlayer: p.pl!.playerId });
+          return;
+        }
+        this.rest(p, it.key);
+        it.used = true;
+        break;
+      }
+      case 'chest': {
+        it.used = true;
+        if (!ws.chestsOpened.includes(it.key)) ws.chestsOpened.push(it.key);
+        w.sfx('chestOpen', target.x);
+        target.anim.pose = 'open';
+        target.anim.poseT = 0;
+        lootHooks.chest(this, p, it.key, it.chestKind ?? 'small', target.x, target.y);
+        this.listener.chestOpened?.(p, it.key);
+        break;
+      }
+      case 'reliquary': {
+        it.used = true;
+        if (!ws.reliquariesOpened.includes(it.key)) ws.reliquariesOpened.push(it.key);
+        w.sfx('reliquary', target.x);
+        target.anim.pose = 'open';
+        lootHooks.reliquary(this, p, target.x, target.y);
+        break;
+      }
+      case 'stairs':
+        this.descend();
+        break;
+      default:
+        w.hooks.onInteract?.(w, p, target);
+    }
+  }
+
+  /** Walk-over pickups. Returns true when collected. */
+  collect(p: Entity, e: Entity): boolean {
+    const pk = e.pk!;
+    const c = p.pl!.char;
+    const w = this.w;
+    switch (pk.kind) {
+      case 'shardpile':
+        c.shards += pk.amount;
+        this.save.world.shardpile = undefined as never;
+        delete this.save.world.shardpile;
+        w.emit({ t: 'msg', text: `Recovered ${Math.floor(pk.amount)} Shards.`, forPlayer: p.pl!.playerId, color: '#9ad0ff' });
+        w.sfx('reliquary', e.x, 0.6);
+        return true;
+      case 'shards':
+        c.shards += pk.amount;
+        w.sfx('shardPickup', e.x);
+        return true;
+      default:
+        return this.collectLoot(p, e);
+    }
+  }
+
+  /** Item/gem/consumable/spell pickups (M5 expands). */
+  collectLoot(p: Entity, e: Entity): boolean {
+    const pk = e.pk!;
+    const c = p.pl!.char;
+    if (pk.kind === 'item' && pk.item) {
+      if (c.bag.length >= 60) return false;
+      c.bag.push(pk.item);
+      this.w.sfx(`loot${pk.rarity[0]!.toUpperCase()}${pk.rarity.slice(1)}`, e.x);
+      this.w.emit({ t: 'msg', text: `${pk.item.name}`, forPlayer: p.pl!.playerId, color: rarityHex(pk.rarity) });
+      return true;
+    }
+    if (pk.kind === 'gem' && pk.gem) {
+      c.gems.push(pk.gem);
+      this.w.sfx('lootRare', e.x);
+      return true;
+    }
+    if (pk.kind === 'consumable' && pk.consumable) {
+      c.consumables[pk.consumable] = Math.min(10, (c.consumables[pk.consumable] ?? 0) + pk.amount);
+      if (!c.quickSlot) c.quickSlot = pk.consumable;
+      this.w.sfx('lootCommon', e.x);
+      return true;
+    }
+    if (pk.kind === 'stardust') {
+      c.stardust += pk.amount;
+      this.w.sfx('shardPickup', e.x, 0.8, 1.4);
+      return true;
+    }
+    if (pk.kind === 'spell' && pk.spellId) {
+      if (!c.knownSpells.includes(pk.spellId)) c.knownSpells.push(pk.spellId);
+      this.w.sfx('reliquary', e.x);
+      this.w.emit({ t: 'msg', text: 'You learned a spell.', forPlayer: p.pl!.playerId, color: '#c58cff' });
+      return true;
+    }
+    if (pk.kind === 'tear') {
+      c.tears++;
+      this.w.emit({ t: 'msg', text: 'A Tear of Undoing.', forPlayer: p.pl!.playerId, color: '#9ad0ff' });
+      return true;
+    }
+    return false;
+  }
+
+  // ------------------------------------------------------------------ bonfires (D38)
+
+  /** Rest at a bonfire: heals and refills only on the first rest; always respawns enemies, saves, sets respawn. */
+  rest(p: Entity, bonfireId: string): boolean {
+    const ws = this.save.world;
+    const pid = p.pl!.playerId;
+    const isOwner = pid === this.save.character.playerId;
+    const used = isOwner ? ws.bonfiresUsed : (ws.bonfiresUsedByPlayer[pid] ??= []);
+    const first = !used.includes(bonfireId);
+    if (first) {
+      used.push(bonfireId);
+      p.hp!.hp = p.hp!.max;
+      p.pl!.char.flaskCur = p.pl!.char.flaskMax;
+      cleanse(p, ['statuses', 'controls']);
+      this.w.fx('levelup', p.x, p.y);
+    }
+    ws.respawnBonfireId = bonfireId;
+    // zone enemies respawn (bosses, opened chests and killed mimics stay done)
+    ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss' || id === this.node.id);
+    this.downs[pid] = 0;
+    p.pl!.downs = 0;
+    this.w.sfx('bonfire', p.x);
+    this.listener.bonfire?.(p, bonfireId, first);
+    this.listener.autosave?.('bonfire');
+    return first;
+  }
+
+  // ------------------------------------------------------------------ death (solo) and respawn
+
+  private onPlayerDown(p: Entity): void {
+    if (this.players.length > 1) {
+      this.downPlayer(p);
+      return;
+    }
+    this.die(p);
+  }
+
+  /** Co-op downed state (D12) — the full rules live in the co-op module (M9). */
+  downPlayer(p: Entity): void {
+    const pl = p.pl!;
+    pl.downs = (this.downs[pl.playerId] ?? 0) + 1;
+    this.downs[pl.playerId] = pl.downs;
+    pl.downed = true;
+    pl.ghostUntil = this.w.time + 30;
+    pl.reviveProgress = 0;
+    pl.reviveNeed = reviveRequirement(pl.downs);
+    pl.state = 'idle';
+    pl.combo = null;
+    p.hp!.hp = 0;
+    this.w.emit({ t: 'downed', playerId: pl.playerId });
+    this.w.sfx('downed', p.x);
+    if (this.w.players.every((x) => x.pl!.downed || x.pl!.deadUntilRest)) this.wipe();
+  }
+
+  /** Party wipe (D12): everyone respawns at the bonfire; each player's Shards drop where they fell. */
+  wipe(): void {
+    this.w.emit({ t: 'msg', text: 'The party has been evicted.', color: '#ff6a5a' });
+    this.w.sfx('wipe');
+    const host = this.localPlayer;
+    if (host) this.die(host);
+  }
+
+  die(p: Entity): void {
+    if (this.dead) return;
+    const ws = this.save.world;
+    const c = this.save.character;
+    this.dead = true;
+    this.w.paused = true;
+    this.save.stats.deaths++;
+    // the Shardpile: at the death spot (in a boss room just inside the door)
+    let x = p.x;
+    let y = p.y;
+    if (this.node.kind === 'boss') [x, y] = [this.entry[0], this.entry[1]];
+    const [fx, fy] = this.w.room.nearestFloor(x, y, 14);
+    if (c.shards > 0) ws.shardpile = { zone: this.layout.zone, roomId: this.node.id, x: fx, y: fy, amount: c.shards };
+    else delete ws.shardpile;
+    c.shards = 0;
+    this.deathLine = DEATH_LINES[this.save.stats.deaths % DEATH_LINES.length]!;
+    this.w.sfx('death');
+    this.listener.playerDied?.(p);
+    this.listener.autosave?.('death');
+  }
+
+  /** Respawn at the last bonfire with full HP and a full Thermos (death refills, §9.3). */
+  respawn(): void {
+    const ws = this.save.world;
+    this.dead = false;
+    this.w.paused = false;
+    for (const sp of this.players) {
+      sp.char.flaskCur = sp.char.flaskMax;
+      if (sp.entity) {
+        const e = sp.entity;
+        refreshDerived(e);
+        e.hp!.dead = false;
+        e.hp!.hp = e.hp!.max;
+        e.stam!.cur = e.stam!.max;
+        e.pl!.downed = false;
+        e.pl!.deadUntilRest = false;
+        e.pl!.state = 'idle';
+        e.pl!.combo = null;
+        e.pl!.falling = null;
+        e.pl!.downs = 0;
+        e.anim.scale = 1;
+        e.anim.alpha = 1;
+        e.buffs = [];
+        cleanse(e, ['statuses', 'controls']);
+      }
+    }
+    this.downs = {};
+    ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss');
+    const room = this.layout.byId[ws.respawnBonfireId] ? ws.respawnBonfireId : this.layout.startId;
+    this.enterRoom(room, 'bonfire');
+    this.listener.autosave?.('respawn');
+  }
+
+  // ------------------------------------------------------------------ zones
+
+  /** Go down the stairs to the next zone (M8 wires the boss room's stairs). */
+  descend(): void {
+    const ws = this.save.world;
+    const next = ws.zone + 1;
+    if (next > 8) return;
+    this.gotoZone(next);
+  }
+
+  gotoZone(z: number): void {
+    const ws = this.save.world;
+    ws.zone = z;
+    ws.roomsCleared = [];
+    ws.respawnBonfireId = `z${z}-start`;
+    this.layout = this.layoutFor(z);
+    this.enterRoom(this.layout.startId, 'bonfire', true);
+    this.listener.autosave?.('zone');
+  }
+
+  // ------------------------------------------------------------------ mimics
+
+  private mimicKilled(e: Entity): void {
+    const ws = this.save.world;
+    const id = e.en!.mimicChestId!.replace('awake:', '');
+    if (!ws.mimicsKilled.includes(id)) ws.mimicsKilled.push(id);
+    ws.mimicsAwake = ws.mimicsAwake.filter((x) => x !== id);
+    this.save.stats.mimicsKilled++;
+    // the chest's loot plus a bonus roll from the Mimic row
+    const p = this.w.get(e.hp!.lastHitBy) ?? this.localPlayer;
+    if (p) lootHooks.chest(this, p, id, 'mimic', e.x, e.y);
+  }
+
+  // ------------------------------------------------------------------ tutorial hall (PROCGEN §8)
+
+  private setupTutorial(m: RoomMarkers): void {
+    const w = this.w;
+    const tut = { goals: new Set<string>(), sx: 0, sy: 0, aim0: 0, poked: false, dummy: {} as Record<string, number>, instructorId: 0 };
+    const p = this.localPlayer;
+    if (p) {
+      tut.sx = p.x;
+      tut.sy = p.y;
+      tut.aim0 = Math.atan2(p.pl!.input.aimY - p.y, p.pl!.input.aimX - p.x);
+    }
+    const defs: Record<string, typeof DUMMY_STILL> = { a: DUMMY_STILL, b: DUMMY_SWING, c: DUMMY_RED, d: DUMMY_PIERCE, f: DUMMY_STILL };
+    for (const d of m.dummies) {
+      const def = defs[d.kind];
+      if (!def) continue;
+      const e = spawnEnemy(w, def, d.x, d.y, { tellS: 0.05, noDrop: true });
+      e.en!.shards = 0;
+      tut.dummy[d.kind] = e.id;
+    }
+    for (const st of m.stations) {
+      const s = TUTORIAL_STATIONS.find((x) => x.n === st.n);
+      if (!s) continue;
+      w.spawn('interact', st.x, st.y + 40, { radius: 10, drawId: 'sign', it: { kind: 'station', key: s.goal, label: '', used: false, holdS: 0, text: s.sign, data: { n: s.n } } });
+    }
+    if (m.instructor && !this.save.world.instructorKilled) {
+      const e = spawnEnemy(w, INSTRUCTOR, m.instructor[0] - 40, m.instructor[1] - 120, { tellS: 0.05, zone: 1 });
+      e.en!.shards = 0;
+      tut.instructorId = e.id;
+    }
+    this.tutorial = tut;
+    this.w.room.doors.e.exists = true;
+    this.w.room.doors.e.open = true;
+    this.w.room.version++;
+  }
+
+  goal(g: string): void {
+    if (!this.tutorial || this.tutorial.goals.has(g)) return;
+    this.tutorial.goals.add(g);
+    this.w.sfx('uiConfirm');
+    this.listener.tutorialGoal?.(g);
+  }
+
+  private tickTutorial(): void {
+    const t = this.tutorial!;
+    const p = this.localPlayer;
+    if (!p) return;
+    const w = this.w;
+    if (dist(p.x, p.y, t.sx, t.sy) > 120) this.goal('move');
+    const aim = Math.atan2(p.pl!.input.aimY - p.y, p.pl!.input.aimX - p.x);
+    if (Math.abs(aim - t.aim0) > 1.0) this.goal('aim');
+    const a = w.get(t.dummy.a ?? 0);
+    if (a && a.hp && a.hp.hp < a.hp.max) this.goal('attack');
+    if (p.pl!.char.twoHanded !== (p.pl!.char.classId === 'brute')) this.goal('twoHand');
+    if (p.pl!.state === 'flask') this.goal('flask');
+    // Red stomp: dodged if the dummy's stomp lands while Joe is inside and takes nothing
+    for (const tele of w.entities.values()) {
+      if (tele.type !== 'telegraph' || !tele.tg || tele.tg.fired) continue;
+      if (w.time < tele.tg.impact - 1 / 60) continue;
+      const owner = tele.tg.ownerId;
+      const shape = tele.tg.shapes[0];
+      if (!shape || shape.k === 'pockets' || shape.k === 'wave' || !('x' in shape)) continue;
+      const near = dist(p.x, p.y, shape.x, shape.y) < 300;
+      if (owner === t.dummy.c && near && p.pl!.state === 'dodge') this.goal('dodgeRed');
+      if (owner === t.dummy.d && near) {
+        const hp0 = p.hp!.hp;
+        w.schedule(0.05, () => {
+          if (p.hp!.hp >= hp0) this.goal('escapePierce');
+        });
+      }
+    }
+    // the flask dummy pokes you once for 10% when you reach station 9
+    const f = w.get(t.dummy.f ?? 0);
+    if (f && !t.poked && dist(p.x, p.y, f.x, f.y) < 160) {
+      t.poked = true;
+      f.anim.pose = 'attack';
+      w.sfx('swingMedium', f.x);
+      rawDamage(w, p, p.hp!.max * 0.1, 'physical', f.id);
+      w.emit({ t: 'msg', text: 'Ow. Drink from the Thermos (C).', forPlayer: p.pl!.playerId });
+    }
+    // sign text when close
+    let sign: string | null = null;
+    for (const e of w.entities.values()) {
+      if (e.type === 'interact' && e.it?.kind === 'station' && dist(p.x, p.y, e.x, e.y - 40) < 70) sign = e.it.text ?? null;
+    }
+    this.listener.sign?.(sign);
+  }
+
+  private finishTutorial(): void {
+    if (this.save.character.tutorialDone) return;
+    this.save.character.tutorialDone = true;
+    this.listener.sign?.(null);
+    this.tutorial = null;
+  }
+
+  /** For the HUD: is each tutorial station done? */
+  tutorialDone(goal: string): boolean {
+    return this.tutorial?.goals.has(goal) ?? false;
+  }
+}
+
+export function rarityHex(r: string): string {
+  return ({ common: '#e8e8e8', uncommon: '#58d66a', rare: '#4aa3ff', epic: '#b06bff', legendary: '#ff9b2e' } as Record<string, string>)[r] ?? '#e8e8e8';
+}

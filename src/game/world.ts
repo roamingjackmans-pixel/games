@@ -274,6 +274,8 @@ export interface EnemyC {
   linkedTo: number;
   /** projectile speed multiplier from phase passive */
   projSpeedMult: number;
+  homeX: number;
+  homeY: number;
 }
 
 export interface ProjC {

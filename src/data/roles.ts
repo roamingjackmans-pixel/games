@@ -30,3 +30,13 @@ export const ROLE_STATS: Record<Role | 'mimic' | 'boss', RoleStats> = {
 
 /** Shard multiplier applied to every role value (D39 "Shard values ×5"; tuned to the §2.3 target). */
 export const SHARD_SCALE = 5;
+
+/**
+ * Per-zone Shard value factor (tuned, GAME_DESIGN §2.3): a full clear of a zone pays for its ten levels
+ * within ±20%. Recomputed by tests/unit/procgen.test.ts whenever rosters or budgets change.
+ */
+export const ZONE_SHARD_FACTOR: Record<number, number> = { 1: 0.46, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1 };
+
+export function zoneShardFactor(zone: number): number {
+  return ZONE_SHARD_FACTOR[Math.max(1, Math.min(8, zone))] ?? 1;
+}

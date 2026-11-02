@@ -235,7 +235,7 @@ export function drawEnemyEntity(ctx: CanvasRenderingContext2D, e: Entity, x: num
   const en = e.en!;
   if (en.state === 'spawning') {
     // rising floor circle tell
-    const k = 1 - Math.max(0, (en.spawnUntil - now) / 1.0);
+    const k = Math.max(0, Math.min(1, 1 - (en.spawnUntil - now) / Math.max(0.05, en.spawnUntil - en.spawnedAt)));
     ctx.save();
     ctx.strokeStyle = withAlpha('#e8d8c0', 0.7);
     ctx.lineWidth = 2;

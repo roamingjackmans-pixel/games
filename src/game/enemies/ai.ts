@@ -150,6 +150,13 @@ function moveByStyle(w: World, e: Entity, target: Entity, dt: number): void {
     face();
     return;
   }
+  // leashed enemies (The Instructor) never leave their home area
+  const home = def.traits?.homeRadius;
+  if (home && dist(e.x, e.y, en.homeX, en.homeY) > home) {
+    stepTo(w, e, en.homeX, en.homeY, sp, dt);
+    face();
+    return;
+  }
   switch (def.moveStyle) {
     case 'stationary':
       face();
@@ -417,7 +424,7 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
   // scripted dummies cycle their attacks in order on a timer
   if (traits.scripted) {
     e.facing = Math.atan2(target.y - e.y, target.x - e.x);
-    if (now >= en.thinkAt) {
+    if (now >= en.thinkAt && dist(e.x, e.y, target.x, target.y) < 320) {
       const list = en.phaseAttacks.filter((a) => !a.trigger);
       const i = (en.summonCount++) % list.length;
       startEnemyAttack(w, e, list[i]!, target);
