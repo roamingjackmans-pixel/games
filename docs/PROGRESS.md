@@ -6,21 +6,21 @@
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
 
 ## M0 — Repo, tooling, deploy pipeline
-- [ ] Vite + TS scaffold, lint, vitest, playwright, scripts
-- [ ] `.gitignore` (incl. `docs/OWNER_PRIVATE.md`), git init, first commit
-- [ ] `gh repo create DungeonJoe --public --source . --push`
-- [ ] `.github/workflows/deploy.yml`, `public/404.html`, README
-- [ ] Owner reminded: Settings → Pages → Source: GitHub Actions
+- [x] Vite + TS scaffold, lint, vitest, playwright, scripts — 5013bff 2026-11-02
+- [x] `.gitignore` (incl. `docs/OWNER_PRIVATE.md`), git init, first commit — 5013bff 2026-11-02
+- [x] `gh repo create DungeonJoe --public --source . --push` — 5013bff 2026-11-02 (github.com/roamingjackmans-pixel/DungeonJoe)
+- [x] `.github/workflows/deploy.yml`, `public/404.html`, README — 5013bff 2026-11-02
+- [x] Owner reminded: Settings → Pages → Source: GitHub Actions — 5013bff 2026-11-02 (also in the final message)
 
 ## M1 — Engine core
-- [ ] loop, canvas scaling, DPR, fullscreen
-- [ ] input: keyboard, mouse, gamepad, bindings, InputFrame
-- [ ] rng streams, math, scene manager, particles, tween, text
-- [ ] draw parts + glow pre-render
-- [ ] audio mixer + Sfx synth + unlock
-- [ ] settings persistence
-- [ ] debug menu (SHA-256 gate) with all listed tools
-- [ ] tests; browser check
+- [x] loop, canvas scaling, DPR, fullscreen — 3420a78 2026-11-02
+- [x] input: keyboard, mouse, gamepad, bindings, InputFrame — 3420a78 2026-11-02
+- [x] rng streams, math, scene manager, particles, tween, text — 3420a78 2026-11-02
+- [x] draw parts + glow pre-render — 3420a78 2026-11-02
+- [x] audio mixer + Sfx synth + unlock — 3420a78 2026-11-02
+- [x] settings persistence — 3420a78 2026-11-02
+- [x] debug menu (SHA-256 gate) with all listed tools — 3420a78 2026-11-02
+- [x] tests; browser check — 3420a78 2026-11-02 — browser: WASD moves Joe ~260 px/s, aim follows cursor, wrong code refused, panel opens (dev ?debug); owner code verified against the hash offline. Gamepad path not physically tested (no pad attached).
 
 ## M2 — Player, combat core, telegraphs
 - [ ] world/ECS + system order
