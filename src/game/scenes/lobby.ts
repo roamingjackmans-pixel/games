@@ -163,7 +163,7 @@ export class LobbyScene implements Scene {
   private async join(raw: string): Promise<void> {
     const code = parseRoomCode(raw);
     if (!code) {
-      toast('A room code is 6 letters and digits.');
+      toast('A room code is 6 digits.');
       return;
     }
     this.status = 'finding your friend…';
@@ -233,7 +233,7 @@ export class LobbyScene implements Scene {
         btn('Start', () => this.start(), 'primary big'),
       );
     } else {
-      const input = h('input', { type: 'text', maxlength: '8', placeholder: 'ROOM CODE', 'data-testid': 'code-input', style: 'font-size:28px;letter-spacing:8px;text-align:center;text-transform:uppercase' }) as HTMLInputElement;
+      const input = h('input', { type: 'text', inputmode: 'numeric', maxlength: '8', placeholder: '6-digit code', 'data-testid': 'code-input', style: 'font-size:28px;letter-spacing:8px;text-align:center' }) as HTMLInputElement;
       if (this.o.code) input.value = this.o.code;
       const go = (): void => void this.join(input.value);
       input.addEventListener('keydown', (e) => {

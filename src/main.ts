@@ -18,7 +18,7 @@ const params = new URLSearchParams(location.search);
 
 if (params.get('net') === 'test') {
   // NETCODE §8: a host and a guest side by side in one tab (BroadcastChannel transport between the panes)
-  const code = params.get('code') ?? 'TEST22';
+  const code = params.get('code') ?? '222222';
   document.body.innerHTML = '';
   document.body.style.cssText = 'margin:0;background:#0d0b12;display:flex;gap:6px;height:100vh';
   for (const role of ['host', 'guest']) {
@@ -61,7 +61,7 @@ function boot(): void {
     const ch = newCharacter(host ? 'knight' : 'brute', host ? 'Host Joe' : 'Guest Joe', host ? 'net-host' : `net-guest-${randomSeedString(Date.now())}`, new Rng(seed));
     ch.tutorialDone = true;
     const save = newSave(host ? 10 : 9, ch, seed);
-    a.scenes.set(new LobbyScene(save, { role: host ? 'host' : 'guest', code: params.get('code') ?? 'TEST22', auto: true }));
+    a.scenes.set(new LobbyScene(save, { role: host ? 'host' : 'guest', code: params.get('code') ?? '222222', auto: true }));
   } else if (params.has('new')) {
     // dev shortcut: straight into a fresh run in slot 10
     const seed = params.get('seed') ?? randomSeedString(Date.now());

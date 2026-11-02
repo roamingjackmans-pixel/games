@@ -37,7 +37,7 @@ on GitHub, in the `games` repository: **Settings → Pages → Build and deploym
 ## Playing together (online co-op, up to 4)
 
 1. The host presses **Host a game** on the title screen (and picks a character if they have several, or makes
-   one). The lobby shows a 6-letter room code.
+   one). The lobby shows a 6-digit room code.
 2. Friends press **Join a game**, pick their own character and type the code. Public relays can take a few
    seconds ("finding your friend…"); **Retry** if it stalls.
 3. The host presses **Start**. Everyone appears at the host's bonfire in the host's world.

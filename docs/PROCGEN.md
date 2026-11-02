@@ -103,8 +103,9 @@ from `map:<zone+1>` lazily, place the party at its start bonfire (fresh). After 
 Fixed 40 × 22 room: a corridor of **9 stations** left to right (signs with a short line each and a glowing
 floor marker that completes when the action is performed): move · aim · attack a dummy · block a dummy's
 swing · parry it · dodge a dummy's **Red** stomp · step out of a dummy's **Piercing** ring · two-hand ·
-drink the flask (a dummy hits you once for 10%). Stations do not gate the door; The Instructor stands
-in the last third beside the open exit (CONTENT_ENEMIES §10).
+drink the flask (a dummy hits you once for 10%). Stations do not gate the door. The Instructor has his own room through
+the hall's south door (D75): an optional side room off the grid, linked back to the hall (CONTENT_ENEMIES §10).
+Nobody can die in the hall itself (D73); in his room you can, and you wake at the start of the hall.
 
 ## 9. Determinism and tests
 

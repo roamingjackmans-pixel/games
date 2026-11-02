@@ -2,7 +2,7 @@
 import { stream } from '../../engine/rng';
 import { ROOM_TEMPLATES } from '../../data/rooms';
 import { BOSS_ARENAS } from '../../data/rooms/bosses';
-import { ROOM_ANTEROOM, ROOM_BOSS, ROOM_MERCHANT, ROOM_RELIQUARY, ROOM_START, ROOM_TREASURE, ROOM_TUTORIAL } from '../../data/rooms/special';
+import { ROOM_ANTEROOM, ROOM_BOSS, ROOM_MERCHANT, ROOM_RELIQUARY, ROOM_START, ROOM_TREASURE, ROOM_TRIAL, ROOM_TUTORIAL } from '../../data/rooms/special';
 import { zoneDef } from '../../data/zones';
 import { Room, T, tileCenter, ROOM_H, ROOM_W, type Side } from '../room';
 import { mirrorTemplate } from './templates';
@@ -43,6 +43,8 @@ function templateFor(layout: ZoneLayout, node: RoomNode, arenaId?: string): { ro
       return { rows: (arenaId && BOSS_ARENAS[arenaId]?.rows) || ROOM_BOSS.rows, mirror: false };
     case 'tutorial':
       return { rows: ROOM_TUTORIAL.rows, mirror: false };
+    case 'trial':
+      return { rows: ROOM_TRIAL.rows, mirror: false };
     default: {
       const list = ROOM_TEMPLATES[layout.zone]?.length ? ROOM_TEMPLATES[layout.zone]! : ROOM_TEMPLATES[1]!;
       const t = list.find((x) => x.id === node.template) ?? list[0]!;

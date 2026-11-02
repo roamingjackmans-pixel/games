@@ -9,7 +9,7 @@ Source for `src/game/net/*`. Decisions D4, D5, D12, D15, D31, D33. Design rules 
 - Transport: **Trystero** over WebRTC data channels. Strategy: `trystero/nostr` first; if no peer is
   found within 8 s, retry with `trystero/mqtt`. (Verify the current recommended strategy and API in
   the Trystero README at build time; the torrent strategy has been unreliable.) `appId`:
-  `"dungeon-joe-v1"`. Room id = the 6-character room code (alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`).
+  `"dungeon-joe-v1"`. Room id = the 6-digit room code (D76; was 6 characters from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`).
   Optional `password` derived from the code to keep strangers who guess the id from decrypting traffic.
 - Game version string (from `package.json`) is exchanged on hello; a mismatch rejects the join with a
   readable message ("Host is on 1.2.0, you are on 1.1.0").

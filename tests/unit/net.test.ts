@@ -76,11 +76,17 @@ function guestEntity(p: Party, i: number): Entity {
 }
 
 describe('net: codecs', () => {
-  it('room codes use the safe alphabet and parse back', () => {
-    const c = newRoomCode();
-    expect(c).toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
-    expect(parseRoomCode(c.toLowerCase())).toBe(c);
-    expect(parseRoomCode('abc')).toBeNull();
+  it('room codes are 6 digits and parse back (D76)', () => {
+    for (let i = 0; i < 50; i++) {
+      const c = newRoomCode();
+      expect(c).toMatch(/^[0-9]{6}$/);
+      expect(parseRoomCode(c)).toBe(c);
+    }
+    expect(parseRoomCode('123 456')).toBe('123456');
+    expect(parseRoomCode('12O-45O')).toBe('120450');
+    expect(parseRoomCode('ABCDEF')).toBeNull();
+    expect(parseRoomCode('12345')).toBeNull();
+    expect(parseRoomCode('1234567')).toBeNull();
   });
   it('input packets round-trip', () => {
     const f: InputFrame = { moveX: 0.5, moveY: -1, aimX: 700, aimY: 300, aimNeutral: true, aimAssist: 0.6, buttons: 0b101, pressed: 0b100 };

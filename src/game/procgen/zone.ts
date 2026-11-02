@@ -7,7 +7,7 @@ import { ENEMIES, rosterOf } from '../../data/enemies';
 import { pickMix } from './mix';
 import type { Side } from '../room';
 
-export type RoomKind = 'start' | 'combat' | 'ambush' | 'treasure' | 'reliquary' | 'merchant' | 'anteroom' | 'boss' | 'tutorial';
+export type RoomKind = 'start' | 'combat' | 'ambush' | 'treasure' | 'reliquary' | 'merchant' | 'anteroom' | 'boss' | 'tutorial' | 'trial';
 
 export interface RoomNode {
   id: string;
@@ -34,6 +34,8 @@ export interface ZoneLayout {
   anteroomId: string;
   bossId: string;
   tutorialId: string | null;
+  /** the Instructor's room off the Training Hall's south door (D75) */
+  trialId: string | null;
   /** the zone's 4-enemy mix (PROCGEN §4) */
   mix: string[];
   /** explicit door links that do not follow the grid (the tutorial hall's exit) */
@@ -214,13 +216,19 @@ export function generateZone(seed: string, zone: number, o: ZoneOpts = {}): Zone
     // the start room's south door leads to the tutorial (one-way: the hall's exit is its east door)
     const links: ZoneLayout['links'] = {};
     let tutorialId: string | null = null;
+    let trialId: string | null = null;
     if (tut) {
       const tutNode = rooms.find((r) => r.kind === 'tutorial')!;
-      tutNode.doors = ['e'];
+      tutNode.doors = ['e', 's'];
       tutorialId = tutNode.id;
       const startNode = rooms.find((r) => r.kind === 'start')!;
       if (!startNode.doors.includes('s')) startNode.doors.push('s');
       links[`${tutNode.id}|e`] = { to: `z${zone}-start`, entry: 's' };
+      // the Instructor's own room hangs off the hall's south door, outside the grid (D75)
+      trialId = `z${zone}-trial`;
+      rooms.push({ id: trialId, gx: -100, gy: -100, kind: 'trial', depth: 0, doors: ['n'], template: 'trial', mirrorH: false, mirrorV: false, bonusChest: false });
+      links[`${tutNode.id}|s`] = { to: trialId, entry: 'n' };
+      links[`${trialId}|n`] = { to: tutNode.id, entry: 's' };
     }
     const byId: Record<string, RoomNode> = {};
     for (const r of rooms) byId[r.id] = r;
@@ -237,6 +245,7 @@ export function generateZone(seed: string, zone: number, o: ZoneOpts = {}): Zone
       anteroomId: `z${zone}-boss`,
       bossId: `z${zone}-bossroom`,
       tutorialId,
+      trialId,
       mix,
       links,
     };

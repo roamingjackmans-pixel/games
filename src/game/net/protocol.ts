@@ -25,20 +25,19 @@ export const CH = {
   pong: 'pong',
 } as const;
 
-export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+/** Room codes are 6 digits (D76): easy to read out loud and to type on any keyboard. */
+export const CODE_LENGTH = 6;
 
 export function newRoomCode(): string {
-  const a = new Uint8Array(6);
+  const a = new Uint32Array(CODE_LENGTH);
   globalThis.crypto.getRandomValues(a);
-  return [...a].map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+  return [...a].map((n) => String(n % 10)).join('');
 }
 
-/** Normalise what a player typed; null when it cannot be a room code. */
+/** Normalise what a player typed (spaces and dashes are fine, O reads as 0); null when it cannot be a code. */
 export function parseRoomCode(s: string): string | null {
-  const c = s.toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0');
-  if (c.length !== 6) return null;
-  for (const ch of c) if (!CODE_ALPHABET.includes(ch)) return null;
-  return c;
+  const c = s.toUpperCase().replace(/O/g, '0').replace(/[\s-]/g, '');
+  return /^[0-9]{6}$/.test(c) ? c : null;
 }
 
 export function gameVersion(): string {

@@ -20,7 +20,8 @@ function reachableAll(L: ZoneLayout): boolean {
       }
     }
   }
-  return L.rooms.filter((r) => r.kind !== 'tutorial').every((r) => seen.has(r.id));
+  // the Training Hall and the Instructor's room off it are entered only at a new character's start
+  return L.rooms.filter((r) => r.kind !== 'tutorial' && r.kind !== 'trial').every((r) => seen.has(r.id));
 }
 
 describe('procgen (PROCGEN §9)', () => {
@@ -34,7 +35,12 @@ describe('procgen (PROCGEN §9)', () => {
         expect(boss.kind).toBe('boss');
         expect(boss.doors.length).toBe(1);
         expect(L.byId[L.anteroomId]!.kind).toBe('anteroom');
-        if (z === 1 && s % 2 === 0) expect(L.tutorialId).not.toBeNull();
+        if (z === 1 && s % 2 === 0) {
+          expect(L.tutorialId).not.toBeNull();
+          // the Instructor's room is the hall's south door, and leads back to it (D75)
+          expect(neighbourId(L, L.tutorialId!, 's')?.id).toBe(L.trialId);
+          expect(neighbourId(L, L.trialId!, 'n')?.id).toBe(L.tutorialId);
+        } else expect(L.trialId).toBeNull();
       }
     }
   });

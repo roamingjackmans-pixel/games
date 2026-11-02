@@ -36,6 +36,10 @@ export function createApp(canvasEl: HTMLCanvasElement, overlay: HTMLElement): Ap
   const particles = new Particles();
   const tweens = new Tweens();
   const settings = loadSettings();
+  // Menu keys (Esc, Tab, M…) are read by scene updates, which run at a fixed 60 Hz, while frames are drawn at
+  // the display's rate. A press is only dropped after an update has had the chance to read it; clearing it
+  // on every drawn frame lost presses on 120/144 Hz screens (Esc "needing several presses").
+  let updatedSinceClear = false;
   const loop = new Loop({
     frame: (now) => {
       input.pollGamepad(now / 1000);
@@ -43,13 +47,17 @@ export function createApp(canvasEl: HTMLCanvasElement, overlay: HTMLElement): Ap
     },
     update: (dt) => {
       scenes.update(dt);
+      updatedSinceClear = true;
     },
     render: (alpha, realDt) => {
       tweens.update(realDt);
       particles.update(realDt);
       const ctx = canvas.begin();
       scenes.render(ctx, alpha, realDt);
-      input.endFrame();
+      if (updatedSinceClear) {
+        input.endFrame();
+        updatedSinceClear = false;
+      }
     },
   });
   const a: App = {

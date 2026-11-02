@@ -109,11 +109,37 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     expect(s.w.room.doors[toBoss!].locked).toBe(false);
     expect(s.w.room.doors[toBoss!].open).toBe(true);
   });
+  it('walking into any open door goes through it at once (the body stops exactly on the edge)', () => {
+    for (const seed of ['DOOR-A', 'DOOR-B', 'DOOR-C']) {
+      const c = newCharacter('knight', 'Joe', 'p1', new Rng(seed));
+      c.tutorialDone = true;
+      const s = new GameSession(newSave(1, c, seed));
+      s.start();
+      for (const node of s.layout.rooms.filter((r) => r.kind !== 'boss' && r.kind !== 'tutorial' && r.kind !== 'trial')) {
+        if (!s.save.world.roomsCleared.includes(node.id)) s.save.world.roomsCleared.push(node.id);
+        for (const side of node.doors) {
+          const to = neighbourId(s.layout, node.id, side);
+          if (!to) continue;
+          s.enterRoom(node.id, side);
+          if (!s.w.room.doors[side].open) continue;
+          const p = s.localPlayer!;
+          // stand where a body walking into the door comes to rest (its radius from the room's edge) and keep pushing
+          const r = p.radius;
+          const [x, y, mx, my] = side === 'n' ? [640, 16 + r, 0, -1] : side === 's' ? [640, 720 - r, 0, 1] : side === 'w' ? [r, 368, -1, 0] : [1280 - r, 368, 1, 0];
+          p.x = p.px = x;
+          p.y = p.py = y;
+          p.pl!.input = { ...p.pl!.input, moveX: mx, moveY: my, buttons: 0, pressed: 0 };
+          run(s, 1);
+          expect(s.node.id, `${seed} ${node.id} ${side}`).toBe(to.id);
+        }
+      }
+    }
+  });
+
   it('nobody dies in the Training Hall (D73), but they can in the first room after it', () => {
     const s = session(true);
     const p = s.localPlayer!;
-    const instructor = [...s.w.entities.values()].find((e) => e.en?.def.id === 'the_instructor')!;
-    rawDamage(s.w, p, 1e9, 'physical', instructor.id);
+    rawDamage(s.w, p, 1e9, 'physical', 0);
     expect(s.dead).toBe(false);
     expect(p.hp!.hp).toBe(1);
     run(s, 2);
@@ -125,10 +151,39 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     expect(s.dead).toBe(true);
   });
 
+  it('the Instructor has his own room off the hall; stations are kept, death there sends you back to the hall (D75)', () => {
+    const s = session(true);
+    const p = s.localPlayer!;
+    s.goal('move');
+    s.goal('aim');
+    // walk out through the hall's south door
+    p.x = 640;
+    p.y = 700;
+    p.pl!.input = { ...p.pl!.input, moveX: 0, moveY: 1 };
+    run(s, 0.3);
+    expect(s.node.kind).toBe('trial');
+    expect(s.save.character.tutorialDone).toBe(false);
+    const inst = [...s.w.entities.values()].find((e) => e.en?.def.id === 'the_instructor');
+    expect(inst).toBeDefined();
+    // back into the hall: the stations already done stay done
+    s.enterRoom(s.layout.tutorialId!, 'n');
+    expect(s.node.kind).toBe('tutorial');
+    expect(s.tutorialDone('move')).toBe(true);
+    expect(s.tutorialDone('aim')).toBe(true);
+    // in his room you can die, and you wake at the start of the hall
+    s.enterRoom(s.layout.trialId!, 'n');
+    rawDamage(s.w, s.localPlayer!, 1e9, 'physical', 0);
+    expect(s.dead).toBe(true);
+    s.respawn();
+    expect(s.node.kind).toBe('tutorial');
+    expect(s.tutorialDone('move')).toBe(true);
+  });
+
   it('a new character starts in the tutorial hall and leaves it into the start room', () => {
     const s = session(true);
     expect(s.node.kind).toBe('tutorial');
-    expect([...s.w.entities.values()].some((e) => e.en?.def.id === 'the_instructor')).toBe(true);
+    // the Instructor is not in the hall any more (D75)
+    expect([...s.w.entities.values()].some((e) => e.en?.def.id === 'the_instructor')).toBe(false);
     const p = s.localPlayer!;
     p.x = 1262;
     p.y = 372;

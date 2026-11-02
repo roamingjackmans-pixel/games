@@ -126,7 +126,7 @@ export class TitleScene implements Scene {
         });
       }, 'big'),
       btn('Credits', () => titleHooks.credits?.(), 'big'),
-      h('div', { class: 'small dim-text', style: 'max-width:340px' }, 'Co-op: up to 4 players, browser to browser. The host shares a 6-letter code; everyone brings their own character.'),
+      h('div', { class: 'small dim-text', style: 'max-width:340px' }, 'Co-op: up to 4 players, browser to browser. The host shares a 6-digit code; everyone brings their own character.'),
     );
   }
 

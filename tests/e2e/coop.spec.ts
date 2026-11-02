@@ -13,8 +13,8 @@ test('host and guest join by room code and see each other move', async ({ contex
   const guest = await context.newPage();
   const errors: string[] = [];
   for (const p of [host, guest]) p.on('pageerror', (e) => errors.push(String(e)));
-  await host.goto('./?net=bc&auto=host&code=E2EE22');
-  await guest.goto('./?net=bc&auto=guest&code=E2EE22');
+  await host.goto('./?net=bc&auto=host&code=424242');
+  await guest.goto('./?net=bc&auto=guest&code=424242');
   await expect.poll(() => sceneName(host), { timeout: 15000 }).toBe('run');
   await expect.poll(() => sceneName(guest), { timeout: 15000 }).toBe('guestRun');
   await expect

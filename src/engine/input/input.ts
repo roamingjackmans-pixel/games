@@ -35,6 +35,9 @@ export class InputManager {
   private padPrev = new Set<number>();
   private padEdge = new Set<number>();
   private padLocalEdge = new Set<number>();
+  /** tap-only buttons (ones that also have a hold action) released before the hold fired, for gameplay and menus */
+  private padTaps = new Set<number>();
+  private padLocalTaps = new Set<number>();
   private padHoldStart = new Map<number, number>();
   private padHoldFired = new Set<number>();
   private lastAimDir: [number, number] = [1, 0];
@@ -156,6 +159,12 @@ export class InputManager {
         this.padLocalEdge.add(HOLD + i);
       }
     }
+    // a release before the hold fired is a tap; remember it until a logic step reads it
+    for (const i of this.padPrev) {
+      if (this.padDown.has(i) || this.padHoldFired.has(i)) continue;
+      this.padTaps.add(i);
+      this.padLocalTaps.add(i);
+    }
     if (this.padDown.size > 0 || Math.hypot(...this.padMove) > 0 || Math.hypot(...this.padAim) > 0) this.lastDevice = 'pad';
   }
 
@@ -183,7 +192,7 @@ export class InputManager {
         if (set.has(b)) return true;
       } else if (this.padTapSuppressed(b)) {
         // fire on release if the hold never triggered
-        if (this.padPrev.has(b) && !this.padDown.has(b) && !this.padHoldFired.has(b)) return true;
+        if (this.padTaps.has(b)) return true;
       } else if (set.has(b)) return true;
     }
     return false;
@@ -221,6 +230,7 @@ export class InputManager {
     }
     this.edge.clear();
     this.padEdge.clear();
+    this.padTaps.clear();
     // edges that happened via held state transitions (e.g. held key while another frame consumed edges)
     pressedBits |= buttons & ~this.prevButtons & ~ACTION_BIT.twoHand;
     this.prevButtons = buttons;
@@ -261,7 +271,10 @@ export class InputManager {
           hit = true;
         }
       } else if (this.padTapSuppressed(b)) {
-        if (this.padPrev.has(b) && !this.padDown.has(b) && !this.padHoldFired.has(b)) hit = true;
+        if (this.padLocalTaps.has(b)) {
+          this.padLocalTaps.delete(b);
+          hit = true;
+        }
       } else if (this.padLocalEdge.has(b)) {
         this.padLocalEdge.delete(b);
         hit = true;
@@ -274,6 +287,7 @@ export class InputManager {
   endFrame(): void {
     this.localEdge.clear();
     this.padLocalEdge.clear();
+    this.padLocalTaps.clear();
   }
 
   isDown(code: string): boolean {

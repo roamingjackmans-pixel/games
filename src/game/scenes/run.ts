@@ -551,7 +551,8 @@ export class RunScene extends WorldScene {
       this.fade = Math.max(0, this.fade - realDt / 0.3);
     }
     if (app().settings.video.showFps) drawText(ctx, `${app().loop.fps.toFixed(0)} fps`, 1270, 150, { size: 12, align: 'right', mono: true, color: '#a59c8a' });
-    if (this.session.node.kind === 'tutorial') drawText(ctx, 'TRAINING HALL — the exit is on the right. The big man is optional.', 640, 40, { size: 14, align: 'center', color: '#a59c8a' });
+    if (this.session.node.kind === 'tutorial') drawText(ctx, 'TRAINING HALL — the exit is on the right. The big man waits through the south door (optional).', 640, 40, { size: 14, align: 'center', color: '#a59c8a' });
+    else if (this.session.node.kind === 'trial') drawText(ctx, 'THE INSTRUCTOR — optional, nearly unbeatable, and here you can die. The door out is behind you.', 640, 40, { size: 14, align: 'center', color: '#e6a07a' });
   }
 
   // ------------------------------------------------------------------ debug

@@ -49,7 +49,7 @@ function iconFor(r: RoomNode, ws: WorldState): { glyph: string; color: string } 
 
 export function drawMap(ctx: CanvasRenderingContext2D, v: MapView, x0: number, y0: number, cw: number, ch: number, gap: number, detail: boolean): void {
   const { visited, seen } = knownRooms(v);
-  const rooms = v.layout.rooms.filter((r) => r.kind !== 'tutorial' || visited.has(r.id));
+  const rooms = v.layout.rooms.filter((r) => (r.kind !== 'tutorial' || visited.has(r.id)) && r.kind !== 'trial');
   if (rooms.length === 0) return;
   const minX = Math.min(...rooms.map((r) => r.gx));
   const minY = Math.min(...rooms.map((r) => r.gy));

@@ -58,7 +58,7 @@ test('Host a game and Join a game from the main menu, with no characters yet (D7
   await page.getByTestId('create-name').fill('Hosty');
   await page.getByRole('button', { name: 'Create and host' }).click();
   await expect.poll(() => scene(page), { timeout: 10000 }).toBe('lobby');
-  await expect(page.getByTestId('room-code')).toHaveText(/^[A-HJ-NP-Z2-9]{6}$/);
+  await expect(page.getByTestId('room-code')).toHaveText(/^[0-9]{6}$/);
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByTestId('title')).toBeVisible();
   // one character now: Join goes straight to the join screen with it

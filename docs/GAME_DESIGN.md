@@ -61,8 +61,9 @@ non-melee type, one type with a Red special and one with a Piercing special.
 
 The very first room is a training hall: sign posts teach move, aim, attack, block, parry (a dummy that
 swings on a timer), dodge through a **red** attack, step out of a **blue** attack, two-hand, drink the
-flask. At the far end stands **The Instructor** (see CONTENT_ENEMIES §10): 120,000 HP, regenerates, slow,
-hits like a truck, and the exit door beside it is always open. You are meant to leave. If you somehow kill
+flask. You cannot die in the hall (D73). Through its south door, in **his own room**, waits **The Instructor**
+(see CONTENT_ENEMIES §10, D75): 120,000 HP, regenerates, slow, hits like a truck; there you can die, and you wake
+at the start of the hall. He is optional: the hall's exit to the first bonfire is its east door. If you somehow kill
 it, it drops a random *really good* item: a Legendary weapon with all 3 skills unlocked at zone-3 item
 level, or a random spell. The hall is not skippable, but it is short (under two minutes to walk through).
 
@@ -511,7 +512,7 @@ built for it.
 
 ## 12. Online co-op (D4, D5, D12, D15, D31, D33)
 
-- **Lobby**: Title → Load character → *Play solo* / *Host* / *Join*. Hosting shows a 6-character room
+- **Lobby**: Title → Load character → *Play solo* / *Host* / *Join*. Hosting shows a 6-digit room
   code; guests enter it. Joining happens **only in the lobby**. The host presses Start; everyone enters
   the host's world at the host's last bonfire. "Return to lobby" from the pause menu brings the party
   back (world saved) so more people can join.

@@ -82,6 +82,11 @@ export interface SessionPlayer {
 }
 
 const INTERACT_R = 56;
+/** room edges in world px and how close to one a body must be to go through its open door */
+const ROOM_TOP = 16;
+const ROOM_BOTTOM = 720;
+const ROOM_RIGHT = 1280;
+const DOOR_SLACK = 6;
 const HOLD_S = 0.6;
 const DEATH_LINES = ['JOE DIED', 'JOE HAS FALLEN DOWN THE STAIRS', 'JOE IS LATE FOR WORK', 'JOE DIED. AGAIN.', 'JOE NEEDS A MINUTE'];
 
@@ -103,7 +108,9 @@ export class GameSession {
   interactHold = new Map<number, { target: number; t: number }>();
   /** The zone title card waits until the party leaves the Training Hall. */
   private titlePending = false;
-  tutorial: { goals: Set<string>; sx: number; sy: number; aim0: number; poked: boolean; dummy: Record<string, number>; instructorId: number } | null = null;
+  tutorial: { goals: Set<string>; sx: number; sy: number; aim0: number; poked: boolean; dummy: Record<string, number> } | null = null;
+  /** stations done in the Training Hall, kept while the player visits the Instructor's room and comes back */
+  private tutGoals = new Set<string>();
   pendingTransition: { roomId: string; entry: Side | 'bonfire' | 'start' } | null = null;
   deathLine = DEATH_LINES[0]!;
   dead = false;
@@ -299,14 +306,17 @@ export class GameSession {
     this.spawnRoomContent(node, built.markers, cleared);
     this.applyDoorLocks();
     if (node.kind === 'tutorial') this.setupTutorial(built.markers);
-    else if (this.tutorial) {
-      this.tutorial = null;
-      this.listener.sign?.(null);
+    else {
+      if (this.tutorial) {
+        this.tutorial = null;
+        this.listener.sign?.(null);
+      }
+      if (node.kind === 'trial') this.setupTrial(built.markers);
     }
     w.inputLock = Math.max(w.inputLock, w.time + 0.2);
     this.listener.roomEntered?.(node, zoneChanged);
     if (zoneChanged || this.titlePending) {
-      this.titlePending = node.kind === 'tutorial';
+      this.titlePending = node.kind === 'tutorial' || node.kind === 'trial';
       if (!this.titlePending) {
         const names = this.layout.mix.map((id) => ENEMIES[id]?.name ?? id);
         this.listener.titleCard?.(this.layout.zone, names);
@@ -689,17 +699,21 @@ export class GameSession {
   private checkDoors(): void {
     const w = this.w;
     for (const p of w.livingPlayers()) {
+      // A body walking into an open door stops exactly on the room's edge (its radius from the border), so the
+      // check needs a little slack; walls are 32 px thick, so only a door gap lets a body this close.
+      const reach = p.radius + DOOR_SLACK;
       let side: Side | null = null;
-      if (p.y < 16 + 14) side = 'n';
-      else if (p.y > 720 - 14) side = 's';
-      else if (p.x < 14) side = 'w';
-      else if (p.x > 1280 - 14) side = 'e';
+      if (p.y <= ROOM_TOP + reach) side = 'n';
+      else if (p.y >= ROOM_BOTTOM - reach) side = 's';
+      else if (p.x <= reach) side = 'w';
+      else if (p.x >= ROOM_RIGHT - reach) side = 'e';
       if (!side) continue;
       const d = w.room.doors[side];
       if (!d.exists || !d.open) continue;
       const n = neighbourId(this.layout, this.node.id, side);
       if (!n) continue;
-      if (this.node.kind === 'tutorial') this.finishTutorial();
+      // the hall is done when you leave it for the first bonfire (not when you visit the Instructor)
+      if (this.node.kind === 'tutorial' && n.id === this.layout.startId) this.finishTutorial();
       this.pendingTransition = { roomId: n.id, entry: n.entry };
       return;
     }
@@ -1043,6 +1057,12 @@ export class GameSession {
     }
     this.downs = {};
     ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss');
+    if (this.layout.tutorialId && !this.save.character.tutorialDone) {
+      // the Instructor floored you: back to the start of the Training Hall, not past it
+      this.enterRoom(this.layout.tutorialId, 'start');
+      this.listener.autosave?.('respawn');
+      return;
+    }
     const room = this.layout.byId[ws.respawnBonfireId] ? ws.respawnBonfireId : this.layout.startId;
     this.enterRoom(room, 'bonfire');
     this.listener.autosave?.('respawn');
@@ -1099,7 +1119,7 @@ export class GameSession {
 
   private setupTutorial(m: RoomMarkers): void {
     const w = this.w;
-    const tut = { goals: new Set<string>(), sx: 0, sy: 0, aim0: 0, poked: false, dummy: {} as Record<string, number>, instructorId: 0 };
+    const tut = { goals: this.tutGoals, sx: 0, sy: 0, aim0: 0, poked: false, dummy: {} as Record<string, number> };
     const p = this.localPlayer;
     if (p) {
       tut.sx = p.x;
@@ -1119,15 +1139,21 @@ export class GameSession {
       if (!s) continue;
       w.spawn('interact', st.x, st.y + 40, { radius: 10, drawId: 'sign', it: { kind: 'station', key: s.goal, label: '', used: false, holdS: 0, text: s.sign, data: { n: s.n } } });
     }
-    if (m.instructor && !this.save.world.instructorKilled) {
-      const e = spawnEnemy(w, INSTRUCTOR, m.instructor[0] - 40, m.instructor[1] - 120, { tellS: 0.05, zone: 1 });
-      e.en!.shards = 0;
-      tut.instructorId = e.id;
-    }
     this.tutorial = tut;
-    this.w.room.doors.e.exists = true;
-    this.w.room.doors.e.open = true;
+    for (const d of ['e', 's'] as const) {
+      this.w.room.doors[d].exists = true;
+      this.w.room.doors[d].locked = false;
+      this.w.room.doors[d].open = true;
+    }
     this.w.room.version++;
+  }
+
+  /** The Instructor's room (D75): optional, he is nearly unbeatable, and here you can die. */
+  private setupTrial(m: RoomMarkers): void {
+    if (!m.instructor || this.save.world.instructorKilled) return;
+    const e = spawnEnemy(this.w, INSTRUCTOR, m.instructor[0], m.instructor[1], { tellS: 0.05, zone: 1 });
+    e.en!.shards = 0;
+    e.facing = -Math.PI / 2;
   }
 
   goal(g: string): void {
