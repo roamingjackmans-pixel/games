@@ -29,6 +29,7 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
       'no-constant-condition': ['error', { checkLoops: false }],
       'prefer-const': 'error',
+      '@typescript-eslint/no-this-alias': 'off',
     },
   },
   {

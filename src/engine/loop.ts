@@ -79,6 +79,16 @@ export class Loop {
     this.raf = requestAnimationFrame(tick);
   }
 
+  /** Run `seconds` of simulation synchronously, then render once (dev playtests in a hidden pane, tests). */
+  advance(seconds: number): void {
+    const n = Math.max(1, Math.round(seconds / STEP));
+    for (let i = 0; i < n; i++) {
+      this.hooks.frame?.(performance.now(), STEP);
+      this.hooks.update(STEP);
+    }
+    this.hooks.render(0, STEP);
+  }
+
   stop(): void {
     this.running = false;
     cancelAnimationFrame(this.raf);

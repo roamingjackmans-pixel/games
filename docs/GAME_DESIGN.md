@@ -139,7 +139,7 @@ Enemies drop **Shards** (the soul currency). Spend them at a bonfire. Cost to go
 `L + 1` (L is your current level):
 
 ```
-cost(L) = floor(60 × 1.045^L + 15 L)        L=1:77 · L=10:243 · L=30:674 · L=50:1292 · L=80:3228
+cost(L) = floor(60 × 1.045^L + 15 L)        L=1:77 · L=10:243 · L=30:674 · L=50:1291 · L=80:3229 (exact floor values)
 ```
 
 Whole-run totals: level 1→12 ≈ 2,100 · 12→22 ≈ 3,800 · 32→42 ≈ 8,100 · 52→62 ≈ 15,600 · 72→80 ≈ 21,000.
