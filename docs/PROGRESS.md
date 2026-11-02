@@ -111,7 +111,7 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] credits, NG+ bonfire and cycle scaling — 240e603 2026-11-02 (D70, tests/unit/ngplus.test.ts)
 
 ## M13 — Gary, reliquaries, merchant room, no-refill test, Tears, rings/legendaries verified
-- [ ] all items
+- [x] all items — 240e603 2026-11-02 (Gary: stock, purchase, three hits and gone, checked in the browser; Tears from bosses/reliquaries/Gary; Lucky Charm; Warden, Thunderclap, Lucky Socks; tests/unit/data.test.ts guards D38 and dead powers; tests/unit/powers.test.ts)
 
 ## M14 — Audio and VFX pass
 - [ ] full sound list, zone music, boss music, VFX list, intro cards, colorblind/high-contrast, juice

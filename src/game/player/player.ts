@@ -1,6 +1,7 @@
 // The player controller (GAME_DESIGN §4–5): input → movement, light combos, dodge, block, parry,
 // two-hand toggle, flask, skills/spells hooks. Runs on the host for every player (guests send inputs).
 import { emptyInput, held, pressed } from '../../engine/input/actions';
+import { T } from '../room';
 import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
 import { flaskHeal } from '../combat/formulas';
 import { addRevive, applyControl, cleanse, emptySpec, heal, hitEnemy, rawDamage, typeColor } from '../combat/damage';
@@ -698,7 +699,10 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   (e.anim as { moving?: number }).moving = mv;
   if (mv > 0.2 && now - pl.lastFootstep > 0.32) {
     pl.lastFootstep = now;
-    w.sfx('stepStone', e.x, 0.6, 0.9 + (w.tick % 3) * 0.1);
+    // footsteps per surface (ART_AUDIO §5): splashes in water, soft steps on moss and forest floor
+    const wet = w.room.tileAt(e.x, e.y) === T.Hazard && w.room.hazardKind === 'water';
+    const soft = w.zone === 2 || w.zone === 4;
+    w.sfx(wet ? 'stepWater' : soft ? 'stepGrass' : 'stepStone', e.x, 0.6, 0.9 + (w.tick % 3) * 0.1);
   }
 
   // stamina regen: after a delay; paused during active frames; slower while blocking

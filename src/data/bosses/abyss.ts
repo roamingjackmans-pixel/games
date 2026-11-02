@@ -27,7 +27,7 @@ const evictionNotices = (count: number, spreadDeg: number): AttackDef => ({
   id: 'landlord_eviction',
   name: 'Eviction Notices',
   kind: 'normal',
-  pattern: { kind: 'projectile', speed: 250, r: 8, homing: 80, count, spreadDeg, range: 1300, drawId: 'e_paper' },
+  pattern: { kind: 'projectile', speed: 250, r: 8, homing: 45, count, spreadDeg, range: 1300, drawId: 'e_paper' },
   windupMs: 700,
   recoverMs: 600,
   dmgMult: 0.6,

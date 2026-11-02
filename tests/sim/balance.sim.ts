@@ -1,9 +1,9 @@
 // Balance harness (BUILD_BRIEF M15): scripted bots (greathammer, daggers, caster, cleric) play new characters
 // through all eight zones: every combat room (re-fighting after a death), treasure chests, the anteroom
 // bonfire, then the boss until it falls. They level up at bonfires and wear better drops. The report goes to
-// docs/BALANCE_REPORT.md. `npm run balance` (RUNS=n bots per class, default 3; the brief's full pass is 50).
+// docs/balance/campaigns.md (docs/BALANCE_REPORT.md is the curated write-up). `npm run balance` (RUNS=n bots per class, default 3; the brief's full pass is 50).
 import { describe, it } from 'vitest';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { GameSession } from '../../src/game/session';
 import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
@@ -17,7 +17,7 @@ import { newBot, botInput, type BotStyle } from './bot';
 import type { ClassId, Item, StatId } from '../../src/game/types';
 import type { Entity } from '../../src/game/world';
 
-const RUNS = Number(process.env.RUNS ?? 3);
+const RUNS = Number(process.env.RUNS ?? 5);
 const MAX_ZONE = Number(process.env.MAX_ZONE ?? 8);
 const ONLY = process.env.BOT ?? '';
 const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
@@ -49,6 +49,8 @@ interface ZoneStats {
   shards: number;
   drops: Record<string, number>;
   levelAtBoss: number;
+  levelAtKill: number;
+  grinds: number;
 }
 
 function spendShards(s: GameSession, p: Entity, order: StatId[]): void {
@@ -107,7 +109,7 @@ function enterSide(s: GameSession, id: string): 'n' | 's' | 'e' | 'w' {
 }
 
 function playZone(s: GameSession, def: BotDef, z: number): ZoneStats {
-  const st: ZoneStats = { deaths: 0, roomS: 0, bossTries: 0, bossS: 0, bossKilled: false, shards: 0, drops: {}, levelAtBoss: 0 };
+  const st: ZoneStats = { deaths: 0, roomS: 0, bossTries: 0, bossS: 0, bossKilled: false, shards: 0, drops: {}, levelAtBoss: 0, levelAtKill: 0, grinds: 0 };
   const c = s.save.character;
   const shards0 = c.shards;
   let spent = 0;
@@ -121,6 +123,7 @@ function playZone(s: GameSession, def: BotDef, z: number): ZoneStats {
     gearUp(p);
   };
   rest(`z${z}-start`);
+  const clearRooms = (): void => {
   for (const node of s.layout.rooms) {
     if (node.kind !== 'combat' && node.kind !== 'ambush' && node.kind !== 'treasure') continue;
     for (let tries = 0; tries < MAX_ROOM_TRIES; tries++) {
@@ -144,6 +147,8 @@ function playZone(s: GameSession, def: BotDef, z: number): ZoneStats {
       break;
     }
   }
+  };
+  clearRooms();
   s.enterRoom(s.layout.anteroomId, 'bonfire');
   rest(`z${z}-boss`);
   st.levelAtBoss = c.level;
@@ -155,11 +160,19 @@ function playZone(s: GameSession, def: BotDef, z: number): ZoneStats {
     st.bossS += s.w.time - t0;
     if (r === 'won') {
       st.bossKilled = true;
+      st.levelAtKill = c.level;
       collectAll(s, s.localPlayer!, st);
     } else if (r === 'died') {
       st.deaths++;
       s.respawn();
       rest(`z${z}-boss`);
+      // stuck: like a player would, go back through the zone for Shards and levels, then try again
+      if (st.bossTries % 4 === 0 && st.bossTries < MAX_BOSS_TRIES) {
+        st.grinds++;
+        clearRooms();
+        s.enterRoom(s.layout.anteroomId, 'bonfire');
+        rest(`z${z}-boss`);
+      }
     } else {
       // timed out: count as a failed attempt and reset
       s.die(s.localPlayer!);
@@ -191,7 +204,7 @@ describe('balance harness', () => {
           if (z > 1) s.gotoZone(z);
           const zs = playZone(s, def, z);
           (rows[def.name]![z] ??= []).push(zs);
-          if (!zs.bossKilled) break; // a stuck bot stops its campaign there
+          // a bot that cannot win after 12 attempts is carried on to the next zone (marked not cleared)
           if (z < 8) save.character.tutorialDone = true;
         }
       }
@@ -208,21 +221,22 @@ describe('balance harness', () => {
     lines.push('Targets (GAME_DESIGN §2.3, BUILD_BRIEF M15): deaths per zone rising gently; bosses 2–5 attempts; first clear ~3–4 h.', '');
     for (const def of BOTS) {
       lines.push(`## ${def.name} (${def.cls})`, '');
-      lines.push('| Zone | Cleared | Deaths (median) | Level at boss | Room fighting (min) | Boss attempts (median) | Boss time per attempt (s) | Shards earned | Drops (C/U/R/E/L) |');
-      lines.push('|---|---|---|---|---|---|---|---|---|');
+      lines.push('| Zone | Boss beaten | Deaths (median) | Level at boss | Level at kill | Re-clears | Room fighting (min) | Boss attempts (median) | Boss time per attempt (s) | Shards earned | Drops (C/U/R/E/L) |');
+      lines.push('|---|---|---|---|---|---|---|---|---|---|---|');
       for (let z = 1; z <= 8; z++) {
         const list = rows[def.name]![z] ?? [];
         if (!list.length) {
-          lines.push(`| ${z} ${ZONES[z - 1]!.name} | not reached | | | | | | | |`);
+          lines.push(`| ${z} ${ZONES[z - 1]!.name} | not reached | | | | | | | | | |`);
           continue;
         }
         const dr = (k: string): number => Math.round(list.reduce((a, b) => a + (b.drops[k] ?? 0), 0) / list.length);
         lines.push(
-          `| ${z} ${ZONES[z - 1]!.name} | ${list.filter((x) => x.bossKilled).length}/${list.length} | ${median(list.map((x) => x.deaths))} | ${median(list.map((x) => x.levelAtBoss))} | ${(median(list.map((x) => x.roomS)) / 60).toFixed(1)} | ${median(list.map((x) => x.bossTries))} | ${Math.round(median(list.map((x) => x.bossS / Math.max(1, x.bossTries))))} | ${Math.round(median(list.map((x) => x.shards)))} | ${dr('common')}/${dr('uncommon')}/${dr('rare')}/${dr('epic')}/${dr('legendary')} |`,
+          `| ${z} ${ZONES[z - 1]!.name} | ${list.filter((x) => x.bossKilled).length}/${list.length} | ${median(list.map((x) => x.deaths))} | ${median(list.map((x) => x.levelAtBoss))} | ${median(list.filter((x) => x.bossKilled).map((x) => x.levelAtKill)) || '—'} | ${median(list.map((x) => x.grinds))} | ${(median(list.map((x) => x.roomS)) / 60).toFixed(1)} | ${median(list.map((x) => x.bossTries))} | ${Math.round(median(list.map((x) => x.bossS / Math.max(1, x.bossTries))))} | ${Math.round(median(list.map((x) => x.shards)))} | ${dr('common')}/${dr('uncommon')}/${dr('rare')}/${dr('epic')}/${dr('legendary')} |`,
         );
       }
       lines.push('');
     }
-    writeFileSync(process.env.REPORT ?? 'docs/BALANCE_REPORT.md', lines.join('\n') + '\n');
+    mkdirSync('docs/balance', { recursive: true });
+    writeFileSync(process.env.REPORT ?? 'docs/balance/campaigns.md', lines.join('\n') + '\n');
   });
 });
