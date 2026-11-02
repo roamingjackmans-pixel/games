@@ -1,6 +1,6 @@
 // Floor hazards (fire puddles, poison clouds, thorns, ice, oil, slag, roots, time bubbles…) and their ticks.
 import { shapeHit, type Shape } from '../combat/patterns';
-import { applyStatusBuild, emptySpec, hitEnemy, hitPlayer, rawDamage } from '../combat/damage';
+import { applyControl, applyStatusBuild, emptySpec, hitEnemy, hitPlayer, rawDamage } from '../combat/damage';
 import { runEffects } from '../effects/run';
 import type { HazardId, Team } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
@@ -15,6 +15,12 @@ export interface HazardDef {
   color: string;
   blocksEnemies?: boolean;
   blocksProjectiles?: boolean;
+  /** solid while it lasts (root walls): bodies cannot walk through */
+  blocksMove?: boolean;
+  /** seconds before it can trigger (bear traps arm in 1 s) */
+  armS?: number;
+  /** a trap: the first body inside is caught (control + hit) and the hazard is used up */
+  trap?: { control: { id: 'root'; durationS: number }; dmg: number };
   hitsTeam: 'enemies' | 'players' | 'both';
 }
 
@@ -26,7 +32,7 @@ export const HAZARDS: Record<HazardId, HazardDef> = {
   ice: { dmg: 0, tickS: 0.5, slippery: true, color: '#cfeaff', hitsTeam: 'both' },
   oil: { dmg: 0, tickS: 0.5, slippery: true, color: '#3a3020', hitsTeam: 'both' },
   slag: { dmg: 0.3, tickS: 0.5, status: { id: 'burn', buildup: 10 }, color: '#ff5a1a', hitsTeam: 'players' },
-  roots: { dmg: 0, tickS: 1, color: '#5a3a1a', blocksEnemies: true, hitsTeam: 'players' },
+  roots: { dmg: 0, tickS: 1, color: '#5a3a1a', blocksEnemies: true, blocksMove: true, hitsTeam: 'players' },
   water: { dmg: 0, tickS: 1, slow: 0.15, color: '#2a5a5a', hitsTeam: 'both' },
   lava: { dmg: 1.2, tickS: 0.5, status: { id: 'burn', buildup: 40 }, color: '#ff4a10', hitsTeam: 'players' },
   timeBubble: { dmg: 0, tickS: 0.25, slow: 0.4, color: '#b08de8', hitsTeam: 'players' },
@@ -39,7 +45,7 @@ export const HAZARDS: Record<HazardId, HazardDef> = {
   regenAura: { dmg: 0, tickS: 1, color: '#7ad0a0', hitsTeam: 'players' },
   timeDilation: { dmg: 0, tickS: 0.25, slow: 0.4, color: '#b08de8', hitsTeam: 'enemies' },
   gravityWell: { dmg: 0, tickS: 0.1, color: '#6a3ab0', hitsTeam: 'enemies' },
-  bearTrap: { dmg: 0, tickS: 0.1, color: '#8a8a8a', hitsTeam: 'both' },
+  bearTrap: { dmg: 0, tickS: 0.1, color: '#8a8a8a', hitsTeam: 'both', armS: 1, trap: { control: { id: 'root', durationS: 1.5 }, dmg: 1.0 } },
 };
 
 export function spawnHazard(w: World, hazard: HazardId, shapes: Shape[], durationS: number, team: Team, ownerId: number, o: Partial<Entity['hz']> = {}): Entity {
@@ -82,6 +88,8 @@ export function spawnHazard(w: World, hazard: HazardId, shapes: Shape[], duratio
       follow: 0,
       pull: 0,
       armedAt: w.time,
+      allyEffects: [],
+      powerMult: 1,
       ...o,
     },
   });
@@ -135,6 +143,7 @@ export function updateHazards(w: World, _dt: number): void {
       }
     }
     const def = HAZARDS[hz.hazard];
+    if (def.armS && now < hz.armedAt + def.armS) continue;
     // who it touches
     const victims: Entity[] = [];
     const hitPlayers = !hz.enemiesOnly && (def.hitsTeam === 'players' || def.hitsTeam === 'both') && hz.team !== 0;
@@ -148,7 +157,17 @@ export function updateHazards(w: World, _dt: number): void {
         break;
       }
       if (!inside) continue;
-      if (v.flying && hz.hazard !== 'timeBubble' && hz.hazard !== 'timeDilation') continue;
+      if (v.flying && !def.slow) continue;
+      if (def.trap) {
+        // caught: root + one hit, then the trap is spent (it catches enemies too)
+        applyControl(w, v, def.trap.control.id, def.trap.control.durationS);
+        if (v.en) v.en.rootUntil = Math.max(v.en.rootUntil, now + def.trap.control.durationS);
+        const base = 18 * (1 + 0.35 * (w.zone - 1)) * Math.pow(1.35, w.cycle) * def.trap.dmg;
+        rawDamage(w, v, v.pl ? base * (100 / (100 + v.pl.derived.defense.physical)) : base, 'physical', hz.ownerId);
+        w.sfx('hitMetal', v.x);
+        w.remove(h);
+        break;
+      }
       // slows apply continuously
       if (hz.slowPct > 0) {
         if (v.en && (hz.team === 0 || def.hitsTeam !== 'players')) {
@@ -167,9 +186,10 @@ export function updateHazards(w: World, _dt: number): void {
       if (now < next) continue;
       hz.nextTick[v.id] = now + hz.tickS;
       const friendly = (v.pl && hz.team === 0) || (v.en && hz.team === 1);
-      if (hz.effects.length && (friendly ? hz.alliesOnly || !hz.enemiesOnly : !hz.alliesOnly)) {
+      const list = friendly ? hz.allyEffects : hz.effects;
+      if (list.length) {
         const owner = w.get(hz.ownerId);
-        runEffects(w, hz.effects, {
+        runEffects(w, list, {
           sourceId: hz.ownerId,
           team: hz.team,
           x: v.x,
@@ -177,7 +197,7 @@ export function updateHazards(w: World, _dt: number): void {
           aimX: v.x,
           aimY: v.y,
           targetId: v.id,
-          powerMult: 1,
+          powerMult: hz.powerMult,
           isSpell: true,
           isSkill: false,
           baseDamage: owner?.pl?.derived.weaponPower ?? 20,
@@ -191,7 +211,7 @@ export function updateHazards(w: World, _dt: number): void {
         else for (const s of hz.spec.status) applyStatusBuild(w, v, s.id, s.buildup);
       } else if (v.en) {
         if (hz.team === 0) hitEnemy(w, w.get(hz.ownerId) ?? null, v, hz.spec, h.x, h.y, { noLifesteal: true });
-        else if (def.dmg > 0 && hz.hazard === 'firePuddle') rawDamage(w, v, hz.spec.dmg.fire ?? 0, 'fire', hz.ownerId, false);
+        else if (def.dmg > 0 && def.hitsTeam === 'both') rawDamage(w, v, Object.values(hz.spec.dmg).reduce((a, b) => a + (b ?? 0), 0), 'fire', hz.ownerId, false);
       }
     }
   }

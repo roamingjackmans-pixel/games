@@ -108,7 +108,7 @@ export type BuffStat =
   | 'speedMult'
   | `defense:${DamageType}`;
 
-export type EffectTarget = 'self' | 'ally' | 'party' | 'enemies' | 'ghost' | 'summoner' | 'allEnemies' | 'nearestAlly' | 'target';
+export type EffectTarget = 'self' | 'ally' | 'party' | 'others' | 'enemies' | 'ghost' | 'summoner' | 'allEnemies' | 'nearestAlly' | 'target';
 
 interface EffectBase {
   target?: EffectTarget;
@@ -140,6 +140,10 @@ export type EffectDef = EffectBase &
         undeadMult?: number;
         ticks?: number;
         tickS?: number;
+        /** only undead / Abyss enemies are affected */
+        onlyUndead?: boolean;
+        /** run when this hit kills (Execute refunds its cooldown) */
+        onKill?: EffectDef[];
       }
     | {
         op: 'dash';
@@ -154,7 +158,7 @@ export type EffectDef = EffectBase &
         leap?: boolean;
       }
     | { op: 'teleport'; distance: number; toward: 'aim' | 'random' | 'behindTarget' | 'away' }
-    | { op: 'buff'; stat: BuffStat; amount: number; durationS: number; maxStacks?: number; stackOn?: 'kill' | 'hit'; id?: string }
+    | { op: 'buff'; stat: BuffStat; amount: number; durationS: number; maxStacks?: number; stackOn?: 'kill' | 'hit'; id?: string; onStack?: EffectDef[] }
     | { op: 'debuff'; stat: BuffStat; amount: number; durationS: number }
     | { op: 'heal'; pct: number; overS?: number; interruptible?: boolean; flat?: number; spell?: boolean }
     | { op: 'barrier'; pctMaxHp: number; durationS: number }
@@ -175,6 +179,8 @@ export type EffectDef = EffectBase &
         noStatusBuild?: boolean;
         enemyDamagePct?: number;
         burst?: EffectDef;
+        /** effects run on allies standing inside each tick (tick runs on foes) */
+        allyTick?: EffectDef[];
       }
     | { op: 'wall'; pattern: PatternDef; durationS: number; blocks: ('projectiles' | 'enemies')[] }
     | { op: 'stance'; durationS: number; onHitTaken: 'parry' | 'ignore'; riposteMult?: number }
@@ -203,6 +209,9 @@ export type EffectDef = EffectBase &
     | { op: 'pulseHazards'; hazard: HazardId; mult: number; type: DamageType; status?: { id: StatusId; buildup: number } }
     | { op: 'scatter'; distance: number }
     | { op: 'eliteSummon'; count: number; max: number }
+    | { op: 'steal'; pct: number }
+    /** the source dies (self-destructs, detonations) */
+    | { op: 'die'; quiet?: boolean }
   );
 
 export interface AttackMove {
@@ -253,6 +262,8 @@ export interface AttackDef {
   triggerValue?: number;
   /** effects applied to the victim on hit (attach, steal…) */
   onHitEffects?: EffectDef[];
+  /** passive triggers: only while the enemy is moving (trails) */
+  onlyWhileMoving?: boolean;
 }
 
 export type MoveStyle = 'walk' | 'dash' | 'circle' | 'flank' | 'hover' | 'teleport' | 'stationary' | 'burrow' | 'ceiling' | 'orbit' | 'swarm';
@@ -441,6 +452,9 @@ export interface SkillDef {
   cooldownS: number;
   stamina: number;
   castMs?: number;
+  /** the aim point is clamped to this range (melee skills land near you) */
+  range?: number;
+  castHyperArmor?: boolean;
   effect: EffectDef[];
   description: string;
 }

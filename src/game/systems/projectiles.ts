@@ -83,8 +83,10 @@ export function updateProjectiles(w: World, dt: number): void {
       e.y = l.fromY + (l.toY - l.fromY) * k;
       e.anim.scale = 1 + Math.sin(k * Math.PI) * 0.8;
       if (k >= 1) {
-        // lobbed projectiles land: hit whatever is under them, then their impact effect
-        if (pr.team === 1) {
+        // lobbed projectiles land: hit whatever is under them (unless an impact blast does it), then the blast
+        if (pr.onImpact) {
+          /* the blast below deals the damage */
+        } else if (pr.team === 1) {
           for (const p of w.livingPlayers()) if (circleHit(e.x, e.y, e.radius + 14, p.x, p.y, p.radius)) hitPlayer(w, pr.ownerId, p, specOf(e), e.x, e.y);
         } else {
           const owner = w.get(pr.ownerId) ?? null;
@@ -170,6 +172,11 @@ export function updateProjectiles(w: World, dt: number): void {
         if (pr.hit.has(p.id)) continue;
         if (!circleHit(e.x, e.y, e.radius, p.x, p.y, p.radius)) continue;
         pr.hit.add(p.id);
+        // a projectile with an impact blast deals its damage through the blast only
+        if (pr.onImpact) {
+          impact(w, e);
+          break;
+        }
         const res = hitPlayer(w, pr.ownerId, p, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e);
         if (res === 'parried') break; // reflected: keeps flying as a player projectile
         if (res === 'dodged') continue;
@@ -191,6 +198,10 @@ export function updateProjectiles(w: World, dt: number): void {
         if (en.hp?.dead || pr.hit.has(en.id) || en.en?.state === 'ceiling') continue;
         if (!circleHit(e.x, e.y, e.radius, en.x, en.y, en.radius)) continue;
         pr.hit.add(en.id);
+        if (pr.onImpact) {
+          impact(w, e);
+          break;
+        }
         hitEnemy(w, owner, en, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, { light: !pr.isSpell && !pr.isSkill });
         if (pr.pierce > 0) {
           pr.pierce--;

@@ -3,7 +3,7 @@
 import { DEG, clamp, dist } from '../../engine/math';
 import { ENEMIES } from '../../data/enemies';
 import { addBuff, buffSum } from '../combat/state';
-import { addRevive, applyControl, cleanse, emptySpec, grantBarrier, heal, hitEnemy, hitPlayer, interrupt } from '../combat/damage';
+import { addRevive, applyControl, checkDeath, cleanse, emptySpec, grantBarrier, heal, hitEnemy, hitPlayer, interrupt } from '../combat/damage';
 import { spawnTelegraphs } from '../combat/telegraph';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, resolvePattern, type PatternCtx, type Shape } from '../combat/patterns';
 import { spawnHazard } from '../systems/hazards';
@@ -207,6 +207,8 @@ function targets(w: World, eff: EffectDef, ctx: EffectCtx, src: Entity | undefin
       return src ? [src] : [];
     case 'party':
       return alliesOf(w, ctx.team).filter((a) => dist(a.x, a.y, ctx.x, ctx.y) <= r || a === src);
+    case 'others':
+      return alliesOf(w, ctx.team).filter((a) => a !== src && dist(a.x, a.y, ctx.x, ctx.y) <= r);
     case 'ally':
     case 'nearestAlly': {
       if (ctx.team === 0) {
@@ -436,6 +438,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       const hz = spawnHazard(w, e.hazard ?? 'consecrate', shapes, e.durationS, ctx.team, ctx.sourceId, {
         tickS: e.tickS,
         effects: e.tick,
+        allyEffects: e.allyTick ?? [],
+        powerMult: ctx.powerMult,
         enemiesOnly: !!e.enemiesOnly,
         alliesOnly: !!e.alliesOnly,
         slowPct: e.slowPct ?? 0,
@@ -747,6 +751,25 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
     }
     case 'eliteSummon':
       break;
+    case 'die':
+      if (src?.hp && !src.hp.dead) {
+        if (src.en && e.quiet) src.en.quietDeath = true;
+        src.hp.hp = 0;
+        checkDeath(w, src, 0);
+      }
+      break;
+    case 'steal': {
+      // Pickpocket: take a share of the victim's Shards; killing the thief gives them back
+      const victim = w.get(ctx.targetId);
+      if (!src?.en || !victim?.pl) break;
+      const amount = Math.floor(victim.pl.char.shards * e.pct);
+      if (amount <= 0) break;
+      victim.pl.char.shards -= amount;
+      src.en.stolen += amount;
+      src.en.stolenFrom = victim.pl.playerId;
+      w.emit({ t: 'msg', text: `-${amount} Shards (pickpocketed!)`, forPlayer: victim.pl.playerId, color: '#ff9b2e' });
+      break;
+    }
   }
 }
 

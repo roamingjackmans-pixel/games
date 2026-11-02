@@ -233,7 +233,7 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
     case 'sweep': {
       const [x, y] = anchorPoints(p.anchor, c)[0]!;
       const arc = p.angleDeg * DEG * (p.clockwise === false ? -1 : 1);
-      const a0 = p.angleDeg >= 360 ? c.facing : c.facing - arc / 2;
+      const a0 = Math.abs(p.angleDeg) >= 360 ? c.facing : c.facing - arc / 2;
       const r = p.r === 'room' ? ROOM_DIAG : p.r;
       return [
         spec([{ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }], {
@@ -368,9 +368,17 @@ export function placePockets(n: number, r: number, c: PatternCtx, anchor?: Ancho
     if (pockets.length >= n) break;
     const covered = pockets.some((q) => dist(q.x, q.y, pl.x, pl.y) - q.r <= reach);
     if (covered) continue;
-    const a = c.rng.range(-Math.PI, Math.PI);
-    const d = c.rng.range(0, Math.min(reach + r * 0.6, 160));
-    pockets.push({ x: clamp(pl.x + Math.cos(a) * d, ROOM_MIN_X + r, ROOM_MAX_X - r), y: clamp(pl.y + Math.sin(a) * d, ROOM_MIN_Y + r, ROOM_MAX_Y - r), r });
+    // never centre a safe pocket over a pit or the void
+    let px = pl.x;
+    let py = pl.y;
+    for (let tries = 0; tries < 12; tries++) {
+      const a = c.rng.range(-Math.PI, Math.PI);
+      const d = c.rng.range(0, Math.min(reach + r * 0.6, 160));
+      px = clamp(pl.x + Math.cos(a) * d, ROOM_MIN_X + r, ROOM_MAX_X - r);
+      py = clamp(pl.y + Math.sin(a) * d, ROOM_MIN_Y + r, ROOM_MAX_Y - r);
+      if (!c.room || !c.room.isFallAt(px, py)) break;
+    }
+    pockets.push({ x: px, y: py, r });
   }
   while (pockets.length < n) {
     pockets.push({ x: c.rng.range(ROOM_MIN_X + r, ROOM_MAX_X - r), y: c.rng.range(ROOM_MIN_Y + r, ROOM_MAX_Y - r), r });

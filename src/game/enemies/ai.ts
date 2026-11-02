@@ -45,7 +45,7 @@ function conditionOk(w: World, e: Entity, atk: AttackDef, target: Entity): boole
   if (c === 'injuredAlly') return w.livingEnemies().some((x) => x !== e && x.hp!.hp < x.hp!.max * 0.8);
   if (c === 'hasAlly') return w.livingEnemies().some((x) => x !== e);
   if (c === 'constructAlly') return w.livingEnemies().some((x) => x !== e && x.en!.def.construct && x.hp!.hp < x.hp!.max * 0.9);
-  if (c === 'linesExist') return w.enemies.some((x) => !x.hp?.dead && x.en?.summonerId === e.id);
+  if (c === 'linesExist') return [...w.entities.values()].some((x) => !x.removed && ((x.type === 'hazard' && x.hz?.ownerId === e.id) || (x.type === 'enemy' && !x.hp?.dead && x.en?.summonerId === e.id)));
   if (c === 'noFlood') return w.roomMods.floodUntil < w.time;
   return true;
 }
@@ -98,6 +98,8 @@ function chooseAttack(w: World, e: Entity, target: Entity): AttackDef | null {
   const budgetUsed = specialsInWindup(w);
   for (const atk of list) {
     if (atk.trigger) continue;
+    // illusions only mimic the normal attack (no specials, no utilities, no real damage)
+    if (en.isIllusion && atk.kind !== 'normal') continue;
     if ((en.cooldowns[atk.id] ?? 0) > now) continue;
     if (d < atk.range[0] || d > atk.range[1]) continue;
     if (en.isBoss && atk.id === en.lastAttackId && list.filter((a) => !a.trigger).length > 1) continue;
@@ -127,6 +129,7 @@ function moveSpeed(w: World, e: Entity): number {
 
 function stepTo(w: World, e: Entity, gx: number, gy: number, speed: number, dt: number): void {
   const [dx, dy] = stepToward(w.room, e.x, e.y, gx, gy, e.flying, w.time);
+  if (e.en && Math.hypot(dx, dy) > 0.1 && speed > 1) e.en.movedAt = w.time;
   w.room.moveCircle(e, dx * speed * dt, dy * speed * dt, e.flying || !!e.en?.def.traits?.phasesThroughProps);
   if (Math.hypot(dx, dy) > 0.1) {
     const want = Math.atan2(dy, dx);
@@ -282,12 +285,13 @@ function triggers(w: World, e: Entity, target: Entity | null, dt: number): void 
   const now = w.time;
   for (const atk of en.phaseAttacks) {
     if (!atk.trigger) continue;
-    const used = en.extrasUsed[atk.id] ?? -100;
-    if (now - used < atk.cooldownS) continue;
+    const used = en.extrasUsed[atk.id];
+    if (used !== undefined && now - used < atk.cooldownS) continue;
     let fire = false;
+    if (atk.onlyWhileMoving && now - en.movedAt > 0.15) continue;
     if (atk.trigger === 'onHitTwice') fire = en.hitTimes.filter((t) => t > now - 1).length >= 2;
-    else if (atk.trigger === 'hpBelow') fire = e.hp!.hp < e.hp!.max * (atk.triggerValue ?? 0.3) && used < 0;
-    else if (atk.trigger === 'firstSight') fire = !!target && used < 0;
+    else if (atk.trigger === 'hpBelow') fire = e.hp!.hp < e.hp!.max * (atk.triggerValue ?? 0.3) && used === undefined;
+    else if (atk.trigger === 'firstSight') fire = !!target && used === undefined;
     else if (atk.trigger === 'passive') {
       fire = true;
     }
@@ -364,7 +368,7 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
   triggers(w, e, target, dt);
 
   // passive pull (Maw)
-  if (traits.passivePull && !en.attack?.def.pattern?.pullSpeed) {
+  if (traits.passivePull) {
     const pp = traits.passivePull;
     for (const p of w.livingPlayers()) {
       const d = dist(p.x, p.y, e.x, e.y);
@@ -407,6 +411,7 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
     if (drop && (en.cooldowns[drop.id] ?? 0) <= now && dist(e.x, e.y, target.x, target.y) < 160 && specialsInWindup(w) < w.specialBudget) {
       startEnemyAttack(w, e, drop, target);
       en.state = 'windup';
+      e.flying = false;
       w.hooks.onCeilingDrop?.(w, e);
     }
     return;
@@ -445,6 +450,12 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
     en.state = 'approach';
   }
   moveByStyle(w, e, target, dt);
+  // lurkers (Sewer Crocodile) move submerged between attacks: half damage taken, hard to see
+  if (traits.submerged) {
+    const far = dist(e.x, e.y, target.x, target.y) > e.radius + 70;
+    if (far) en.state = 'submerged';
+    e.anim.alpha = far ? 0.45 : 1;
+  }
   if (en.attachedTo) {
     const host = w.get(en.attachedTo);
     if (host && !host.pl?.downed) {
@@ -458,10 +469,12 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
 
 function syncSwarm(w: World, e: Entity, atk: AttackDef, target: Entity): void {
   const en = e.en!;
+  if (!en.groupId) return; // summoned or split pieces have no group
   let k = 1;
   for (const o of w.enemies) {
     if (o === e || o.hp?.dead || o.en!.groupId !== en.groupId || o.en!.attack) continue;
     if ((o.en!.cooldowns[atk.id] ?? 0) > w.time) continue;
+    if (atk.budget !== undefined && usersOf(w, atk.id) >= atk.budget) break;
     startEnemyAttack(w, o, atk, target);
     o.en!.attack!.windup += 0.15 * k++;
     o.en!.attack!.usedBudget = false;

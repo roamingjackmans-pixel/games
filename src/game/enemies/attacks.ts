@@ -1,7 +1,7 @@
 // Enemy attack execution: windup (tint + telegraph) → active (impact, projectiles, lunges, combos) → recover.
 import { DEG, angleDiff, circleHit, clamp, dist, turnToward } from '../../engine/math';
 import { emptySpec, hitPlayer } from '../combat/damage';
-import { spawnTelegraphs } from '../combat/telegraph';
+import { spawnShapeTelegraph, spawnTelegraphs } from '../combat/telegraph';
 import { resolvePattern, type PatternCtx } from '../combat/patterns';
 import { speedMult } from '../combat/state';
 import { runEffects } from '../effects/run';
@@ -103,6 +103,7 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
   e.anim.pose = 'windup';
   e.anim.poseT = 0;
 
+  if (atk.effects?.some((fx) => fx.op === 'pulseHazards')) en.attack.teleIds.push(...pulseOwnHazards(w, e, atk, windup));
   // pre-moves that happen before the telegraph resolves
   const mv = atk.move;
   if (mv?.kind === 'behindTarget' && target) {
@@ -149,13 +150,31 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
       trackTargetId: target?.id ?? 0,
       minActiveS: mv?.kind === 'charge' ? 1.2 : 0,
     });
-    en.attack.teleIds = teles.map((t) => t.id);
-    // melee/anchor-self shapes follow the enemy until 60% of the windup, then lock
-    for (const t of teles) {
-      const anchorSelf = isSelfAnchored(atk.pattern);
-      if (anchorSelf) t.tg!.follow = true;
-    }
+    en.attack.teleIds.push(...teles.map((t) => t.id));
+    // single-shape melee/anchor-self shapes follow the enemy until 60% of the windup, then lock;
+    // multi-shape patterns (random circles, lanes, line fans) stay where they were placed
+    if (teles.length === 1 && teles[0]!.tg!.shapes.length === 1 && isSelfAnchored(atk.pattern) && FOLLOW_KINDS.has(atk.pattern.kind)) teles[0]!.tg!.follow = true;
   }
+}
+
+const FOLLOW_KINDS = new Set(['melee', 'cone', 'line', 'circle', 'ring', 'sweep', 'expandingRing', 'beam']);
+
+/** Attacks that make the enemy's own hazards pulse (Mycelium Weaver's Lash). */
+function pulseOwnHazards(w: World, e: Entity, atk: AttackDef, windup: number): number[] {
+  const ids: number[] = [];
+  for (const fx of atk.effects ?? []) {
+    if (fx.op !== 'pulseHazards') continue;
+    const shapes = [...w.entities.values()]
+      .filter((h) => h.type === 'hazard' && !h.removed && h.hz!.ownerId === e.id && h.hz!.hazard === fx.hazard)
+      .flatMap((h) => h.hz!.shapes.map((s) => ({ ...s })));
+    if (!shapes.length) continue;
+    const spec = enemyAttackSpec(e, atk, fx.mult / Math.max(0.01, atk.dmgMult || 1));
+    const total = Object.values(spec.dmg).reduce((a, b) => a + (b ?? 0), 0);
+    spec.dmg = { [fx.type]: total };
+    if (fx.status) spec.status = [fx.status];
+    ids.push(spawnShapeTelegraph(w, shapes, { ownerId: e.id, team: 1, kind: atk.kind, windupS: windup, spec, x: e.x, y: e.y, sourceTag: atk.id }).id);
+  }
+  return ids;
 }
 
 function isSelfAnchored(p: PatternDef): boolean {
@@ -369,6 +388,11 @@ export function updateEnemyAttack(w: World, e: Entity, dt: number): void {
       e.anim.pose = 'recover';
       e.anim.scale = 1;
       if (a.def.move?.kind === 'teleportAway') teleportAway(w, e, 300);
+      const fade = en.def.traits?.fadeAfterAttackS;
+      if (fade) {
+        en.fadeUntil = now + fade;
+        e.hp!.invulnUntil = Math.max(e.hp!.invulnUntil, now + fade);
+      }
       if (a.def.stunAfterS) {
         en.stunUntil = now + a.def.stunAfterS;
         e.hp!.staggerUntil = now + a.def.stunAfterS;
@@ -396,7 +420,7 @@ function followShapes(t: Entity, e: Entity, angle: number): void {
       s.x = e.x;
       s.y = e.y;
       if (s.k === 'cone' || s.k === 'line' || s.k === 'beam') s.a = angle;
-      else s.a0 = s.arc >= Math.PI * 2 - 0.01 ? angle : angle - s.arc / 2;
+      else s.a0 = Math.abs(s.arc) >= Math.PI * 2 - 0.01 ? angle : angle - s.arc / 2;
     } else if (s.k === 'circle' || s.k === 'ring' || s.k === 'expRing') {
       s.x = e.x;
       s.y = e.y;

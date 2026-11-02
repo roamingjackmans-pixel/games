@@ -4,6 +4,7 @@ import { shapeHit, type Shape } from '../combat/patterns';
 import { addRevive, hitEnemy, hitPlayer } from '../combat/damage';
 import { runEffects } from '../effects/run';
 import { spawnHazard } from './hazards';
+import { attackDamage } from '../enemies/spawn';
 import type { Entity, World } from '../world';
 
 function targetsFor(w: World, t: Entity): Entity[] {
@@ -95,7 +96,7 @@ export function updateTelegraphs(w: World, dt: number): void {
     const owner = w.get(tg.ownerId);
     // owner died before impact: enemy telegraphs vanish (a dead caster casts nothing); bosses' too
     if (now < tg.impact) {
-      if (tg.team === 1 && (!owner || owner.hp?.dead) && tg.kind !== 'utility') {
+      if (tg.team === 1 && (!owner || owner.hp?.dead) && tg.kind !== 'utility' && !tg.sourceTag.startsWith('death:')) {
         w.remove(t);
       }
       continue;
@@ -137,7 +138,7 @@ export function updateTelegraphs(w: World, dt: number): void {
             powerMult: 1,
             isSpell: !!tg.spec?.isSpell,
             isSkill: !!tg.spec?.isSkill,
-            baseDamage: 0,
+            baseDamage: owner.en ? attackDamage(owner, 1) : (owner.pl?.derived.weaponPower ?? 0),
             windupS: 0,
             tag: tg.sourceTag,
           });

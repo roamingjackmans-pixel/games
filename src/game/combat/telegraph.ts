@@ -65,3 +65,41 @@ export function spawnTelegraphs(w: World, pattern: PatternDef, o: TeleOpts): Ent
   }
   return out;
 }
+
+/** A telegraph over shapes that already exist (existing tendril lines pulsing: the Weaver's Lash). */
+export function spawnShapeTelegraph(w: World, shapes: import('./patterns').Shape[], o: Omit<TeleOpts, 'ctx'> & { x: number; y: number }): Entity {
+  const now = w.time;
+  const e = w.spawn('telegraph', o.x, o.y, {
+    team: o.team,
+    tg: {
+      ownerId: o.ownerId,
+      team: o.team,
+      shapes,
+      kind: o.kind,
+      start: now,
+      impact: now + o.windupS,
+      end: now + o.windupS + 0.12,
+      mode: 'instant',
+      tickS: 0,
+      nextTick: now + o.windupS,
+      hit: new Set(),
+      spec: o.spec,
+      pulses: 1,
+      pulseGap: 0.8,
+      pulsesDone: 0,
+      persist: null,
+      onImpact: [],
+      fired: false,
+      follow: false,
+      trackTargetId: 0,
+      turnRate: 0,
+      pullSpeed: 0,
+      area: true,
+      hidden: false,
+      sourceTag: o.sourceTag ?? '',
+      slowable: 1,
+    },
+  });
+  w.emit({ t: 'telegraph', id: e.id });
+  return e;
+}

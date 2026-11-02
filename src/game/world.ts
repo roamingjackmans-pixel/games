@@ -65,6 +65,7 @@ export interface Buff {
   sourceId: number;
   /** stacks grow on kills or hits (Bloodlust, Rampage) */
   stackOn?: 'kill' | 'hit';
+  onStack?: EffectDef[];
 }
 
 export interface ComboState {
@@ -276,6 +277,11 @@ export interface EnemyC {
   projSpeedMult: number;
   homeX: number;
   homeY: number;
+  movedAt: number;
+  /** died by its own detonation: skip its on-death effects */
+  quietDeath: boolean;
+  stolen: number;
+  stolenFrom: string;
 }
 
 export interface ProjC {
@@ -333,6 +339,8 @@ export interface DamageSpec {
   sourceTag?: string;
   /** effects applied to the victim on hit */
   onHitEffects?: EffectDef[];
+  onKillEffects?: EffectDef[];
+  onlyUndead?: boolean;
 }
 
 export interface TeleC {
@@ -385,6 +393,8 @@ export interface HazardC {
   noStatusBuild: boolean;
   enemyDamagePct: number;
   burst: EffectDef | null;
+  allyEffects: EffectDef[];
+  powerMult: number;
   follow: number;
   pull: number;
   armedAt: number;
@@ -525,6 +535,7 @@ export interface WorldHooks {
   onPlayerKill?(w: World, p: Entity, victim: Entity): void;
   onMimicWake?(w: World, e: Entity): void;
   onMimicBite?(w: World, p: Entity, mimic: Entity): void;
+  onSpecKill?(w: World, attacker: Entity, victim: Entity, effects: EffectDef[]): void;
   /** room/wave logic, called once per tick after combat (rooms system) */
   onTick?(w: World, dt: number): void;
 }

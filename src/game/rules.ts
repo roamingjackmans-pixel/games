@@ -51,7 +51,7 @@ export function installRules(w: World, o: RulesOpts = {}): void {
       tag: `death:${def.id}`,
     };
     if (!en.isIllusion) {
-      if (def.onDeath) runEffects(w2, def.onDeath, ctx);
+      if (def.onDeath && !en.quietDeath) runEffects(w2, def.onDeath, ctx);
       for (const a of en.phaseAttacks) {
         if (a.trigger !== 'onDeath') continue;
         if (a.effects) runEffects(w2, a.effects.filter((x) => x.op !== 'split' || !en.splitDone), { ...ctx, windupS: a.windupMs / 1000, baseDamage: attackDamage(e, a.dmgMult || 1) });
@@ -60,6 +60,15 @@ export function installRules(w: World, o: RulesOpts = {}): void {
       if (en.shards > 0 && !def.traits?.noShards) grantShards(w2, en.shards, e.x, e.y);
       if (!en.noDrop) o.onDrops?.(w2, e, killerId);
       o.onKillStat?.(w2, e);
+    }
+    // a pickpocket gives the Shards back
+    if (en.stolen > 0) {
+      const victim = w2.players.find((p) => p.pl!.playerId === en.stolenFrom);
+      if (victim) {
+        victim.pl!.char.shards += en.stolen;
+        w2.emit({ t: 'msg', text: `+${en.stolen} Shards recovered`, forPlayer: en.stolenFrom, color: '#9ad0ff' });
+      }
+      en.stolen = 0;
     }
     // detach leeches
     for (const p of w2.players) p.pl!.attached = p.pl!.attached.filter((id) => id !== e.id);

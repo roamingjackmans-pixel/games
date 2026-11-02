@@ -112,6 +112,10 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
     projSpeedMult: 1,
     homeX: x,
     homeY: y,
+    movedAt: -10,
+    quietDeath: false,
+    stolen: 0,
+    stolenFrom: '',
   };
   if (o.illusion) {
     hp = 1;
@@ -145,6 +149,9 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
     en,
   });
   if (def.moveStyle === 'ceiling') en.state = 'spawning';
+  // player-look enemies roll the weapon they carry (drawn from the variant)
+  const pick = def.traits?.weaponPick;
+  if (pick && pick.length && o.pieceIndex === undefined) en.pieceIndex = w.combat.int(0, pick.length - 1);
   w.hooks.onEnemySpawned?.(w, e);
   return e;
 }

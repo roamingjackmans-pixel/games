@@ -2,6 +2,7 @@
 // separation, pits/void falls, the rotating floor ring, and the time-slow reset.
 import { dist } from '../../engine/math';
 import { rawDamage } from '../combat/damage';
+import { HAZARDS } from './hazards';
 import type { Entity, World } from '../world';
 
 export const FALL_PIT_PCT = 0.3;
@@ -62,6 +63,20 @@ export function updateMovement(w: World, dt: number): void {
       }
     }
   }
+  // solid hazards (root walls) block everyone; Guardian Walls block non-boss enemies
+  for (const h of w.entities.values()) {
+    if (h.removed) continue;
+    if (h.type === 'hazard' && h.hz && HAZARDS[h.hz.hazard].blocksMove) {
+      for (const s of h.hz.shapes) {
+        if (s.k !== 'line') continue;
+        const x2 = s.x + Math.cos(s.a) * s.l;
+        const y2 = s.y + Math.sin(s.a) * s.l;
+        for (const b of [...w.players, ...w.enemies]) if (!b.hp?.dead && !b.flying && !b.en?.isBoss) pushOut(w, b, s.x, s.y, x2, y2, s.w / 2);
+      }
+    } else if (h.type === 'wall' && h.wl?.blocksEnemies) {
+      for (const b of w.enemies) if (!b.hp?.dead && !b.en?.isBoss) pushOut(w, b, h.wl.x1, h.wl.y1, h.wl.x2, h.wl.y2, h.wl.w / 2);
+    }
+  }
   // soft separation between bodies (players and enemies push each other apart)
   const bodies: Entity[] = [];
   for (const p of w.players) if (!p.pl!.downed && !p.pl!.deadUntilRest && !p.pl!.falling) bodies.push(p);
@@ -89,4 +104,22 @@ export function updateMovement(w: World, dt: number): void {
     }
   }
   for (const p of w.players) if (p.pl) p.pl.timeSlow = 1;
+}
+
+/** Push a body out of a capsule (segment x1,y1 → x2,y2 with half width hw). */
+function pushOut(w: World, b: Entity, x1: number, y1: number, x2: number, y2: number, hw: number): void {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const l2 = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((b.x - x1) * dx + (b.y - y1) * dy) / l2));
+  const cx = x1 + dx * t;
+  const cy = y1 + dy * t;
+  const ox = b.x - cx;
+  const oy = b.y - cy;
+  const d = Math.hypot(ox, oy);
+  const need = hw + b.radius * 0.8;
+  if (d >= need) return;
+  const nx = d > 1e-6 ? ox / d : -dy / Math.sqrt(l2);
+  const ny = d > 1e-6 ? oy / d : dx / Math.sqrt(l2);
+  w.room.moveCircle(b, nx * (need - d), ny * (need - d), b.flying);
 }

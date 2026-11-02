@@ -628,6 +628,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   hp.lastHitAt = now;
   hp.lastHitBy = attacker?.id ?? 0;
   e.anim.flashUntil = now + 0.08;
+  if (traits.revealedByHoly && (spec.dmg.holy ?? 0) > 0) en.revealedUntil = now + traits.revealedByHoly;
   const shown = total;
   w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius - 4, amount: shown, type: dominantTypeOf(spec), crit, toPlayer: false, targetId: e.id });
   w.sfx(en.def.hitSound ?? 'hitFlesh', e.x, 0.8, 0.9 + (w.tick % 5) * 0.04);
