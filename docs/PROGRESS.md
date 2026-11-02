@@ -1,7 +1,7 @@
 # Dungeon Joe — Build progress
 
-> **Next session starts here:** nothing built yet. Start at M0. (Update this line at the end of every
-> session: where things stand, what was verified in the browser, what is half-done.)
+> **Next session starts here:** M0–M2 done (repo is github.com/roamingjackmans-pixel/games, live path /games/dungeonjoe/, D48).
+> Continue at M3 (enemy framework + Mossy Crypt roster). Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug
 
 Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never delete a line.
 
@@ -23,15 +23,15 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] tests; browser check — 3420a78 2026-11-02 — browser: WASD moves Joe ~260 px/s, aim follows cursor, wrong code refused, panel opens (dev ?debug); owner code verified against the hash offline. Gamepad path not physically tested (no pad attached).
 
 ## M2 — Player, combat core, telegraphs
-- [ ] world/ECS + system order
-- [ ] movement, stamina, dodge (5 s ring)
-- [ ] combos for Longsword, Greathammer, Twin Daggers, Bow; hitboxes
-- [ ] block, stability, guard break, parry, riposte, two-hand + weapon guard
-- [ ] damage pipeline, types, defenses, 5 statuses, poise/stagger, hitstop, numbers
-- [ ] all pattern primitives + telegraph drawing + hit tests + escapability helper
-- [ ] Red / Piercing rules
-- [ ] HUD v1
-- [ ] tests; browser check with scripted dummy
+- [x] world/ECS + system order — 5f42d31 2026-11-02
+- [x] movement, stamina, dodge (5 s ring) — 5f42d31 2026-11-02
+- [x] combos for Longsword, Greathammer, Twin Daggers, Bow; hitboxes — 5f42d31 2026-11-02
+- [x] block, stability, guard break, parry, riposte, two-hand + weapon guard — 5f42d31 2026-11-02
+- [x] damage pipeline, types, defenses, 5 statuses, poise/stagger, hitstop, numbers — 5f42d31 2026-11-02
+- [x] all pattern primitives + telegraph drawing + hit tests + escapability helper — 5f42d31 2026-11-02
+- [x] Red / Piercing rules — 5f42d31 2026-11-02
+- [x] HUD v1 — 5f42d31 2026-11-02
+- [x] tests; browser check with scripted dummy — 5f42d31 2026-11-02 — browser (loop.advance in the hidden pane): dummy swing blocked 2 HP vs 20 unblocked; Red stomp guard-breaks when blocked, 0 dmg when dodged; Piercing ring escaped by position; greathammer first hit 0.57 s vs daggers 0.18 s; bow tap 12 vs charged 22. 35 unit tests.
 
 ## M3 — Enemy framework, Zone 1, Elites, Mimic
 - [ ] EnemyDef/AttackDef loader + validator
