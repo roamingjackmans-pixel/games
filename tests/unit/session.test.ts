@@ -4,7 +4,7 @@ import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
 import { Rng } from '../../src/engine/rng';
 import { stepWorld } from '../../src/game/sim';
-import { emptySpec, hitPlayer, rawDamage } from '../../src/game/combat/damage';
+import { emptySpec, hitEnemy, hitPlayer, rawDamage } from '../../src/game/combat/damage';
 import { refreshDerived } from '../../src/game/player/player';
 import { neighbourId } from '../../src/game/procgen/zone';
 import { smallChest } from '../../src/game/procgen/chests';
@@ -249,6 +249,24 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     p.pl!.bareParryUntil = s.w.time + 0.1;
     hitPlayer(s.w, dummy.id, p, spec, p.x + 40, p.y);
     expect(s.tutorialDone('parry')).toBe(true);
+  });
+
+  it('station 10: a hit from behind checks off the backstab station; only Twin Daggers deal more there (D97)', () => {
+    const s = session(true);
+    const p = s.localPlayer!;
+    for (let i = 0; i < 60; i++) stepWorld(s.w);
+    const h = s.w.get(s.tutorial!.dummy.h!)!;
+    expect(h).toBeDefined();
+    // it still looks at the back wall after a second of play
+    expect(Math.abs(h.facing + Math.PI / 2)).toBeLessThan(0.2);
+    h.hp!.max = h.hp!.hp = 1e6;
+    const spec = () => ({ ...emptySpec('player'), dmg: { physical: 100 } });
+    const front = hitEnemy(s.w, p, h, spec(), h.x, h.y - 40);
+    expect(s.tutorialDone('backstab')).toBe(false);
+    const back = hitEnemy(s.w, p, h, spec(), h.x, h.y + 40);
+    // the Knight's longsword has no backstab of its own: same damage, station done
+    expect(back).toBeCloseTo(front, 5);
+    expect(s.tutorialDone('backstab')).toBe(true);
   });
 
   it('walking past him and out his east door reaches the start room', () => {

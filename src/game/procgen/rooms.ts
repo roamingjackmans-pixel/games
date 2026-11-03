@@ -90,8 +90,8 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
       else if (ch === 'X') m.start = c;
       else if (ch === 'I') m.instructor = c;
       else if (ch === 'E') m.exit = c;
-      else if (ch >= '1' && ch <= '9') m.stations.push({ n: Number(ch), x: c[0], y: c[1] });
-      else if ('abcdf'.includes(ch)) m.dummies.push({ kind: ch, x: c[0], y: c[1] });
+      else if (ch >= '0' && ch <= '9') m.stations.push({ n: ch === '0' ? 10 : Number(ch), x: c[0], y: c[1] });
+      else if ('abcdfh'.includes(ch)) m.dummies.push({ kind: ch, x: c[0], y: c[1] });
       else if (ch === 'K') m.boss = c;
       else if (ch === 'H') m.stairs = c;
       // arena marks take the floor they sit on (water arenas stay wet)
