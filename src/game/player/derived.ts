@@ -221,16 +221,21 @@ export function computeDerived(c: Character): Derived {
           if (def.defType) defPct[def.defType] = (defPct[def.defType] ?? 0) + v / 100;
       }
     }
-    for (const g of it.sockets) {
-      if (!g) continue;
-      const gd = GEMS[g.family];
-      const v = gemValue(g.family, g.tier);
+    // every perk of every socketed gem counts; armor perks work in armor, weapon perks in weapons
+    for (const g of it.sockets) for (const pk of g?.perks ?? []) {
+      const gd = GEMS[pk.family];
+      if (!gd) continue;
+      const v = gemValue(pk.family, pk.tier);
       if (it.kind === 'armor') {
-        if (g.family === 'bulwark') defAll += v;
+        if (!gd.armorOnly) continue;
+        if (pk.family === 'bulwark') defAll += v;
+        else if (pk.family === 'hearth') hpFlat += v;
+        else if (pk.family === 'zephyr') regenMult += v / 100;
+        else if (pk.family === 'gilt') glowenFind += v / 100;
         continue;
       }
-      if (it.kind !== 'weapon') continue;
-      switch (g.family) {
+      if (it.kind !== 'weapon' || gd.armorOnly) continue;
+      switch (pk.family) {
         case 'quicksilver':
           attackSpeedPct += v / 100;
           castSpeedPct += v / 100;
@@ -253,7 +258,7 @@ export function computeDerived(c: Character): Derived {
         default:
           if (gd.convert) {
             convert.push({ type: gd.convert.type, pct: v / 100 });
-            if (gd.convert.status) statusBuild.push({ id: gd.convert.status, buildup: gemBuildup(g.tier) });
+            if (gd.convert.status) statusBuild.push({ id: gd.convert.status, buildup: gemBuildup(pk.tier) });
           }
       }
     }

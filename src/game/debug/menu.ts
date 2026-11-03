@@ -24,6 +24,7 @@ export interface DebugApi {
   isGod(): boolean;
   listBases(): string[];
   giveItem(baseId: string, rarity: string, ilvl: number): string;
+  /** families joined by '+' or ',' (1–3, same kind: 'brutal+tempo'); every perk at `tier` */
   giveGem(family: string, tier: number): string;
   giveConsumable(id: string, n: number): string;
   learnAllSpells(): string;

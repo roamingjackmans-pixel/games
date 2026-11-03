@@ -1,21 +1,24 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
-import { GEMS, gemName, gemText } from '../../data/gems';
-import { levelCost, gemRerollCost, gemSellValue, gemUpgradeCost } from '../../game/combat/formulas';
-import { canSocket, itemSellValue } from '../../game/items/inventory';
+import { GEMS, gemColor, gemKind, gemKindLabel, gemText, gemTitle, perkName, perkText } from '../../data/gems';
+import { levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
+import { canSocket, fusePreview, gemAt, itemSellValue, sellAllPreview, type FusePick, type GemLoc, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import type { Character, ConsumableId, Gem, Item, StatId } from '../../game/types';
 import { btn, clearEl, fmt, h, layer, toast } from '../dom';
-import { gemIcon, glowenEl, itemIcon, itemTooltip } from '../tooltip';
+import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
 export interface BonfireOps {
   levelUp(stat: StatId): string;
   respec(): string;
   socket(itemId: string, socketIdx: number, gemIdx: number): string;
   unsocket(itemId: string, socketIdx: number): string;
-  upgradeGem(gemIdx: number): string;
-  rerollGem(gemIdx: number): string;
+  /** upgrade one perk of a loose or socketed gem */
+  upgradeGem(loc: GemLoc, perkIdx: number): string;
+  /** fuse a loose donor gem into the original (loose or socketed), keeping the picked perks */
+  fuseGem(orig: GemLoc, donorIdx: number, picks: FusePick[]): string;
   sellItem(itemId: string): string;
+  sellAll(filter: SellAllFilter): string;
   sellGem(gemIdx: number): string;
   sellConsumable(id: ConsumableId): string;
   buyConsumable(id: ConsumableId): string;
@@ -46,17 +49,46 @@ const STATS: { id: StatId; label: string; what: string }[] = [
   { id: 'prayer', label: 'Prayer', what: 'talisman spells, flask' },
 ];
 
+const SELL_ALL: { filter: SellAllFilter; label: string; what: string }[] = [
+  { filter: 'common', label: 'Sell all Commons', what: 'every Common item in your bag' },
+  { filter: 'belowRare', label: 'Sell all below Rare', what: 'every Common and Uncommon item in your bag' },
+  { filter: 'all', label: 'Sell all', what: 'everything in your bag' },
+];
+
+const locKey = (loc: GemLoc): string => ('gemIdx' in loc ? `l${loc.gemIdx}` : `s:${loc.itemId}:${loc.socketIdx}`);
+
 export function openBonfire(v: BonfireView): HTMLElement {
   const root = layer('dim');
   root.setAttribute('data-testid', 'bonfire-menu');
-  const panel = h('div', { class: 'panel', style: 'width:980px;height:640px;display:flex;flex-direction:column;gap:10px' });
+  const panel = h('div', { class: 'panel', style: 'width:1200px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(panel);
   let tab = 'level';
   let selItem: string | null = null;
+  /** which gem's per-perk upgrade list is open */
+  let upOpen: string | null = null;
+  /** the fuse dialog's state */
+  let fuse: { orig: GemLoc; donor: number | null; picks: FusePick[] } | null = null;
+  /** the Sell all confirmation */
+  let confirmSell: SellAllFilter | null = null;
+  let modal: HTMLElement | null = null;
   const say = (msg: string): void => {
     if (msg) toast(msg);
     render();
   };
+  // Escape (or the pad's back button) closes a dialog before it closes the bonfire
+  const onKey = (e: KeyboardEvent): void => {
+    if (!root.isConnected) {
+      window.removeEventListener('keydown', onKey, true);
+      return;
+    }
+    if (e.code !== 'Escape' || (!fuse && !confirmSell)) return;
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    fuse = null;
+    confirmSell = null;
+    render();
+  };
+  window.addEventListener('keydown', onKey, true);
   /** An item tooltip beside `el` while hovered (kept on screen). */
   const hoverTip = (el: HTMLElement, make: () => HTMLElement): void => {
     el.addEventListener('mouseenter', () => {
@@ -101,104 +133,286 @@ export function openBonfire(v: BonfireView): HTMLElement {
     el.appendChild(h('div', { class: 'row' }, btn(`Respec with a Tear of Undoing (${c.tears})`, () => say(v.ops.respec()), 'danger', c.tears <= 0), h('div', { class: 'small dim-text' }, 'Stats return to your class base; every point comes back to place freely.')));
   }
 
-  /** What a gem does, where it fits, and what upgrading it would give (shown at the bench and the shop). */
-  function gemInfo(g: Gem, extra = true): HTMLElement {
-    const def = GEMS[g.family];
-    const parts = [gemText(g.family, g.tier), def.armorOnly ? 'armor sockets only' : 'weapon sockets'];
-    if (extra && g.tier < 5) parts.push(`T${g.tier + 1}: ${gemText(g.family, g.tier + 1)}`);
-    return h('div', { class: 'small', style: 'color:#cfc6b4;padding-left:30px' }, parts.join(' · '));
+  /** Perk names in their colours with their tiers, and the Weapon / Armor chip. */
+  function gemNameEl(g: Gem): HTMLElement {
+    const el = h('div', { class: 'gem-name' }, gemKindChip(g));
+    g.perks.forEach((p, i) => {
+      if (i) el.appendChild(h('span', { class: 'dim-text' }, '+'));
+      el.appendChild(h('span', { style: `color:${GEMS[p.family].color}` }, perkName(p)));
+    });
+    return el;
+  }
+
+  /** The upgrade control: one button for a one-perk gem, a drop-down of perks for more. */
+  function upgradeCtl(g: Gem, loc: GemLoc): HTMLElement {
+    const c = v.char;
+    if (g.perks.length === 1) {
+      const p = g.perks[0]!;
+      const cost = gemUpgradeCost(p.tier);
+      const b = btn(p.tier >= 5 ? 'T5 (max)' : ['Upgrade ', glowenEl(cost)], () => say(v.ops.upgradeGem(loc, 0)), 'tiny', p.tier >= 5 || c.glowen < cost);
+      b.title = p.tier >= 5 ? 'Already T5.' : `T${p.tier + 1}: ${gemText(p.family, p.tier + 1)}`;
+      b.setAttribute('data-testid', 'gem-upgrade');
+      return b;
+    }
+    const key = locKey(loc);
+    const b = btn(upOpen === key ? 'Upgrade ▴' : 'Upgrade ▾', () => {
+      upOpen = upOpen === key ? null : key;
+      render();
+    }, 'tiny', g.perks.every((p) => p.tier >= 5));
+    b.title = 'Each perk upgrades on its own.';
+    b.setAttribute('data-testid', 'gem-upgrade');
+    return b;
+  }
+
+  /** The per-perk upgrade list under a gem row (when open). */
+  function perkUpgrades(g: Gem, loc: GemLoc): HTMLElement | null {
+    if (g.perks.length < 2 || upOpen !== locKey(loc)) return null;
+    const c = v.char;
+    const row = h('div', { class: 'row wrap', style: 'gap:4px;padding:0 8px 6px 40px' });
+    g.perks.forEach((p, i) => {
+      const cost = gemUpgradeCost(p.tier);
+      const b = btn(
+        p.tier >= 5 ? [h('span', { style: `color:${GEMS[p.family].color}` }, GEMS[p.family].name), ' T5 (max)'] : [h('span', { style: `color:${GEMS[p.family].color}` }, GEMS[p.family].name), ` T${p.tier}→T${p.tier + 1} `, glowenEl(cost)],
+        () => say(v.ops.upgradeGem(loc, i)),
+        'tiny perk-up',
+        p.tier >= 5 || c.glowen < cost,
+      );
+      b.setAttribute('data-testid', `perk-up-${i}`);
+      b.title = p.tier >= 5 ? 'Already T5.' : `Now: ${perkText(p)}. T${p.tier + 1}: ${gemText(p.family, p.tier + 1)}`;
+      row.appendChild(b);
+    });
+    return row;
+  }
+
+  /** One gem on one line: icon, name + chip + effects, then its buttons. */
+  function gemRow(g: Gem, loc: GemLoc, acts: (HTMLElement | null)[], testid: string): HTMLElement {
+    const icon = h('span', { style: 'display:inline-flex;flex:none' }, gemIcon(g, 26));
+    hoverTip(icon, () => gemTooltip(g));
+    const main = h('div', { class: 'gem-main' }, gemNameEl(g), h('div', { class: 'small', style: 'color:#cfc6b4' }, g.perks.map(perkText).join(' · ')));
+    const row = h('div', { class: 'gem-row', 'data-testid': testid }, icon, main, h('div', { class: 'gem-acts' }, ...acts));
+    const sub = perkUpgrades(g, loc);
+    return sub ? h('div', null, row, sub) : row;
+  }
+
+  function fuseBtn(g: Gem, loc: GemLoc): HTMLElement | null {
+    if (g.perks.length < 2) return null;
+    const b = btn('Fuse', () => {
+      fuse = { orig: loc, donor: null, picks: g.perks.map((_, i) => ({ from: 'orig' as const, idx: i })) };
+      render();
+    }, 'tiny');
+    b.title = 'Swap perks in from another gem of the same kind (that gem is destroyed).';
+    b.setAttribute('data-testid', 'gem-fuse');
+    return b;
   }
 
   function gemsTab(el: HTMLElement): void {
     const c = v.char;
     const items = [c.equipment.main, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0);
-    const list = h('div', { class: 'col', style: 'gap:4px;width:420px;max-height:500px;overflow:auto' }, h('h3', null, 'Socketed gear'));
-    if (items.length === 0) list.appendChild(h('div', { class: 'dim-text' }, 'Nothing you carry has sockets. Rare and better weapons do.'));
+    const list = h('div', { class: 'col', style: 'gap:6px;width:500px;max-height:540px;overflow:auto' }, h('h3', null, 'Socketed gear'));
+    if (items.length === 0) list.appendChild(h('div', { class: 'dim-text' }, 'Nothing you carry has sockets. Rare and better gear does.'));
     for (const it of items) {
-      const row = h('div', { class: `card ${selItem === it.id ? 'on' : ''}` });
-      const nameEl = h('div', { class: `r-${it.rarity}` }, it.name);
+      const card = h('div', { class: `card ${selItem === it.id ? 'on' : ''}`, style: 'padding:6px 8px' });
+      const nameEl = h('div', { class: `r-${it.rarity}` }, it.name, h('span', { class: 'small dim-text' }, ` · ${it.kind === 'armor' ? 'armor gems' : 'weapon gems'}`));
       hoverTip(nameEl, () => itemTooltip(it, c, 'auto'));
-      row.appendChild(nameEl);
-      const sockets = h('div', { class: 'row' });
+      card.appendChild(nameEl);
       it.sockets.forEach((g, i) => {
         if (g) {
-          const b = btn([gemIcon(g, 20), ` ${gemName(g.family, g.tier)} (remove)`], () => say(v.ops.unsocket(it.id, i)), 'tiny');
-          b.title = gemText(g.family, g.tier);
-          sockets.appendChild(b);
-        }
-        else
-          sockets.appendChild(
-            btn(`◇ empty — ${selItem === it.id ? 'pick a gem →' : 'select'}`, () => {
-              selItem = it.id;
-              render();
-            }, 'tiny'),
+          const loc: GemLoc = { itemId: it.id, socketIdx: i };
+          card.appendChild(gemRow(g, loc, [upgradeCtl(g, loc), fuseBtn(g, loc), btn('Remove', () => say(v.ops.unsocket(it.id, i)), 'tiny')], `socket-gem-${it.id}-${i}`));
+        } else
+          card.appendChild(
+            h(
+              'div',
+              { class: 'row', style: 'padding:3px 0' },
+              btn(`◇ Empty socket — ${selItem === it.id ? 'pick a gem →' : 'select'}`, () => {
+                selItem = it.id;
+                render();
+              }, 'tiny'),
+            ),
           );
       });
-      row.appendChild(sockets);
-      // what the socketed gems are doing on this piece
-      const active = it.sockets.filter((x): x is Gem => !!x);
-      if (active.length) row.appendChild(h('div', { class: 'small', style: 'color:#cfc6b4' }, active.map((x) => `${GEMS[x.family].name}: ${gemText(x.family, x.tier)}`).join(' · ')));
-      list.appendChild(row);
+      list.appendChild(card);
     }
-    const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;max-height:500px;overflow:auto' }, h('h3', null, 'Loose gems · ', glowenEl(c.glowen)));
+    const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;min-width:0;max-height:540px;overflow:auto' }, h('h3', null, 'Loose gems · ', glowenEl(c.glowen)));
+    const sel = selItem ? items.find((i) => i.id === selItem) : null;
+    const free = sel ? sel.sockets.findIndex((x) => !x) : -1;
     c.gems.forEach((g, gi) => {
-      const sel = selItem ? items.find((i) => i.id === selItem) : null;
-      const free = sel ? sel.sockets.findIndex((x) => !x) : -1;
-      const up = btn(['Upgrade (', glowenEl(gemUpgradeCost(g.tier)), ')'], () => say(v.ops.upgradeGem(gi)), 'tiny', g.tier >= 5 || c.glowen < gemUpgradeCost(g.tier));
-      up.title = g.tier >= 5 ? 'Already T5.' : `T${g.tier + 1}: ${gemText(g.family, g.tier + 1)}`;
-      const rr = btn(['Re-roll (', glowenEl(gemRerollCost(g.tier)), ')'], () => say(v.ops.rerollGem(gi)), 'tiny', c.glowen < gemRerollCost(g.tier));
-      rr.title = GEMS[g.family].armorOnly ? 'Becomes a random gem of the same tier.' : 'Becomes a different random weapon gem of the same tier.';
-      gems.appendChild(
-        h(
-          'div',
-          { class: 'card', 'data-testid': `loose-gem-${gi}` },
-          h(
-            'div',
-            { class: 'row wrap' },
-            gemIcon(g, 24),
-            h('span', { style: `color:${GEMS[g.family].color};width:150px` }, gemName(g.family, g.tier)),
-            sel && free >= 0 ? btn('Socket', () => say(v.ops.socket(sel.id, free, gi)), 'tiny', !canSocket(sel, g)) : null,
-            up,
-            rr,
-            btn(['Sell (', glowenEl(gemSellValue(g.tier), '+'), ')'], () => say(v.ops.sellGem(gi)), 'tiny'),
-          ),
-          gemInfo(g),
-        ),
-      );
+      const loc: GemLoc = { gemIdx: gi };
+      let sock: HTMLElement | null = null;
+      if (sel && free >= 0) {
+        const fits = canSocket(sel, g);
+        sock = btn('Socket', () => say(v.ops.socket(sel.id, free, gi)), 'tiny', !fits);
+        sock.title = fits ? `Into ${sel.name}` : `${sel.name} takes ${sel.kind === 'armor' ? 'armor' : 'weapon'} gems.`;
+      }
+      const sell = btn(['Sell ', glowenEl(gemSellTotal(g), '+')], () => say(v.ops.sellGem(gi)), 'tiny');
+      gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, upgradeCtl(g, loc), sell, fuseBtn(g, loc)], `loose-gem-${gi}`)));
     });
     if (c.gems.length === 0) gems.appendChild(h('div', { class: 'dim-text' }, 'No loose gems.'));
+    gems.appendChild(h('div', { class: 'small dim-text', style: 'margin-top:6px' }, 'Weapon gems fit weapon sockets, armor gems armor sockets. Upgrade any perk without unsocketing. NG+ gems carry two or three perks; Fuse swaps perks between two gems of the same kind.'));
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, gems));
+  }
+
+  /** The fuse dialog: choose which perks the original gem ends up with, from it and a donor gem. */
+  function fuseDialog(): HTMLElement | null {
+    if (!fuse) return null;
+    const c = v.char;
+    const f = fuse;
+    const orig = gemAt(c, f.orig);
+    if (!orig || orig.perks.length < 2) {
+      fuse = null;
+      return null;
+    }
+    const n = orig.perks.length;
+    const kind = gemKind(orig);
+    const donors = c.gems.map((g, i) => ({ g, i })).filter(({ g }) => g !== orig && gemKind(g) === kind);
+    const donor = f.donor !== null ? (c.gems[f.donor] ?? null) : null;
+    const pickedFamilies = f.picks.map((p) => (p.from === 'orig' ? orig : donor)?.perks[p.idx]?.family);
+    const perkBtn = (g: Gem, from: 'orig' | 'donor', idx: number): HTMLElement => {
+      const p = g.perks[idx]!;
+      const on = f.picks.some((x) => x.from === from && x.idx === idx);
+      const dup = !on && pickedFamilies.includes(p.family);
+      const full = !on && f.picks.length >= n;
+      const b = btn(
+        [h('span', { class: 'tick' }, on ? '✓' : ''), h('span', { style: `color:${GEMS[p.family].color};width:120px` }, perkName(p)), h('span', { class: 'small', style: 'color:#cfc6b4' }, perkText(p))],
+        () => {
+          if (on) f.picks = f.picks.filter((x) => !(x.from === from && x.idx === idx));
+          else f.picks.push({ from, idx });
+          render();
+        },
+        `fuse-perk ${on ? 'on' : ''}`,
+        dup || full,
+      );
+      b.setAttribute('data-testid', `fuse-${from}-${idx}`);
+      if (dup) b.title = `You already keep a ${GEMS[p.family].name} perk.`;
+      else if (full) b.title = `A fused gem has ${n} perks: untick one first.`;
+      return b;
+    };
+    const left = h('div', { class: 'col', style: 'gap:4px;width:400px' }, h('h3', null, 'Original gem'), gemNameEl(orig), ...orig.perks.map((_, i) => perkBtn(orig, 'orig', i)));
+    const right = h('div', { class: 'col', style: 'gap:4px;flex:1' }, h('h3', null, 'Fuse with (destroyed)'));
+    if (donors.length === 0) right.appendChild(h('div', { class: 'dim-text' }, `No loose ${gemKindLabel(orig).toLowerCase()} to fuse with.`));
+    for (const d of donors) {
+      const on = f.donor === d.i;
+      const b = btn([gemIcon(d.g, 20), ' ', gemTitle(d.g)], () => {
+        f.donor = on ? null : d.i;
+        f.picks = orig.perks.map((_, i) => ({ from: 'orig' as const, idx: i }));
+        render();
+      }, `tiny fuse-perk ${on ? 'on' : ''}`);
+      b.setAttribute('data-testid', `fuse-gem-${d.i}`);
+      right.appendChild(b);
+      if (on) {
+        const perks = h('div', { class: 'col', style: 'gap:4px;padding-left:18px' });
+        d.g.perks.forEach((_, i) => perks.appendChild(perkBtn(d.g, 'donor', i)));
+        right.appendChild(perks);
+      }
+    }
+    const res = fusePreview(orig, donor, f.picks);
+    const preview = h('div', { class: 'card col', style: 'gap:4px' }, h('div', { class: 'small dim-text' }, `Result: keep ${n} perks, at least one from each gem. Picked ${f.picks.length} of ${n}.`));
+    if ('error' in res) preview.appendChild(h('div', { class: 'small bad', 'data-testid': 'fuse-error' }, res.error));
+    else {
+      const g: Gem = { perks: res.perks };
+      preview.appendChild(h('div', { class: 'row' }, gemIcon(g, 26), gemNameEl(g)));
+      for (const line of gemPerkLines(g)) preview.appendChild(line);
+    }
+    const cost = 'error' in res ? 0 : res.cost;
+    const go = btn(['Fuse', 'error' in res ? '' : [' (', glowenEl(cost), ')']], () => {
+      const msg = v.ops.fuseGem(f.orig, f.donor ?? -1, f.picks);
+      fuse = null;
+      upOpen = null;
+      say(msg);
+    }, 'primary', 'error' in res || c.glowen < cost);
+    go.setAttribute('data-testid', 'fuse-confirm');
+    const cancel = btn('Cancel', () => {
+      fuse = null;
+      render();
+    });
+    const box = h(
+      'div',
+      { class: 'panel col', style: 'width:860px;gap:10px', 'data-testid': 'fuse-dialog' },
+      h('h2', null, 'Fuse gems'),
+      h('div', { class: 'small dim-text' }, 'Choose the perks the original gem keeps; the rest come from the other gem, which is destroyed. Tiers come with their perks.'),
+      h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, left, right),
+      preview,
+      h('div', { class: 'row' }, go, cancel, h('div', { class: 'grow' }), glowenEl(c.glowen)),
+    );
+    return box;
+  }
+
+  /** "Sell all": what goes, for how much, and a confirm. */
+  function sellAllDialog(): HTMLElement | null {
+    if (!confirmSell) return null;
+    const def = SELL_ALL.find((s) => s.filter === confirmSell)!;
+    const pv = sellAllPreview(v.char, def.filter);
+    const yes = btn(['Sell ', String(pv.count), ' for ', glowenEl(pv.glowen, '+')], () => {
+      confirmSell = null;
+      say(v.ops.sellAll(def.filter));
+    }, 'primary', pv.count === 0);
+    yes.setAttribute('data-testid', 'sell-all-confirm');
+    return h(
+      'div',
+      { class: 'panel col', style: 'width:460px;gap:10px', 'data-testid': 'sell-all-dialog' },
+      h('h2', null, def.label),
+      h('div', null, `Sell ${def.what}: ${pv.count} item${pv.count === 1 ? '' : 's'}.`),
+      h('div', { class: 'row' }, 'You get ', glowenEl(pv.glowen, '+'), h('span', { class: 'dim-text' }, ` (you have ${fmt(v.char.glowen)})`)),
+      pv.gems ? h('div', { class: 'small good' }, `${pv.gems} socketed gem${pv.gems === 1 ? '' : 's'} come out first and go to your loose gems.`) : null,
+      h('div', { class: 'small dim-text' }, 'Worn gear and your second weapon are never sold.'),
+      h('div', { class: 'row' }, yes, btn('Cancel', () => {
+        confirmSell = null;
+        render();
+      })),
+    );
   }
 
   function shopTab(el: HTMLElement): void {
     const c = v.char;
-    const buy = h('div', { class: 'col', style: 'gap:6px;width:440px' }, h('h3', null, 'Buy · ', glowenEl(c.glowen)));
+    const buy = h('div', { class: 'col', style: 'gap:6px;width:360px' }, h('h3', null, 'Buy · ', glowenEl(c.glowen)));
     for (const s of shopConsumables()) {
       buy.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:150px' }, CONSUMABLES[s.id].name), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(s.price)), h('div', { class: 'small dim-text', style: 'width:60px' }, `have ${c.consumables[s.id] ?? 0}`), btn('Buy', () => say(v.ops.buyConsumable(s.id)), 'tiny', c.glowen < s.price)));
     }
-    buy.appendChild(h('div', { class: 'row' }, gemIcon(v.shopGem, 22), h('div', { style: 'width:128px' }, gemName(v.shopGem.family, 1)), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(shopGemPrice())), btn('Buy', () => say(v.ops.buyGem()), 'tiny', c.glowen < shopGemPrice())));
-    buy.appendChild(gemInfo(v.shopGem, false));
+    const sg = v.shopGem;
+    const gemPrice = shopGemPrice(sg);
+    const gemLine = h('div', { class: 'row' }, gemIcon(sg, 22), h('div', { style: `width:150px;color:${gemColor(sg)}` }, gemTitle(sg)), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(gemPrice)), btn('Buy', () => say(v.ops.buyGem()), 'tiny', c.glowen < gemPrice));
+    hoverTip(gemLine, () => gemTooltip(sg));
+    buy.appendChild(h('div', { style: 'border-top:1px solid var(--line);margin:4px 0' }));
+    buy.appendChild(gemLine);
+    buy.appendChild(h('div', { class: 'row small', style: 'padding-left:30px;color:#cfc6b4' }, gemKindChip(sg), sg.perks.map(perkText).join(' · ')));
+
+    // the rotating piece: what it is and its full stats, visible without hovering
+    const piece = h('div', { class: 'col', style: 'gap:6px;width:340px' }, h('h3', null, 'Rotating piece'));
     if (v.shopPiece) {
       const p = v.shopPiece;
       const price = shopItemPrice(p);
-      const b = h('div', { class: 'row' }, itemIcon(p, 32), h('div', { class: `r-${p.rarity}`, style: 'width:220px' }, p.name), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(price)), btn('Buy', () => say(v.ops.buyPiece()), 'tiny', c.glowen < price));
-      hoverTip(b, () => itemTooltip(p, c, 'auto'));
-      buy.appendChild(h('div', { class: 'small dim-text' }, 'Rotating piece (changes every rest):'));
-      buy.appendChild(b);
-    } else buy.appendChild(h('div', { class: 'small dim-text' }, 'The rotating piece is sold. Rest for a new one.'));
-    const sell = h('div', { class: 'col', style: 'gap:3px;flex:1;max-height:520px;overflow:auto' }, h('h3', null, 'Sell from your bag'));
+      const b = h('div', { class: 'row' }, itemIcon(p, 32), h('div', { class: 'col', style: 'gap:0;flex:1' }, h('div', { class: `r-${p.rarity}` }, p.name), h('div', { class: 'small dim-text' }, itemSummary(p))), btn(['Buy ', glowenEl(price)], () => say(v.ops.buyPiece()), 'tiny', c.glowen < price));
+      b.setAttribute('data-testid', 'shop-piece');
+      piece.appendChild(b);
+      piece.appendChild(h('div', { class: 'small dim-text' }, 'Changes every rest. Compared with what you wear:'));
+      piece.appendChild(staticTip(itemTooltip(p, c, 'auto')));
+    } else piece.appendChild(h('div', { class: 'small dim-text' }, 'The rotating piece is sold. Rest for a new one.'));
+
+    const sell = h('div', { class: 'col', style: 'gap:3px;flex:1;min-width:0;max-height:560px;overflow:auto' }, h('h3', null, 'Sell from your bag'));
+    const allRow = h('div', { class: 'row wrap', style: 'gap:4px;margin-bottom:4px' });
+    for (const s of SELL_ALL) {
+      const pv = sellAllPreview(c, s.filter);
+      const b = btn(s.label, () => {
+        confirmSell = s.filter;
+        render();
+      }, s.filter === 'all' ? 'tiny danger' : 'tiny', pv.count === 0);
+      b.setAttribute('data-testid', `sell-all-${s.filter}`);
+      b.title = `${pv.count} item${pv.count === 1 ? '' : 's'} for ${pv.glowen} Glowen`;
+      allRow.appendChild(b);
+    }
+    sell.appendChild(allRow);
     for (const it of c.bag) {
-      const row = h('div', { class: 'row' }, itemIcon(it, 24), h('div', { class: `r-${it.rarity}`, style: 'width:260px;font-size:13px' }, it.name), btn(glowenEl(itemSellValue(it), '+'), () => say(v.ops.sellItem(it.id)), 'tiny'));
+      const row = h('div', { class: 'row' }, itemIcon(it, 24), h('div', { class: `r-${it.rarity}`, style: 'flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' }, it.name), btn(glowenEl(itemSellValue(it), '+'), () => say(v.ops.sellItem(it.id)), 'tiny'));
       hoverTip(row, () => itemTooltip(it, c, 'auto'));
       sell.appendChild(row);
     }
     for (const [id, n] of Object.entries(c.consumables)) {
       if (!n) continue;
       const def = CONSUMABLES[id as ConsumableId];
-      sell.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:290px;font-size:13px' }, `${def.name} ×${n}`), btn(glowenEl(Math.floor((def.price ?? 20) / 2), '+'), () => say(v.ops.sellConsumable(id as ConsumableId)), 'tiny')));
+      sell.appendChild(h('div', { class: 'row' }, h('div', { style: 'flex:1;font-size:13px' }, `${def.name} ×${n}`), btn(glowenEl(Math.floor((def.price ?? 20) / 2), '+'), () => say(v.ops.sellConsumable(id as ConsumableId)), 'tiny')));
     }
     if (c.bag.length === 0) sell.appendChild(h('div', { class: 'dim-text' }, 'Your bag is empty.'));
-    el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, buy, sell));
+    el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, buy, piece, sell));
   }
 
   function warpTab(el: HTMLElement): void {
@@ -211,6 +425,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   function render(): void {
     clearEl(panel);
     root.querySelectorAll('[data-tt]').forEach((x) => x.remove());
+    modal?.remove();
+    modal = null;
     const tabs = h('div', { class: 'tabs' });
     const defs: { key: string; label: string; fn?: (el: HTMLElement) => void }[] = [
       { key: 'level', label: 'Level up', fn: levelTab },
@@ -222,6 +438,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
     for (const d of defs) {
       const b = btn(d.label, () => {
         tab = d.key;
+        fuse = null;
+        confirmSell = null;
         render();
       });
       if (tab === d.key) b.classList.add('on');
@@ -235,7 +453,14 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const content = h('div', { style: 'flex:1;overflow:auto' });
     defs.find((d) => d.key === tab)?.fn?.(content);
     panel.appendChild(content);
-    setTimeout(() => panel.querySelector<HTMLElement>('.tabs button')?.focus(), 0);
+    const box = tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : null;
+    if (box) {
+      // a layer of its own so the pad's focus stays inside the dialog
+      modal = h('div', { class: 'layer dim', style: 'z-index:40' }, box);
+      root.appendChild(modal);
+      const m = modal;
+      setTimeout(() => m.querySelector<HTMLElement>('button:not(:disabled)')?.focus(), 0);
+    } else setTimeout(() => panel.querySelector<HTMLElement>('.tabs button')?.focus(), 0);
   }
   render();
   return root;

@@ -17,8 +17,8 @@ import { drawMap, drawMinimap } from '../../ui/minimap';
 import { drawInteractable } from '../../render/interactables';
 import { drawPartyCards } from '../../ui/party';
 import { WorldScene } from './worldScene';
-import { GameSession, beginNextCycle, rarityHex } from '../session';
-import { buyFromGary, garyEntryName, garyStock } from '../bonfire/gary';
+import { GameSession, beginNextCycle } from '../session';
+import { buyFromGary, garyStock } from '../bonfire/gary';
 import type { NetHost } from '../net/host';
 import { writeSave } from '../save/storage';
 import type { DebugApi } from '../debug/menu';
@@ -28,7 +28,8 @@ import { neighbourId } from '../procgen/zone';
 import { openInventory } from '../../ui/menus/inventory';
 import { openBonfire } from '../../ui/menus/bonfire';
 import { renderSpellTab } from '../../ui/menus/spells';
-import { buyConsumable, buyGem, buyItem, cycleQuickSlot, levelUp, rerollGem, respec, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
+import { renderGary } from '../../ui/menus/gary';
+import { buyConsumable, buyGem, buyItem, cycleQuickSlot, fuseGems, levelUp, respec, sellAll, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
 import { shopGem, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
 import { refreshDerived, toggleTwoHand } from '../player/player';
 import { stream } from '../../engine/rng';
@@ -373,7 +374,6 @@ export class RunScene extends WorldScene {
       changed();
       return o.msg;
     };
-    const rng = stream(ws.seed, `reroll:${c.glowen}:${c.gems.length}:${s.w.tick}`);
     const open = (): void => {
       this.overlay?.remove();
       this.overlay = openBonfire({
@@ -400,13 +400,17 @@ export class RunScene extends WorldScene {
           respec: () => r(respec(c)),
           socket: (it, si, gi) => r(socketGem(c, it, si, gi)),
           unsocket: (it, si) => r(unsocketGem(c, it, si)),
-          upgradeGem: (gi) => r(upgradeGem(c, gi)),
-          rerollGem: (gi) => r(rerollGem(c, gi, rng)),
+          upgradeGem: (loc, pi) => r(upgradeGem(c, loc, pi)),
+          fuseGem: (o, d, picks) => r(fuseGems(c, o, d, picks)),
           sellItem: (it) => r(sellItem(c, it)),
+          sellAll: (f) => r(sellAll(c, f)),
           sellGem: (gi) => r(sellGem(c, gi)),
           sellConsumable: (cid) => r(sellConsumable(c, cid)),
           buyConsumable: (cid) => r(buyConsumable(c, cid)),
-          buyGem: () => r(buyGem(c, shopGem(ws.seed, zone, cyc), shopGemPrice())),
+          buyGem: () => {
+            const g = shopGem(ws.seed, zone, cyc);
+            return r(buyGem(c, g, shopGemPrice(g)));
+          },
           buyPiece: () => {
             const piece = shopPiece(ws, id, zone, cyc);
             if (!piece) return 'Sold out.';
@@ -442,35 +446,11 @@ export class RunScene extends WorldScene {
     const stock = garyStock(this.save.world, this.session.layout.zone, c.cycle);
     const l = layer('dim');
     l.setAttribute('data-testid', 'gary');
-    const draw = (msg = ''): void => {
-      clearEl(l);
-      const rows = stock.map((e) => {
-        const color = e.item ? rarityHex(e.item.rarity) : e.kind === 'tear' ? '#9ad0ff' : e.kind === 'gem' ? '#58d6c8' : '#efe6d2';
-        const b = btn(e.sold ? 'Sold' : `${e.price} ✦`, () => {
-          const o = buyFromGary(c, e);
-          if (o.ok) {
-            refreshDerived(p);
-            this.w.sfx('lootRare', p.x);
-            this.persist();
-          }
-          draw(o.msg);
-        }, 'tiny');
-        b.disabled = e.sold;
-        return h('div', { class: 'row', style: 'justify-content:space-between;gap:16px' }, h('span', { style: `color:${color}` }, garyEntryName(e)), b);
-      });
-      l.appendChild(
-        h(
-          'div',
-          { class: 'panel col', style: 'width:460px' },
-          h('h2', null, 'Gary'),
-          h('div', { class: 'small dim-text' }, '"Don’t ask where I got it." · You have ' + c.glowen + ' Glowen.'),
-          ...rows,
-          msg ? h('div', { class: 'small' }, msg) : null,
-          btn('Leave', () => this.closeOverlay(), 'big'),
-        ),
-      );
-    };
-    draw();
+    renderGary(l, { char: c, stock, buy: (e) => buyFromGary(c, e), close: () => this.closeOverlay() }, () => {
+      refreshDerived(p);
+      this.w.sfx('lootRare', p.x);
+      this.persist();
+    });
     this.overlay = l;
     this.overlayKind = 'bonfire';
     this.menuOpen = true;

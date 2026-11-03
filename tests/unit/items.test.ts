@@ -10,7 +10,10 @@ import {
   equip,
   levelUp,
   respec,
-  rerollGem,
+  fuseGems,
+  fusePreview,
+  sellAll,
+  sellAllPreview,
   sellGem,
   sellItem,
   socketGem,
@@ -19,7 +22,10 @@ import {
   upgradeGem,
   itemSellValue,
 } from '../../src/game/items/inventory';
-import { gemSellValue, gemUpgradeCost, gemRerollCost, levelCost, gearSellValue } from '../../src/game/combat/formulas';
+import { gemSellTotal, gemSellValue, gemUpgradeCost, levelCost, gearSellValue } from '../../src/game/combat/formulas';
+import { gemKind, isValidGem, makeGem } from '../../src/data/gems';
+import { gemPerkCountChances, randomGem } from '../../src/game/items/generate';
+import type { Gem } from '../../src/game/types';
 import { newSave, validateSave } from '../../src/game/save/schema';
 import { MemoryStore } from '../../src/engine/settings';
 import { readSave, writeSave } from '../../src/game/save/storage';
@@ -80,7 +86,7 @@ describe('requirements and penalties (D37)', () => {
   it('gems change attack speed (Quicksilver) and are capped at ×1.6', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
     const base = computeDerived(c).attackSpeed;
-    c.equipment.main = makeItem('longsword', 'legendary', 1, { gems: [{ family: 'quicksilver', tier: 5 }, { family: 'quicksilver', tier: 5 }] });
+    c.equipment.main = makeItem('longsword', 'legendary', 1, { gems: [makeGem('quicksilver', 5), makeGem('quicksilver', 5)] });
     expect(computeDerived(c).attackSpeed).toBeCloseTo(base * 1.36, 2);
     c.equipment.main.affixes.push({ id: 'swift', value: 40 });
     expect(computeDerived(c).attackSpeed).toBeLessThanOrEqual(1.6);
@@ -103,32 +109,128 @@ describe('inventory, gems, Glowen, levels', () => {
   });
   it('gem socket rules, upgrade costs and sell values (GAME_DESIGN §8.5)', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
+    c.gems = [];
     const w = makeItem('longsword', 'rare', 1, { sockets: 1 });
     const a = makeItem('crypt_rags_body', 'epic', 1, { sockets: 1 });
     c.bag.push(w, a);
-    c.gems.push({ family: 'bulwark', tier: 1 }, { family: 'brutal', tier: 1 });
-    expect(socketGem(c, w.id, 0, 0).ok).toBe(false); // bulwark is armor-only
+    c.gems.push(makeGem('bulwark', 1), makeGem('brutal', 1));
+    expect(socketGem(c, w.id, 0, 0).ok).toBe(false); // bulwark is an armor gem
     expect(socketGem(c, a.id, 0, 0).ok).toBe(true);
     expect(socketGem(c, w.id, 0, 0).ok).toBe(true);
     expect(c.gems.length).toBe(0);
     expect(unsocketGem(c, w.id, 0).ok).toBe(true);
     expect([1, 2, 3, 4, 5].map(gemSellValue)).toEqual([40, 120, 360, 1080, 3240]);
     expect(gemUpgradeCost(1)).toBe(400);
-    expect(gemRerollCost(2)).toBe(240);
     c.glowen = 400;
-    expect(upgradeGem(c, 0).ok).toBe(true);
-    expect(c.gems[0]!.tier).toBe(2);
+    expect(upgradeGem(c, { gemIdx: 0 }, 0).ok).toBe(true);
+    expect(c.gems[0]!.perks[0]!.tier).toBe(2);
     expect(c.glowen).toBe(0);
-    c.glowen = 240;
-    expect(rerollGem(c, 0, new Rng(5)).ok).toBe(true);
-    expect(c.gems[0]!.family).not.toBe('brutal');
     expect(sellGem(c, 0).ok).toBe(true);
     expect(c.glowen).toBe(120);
     expect(gearSellValue('legendary', 3)).toBe(Math.round(400 * 1.6));
     const before = c.glowen;
     const v = itemSellValue(a);
+    expect(v).toBe(gearSellValue('epic', 1) + 40); // the socketed Bulwark sells with the armor
     expect(sellItem(c, a.id).ok).toBe(true);
     expect(c.glowen - before).toBe(v);
+  });
+  it('multi-perk gems: each perk upgrades on its own, even socketed; sell value is the sum', () => {
+    const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
+    const g: Gem = { perks: [{ family: 'brutal', tier: 2 }, { family: 'tempo', tier: 1 }, { family: 'leech', tier: 3 }] };
+    expect(isValidGem(g)).toBe(true);
+    expect(gemKind(g)).toBe('weapon');
+    expect(gemSellTotal(g)).toBe(120 + 40 + 360);
+    const w = makeItem('longsword', 'rare', 1, { sockets: 1, gems: [g] });
+    c.equipment.main = w;
+    c.glowen = gemUpgradeCost(1) + gemUpgradeCost(3);
+    expect(upgradeGem(c, { itemId: w.id, socketIdx: 0 }, 1).ok).toBe(true);
+    expect(upgradeGem(c, { itemId: w.id, socketIdx: 0 }, 2).ok).toBe(true);
+    expect(g.perks.map((p) => p.tier)).toEqual([2, 2, 4]);
+    expect(c.glowen).toBe(0);
+    expect(upgradeGem(c, { itemId: w.id, socketIdx: 0 }, 0).ok).toBe(false); // broke
+    // every perk works: Brutal adds damage, Tempo cooldowns, Leech lifesteal
+    const d = computeDerived(c);
+    expect(d.dmgPct).toBeCloseTo(0.08, 5);
+    expect(d.cdr).toBeCloseTo(0.09, 5);
+    expect(d.lifesteal).toBeCloseTo(0.05, 5);
+    // armor perks in armor
+    c.equipment.body = makeItem('crypt_rags_body', 'epic', 1, { sockets: 1, gems: [{ perks: [{ family: 'hearth', tier: 1 }, { family: 'bulwark', tier: 1 }] }] });
+    const d2 = computeDerived(c);
+    expect(d2.maxHp).toBe(d.maxHp + 15);
+    // a gem mixing weapon and armor perks, or repeating a family, is not a gem
+    expect(isValidGem({ perks: [{ family: 'brutal', tier: 1 }, { family: 'bulwark', tier: 1 }] })).toBe(false);
+    expect(isValidGem({ perks: [{ family: 'brutal', tier: 1 }, { family: 'brutal', tier: 2 }] })).toBe(false);
+  });
+  it('fusing keeps the chosen perks, destroys the donor and never duplicates a family', () => {
+    const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
+    c.gems = [
+      { perks: [{ family: 'brutal', tier: 3 }, { family: 'tempo', tier: 1 }, { family: 'leech', tier: 1 }] },
+      { perks: [{ family: 'quicksilver', tier: 2 }, { family: 'vigor', tier: 4 }, { family: 'brutal', tier: 1 }] },
+      makeGem('bulwark', 1),
+    ];
+    const orig = c.gems[0]!;
+    // wrong kind, wrong count, duplicate family, nothing from the donor
+    expect(fuseGems(c, { gemIdx: 0 }, 2, [{ from: 'orig', idx: 0 }, { from: 'donor', idx: 0 }, { from: 'orig', idx: 1 }]).ok).toBe(false);
+    expect(fusePreview(orig, c.gems[1]!, [{ from: 'orig', idx: 0 }, { from: 'donor', idx: 0 }])).toHaveProperty('error');
+    expect(fusePreview(orig, c.gems[1]!, [{ from: 'orig', idx: 0 }, { from: 'donor', idx: 2 }, { from: 'orig', idx: 1 }])).toHaveProperty('error');
+    expect(fusePreview(orig, c.gems[1]!, [{ from: 'orig', idx: 0 }, { from: 'orig', idx: 1 }, { from: 'orig', idx: 2 }])).toHaveProperty('error');
+    expect(fusePreview(orig, c.gems[1]!, [{ from: 'donor', idx: 0 }, { from: 'donor', idx: 1 }, { from: 'donor', idx: 2 }])).toHaveProperty('error');
+    // keep Brutal T3, take Quicksilver T2 and Vigor T4
+    const picks = [{ from: 'orig', idx: 0 }, { from: 'donor', idx: 0 }, { from: 'donor', idx: 1 }] as const;
+    const pv = fusePreview(orig, c.gems[1]!, [...picks]);
+    expect('error' in pv).toBe(false);
+    c.glowen = 0;
+    expect(fuseGems(c, { gemIdx: 0 }, 1, [...picks]).ok).toBe(false); // costs Glowen
+    c.glowen = 10000;
+    expect(fuseGems(c, { gemIdx: 0 }, 1, [...picks]).ok).toBe(true);
+    expect(orig.perks).toEqual([{ family: 'brutal', tier: 3 }, { family: 'quicksilver', tier: 2 }, { family: 'vigor', tier: 4 }]);
+    expect(c.gems.length).toBe(2);
+    expect(c.gems[0]).toBe(orig);
+    expect(c.glowen).toBe(10000 - gemSellValue(4));
+    // a one-perk gem cannot be the original
+    expect(fusePreview(c.gems[1]!, orig, [{ from: 'donor', idx: 0 }])).toHaveProperty('error');
+  });
+  it('dropped gems: one perk in the first cycle, up to two in NG+, up to three from NG+2, same kind', () => {
+    for (const cycle of [0, 1, 2, 3]) {
+      const r = new Rng(`gems-${cycle}`);
+      const counts = [0, 0, 0, 0];
+      const N = 4000;
+      for (let i = 0; i < N; i++) {
+        const g = randomGem(r, 2, cycle);
+        expect(isValidGem(g)).toBe(true);
+        expect(g.perks.every((p) => p.tier === 2)).toBe(true);
+        counts[g.perks.length]!++;
+      }
+      const ch = gemPerkCountChances(cycle);
+      if (cycle === 0) expect(counts[1]).toBe(N);
+      if (cycle === 1) expect(counts[3]).toBe(0);
+      expect(Math.abs(counts[2]! / N - ch.two)).toBeLessThan(0.03);
+      expect(Math.abs(counts[3]! / N - ch.three)).toBeLessThan(0.03);
+    }
+    // armor gems can carry three perks too (four armor families)
+    const g = randomGem(new Rng('a'), 1, 5, 'armor');
+    expect(gemKind(g)).toBe('armor');
+  });
+  it('Sell all sells only the bag, by rarity, and hands socketed gems back', () => {
+    const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
+    c.bag = [];
+    c.gems = [];
+    const worn = c.equipment.main!;
+    c.bag.push(makeItem('longsword', 'common', 1), makeItem('battleaxe', 'uncommon', 2, { sockets: 1, gems: [makeGem('brutal', 2)] }), makeItem('longsword', 'rare', 3));
+    const pv = sellAllPreview(c, 'belowRare');
+    expect(pv.count).toBe(2);
+    expect(pv.gems).toBe(1);
+    expect(pv.glowen).toBe(gearSellValue('common', 1) + gearSellValue('uncommon', 2));
+    expect(sellAllPreview(c, 'common').count).toBe(1);
+    c.glowen = 0;
+    expect(sellAll(c, 'belowRare').ok).toBe(true);
+    expect(c.glowen).toBe(pv.glowen);
+    expect(c.bag.map((i) => i.rarity)).toEqual(['rare']);
+    expect(c.gems.length).toBe(1);
+    expect(sellAll(c, 'all').ok).toBe(true);
+    expect(c.bag.length).toBe(0);
+    expect(c.equipment.main).toBe(worn);
+    expect(sellAll(c, 'all').ok).toBe(false);
   });
   it('level up costs follow the curve; respec refunds points as free points', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
@@ -153,7 +255,7 @@ describe('save round-trip of items', () => {
     const c = newCharacter('cleric', 'Joe', 'p', new Rng(1));
     const r = new Rng('rt');
     for (let i = 0; i < 40; i++) c.bag.push(generateItem(r, { source: 'boss', ilvl: 5, zone: 4 }));
-    c.gems.push({ family: 'tempo', tier: 3 });
+    c.gems.push(makeGem('tempo', 3), { perks: [{ family: 'brutal', tier: 2 }, { family: 'leech', tier: 1 }] });
     const s = newSave(3, c, 'RT');
     const store = new MemoryStore();
     writeSave(store, s);

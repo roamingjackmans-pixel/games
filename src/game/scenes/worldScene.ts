@@ -17,7 +17,8 @@ import { SPELLS } from '../../data/spells';
 import { spawnUnit } from '../enemies/spawn';
 import { refreshDerived } from '../player/player';
 import { levelFromStats } from '../player/character';
-import type { ConsumableId, EliteAffix, EnemyDef, Item, Rarity, StatId } from '../types';
+import { gemKindLabel, gemTitle, isValidGem } from '../../data/gems';
+import type { ConsumableId, EliteAffix, EnemyDef, GemFamily, GemTier, Item, Rarity, StatId } from '../types';
 import type { Entity, World } from '../world';
 
 export abstract class WorldScene implements Scene {
@@ -124,8 +125,11 @@ export abstract class WorldScene implements Scene {
         return `Equipped ${it.name} (${it.rarity}, ilvl ${it.ilvl}).`;
       },
       giveGem(family, tier) {
-        pl().pl!.char.gems.push({ family: family as never, tier: Math.max(1, Math.min(5, tier)) as 1 });
-        return `Gem ${family} T${tier} added to the bag.`;
+        const t = Math.max(1, Math.min(5, Math.round(tier))) as GemTier;
+        const gem = { perks: family.split(/[+,\s]+/).filter(Boolean).map((f) => ({ family: f as GemFamily, tier: t })) };
+        if (!isValidGem(gem)) return `Not a gem: 1–3 known families, all weapon or all armor, no repeats (${family}).`;
+        pl().pl!.char.gems.push(gem);
+        return `${gemKindLabel(gem)} ${gemTitle(gem)} added to the bag.`;
       },
       giveConsumable(id, n) {
         const ch = pl().pl!.char;

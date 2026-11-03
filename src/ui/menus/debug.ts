@@ -3,6 +3,7 @@ import { checkDebugCode } from '../../game/debug/hash';
 import { debugApi, isDebugUnlocked, overlays, setDebugUnlocked } from '../../game/debug/menu';
 import { playSfx } from '../../engine/audio/sfx';
 import { btn, h, toast, uiRoot } from '../dom';
+import { GEM_FAMILIES } from '../../data/gems';
 
 let panel: HTMLElement | null = null;
 let prompt: HTMLElement | null = null;
@@ -123,7 +124,9 @@ function buildPanel(): void {
     const baseSel = select(bases, 'debug-base');
     const rar = select(['common', 'uncommon', 'rare', 'epic', 'legendary'], 'debug-rarity');
     const ilvl = field({ type: 'number', value: '1', style: 'width:50px' });
-    const gemFam = select(['quicksilver', 'tempo', 'fleetfoot', 'brutal', 'ember', 'rime', 'storm', 'dawn', 'dusk', 'leech', 'vigor', 'bulwark'], 'debug-gem');
+    const gemFam = select(GEM_FAMILIES, 'debug-gem');
+    const gemFam2 = select(['(none)', ...GEM_FAMILIES], 'debug-gem2');
+    const gemFam3 = select(['(none)', ...GEM_FAMILIES], 'debug-gem3');
     const gemTier = field({ type: 'number', value: '1', style: 'width:40px' });
     const cons = select(['throwing_knife', 'firebomb', 'frost_jar', 'holy_water', 'stamina_tonic', 'lure', 'shard_pouch'], 'debug-cons');
     const level = field({ type: 'number', value: '10', style: 'width:60px' });
@@ -155,7 +158,8 @@ function buildPanel(): void {
         h('div', { class: 'row wrap' }, btn('Learn all spells', () => call(() => api.learnAllSpells())))),
       h('fieldset', null, h('legend', null, 'Items'),
         h('div', { class: 'row wrap' }, baseSel, rar, 'ilvl', ilvl, btn('Give', () => call(() => api.giveItem(baseSel.value, rar.value, num(ilvl.value, 1))))),
-        h('div', { class: 'row wrap' }, gemFam, 'T', gemTier, btn('Give gem', () => call(() => api.giveGem(gemFam.value, num(gemTier.value, 1)))), cons, btn('Give ×5', () => call(() => api.giveConsumable(cons.value, 5))))),
+        h('div', { class: 'row wrap' }, gemFam, gemFam2, gemFam3, 'T', gemTier, btn('Give gem', () => call(() => api.giveGem([gemFam.value, gemFam2.value, gemFam3.value].filter((f) => f !== '(none)').join('+'), num(gemTier.value, 1))))),
+        h('div', { class: 'row wrap' }, cons, btn('Give ×5', () => call(() => api.giveConsumable(cons.value, 5))))),
       h('fieldset', null, h('legend', null, 'Enemies'),
         h('div', { class: 'row wrap' }, enemySel, eliteSel, btn('Spawn', () => call(() => api.spawnEnemy(enemySel.value, eliteSel.value === '(none)' ? null : eliteSel.value)), '', false)),
         h('div', { class: 'row wrap' }, btn('Kill all', () => call(() => api.killAll())), btn('Test arena', () => call(() => api.testArena())))),

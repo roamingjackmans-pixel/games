@@ -433,33 +433,52 @@ defense per type, max HP/stamina, Shard find, Glowen find, gem find, revive valu
 
 ### 8.5 Gems (V Rising)
 
-Gems slot into sockets and **change how the weapon works, mostly its speed**:
+Gems slot into sockets and **change how the weapon works, mostly its speed**. A gem carries one to three
+**perks**; each perk is one family below with **its own tier** (the perk has the tier, not the gem). Every
+perk on a gem is a different family, and a gem is either a **weapon gem** (weapon perks, weapon sockets)
+or an **armor gem** (armor perks, armor sockets); the bench, tooltips, pickups and shops show a
+"Weapon gem" / "Armor gem" tag.
 
-| Gem | Effect per tier (T1 → T5) |
+| Perk | Effect per tier (T1 → T5) |
 |---|---|
 | Quicksilver | +6/9/12/15/18% attack and cast speed |
 | Tempo | −6/9/12/15/18% skill cooldowns |
 | Fleetfoot | −0.3/0.45/0.6/0.75/0.9 s dodge recharge (respects the 3 s floor) |
 | Brutal | +5/8/11/14/17% damage |
-| Ember / Rime / Storm / Dawn / Dusk | converts 20/25/30/35/40% of physical damage to Fire / Frost / Lightning / Holy / Void and adds status buildup |
+| Ember / Rime / Storm / Dawn / Dusk | converts 20/25/30/35/40% of physical damage to Fire / Magic (frost) / Magic (lightning) / Holy / Void and adds status buildup |
 | Leech | 2/3/4/5/6% lifesteal |
 | Vigor | −8/12/16/20/24% stamina costs |
-| Bulwark (armor only) | +8/12/16/20/24 defense to all types |
+| Bulwark (armor) | +8/12/16/20/24 defense to all types |
+| Hearth (armor) | +15/22/30/38/45 max HP |
+| Zephyr (armor) | +8/12/16/20/24% stamina regeneration |
+| Gilt (armor) | +5/8/11/14/17% Glowen found |
+
+**Perk count by cycle**: in the first playthrough every gem has one perk. In NG+ (cycle 1) a gem has a
+35% chance of two perks; from NG+2 on, 40% two perks and 25% three (all perks at the drop's tier). The
+bonfire shop's gem is always one T1 perk.
 
 Gems drop from enemies (2%), chests (12%), bosses (100%, one), the wandering merchant, and the bonfire
-shop (one T1 per zone). **Glowen**: selling a gem gives 40 × 3^(tier−1) Glowen; upgrading a gem to
-the next tier costs 10× its sell value (T1→T2: 400, T2→T3: 1200, T3→T4: 3600, T4→T5: 10800). Glowen
-also comes from selling gear (10–400 by rarity/ilvl) and rare "Glowen Wisps" drops (better-made gear holds more Glowen, §19). Re-rolling a gem
-into another random gem of the same tier costs 2× its sell value at the bonfire shop. Gems can be
-unsocketed for free at a bonfire.
+shop (one T1 per zone). **Glowen**: a perk is worth 40 × 3^(tier−1) Glowen and a gem sells for the sum of
+its perks; **each perk is upgraded on its own** for 10× its value (T1→T2: 400, T2→T3: 1200, T3→T4: 3600,
+T4→T5: 10800), at the gem bench, loose or still socketed in gear you carry. Glowen also comes from selling
+gear (10–400 by rarity/ilvl) and rare "Glowen Wisps" drops (better-made gear holds more Glowen, §19).
+Gems can be unsocketed for free at a bonfire. There is no re-rolling.
+
+**Fusing**: a gem with two or more perks can be fused with a loose gem of the same kind. You choose which
+perks the original gem ends up with from both gems' perks — exactly as many as it had, no family twice, at
+least one from each gem (two 3-perk gems: pick any three of the six) — and the other gem is destroyed. Tiers
+travel with their perks. Fusing costs the value of the best perk kept (40 × 3^(tier−1)).
 
 ## 9. Bonfires, flask, death
 
 ### 9.1 Bonfire menu
 
 Rest · Level up · Respec (needs a Tear) ·
-Gem bench (socket, unsocket, upgrade, re-roll) · Shop (sell gems and gear for Glowen; buy throwables,
-a T1 gem, and one rotating gear piece at the zone's ilvl re-rolled on each rest) · Warp (to any
+Gem bench (socket, unsocket, upgrade each perk — loose or socketed —, sell, fuse; one gem per line) · Shop
+(sell gems and gear for Glowen, one by one or with **Sell all** / Sell all Commons / Sell all below Rare —
+bag only, never worn gear, socketed gems come back loose, a confirm shows the total; buy throwables,
+a T1 gem, and one rotating gear piece at the zone's ilvl re-rolled on each rest, shown with its full stats
+compared with what you wear) · Warp (to any
 **discovered** bonfire in this playthrough, fresh or ember) · Spell loadout (also available anywhere in
 the inventory).
 
@@ -513,7 +532,7 @@ built for it.
   one spell the character does not know yet (either school), 5% a Tear of Undoing instead. Never a mimic.
 - **Wandering merchant** ("Gary"): 20% chance per zone to generate a merchant room (never zone 1). Sells
   3–5 random *special* things for Glowen: an Epic/Legendary at ilvl+1, a T2–T3 gem, 3 random
-  consumables, a Tear of Undoing (rare), a **Lucky Charm** ring (+10% Shard find). Hit Gary three times
+  consumables, a Tear of Undoing (rare), a **Lucky Charm** ring (+10% Shard find). Each entry says what it is (gear: rarity, class, level, affixes, sockets; gems: kind and perks) and a detail pane shows the full stats of the entry under the pointer or focus, gear compared with what you wear. Hit Gary three times
   and he leaves for the rest of the playthrough (he is nearly unkillable and drops nothing).
 
 ## 12. Online co-op (D4, D5, D12, D15, D31, D33)

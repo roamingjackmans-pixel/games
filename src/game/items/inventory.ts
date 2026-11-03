@@ -1,11 +1,10 @@
 // Inventory operations on a Character (bag of 60, equipment, gems, consumables). Pure and validated:
 // the co-op host runs the same functions to check guests' commands (NETCODE §6).
-import { GEMS, GEM_FAMILIES, WEAPON_GEM_FAMILIES } from '../../data/gems';
+import { GEMS, gemKind, gemKindLabel, gemTitle } from '../../data/gems';
 import { CONSUMABLES, MAX_CONSUMABLE } from '../../data/consumables';
-import { gearSellValue, gemRerollCost, gemSellValue, gemUpgradeCost, levelCost } from '../combat/formulas';
+import { gearSellValue, gemFuseCost, gemSellTotal, gemUpgradeCost, levelCost } from '../combat/formulas';
 import { canRaise, levelFromStats, respecStats } from '../player/character';
-import type { Rng } from '../../engine/rng';
-import type { Character, ConsumableId, Gem, Item, StatId } from '../types';
+import type { Character, ConsumableId, Gem, GemPerk, GemTier, Item, Rarity, StatId } from '../types';
 
 export const BAG_SIZE = 60;
 export type EquipSlot = keyof Character['equipment'] | 'altMain';
@@ -79,10 +78,19 @@ export function findItem(c: Character, itemId: string): Item | null {
 
 // ------------------------------------------------------------------ gems
 
+/** Weapon gems go in weapon sockets, armor gems in armor sockets. */
 export function canSocket(item: Item, gem: Gem): boolean {
-  if (item.kind === 'armor') return gem.family === 'bulwark';
-  if (item.kind === 'weapon') return !GEMS[gem.family].armorOnly;
+  if (item.kind === 'armor') return gemKind(gem) === 'armor';
+  if (item.kind === 'weapon') return gemKind(gem) === 'weapon';
   return false;
+}
+
+/** Where a gem sits: loose in the bag (`gemIdx`) or in a socket of an item you carry. */
+export type GemLoc = { gemIdx: number } | { itemId: string; socketIdx: number };
+
+export function gemAt(c: Character, loc: GemLoc): Gem | null {
+  if ('gemIdx' in loc) return c.gems[loc.gemIdx] ?? null;
+  return findItem(c, loc.itemId)?.sockets[loc.socketIdx] ?? null;
 }
 
 export function socketGem(c: Character, itemId: string, socketIdx: number, gemIdx: number): OpResult {
@@ -90,12 +98,12 @@ export function socketGem(c: Character, itemId: string, socketIdx: number, gemId
   const gem = c.gems[gemIdx];
   if (!item || !gem) return no('Nothing to socket.');
   if (socketIdx < 0 || socketIdx >= item.sockets.length) return no('No such socket.');
-  if (!canSocket(item, gem)) return no(item.kind === 'armor' ? 'Armor sockets take Bulwark gems only.' : 'That gem does not fit.');
+  if (!canSocket(item, gem)) return no(item.kind === 'armor' ? 'Armor sockets take armor gems only.' : 'Weapon sockets take weapon gems only.');
   const prev = item.sockets[socketIdx];
   item.sockets[socketIdx] = gem;
   c.gems.splice(gemIdx, 1);
   if (prev) c.gems.push(prev);
-  return ok(`Socketed ${GEMS[gem.family].name} (T${gem.tier}).`);
+  return ok(`Socketed ${gemTitle(gem)}.`);
 }
 
 /** Unsocketing is free at a bonfire (GAME_DESIGN §8.5). */
@@ -108,34 +116,107 @@ export function unsocketGem(c: Character, itemId: string, socketIdx: number): Op
   return ok('Gem removed.');
 }
 
-export function upgradeGem(c: Character, gemIdx: number): OpResult {
-  const gem = c.gems[gemIdx];
-  if (!gem) return no('No gem.');
-  if (gem.tier >= 5) return no('Already T5.');
-  const cost = gemUpgradeCost(gem.tier);
+/** Upgrade one perk of a gem by a tier, loose or socketed (no need to unsocket). Each perk pays its own way. */
+export function upgradeGem(c: Character, loc: GemLoc, perkIdx = 0): OpResult {
+  const gem = gemAt(c, loc);
+  const perk = gem?.perks[perkIdx];
+  if (!gem || !perk) return no('No gem.');
+  if (perk.tier >= 5) return no(`${GEMS[perk.family].name} is already T5.`);
+  const cost = gemUpgradeCost(perk.tier);
   if (c.glowen < cost) return no(`Needs ${cost} Glowen.`);
   c.glowen -= cost;
-  gem.tier = (gem.tier + 1) as Gem['tier'];
-  return ok(`Upgraded to T${gem.tier}.`);
+  perk.tier = (perk.tier + 1) as GemTier;
+  return ok(`${GEMS[perk.family].name} upgraded to T${perk.tier}.`);
 }
 
-export function rerollGem(c: Character, gemIdx: number, rng: Rng): OpResult {
-  const gem = c.gems[gemIdx];
-  if (!gem) return no('No gem.');
-  const cost = gemRerollCost(gem.tier);
-  if (c.glowen < cost) return no(`Needs ${cost} Glowen.`);
-  c.glowen -= cost;
-  const pool = gem.family === 'bulwark' ? GEM_FAMILIES : WEAPON_GEM_FAMILIES.filter((f) => f !== gem.family);
-  gem.family = rng.pick(pool);
-  return ok(`It became ${GEMS[gem.family].name}.`);
+/** A perk chosen for a fused gem: from the original gem or the donor gem, by index. */
+export interface FusePick {
+  from: 'orig' | 'donor';
+  idx: number;
+}
+
+/** Check a fuse and work out the resulting perks (or why it cannot be done). */
+export function fusePreview(orig: Gem | null, donor: Gem | null, picks: FusePick[]): { perks: GemPerk[]; cost: number } | { error: string } {
+  if (!orig || !donor) return { error: 'Pick two gems.' };
+  if (orig === donor) return { error: 'A gem cannot fuse with itself.' };
+  if (orig.perks.length < 2) return { error: 'Only gems with two or more perks can be fused.' };
+  if (gemKind(orig) !== gemKind(donor)) return { error: `Both gems must be ${gemKindLabel(orig).toLowerCase()}s.` };
+  if (picks.length !== orig.perks.length) return { error: `Choose exactly ${orig.perks.length} perks.` };
+  const perks: GemPerk[] = [];
+  const seen = new Set<string>();
+  for (const p of picks) {
+    const perk = (p.from === 'orig' ? orig : donor).perks[p.idx];
+    if (!perk) return { error: 'No such perk.' };
+    if (seen.has(perk.family)) return { error: `Only one ${GEMS[perk.family].name} perk per gem.` };
+    seen.add(perk.family);
+    perks.push({ ...perk });
+  }
+  if (!picks.some((p) => p.from === 'orig')) return { error: 'Keep at least one perk of the original gem.' };
+  if (!picks.some((p) => p.from === 'donor')) return { error: 'Take at least one perk from the other gem.' };
+  return { perks, cost: gemFuseCost(perks) };
+}
+
+/**
+ * Fuse: the original gem (loose or socketed, two or more perks) keeps the chosen perks, taking the rest
+ * from a loose donor gem of the same kind, which is destroyed. The perk count stays the original's.
+ */
+export function fuseGems(c: Character, orig: GemLoc, donorIdx: number, picks: FusePick[]): OpResult {
+  const o = gemAt(c, orig);
+  const d = c.gems[donorIdx] ?? null;
+  const res = fusePreview(o, d, picks);
+  if ('error' in res) return no(res.error);
+  if (c.glowen < res.cost) return no(`Needs ${res.cost} Glowen.`);
+  c.glowen -= res.cost;
+  o!.perks = res.perks;
+  c.gems.splice(c.gems.indexOf(d!), 1);
+  return ok(`Fused: ${gemTitle(o!)}.`);
 }
 
 // ------------------------------------------------------------------ selling and buying
 
 export function itemSellValue(item: Item): number {
   let v = gearSellValue(item.rarity, item.ilvl);
-  for (const g of item.sockets) if (g) v += gemSellValue(g.tier);
+  for (const g of item.sockets) if (g) v += gemSellTotal(g);
   return v;
+}
+
+/** Which bag items "Sell all" takes. */
+export type SellAllFilter = 'all' | 'common' | 'belowRare';
+const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+
+function sellAllPicks(c: Character, filter: SellAllFilter): Item[] {
+  return c.bag.filter((it) => filter === 'all' || (filter === 'common' ? it.rarity === 'common' : RARITY_ORDER.indexOf(it.rarity) < RARITY_ORDER.indexOf('rare')));
+}
+
+/**
+ * What "Sell all" would do: worn gear and the quick-swap weapon are never in the bag, so never sold.
+ * Socketed gems are not sold with the gear: they go back to your loose gems.
+ */
+export function sellAllPreview(c: Character, filter: SellAllFilter): { count: number; glowen: number; gems: number } {
+  const items = sellAllPicks(c, filter);
+  return {
+    count: items.length,
+    glowen: items.reduce((s, it) => s + gearSellValue(it.rarity, it.ilvl), 0),
+    gems: items.reduce((s, it) => s + it.sockets.filter((g) => !!g).length, 0),
+  };
+}
+
+export function sellAll(c: Character, filter: SellAllFilter): OpResult {
+  const items = sellAllPicks(c, filter);
+  if (items.length === 0) return no('Nothing to sell.');
+  let v = 0;
+  let gems = 0;
+  for (const it of items) {
+    v += gearSellValue(it.rarity, it.ilvl);
+    for (const g of it.sockets) {
+      if (!g) continue;
+      c.gems.push(g);
+      gems++;
+    }
+  }
+  for (const it of items) c.bag.splice(c.bag.indexOf(it), 1);
+  c.glowen += v;
+  return ok(`Sold ${items.length} item${items.length === 1 ? '' : 's'} for ${v} Glowen.${gems ? ` ${gems} gem${gems === 1 ? '' : 's'} back in your pouch.` : ''}`);
 }
 
 export function sellItem(c: Character, itemId: string): OpResult {
@@ -151,7 +232,7 @@ export function sellItem(c: Character, itemId: string): OpResult {
 export function sellGem(c: Character, gemIdx: number): OpResult {
   const gem = c.gems[gemIdx];
   if (!gem) return no('No gem.');
-  const v = gemSellValue(gem.tier);
+  const v = gemSellTotal(gem);
   c.gems.splice(gemIdx, 1);
   c.glowen += v;
   return ok(`Sold for ${v} Glowen.`);
@@ -189,8 +270,8 @@ export function buyItem(c: Character, item: Item, price: number): OpResult {
 export function buyGem(c: Character, gem: Gem, price: number): OpResult {
   if (c.glowen < price) return no(`Needs ${price} Glowen.`);
   c.glowen -= price;
-  c.gems.push({ ...gem });
-  return ok(`Bought ${GEMS[gem.family].name} (T${gem.tier}).`);
+  c.gems.push({ perks: gem.perks.map((p) => ({ ...p })) });
+  return ok(`Bought ${gemTitle(gem)}.`);
 }
 
 // ------------------------------------------------------------------ levels

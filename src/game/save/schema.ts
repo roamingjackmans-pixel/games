@@ -2,7 +2,7 @@
 import type { Character, SaveFile, WorldState } from '../types';
 import { CLASS_IDS } from '../../data/classes';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const SLOT_COUNT = 10;
 
 export function newWorldState(seed: string, zone = 1): WorldState {

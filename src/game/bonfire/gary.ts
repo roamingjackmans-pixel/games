@@ -3,7 +3,8 @@
 // it is the same every visit; sold entries stay sold. NG+ stock is better (more Legendaries, gems +1 tier).
 import { stream } from '../../engine/rng';
 import { CONSUMABLE_IDS, CONSUMABLES } from '../../data/consumables';
-import { itemLevelFor, gemSellValue } from '../combat/formulas';
+import { gemKindLabel, gemTitle } from '../../data/gems';
+import { itemLevelFor, gemSellTotal } from '../combat/formulas';
 import { generateItem, randomGem } from '../items/generate';
 import { itemSellValue } from '../items/inventory';
 import type { Character, GaryStockEntry, WorldState } from '../types';
@@ -22,8 +23,8 @@ export function garyStock(ws: WorldState, zone: number, cycle: number): GaryStoc
       return { kind: 'item', item, price: Math.max(400, itemSellValue(item) * 5), sold: false };
     },
     () => {
-      const gem = randomGem(rng, Math.min(5, (rng.chance(0.6) ? 2 : 3) + (cycle > 0 ? 1 : 0)) as 2 | 3 | 4);
-      return { kind: 'gem', gem, price: gemSellValue(gem.tier) * 3, sold: false };
+      const gem = randomGem(rng, Math.min(5, (rng.chance(0.6) ? 2 : 3) + (cycle > 0 ? 1 : 0)) as 2 | 3 | 4, cycle);
+      return { kind: 'gem', gem, price: gemSellTotal(gem) * 3, sold: false };
     },
     () => {
       const ids = CONSUMABLE_IDS.filter((id) => CONSUMABLES[id].price !== null);
@@ -51,7 +52,7 @@ export function garyEntryName(e: GaryStockEntry): string {
     case 'ring':
       return e.item?.name ?? 'Something';
     case 'gem':
-      return `${e.gem?.family ?? 'gem'} gem (T${e.gem?.tier ?? 1})`;
+      return e.gem ? `${gemKindLabel(e.gem)}: ${gemTitle(e.gem)}` : 'A gem';
     case 'consumable':
       return `${e.count ?? 1}× ${e.consumable ? CONSUMABLES[e.consumable].name : 'thing'}`;
     case 'tear':
@@ -67,7 +68,7 @@ export function buyFromGary(c: Character, e: GaryStockEntry): { ok: boolean; msg
   c.glowen -= e.price;
   e.sold = true;
   if ((e.kind === 'item' || e.kind === 'ring') && e.item) c.bag.push(e.item);
-  else if (e.kind === 'gem' && e.gem) c.gems.push({ ...e.gem });
+  else if (e.kind === 'gem' && e.gem) c.gems.push({ perks: e.gem.perks.map((p) => ({ ...p })) });
   else if (e.kind === 'consumable' && e.consumable) {
     c.consumables[e.consumable] = Math.min(10, (c.consumables[e.consumable] ?? 0) + (e.count ?? 1));
     if (!c.quickSlot) c.quickSlot = e.consumable;

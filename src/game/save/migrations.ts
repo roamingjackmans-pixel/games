@@ -1,4 +1,4 @@
-// Save migrations: each entry upgrades a save from `from` to `from + 1`. Version 2 is current.
+// Save migrations: each entry upgrades a save from `from` to `from + 1`. Version 3 is current.
 import { SAVE_VERSION } from './schema';
 
 type Migration = { from: number; up: (s: Record<string, unknown>) => Record<string, unknown> };
@@ -54,7 +54,42 @@ export const MIGRATIONS: Migration[] = [
       return { ...s, character: c, world: w, version: 2 };
     },
   },
+  {
+    // 2 → 3: a gem is a list of perks, each with its own tier ({family, tier} → {perks: [{family, tier}]}).
+    from: 2,
+    up: (s) => {
+      const c = (s.character ?? {}) as Record<string, unknown>;
+      const fixItem = (it: unknown): void => {
+        if (!it || typeof it !== 'object') return;
+        const o = it as { sockets?: unknown[] };
+        if (Array.isArray(o.sockets)) o.sockets = o.sockets.map((g) => (g ? perkGem(g) : null));
+      };
+      if (Array.isArray(c.gems)) c.gems = c.gems.map(perkGem);
+      const eq = (c.equipment ?? {}) as Record<string, unknown>;
+      for (const k of Object.keys(eq)) fixItem(eq[k]);
+      fixItem(c.altMain);
+      for (const it of (c.bag as unknown[] | undefined) ?? []) fixItem(it);
+      const w = (s.world ?? {}) as Record<string, unknown>;
+      for (const list of Object.values((w.leftBehind ?? {}) as Record<string, { item?: unknown }[]>)) for (const e of list) fixItem(e.item);
+      for (const list of Object.values((w.garyStock ?? {}) as Record<string, { item?: unknown; gem?: unknown }[]>)) {
+        for (const e of list) {
+          fixItem(e.item);
+          if (e.gem) e.gem = perkGem(e.gem);
+        }
+      }
+      for (const e of Object.values((w.shopStock ?? {}) as Record<string, { item?: unknown }>)) fixItem(e.item);
+      return { ...s, character: c, world: w, version: 3 };
+    },
+  },
 ];
+
+/** An old one-family gem ({family, tier}) as a one-perk gem; a gem that already has perks is kept. */
+export function perkGem(g: unknown): unknown {
+  if (!g || typeof g !== 'object') return g;
+  const o = g as { family?: unknown; tier?: unknown; perks?: unknown };
+  if (Array.isArray(o.perks)) return g;
+  return { perks: [{ family: o.family, tier: typeof o.tier === 'number' ? o.tier : 1 }] };
+}
 
 export function migrate(raw: unknown): unknown {
   if (!raw || typeof raw !== 'object') return raw;

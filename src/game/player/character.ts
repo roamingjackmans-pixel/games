@@ -1,6 +1,6 @@
 // Character creation from a class (CONTENT_SPELLS_CLASSES §3) and level/stat helpers.
 import { CLASSES } from '../../data/classes';
-import { GEM_FAMILIES } from '../../data/gems';
+import { GEM_FAMILIES, makeGem } from '../../data/gems';
 import type { Rng } from '../../engine/rng';
 import { makeItem } from '../items/make';
 import type { Character, ClassId, Gem, Item, StatId } from '../types';
@@ -16,7 +16,7 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
     if (it.slot === 'head' || it.slot === 'body' || it.slot === 'legs') equipment[it.slot] = it;
   }
   const gems: Gem[] = [];
-  for (let i = 0; i < (cls.start.gems ?? 0); i++) gems.push({ family: rng ? rng.pick(GEM_FAMILIES) : 'brutal', tier: 1 });
+  for (let i = 0; i < (cls.start.gems ?? 0); i++) gems.push(makeGem(rng ? rng.pick(GEM_FAMILIES) : 'brutal', 1));
   const school = cls.start.off?.includes('staff') ? 'brain' : 'prayer';
   const loadout: [string | null, string | null, string | null] = [cls.start.spells[0] ?? null, cls.start.spells[1] ?? null, null];
   return {

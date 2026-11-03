@@ -228,15 +228,20 @@ export function flaskCap(c: { flaskMax: number; equipment: { legs: { legendaryPo
   return Math.min(5, c.flaskMax + (c.equipment.legs?.legendaryPower === 'lucky_socks' ? 1 : 0));
 }
 
-/** Glowen for selling a gem: 40 × 3^(tier−1); upgrade = 10× sell; re-roll = 2× sell. */
+/** Glowen for one gem perk: 40 × 3^(tier−1); upgrading a perk = 10× its value. */
 export function gemSellValue(tier: number): number {
   return 40 * Math.pow(3, tier - 1);
 }
 export function gemUpgradeCost(tier: number): number {
   return 10 * gemSellValue(tier);
 }
-export function gemRerollCost(tier: number): number {
-  return 2 * gemSellValue(tier);
+/** A whole gem sells for the sum of its perks. */
+export function gemSellTotal(g: { perks: { tier: number }[] }): number {
+  return g.perks.reduce((s, p) => s + gemSellValue(p.tier), 0);
+}
+/** Fusing two gems costs the value of the best perk the result keeps (small next to an upgrade). */
+export function gemFuseCost(perks: { tier: number }[]): number {
+  return gemSellValue(perks.reduce((m, p) => Math.max(m, p.tier), 1));
 }
 
 export const GEAR_SELL: Record<string, number> = { common: 10, uncommon: 25, rare: 60, epic: 150, legendary: 400 };

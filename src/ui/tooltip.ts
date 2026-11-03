@@ -6,7 +6,7 @@ import { SHIELDS, shieldValues } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
 import { SKILLS } from '../data/skills';
-import { GEMS, gemName, gemText } from '../data/gems';
+import { GEMS, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkText } from '../data/gems';
 import { LEGENDARY_POWERS, LEGENDARY_FLAVOR } from '../data/legendaries';
 import { affixText } from '../data/affixes';
 import { armorPieceDefense, parseArmorBase } from '../data/armor';
@@ -212,6 +212,31 @@ export function compareTargetFor(c: Character, item: Item): { slot: WornSlot; it
 }
 
 /**
+ * One line saying what an item is: "Epic Longsword · Level 6 · Medium · 2 affixes · 1 socket".
+ */
+export function itemSummary(item: Item): string {
+  const w = WEAPONS[item.baseId];
+  const s = SHIELDS[item.baseId];
+  const t = CASTING_TOOLS[item.baseId];
+  const cls = w?.name ?? s?.name ?? t?.name ?? (item.kind === 'armor' ? (ARMOR_SLOT_LABEL[item.slot] ?? 'Armor') : item.kind === 'ring' ? 'Ring' : (baseInfo(item.baseId)?.name ?? item.kind));
+  const sub = w ? (SPEED_LABEL[w.speedClass] ?? w.speedClass) : s ? (SHIELD_SIZE_LABEL[s.size] ?? 'Shield') : t ? (t.school === 'brain' ? 'Staff' : 'Talisman') : item.kind === 'armor' ? (parseArmorBase(item.baseId)?.set?.weight ?? 'cloth') : '';
+  const parts = [`${RARITY_LABEL[item.rarity]} ${cls}`, `Level ${item.ilvl}`];
+  if (sub) parts.push(sub[0]!.toUpperCase() + sub.slice(1));
+  if (item.affixes.length) parts.push(`${item.affixes.length} affix${item.affixes.length === 1 ? '' : 'es'}`);
+  if (item.sockets.length) parts.push(`${item.sockets.length} socket${item.sockets.length === 1 ? '' : 's'}`);
+  if (item.legendaryPower) parts.push(LEGENDARY_POWERS[item.legendaryPower]?.name ?? 'Legendary power');
+  return parts.join(' · ');
+}
+
+/** A tooltip laid out in the page (a detail pane) instead of floating beside the pointer. */
+export function staticTip(tt: HTMLElement): HTMLElement {
+  tt.style.position = 'static';
+  tt.style.width = '100%';
+  tt.style.zIndex = 'auto';
+  return tt;
+}
+
+/**
  * Tooltip for an item. `compare`:
  * - 'auto': compare against whatever is worn in the slot it would go into (nothing there compares against 0 / —);
  *   equipped items show plain values;
@@ -385,8 +410,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
         'Sockets',
         ...item.sockets.map((g, i) =>
           g
-            ? h('div', { class: 'tt-text' }, h('span', { style: `color:${GEMS[g.family].color}` }, `◆ ${gemName(g.family, g.tier)}`), `: ${gemText(g.family, g.tier)}`)
-            : h('div', { class: 'tt-text dim-text' }, `◇ Empty socket ${i + 1}${item.kind === 'armor' ? ' (Bulwark only)' : ''}`),
+            ? h('div', { class: 'tt-text' }, ...g.perks.map((p, j) => h('div', null, h('span', { style: `color:${GEMS[p.family].color}` }, `${j === 0 ? '◆' : '+'} ${perkName(p)}`), `: ${perkText(p)}`)))
+            : h('div', { class: 'tt-text dim-text' }, `◇ Empty socket ${i + 1} (${item.kind === 'armor' ? 'armor' : 'weapon'} gems)`),
         ),
       ),
     );
@@ -424,8 +449,26 @@ function ringEffect(item: Item): string {
   return r.effect;
 }
 
+/** A small "Weapon gem" / "Armor gem" chip. */
+export function gemKindChip(g: Gem): HTMLElement {
+  const armor = gemKind(g) === 'armor';
+  return h('span', { class: `gem-chip ${armor ? 'gem-armor' : 'gem-weapon'}`, 'data-testid': 'gem-kind' }, gemKindLabel(g));
+}
+
+/** One line per perk: name (tier, coloured) and what it does. */
+export function gemPerkLines(g: Gem): HTMLElement[] {
+  return g.perks.map((p) => h('div', { class: 'small' }, h('span', { style: `color:${GEMS[p.family].color}` }, perkName(p)), h('span', { style: 'color:#cfc6b4' }, ` ${perkText(p)}`)));
+}
+
 export function gemTooltip(g: Gem): HTMLElement {
-  return h('div', { class: 'tooltip' }, h('div', { class: 'name', style: `color:${GEMS[g.family].color}` }, gemName(g.family, g.tier)), h('div', null, gemText(g.family, g.tier)), h('div', { class: 'small dim-text' }, GEMS[g.family].armorOnly ? 'Armor sockets only.' : 'Weapon sockets.'));
+  return h(
+    'div',
+    { class: 'tooltip' },
+    h('div', { class: 'name', style: `color:${gemColor(g)}` }, gemTitle(g)),
+    h('div', null, gemKindChip(g)),
+    ...gemPerkLines(g),
+    h('div', { class: 'small dim-text' }, gemKind(g) === 'armor' ? 'Armor sockets only.' : 'Weapon sockets only.', g.perks.length > 1 ? ' Each perk upgrades on its own.' : ''),
+  );
 }
 
 /** Draw a small icon for an item into a canvas. */
@@ -489,10 +532,31 @@ export function gemIcon(g: Gem, size = 28): HTMLCanvasElement {
   const c = h('canvas', { width: size, height: size });
   const ctx = c.getContext('2d')!;
   const m = size / 2;
-  poly(ctx, [m, 3, size - 4, m, m, size - 3, 4, m], GEMS[g.family].color, OUTLINE, 2);
-  ctx.fillStyle = '#000';
-  ctx.font = `bold ${Math.round(size * 0.35)}px "Segoe UI", system-ui, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText(String(g.tier), m, m + size * 0.13);
+  const n = g.perks.length;
+  // a cut gem split into one facet per perk (left to right), each in its perk's colour
+  const pts = [m, 3, size - 4, m, m, size - 3, 4, m];
+  if (n <= 1) poly(ctx, pts, gemColor(g), OUTLINE, 2);
+  else {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pts[0]!, pts[1]!);
+    for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i]!, pts[i + 1]!);
+    ctx.closePath();
+    ctx.clip();
+    const w = (size - 8) / n;
+    g.perks.forEach((p, i) => {
+      ctx.fillStyle = GEMS[p.family].color;
+      ctx.fillRect(4 + i * w, 0, w + 0.5, size);
+    });
+    ctx.restore();
+    poly(ctx, pts, 'rgba(0,0,0,0)', OUTLINE, 2);
+  }
+  // the tier on a one-perk gem; a multi-perk gem's facets say enough at icon size (names carry the tiers)
+  if (n <= 1 || size >= 40) {
+    ctx.fillStyle = '#000';
+    ctx.font = `bold ${Math.round(size * (n > 1 ? 0.24 : 0.35))}px "Segoe UI", system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(g.perks.map((p) => p.tier).join(n > 1 ? '·' : ''), m, m + size * 0.11);
+  }
   return c;
 }
