@@ -58,6 +58,15 @@ export const STAMINA_COST_MULT = 1.15;
 /** Elites have 50% more poise on top of their bigger body (D105). */
 export const ELITE_POISE_MULT = 1.5;
 
+/** Spell cast speed from Slicey (D106): ×(1 + 0.25 f(Slicey)), ≈ +13% at 40, +21% at 99. */
+export function slickCast(slicey: number): number {
+  return 1 + 0.25 * scalingCurve(slicey);
+}
+/** Walking speed while casting (D106): 50% of normal, + 0.25 f(Bonk), ≈ 63% at 40, 70% at 99. */
+export function castMoveMult(bonk: number): number {
+  return 0.5 + 0.25 * scalingCurve(bonk);
+}
+
 /** Scaling curve f(s) = 1 − 0.982^s */
 export function scalingCurve(s: number): number {
   return 1 - Math.pow(0.982, Math.max(0, s));

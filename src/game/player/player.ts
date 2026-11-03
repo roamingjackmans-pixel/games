@@ -698,7 +698,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   } else if (canMove && e.st!.controls.root <= now) {
     let speed = pl.derived.walk * speedMult(e, w);
     if (pl.state === 'flask') speed *= 0.4;
-    if (pl.state === 'cast') speed *= 0.5;
+    if (pl.state === 'cast') speed *= pl.derived.castMoveMult;
     if (pl.channel) speed *= pl.channel.moveMult;
     if (pl.charge) speed *= 0.35;
     // swinging slows you down instead of rooting you; heavier weapon classes slow you more (D88)

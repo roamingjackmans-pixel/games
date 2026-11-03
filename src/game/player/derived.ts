@@ -7,7 +7,7 @@ import { armorPieceDefense } from '../../data/armor';
 import { AFFIXES, affixBuildup } from '../../data/affixes';
 import { GEMS, gemBuildup, gemValue } from '../../data/gems';
 import { RINGS, bandAmount, bandStat } from '../../data/rings';
-import { dodgeRecharge, itemSkillCount, maxHP, maxStamina, scalingMult, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
+import { castMoveMult, slickCast, dodgeRecharge, itemSkillCount, maxHP, maxStamina, scalingMult, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
 import { itemRequirements, meetsRequirements } from '../items/bases';
 import { equipLoadOf, type EquipLoadInfo } from './equipLoad';
 import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatusId, Stats, WeaponDef } from '../types';
@@ -33,6 +33,8 @@ export interface Derived {
   statusBuild: { id: StatusId; buildup: number }[];
   attackSpeed: number;
   castSpeed: number;
+  /** walking speed while casting a spell (D106: 50%, up to about 70% with Bonk) */
+  castMoveMult: number;
   cdr: number;
   dodgeRecharge: number;
   stamCost: number;
@@ -322,7 +324,9 @@ export function computeDerived(c: Character): Derived {
     convert,
     statusBuild,
     attackSpeed: Math.min(1.6, 1 + attackSpeedPct),
-    castSpeed: Math.min(1.6, (tool?.castSpeed ?? 1) * (1 + castSpeedPct)),
+    // Slicey quickens your casting hands a little: up to about +21% at 99 (D106)
+    castSpeed: Math.min(1.6, (tool?.castSpeed ?? 1) * (1 + castSpeedPct) * slickCast(stats.slicey)),
+    castMoveMult: castMoveMult(stats.bonk),
     cdr: Math.min(0.5, cdrPct),
     dodgeRecharge: dodgeRecharge(dodgeRed),
     stamCost: Math.max(0.3, 1 - stamCostPct),

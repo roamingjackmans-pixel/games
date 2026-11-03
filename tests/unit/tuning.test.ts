@@ -45,3 +45,19 @@ describe('bows and scaling (D88)', () => {
     expect(GRADE_MULT.A).toBeGreaterThan(1.2);
   });
 });
+
+describe('Slicey casts faster, Bonk walks faster while casting (D106)', () => {
+  it('both are slight and grow with the stat', async () => {
+    const { slickCast, castMoveMult } = await import('../../src/game/combat/formulas');
+    expect(slickCast(10)).toBeGreaterThan(1);
+    expect(slickCast(99)).toBeGreaterThan(slickCast(40));
+    expect(slickCast(99)).toBeLessThan(1.25);
+    expect(castMoveMult(0)).toBeCloseTo(0.5, 5);
+    expect(castMoveMult(99)).toBeGreaterThan(castMoveMult(40));
+    expect(castMoveMult(99)).toBeLessThan(0.75);
+    const c = newCharacter('scholar', 'Joe', 'p', new Rng(1));
+    const slow = computeDerived(c).castSpeed;
+    c.stats.slicey = 60;
+    expect(computeDerived(c).castSpeed).toBeGreaterThan(slow);
+  });
+});
