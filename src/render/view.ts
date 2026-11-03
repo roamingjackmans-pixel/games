@@ -38,6 +38,8 @@ export class WorldView {
   /** extra overlay hook (bosses' arena decorations, etc.) */
   underlay: ((ctx: CanvasRenderingContext2D, w: World, now: number) => void) | null = null;
   darkness = 0;
+  /** cutscene camera (src/ui/cutscene.ts): zoom the world around a point; null = the fixed room view */
+  camera: { x: number; y: number; zoom: number } | null = null;
   /** white flash on a boss phase change (ART_AUDIO §4) */
   private flash = 0;
   private lastHitSoundAt = 0;
@@ -213,6 +215,11 @@ export class WorldView {
     ctx.fillRect(0, 0, 1280, 720);
     ctx.save();
     ctx.translate(this.shakeX, this.shakeY);
+    if (this.camera) {
+      ctx.translate(640, 360);
+      ctx.scale(this.camera.zoom, this.camera.zoom);
+      ctx.translate(-this.camera.x, -this.camera.y);
+    }
     drawRoomFloor(ctx, w.room, this.palette, this.propStyle, 0);
     if (w.room.rotFloor) {
       const rf = w.room.rotFloor;

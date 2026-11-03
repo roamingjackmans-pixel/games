@@ -710,6 +710,8 @@ export interface WorldState {
   leftBehind: Record<string, { playerId: string; item: Item; x: number; y: number }[]>;
   /** awakened mimics that still live (they fight when you return) */
   bossKilled: number[];
+  /** cutscenes already played this cycle (src/data/story.ts ids: `zone-N`, `boss-intro-N`, `instructor`) */
+  cutscenesSeen?: string[];
 }
 
 export interface GaryStockEntry {

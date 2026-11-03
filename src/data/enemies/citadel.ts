@@ -282,7 +282,7 @@ export const CITADEL: Record<string, EnemyDef> = {
       },
     ],
     traits: { teleportEveryS: 5 },
-    flavor: 'Is always five seconds somewhere else.',
+    flavor: 'Checks Tock’s sums. Has found an error. It’s you.',
     draw: 'citadel_magister',
     hitSound: 'hitFlesh',
   },

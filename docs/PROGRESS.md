@@ -52,16 +52,16 @@ Tick items as `[x]` with the commit hash and date. Add sub-items freely. Never d
 - [x] death screen, Shardpile, respawn, first-rest rule — 0949d39 2026-11-02
 - [x] tests; browser check — 0949d39 2026-11-02 — procgen (1,000 seeds × 8 zones, reachability, dead-end boss, mixes, ≤ 12 live, mimic 5%±0.5%, Shard tuning zone 1), session tests. Browser (no-HMR server on 5174): hall → start bonfire; first rest 240/240 + flask, second rest nothing; combat room locks, waves, clears; death → pile 621 → respawn full → recovered 621; treasure chest; anteroom bonfire + locked boss door. Fixed: negative spawn-tell radius on 1.5 s tells.
 
-## M5 — Items, loot, inventory, gems, Stardust, shop
+## M5 — Items, loot, inventory, gems, Glowen, shop
 - [x] item generator (rarity, slot, ilvl, affixes, sockets, legendaries, names, flavor) — 8a7d2fd 2026-11-02
 - [x] drops + instancing hooks, pickups, loot beams — 8a7d2fd 2026-11-02
 - [x] inventory/character screen, requirements penalties, tooltips, quick swap — 8a7d2fd 2026-11-02
 - [x] armor sets, rings — 8a7d2fd 2026-11-02
-- [x] gems: socket/unsocket/upgrade/re-roll, Stardust, selling — 8a7d2fd 2026-11-02
+- [x] gems: socket/unsocket/upgrade/re-roll, Glowen, selling — 8a7d2fd 2026-11-02
 - [x] bonfire menu: rest (first-rest rule), level up, respec, gem bench, shop, warp — 8a7d2fd 2026-11-02
 - [x] consumables + quick-use — 8a7d2fd 2026-11-02
 - [x] Instructor drop real — 8a7d2fd 2026-11-02
-- [x] tests; browser check — 8a7d2fd 2026-11-02 — 14 item tests (rarity weights within 1% over 100k for 6 sources, no duplicate affixes, penalties, Quicksilver attack speed and the ×1.6 cap, gems/Stardust math, level curve, respec, save round-trip). Browser: 4 rooms cleared → 8 drops in common/uncommon/rare + gems; inventory + tooltip; ring equipped (HP 240→282); bonfire level 1→2; Quicksilver T5 socketed → attack speed 1.00→1.18; shop purchase; all of it survived a reload.
+- [x] tests; browser check — 8a7d2fd 2026-11-02 — 14 item tests (rarity weights within 1% over 100k for 6 sources, no duplicate affixes, penalties, Quicksilver attack speed and the ×1.6 cap, gems/Glowen math, level curve, respec, save round-trip). Browser: 4 rooms cleared → 8 drops in common/uncommon/rare + gems; inventory + tooltip; ring equipped (HP 240→282); bonfire level 1→2; Quicksilver T5 socketed → attack speed 1.00→1.18; shop purchase; all of it survived a reload.
 
 ## M6 — 16 weapon classes, 48 skills, casting, 28 spells
 - [x] all WeaponDefs + draw functions — 7d61843 2026-11-02

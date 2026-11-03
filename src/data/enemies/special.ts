@@ -8,7 +8,7 @@ const dummyBase = {
   resist: {},
   moveStyle: 'stationary' as const,
   preferredRange: 0,
-  flavor: 'Has taken more hits than Joe. Will take more.',
+  flavor: 'Has taken more hits than Joe. Complains less.',
   draw: 'training_dummy',
   special: true,
   hitSound: 'hitFlesh' as const,
@@ -138,7 +138,7 @@ export const GARY: EnemyDef = {
   special: true,
   attacks: [],
   traits: { merchant: true, hideHpBar: true, noDrops: true, noFlinch: true, noShards: true },
-  flavor: 'Sells things. Does not say where he got them.',
+  flavor: 'Pays no rent. Asks no questions. Answers fewer.',
   draw: 'gary',
   hitSound: 'hitFlesh',
 };

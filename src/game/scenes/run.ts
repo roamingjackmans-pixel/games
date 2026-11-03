@@ -33,6 +33,9 @@ import { refreshDerived, toggleTwoHand } from '../player/player';
 import { stream } from '../../engine/rng';
 import { toast } from '../../ui/dom';
 import { openSettings } from '../../ui/menus/settings';
+import { INSTRUCTOR } from '../../data/enemies/special';
+import { BONFIRE_LINES, DEATH_QUIPS, EMBER_LINES, TIPS, bossIntroId, zoneCutsceneId, zoneLines } from '../../data/story';
+import { ZoneCutscene, bossIntroCut, cutscenesEnabled, defeatCut, drawBossNameCard, drawZoneTitleCard, instructorCut, restLine, type Cutscene } from '../../ui/cutscene';
 
 /** Scene switches the run scene asks for (wired in main.ts, avoids import cycles). */
 export const runHooks: { toTitle?: () => void; credits?: (s: GameSession) => void; toLobby?: (save: SaveFile, net: NetHost) => void; newCycle?: (save: SaveFile) => void } = {};
@@ -50,6 +53,12 @@ export class RunScene extends WorldScene {
   private pendingSave = false;
   private revealMap = false;
   private saveDebounce = 0;
+  /** the cutscene playing (zone entry, boss intro, boss defeat, the Instructor); solo pauses the sim under it */
+  private cut: Cutscene | null = null;
+  private cutEnd: (() => void) | null = null;
+  /** a zone cutscene ends by itself if the party leaves the room it started in (co-op: the sim runs on) */
+  private cutRoom = '';
+  private pendingDefeat: { def: BossDef; zone: number; at: number } | null = null;
 
   constructor(
     public save: SaveFile,
@@ -57,9 +66,10 @@ export class RunScene extends WorldScene {
   ) {
     super();
     this.session = new GameSession(save, {
-      roomEntered: () => {
+      roomEntered: (node) => {
         this.fade = 1;
         this.updateMusic();
+        if (node.kind === 'trial') this.instructorIntro();
       },
       playerDied: () => this.showDeath(),
       bonfire: (p, id, first) => {
@@ -68,9 +78,7 @@ export class RunScene extends WorldScene {
         if (g) this.net!.sendEvent(g.peerId, { t: 'bonfire', id, first });
         else this.showBonfire(p, id, first);
       },
-      titleCard: (zone, names) => {
-        this.title = { zone, names, until: performance.now() / 1000 + 3.5 };
-      },
+      titleCard: (zone, names) => this.zoneIntro(zone, names),
       autosave: (reason) => {
         if (reason === 'pickup') {
           // pickups save at most every 2 s
@@ -82,12 +90,16 @@ export class RunScene extends WorldScene {
         this.signText = t;
       },
       tutorialGoal: () => undefined,
-      bossIntro: (def) => {
-        this.bossCard = { def, until: performance.now() / 1000 + 2.6 };
+      bossIntro: (def, e) => {
         music.play('boss', this.bossSeed(def), 1);
+        this.bossIntro(def, e);
       },
       bossPhase: (def, phase) => music.play('boss', this.bossSeed(def), phase + 1),
-      bossDefeated: () => music.play('off', null),
+      bossDefeated: (def) => {
+        music.play('off', null);
+        // the defeat lines start once the boss has finished exploding
+        if (cutscenesEnabled()) this.pendingDefeat = { def, zone: this.session.layout.zone, at: performance.now() / 1000 + 1.1 };
+      },
       credits: () => {
         // the end of the run: everyone in the party sees the credits, then the host finds the NG+ fire
         this.persist();
@@ -171,6 +183,7 @@ export class RunScene extends WorldScene {
 
   protected override beforeStep(dt: number): void {
     const a = app();
+    this.tickCutscenes();
     this.local = this.session.localPlayer;
     this.view.palette = zoneDef(this.session.layout.zone).palette;
     this.view.propStyle = zoneDef(this.session.layout.zone).props;
@@ -203,6 +216,95 @@ export class RunScene extends WorldScene {
     return !!this.net && this.net.guests.size > 0;
   }
 
+  // ------------------------------------------------------------------ cutscenes (src/ui/cutscene.ts, src/data/story.ts)
+
+  /** A line from a list: seeded by the world and a counter, so it varies without Math.random. */
+  private pickLine(list: readonly string[], label: string): string {
+    return stream(this.save.world.seed, `${label}:${this.save.stats.deaths}:${this.save.stats.kills}`).pick(list);
+  }
+
+  private seen(id: string): boolean {
+    return (this.save.world.cutscenesSeen ?? []).includes(id);
+  }
+
+  private markSeen(id: string): void {
+    const l = (this.save.world.cutscenesSeen ??= []);
+    if (!l.includes(id)) l.push(id);
+  }
+
+  /** Start a cutscene; the solo sim pauses under it (menuOpen) and gameplay input is off. */
+  private playCut(c: Cutscene, onEnd: (() => void) | null = null, roomBound = false): void {
+    this.dropCut();
+    this.cut = c;
+    this.cutEnd = onEnd;
+    this.cutRoom = roomBound ? this.session.node.id : '';
+    this.menuOpen = true;
+  }
+
+  /** Finish the cutscene now (it ended, was skipped, or a menu opened over it). */
+  private dropCut(): void {
+    const c = this.cut;
+    if (!c) return;
+    this.cut = null;
+    this.view.camera = null;
+    if (!this.overlay) this.menuOpen = false;
+    const end = this.cutEnd;
+    this.cutEnd = null;
+    end?.();
+  }
+
+  private tickCutscenes(): void {
+    if (this.cut && (this.cut.done || (this.cutRoom && this.session.node.id !== this.cutRoom))) this.dropCut();
+    const pd = this.pendingDefeat;
+    if (!this.cut && pd && !this.overlay && performance.now() / 1000 >= pd.at) {
+      this.pendingDefeat = null;
+      this.view.banner = null;
+      this.playCut(defeatCut(pd.def, pd.zone));
+    }
+  }
+
+  /** Zone entry: the story cutscene the first time this cycle, the plain title card after (D57). */
+  private zoneIntro(zone: number, names: string[]): void {
+    const id = zoneCutsceneId(zone);
+    if (!cutscenesEnabled() || this.seen(id)) {
+      this.title = { zone, names, until: performance.now() / 1000 + 3.5 };
+      return;
+    }
+    this.markSeen(id);
+    const z = zoneDef(zone);
+    const cycle = this.save.character.cycle;
+    this.playCut(new ZoneCutscene({ zone, name: z.name, palette: z.palette, lines: zoneLines(zone, cycle), guests: names, cycle }), null, true);
+  }
+
+  /**
+   * The boss storms in: the full intro the first time (and always in co-op, where the sim cannot pause and the
+   * session holds the boss for the whole cutscene), the freeze-frame alone on later solo attempts.
+   */
+  private bossIntro(def: BossDef, e: Entity): void {
+    const zone = this.session.layout.zone;
+    if (!cutscenesEnabled()) {
+      this.bossCard = { def, until: performance.now() / 1000 + 2.6 };
+      return;
+    }
+    const coop = this.w.playerCount > 1;
+    const id = bossIntroId(zone);
+    const full = coop || !this.seen(id);
+    this.markSeen(id);
+    const cut = bossIntroCut(def, zone, zoneDef(zone).name, () => (this.w.bossId === e.id ? e : null), zoneDef(zone).palette.colors, full);
+    if (coop) this.session.holdBossIntro(cut.length + 0.3);
+    // solo: the sim was paused under the cutscene; the fight starts a moment after it ends
+    this.playCut(cut, coop ? null : () => this.session.holdBossIntro(0.6));
+  }
+
+  /** The Instructor's lighter card, the first time Joe walks into his room. */
+  private instructorIntro(): void {
+    if (!cutscenesEnabled() || this.save.world.instructorKilled || this.seen('instructor')) return;
+    const inst = this.w.enemies.find((x) => x.en?.def.id === INSTRUCTOR.id && !x.hp?.dead);
+    if (!inst) return;
+    this.markSeen('instructor');
+    this.playCut(instructorCut(() => (inst.removed ? null : inst), zoneDef(1).palette.colors), null, true);
+  }
+
   // ------------------------------------------------------------------ overlays
 
   closeOverlay(): void {
@@ -213,6 +315,7 @@ export class RunScene extends WorldScene {
   }
 
   private showDeath(): void {
+    this.dropCut();
     this.closeOverlay();
     mixer.setDuck(0.3);
     const lost = this.save.world.shardpile?.amount ?? 0;
@@ -238,8 +341,10 @@ export class RunScene extends WorldScene {
         'div',
         { class: 'col center', style: 'align-items:center;gap:18px' },
         h('div', { class: 'death-title' }, this.session.deathLine),
+        h('div', { style: 'font-size:20px;font-style:italic;color:#efe6d2' }, this.pickLine(DEATH_QUIPS, 'quip')),
         h('div', { class: 'dim-text' }, lost > 0 ? `${Math.floor(lost)} Shards left where you fell. Touch them to take them back. Die first and they are gone.` : 'You had no Shards. Small mercies.'),
         h('div', { class: 'dim-text small' }, 'You will wake at your bonfire with full HP and a full Thermos.'),
+        h('div', { class: 'small', style: 'color:#cfc6b4;max-width:640px;text-align:center' }, `Tip: ${this.pickLine(TIPS, 'tip')}`),
         b,
       ),
     );
@@ -250,6 +355,7 @@ export class RunScene extends WorldScene {
 
   /** The bonfire menu: level up, respec, gem bench, shop, warp. */
   showBonfire(p: Entity, id: string, first: boolean): void {
+    this.dropCut();
     this.closeOverlay();
     const c = p.pl!.char;
     const ws = this.save.world;
@@ -313,6 +419,7 @@ export class RunScene extends WorldScene {
         openInventory: () => this.showInventory(() => open()),
         close: () => this.closeOverlay(),
       });
+      this.overlay.appendChild(restLine(this.pickLine(first ? BONFIRE_LINES : EMBER_LINES, `rest:${id}`)));
       this.overlayKind = 'bonfire';
       this.menuOpen = true;
     };
@@ -321,6 +428,7 @@ export class RunScene extends WorldScene {
 
   /** Gary's cart: 3–5 special things for Glowen (GAME_DESIGN §11). */
   showGary(): void {
+    this.dropCut();
     this.closeOverlay();
     const p = this.local;
     if (!p) return;
@@ -365,6 +473,7 @@ export class RunScene extends WorldScene {
   showInventory(onClose?: () => void): void {
     const p = this.local;
     if (!p) return;
+    this.dropCut();
     this.overlay?.remove();
     this.overlay = openInventory({
       char: p.pl!.char,
@@ -382,6 +491,7 @@ export class RunScene extends WorldScene {
   }
 
   showPause(): void {
+    this.dropCut();
     this.closeOverlay();
     const l = layer('dim');
     l.setAttribute('data-testid', 'pause-menu');
@@ -434,6 +544,7 @@ export class RunScene extends WorldScene {
   }
 
   private showMap(): void {
+    this.dropCut();
     this.closeOverlay();
     const l = layer('dim');
     l.setAttribute('data-testid', 'map-screen');
@@ -513,36 +624,22 @@ export class RunScene extends WorldScene {
 
   protected override renderTop(ctx: CanvasRenderingContext2D, _alpha: number, realDt: number): void {
     const now = performance.now() / 1000;
-    drawMinimap(ctx, { layout: this.session.layout, ws: this.save.world, currentId: this.session.node.id, revealAll: this.revealMap });
-    if (this.w.players.length > 1) drawPartyCards(ctx, this.w, this.local?.pl?.playerId ?? '');
-    // zone title card
-    if (this.title && now < this.title.until) {
-      const k = Math.min(1, (this.title.until - now) / 0.6, (now - (this.title.until - 3.5)) / 0.4);
-      const z = ZONES[this.title.zone - 1]!;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, k);
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.fillRect(0, 250, 1280, 150);
-      ctx.restore();
-      drawText(ctx, z.name.toUpperCase(), 640, 320, { size: 52, align: 'center', weight: 'bold', alpha: Math.max(0, k), color: z.palette.accent });
-      drawText(ctx, this.title.names.join(' · '), 640, 356, { size: 16, align: 'center', alpha: Math.max(0, k), color: '#efe6d2' });
-      drawText(ctx, z.tagline, 640, 384, { size: 14, align: 'center', alpha: Math.max(0, k) * 0.8, color: '#a59c8a' });
+    if (!this.cut) {
+      drawMinimap(ctx, { layout: this.session.layout, ws: this.save.world, currentId: this.session.node.id, revealAll: this.revealMap });
+      if (this.w.players.length > 1) drawPartyCards(ctx, this.w, this.local?.pl?.playerId ?? '');
     }
-    // boss name card (inputs are held for the first 1.5 s by the session)
-    if (this.bossCard && now < this.bossCard.until) {
-      const { def, until } = this.bossCard;
-      const k = Math.max(0, Math.min(1, (until - now) / 0.6, (now - (until - 2.6)) / 0.3));
-      ctx.save();
-      ctx.globalAlpha = k;
-      const g = ctx.createLinearGradient(0, 230, 0, 420);
-      g.addColorStop(0, 'rgba(0,0,0,0)');
-      g.addColorStop(0.5, 'rgba(0,0,0,0.7)');
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 230, 1280, 190);
-      ctx.restore();
-      drawText(ctx, def.introTitle, 640, 330, { size: 60, align: 'center', weight: 'bold', alpha: k, color: def.palette?.[1] ?? '#e6b84a' });
-      drawText(ctx, def.introSub, 640, 366, { size: 17, align: 'center', alpha: k * 0.9, color: '#efe6d2' });
+    // zone title card (a zone already introduced this cycle)
+    if (this.title && now < this.title.until) {
+      const z = ZONES[this.title.zone - 1]!;
+      drawZoneTitleCard(ctx, z.name, z.palette.accent, this.title.names, z.tagline, this.title.until - now, 3.5);
+    }
+    // boss name card when cutscenes are off (inputs are held for the first 1.5 s by the session)
+    if (this.bossCard && now < this.bossCard.until) drawBossNameCard(ctx, this.bossCard.def.introTitle, this.bossCard.def.introSub, this.bossCard.def.palette?.[1] ?? '#e6b84a', this.bossCard.until - now, 2.6);
+    // the cutscene: drawn with the camera the world used this frame, then ticked for the next one
+    if (this.cut) {
+      this.cut.draw(ctx, { cam: this.view.camera });
+      this.cut.tick(realDt);
+      this.view.camera = this.cut.camera(app().settings.video.shake);
     }
     // room transition fade (0.3 s)
     if (this.fade > 0) {

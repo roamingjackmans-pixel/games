@@ -21,7 +21,7 @@ interface Character {
   playerId: string;                 // uuid, stable for co-op identity
   name: string; classId: ClassId;
   level: number; stats: Stats;      // { hp, stamina, bonk, slicey, brain, prayer }
-  shards: number; stardust: number;
+  shards: number; glowen: number;
   flaskMax: number; flaskCur: number; bossesBeaten: number;   // bossesBeaten drives flaskMax
   highestZoneBeaten: number;        // 0–8
   cycle: number;                    // NG+ count, 0 = first playthrough
@@ -168,7 +168,7 @@ type EffectDef =
   | { op: 'reviveValue'; amount: number }
   | { op: 'stagger'; durationS: number; bossPoiseMult?: number }
   | { op: 'resetCooldown'; skill: 'this' | SkillId | 'all' }
-  | { op: 'resource'; stamina?: number; hp?: number; shards?: number; stardust?: number; flask?: number }
+  | { op: 'resource'; stamina?: number; hp?: number; shards?: number; glowen?: number; flask?: number }
   | { op: 'hyperArmor'; durationS: number }
   | { op: 'reveal'; r: number; durationS: number }
   | { op: 'hazard'; pattern: PatternDef; hazard: HazardId; durationS: number }

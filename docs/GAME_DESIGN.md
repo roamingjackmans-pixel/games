@@ -378,7 +378,7 @@ chest's loot plus a bonus roll from the Mimic row of CONTENT_ITEMS §3.
 ## 7. Bosses
 
 8 bosses, one per zone. Each has: an arena with unique hazards, a **boss bar** with a phase marker, an
-intro (name card, 1.5 s, inputs locked), 4–5 attacks in phase 1, and a **phase 2 at 50% HP**: a
+intro (the boss cutscene of §19, inputs locked), 4–5 attacks in phase 1, and a **phase 2 at 50% HP**: a
 transition animation (2 s invulnerable), +20% speed, +25% damage, 2 new attacks, old attacks get
 extra projectiles/areas. **The Landlord** (final) has three phases at 66% and 33%. Every boss uses both
 Red and Piercing attacks and at least two room-covering patterns. Bosses never spawn as Elites.
@@ -429,7 +429,7 @@ cooldowns (V Rising); they cost stamina too.
 
 Rolled from CONTENT_ITEMS §6: flat/percent damage, elemental conversion, attack speed, cooldown
 reduction, Fleet (dodge recharge), stamina cost reduction, lifesteal, status buildup, poise damage,
-defense per type, max HP/stamina, Shard find, Stardust find, gem find, revive value, +1 stat.
+defense per type, max HP/stamina, Shard find, Glowen find, gem find, revive value, +1 stat.
 
 ### 8.5 Gems (V Rising)
 
@@ -447,9 +447,9 @@ Gems slot into sockets and **change how the weapon works, mostly its speed**:
 | Bulwark (armor only) | +8/12/16/20/24 defense to all types |
 
 Gems drop from enemies (2%), chests (12%), bosses (100%, one), the wandering merchant, and the bonfire
-shop (one T1 per zone). **Stardust**: selling a gem gives 40 × 3^(tier−1) Stardust; upgrading a gem to
-the next tier costs 10× its sell value (T1→T2: 400, T2→T3: 1200, T3→T4: 3600, T4→T5: 10800). Stardust
-also comes from selling gear (10–400 by rarity/ilvl) and rare "Stardust Motes" drops. Re-rolling a gem
+shop (one T1 per zone). **Glowen**: selling a gem gives 40 × 3^(tier−1) Glowen; upgrading a gem to
+the next tier costs 10× its sell value (T1→T2: 400, T2→T3: 1200, T3→T4: 3600, T4→T5: 10800). Glowen
+also comes from selling gear (10–400 by rarity/ilvl) and rare "Glowen Wisps" drops (better-made gear holds more Glowen, §19). Re-rolling a gem
 into another random gem of the same tier costs 2× its sell value at the bonfire shop. Gems can be
 unsocketed for free at a bonfire.
 
@@ -458,7 +458,7 @@ unsocketed for free at a bonfire.
 ### 9.1 Bonfire menu
 
 Rest · Level up · Respec (needs a Tear) ·
-Gem bench (socket, unsocket, upgrade, re-roll) · Shop (sell gems and gear for Stardust; buy throwables,
+Gem bench (socket, unsocket, upgrade, re-roll) · Shop (sell gems and gear for Glowen; buy throwables,
 a T1 gem, and one rotating gear piece at the zone's ilvl re-rolled on each rest) · Warp (to any
 **discovered** bonfire in this playthrough, fresh or ember) · Spell loadout (also available anywhere in
 the inventory).
@@ -512,7 +512,7 @@ built for it.
 - **Spell reliquary**: ornate, glowing. Chance per zone 35% to generate one; also 25% after a boss. Holds
   one spell the character does not know yet (either school), 5% a Tear of Undoing instead. Never a mimic.
 - **Wandering merchant** ("Gary"): 20% chance per zone to generate a merchant room (never zone 1). Sells
-  3–5 random *special* things for Stardust: an Epic/Legendary at ilvl+1, a T2–T3 gem, 3 random
+  3–5 random *special* things for Glowen: an Epic/Legendary at ilvl+1, a T2–T3 gem, 3 random
   consumables, a Tear of Undoing (rare), a **Lucky Charm** ring (+10% Shard find). Hit Gary three times
   and he leaves for the rest of the playthrough (he is nearly unkillable and drops nothing).
 
@@ -536,7 +536,7 @@ built for it.
   timer expires → the player is **dead** until the party rests at a bonfire or wipes, and returns then
   with full HP and a full Thermos (death refills, §9.3). Everyone down → party wipe → all respawn at the
   host's bonfire with full HP and Thermos, each player's Shards dropped where they fell.
-- **Progress for guests**: Shards, loot, levels, spells, gems, Stardust, flask upgrades always carry
+- **Progress for guests**: Shards, loot, levels, spells, gems, Glowen, flask upgrades always carry
   home. A boss beaten at zone `z` also marks zone `z` beaten in a guest's own world **if** `z` = the
   guest's highest beaten zone + 1 (D31); their world then starts them at the zone `z+1` start bonfire.
 - Guests who disconnect are removed after 10 s; their character is saved locally on their side with the
@@ -546,7 +546,7 @@ built for it.
 ## 13. New Game+
 
 After The Landlord: credits, then a bonfire with **Begin Cycle N+1**. New map seed, zone 1, everything
-kept (level, gear, spells, gems, flask max, Stardust). Enemies ×1.6^c HP, ×1.35^c damage, Shards
+kept (level, gear, spells, gems, flask max, Glowen). Enemies ×1.6^c HP, ×1.35^c damage, Shards
 ×1.8^c, item level +c, no tutorial, merchant stock improves. The title screen shows the cycle next to
 the character.
 
@@ -573,7 +573,7 @@ the vector character with the class's starting gear, and the class's dry one-lin
 ## 16. UI and HUD
 
 - **HUD**: HP bar (red) and stamina bar (green) top-left with status meters under them; flask count;
-  Shards and Stardust counters; Q/E/R skill icons with radial cooldowns; 1/2/3 spell icons; quick-use
+  Shards and Glowen counters; Q/E/R skill icons with radial cooldowns; 1/2/3 spell icons; quick-use
   item; dodge recharge ring drawn around the player; minimap top-right (rooms discovered, icons for
   bonfire, chest, boss, merchant); boss bar bottom-center with phase tick; co-op player cards (name,
   HP, status, downed timer) along the left.
@@ -593,7 +593,51 @@ volume, key rebinding (keyboard and gamepad), aim-assist strength, "hold to bloc
 
 ## 18. Glossary of names
 
-Shards (XP currency) · Stardust (gem currency) · Joe's Thermos (flask) · Shardpile (dropped Shards) ·
+Shards (XP currency) · Glowen (the money: a warm ectoplasm everything alive or well-made seeps, §19) · Joe's Thermos (flask) · Shardpile (dropped Shards) ·
 Bonfire (the camp stove Joe sits at) · Red attack = "Crimson" · Piercing attack = "Spectral" · Tear of
 Undoing (respec) · Spell reliquary · Gary (the wandering merchant) · The Instructor (tutorial boss) ·
 The Landlord (final boss) · Cycle (NG+ count).
+
+## 19. Story and Glowen
+
+All story text lives in `src/data/story.ts` (premise, zone and boss cutscene lines, death quips, bonfire lines,
+tips, credits epilogue). Tone per D14: the world is grim, the text is dry.
+
+**Glowen** is the money. It is a pale, warm, faintly glowing ectoplasm that seeps out of everything alive or
+valuable. The harder someone worked on a thing, the more Glowen soaked into it: a hand-forged sword holds a
+fortune, a plastic spoon holds a smell. It is why a lamp feels cosy and a grandmother's ring feels heavier than
+it is. That is why the game deals in it:
+
+- **Monsters** are full of Glowen scraped off something else; hit one hard enough and it seeps out.
+- **Gear** sells by rarity and item level because rarer, harder-worked things soaked up more of their maker.
+- **Gems** are Glowen that set hard under pressure; pouring more in grows them a tier.
+- **Bonfires** were lit by the Joes who came down before. Someone always opens a stall by a fire, and down
+  here stalls take only Glowen, the one thing the Landlord wants. **Gary** pays no rent and never says where
+  anything came from.
+- Anything drained of its last Glowen goes **hollow**: Hollow Knights, the Hollow Forest, the Hollow Joes.
+
+**The premise.** The Landlord, at the bottom of the Abyss, holds the deed to everything under the stairs; the
+small print says the world above is a sublet. Rent is paid in Glowen, and he is foreclosing on the living
+world one glow at a time. The lights went out in Joe's building, so Joe went down the stairs to find the fuse
+box. The stairs kept going.
+
+Each boss is a link in the rent chain: **The Caretaker** buries the dead and keeps their Glowen; **Mother Spore**
+farms it in the dark; **The Bloatking** skims the rent that drains through the sewers; **Vexthorn** wears the
+Hollow Forest's last Glowen as a lantern-heart (the forest was tapped like maple); **Foreman Ignatius** runs a
+forge where fine things are made only to be melted down for the Glowen the work put in; **Saint Aurelia**
+froze herself at the reliquary door to keep the collectors out and no longer knows Joe isn't one;
+**Archmagister Tock** keeps the ledger of every drop owed; **The Landlord** collects. Beating him voids the
+lease, every drop goes home, the fuse clicks back on, and the stairs go up (credits). In NG+ the lights go out
+again a week later: landlords always come back.
+
+**Cutscenes.** Zone entry (first time per character per cycle, zones 1–8, never in the Training Hall):
+letterbox, a drawn vignette in the zone's palette, the zone's name and 2–4 typed lines; it replaces the D57
+title card the first time, and the plain card shows on later visits. Boss room lock: the boss storms in and
+roars (camera punch-in, shake), then a freeze-frame with its name in huge letters over a slanted panel and its
+`introSub` beneath (about 4 s; later solo attempts get the 2 s freeze-frame only; skippable after 0.5 s). The
+Instructor gets the freeze-frame alone. Boss defeat: 2–3 letterboxed lines, then the normal reward flow; The
+Landlord's lines lead into the credits' epilogue. Everything is skippable with any key, mouse button or gamepad
+button. Solo pauses the simulation under a cutscene; co-op cannot pause, so each client plays it as a local
+overlay (zone cutscenes end if the party leaves the room) and the host holds the boss and every player's input
+for the whole boss intro. Seen cutscenes are stored in `world.cutscenesSeen` (optional, so no migration).
+Automated test panes (`?auto=…`) and `?nocut` skip cutscenes; `?cutscenes=1` forces them on.

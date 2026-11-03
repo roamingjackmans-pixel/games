@@ -158,7 +158,7 @@ Rings have no ilvl scaling except where noted; they roll a rarity (affects which
 | Fleet Ring | Rare | −0.5 s dodge recharge. |
 | Ring of Stillness | Epic | Standing still 1 s grants +15% damage. |
 | Chloranthy Knot | Epic | +20% stamina regen. |
-| Starcatcher | Epic | +25% gem drop chance, +20% Stardust. |
+| Glowcatcher | Epic | +25% gem drop chance, +20% Glowen. |
 | Red Thread | Legendary | Blocking is impossible; Red attacks deal −25% to you. |
 | Ghost Lantern | Legendary | Your hits on ghosts count double for reviving. |
 | Slumlord's Signet | Legendary | +15% damage, −15% max HP. |
@@ -213,7 +213,7 @@ at ilvl 1, ×(1 + 0.2 (ilvl − 1)) for flat values; percents fixed).
 | Hearty (+max HP) | armor | 15–45 |
 | Enduring (+max stamina) | armor | 6–18 |
 | Lucky (+Shard find) | ring, head | 5–15% |
-| Stardusted (+Stardust find) | ring, head | 10–30% |
+| Glowing (+Glowen find) | ring, head | 10–30% |
 | Of the Medic (+revive value per hit) | weapon | +0.5–1.5 |
 | Of the Bonker / Slicer / Thinker / Pious / Vigorous / Hale (+stat) | any | +1–3 |
 | Steadfast (+stability) | shield | 10–25% less stamina per block |
@@ -221,14 +221,14 @@ at ilvl 1, ×(1 + 0.2 (ilvl − 1)) for flat values; percents fixed).
 
 ## 11. Gems
 
-Defined in GAME_DESIGN §8.5. Tiers T1–T5. Drop sources and Stardust economy there. Gem names in the
+Defined in GAME_DESIGN §8.5. Tiers T1–T5. Drop sources and Glowen economy there. Gem names in the
 inventory: "Quicksilver (T3)" with a cut-gem icon per family color (Quicksilver silver, Tempo gold,
 Fleetfoot green, Brutal red, Ember orange, Rime ice blue, Storm yellow, Dawn white, Dusk violet, Leech
 dark red, Vigor teal, Bulwark grey).
 
 ## 12. Consumables (quick-use, max 10 each)
 
-| Item | Effect | Bonfire price (Stardust) |
+| Item | Effect | Bonfire price (Glowen) |
 |---|---|---|
 | Throwing Knife | proj(650) ×0.8 of a base 20 physical (scaled by ilvl), Bleed 20. | 15 |
 | Firebomb | lobbed, circle(90) 60 Fire (ilvl-scaled), Burn 50, puddle 3 s. | 30 |
@@ -237,7 +237,7 @@ dark red, Vigor teal, Bulwark grey).
 | Stamina Tonic | +60 stamina instantly, +50% regen 6 s. | 25 |
 | Lure | throws a decoy that taunts enemies within 300 px for 4 s (bosses 2 s). | 30 |
 | Shard Pouch | drop-only: 150 × zone Shards when used from the quick-use slot. | — |
-| Stardust Mote | drop-only: 60 × zone Stardust, consumed automatically on pickup. | — |
+| Glowen Wisp | drop-only: 60 × zone Glowen, consumed automatically on pickup. | — |
 | Tear of Undoing | respec at a bonfire (stored on the character, not in the quick-use cycle). Gary: 2000 × zone. | — |
 
 Nothing in the game restores a Thermos charge except dying or the first rest at a bonfire
@@ -245,7 +245,7 @@ Nothing in the game restores a Thermos charge except dying or the first rest at 
 
 Consumables as drops: 8% of chests give a bundle (3–6 of one kind); fodder 3% one knife/bomb.
 
-## 13. Sell values (Stardust)
+## 13. Sell values (Glowen)
 
 Gear: Common 10, Uncommon 25, Rare 60, Epic 150, Legendary 400, each × (1 + 0.3 (ilvl − 1)).
 Gems: 40 × 3^(tier−1). Consumables sell for half price. Spells cannot be sold.

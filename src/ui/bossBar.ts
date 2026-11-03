@@ -31,8 +31,10 @@ export function drawBossBar(ctx: CanvasRenderingContext2D, w: World, st: BossBar
   const H = 14;
   const x = 640 - W / 2;
   const y = 676;
-  // fade in during the intro
-  const k = e.en.state === 'spawning' ? Math.max(0, 1 - (e.en.spawnUntil - w.time) / 1.5) : 1;
+  // fade in during the intro, then the bar fills up as the boss gets going (souls style)
+  const spawning = e.en.state === 'spawning';
+  const k = spawning ? Math.max(0, 1 - (e.en.spawnUntil - w.time) / 1.5) : 1;
+  const fill = spawning ? 1 - Math.pow(1 - Math.max(0, Math.min(1, 1 - (e.en.spawnUntil - w.time) / 1.1)), 3) : 1;
   ctx.save();
   ctx.globalAlpha = k;
   drawText(ctx, def.name, x, y - 8, { size: 16, weight: 'bold', color: '#efe6d2' });
@@ -41,14 +43,14 @@ export function drawBossBar(ctx: CanvasRenderingContext2D, w: World, st: BossBar
   ctx.fillRect(x - 3, y - 3, W + 6, H + 6);
   ctx.fillStyle = '#2a1418';
   ctx.fillRect(x, y, W, H);
-  if (st.ghost > frac) {
+  if (st.ghost > frac && !spawning) {
     ctx.fillStyle = withAlpha('#ffe0a0', 0.55);
     ctx.fillRect(x, y, W * st.ghost, H);
   }
   ctx.fillStyle = e.en.phaseTransitionUntil > w.time ? '#e8e0d0' : '#b8242c';
-  ctx.fillRect(x, y, W * frac, H);
+  ctx.fillRect(x, y, W * frac * fill, H);
   ctx.fillStyle = withAlpha('#ffffff', 0.15);
-  ctx.fillRect(x, y, W * frac, H * 0.35);
+  ctx.fillRect(x, y, W * frac * fill, H * 0.35);
   // phase ticks
   for (let i = 0; i < def.phases.length - 1; i++) {
     const t = def.phases[i]!.untilHpPct / 100;

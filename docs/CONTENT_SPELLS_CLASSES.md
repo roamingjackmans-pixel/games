@@ -51,7 +51,7 @@ Revive value of any damaging spell hit on a ghost: **0.25** (D12). *Last Rites* 
 ## 3. Classes (D23)
 
 Level 1, 48 stat points. Starting ilvl 1 gear (Common unless noted); tools come with the listed spells
-already known. Every class starts with 1 flask charge, 0 Shards, 0 Stardust, 3 Throwing Knives.
+already known. Every class starts with 1 flask charge, 0 Shards, 0 Glowen, 3 Throwing Knives.
 
 | Class | HP | Stam | Bonk | Slicey | Brain | Prayer | Main hand | Off hand | Armor | Spells known | Blurb |
 |---|---|---|---|---|---|---|---|---|---|---|---|
