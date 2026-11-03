@@ -45,6 +45,23 @@ export function lookFor(c: Character): JoeLook {
   if (cl.emblem) look.emblem = cl.emblem as Emblem;
   if (look.head === 'hood') look.headStyle = c.classId === 'occultist' ? 'deep' : 'ranger';
   if (c.classId === 'occultist') look.eyeGlow = '#b06bff';
+  // the person from the character creator (old saves have none: the class look stands)
+  const ap = c.appearance;
+  if (ap) {
+    look.skin = ap.skin;
+    look.hair = ap.hair;
+    look.hairStyle = ap.hairStyle;
+    look.beard = ap.beard;
+    if (ap.eyes) look.eyes = ap.eyes;
+    look.eyeShape = ap.eyeShape;
+    look.nose = ap.nose;
+    look.brows = ap.brows;
+    look.mark = ap.mark;
+    look.armL = ap.armL;
+    look.armR = ap.armR;
+    look.legL = ap.legL;
+    look.legR = ap.legR;
+  }
   // armor pieces: the set's base look from armor.ts, the fantasy dressing from armorLooks.ts
   const head = c.equipment.head && parseArmorBase(c.equipment.head.baseId);
   if (head?.set) {

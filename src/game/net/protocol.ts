@@ -1,7 +1,7 @@
 // Co-op protocol (NETCODE §3): message names and shapes, room codes, the version check and the 60 Hz input
 // packet. Snapshots live in snapshot.ts, character sync in charSync.ts.
 import type { InputFrame } from '../../engine/input/actions';
-import type { Character, ClassId } from '../types';
+import type { Appearance, Character, ClassId } from '../types';
 
 export const MAX_GUESTS = 3;
 export const SNAP_HZ = 20;
@@ -66,6 +66,8 @@ export interface PublicPlayer {
   level: number;
   host: boolean;
   cycle: number;
+  /** the creator look, so the lobby shows each player as they made themselves */
+  appearance?: Appearance | undefined;
 }
 
 export interface LobbyState {

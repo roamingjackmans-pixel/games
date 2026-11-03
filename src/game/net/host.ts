@@ -104,8 +104,8 @@ export class NetHost {
 
   lobbyState(): LobbyState {
     const c = this.save.character;
-    const players: PublicPlayer[] = [{ peerId: this.t.selfId, playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: true, cycle: c.cycle }];
-    for (const g of this.guests.values()) players.push({ peerId: g.peerId, playerId: g.char.playerId, name: g.char.name, classId: g.char.classId, level: g.char.level, host: false, cycle: g.char.cycle });
+    const players: PublicPlayer[] = [{ peerId: this.t.selfId, playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: true, cycle: c.cycle, appearance: c.appearance }];
+    for (const g of this.guests.values()) players.push({ peerId: g.peerId, playerId: g.char.playerId, name: g.char.name, classId: g.char.classId, level: g.char.level, host: false, cycle: g.char.cycle, appearance: g.char.appearance });
     return { code: this.code, players, zone: this.save.world.zone };
   }
 

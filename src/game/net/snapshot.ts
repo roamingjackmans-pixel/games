@@ -278,6 +278,7 @@ export function publicChar(c: Entity['pl'] extends infer P ? (P extends { char: 
     equipment: c.equipment,
     altMain: c.altMain,
     twoHanded: c.twoHanded,
+    appearance: c.appearance,
     spellLoadout: c.spellLoadout,
     knownSpells: [],
     bag: [],

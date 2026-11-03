@@ -1,4 +1,22 @@
 // Shared game types (DATA_MODEL.md). Data tables in src/data conform to these; systems read them.
+import type { ArmFeature, Beard, Brows, EyeShape, FaceMark, HairStyle, LegFeature, NoseShape } from '../engine/draw/players';
+
+/** The person picked in the character creator (src/data/appearance.ts lists the options). */
+export interface Appearance {
+  skin: string;
+  hair: string;
+  hairStyle: HairStyle;
+  beard: Beard;
+  eyes: string;
+  eyeShape: EyeShape;
+  nose: NoseShape;
+  brows: Brows;
+  mark: FaceMark;
+  armL: ArmFeature;
+  armR: ArmFeature;
+  legL: LegFeature;
+  legR: LegFeature;
+}
 
 /** The five damage types (D80): Physical (white), Magic (blue), Void (grey-black), Fire (red), Holy (yellow). */
 export type DamageType = 'physical' | 'magic' | 'void' | 'fire' | 'holy';
@@ -713,6 +731,8 @@ export interface Character {
   /** stat points refunded by a Tear of Undoing, spent for free at a bonfire */
   freePoints: number;
   tutorialDone: boolean;
+  /** the creator's look; absent on old saves (the class look is used) */
+  appearance?: Appearance;
 }
 
 export interface WorldState {
