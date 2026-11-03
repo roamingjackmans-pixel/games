@@ -1,0 +1,46 @@
+# Every 10 minutes, looks for new versions of the games that live in other repos (deploy/library.json).
+# Each of those repos moves its `ready` branch forward when its checks pass. When a `ready` commit differs
+# from what josephjackman.com/games/library.json says is live, this starts deploy.yml to rebuild /games/.
+# When nothing changed it stops after a few seconds. A game repo with a GAMES_DEPLOY_TOKEN secret starts
+# deploy.yml itself right away, so this is the fallback that needs no setup.
+name: Watch the other games
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: deploy
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - id: check
+        run: node deploy/assemble.mjs check >> "$GITHUB_OUTPUT"
+      - name: Rebuild /games/
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          read -r status conclusion updated < <(gh run list --workflow deploy.yml --limit 1 \
+            --json status,conclusion,updatedAt --jq '.[0] // {} | "\(.status) \(.conclusion) \(.updatedAt)"') || true
+          if [ "$status" != "null" ] && [ "$status" != "completed" ]; then
+            echo "A deploy is running now. The next check picks up anything it missed."
+            exit 0
+          fi
+          if [ "$conclusion" = "failure" ] && [ $(( $(date +%s) - $(date -d "$updated" +%s) )) -lt 3600 ]; then
+            echo "::warning::The last deploy failed less than an hour ago. Trying again later."
+            exit 0
+          fi
+          gh workflow run deploy.yml --ref main
+          echo "Started deploy.yml."

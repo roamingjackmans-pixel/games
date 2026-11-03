@@ -2,6 +2,8 @@
 # This repo is named "games", so its Pages site is josephjackman.com/games/ (the account's user site
 # has the josephjackman.com custom domain). The game is published in the dungeonjoe/ folder of that
 # site, so it lives at josephjackman.com/games/dungeonjoe/ (D48). deploy/index.html is the /games/ hub.
+# The other games (deploy/library.json) are added beside it by deploy/assemble.mjs, each from its own
+# repo's `ready` branch. library-watch.yml starts this workflow when one of them has a new version.
 # One-time owner step: repo Settings → Pages → Build and deployment → Source: GitHub Actions.
 name: Deploy to GitHub Pages
 
@@ -43,6 +45,8 @@ jobs:
           cp deploy/index.html site/index.html
           cp deploy/404.html site/404.html
           touch site/.nojekyll
+      - name: Add the other games
+        run: node deploy/assemble.mjs build site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
