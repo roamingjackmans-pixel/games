@@ -417,6 +417,11 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
     e.anim.alpha = close || revealed || en.attack ? 1 : traits.invisibleBeyond ? 0.08 : 0.3;
   }
   if (en.fadeUntil > now) e.anim.alpha = 0.25;
+  else if (en.fadeUntil > 0) {
+    // the fade (and its invulnerability) is over: solid again (it used to stay see-through for good)
+    en.fadeUntil = 0;
+    if (!traits.stealthUntil && !traits.invisibleBeyond) e.anim.alpha = 1;
+  }
 
   if (en.attack) {
     updateEnemyAttack(w, e, dt);

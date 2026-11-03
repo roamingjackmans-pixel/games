@@ -213,22 +213,22 @@ export function generateZone(seed: string, zone: number, o: ZoneOpts = {}): Zone
         bonusChest: kind === 'combat' && bonusDead.has(k),
       });
     }
-    // the start room's south door leads to the tutorial (one-way: the hall's exit is its east door)
+    // Training Hall → The Instructor's room → the start room (D90): the hall's east door opens on his room, and his
+    // room's east door is the way down to the first bonfire (the start room's south door)
     const links: ZoneLayout['links'] = {};
     let tutorialId: string | null = null;
     let trialId: string | null = null;
     if (tut) {
       const tutNode = rooms.find((r) => r.kind === 'tutorial')!;
-      tutNode.doors = ['e', 's'];
+      tutNode.doors = ['e'];
       tutorialId = tutNode.id;
       const startNode = rooms.find((r) => r.kind === 'start')!;
       if (!startNode.doors.includes('s')) startNode.doors.push('s');
-      links[`${tutNode.id}|e`] = { to: `z${zone}-start`, entry: 's' };
-      // the Instructor's own room hangs off the hall's south door, outside the grid (D75)
       trialId = `z${zone}-trial`;
-      rooms.push({ id: trialId, gx: -100, gy: -100, kind: 'trial', depth: 0, doors: ['n'], template: 'trial', mirrorH: false, mirrorV: false, bonusChest: false });
-      links[`${tutNode.id}|s`] = { to: trialId, entry: 'n' };
-      links[`${trialId}|n`] = { to: tutNode.id, entry: 's' };
+      rooms.push({ id: trialId, gx: -100, gy: -100, kind: 'trial', depth: 0, doors: ['w', 'e'], template: 'trial', mirrorH: false, mirrorV: false, bonusChest: false });
+      links[`${tutNode.id}|e`] = { to: trialId, entry: 'w' };
+      links[`${trialId}|w`] = { to: tutNode.id, entry: 'e' };
+      links[`${trialId}|e`] = { to: `z${zone}-start`, entry: 's' };
     }
     const byId: Record<string, RoomNode> = {};
     for (const r of rooms) byId[r.id] = r;

@@ -197,7 +197,13 @@ export class InputManager {
     window.addEventListener('mouseup', (e) => {
       this.down.delete(`Mouse${e.button}`);
     });
-    target.addEventListener('contextmenu', (e) => e.preventDefault());
+    // no browser context menu anywhere in the game (right click is block; over menus and the death screen it
+    // used to open the browser menu and lead to stray clicks); text fields keep theirs
+    window.addEventListener('contextmenu', (e) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      e.preventDefault();
+    });
     target.addEventListener(
       'wheel',
       (e) => {

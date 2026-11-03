@@ -39,8 +39,9 @@ describe('procgen (PROCGEN §9)', () => {
         if (z === 1 && s % 2 === 0) {
           expect(L.tutorialId).not.toBeNull();
           // the Instructor's room is the hall's south door, and leads back to it (D75)
-          expect(neighbourId(L, L.tutorialId!, 's')?.id).toBe(L.trialId);
-          expect(neighbourId(L, L.trialId!, 'n')?.id).toBe(L.tutorialId);
+          expect(neighbourId(L, L.tutorialId!, 'e')?.id).toBe(L.trialId);
+          expect(neighbourId(L, L.trialId!, 'w')?.id).toBe(L.tutorialId);
+          expect(neighbourId(L, L.trialId!, 'e')?.id).toBe(L.startId);
         } else expect(L.trialId).toBeNull();
       }
     }

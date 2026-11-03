@@ -136,7 +136,7 @@ export const ABYSS: Record<string, EnemyDef> = {
         id: 'gaze_beam',
         name: 'Gaze Beam',
         kind: 'pierce',
-        pattern: { kind: 'beam', w: 26, l: 'room', turnRateDeg: 40, durationS: 3, tickS: 0.25, anchor: 'self' },
+        pattern: { kind: 'beam', w: 26, l: 'room', turnRateDeg: 14, durationS: 2.2, tickS: 0.4, anchor: 'self' }, // D88: tracks slowly (was 40°/s for 3 s)
         windupMs: 1000,
         activeMs: 3000,
         recoverMs: 700,

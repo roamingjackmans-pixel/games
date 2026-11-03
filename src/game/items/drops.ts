@@ -133,13 +133,17 @@ export function instructorDrops(c: DropContext, x: number, y: number): void {
   for (const p of w.players) {
     const pl = p.pl!;
     const rng = stream(c.seed, `loot:${pl.playerId}:instructor`);
+    // a fat purse for the walk down to the first bonfire (D90)
+    spawnPickup(w, x + 30, y + 20, { kind: 'glowen', forPlayer: pl.playerId, amount: 500, rarity: 'uncommon' });
     const unknown = Object.keys(SPELLS).filter((id) => !pl.char.knownSpells.includes(id));
     if (unknown.length && rng.chance(0.5)) {
       spawnPickup(w, x, y, { kind: 'spell', forPlayer: pl.playerId, spellId: rng.pick(unknown), amount: 1, rarity: 'legendary' });
       continue;
     }
     const item = generateItem(rng, { source: 'boss', ilvl: 3, zone: 3, rarity: 'legendary', baseId: rng.pick(WEAPON_IDS) });
-    item.bonusSkills = 1;
+    // his weapon comes with its Q skill (D89: no E or R before NG+)
+    item.skills = 1;
+    delete item.bonusSkills;
     dropItem(w, pl.playerId, item, x, y);
   }
 }

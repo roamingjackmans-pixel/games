@@ -734,7 +734,7 @@ export class GameSession {
       const n = neighbourId(this.layout, this.node.id, side);
       if (!n) continue;
       // the hall is done when you leave it for the first bonfire (not when you visit the Instructor)
-      if (this.node.kind === 'tutorial' && n.id === this.layout.startId) this.finishTutorial();
+      if ((this.node.kind === 'tutorial' || this.node.kind === 'trial') && n.id === this.layout.startId) this.finishTutorial();
       this.pendingTransition = { roomId: n.id, entry: n.entry };
       return;
     }
@@ -1079,10 +1079,9 @@ export class GameSession {
     this.downs = {};
     ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss');
     if (this.layout.tutorialId && !this.save.character.tutorialDone) {
-      // the Instructor floored you: back to the start of the Training Hall, not past it
-      this.enterRoom(this.layout.tutorialId, 'start');
-      this.listener.autosave?.('respawn');
-      return;
+      // the Instructor floored you (D90): you wake at the first bonfire, past him, tutorial done
+      this.finishTutorial();
+      ws.respawnBonfireId = this.layout.startId;
     }
     const room = this.layout.byId[ws.respawnBonfireId] ? ws.respawnBonfireId : this.layout.startId;
     this.enterRoom(room, 'bonfire');
