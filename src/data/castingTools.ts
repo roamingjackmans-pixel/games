@@ -10,7 +10,7 @@ export const CASTING_TOOLS: Record<string, CastingToolDef> = {
   wooden_talisman: { id: 'wooden_talisman', name: 'Wooden Talisman', weight: 0.5, school: 'prayer', req: 8, grade: 0.9, gradeLetter: 'C', castSpeed: 1.0, flavor: "Cleric's start. Whittled during a sermon.", draw: 't_talisman_wood' },
   silver_talisman: { id: 'silver_talisman', name: 'Silver Talisman', weight: 0.8, school: 'prayer', req: 14, grade: 1.0, gradeLetter: 'B', castSpeed: 1.0, flavor: 'Tarnishes near liars. Always tarnished.', draw: 't_talisman_silver' },
   sunlight_talisman: { id: 'sunlight_talisman', name: 'Sunlight Talisman', weight: 1, school: 'prayer', req: 20, grade: 1.1, gradeLetter: 'A', castSpeed: 1.05, bonus: { element: 'holy', pct: 0.2 }, flavor: 'Praise it. It likes that.', draw: 't_talisman_sun' },
-  saints_relic: { id: 'saints_relic', name: "Saint's Relic", weight: 1.5, school: 'prayer', req: 26, grade: 1.25, gradeLetter: 'S', castSpeed: 1.15, bonus: { pct: 0.15, heals: true }, flavor: 'A finger bone. Whose, nobody says.', draw: 't_relic' },
+  saints_relic: { id: 'saints_relic', name: "Saint's Relic", weight: 1.5, school: 'prayer', req: 26, grade: 1.25, gradeLetter: 'S', castSpeed: 1.15, bonus: { pct: 0.15, heals: true }, flavor: 'A finger bone, still warm with Glowen. Whose, nobody says.', draw: 't_relic' },
 };
 
 export const CASTING_TOOL_IDS = Object.keys(CASTING_TOOLS);

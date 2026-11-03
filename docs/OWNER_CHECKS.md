@@ -19,7 +19,7 @@ Each line is one thing to do and what you should see. Tick them off as you play.
 15. [ ] Beat The Caretaker: the name card, the phase change at half health (burning moss), the boss bar tick, the loot and the stairs down.
 16. [ ] Go down to zone 2 and notice the new palette, enemies, hazards and music.
 17. [ ] After two bosses, check that your Thermos holds one more charge.
-18. [ ] Find Gary in a merchant room (zones 2–8), buy something for Stardust, then hit him three times and he leaves for good.
+18. [ ] Find Gary in a merchant room (zones 2–8), buy something for Glowen, then hit him three times and he leaves for good.
 19. [ ] Press **Host a game** on the title screen, have a friend press **Join a game** and type your 6-digit code on another PC, and fight a room together.
 20. [ ] In co-op, let your friend fall and revive their ghost by hitting it; check the revive ring fills.
 21. [ ] In co-op, check that each of you sees only your own loot drops, and that your friend keeps them after leaving.

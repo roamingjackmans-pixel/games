@@ -22,7 +22,7 @@ export const SHIELDS: Record<string, ShieldDef> = {
     parryS: null,
     blockHealPct: 0.01,
     legendaryOnly: true,
-    flavor: 'Smells faintly of incense and victory.',
+    flavor: 'Every blow it stops does you a little good. Saintly, if smug.',
     draw: 's_bulwark',
   },
 };

@@ -43,7 +43,7 @@ export const CONSUMABLES: Record<ConsumableId, ConsumableDef> = {
       },
     ],
     thrown: true,
-    flavor: 'Light, throw, regret nothing.',
+    flavor: 'Light the fuse. Throw. Do these in that order.',
   },
   frost_jar: {
     id: 'frost_jar',
@@ -108,7 +108,7 @@ export const CONSUMABLES: Record<ConsumableId, ConsumableDef> = {
     description: 'Use: gain 150 × zone Shards.',
     effect: [{ op: 'resource', shards: 150 }],
     thrown: false,
-    flavor: "Someone's savings. Not anymore.",
+    flavor: 'An earlier Joe’s savings. He won’t be needing them.',
   },
 };
 

@@ -73,7 +73,7 @@ so guests draw them locally from the shared clock. Projectiles are entities. Par
 
 | Owned by host | Owned by each guest (their save) |
 |---|---|
-| World, rooms, enemies, bosses, projectiles, telegraphs, loot rolls, Shards drops, revive progress, bonfire state, Gary stock | Inventory, equipment, spell loadout, consumables, Stardust, known spells, level and stats, flask count |
+| World, rooms, enemies, bosses, projectiles, telegraphs, loot rolls, Shards drops, revive progress, bonfire state, Gary stock | Inventory, equipment, spell loadout, consumables, Glowen, known spells, level and stats, flask count |
 
 Guests send `cmd` for anything that touches the shared world (interact, rest, shop). The host validates
 (requirements, range, cooldowns) and replies with events. Equipment changes are validated for
@@ -92,6 +92,11 @@ that player; other players never see it. Shards: each player gets the full per-k
   `reviveProgress` events drive the ring UI.
 - Zone-progress credit (D31): on boss death the host emits `progress { zone }` to each guest; the guest
   applies the `highestZoneBeaten + 1` rule itself and stores a pending "advance to zone z+1" in its save.
+- Cutscenes (GAME_DESIGN §19) need no message: the sim never pauses for them. Each client plays them as a
+  local overlay. A guest starts the zone cutscene when its zone layout changes (outside the Training Hall),
+  the boss intro when the snapshot's `bossId` turns to a boss still in its spawn tell, and the defeat lines on
+  the boss's `death` world event. The host holds the boss and every player's input (`inputLock`) for the
+  whole intro (`GameSession.holdBossIntro`). Seen cutscenes go in each player's own `world.cutscenesSeen`.
 
 ## 8. Local transport and tests
 

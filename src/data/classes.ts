@@ -19,7 +19,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     name: 'Knight',
     stats: S(10, 8, 10, 9, 4, 7),
     start: { main: 'longsword', off: 'kite_shield', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: [] },
-    blurb: 'Took the job for the armor.',
+    blurb: 'Took the job for the armour. The job came with stairs.',
     look: { skin: '#e8c9a0', hair: '#5a3a22', shirt: '#4a6aa0', legs: '#3d3a4a', head: 'none', trim: '#c9b98a' },
   },
   brute: {
@@ -60,7 +60,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     name: 'Spearman',
     stats: S(9, 9, 9, 10, 5, 6),
     start: { main: 'spear', off: 'round_shield', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: [] },
-    blurb: 'Keeps a polite distance.',
+    blurb: 'Friendly from a distance. Exactly one spear’s distance.',
     look: { skin: '#d8b090', hair: '#3a2a1a', shirt: '#6a7a3a', legs: '#3a3a2a', head: 'none', trim: '#c9b98a' },
   },
   hunter: {
@@ -68,7 +68,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     name: 'Hunter',
     stats: S(8, 12, 5, 12, 6, 5),
     start: { main: 'bow', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [], bag: ['whip'] },
-    blurb: 'Never misses. Rarely hits.',
+    blurb: 'Can track anything. Mostly tracks in mud.',
     look: { skin: '#e0b890', hair: '#6a3a1a', shirt: '#3a5a2a', legs: '#3a3020', head: 'hood', trim: '#a0803a' },
   },
   nobody: {
@@ -84,7 +84,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     name: 'Berserker',
     stats: S(10, 10, 11, 10, 3, 4),
     start: { main: 'twin_axes', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
-    blurb: 'Has two of everything except plans.',
+    blurb: 'Was asked to calm down once. Once.',
     look: { skin: '#e0b088', hair: '#a03a1a', shirt: '#5a2a1a', legs: '#3a2a1a', head: 'horned', trim: '#c9b98a' },
   },
   occultist: {
@@ -92,7 +92,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     name: 'Occultist',
     stats: S(7, 7, 3, 10, 15, 6),
     start: { main: 'rapier', off: 'void_staff', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: ['void_rift', 'arcane_bolt'] },
-    blurb: 'Found the staff in a dumpster. It found him back.',
+    blurb: 'Heard a voice in the bins. Answered it.',
     look: { skin: '#d8c0b0', hair: '#1a0a2a', shirt: '#2a1a3a', legs: '#1a1a2a', head: 'hood', trim: '#7a2bd6' },
   },
 };

@@ -24,6 +24,7 @@ import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, rawDamage } from './combat/damage';
 import { reviveRequirement } from './combat/formulas';
 import { BOSSES } from '../data/bosses';
+import { DEATH_TITLES } from '../data/story';
 import { newWorldState } from './save/schema';
 import { flaskCap, flaskMaxFor } from './combat/formulas';
 import { applyArenaChanges } from './boss/arena';
@@ -88,7 +89,7 @@ const ROOM_BOTTOM = 720;
 const ROOM_RIGHT = 1280;
 const DOOR_SLACK = 6;
 const HOLD_S = 0.6;
-const DEATH_LINES = ['JOE DIED', 'JOE HAS FALLEN DOWN THE STAIRS', 'JOE IS LATE FOR WORK', 'JOE DIED. AGAIN.', 'JOE NEEDS A MINUTE'];
+const DEATH_LINES = DEATH_TITLES;
 
 export class GameSession {
   save: SaveFile;
@@ -384,6 +385,23 @@ export class GameSession {
     w.sfx('doorLock');
     w.sfx('bossRoar', bx);
     this.listener.bossIntro?.(def, e);
+  }
+
+  /**
+   * Hold (or release) the boss intro: the boss stays in its spawn tell and every player's input stays locked
+   * until `seconds` from now. The client's intro cutscene calls it: co-op extends the hold over the whole
+   * cutscene (the sim runs on), solo shortens what is left once the paused cutscene ends.
+   */
+  holdBossIntro(seconds: number): void {
+    const w = this.w;
+    const until = w.time + Math.max(0, seconds);
+    w.inputLock = until;
+    const b = w.bossId ? w.get(w.bossId) : null;
+    if (!b?.en || b.en.state !== 'spawning') return;
+    b.en.spawnUntil = until;
+    b.en.thinkAt = until;
+    // keep its rising floor tell three-quarters done, so the boss is visible as the hold ends
+    b.en.spawnedAt = Math.min(b.en.spawnedAt, w.time - 3 * Math.max(0.05, seconds));
   }
 
   /** The stairs (and the reliquary if one rolled) in a beaten boss's arena. */

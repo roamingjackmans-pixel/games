@@ -130,7 +130,7 @@ segment-circle, cone tests); scene manager; particle pool; tween; text drawing; 
 settings persistence; the **debug menu** (Ctrl+Shift+D → code prompt; `SHA-256(code) ===
 "1bdbba686a80685b2d3e388d26fb8067c33b4392d8029716f32f4c61af2fb24e"` using `crypto.subtle`; on success a
 DOM panel: god mode, give item (base, rarity, ilvl), set level, set stat, spawn enemy by id, kill all,
-jump to zone/room/boss, set cycle, set flask, add Shards/Stardust, toggle hitbox/telegraph/AI
+jump to zone/room/boss, set cycle, set flask, add Shards/Glowen, toggle hitbox/telegraph/AI
 overlays, show FPS and entity counts).
 Tests: rng determinism, math, bindings serialisation, hash check.
 Done when: a test scene lets Joe walk with WASD and gamepad, aims at the cursor, and the debug menu opens
@@ -172,17 +172,17 @@ Done when: a new character walks the tutorial, reaches the start bonfire, clears
 waves, finds the treasure room, dies, recovers the Shardpile, rests (first rest heals; second does
 not), and the boss anteroom bonfire exists (boss door locked until M8).
 
-### M5 — Items, loot, inventory, gems, Stardust, shop
+### M5 — Items, loot, inventory, gems, Glowen, shop
 Build: item generation (rarity tables per source, slot roll, ilvl, affixes with ranges, sockets,
 legendary powers, names, flavor); drop logic incl. instancing hooks (player-keyed streams); pickups
 and loot beams; **inventory/character screen** (60-slot bag, equip with requirement checks and the
 40%/locked/half/no-cast penalties, compare tooltips, two-weapon quick swap, ring slots, two-hand
 state); armor sets and defense; **gems** (all families, tiers, socket/unsocket, upgrade and re-roll
-costs), Stardust, sell values; **bonfire menu** (rest, level up with cost curve and stat buttons,
+costs), Glowen, sell values; **bonfire menu** (rest, level up with cost curve and stat buttons,
 respec with Tears, gem bench, shop with throwables, T1 gem, rotating piece, warp);
 consumables and the quick-use slot; the Instructor's real drop.
 Tests: generator distributions (rarity weights within 1% over 100k rolls), affix no-duplicates,
-requirement penalties, level cost curve, Stardust math, save round-trip of items.
+requirement penalties, level cost curve, Glowen math, save round-trip of items.
 Done when: loot drops in rarities, equips with tooltips, gems change attack speed visibly, the shop
 and gem bench work, leveling works, and the inventory survives reload.
 
