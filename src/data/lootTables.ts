@@ -13,7 +13,7 @@ export const RARITY_WEIGHTS: Record<LootSource, [number, number, number, number,
   brute: [70, 22, 5, 2.5, 0.5],
   elite: [45, 35, 12.5, 6, 1.5],
   chestSmall: [25, 40, 25, 8, 2],
-  chestTreasure: [0, 35, 40, 20, 5],
+  chestTreasure: [20, 35, 30, 11, 4], // D98: the treasure room's chest rolls like a boss (was 0 / 35 / 40 / 20 / 5)
   mimic: [0, 20, 45, 27, 8],
   boss: [20, 35, 30, 11, 4],
   shop: [0, 40, 45, 15, 0],

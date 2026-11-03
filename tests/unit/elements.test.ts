@@ -157,6 +157,8 @@ describe('drop tables (D84)', () => {
     expect(pct(RARITY_WEIGHTS.brute)).toEqual([70, 22, 5, 2.5, 0.5]);
     expect(pct(RARITY_WEIGHTS.elite)).toEqual([45, 35, 12.5, 6, 1.5]);
     expect(pct(RARITY_WEIGHTS.boss)).toEqual([20, 35, 30, 11, 4]);
+    // the treasure room's chest rolls exactly like a boss (D98)
+    expect(RARITY_WEIGHTS.chestTreasure).toEqual(RARITY_WEIGHTS.boss);
     expect(DROP_CHANCE.elite).toBeGreaterThan(DROP_CHANCE.fodder);
     expect(DROP_CHANCE.fodder).toBeLessThan(0.1);
     expect([DROP_CHANCE.bossMin, DROP_CHANCE.bossMax]).toEqual([2, 5]);
