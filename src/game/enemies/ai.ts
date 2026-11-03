@@ -140,7 +140,9 @@ function moveSpeed(w: World, e: Entity): number {
 }
 
 function stepTo(w: World, e: Entity, gx: number, gy: number, speed: number, dt: number): void {
-  const [dx, dy] = stepToward(w.room, e.x, e.y, gx, gy, e.flying, w.time);
+  const passes = e.flying || !!e.en?.def.traits?.phasesThroughProps;
+  // room enemies path with their body size; bosses keep point pathing (their arenas and moves are tuned for it)
+  const [dx, dy] = stepToward(w.room, e.x, e.y, gx, gy, passes, w.time, e.en?.isBoss ? 0 : e.radius);
   if (e.en && Math.hypot(dx, dy) > 0.1 && speed > 1) e.en.movedAt = w.time;
   w.room.moveCircle(e, dx * speed * dt, dy * speed * dt, e.flying || !!e.en?.def.traits?.phasesThroughProps);
   if (Math.hypot(dx, dy) > 0.1) {

@@ -327,6 +327,8 @@ describe('The Landlord: the fight', () => {
     expect(floorCount(s.w)).toBeLessThan(before * 0.75);
     expect(p.pl!.falling).not.toBeNull();
     expect(p.hp!.hp).toBeCloseTo(p.hp!.max * 0.5, 6);
+    // the adds can reach you now (they path around the platform edge): keep the player alive while the floor returns
+    s.w.god = true;
     expect(solidUnder(s.w, b)).toBe(true);
     // the climb back lands inside the ring that stayed
     run(s, 1.5);

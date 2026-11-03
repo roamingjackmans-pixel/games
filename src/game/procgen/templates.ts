@@ -23,13 +23,66 @@ export interface TemplateIssue {
 
 const PASSABLE = new Set(['.', '~', 'G', 'S', 'C', 'D', 'B', 'K', 'H', 'w']);
 const KNOWN = new Set(['#', '.', 'P', 'o', '~', '_', 'G', 'S', 'C', 'D', 'B', 'V', 'K', 'H', 'w', 'g', 't']);
+/** Tiles a walking body cannot cross: wall, pillar, prop, pit, void, tree, open grave. */
+export const BLOCKING = new Set(['#', 'P', 'o', '_', 'V', 't', 'g']);
+/** The narrowest walkable gap allowed between two separate blocking things, in tiles (96 px: an Elite brute fits). */
+export const MIN_GAP = 3;
 
 function at(rows: string[], x: number, y: number): string {
   return rows[y]?.[x] ?? '#';
 }
 
-/** Validate one template against the PROCGEN §3 rules. */
-export function validateTemplate(t: RoomTemplate, o: { arena?: boolean } = {}): TemplateIssue[] {
+function onBorder(x: number, y: number): boolean {
+  return x === 0 || y === 0 || x === ROOM_W - 1 || y === ROOM_H - 1;
+}
+
+/**
+ * The gap rule (PROCGEN §3): two blocking tiles either touch (one lump) or leave at least MIN_GAP walkable tiles
+ * between them, measured horizontally, vertically and diagonally (Euclidean, in whole tiles: a gap of 2 across
+ * and 2 down is 2.8 tiles and too narrow). Big bodies (radius up to ~43 px) cannot squeeze through anything less.
+ * Returns each offending pair once (the door openings in the outer wall are exempt). `blocks` overrides which
+ * characters count as blocking.
+ */
+export function gapViolations(rows: readonly string[], blocks: (ch: string) => boolean = (ch) => BLOCKING.has(ch)): { a: [number, number]; b: [number, number] }[] {
+  const out: { a: [number, number]; b: [number, number] }[] = [];
+  const H = rows.length;
+  const W = rows[0]?.length ?? 0;
+  const solid = (x: number, y: number): boolean => x < 0 || y < 0 || x >= W || y >= H || blocks(rows[y]![x]!);
+  const R = MIN_GAP;
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (!solid(x, y)) continue;
+      for (let dy = 0; dy <= R; dy++)
+        for (let dx = -R; dx <= R; dx++) {
+          if (dy === 0 && dx <= 0) continue;
+          const gx = Math.max(0, Math.abs(dx) - 1);
+          const gy = Math.max(0, Math.abs(dy) - 1);
+          if (gx === 0 && gy === 0) continue; // touching
+          if (gx * gx + gy * gy >= R * R) continue; // wide enough
+          const bx = x + dx;
+          const by = y + dy;
+          if (bx < 0 || by < 0 || bx >= W || by >= H || !solid(bx, by)) continue;
+          if (onBorder(x, y) && onBorder(bx, by)) continue; // the outer wall's own door openings
+          // anything blocking in between means a closer pair (or one lump): only an all-walkable box is a gap
+          let open = true;
+          const x0 = Math.min(x, bx);
+          const x1 = Math.max(x, bx);
+          for (let yy = y; yy <= by && open; yy++)
+            for (let xx = x0; xx <= x1; xx++) {
+              if ((xx === x && yy === y) || (xx === bx && yy === by)) continue;
+              if (solid(xx, yy)) {
+                open = false;
+                break;
+              }
+            }
+          if (open) out.push({ a: [x, y], b: [bx, by] });
+        }
+    }
+  return out;
+}
+
+/** Validate one template against the PROCGEN §3 rules (`minFloor`: shaped rooms may go down to 50%). */
+export function validateTemplate(t: RoomTemplate, o: { arena?: boolean; minFloor?: number } = {}): TemplateIssue[] {
   const out: TemplateIssue[] = [];
   const bad = (msg: string): void => {
     out.push({ id: t.id, msg });
@@ -80,7 +133,12 @@ export function validateTemplate(t: RoomTemplate, o: { arena?: boolean } = {}): 
       interior++;
       if (PASSABLE.has(at(t.rows, x, y))) floor++;
     }
-  if (floor / interior < 0.6) bad(`only ${Math.round((floor / interior) * 100)}% floor (needs ≥ 60%)`);
+  const minFloor = o.minFloor ?? 0.6;
+  if (floor / interior < minFloor) bad(`only ${Math.round((floor / interior) * 100)}% floor (needs ≥ ${Math.round(minFloor * 100)}%)`);
+  // the gap rule: no 1–2 tile squeezes between blocking things
+  const gaps = gapViolations(t.rows);
+  for (const g of gaps.slice(0, 6)) bad(`gap narrower than ${MIN_GAP} tiles between ${g.a[0]},${g.a[1]} and ${g.b[0]},${g.b[1]}`);
+  if (gaps.length > 6) bad(`… and ${gaps.length - 6} more narrow gaps`);
   // every door reachable from every other door (flood fill)
   const seen = new Set<string>();
   const start = inside.n[0]!;

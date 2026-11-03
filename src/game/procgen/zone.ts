@@ -5,6 +5,7 @@ import { ROOM_TEMPLATES } from '../../data/rooms';
 import { zoneDef } from '../../data/zones';
 import { ENEMIES, rosterOf } from '../../data/enemies';
 import { pickMix } from './mix';
+import { shapeIds } from './shapes';
 import type { Side } from '../room';
 
 export type RoomKind = 'start' | 'combat' | 'ambush' | 'treasure' | 'reliquary' | 'merchant' | 'anteroom' | 'boss' | 'tutorial' | 'trial';
@@ -22,6 +23,8 @@ export interface RoomNode {
   mirrorV: boolean;
   /** dead-end combat rooms get a small-chest bonus */
   bonusChest: boolean;
+  /** the room's shape family (procgen/shapes.ts); '' = plain template (special rooms get their zone frame) */
+  shape: string;
 }
 
 export interface ZoneLayout {
@@ -211,7 +214,23 @@ export function generateZone(seed: string, zone: number, o: ZoneOpts = {}): Zone
         mirrorH: rng.chance(0.5),
         mirrorV: rng.chance(0.5),
         bonusChest: kind === 'combat' && bonusDead.has(k),
+        shape: '',
       });
+    }
+    // room shapes (PROCGEN §3.1): every combat room gets a shape family from its own stream (the map stream
+    // above is untouched), never the same family as a neighbouring room while the zone has one to spare
+    const families = shapeIds(zone);
+    const shapeRng = stream(seed, `shapes:${zone}:${cycle}`);
+    const atCell = new Map(rooms.map((r) => [key(r.gx, r.gy), r]));
+    for (const r of rooms) {
+      if (r.kind !== 'combat' && r.kind !== 'ambush') continue;
+      const near = new Set<string>();
+      for (const [, dx, dy] of DIRS) {
+        const n = atCell.get(key(r.gx + dx, r.gy + dy));
+        if (n?.shape) near.add(n.shape);
+      }
+      const free = families.filter((f) => !near.has(f));
+      r.shape = shapeRng.pick(free.length ? free : families);
     }
     // the start room's south door leads to the tutorial (one-way: the hall's exit is its east door)
     const links: ZoneLayout['links'] = {};
@@ -226,7 +245,7 @@ export function generateZone(seed: string, zone: number, o: ZoneOpts = {}): Zone
       links[`${tutNode.id}|e`] = { to: `z${zone}-start`, entry: 's' };
       // the Instructor's own room hangs off the hall's south door, outside the grid (D75)
       trialId = `z${zone}-trial`;
-      rooms.push({ id: trialId, gx: -100, gy: -100, kind: 'trial', depth: 0, doors: ['n'], template: 'trial', mirrorH: false, mirrorV: false, bonusChest: false });
+      rooms.push({ id: trialId, gx: -100, gy: -100, kind: 'trial', depth: 0, doors: ['n'], template: 'trial', mirrorH: false, mirrorV: false, bonusChest: false, shape: '' });
       links[`${tutNode.id}|s`] = { to: trialId, entry: 'n' };
       links[`${trialId}|n`] = { to: tutNode.id, entry: 's' };
     }

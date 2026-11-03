@@ -6,6 +6,7 @@ import { ROOM_ANTEROOM, ROOM_BOSS, ROOM_MERCHANT, ROOM_RELIQUARY, ROOM_START, RO
 import { zoneDef } from '../../data/zones';
 import { Room, T, tileCenter, ROOM_H, ROOM_W, type Side } from '../room';
 import { mirrorTemplate } from './templates';
+import { shapeRoom, thinProps } from './shapes';
 import type { RoomNode, ZoneLayout } from './zone';
 
 export interface RoomMarkers {
@@ -53,9 +54,23 @@ function templateFor(layout: ZoneLayout, node: RoomNode, arenaId?: string): { ro
   }
 }
 
-export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string): { room: Room; markers: RoomMarkers } {
+/** Special rooms that wear their zone's light frame (shaped corners); boss arenas, the hall and the trial stay as drawn. */
+const FRAMED = new Set<RoomNode['kind']>(['start', 'anteroom', 'treasure', 'reliquary', 'merchant']);
+
+/** The final ASCII rows of a room: template, mirrored, shaped (PROCGEN §3.1), props thinned. Deterministic. */
+export function roomRows(layout: ZoneLayout, node: RoomNode, arenaId?: string): { rows: string[]; mirror: boolean } {
   const tpl = templateFor(layout, node, arenaId);
-  const rows = tpl.mirror ? mirrorTemplate(tpl.rows, node.mirrorH, node.mirrorV) : tpl.rows;
+  let rows = tpl.mirror ? mirrorTemplate(tpl.rows, node.mirrorH, node.mirrorV) : tpl.rows;
+  const shapeSeed = `${layout.seed}#${layout.cycle}`;
+  if (tpl.mirror && node.shape) rows = shapeRoom(rows, { zone: layout.zone, shape: node.shape, seed: shapeSeed, roomId: node.id });
+  else if (FRAMED.has(node.kind)) rows = shapeRoom(rows, { zone: layout.zone, shape: 'frame', seed: shapeSeed, roomId: node.id });
+  // thin props by 20% (PROCGEN §3): whole free-standing clumps, so no narrow gap ever opens
+  if (tpl.mirror) rows = thinProps(rows, stream(layout.seed, `props:${layout.zone}:${node.id}`));
+  return { rows, mirror: tpl.mirror };
+}
+
+export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string): { room: Room; markers: RoomMarkers } {
+  const { rows } = roomRows(layout, node, arenaId);
   const room = Room.fromAscii(rows);
   room.id = `${layout.seed}|${node.id}`;
   room.hazardKind = zoneDef(layout.zone).hazardKind;
@@ -84,12 +99,6 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
       else if (ch === 'g') m.graves.push(c);
       else if (ch === 'w') m.pools.push(c);
     }
-  }
-  // thin props by 20% (PROCGEN §3) — deterministic per room
-  if (tpl.mirror) {
-    const rng = stream(layout.seed, `props:${layout.zone}:${node.id}`);
-    for (let y = 1; y < ROOM_H - 1; y++)
-      for (let x = 1; x < ROOM_W - 1; x++) if (room.get(x, y) === T.Prop && rng.chance(0.2)) room.set(x, y, T.Floor);
   }
   // trees ('t'): props a charge can break, one charge per clump (Vexthorn's clearing)
   for (let y = 0; y < ROOM_H; y++) for (let x = 0; x < ROOM_W; x++) if (rows[y]?.[x] === 't' && room.get(x, y) === T.Prop) room.trees.set(y * ROOM_W + x, 1);
