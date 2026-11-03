@@ -8,7 +8,7 @@ import { ELEMENTS } from '../../game/elements';
 import { canSocket, fusePreview, gemAt, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
-import { btn, clearEl, fmt, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
+import { btn, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { tabHints } from '../glyphs';
 import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
@@ -643,7 +643,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
       setTimeout(() => m.querySelector<HTMLElement>('button:not(:disabled)')?.focus(), 0);
     } else
       setTimeout(() => {
-        if (!restoreFocus(panel, panelMark)) panel.querySelector<HTMLElement>('.tabs button')?.focus();
+        // first open: the top-left control of the tab's content (D148)
+        if (!restoreFocus(panel, panelMark) && !focusContentStart(panel, content)) panel.querySelector<HTMLElement>('.tabs button')?.focus();
       }, 0);
   }
   render();

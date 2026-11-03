@@ -151,6 +151,27 @@ export function restoreFocus(scope: HTMLElement, mark: FocusMark | null): boolea
   return true;
 }
 
+/**
+ * Focus where a menu's content starts (D148): its `data-autofocus` control if usable, else the top-most usable control
+ * below the tab bar, leftmost of that row. `content` narrows the search (a tab's body); the tab bar never counts.
+ */
+export function focusContentStart(scope: HTMLElement, content?: HTMLElement | null): boolean {
+  const auto = scope.querySelector<HTMLElement>('[data-autofocus]');
+  if (auto && usable(auto)) {
+    auto.focus();
+    return true;
+  }
+  const area = content ?? scope.querySelector<HTMLElement>('[data-focus-group^="tab-"]') ?? scope;
+  const items = [...area.querySelectorAll<HTMLElement>(ANY_CONTROL)].filter((e) => usable(e) && !e.closest('.tabs'));
+  if (items.length === 0) return false;
+  const pos = items.map((e) => ({ e, r: e.getBoundingClientRect() }));
+  // one "row" is anything whose top is within 8 px of the highest; take its leftmost
+  const top = Math.min(...pos.map((p) => p.r.top));
+  const row = pos.filter((p) => p.r.top - top < 8).sort((a, b) => a.r.left - b.r.left);
+  row[0]!.e.focus();
+  return true;
+}
+
 export function focusFirst(el: HTMLElement): void {
   const f = el.querySelector<HTMLElement>('button:not(:disabled), input, select, [tabindex="0"]');
   f?.focus();

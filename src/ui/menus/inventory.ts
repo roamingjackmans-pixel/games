@@ -11,7 +11,7 @@ import { levelCost } from '../../game/combat/formulas';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import type { Derived } from '../../game/player/derived';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Item } from '../../game/types';
-import { btn, clearEl, fmt, h, layer, markFocus, restoreFocus } from '../dom';
+import { btn, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
 import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemTooltip } from '../tooltip';
 
@@ -199,6 +199,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
       );
       // the same bag slot keeps the focus after equipping from it (D144)
       bagCell.setAttribute('data-focus', `bag-${i}`);
+      // the inventory opens on the first bag slot, top left of the backpack (D148)
+      if (i === 0) bagCell.setAttribute('data-autofocus', '');
     }
     bag.appendChild(bagGrid);
     bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it. Right-click a weapon to make it your 2nd weapon (swap with ${glyphText('swapWeapon')}); right-click a ring for the second ring slot. Staffs and talismans go in either hand: click for the off hand, right-click for the weapon hand, Shift+right-click for the 2nd weapon. Click worn gear to take it off.`));
@@ -260,7 +262,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     content.appendChild(right);
     body.appendChild(content);
     setTimeout(() => {
-      if (!restoreFocus(body, mark)) body.querySelector<HTMLElement>('.grid-bag button, .tabs button')?.focus();
+      if (!restoreFocus(body, mark)) focusContentStart(body, right);
     }, 0);
   }
   render();

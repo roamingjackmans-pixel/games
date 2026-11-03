@@ -283,7 +283,11 @@ export function openStatistics(onClose: () => void, opts: StatisticsOpts = {}): 
       panel.appendChild(h('div', { class: 'small dim-text stat-note' }, 'Every character this browser has ever played, deleted ones included. Co-op counts what you did, not what your friends did.'));
       panel.appendChild(statsBody(t.rec.c));
     }
-    setTimeout(() => (panel.querySelector<HTMLElement>(`[data-key="${focusKey ?? 'back'}"]`) ?? back).focus(), 0);
+    setTimeout(() => {
+      // on opening: the first character button below the header if there is one, else Back (D148)
+      const first = !focusKey ? [...panel.querySelectorAll<HTMLButtonElement>('.stat-slots button')].find((b) => !b.disabled && b.offsetParent !== null && getComputedStyle(b.parentElement!).visibility !== 'hidden') : null;
+      (first ?? panel.querySelector<HTMLElement>(`[data-key="${focusKey ?? 'back'}"]`) ?? back).focus();
+    }, 0);
   };
   render();
   return root;

@@ -4,7 +4,7 @@
 import { app } from '../app';
 import { defaultMenuPad, type MenuPadBindings } from '../engine/input/bindings';
 import type { InputManager } from '../engine/input/input';
-import { moveFocus } from './dom';
+import { focusContentStart, moveFocus } from './dom';
 import { refreshGlyphs } from './glyphs';
 
 let repeatAt = 0;
@@ -91,10 +91,11 @@ export function pollMenuPad(input: InputManager, now: number): void {
     input.swallowPadButton(btnIdx);
     if (cur < 0 || !next) continue;
     next.click();
-    // after the menu's own redraw has put the focus back
+    // after the menu's own redraw: the new tab's first control (D148), or the tab itself when it has none
     setTimeout(() => {
-      const on = document.querySelector<HTMLElement>('#overlay .layer .tabs [data-tab].on');
-      on?.focus();
+      const layer = [...document.querySelectorAll<HTMLElement>('#overlay .layer')].pop();
+      if (layer && focusContentStart(layer)) return;
+      document.querySelector<HTMLElement>('#overlay .layer .tabs [data-tab].on')?.focus();
     }, 0);
   }
   const mp = menuButtons();

@@ -18,7 +18,7 @@ import {
 import { HOLD_S } from '../../engine/input/input';
 import { FRIENDLY_FIRE_MAX, FRIENDLY_FIRE_STEP, PROMPT_SETTINGS, normalizeFriendlyFire, type PromptSetting, type TouchMode } from '../../engine/settings';
 import { refreshTouchControls } from '../touchControls';
-import { btn, clearEl, h, layer } from '../dom';
+import { btn, clearEl, focusContentStart, h, layer } from '../dom';
 import { canPromptInstall, installSteps, isInstalledApp, onInstallChange, promptInstall } from '../install';
 import { GLYPH_LABEL, glyphEl, inputGlyphEl, inputText, padStyle, promptStyle, refreshGlyphs, type GlyphAction, type GlyphInput } from '../glyphs';
 
@@ -649,6 +649,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
   window.addEventListener('gamepadconnected', onPad);
   window.addEventListener('gamepaddisconnected', onPad);
 
+  let opened = false;
   function render(focus?: string): void {
     const body0 = panel.querySelector<HTMLElement>('.settings-body');
     const scroll = body0 && focus ? body0.scrollTop : 0;
@@ -691,7 +692,11 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     else bindings(body, tab === 'gamepad');
     panel.appendChild(body);
     body.scrollTop = scroll;
+    const first = !opened;
+    opened = true;
     setTimeout(() => {
+      // on opening: the first control of the tab's content (D148); after a tab click: stay on that tab
+      if (first && !focus && focusContentStart(panel, body)) return;
       const el = (focus && panel.querySelector<HTMLElement>(`[data-focus="${focus}"]`)) || panel.querySelector<HTMLElement>('.tabs button.on');
       el?.focus({ preventScroll: Boolean(focus) });
     }, 0);

@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 type Run = {
   showInventory(): void;
   showBonfire(p: unknown, id: string, first: boolean): void;
-  session: { localPlayer: unknown; save: { character: { glowen: number } } };
+  session: { localPlayer: unknown; save: { character: { glowen: number; shards: number } } };
 };
 type VPad = { setVirtualPadActive(on: boolean): void; setVirtualButton(i: number, down: boolean): void };
 
@@ -36,14 +36,20 @@ test('LB / RB switch tabs; left / right stay inside the tab content (D145)', asy
   await page.evaluate(() => {
     const r = (window as unknown as { __dj: { scenes: { current: Run } } }).__dj.scenes.current;
     r.session.save.character.glowen = 100000;
+    r.session.save.character.shards = 100000;
     r.showBonfire(r.session.localPlayer, 'z1-start', false);
   });
   await expect(page.getByTestId('bonfire-menu')).toBeVisible();
   expect(await activeTab(page)).toBe('level');
+  // D148: it opens inside the Level up content (HP +1, the first usable control), not on the tabs
+  await expect.poll(() => page.evaluate(() => document.activeElement?.getAttribute('data-focus') ?? '')).toBe('lvl-plus-hp');
   await press(page, 5);
   expect(await activeTab(page)).toBe('gems');
+  expect(await inTabs(page)).toBe(true); // the Gem bench has nothing to press yet with an empty bag
   await press(page, 5);
   expect(await activeTab(page)).toBe('shop');
+  // D148: a bumper switch lands on the new tab's first control
+  expect(await inTabs(page)).toBe(false);
   await press(page, 4);
   await press(page, 5);
   expect(await activeTab(page)).toBe('shop');
@@ -62,10 +68,13 @@ test('LB / RB switch tabs; left / right stay inside the tab content (D145)', asy
   await page.getByRole('button', { name: 'Leave', exact: true }).click();
   await page.evaluate(() => (window as unknown as { __dj: { scenes: { current: Run } } }).__dj.scenes.current.showInventory());
   expect(await activeTab(page)).toBe('items');
+  // D148: the inventory opens on the first bag slot
+  await expect.poll(() => page.evaluate(() => document.activeElement?.getAttribute('data-focus') ?? '')).toBe('bag-0');
   await press(page, 5);
   expect(await activeTab(page)).toBe('Spells');
   await press(page, 4);
   expect(await activeTab(page)).toBe('items');
+  await expect.poll(() => page.evaluate(() => document.activeElement?.getAttribute('data-focus') ?? '')).toBe('bag-0');
   expect(errors).toEqual([]);
 });
 
