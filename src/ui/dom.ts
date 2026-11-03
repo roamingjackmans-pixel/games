@@ -4,7 +4,11 @@ import { playSfx } from '../engine/audio/sfx';
 type Child = Node | string | number | null | undefined | false | Child[];
 type Attrs = Record<string, string | number | boolean | ((e: Event) => void) | undefined | null>;
 
-export function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Attrs | null = null, ...children: Child[]): HTMLElementTagNameMap[K] {
+export function h<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  attrs: Attrs | null = null,
+  ...children: Child[]
+): HTMLElementTagNameMap[K] {
   const el = document.createElement(tag);
   if (attrs) {
     for (const [k, v] of Object.entries(attrs)) {
@@ -166,24 +170,33 @@ export function moveFocus(scope: HTMLElement, dx: number, dy: number): void {
   const r0 = cur.getBoundingClientRect();
   const cx = r0.left + r0.width / 2;
   const cy = r0.top + r0.height / 2;
-  let best: HTMLElement | null = null;
-  let bestScore = Infinity;
-  for (const e of items) {
-    if (e === cur) continue;
-    const r = e.getBoundingClientRect();
-    const ex = r.left + r.width / 2;
-    const ey = r.top + r.height / 2;
-    const ddx = ex - cx;
-    const ddy = ey - cy;
-    const along = dx !== 0 ? ddx * dx : ddy * dy;
-    if (along <= 2) continue;
-    const across = dx !== 0 ? Math.abs(ddy) : Math.abs(ddx);
-    const score = along + across * 2.5;
-    if (score < bestScore) {
-      bestScore = score;
-      best = e;
+  // a menu's tab bar and its content are separate areas (D145): left / right never leave the area the focus is in,
+  // and up / down cross between them only when there is nothing further that way in the same area
+  const bar = (e: HTMLElement): Element | null => e.closest('.tabs');
+  const here = bar(cur);
+  const pick = (sameArea: boolean): HTMLElement | null => {
+    let best: HTMLElement | null = null;
+    let bestScore = Infinity;
+    for (const e of items) {
+      if (e === cur) continue;
+      if (sameArea && bar(e) !== here) continue;
+      const r = e.getBoundingClientRect();
+      const ex = r.left + r.width / 2;
+      const ey = r.top + r.height / 2;
+      const ddx = ex - cx;
+      const ddy = ey - cy;
+      const along = dx !== 0 ? ddx * dx : ddy * dy;
+      if (along <= 2) continue;
+      const across = dx !== 0 ? Math.abs(ddy) : Math.abs(ddx);
+      const score = along + across * 2.5;
+      if (score < bestScore) {
+        bestScore = score;
+        best = e;
+      }
     }
-  }
+    return best;
+  };
+  const best = pick(true) ?? (dy !== 0 ? pick(false) : null);
   if (best) {
     best.focus();
     playSfx('uiHover', { vol: 0.5 });

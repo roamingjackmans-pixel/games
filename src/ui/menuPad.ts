@@ -82,6 +82,20 @@ export function pollMenuPad(input: InputManager, now: number): void {
     const box = scrollBoxFor(scope, document.activeElement as HTMLElement | null);
     if (box) box.scrollTop += ry * 1100 * dt;
   }
+  // LB / RB (L1 / R1) step through a menu's tabs (D145), stopping at the ends; the focus goes to the new tab
+  for (const [btnIdx, step] of [[4, -1], [5, 1]] as const) {
+    if (!input.padButtonEdge(btnIdx)) continue;
+    const tabs = [...scope.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]')].filter((t) => t.offsetParent !== null && !t.disabled);
+    const cur = tabs.findIndex((t) => t.classList.contains('on'));
+    const next = tabs[cur + step];
+    if (cur < 0 || !next) continue;
+    next.click();
+    // after the menu's own redraw has put the focus back
+    setTimeout(() => {
+      const on = document.querySelector<HTMLElement>('#overlay .layer .tabs [data-tab].on');
+      on?.focus();
+    }, 0);
+  }
   const mp = menuButtons();
   if (input.padButtonEdge(mp.confirm)) {
     const el = document.activeElement as HTMLElement | null;

@@ -1,7 +1,7 @@
 // Inventory / character screen (GAME_DESIGN §16): stats, a paper doll of the equipment, equip load, the
 // 60-slot bag, gems, consumables, compare tooltips, two-hand toggle, second weapon, quick-use selection.
 // Mouse, keyboard and gamepad (every slot is a focusable button; menuPad moves focus spatially).
-import { glyphText } from '../glyphs';
+import { glyphText, tabHints } from '../glyphs';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
@@ -245,8 +245,10 @@ export function openInventory(host: InventoryHost): HTMLElement {
         render();
       });
       if (tab === t.key) b.classList.add('on');
+      b.setAttribute('data-tab', t.key);
       tabs.appendChild(b);
     }
+    tabHints(tabs);
     tabs.appendChild(h('div', { class: 'grow' }));
     tabs.appendChild(btn(`Close (${glyphText('inventory')})`, () => host.close(), 'primary'));
     body.appendChild(tabs);

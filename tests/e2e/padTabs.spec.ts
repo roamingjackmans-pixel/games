@@ -1,0 +1,70 @@
+import { expect, test, type Page } from '@playwright/test';
+
+// D145: LB / RB step through the bonfire's and the inventory's tabs; left / right inside a tab stay in its content
+// and only Up goes back to the tab bar. Driven through the virtual pad (D143), exactly like a real controller.
+
+type Run = {
+  showInventory(): void;
+  showBonfire(p: unknown, id: string, first: boolean): void;
+  session: { localPlayer: unknown; save: { character: { glowen: number } } };
+};
+type VPad = { setVirtualPadActive(on: boolean): void; setVirtualButton(i: number, down: boolean): void };
+
+async function press(page: Page, i: number): Promise<void> {
+  await page.evaluate(async (b) => {
+    const path = '/games/dungeonjoe/src/engine/input/virtualPad.ts';
+    const vp = (await import(/* @vite-ignore */ path)) as VPad;
+    vp.setVirtualPadActive(true);
+    vp.setVirtualButton(b, true);
+  }, i);
+  await page.waitForTimeout(90);
+  await page.evaluate(async (b) => {
+    const path = '/games/dungeonjoe/src/engine/input/virtualPad.ts';
+    const vp = (await import(/* @vite-ignore */ path)) as VPad;
+    vp.setVirtualButton(b, false);
+  }, i);
+  await page.waitForTimeout(260);
+}
+const activeTab = (page: Page): Promise<string> => page.evaluate(() => document.querySelector('#overlay .tabs [data-tab].on')?.getAttribute('data-tab') ?? '');
+const inTabs = (page: Page): Promise<boolean> => page.evaluate(() => !!(document.activeElement as HTMLElement | null)?.closest('.tabs'));
+
+test('LB / RB switch tabs; left / right stay inside the tab content (D145)', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto('./?new&class=knight&seed=PADTABS&nocut');
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __dj?: { scenes: { current?: { name: string } } } }).__dj?.scenes.current?.name ?? ''), { timeout: 10000 }).toBe('run');
+  await page.evaluate(() => {
+    const r = (window as unknown as { __dj: { scenes: { current: Run } } }).__dj.scenes.current;
+    r.session.save.character.glowen = 100000;
+    r.showBonfire(r.session.localPlayer, 'z1-start', false);
+  });
+  await expect(page.getByTestId('bonfire-menu')).toBeVisible();
+  expect(await activeTab(page)).toBe('level');
+  await press(page, 5);
+  expect(await activeTab(page)).toBe('gems');
+  await press(page, 5);
+  expect(await activeTab(page)).toBe('shop');
+  await press(page, 4);
+  await press(page, 5);
+  expect(await activeTab(page)).toBe('shop');
+  // into the shop's buttons, then left / right many times: never back on the tab bar
+  await press(page, 13);
+  await press(page, 13);
+  expect(await inTabs(page)).toBe(false);
+  for (const b of [14, 15, 15, 14, 14, 15]) {
+    await press(page, b);
+    expect(await inTabs(page)).toBe(false);
+  }
+  // Up climbs back to the tabs
+  for (let i = 0; i < 12 && !(await inTabs(page)); i++) await press(page, 12);
+  expect(await inTabs(page)).toBe(true);
+  // inventory: LB / RB between Items and Spells
+  await page.getByRole('button', { name: 'Leave', exact: true }).click();
+  await page.evaluate(() => (window as unknown as { __dj: { scenes: { current: Run } } }).__dj.scenes.current.showInventory());
+  expect(await activeTab(page)).toBe('items');
+  await press(page, 5);
+  expect(await activeTab(page)).toBe('Spells');
+  await press(page, 4);
+  expect(await activeTab(page)).toBe('items');
+  expect(errors).toEqual([]);
+});

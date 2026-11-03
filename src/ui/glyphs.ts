@@ -862,3 +862,21 @@ export function refreshGlyphs(now?: number, force = false): void {
     fillGlyphSpan(span, actionShape(a, Number(span.dataset.glyphSize) || 20, st ?? promptStyle()));
   }
 }
+
+/**
+ * LB / RB (L1 / R1) pictures at the two ends of a menu's tab buttons (D145): they step through the tabs. Shown only
+ * while the pad drives the menus (body.pad-nav). Call after the last tab button is in `tabs`.
+ */
+export function tabHints(tabs: HTMLElement): void {
+  const hint = (i: number): HTMLElement => {
+    const w = document.createElement('span');
+    w.className = 'tab-hint';
+    w.appendChild(inputGlyphEl(i, 18));
+    return w;
+  };
+  const first = tabs.querySelector('[data-tab]');
+  if (first) tabs.insertBefore(hint(4), first);
+  const all = tabs.querySelectorAll('[data-tab]');
+  const last = all[all.length - 1];
+  if (last) last.after(hint(5));
+}

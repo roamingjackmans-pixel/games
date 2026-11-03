@@ -183,3 +183,7 @@ body.pad-nav button:focus, body.pad-nav .btn:focus, body.pad-nav [tabindex]:focu
   box-shadow: 0 0 14px rgba(230, 184, 74, 0.55);
   background-color: #352f43;
 }
+
+/* LB / RB tab hints (D145): only while a gamepad drives the menus */
+.tab-hint { display: none; align-self: center; opacity: .75; }
+body.pad-nav .tab-hint { display: inline-flex; }

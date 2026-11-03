@@ -9,6 +9,7 @@ import { canSocket, fusePreview, gemAt, itemSellValue, planLevelUps, sellAllPrev
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { btn, clearEl, fmt, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
+import { tabHints } from '../glyphs';
 import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
 export interface BonfireOps {
@@ -618,9 +619,14 @@ export function openBonfire(v: BonfireView): HTMLElement {
         render();
       });
       if (tab === d.key) b.classList.add('on');
+      b.setAttribute('data-tab', d.key);
       tabs.appendChild(b);
     }
-    tabs.appendChild(btn('Inventory', () => leave(() => v.openInventory())));
+    // the Inventory is the last stop of LB / RB (D145)
+    const inv = btn('Inventory', () => leave(() => v.openInventory()));
+    inv.setAttribute('data-tab', 'inventory');
+    tabs.appendChild(inv);
+    tabHints(tabs);
     tabs.appendChild(h('div', { class: 'grow' }));
     tabs.appendChild(btn('Leave', () => leave(() => v.close()), 'primary'));
     panel.appendChild(h('div', { class: 'row' }, h('h2', { class: 'grow', style: 'margin:0' }, 'Bonfire'), h('div', { class: v.firstRest ? 'good' : 'dim-text' }, v.firstRest ? 'You rest. HP and Thermos restored.' : 'Embers: resting restores nothing here. Enemies have returned.')));
