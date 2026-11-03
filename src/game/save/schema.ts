@@ -101,5 +101,12 @@ export function normalizeSave(s: SaveFile): SaveFile {
   if (c.quickSlot === undefined) c.quickSlot = null;
   if (!c.consumables) c.consumables = {};
   if (!c.gems) c.gems = [];
+  // statistics: numbers only (a hand-edited or newer file may carry anything)
+  const ex = s.stats.extra as unknown;
+  if (ex !== undefined) {
+    const clean: Record<string, number> = {};
+    if (ex && typeof ex === 'object' && !Array.isArray(ex)) for (const [k, v] of Object.entries(ex)) if (typeof v === 'number' && Number.isFinite(v) && v >= 0) clean[k] = v;
+    s.stats.extra = clean;
+  }
   return s;
 }

@@ -16,7 +16,9 @@ import { openBonfire } from '../../ui/menus/bonfire';
 import { renderSpellTab } from '../../ui/menus/spells';
 import { openSettings } from '../../ui/menus/settings';
 import { openAchievements } from '../../ui/achievements';
+import { openStatistics } from '../../ui/statistics';
 import { achievements } from '../achievements';
+import { stats } from '../stats';
 import { drawInteractable, nearestInteractable } from '../../render/interactables';
 import { buyConsumable, buyGem, fuseGems, levelUp, respec, sellAll, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
 import { shopGem, shopGemPrice } from '../bonfire/shop';
@@ -136,6 +138,7 @@ export class GuestRunScene extends WorldScene {
 
   protected override afterStep(): void {
     achievements().frame(this.w, this.local, this.save.character, this.w.events);
+    stats().frame(this.w, this.local, this.save, this.w.events);
     // a boss died in the host's world: its defeat lines play here once it has finished exploding
     for (const ev of this.w.events) {
       if (ev.t !== 'death' || ev.isPlayer || !ev.defId) continue;
@@ -227,6 +230,7 @@ export class GuestRunScene extends WorldScene {
       this.showBonfire(e.first);
     } else if (e.t === 'wipe') {
       achievements().note({ k: 'death' });
+      stats().note({ k: 'death' });
       this.banner = { text: 'THE PARTY WAS EVICTED', until: performance.now() / 1000 + 3 };
       this.quip = this.pickLine(DEATH_QUIPS, 'quip');
     }
@@ -278,8 +282,8 @@ export class GuestRunScene extends WorldScene {
           respec: () => r(respec(c)),
           socket: (it, si, gi) => r(socketGem(c, it, si, gi)),
           unsocket: (it, si) => r(unsocketGem(c, it, si)),
-          upgradeGem: (loc, pi) => r(upgradeGem(c, loc, pi)),
-          fuseGem: (o, d, picks) => r(fuseGems(c, o, d, picks)),
+          upgradeGem: (loc, pi) => r(stats().count(upgradeGem(c, loc, pi), 'gemsUpgraded')),
+          fuseGem: (o, d, picks) => r(stats().count(fuseGems(c, o, d, picks), 'gemsFused')),
           sellAll: (f) => r(sellAll(c, f)),
           sellItem: (it) => r(sellItem(c, it)),
           sellGem: (gi) => r(sellGem(c, gi)),
@@ -352,6 +356,11 @@ export class GuestRunScene extends WorldScene {
         btn('Achievements', () => {
           this.overlay?.remove();
           this.overlay = openAchievements(() => this.showPause());
+          this.overlayKind = 'settings';
+        }, 'big'),
+        btn('Statistics', () => {
+          this.overlay?.remove();
+          this.overlay = openStatistics(() => this.showPause(), { save: this.save });
           this.overlayKind = 'settings';
         }, 'big'),
         btn(

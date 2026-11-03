@@ -19,6 +19,7 @@ import { lookFor } from '../../render/entities';
 import { btn, clearEl, focusFirst, h, layer, toast } from '../../ui/dom';
 import { openSettings } from '../../ui/menus/settings';
 import { openAchievements } from '../../ui/achievements';
+import { openStatistics } from '../../ui/statistics';
 import { achievements } from '../achievements';
 import { newCharacter } from '../player/character';
 import { newSave, SLOT_COUNT } from '../save/schema';
@@ -134,8 +135,15 @@ export class TitleScene implements Scene {
           this.main();
         });
       }, 'big'),
+      btn('Statistics', () => {
+        this.root!.style.display = 'none';
+        openStatistics(() => {
+          this.root!.style.display = '';
+          this.main();
+        }, { saves: listSaves(store).filter((x): x is SaveFile => !!x), slot: meta.lastSlot });
+      }, 'big'),
       btn('Credits', () => titleHooks.credits?.(), 'big'),
-      h('div', { class: 'small dim-text', style: 'max-width:340px' }, 'Co-op: up to 4 players, browser to browser. The host shares a 6-digit code; everyone brings their own character.'),
+      h('div', { class: 'small dim-text', style: 'max-width:360px' }, 'Co-op: up to 4 players, each with their own character.'),
     );
   }
 

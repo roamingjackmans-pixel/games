@@ -13,7 +13,7 @@ interface SaveFile {
   createdAt: string; updatedAt: string;   // ISO
   character: Character;
   world: WorldState;
-  stats: { deaths: number; kills: number; bossKills: number; playtimeSec: number; elitesKilled: number; mimicsKilled: number; mimicDeaths: number; };
+  stats: { deaths: number; kills: number; bossKills: number; playtimeSec: number; elitesKilled: number; mimicsKilled: number; mimicDeaths: number; extra?: Record<string, number> /* Statistics counters, GAME_DESIGN §21 */ };
   pending?: { advanceToZone?: number };   // set by co-op progress credit (D31), consumed on next solo load
 }
 

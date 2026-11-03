@@ -19,5 +19,6 @@ export function mimicBite(w: World, p: Entity, mimic: Entity): void {
   w.emit({ t: 'msg', text: 'It was a mimic.', color: '#ff6a5a' });
   wakeMimic(w, mimic);
   rawDamage(w, p, p.hp!.hp + p.hp!.max, 'physical', mimic.id, true);
+  if (p.pl) w.emit({ t: 'stat', key: 'mimicBites', playerId: p.pl.playerId });
   w.hooks.onMimicBite?.(w, p, mimic);
 }

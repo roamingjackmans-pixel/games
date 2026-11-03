@@ -30,6 +30,7 @@ import { newWorldState } from './save/schema';
 import { flaskCap, flaskMaxFor } from './combat/formulas';
 import { applyArenaChanges } from './boss/arena';
 import { achievements } from './achievements';
+import { stats } from './stats';
 import { startPhaseSummons, tickPhaseSummons } from './boss/summons';
 import { spawnHazard } from './systems/hazards';
 import type { BossDef, Character, EliteAffix, SaveFile } from './types';
@@ -476,6 +477,7 @@ export class GameSession {
     w.bossId = 0;
     this.roomPhase = 'cleared';
     if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
+    w.emit({ t: 'stat', key: 'roomsCleared', playerId: '' });
     lootHooks.boss(this, e.x, e.y, def.id);
     w.emit({ t: 'levelBanner', text: 'BOSS DEFEATED', sub: def.name });
     w.emit({ t: 'shake', amount: 14 });
@@ -498,7 +500,10 @@ export class GameSession {
     // bonfire
     if (m.bonfire && (node.kind === 'start' || node.kind === 'anteroom')) {
       const id = node.kind === 'start' ? `z${this.layout.zone}-start` : `z${this.layout.zone}-boss`;
-      if (!ws.bonfiresDiscovered.includes(id)) ws.bonfiresDiscovered.push(id);
+      if (!ws.bonfiresDiscovered.includes(id)) {
+        ws.bonfiresDiscovered.push(id);
+        w.emit({ t: 'stat', key: 'bonfires', playerId: '' });
+      }
       const unlit = node.kind === 'start' && this.layout.tutorialId !== null && !this.save.character.tutorialDone;
       w.spawn('interact', m.bonfire[0], m.bonfire[1], {
         radius: 20,
@@ -712,6 +717,7 @@ export class GameSession {
     const ws = this.save.world;
     this.roomPhase = 'cleared';
     if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
+    w.emit({ t: 'stat', key: 'roomsCleared', playerId: '' });
     this.applyDoorLocks();
     w.sfx('doorOpen');
     w.emit({ t: 'msg', text: 'Room cleared.', color: '#a9b7a0' });
@@ -818,6 +824,7 @@ export class GameSession {
       case 'chest': {
         it.used = true;
         if (!ws.chestsOpened.includes(it.key)) ws.chestsOpened.push(it.key);
+        w.emit({ t: 'stat', key: 'chests', playerId: p.pl!.playerId });
         w.sfx('chestOpen', target.x);
         target.anim.pose = 'open';
         target.anim.poseT = 0;
@@ -859,6 +866,7 @@ export class GameSession {
         if (p.pl!.playerId === this.save.character.playerId) delete this.save.world.shardpile;
         else if (this.save.world.guestPiles) delete this.save.world.guestPiles[p.pl!.playerId];
         w.emit({ t: 'msg', text: `Recovered ${Math.floor(pk.amount)} Shards.`, forPlayer: p.pl!.playerId, color: '#9ad0ff' });
+        w.emit({ t: 'stat', key: 'shardsRecovered', playerId: p.pl!.playerId, n: Math.floor(pk.amount) });
         w.sfx('reliquary', e.x, 0.6);
         return true;
       case 'shards':
@@ -884,6 +892,7 @@ export class GameSession {
     }
     if (pk.kind === 'gem' && pk.gem) {
       c.gems.push(pk.gem);
+      this.w.emit({ t: 'stat', key: 'gems', playerId: p.pl!.playerId });
       this.w.sfx('lootRare', e.x);
       this.w.emit({ t: 'msg', text: `${gemKindLabel(pk.gem)}: ${gemTitle(pk.gem)}`, forPlayer: p.pl!.playerId, color: gemColor(pk.gem) });
       return true;
@@ -1031,6 +1040,7 @@ export class GameSession {
     this.w.paused = true;
     this.save.stats.deaths++;
     achievements().note({ k: 'death', by: this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id });
+    stats().note({ k: 'death', by: this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id });
     // the Shardpile: at the death spot (in a boss room just inside the door)
     let x = p.x;
     let y = p.y;

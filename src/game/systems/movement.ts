@@ -20,6 +20,7 @@ export function startFall(w: World, e: Entity, pct: number, climbS: number): voi
   e.forced = null;
   w.sfx('fall', e.x);
   rawDamage(w, e, e.hp!.max * pct, 'physical', 0);
+  w.emit({ t: 'stat', key: 'falls', playerId: e.pl.playerId });
   w.hooks.onFall?.(w, e);
 }
 

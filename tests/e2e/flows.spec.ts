@@ -36,7 +36,21 @@ test('create a character, play the tutorial hall, pause, save and continue after
   // pause opens and closes
   await page.keyboard.press('KeyP');
   await expect(page.getByTestId('pause-menu')).toBeVisible();
+  // Statistics from the pause menu: this character first, all characters a tab away, Esc back to the pause menu
+  await page.getByRole('button', { name: 'Statistics' }).click();
+  await expect(page.getByTestId('statistics')).toBeVisible();
+  await expect(page.getByText('E2E Joe, Cleric')).toBeVisible();
+  await page.getByTestId('stat-tab-all').click();
+  await expect(page.getByText('Every character this browser has ever played')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('pause-menu')).toBeVisible();
   await page.getByRole('button', { name: 'Save and quit to title' }).click();
+  await expect(page.getByTestId('title')).toBeVisible();
+  // and from the title menu, with the saved character to pick
+  await page.getByRole('button', { name: 'Statistics' }).click();
+  await expect(page.getByTestId('statistics')).toBeVisible();
+  await expect(page.getByText('E2E Joe, Cleric')).toBeVisible();
+  await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByTestId('title')).toBeVisible();
   // reload: the save is still there and continues
   await page.reload();
