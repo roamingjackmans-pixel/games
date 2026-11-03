@@ -31,6 +31,13 @@ test('create a character, play the tutorial hall, pause, save and continue after
     p.y = 368;
   });
   await page.keyboard.down('KeyD');
+  // the hall's east door opens on The Instructor's room (D90); his east door leads down to the first bonfire
+  await expect.poll(where, { timeout: 8000 }).toBe('trial');
+  await page.evaluate(() => {
+    const p = (window as unknown as { __dj: DJ }).__dj.scenes.current!.session!.localPlayer;
+    p.x = 1180;
+    p.y = 368;
+  });
   await expect.poll(where, { timeout: 8000 }).toBe('start');
   await page.keyboard.up('KeyD');
   // pause opens and closes
