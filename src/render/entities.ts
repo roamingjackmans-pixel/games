@@ -3,6 +3,9 @@
 import { DEG } from '../engine/math';
 import { drawById, type DrawState } from '../engine/draw/registry';
 import { DEFAULT_LOOK, drawJoe, type BodyGear, type HeadGear, type JoeLook } from '../engine/draw/players';
+import type { Beard, Emblem, HairStyle, HandPose } from '../engine/draw/players';
+import { ARMOR_LOOKS, HEAD_OVERRIDE } from '../data/armorLooks';
+import { FLASK_DRINK_S } from '../game/player/player';
 import { drawShield, drawTool, drawWeapon, isPairedWeapon } from '../engine/draw/weapons';
 import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/parts';
 import { CLASSES } from '../data/classes';
@@ -22,31 +25,52 @@ export function rarityColor(r: string): string {
 
 export function lookFor(c: Character): JoeLook {
   const cls = CLASSES[c.classId];
+  const cl = cls.look;
+  // the class default: a tunic in the class colours, the class's own hat, hair and beard
   const look: JoeLook = {
     ...DEFAULT_LOOK,
-    skin: cls.look.skin,
-    hair: cls.look.hair,
-    head: cls.look.head as HeadGear,
-    headColor: cls.look.trim,
+    skin: cl.skin,
+    hair: cl.hair,
+    head: cl.head as HeadGear,
+    headColor: cl.hat ?? cl.trim,
     body: 'shirt',
-    bodyColor: cls.look.shirt,
-    trim: cls.look.trim,
-    legsColor: cls.look.legs,
+    bodyColor: cl.shirt,
+    trim: cl.trim,
+    legsColor: cl.legs,
   };
+  if (cl.hairStyle) look.hairStyle = cl.hairStyle as HairStyle;
+  if (cl.beard) look.beard = cl.beard as Beard;
+  if (cl.belt) look.belt = cl.belt;
+  if (cl.emblem) look.emblem = cl.emblem as Emblem;
+  if (look.head === 'hood') look.headStyle = c.classId === 'occultist' ? 'deep' : 'ranger';
+  if (c.classId === 'occultist') look.eyeGlow = '#b06bff';
+  // armor pieces: the set's base look from armor.ts, the fantasy dressing from armorLooks.ts
   const head = c.equipment.head && parseArmorBase(c.equipment.head.baseId);
   if (head?.set) {
-    look.head = head.set.look.head as HeadGear;
+    look.head = (HEAD_OVERRIDE[head.set.id] ?? head.set.look.head) as HeadGear;
     look.headColor = head.set.look.color;
+    look.headTrim = head.set.look.trim;
+    delete look.headStyle;
+    delete look.eyeGlow;
+    Object.assign(look, ARMOR_LOOKS[head.set.id]?.head);
   }
   const body = c.equipment.body && parseArmorBase(c.equipment.body.baseId);
   if (body?.set) {
     look.body = body.set.look.body as BodyGear;
     look.bodyColor = body.set.look.color;
     look.trim = body.set.look.trim;
+    delete look.belt;
+    delete look.emblem;
+    Object.assign(look, ARMOR_LOOKS[body.set.id]?.body);
   }
   const legs = c.equipment.legs && parseArmorBase(c.equipment.legs.baseId);
-  if (legs && !legs.set) look.body = c.equipment.body ? look.body : 'loincloth';
-  else if (legs?.set) look.legsColor = shade(legs.set.look.color, 0.8);
+  if (legs && !legs.set) {
+    look.body = c.equipment.body ? look.body : 'loincloth';
+    look.legs = 'bare';
+  } else if (legs?.set) {
+    look.legsColor = shade(legs.set.look.color, 0.8);
+    Object.assign(look, ARMOR_LOOKS[legs.set.id]?.legs);
+  }
   if (c.classId === 'nobody' && !c.equipment.body) look.body = 'loincloth';
   return look;
 }
@@ -119,10 +143,44 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     ctx.restore();
   }
   if (pl.parryUntil > now) glow(ctx, x + Math.cos(e.facing) * 16, y + Math.sin(e.facing) * 16, 20, '#ffffff', 0.7);
+  // hands: the main hand orbits the body with the swing so the arm carries the blade; the off hand holds
+  // the shield (raised when blocking), the staff (thrust forward while casting) or the second weapon
+  const f = e.facing;
+  const rot = !pl.combo && two && !pl.blocking && !isPairedWeapon(wDraw) ? 1.0 : pose.rot;
+  const ha = f + 0.9 + (rot - 0.7) * 0.55;
+  const wa = f + rot;
+  const main: HandPose | undefined = ghost
+    ? undefined
+    : {
+        x: Math.cos(ha) * 10 + Math.cos(wa) * pose.ext,
+        y: Math.sin(ha) * 10 + 2 + Math.sin(wa) * pose.ext,
+        a: wa,
+        draw: (c) => drawWeapon(c, wDraw, charging),
+      };
+  let off: HandPose | undefined;
+  // paired weapons (twin daggers/axes): one-handed shows only the main-hand blade plus the usual off-hand
+  // item; two-handed shows both blades and never a shield or staff
+  const paired = isPairedWeapon(wDraw);
+  const dual = paired && two;
+  if (!ghost && dual) {
+    off = { x: Math.cos(f - 0.9) * 10, y: Math.sin(f - 0.9) * 10 + 2, a: f - pose.rot * 0.8, draw: (c) => drawWeapon(c, wDraw, 0) };
+  } else if (!ghost && !two) {
+    const blockLayer: 'front' | 'back' = Math.sin(f) < -0.35 ? 'back' : 'front';
+    if (shield) {
+      const side = pl.blocking ? 0.15 : -1.1;
+      off = { x: Math.cos(f + side) * 13, y: Math.sin(f + side) * 13 + 2, a: f, hold: 'shield', draw: (c) => drawShield(c, shield.draw), ...(pl.blocking ? { layer: blockLayer } : {}) };
+    } else if (tool) {
+      const cast = pl.state === 'cast' && pl.action ? Math.min(1, pl.action.t / Math.max(0.05, pl.action.castS) + 0.4) : 0;
+      const side = -1.1 + 0.7 * cast;
+      const rad = 13 + 2 * cast;
+      off = { x: Math.cos(f + side) * rad, y: Math.sin(f + side) * rad + 2, a: f - 0.4 + 0.32 * cast, draw: (c) => drawTool(c, tool.draw, now) };
+    }
+  }
+  const drink = pl.state === 'flask' ? Math.max(0.01, Math.min(1, 1 - (pl.stateUntil - now) / FLASK_DRINK_S)) : 0;
   drawJoe(ctx, look, {
     x,
     y,
-    facing: e.facing,
+    facing: f,
     t: e.anim.t + now,
     moving: (e.anim as { moving?: number }).moving ?? 0,
     squash: e.anim.squash,
@@ -131,38 +189,11 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     alpha: (ghost ? 0.55 : dodge ? 0.75 : 1) * e.anim.alpha,
     ghost,
     scale: e.anim.scale,
-    twoHanded: two,
+    twoHanded: two && !dual,
     blocking: pl.blocking,
-    drawWeapon: (c) => {
-      if (ghost) return;
-      c.save();
-      const a = e.facing + pose.rot;
-      const hx = Math.cos(e.facing + 0.9) * 10;
-      const hy = Math.sin(e.facing + 0.9) * 10 + 2;
-      c.translate(hx + Math.cos(a) * pose.ext, hy + Math.sin(a) * pose.ext);
-      c.rotate(a);
-      drawWeapon(c, wDraw, charging);
-      blob(c, 0, 0, 4.5, 4.5, { fill: look.skin, outlineW: 2 });
-      c.restore();
-      if (isPairedWeapon(wDraw)) {
-        c.save();
-        const a2 = e.facing - pose.rot * 0.8;
-        c.translate(Math.cos(e.facing - 0.9) * 10, Math.sin(e.facing - 0.9) * 10 + 2);
-        c.rotate(a2);
-        drawWeapon(c, wDraw, 0);
-        c.restore();
-      }
-    },
-    drawOffhand: (c) => {
-      if (ghost) return;
-      c.save();
-      const side = pl.blocking ? 0.15 : -1.1;
-      c.translate(Math.cos(e.facing + side) * 13, Math.sin(e.facing + side) * 13 + 2);
-      c.rotate(e.facing + (shield ? 0 : -0.4));
-      if (shield) drawShield(c, shield.draw);
-      else if (tool) drawTool(c, tool.draw, now);
-      c.restore();
-    },
+    ...(main ? { main } : {}),
+    ...(off ? { off } : {}),
+    ...(drink > 0 && !ghost ? { drink } : {}),
   });
   // slash arc: the swing drawn as a fading wedge while the hit is live (ART_AUDIO §4)
   const sw = pl.combo;

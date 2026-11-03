@@ -1,6 +1,6 @@
 // The Abyss roster draw functions (void black, violet, white, deep purple). The floor is near-black, so
 // every body carries a violet rim, a pale face or a glow to keep its silhouette readable.
-import { OUTLINE, blob, eyes, glow, limb, poly, shade, shadow, spec, withAlpha } from '../parts';
+import { OUTLINE, blob, eyes, glow, limb, poly, shadow, spec, withAlpha } from '../parts';
 import { DEFAULT_LOOK, drawJoe, type JoeLook } from '../players';
 import { fc, registerDraw, type DrawState } from '../registry';
 import { drawWeapon, isPairedWeapon } from '../weapons';
@@ -25,6 +25,7 @@ const HOLLOW_LOOK: JoeLook = {
   legsColor: '#46434e',
   trim: '#87838f',
   headColor: '#77737f',
+  lids: true,
 };
 /** weaponPick order: longsword, club, twin daggers, spear (one per spawn variant) */
 const HOLLOW_WEAPONS = ['w_longsword', 'w_club', 'w_daggers', 'w_spear'];
@@ -81,25 +82,7 @@ registerDraw('abyss_hollow_joe', (ctx, s) => {
       }
     },
   });
-  if (s.flash) return;
-  // heavy eyelids (same transform as drawJoe's head)
-  const sq = s.squash;
-  const fx = Math.cos(s.facing);
-  const fy = Math.sin(s.facing);
-  ctx.save();
-  ctx.translate(s.x, s.y + Math.sin(tSlow * 12) * 1.6 * s.moving);
-  ctx.scale(sc * (1 - sq * 0.12), sc * (1 + sq * 0.12));
-  const hx = fx * 2;
-  const hy = -14 + fy * 1.5 - 1;
-  ctx.fillStyle = shade(HOLLOW_LOOK.skin, 0.7);
-  for (const side of [1, -1]) {
-    const ex = hx - fy * 3.6 * side + fx * 2.4;
-    const ey = hy + fx * 3.6 * side + fy * 2.4;
-    ctx.beginPath();
-    ctx.arc(ex, ey + 0.2, 2.3, Math.PI, TAU);
-    ctx.fill();
-  }
-  ctx.restore();
+  // heavy eyelids: HOLLOW_LOOK.lids, drawn by drawJoe on the face
 });
 
 // ---------------------------------------------------------------- Void Mote: a black core in a violet halo
