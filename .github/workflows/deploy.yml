@@ -29,6 +29,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          # the full history: the game version counts commits (vite.config.ts)
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: 24
