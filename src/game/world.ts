@@ -482,7 +482,7 @@ export interface Entity {
 export type GameEvent =
   | { t: 'sfx'; id: string; x?: number; vol?: number; rate?: number }
   | { t: 'fx'; kind: string; x: number; y: number; a?: number; color?: string; n?: number; r?: number; x2?: number; y2?: number }
-  | { t: 'dmg'; x: number; y: number; amount: number; type: DamageType; crit: boolean; toPlayer: boolean; heal?: boolean; targetId?: number }
+  | { t: 'dmg'; x: number; y: number; amount: number; type: DamageType; crit: boolean; toPlayer: boolean; heal?: boolean; targetId?: number; affinity?: 'weak' | 'resist' }
   | { t: 'shake'; amount: number }
   | { t: 'hitstop'; ms: number; ids: number[] }
   | { t: 'msg'; text: string; forPlayer?: string | undefined; color?: string }

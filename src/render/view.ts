@@ -74,6 +74,8 @@ export class WorldView {
             grav: 60,
             text: `${ev.heal ? '+' : ''}${Math.max(1, Math.round(ev.amount))}${ev.crit ? '!' : ''}`,
           });
+          // the weakness chart (D81) says so out loud: a hit on a weakness or a resisted hit
+          if (ev.affinity) p.spawn(ev.x, ev.y - 16, 0, -55, 0.8, 12, ev.affinity === 'weak' ? '#ffe14a' : '#9a9aa6', 'text', { drag: 3, grav: 30, text: ev.affinity === 'weak' ? 'Weak!' : 'Resist' });
           break;
         case 'shake':
           this.shake = Math.min(18, Math.max(this.shake, ev.amount * st.video.shake));

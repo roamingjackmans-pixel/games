@@ -637,6 +637,8 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   const resist = en.def.resist;
   // the weakness chart (D81): the enemy's own type against each part of the hit
   const bodyType = enemyElement(en.def);
+  let biggest = 0;
+  let affinity: 'weak' | 'resist' | undefined;
   for (const t of DAMAGE_TYPES) {
     let amt = spec.dmg[t] ?? 0;
     if (amt <= 0) continue;
@@ -647,7 +649,12 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
     if ((t === 'holy' || t === 'void') && spec.undeadMult && (en.def.undead || en.def.zone === 8)) amt *= spec.undeadMult;
     // Sunder: skills ignore 30% of enemy defense (resistances)
     if (spec.isSkill && pl?.derived.powers.has('sunder') && r > 0) r *= 0.7;
-    amt *= Math.max(0, 1 - r) * affinityMult(t, bodyType);
+    const aff = affinityMult(t, bodyType);
+    amt *= Math.max(0, 1 - r) * aff;
+    if (amt > biggest) {
+      biggest = amt;
+      affinity = aff > 1 ? 'weak' : aff < 1 ? 'resist' : undefined;
+    }
     total += amt;
   }
   total *= mult;
@@ -670,7 +677,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   e.anim.flashUntil = now + 0.08;
   if (traits.revealedByHoly && (spec.dmg.holy ?? 0) > 0) en.revealedUntil = now + traits.revealedByHoly;
   const shown = total;
-  w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius - 4, amount: shown, type: dominantTypeOf(spec), crit, toPlayer: false, targetId: e.id });
+  w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius - 4, amount: shown, type: dominantTypeOf(spec), crit, toPlayer: false, targetId: e.id, ...(affinity ? { affinity } : {}) });
   w.sfx(en.def.hitSound ?? 'hitFlesh', e.x, 0.8, 0.9 + (w.tick % 5) * 0.04);
   w.fx('hit', e.x, e.y, { color: typeColor(dominantTypeOf(spec)), n: crit ? 14 : 7, a: Math.atan2(e.y - fromY, e.x - fromX) });
 

@@ -14,6 +14,12 @@ import { newCharacter } from '../../src/game/player/character';
 import { makeItem } from '../../src/game/items/make';
 import { itemRequirements } from '../../src/game/items/bases';
 import { Rng } from '../../src/engine/rng';
+import { World } from '../../src/game/world';
+import { Room } from '../../src/game/room';
+import { spawnPlayer, weaponSpec } from '../../src/game/player/player';
+import { spawnEnemy } from '../../src/game/enemies/spawn';
+import { hitEnemy } from '../../src/game/combat/damage';
+import { installRules } from '../../src/game/rules';
 
 describe('five damage types and the weakness chart (D80, D81)', () => {
   it('has exactly physical, magic, void, fire, holy', () => {
@@ -42,6 +48,33 @@ describe('five damage types and the weakness chart (D80, D81)', () => {
     expect(enemyElement(ENEMIES.frost_knight!)).toBe('magic');
     const forge = Object.values(ENEMIES).filter((d) => d.zone === 5 && !d.special);
     expect(forge.some((d) => enemyElement(d) === 'fire')).toBe(true);
+  });
+});
+
+describe('the chart in a real hit (D81)', () => {
+  it('a Void maul hits a Fire enemy for ×1.5 and a Holy one for ×0.6, and says so', () => {
+    const w = new World('CHART', Room.empty());
+    installRules(w, {});
+    const c = newCharacter('knight', 'Joe', 'p1', new Rng(4));
+    c.equipment.main = makeItem('hollow_maul', 'common', 1);
+    const p = spawnPlayer(w, c, 0, true, 300, 368);
+    const fire = spawnEnemy(w, ENEMIES.pyromancer!, 600, 368, { tellS: 0 });
+    const holy = spawnEnemy(w, ENEMIES.choir_acolyte!, 700, 368, { tellS: 0 });
+    const phys = spawnEnemy(w, ENEMIES.shambler!, 800, 368, { tellS: 0 });
+    for (const e of [fire, holy, phys]) {
+      e.hp!.max = e.hp!.hp = 1e6;
+      e.en!.state = 'idle';
+    }
+    const spec = weaponSpec(w, p, 1);
+    expect(spec.dmg.void).toBeGreaterThan(0);
+    expect(spec.dmg.physical ?? 0).toBe(0);
+    const dFire = hitEnemy(w, p, fire, weaponSpec(w, p, 1), p.x, p.y);
+    const dHoly = hitEnemy(w, p, holy, weaponSpec(w, p, 1), p.x, p.y);
+    const dPhys = hitEnemy(w, p, phys, weaponSpec(w, p, 1), p.x, p.y);
+    expect(dFire / dPhys).toBeCloseTo(1.5, 1);
+    expect(dHoly / dPhys).toBeCloseTo(0.6, 1);
+    const tags = w.events.filter((ev) => ev.t === 'dmg').map((ev) => (ev as { affinity?: string }).affinity ?? '-');
+    expect(tags).toEqual(['weak', 'resist', '-']);
   });
 });
 
