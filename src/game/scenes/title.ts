@@ -568,7 +568,8 @@ export class TitleScene implements Scene {
         g.rotate(facing + 0.7);
         drawWeapon(g, wDraw, 0);
         g.restore();
-        if (isPairedWeapon(wDraw)) {
+        // the second blade only when dual-wielding (two-handed), as in the game; a one-handed Duelist holds the shield there (D141)
+        if (isPairedWeapon(wDraw) && cls.twoHanded) {
           g.save();
           g.translate(Math.cos(facing - 0.9) * 10, Math.sin(facing - 0.9) * 10 + 2);
           g.rotate(facing - 0.6);
@@ -577,10 +578,11 @@ export class TitleScene implements Scene {
         }
       },
       drawOffhand: (g) => {
-        if (!off) return;
+        if (!off || cls.twoHanded) return;
         g.save();
         g.translate(Math.cos(facing - 1.1) * 13, Math.sin(facing - 1.1) * 13 + 2);
-        g.rotate(facing);
+        // a shield stands upright, leaning a touch toward the facing, as in the game (D113, D141); a tool turns with Joe
+        g.rotate(SHIELDS[off] ? Math.cos(facing) * 0.18 : facing);
         if (SHIELDS[off]) drawShield(g, SHIELDS[off]!.draw);
         else if (CASTING_TOOLS[off]) drawTool(g, CASTING_TOOLS[off]!.draw, this.t);
         g.restore();
