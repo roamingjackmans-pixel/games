@@ -88,6 +88,7 @@ export function pollMenuPad(input: InputManager, now: number): void {
     const tabs = [...scope.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]')].filter((t) => t.offsetParent !== null && !t.disabled);
     const cur = tabs.findIndex((t) => t.classList.contains('on'));
     const next = tabs[cur + step];
+    input.swallowPadButton(btnIdx);
     if (cur < 0 || !next) continue;
     next.click();
     // after the menu's own redraw has put the focus back
@@ -99,9 +100,13 @@ export function pollMenuPad(input: InputManager, now: number): void {
   const mp = menuButtons();
   if (input.padButtonEdge(mp.confirm)) {
     const el = document.activeElement as HTMLElement | null;
+    // the game must not also take this press (A is Interact) when the menu closes under it (D147)
+    input.swallowPadButton(mp.confirm);
     if (el && scope.contains(el)) el.click();
   }
   if (input.padButtonEdge(mp.back)) {
+    // B is Dodge in play: closing a menu with it must not dodge as well; it dodges again after a fresh press (D147)
+    input.swallowPadButton(mp.back);
     // a full press (down and up): a lone keydown left Escape "held", so B only ever backed out once
     window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' }));
     window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Escape', key: 'Escape' }));

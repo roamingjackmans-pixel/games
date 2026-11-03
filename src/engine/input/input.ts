@@ -448,6 +448,22 @@ export class InputManager {
   padButtonEdge(i: number): boolean {
     return this.padDown.has(i) && !this.padPrev.has(i);
   }
+  /**
+   * A menu used this pad button (confirm, back, a tab bumper): the game must not see the same press (B closing a
+   * menu used to dodge as it closed), so the button is ignored until it is released and pressed again (D147).
+   */
+  swallowPadButton(i: number): void {
+    this.padSwallow.add(i);
+    this.padDown.delete(i);
+    for (const b of [i, HOLD + i]) {
+      this.padEdge.delete(b);
+      this.padLocalEdge.delete(b);
+    }
+    this.padTaps.delete(i);
+    this.padLocalTaps.delete(i);
+    this.padHoldStart.delete(i);
+    this.padHoldFired.delete(i);
+  }
   /** the right stick, dead-zoned (menus scroll with it) */
   padRightStick(): [number, number] {
     return [this.padAim[0], this.padAim[1]];

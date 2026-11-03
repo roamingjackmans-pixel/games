@@ -5,7 +5,8 @@ import { ENEMIES } from '../../data/enemies';
 import { ROLE_STATS, SHARD_SCALE, zoneShardFactor } from '../../data/roles';
 import { enemyShardMult, levelCostRange } from '../combat/formulas';
 
-export const EXPECTED_LEVEL = [1, 12, 22, 32, 42, 52, 62, 72, 80];
+// zone 1 ends near level 10 and zone 2 near 20 since the first twenty levels cost more (D147); was 12 and 22
+export const EXPECTED_LEVEL = [1, 10, 20, 32, 42, 52, 62, 72, 80];
 
 export function zoneShardYield(z: number, seeds = 100, factor = zoneShardFactor(z)): number {
   let tot = 0;

@@ -152,9 +152,15 @@ export function damageAfterDefense(incoming: number, def: number): number {
   return (incoming * 100) / (100 + Math.max(0, def));
 }
 
-/** cost(L) = floor(60 × 1.045^L + 15 L) Shards to go from L to L+1 */
+/**
+ * cost(L) = floor((60 × 1.045^L + 15 L) × early(L)) Shards to go from L to L+1. early(L) makes the first twenty levels
+ * dearer (D147): ×1.6 at level 1, easing in a straight line to ×1 at level 21 and after.
+ */
+export const EARLY_LEVEL_SURCHARGE = 0.6;
+export const EARLY_LEVEL_END = 21;
 export function levelCost(level: number): number {
-  return Math.floor(60 * Math.pow(1.045, level) + 15 * level);
+  const early = 1 + EARLY_LEVEL_SURCHARGE * Math.max(0, (EARLY_LEVEL_END - level) / (EARLY_LEVEL_END - 1));
+  return Math.floor((60 * Math.pow(1.045, level) + 15 * level) * early);
 }
 export function levelCostRange(from: number, to: number): number {
   let total = 0;

@@ -69,9 +69,11 @@ describe('formulas (GAME_DESIGN §3)', () => {
     const fast = weaponDamage(40, 1, { bonk: '-', slicey: 'S' }, { bonk: 5, slicey: 20 }, false, 1);
     expect(weaponDamage(40, 1, { bonk: '-', slicey: 'S' }, { bonk: 5, slicey: 20 }, true, 1)).toBeCloseTo(fast, 6);
   });
-  it('level cost curve matches the documented points', () => {
-    expect(levelCost(1)).toBe(77);
-    expect(levelCost(10)).toBe(243);
+  it('level cost curve matches the documented points (the first twenty levels dearer, D147)', () => {
+    expect(levelCost(1)).toBe(124);
+    expect(levelCost(10)).toBe(323);
+    expect(levelCost(20)).toBe(458);
+    expect(levelCost(21)).toBe(466); // the surcharge is gone from level 21
     expect(levelCost(30)).toBe(674);
     expect(levelCost(50)).toBe(1291); // floor; the doc rounded to 1292
     expect(levelCost(80)).toBe(3229); // floor; the doc rounded to 3228

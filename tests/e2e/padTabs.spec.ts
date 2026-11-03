@@ -68,3 +68,50 @@ test('LB / RB switch tabs; left / right stay inside the tab content (D145)', asy
   expect(await activeTab(page)).toBe('items');
   expect(errors).toEqual([]);
 });
+
+test('closing a menu with B does not dodge; the next press of B does (D147)', async ({ page }) => {
+  await page.goto('./?new&class=knight&seed=PADB&nocut');
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __dj?: { scenes: { current?: { name: string } } } }).__dj?.scenes.current?.name ?? ''), { timeout: 10000 }).toBe('run');
+  const setBtn = (i: number, down: boolean): Promise<void> =>
+    page.evaluate(
+      async ([b, d]) => {
+        const path = '/games/dungeonjoe/src/engine/input/virtualPad.ts';
+        const vp = (await import(/* @vite-ignore */ path)) as VPad;
+        vp.setVirtualPadActive(true);
+        vp.setVirtualButton(b as number, d as boolean);
+      },
+      [i, down],
+    );
+  const dodges = (): Promise<number> =>
+    page.evaluate(() => {
+      const w = window as unknown as { __dodges?: number; __dj: { scenes: { current: { session: { localPlayer: { pl: { state: string } } } } } } };
+      return w.__dodges ?? 0;
+    });
+  // count every frame Joe is in his dodge
+  await page.evaluate(() => {
+    const w = window as unknown as { __dodges?: number; __dj: { scenes: { current: { session: { localPlayer: { pl: { state: string } } } } } } };
+    w.__dodges = 0;
+    const tick = (): void => {
+      if (w.__dj.scenes.current.session.localPlayer.pl.state === 'dodge') w.__dodges! += 1;
+      requestAnimationFrame(tick);
+    };
+    tick();
+  });
+  // Menu opens the pause menu
+  await setBtn(9, true);
+  await page.waitForTimeout(100);
+  await setBtn(9, false);
+  await expect(page.locator('#overlay .layer .panel')).toHaveCount(1);
+  // B closes it and stays held: no dodge
+  await setBtn(1, true);
+  await expect(page.locator('#overlay .layer .panel')).toHaveCount(0);
+  await page.waitForTimeout(600);
+  expect(await dodges()).toBe(0);
+  await setBtn(1, false);
+  await page.waitForTimeout(150);
+  // a fresh press dodges
+  await setBtn(1, true);
+  await page.waitForTimeout(120);
+  await setBtn(1, false);
+  await expect.poll(dodges, { timeout: 2000 }).toBeGreaterThan(0);
+});
