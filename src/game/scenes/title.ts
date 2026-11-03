@@ -503,9 +503,8 @@ export class TitleScene implements Scene {
       delete look.eyeGlow;
     }
     const cls = CLASSES[p.classId];
-    // a slow turn on the spot, lingering a little on the front so the face reads
-    const turn = this.t * 0.75;
-    const facing = Math.PI / 2 + turn - Math.sin(turn) * 0.45;
+    // stands still facing you, turned a touch to the side so the gear in both hands shows (no more spinning)
+    const facing = Math.PI / 2 - 0.3;
     const wDraw = WEAPONS[cls.start.main]?.draw ?? 'w_fists';
     const off = cls.start.off;
     drawJoe(ctx, look, {
@@ -513,7 +512,7 @@ export class TitleScene implements Scene {
       y: H / 2 + 30,
       facing,
       t: this.t,
-      moving: 0.45,
+      moving: 0,
       scale: 3.1,
       twoHanded: !!cls.twoHanded && !isPairedWeapon(wDraw),
       drawWeapon: (g) => {
