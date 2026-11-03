@@ -1,18 +1,188 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Games — josephjackman.com</title>
-    <link rel="icon" type="image/svg+xml" href="./dungeonjoe/favicon.svg" />
-  </head>
-  <body style="margin:0;min-height:100vh;background:#14121a;color:#efe6d2;font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center">
-    <main style="text-align:center;padding:24px">
-      <h1 style="font-size:40px;margin:0 0 8px">Games</h1>
-      <p style="color:#a59c8a;margin:0 0 28px">Browser games by Joseph Jackman.</p>
-      <a href="./dungeonjoe/" style="display:inline-block;padding:16px 28px;border:2px solid #e6b84a;border-radius:10px;color:#efe6d2;text-decoration:none;font-size:22px;background:#2a2218">
-        Dungeon Joe<br /><span style="font-size:14px;color:#a59c8a">A souls-like with four-player online co-op</span>
-      </a>
-    </main>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Games | josephjackman.com</title>
+<!-- The games are only for people who have this address: keep the page out of search results. -->
+<meta name="robots" content="noindex">
+<meta name="description" content="Browser games by Joseph Jackman: Alt Whisker Wars, The Infinite Hive, Horse Race, The Deck, Lieage, Roleplay20 and Dungeon Joe.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #2b1d3a;
+    --bg-2: #43295c;
+    --card: #fff8ee;
+    --ink: #3a2a48;
+    --muted: #7a6a88;
+    --accent: #ff6fa3;
+    --accent-dark: #d94c82;
+    --gold: #ffcf5a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    font-family: 'Fredoka', system-ui, sans-serif;
+    color: var(--card);
+    background: radial-gradient(ellipse at top, var(--bg-2), var(--bg) 70%);
+  }
+  .site { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #cdb8e6; margin: 0 0 20px; }
+  .site a { color: inherit; text-decoration: none; }
+  .card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 28px;
+    padding: 32px 28px 28px;
+    text-align: center;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+  }
+  .hero { font-size: 72px; line-height: 1; margin-bottom: 8px; }
+  .hero span { display: inline-block; animation: bob 2.4s ease-in-out infinite; }
+  .hero span:nth-child(2) { animation-delay: .3s; }
+  .hero span:nth-child(3) { animation-delay: .6s; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  h1 { font-size: 40px; margin: 6px 0 4px; font-weight: 700; }
+  .tag { color: var(--muted); font-size: 17px; margin: 0 0 24px; line-height: 1.4; }
+  .play {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 22px;
+    padding: 14px 40px;
+    border-radius: 999px;
+    box-shadow: 0 5px 0 var(--accent-dark);
+    transition: transform .1s, box-shadow .1s;
+  }
+  .play:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--accent-dark); }
+  .play:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-dark); }
+  ul { list-style: none; padding: 0; margin: 24px 0 0; text-align: left; font-size: 15px; color: var(--muted); }
+  li { padding: 6px 0; border-top: 1px dashed #e6d9ca; }
+  li b { color: var(--ink); font-weight: 600; }
+  footer { margin-top: 20px; font-size: 13px; color: #a893c0; }
+  /* the game cards: side by side when there's room, stacked on phones */
+  .games { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 24px; width: 100%; }
+  .games .card { flex: 1 1 340px; display: flex; flex-direction: column; align-items: center; }
+  .games .card ul { width: 100%; }
+  .games .card .tag { flex: 1 0 auto; }   /* longer taglines push nothing out of line: the buttons stay level */
+  .games .card .hero { align-self: stretch; white-space: nowrap; font-size: clamp(52px, 17vw, 72px); }   /* three emoji, one row */
+  .alt .play { background: #1fb4c4; box-shadow: 0 5px 0 #13808c; }
+  .alt .play:hover { box-shadow: 0 7px 0 #13808c; }
+  .alt .play:active { box-shadow: 0 2px 0 #13808c; }
+  .hive .play { background: #ffb120; color: #3a2405; box-shadow: 0 5px 0 #c27c0e; }
+  .hive .play:hover { box-shadow: 0 7px 0 #c27c0e; }
+  .hive .play:active { box-shadow: 0 2px 0 #c27c0e; }
+  .race .play { background: #1f9a48; box-shadow: 0 5px 0 #13652f; }
+  .race .play:hover { box-shadow: 0 7px 0 #13652f; }
+  .race .play:active { box-shadow: 0 2px 0 #13652f; }
+  .deck .play { background: #428bca; box-shadow: 0 5px 0 #2a5f93; }
+  .deck .play:hover { box-shadow: 0 7px 0 #2a5f93; }
+  .deck .play:active { box-shadow: 0 2px 0 #2a5f93; }
+  .lie .play { background: #8a4dff; box-shadow: 0 5px 0 #5e2fc0; }
+  .lie .play:hover { box-shadow: 0 7px 0 #5e2fc0; }
+  .lie .play:active { box-shadow: 0 2px 0 #5e2fc0; }
+  .rp20 .play { background: #b8322a; box-shadow: 0 5px 0 #7e1f19; }
+  .rp20 .play:hover { box-shadow: 0 7px 0 #7e1f19; }
+  .rp20 .play:active { box-shadow: 0 2px 0 #7e1f19; }
+  .dj .play { background: #2e2519; color: #f0c75e; box-shadow: 0 5px 0 #0f0c08; }
+  .dj .play:hover { box-shadow: 0 7px 0 #0f0c08; }
+  .dj .play:active { box-shadow: 0 2px 0 #0f0c08; }
+  @media (prefers-reduced-motion: reduce) { .hero span { animation: none; } }
+</style>
+</head>
+<body>
+  <p class="site"><a href="/">josephjackman.com</a></p>
+  <main class="games">
+    <section class="card alt">
+      <div class="hero" aria-hidden="true"><span>🙀</span><span>❓</span><span>⭐</span></div>
+      <h1>Alt Whisker Wars</h1>
+      <p class="tag">Real-time cat kingdom battles with hidden armies: you can't see what's inside enemy buildings, so spy, guess and keep your army's morale up.</p>
+      <a class="play" href="altwhiskerwars/">Play now</a>
+      <ul>
+        <li><b>12 cat heroes</b>, each with 4 skills you level up with fish</li>
+        <li><b>Purr Power</b> morale that makes or breaks your army</li>
+        <li><b>Interactive tutorial</b> to learn it in one battle</li>
+      </ul>
+    </section>
+    <section class="card hive">
+      <div class="hero" aria-hidden="true"><span>🐝</span><span>🍯</span><span>🌌</span></div>
+      <h1>The Infinite Hive</h1>
+      <p class="tag">An incremental game. Grow one backyard hive into a swarm that covers the Earth, then the galaxy.</p>
+      <a class="play" href="infinitehive/">Play now</a>
+      <ul>
+        <li><b>Three phases</b>: backyard, planet, galaxy</li>
+        <li><b>Real-time space battles</b>, a casino and a stock exchange</li>
+        <li><b>Saves in your browser</b>, no sign-up</li>
+      </ul>
+    </section>
+    <section class="card race">
+      <div class="hero" aria-hidden="true"><span>🏇</span><span>🪙</span><span>💥</span></div>
+      <h1>Horse Race</h1>
+      <p class="tag">A silly betting party game. Back ridiculous horses with your friends, then dish out penalties when you win.</p>
+      <a class="play" href="horserace/">Play now</a>
+      <ul>
+        <li><b>Online with friends</b>: share a 5-number code, no sign-up</li>
+        <li><b>200 silly horse names</b>, and the first to pick one can rename it</li>
+        <li><b>Boosts, setbacks</b> and penalty attacks</li>
+      </ul>
+    </section>
+    <section class="card deck">
+      <div class="hero" aria-hidden="true"><span>🃏</span><span>🍻</span><span>🎉</span></div>
+      <h1>The Deck</h1>
+      <p class="tag">A drinking card game for parties. Draw cards on your own phone, then show them, pass them on or keep them.</p>
+      <a class="play" href="thedeck/">Play now</a>
+      <ul>
+        <li><b>Online with friends</b>: share a 5-number code, no sign-up</li>
+        <li><b>Play cards any time</b>, even when it isn't your turn</li>
+        <li><b>The host picks</b> which cards are in</li>
+      </ul>
+    </section>
+    <section class="card lie">
+      <div class="hero" aria-hidden="true"><span>🤥</span><span>📺</span><span>🔍</span></div>
+      <h1>Lieage</h1>
+      <p class="tag">A bluffing trivia party game. Put it on a big screen, write believable lies on your phone, and try to spot the strange-but-true answer.</p>
+      <a class="play" href="lieage/">Play now</a>
+      <ul>
+        <li><b>The big screen is the game</b>, everyone plays on their phone</li>
+        <li><b>480 real but strange facts</b> in eight categories</li>
+        <li><b>2 to 10 players</b>: share a 5-number code, no sign-up</li>
+      </ul>
+    </section>
+    <section class="card rp20">
+      <div class="hero" aria-hidden="true"><span>🐉</span><span>🎲</span><span>📜</span></div>
+      <h1>Roleplay20</h1>
+      <p class="tag">Dungeons &amp; Dragons with Claude as your Dungeon Master. A private table for our group: password and invite only.</p>
+      <a class="play" href="roleplay20/">Enter the tavern</a>
+      <ul>
+        <li><b>An AI Dungeon Master</b> that narrates, voices every NPC and runs the monsters</li>
+        <li><b>Battle maps with fog of war</b>: you only see what your character can see</li>
+        <li><b>Character sheets that roll</b>, track your spells and level up</li>
+      </ul>
+    </section>
+    <section class="card dj">
+      <div class="hero" aria-hidden="true"><span>🗡️</span><span>🔥</span><span>💀</span></div>
+      <h1>Dungeon Joe</h1>
+      <p class="tag">A souls-like dungeon crawler with the pace of Hades. Rest at bonfires, dodge what you can't block, and take down the bosses alone or with friends.</p>
+      <a class="play" href="dungeonjoe/">Play now</a>
+      <ul>
+        <li><b>Four-player online co-op</b>: share a room code to join</li>
+        <li><b>Ten classes</b>, and weapons with three cooldown skills each</li>
+        <li><b>Eight zones, eight bosses</b>, then New Game+</li>
+      </ul>
+    </section>
+  </main>
+  <footer>Play in any desktop or phone browser</footer>
+</body>
 </html>

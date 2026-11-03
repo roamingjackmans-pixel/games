@@ -1,0 +1,18 @@
+{
+  "owner": "roamingjackmans-pixel",
+  "games": [
+    {
+      "folder": "altwhiskerwars",
+      "repo": "altwhiskerwars",
+      "publish": "public",
+      "fullHistory": true,
+      "replace": [{ "file": "public/config.js", "from": "server: 'auto'", "to": "server: 'p2p'" }],
+      "stamp": true
+    },
+    { "folder": "infinitehive", "local": "deploy/infinitehive" },
+    { "folder": "horserace", "repo": "horserace", "publish": "public", "stamp": true },
+    { "folder": "thedeck", "repo": "thedeck", "publish": "public", "stamp": true },
+    { "folder": "lieage", "repo": "lieage", "publish": "public", "stamp": true },
+    { "folder": "roleplay20", "repo": "roleplay20", "publish": "site" }
+  ]
+}
