@@ -335,6 +335,8 @@ export interface RoomSync {
   zone: number;
   tiles: string;
   overlay: string;
+  /** hazardous terrain (PROCGEN §3.2), only when the room has any */
+  terrain?: string;
   doors: Record<string, { exists: boolean; open: boolean; locked: boolean }>;
   hazardKind: string;
   rotFloor: { x: number; y: number; rIn: number; rOut: number; speed: number } | null;
@@ -362,7 +364,7 @@ export function roomSync(w: World, nodeId: string, kind: string, zone: number, v
   const r = w.room;
   const doors: RoomSync['doors'] = {};
   for (const s of ['n', 's', 'e', 'w'] as const) doors[s] = { exists: r.doors[s].exists, open: r.doors[s].open, locked: r.doors[s].locked };
-  return { key: `${r.id}`, version: r.version, kind, nodeId, zone, tiles: toB64(r.tiles), overlay: toB64(r.overlay), doors, hazardKind: r.hazardKind, rotFloor: r.rotFloor ? { ...r.rotFloor } : null, movers: r.movers.map((m) => ({ ...m })), visited: [...visited], cleared: [...cleared] };
+  return { key: `${r.id}`, version: r.version, kind, nodeId, zone, tiles: toB64(r.tiles), overlay: toB64(r.overlay), ...(r.terrain.some((v) => v !== 0) ? { terrain: toB64(r.terrain) } : {}), doors, hazardKind: r.hazardKind, rotFloor: r.rotFloor ? { ...r.rotFloor } : null, movers: r.movers.map((m) => ({ ...m })), visited: [...visited], cleared: [...cleared] };
 }
 
 // ---------------------------------------------------------------- the guest's own HUD state

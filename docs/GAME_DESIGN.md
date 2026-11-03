@@ -183,6 +183,17 @@ attacks go toward the nearest enemy within 160 px of the facing cone, otherwise 
 - Logical arena 1280 × 720 px. Player walk speed 260 px/s (modified by Chill, Haste, class perks).
 - Twin-stick. Melee swings are centered on the aim direction. Projectiles and spells go to the cursor.
 - Aim assist (gamepad): within ±14° of an enemy the aim snaps to it for projectiles.
+- **Hazardous terrain** (PROCGEN §3.2): about a third of combat rooms have 1–3 patches on open floor, themed per
+  zone and outlined so they never read as plain floor.
+  - **Slow** (heavy and gooey: grave mud with bones, spore sludge, sewage slime, bramble roots, cooling slag, snow
+    drifts, clockwork grease with gears, void tar): **−35% walking speed** while your centre is on it, players and
+    walking enemies alike (fliers skim over it; bosses never meet it). One multiplier, never stacked. The **dodge
+    is untouched**: it is forced motion and keeps its full distance and speed through the patch (so are leaps,
+    dashes and knockbacks).
+  - **Hurt** (flickering danger: ghostly grave-fire, acid, toxic bubbling, thorns, ember cracks, frost spikes,
+    sparking plates, void crackle): players standing in it take **3% of max HP every 0.5 s** (a steady beat; the
+    first hit lands on entry), with a hit flash and a soft hit sound. A dodge's i-frames skip a tick, so rolling
+    across a patch is free. Enemies take nothing (it is their dungeon) and path straight through.
 
 ### 5.2 Attacks
 

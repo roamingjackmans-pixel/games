@@ -7,6 +7,7 @@ import { updateStatuses } from './systems/statuses';
 import { updateTelegraphs } from './systems/telegraphs';
 import { updateProjectiles } from './systems/projectiles';
 import { updateHazards } from './systems/hazards';
+import { updateTerrain } from './systems/terrain';
 import './wire';
 import type { World } from './world';
 
@@ -27,6 +28,7 @@ export function stepWorld(w: World, dt = SIM_DT): void {
   updateTelegraphs(w, dt);
   updateProjectiles(w, dt);
   updateHazards(w, dt);
+  updateTerrain(w);
   if (w.scheduled.length) {
     const due = w.scheduled.filter((x) => x.at <= w.time);
     if (due.length) {

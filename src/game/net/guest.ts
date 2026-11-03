@@ -9,6 +9,7 @@ import { spawnEnemy } from '../enemies/spawn';
 import { refreshDerived, spawnPlayer } from '../player/player';
 import { generateZone, type ZoneLayout } from '../procgen/zone';
 import { Room } from '../room';
+import { terrainWalkMult } from '../systems/terrain';
 import { World, type Entity, type EType } from '../world';
 import { applyCharOp, cloneChar, type CharOp } from './charSync';
 import { CH, INTERP_DELAY_S, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
@@ -236,6 +237,7 @@ export class NetGuest {
   private applyRoom(r: RoomSync): void {
     const room = new Room(fromB64(r.tiles));
     room.overlay = fromB64(r.overlay);
+    if (r.terrain) room.terrain = fromB64(r.terrain);
     room.id = r.key;
     room.hazardKind = r.hazardKind;
     room.rotFloor = r.rotFloor;
@@ -406,7 +408,11 @@ export class NetGuest {
     let py = s.y;
     if (s.speed > 0) {
       const probe = { ...e, x: px, y: py };
-      for (const p of this.pending) this.cw.room.moveCircle(probe, p.mx * s.speed * p.dt, p.my * s.speed * p.dt);
+      for (const p of this.pending) {
+        // Slow terrain is applied where each step starts, as the host does (the host's speed leaves it out)
+        const sp = s.speed * terrainWalkMult(this.cw.room, probe.x, probe.y);
+        this.cw.room.moveCircle(probe, p.mx * sp * p.dt, p.my * sp * p.dt);
+      }
       px = probe.x;
       py = probe.y;
     }
@@ -466,7 +472,8 @@ export class NetGuest {
       if (speed > 0) {
         this.pending.push({ seq: this.seq, dt, mx: input.moveX, my: input.moveY });
         if (this.pending.length > 120) this.pending.shift();
-        this.cw.room.moveCircle(me, input.moveX * speed * dt, input.moveY * speed * dt);
+        const sp = speed * terrainWalkMult(this.cw.room, me.x, me.y);
+        this.cw.room.moveCircle(me, input.moveX * sp * dt, input.moveY * sp * dt);
         const k = Math.min(1, dt / 0.1);
         me.x += this.correction.x * k;
         me.y += this.correction.y * k;

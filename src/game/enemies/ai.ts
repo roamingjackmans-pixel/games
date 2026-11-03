@@ -7,6 +7,7 @@ import { hasControl, speedMult } from '../combat/state';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, ROOM_CX, ROOM_CY } from '../combat/patterns';
 import { runEffects } from '../effects/run';
 import { spawnHazard } from '../systems/hazards';
+import { terrainWalkMult } from '../systems/terrain';
 import { patternAllowed, ringReachable, startEnemyAttack, teleportAway, updateEnemyAttack } from './attacks';
 import { phasePassive, tickBossPassive } from '../boss/passive';
 import { stepToward } from './pathing';
@@ -135,6 +136,8 @@ function moveSpeed(w: World, e: Entity): number {
   const en = e.en!;
   let s = en.speed * speedMult(e, w);
   if (w.roomMods.enrageUntil > w.time) s *= 1.15;
+  // Slow terrain (PROCGEN §3.2) bogs walkers down too; fliers and phasing ghosts skim over it
+  if (!en.isBoss) s *= terrainWalkMult(w.room, e.x, e.y, e.flying || !!en.def.traits?.phasesThroughProps);
   if (en.isBoss) s *= (en.def as unknown as { phases: { speedMult: number }[] }).phases[en.phase]?.speedMult ?? 1;
   return s;
 }

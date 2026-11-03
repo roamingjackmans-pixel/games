@@ -23,6 +23,15 @@ export const T = {
 /** Room.overlay values: Void (the platform shrank) and Collapsed (fallen away for a while) read as T.Void; Crumbling is still floor, about to fall. */
 export const OVERLAY = { None: 0, Void: 1, Collapsed: 2, Crumbling: 3 } as const;
 
+/**
+ * Room.terrain values (hazardous terrain patches, PROCGEN §3.2): Slow (grave mud, sludge, snow…: −35% walking,
+ * never the dodge) and Hurt (grave-fire, acid, frost spikes…: a small hit every 0.5 s). A layer over plain floor,
+ * fixed at generation and separate from the zone's '~' hazard tiles.
+ */
+export const TERRAIN = { None: 0, Slow: 1, Hurt: 2 } as const;
+/** walking speed multiplier on Slow terrain (−35%) */
+export const TERRAIN_SLOW_MULT = 0.65;
+
 export type Side = 'n' | 's' | 'e' | 'w';
 
 export interface DoorInfo {
@@ -96,6 +105,8 @@ export class Room {
   hazardKind = 'water';
   /** extra void tiles over the template (OVERLAY: a shrunk platform, a temporary collapse, a crumbling edge) */
   overlay: Uint8Array;
+  /** hazardous terrain patches over plain floor (TERRAIN), fixed at generation */
+  terrain: Uint8Array;
   /** rotating floor ring (Tock): center, inner/outer radius, speed in px/s along the ring (sign = direction) */
   rotFloor: { x: number; y: number; rIn: number; rOut: number; speed: number } | null = null;
   /** moving floors a boss phase started (ArenaChange 'movingFloor', D95): rings and conveyor belts */
@@ -108,6 +119,7 @@ export class Room {
   constructor(tiles?: Uint8Array) {
     this.tiles = tiles ?? new Uint8Array(ROOM_W * ROOM_H);
     this.overlay = new Uint8Array(ROOM_W * ROOM_H);
+    this.terrain = new Uint8Array(ROOM_W * ROOM_H);
     this.doors = {
       n: { side: 'n', exists: false, open: false, locked: false },
       s: { side: 's', exists: false, open: false, locked: false },
@@ -188,6 +200,17 @@ export class Room {
 
   isHazardAt(x: number, y: number): boolean {
     return this.tileAt(x, y) === T.Hazard;
+  }
+
+  /** The hazardous terrain (TERRAIN) under a world point (none where the floor has fallen away). */
+  terrainAt(x: number, y: number): number {
+    const tx = Math.floor(x / TILE);
+    const ty = Math.floor((y - ROOM_Y0) / TILE);
+    if (tx < 0 || ty < 0 || tx >= ROOM_W || ty >= ROOM_H) return TERRAIN.None;
+    const i = ty * ROOM_W + tx;
+    const o = this.overlay[i];
+    if (o === OVERLAY.Void || o === OVERLAY.Collapsed) return TERRAIN.None;
+    return this.terrain[i]!;
   }
 
   isGrateAt(x: number, y: number): boolean {

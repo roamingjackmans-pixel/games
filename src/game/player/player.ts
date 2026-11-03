@@ -6,6 +6,7 @@ import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
 import { flaskHeal, STAMINA_COST_MULT } from '../combat/formulas';
 import { addRevive, applyControl, cleanse, emptySpec, ffVictims, heal, hitAlly, hitEnemy, rawDamage, typeColor } from '../combat/damage';
 import { buffSum, hasControl, speedMult } from '../combat/state';
+import { terrainWalkMult } from '../systems/terrain';
 import { computeDerived } from './derived';
 import { tryCastSpell, tryUseConsumable, tryUseSkill, updatePlayerAction } from '../skills/use';
 import type { Character, DamageType, SwingDef } from '../types';
@@ -92,6 +93,7 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     link: null,
     attached: [],
     timeSlow: 1,
+    terrainHurtAt: 0,
     pastPos: [],
     shardsGained: 0,
     inBossRoom: false,
@@ -713,6 +715,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     // swinging slows you down instead of rooting you; heavier weapon classes slow you more (D88)
     if (pl.state === 'attack') speed *= ATTACK_MOVE[pl.derived.weapon.speedClass] ?? 0.4;
     if (pl.blocking) speed *= 0.75;
+    // Slow terrain (PROCGEN §3.2): walking only; the dodge above is untouched
+    speed *= terrainWalkMult(w.room, e.x, e.y);
     const ix = inp.moveX;
     const iy = inp.moveY;
     mv = Math.min(1, Math.hypot(ix, iy));

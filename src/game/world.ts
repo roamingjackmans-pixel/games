@@ -188,6 +188,8 @@ export interface PlayerC {
   link: { otherId: number; until: number; split: number } | null;
   attached: number[];
   timeSlow: number;
+  /** next time Hurt terrain may hit this player (PROCGEN §3.2: every 0.5 s while standing in it) */
+  terrainHurtAt: number;
   pastPos: { t: number; x: number; y: number }[];
   shardsGained: number;
   inBossRoom: boolean;

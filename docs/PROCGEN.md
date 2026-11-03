@@ -57,6 +57,24 @@ Special rooms have their own fixed layouts: treasure (a dais with the chest, 2 p
 shrine, candles, no enemies), merchant (Gary's cart, a rug), bonfire rooms (the camp stove, no
 hazards), boss arenas (one per boss, CONTENT_ENEMIES §11).
 
+### 3.2 Hazardous terrain
+
+A layer over plain floor (`Room.terrain`, `procgen/terrain.ts`), separate from the template's `~` tiles.
+**35%** of combat and ambush rooms roll it from their own stream `terrain:<zone>:<cycle>:<room>` (about 33% end
+up with some: a cramped room may have no room for it). Such a room gets **1–3 organic patches** (9–20 tiles
+each, grown as round blobs from a random seed tile), each patch **Slow** or **Hurt** (50/50).
+
+- Only on `.` floor whose 8 neighbours are floor or grate: never on or touching walls, pillars, props, pits,
+  void, `~` tiles or doors, so a patch never narrows a passage. Never within 3 tiles of a door, never on or next to
+  a spawn point, a chest spot or the room's centre (where a chest without a C spot stands).
+- Patches keep a 1-tile gap from each other; total coverage **≤ 8%** of the room's floor (average about 5%).
+- After each patch, a flood fill checks that a **terrain-free walkable route** still joins every open door,
+  spawn point and chest spot; a patch that breaks one is dropped and another seed tried.
+- Never in boss arenas, the Training Hall, the Instructor's room, start/anteroom bonfire rooms, treasure,
+  reliquary or merchant rooms.
+- Deterministic; the host also sends it in the room sync (`RoomSync.terrain`, base64, only when present).
+  Effects and look: GAME_DESIGN §5.1, ART_AUDIO-style themes in `src/render/terrain.ts`.
+
 ## 4. Enemy mix and waves
 
 **Mix picker** (per zone, from `rooms:<zone>` stream): choose 4 of the zone's 8 types such that the set has
