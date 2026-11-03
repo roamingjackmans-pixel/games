@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 // pause, then reload and continue the same character from its save.
 
 type DJ = {
-  scenes: { current?: { name: string; session?: { node: { kind: string }; localPlayer: { x: number; y: number }; save: { character: { name: string; classId: string } } } } };
+  scenes: { current?: { name: string; session?: { node: { kind: string }; localPlayer: { x: number; y: number }; save: { character: { name: string; classId: string; appearance?: { legR: string } } } } } };
 };
 
 async function scene(p: Page): Promise<string> {
@@ -18,6 +18,8 @@ test('create a character, play the tutorial hall, pause, save and continue after
   await expect(page.getByTestId('title')).toBeVisible();
   await page.getByRole('button', { name: 'New character' }).click();
   await page.getByRole('button', { name: 'Cleric' }).click();
+  // a peg leg from the appearance panel
+  await page.getByRole('button', { name: 'Next right leg' }).click();
   const name = page.getByTestId('create-name');
   await name.fill('E2E Joe');
   await page.getByRole('button', { name: 'Start' }).click();
@@ -31,7 +33,8 @@ test('create a character, play the tutorial hall, pause, save and continue after
     p.y = 368;
   });
   await page.keyboard.down('KeyD');
-  await expect.poll(where, { timeout: 8000 }).toBe('start');
+  // the hall's exit leads to The Instructor's room (beat him or walk past him)
+  await expect.poll(where, { timeout: 8000 }).toBe('trial');
   await page.keyboard.up('KeyD');
   // pause opens and closes
   await page.keyboard.press('KeyP');
@@ -46,7 +49,9 @@ test('create a character, play the tutorial hall, pause, save and continue after
   const who = await page.evaluate(() => (window as unknown as { __dj: DJ }).__dj.scenes.current!.session!.save.character);
   expect(who.name).toBe('E2E Joe');
   expect(who.classId).toBe('cleric');
-  expect(await where()).toBe('start');
+  expect(who.appearance?.legR).toBe('peg');
+  // the Training Hall is not finished until The Instructor is passed: Continue starts back in the hall
+  expect(await where()).toBe('tutorial');
   expect(errors).toEqual([]);
 });
 
