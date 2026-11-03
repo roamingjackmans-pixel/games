@@ -177,5 +177,7 @@ export function appIcons() {
     'icons/icon-maskable-192.png': encodePng(192, renderIcon(192, true)),
     'icons/icon-maskable-512.png': encodePng(512, renderIcon(512, true)),
     'icons/apple-touch-icon.png': encodePng(180, renderIcon(180, true)),
+    // for Steam's Properties icon box: Steam does not copy an installed app's icon by itself (D138)
+    'icons/DungeonJoe.ico': iconIco(),
   };
 }

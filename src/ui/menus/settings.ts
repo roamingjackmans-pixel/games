@@ -563,7 +563,21 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
           'ol',
           { class: 'download-steps' },
           h('li', null, h('b', null, 'Install. '), 'Click Install Dungeon Joe above, then Install in the box your browser shows (or follow the steps it gives you).'),
-          h('li', null, h('b', null, 'Add it to Steam. '), 'In Steam: Games → Add a Non-Steam Game to My Library… Dungeon Joe is in the list with its name and icon: tick it → Add Selected Programs.'),
+          h('li', null, h('b', null, 'Add it to Steam. '), 'In Steam: Games → Add a Non-Steam Game to My Library… Dungeon Joe is in the list by name: tick it → Add Selected Programs.'),
+          h(
+            'li',
+            null,
+            h('b', null, 'Give it its icon in Steam. '),
+            'Steam does not copy the icon by itself (D138): ',
+            h('a', { href: `${import.meta.env.BASE_URL}icons/DungeonJoe.ico`, download: 'DungeonJoe.ico', 'data-testid': 'download-icon' }, 'download DungeonJoe.ico'),
+            ', then in your Library right-click Dungeon Joe → Properties → click the blank icon square → choose the file.',
+          ),
+          h(
+            'li',
+            null,
+            h('b', null, 'Steam opens an empty Chrome? '),
+            'Steam kept Chrome but dropped which app to open (D138). Press the Windows key, type Dungeon Joe, choose Open file location, right-click the shortcut → Properties, and copy everything in Target after chrome_proxy.exe" (it starts with --profile-directory and ends with --app-id=…). In Steam, right-click Dungeon Joe → Properties and paste it into Launch Options.',
+          ),
           h('li', null, h('b', null, 'Play. '), 'Start it from Steam, the Start menu or the desktop. F11 switches full screen.'),
         ),
       );

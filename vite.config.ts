@@ -44,7 +44,7 @@ function appIconsPlugin(): Plugin {
         if (!path.startsWith(base + 'icons/')) return next();
         const png = all()[path.slice(base.length)];
         if (!png) return next();
-        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Type', path.endsWith('.ico') ? 'image/x-icon' : 'image/png');
         res.end(png);
       });
     },
