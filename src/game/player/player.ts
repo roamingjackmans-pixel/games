@@ -219,7 +219,8 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   const spec = emptySpec('player');
   spec.dmg = dmg;
   spec.status = d.statusBuild.map((s) => ({ ...s }));
-  spec.poiseDmg = d.weapon.poiseDmg * (opts.poiseMult ?? 1);
+  // harder swings (combo finishers, charged shots, skills) hit poise harder in proportion (D78)
+  spec.poiseDmg = d.weapon.poiseDmg * Math.max(1, mult) * (opts.poiseMult ?? 1);
   spec.isSkill = !!opts.skill;
   spec.reviveValue = d.weapon.reviveValue + d.reviveBonus;
   spec.ignoreFrontGuard = !!(d.weapon.ignoreFrontGuard || opts.ignoreFrontGuard);

@@ -10,7 +10,16 @@ import { affixText } from '../data/affixes';
 import { armorPieceDefense, parseArmorBase } from '../data/armor';
 import { baseInfo, itemRequirements, meetsRequirements } from '../game/items/bases';
 import { itemSellValue } from '../game/items/inventory';
-import { scalingMult, skillsUnlocked, tierName, toolMult, weaponBase } from '../game/combat/formulas';
+import { poiseForSize, scalingMult, skillsUnlocked, tierName, toolMult, weaponBase } from '../game/combat/formulas';
+
+/** What one hit of this poise damage staggers out of an attack (D78), by body size. */
+function staggerReach(p: number): string {
+  if (p >= poiseForSize(33)) return 'one hit staggers even brutes';
+  if (p >= poiseForSize(26)) return 'one hit staggers knights and smaller';
+  if (p >= poiseForSize(17)) return 'one hit staggers most small foes';
+  if (p >= poiseForSize(9)) return 'one hit staggers only swarms and the smallest';
+  return 'too light to stagger';
+}
 import { drawShield, drawTool, drawWeapon } from '../engine/draw/weapons';
 import { OUTLINE, blob, poly } from '../engine/draw/parts';
 import { DAMAGE_TYPES, type Character, type Gem, type Item, type Stats } from '../game/types';
@@ -58,6 +67,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null = nul
     lines.push(h('div', null, `${tierName(item.ilvl)} · ${w.name} · ${w.speedClass.replace('very', 'very ')}`));
     const dmg = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, c.stats, twoH) * (meets ? 1 : 0.4);
     lines.push(h('div', null, `Damage ${Math.round(dmg)}${w.holyPct ? ` (${Math.round(w.holyPct * 100)}% Holy)` : ''} · Scaling Bonk ${w.grades.bonk} / Slicey ${w.grades.slicey}`));
+    lines.push(h('div', { class: 'small' }, `Poise damage ${w.poiseDmg} · ${staggerReach(w.poiseDmg)}`));
     lines.push(h('div', { class: 'small' }, ...w.skills.map((sid, i) => h('span', { class: i < n ? '' : 'dim-text', style: i < n ? '' : 'text-decoration:line-through' }, `${['Q', 'E', 'R'][i]} ${SKILLS[sid]?.name ?? sid}${i < 2 ? ' · ' : ''}`))));
   }
   const s = SHIELDS[item.baseId];

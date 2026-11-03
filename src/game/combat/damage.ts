@@ -704,15 +704,22 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
       }
     }
   }
-  // Ghost revive scoring handled by the attack system; poise and stagger:
+  // Poise and stagger (D78). An enemy's poise comes from its size. One hit staggers it, cancelling the attack it
+  // is making, only when that hit's poise damage reaches its poise: a greathammer staggers a brute, daggers
+  // only stagger rats. Bosses instead have a poise pool that hits wear down (and that regenerates).
   if (!en.isBoss || spec.poiseDmg > 0) {
     let poise = spec.poiseDmg * (en.isBoss ? (spec.bossPoiseMult ?? 1) : 1);
     if (attacker) poise *= 1 + buffSum(attacker, 'poiseDamagePct', now);
     if (pl) poise *= pl.derived.poiseDmgMult;
-    hp.poise -= poise;
-    hp.poiseRegenAt = now + 3;
-    const hyper = (en.def.hyperArmor || en.attack?.def.hyperArmor) && en.attack && en.attack.phase !== 'recover';
-    if ((hp.poise <= 0 || spec.guaranteedStagger) && !hyper && !traits.noFlinch) {
+    // hyper armor (heavy swings): a boss cannot be staggered out of it; anyone else's poise counts double
+    const hyper = !!(en.def.hyperArmor || en.attack?.def.hyperArmor) && !!en.attack && en.attack.phase !== 'recover';
+    let broken: boolean;
+    if (en.isBoss) {
+      hp.poise -= poise;
+      hp.poiseRegenAt = now + 3;
+      broken = hp.poise <= 0 && !hyper;
+    } else broken = poise > 0 && poise >= hp.poiseMax * (hyper ? 2 : 1);
+    if ((broken || (spec.guaranteedStagger && !hyper)) && !traits.noFlinch) {
       const heavy = o.heavy ?? false;
       hp.poise = hp.poiseMax;
       interrupt(w, e, en.isBoss ? 1.2 : heavy ? 0.9 : 0.6);

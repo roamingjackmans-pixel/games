@@ -347,9 +347,15 @@ re-evaluated every 1.5 s. Fodder spread out across targets.
 
 ### 6.3 Poise and stagger
 
-Enemies have **poise**. Each hit subtracts the weapon's poise damage; at 0 the enemy staggers (0.6 s,
-heavier weapons 0.9 s) and poise resets after 3 s of no hits. Brutes, tanks and bosses have high poise;
-fodder has none (every hit staggers).
+Every enemy has a **poise** stat set by its size (D78): poise = 0.05 × radius², so a rat (r 9) has 4, a
+skeleton (r 17) 14, a knight (r 24) 29, a brute (r 30) 45, and an Elite (30% bigger) about 70% more. A single
+hit **staggers** an enemy (0.6 s, heavy weapons 0.9 s), cancelling the attack it is winding up or swinging,
+only when that hit's poise damage reaches the enemy's poise. Hits do not add up: daggers (8) stagger only
+swarms, a longsword (25) skeletons and small knights, a greathammer (60) even brutes. Harder swings hit poise
+harder in proportion (combo finishers, charged shots, skills), and poise-damage affixes and buffs add on top.
+Hyper armor (a heavy enemy's own big swings) doubles its poise for that swing. Bosses instead have a large
+poise pool that hits wear down; it refills after 3 s without a hit, and their hyper-armor swings cannot be
+staggered. Weapon tooltips show poise damage and what one hit can stagger.
 
 ### 6.4 Elites (D21)
 

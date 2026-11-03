@@ -6,6 +6,8 @@ This file is the source for `src/data/enemies.ts` and `src/data/bosses.ts`.
 
 ## 1. Role base stats (zone 1, cycle 0, solo; scaled by GAME_DESIGN §2.3)
 
+Poise in this table is used only for bosses now; every other enemy's poise comes from its size (0.05 × radius², GAME_DESIGN §6.3, D78).
+
 | Role (enum id) | HP | Hit dmg | Move px/s | Poise | Shards | Drop chance | Size (radius px) |
 |---|---|---|---|---|---|---|---|
 | Fodder (`fodder`) | 60 | 18 | 150 | 0 | 20 | 18% | 18 |
@@ -43,7 +45,7 @@ Resist Frost 30%. Weak to Holy 30%, Fire 20%.
 | **Crypt Rat Swarm** | Swarm | 6 pieces orbit the target then dart | Nibble ×1.0 on contact, 0.4 s cd per piece | **Frenzy [RED]**: all pieces tint 0.6 s then lunge in sequence 0.15 s apart, 150 px each, ×1.0, cd 7 | **Scatter** (utility): when a piece is hit, the remaining pieces burst outward 120 px and re-engage (dodging through a swarm is not free) | Pieces cannot be parried. |
 | **Gravedigger** | Brute | slow walk, stops to swing | Shovel overhead: line(50, 90), windup 0.8 s, ×1.2, poise dmg high | **Dirt Toss [RED]**: cone(90°, 220), tint 0.6 s, ×0.9, applies Blind 1.5 s, cd 8 | **Grave Quake [PIERCE][AREA]**: expandingRing(300 px/s) from him to the walls with **2 gaps** (90 px) at random angles, 1.0 s telegraph, ×1.0, cd 12 | Hyper armor on normal swing. |
 | **Will-o-Wisp** | Caster | hovers, erratic sine drift, keeps 250 px | Spark bolt: slow homing projectile 240 px/s, ×0.9, cd 2 | **Soul Flare [PIERCE]**: flies to the target, circle(130) telegraph 1.2 s, explodes ×1.6, then teleports away, cd 10 | **Blink**: teleports 300 px when hit twice in 1 s | Takes ×2 from Holy. Lights the room (useful in dark rooms). |
-| **Hollow Knight** | Tank | walks, holds shield toward target | Sword 3-hit combo: arcs 90°/90°/thrust, ×0.9/×0.9/×1.3 | **Shield Charge [RED]**: 0.6 s tint, charges 260 px line(60, 260), ×1.5, cd 9 | — | Front guard blocks 80% of player damage; flank, parry the combo, or stagger with Bonk weapons (poise 80). |
+| **Hollow Knight** | Tank | walks, holds shield toward target | Sword 3-hit combo: arcs 90°/90°/thrust, ×0.9/×0.9/×1.3 | **Shield Charge [RED]**: 0.6 s tint, charges 260 px line(60, 260), ×1.5, cd 9 | — | Front guard blocks 80% of player damage; flank, parry the combo, or stagger it with a longsword or anything heavier (poise 24 from its size, D78). |
 | **Ghoul Leaper** | Assassin | circles at 300 px then dashes | Double slash: 2 fast arcs ×0.8 each | **Pounce [RED]**: from up to 450 px, tint 0.6 s, leaps in 0.35 s, circle(60) on landing ×1.6, cd 7 | **Mist Step**: below 30% HP, vanishes 1.5 s and reappears behind the target | Bleed buildup 25 per hit. |
 | **Plague Bell** | Hazard-maker | stationary (floats 1 px) | Chime: ring(0, 90) around it, windup 0.5 s, ×0.6, cd 3 | **Toll [PIERCE][AREA]**: three expandingRing(220 px/s) spaced 1.2 s apart with 2 gaps of 90 px that rotate position; telegraph 1.0 s; ×0.8 each; cd 14 | **Raise Dead** (utility): resurrects one fallen non-elite enemy in the room at 50% HP (max 2 per room), 2 s channel (interruptible by any stagger) | Kill priority. "Rings for thee." |
 

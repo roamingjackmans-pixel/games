@@ -53,6 +53,15 @@ export function effBonk(bonk: number, twoHanded: boolean): number {
   return twoHanded ? Math.min(99, bonk * 1.5) : bonk;
 }
 
+/**
+ * An enemy's poise from its size (D78): bigger bodies take bigger hits to stagger. One hit staggers it out of
+ * whatever it is doing only if that hit's poise damage reaches this. r 9 (a rat) 4 · r 17 (a skeleton) 14 ·
+ * r 24 (a knight) 29 · r 30 (a brute) 45 · r 33 54; an Elite is 30% bigger, so about 70% sturdier.
+ */
+export function poiseForSize(radius: number): number {
+  return Math.round(0.05 * radius * radius);
+}
+
 /** Weapon base damage at an item level: base1 × (1 + 0.45 (ilvl − 1)) */
 export function weaponBase(base1: number, ilvl: number): number {
   return base1 * (1 + 0.45 * (ilvl - 1));
