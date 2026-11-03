@@ -15,7 +15,7 @@ import { CASTING_TOOLS } from '../data/castingTools';
 import { shapeHit } from '../game/combat/patterns';
 import { drawAttackIcon } from './telegraphs';
 import { ELEMENTS, enemyElement } from '../game/elements';
-import { drawElementOver, drawElementUnder } from './elementFx';
+import { drawElementOver, drawElementUnder, drawImmuneBorder } from './elementFx';
 import type { Character } from '../game/types';
 import type { Entity, World } from '../game/world';
 
@@ -365,6 +365,7 @@ export function drawEnemyEntity(ctx: CanvasRenderingContext2D, e: Entity, x: num
   drawElementUnder(ctx, e, x, y, now);
   drawById(ctx, e.drawId, enemyDrawState(e, x, y, now, pal));
   drawElementOver(ctx, e, x, y, now);
+  drawImmuneBorder(ctx, e, x, y, now);
   if (en.elite === 'arcane') {
     for (let i = 0; i < 3; i++) {
       const a = en.eliteOrbAngle + (i * Math.PI * 2) / 3;

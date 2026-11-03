@@ -32,6 +32,8 @@ export const F = {
   windRed: 4096,
   windPierce: 8192,
   stagger: 16384,
+  /** faded (immune) enemies: the gold border (D108) */
+  faded: 32768,
 } as const;
 
 export interface Rec {
@@ -91,6 +93,7 @@ export function recordOf(e: Entity, now: number): Rec {
     const en = e.en;
     state = Math.max(0, ENEMY_STATES.indexOf(en.state));
     if (en.phaseTransitionUntil > now) flags |= F.transition;
+    if (en.fadeUntil > now) flags |= F.faded;
     if (e.hp && e.hp.staggerUntil > now) flags |= F.stagger;
     const a = en.attack;
     if (a && a.phase === 'windup') {

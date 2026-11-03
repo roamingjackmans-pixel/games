@@ -97,3 +97,37 @@ export function drawElementOver(ctx: CanvasRenderingContext2D, e: Entity, x: num
     ctx.restore();
   }
 }
+
+const GOLD = '#ffd24a';
+
+/**
+ * Immune right now (faded, a boss's phase change, a moment of invulnerability): a pulsing gold border around the
+ * body, so it reads at a glance that hits will not land (D108). Spawning and decorative parts are left alone.
+ */
+export function drawImmuneBorder(ctx: CanvasRenderingContext2D, e: Entity, x: number, y: number, now: number): void {
+  const en = e.en;
+  if (!en || !e.hp || e.hp.dead || HIDDEN.has(en.state) || en.def.traits?.invulnerable) return;
+  const immune = en.fadeUntil > now || e.hp.invulnUntil > now || en.phaseTransitionUntil > now;
+  if (!immune) return;
+  const r = e.radius * (e.anim.scale || 1) + 6;
+  const pulse = 0.5 + 0.5 * Math.sin(now * 7 + e.id);
+  glow(ctx, x, y, r * 1.7, GOLD, 0.35 + pulse * 0.2);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(20,14,4,0.75)';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  // a bright glint travelling round the border
+  const a = now * 3 + e.id;
+  ctx.strokeStyle = '#fff6cf';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(x, y, r, a, a + 0.7);
+  ctx.stroke();
+  ctx.restore();
+}

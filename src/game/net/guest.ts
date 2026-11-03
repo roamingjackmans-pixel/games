@@ -335,6 +335,7 @@ export class NetGuest {
       en.state = ENEMY_STATES[r.state] ?? 'alert';
       en.phase = r.extra;
       en.phaseTransitionUntil = r.flags & F.transition ? t + 0.3 : 0;
+      en.fadeUntil = r.flags & F.faded ? t + 0.2 : 0;
       const k = r.extra2 / 1000;
       en.spawnedAt = t - k;
       en.spawnUntil = t + (1 - k);
