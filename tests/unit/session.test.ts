@@ -316,3 +316,32 @@ describe('The Instructor walks the whole room (D110)', () => {
     expect(inst.hp!.hp).toBeLessThanOrEqual(inst.hp!.max * 0.8);
   });
 });
+
+describe('Training Hall terrain stations (D126)', () => {
+  it('has a slow and a hurt patch in the bottom half, and walking onto each checks its station off', async () => {
+    const { TERRAIN, ROOM_W, tileCenter } = await import('../../src/game/room');
+    const ch = newCharacter('knight', 'Joe', 'p1', new Rng('tut-terrain'));
+    ch.tutorialDone = false;
+    const s = new GameSession(newSave(1, ch, 'TUT-TERRAIN'));
+    s.start();
+    expect(s.node.kind).toBe('tutorial');
+    const t = s.w.room.terrain;
+    const tiles = (k: number): number[] => [...t.keys()].filter((i) => t[i] === k);
+    const slow = tiles(TERRAIN.Slow);
+    const hurt = tiles(TERRAIN.Hurt);
+    expect(slow.length).toBeGreaterThan(8);
+    expect(hurt.length).toBeGreaterThan(8);
+    for (const i of [...slow, ...hurt]) expect(Math.floor(i / ROOM_W)).toBeGreaterThanOrEqual(12);
+    const p = s.localPlayer!;
+    const go = (i: number): void => {
+      const [x, y] = tileCenter(i % ROOM_W, Math.floor(i / ROOM_W));
+      p.x = x;
+      p.y = y;
+      for (let k = 0; k < 3; k++) stepWorld(s.w);
+    };
+    go(slow[Math.floor(slow.length / 2)]!);
+    expect(s.tutorialDone('slowTerrain')).toBe(true);
+    go(hurt[Math.floor(hurt.length / 2)]!);
+    expect(s.tutorialDone('hurtTerrain')).toBe(true);
+  });
+});

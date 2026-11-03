@@ -10,7 +10,7 @@ import { TUTORIAL_STATIONS } from '../data/rooms/special';
 import { zoneDef } from '../data/zones';
 import { gemColor, gemKindLabel, gemTitle } from '../data/gems';
 import { World, type Entity } from './world';
-import { entryPoint, OPPOSITE, type Side } from './room';
+import { entryPoint, OPPOSITE, ROOM_W, T, TERRAIN, worldToTile, type Side } from './room';
 import { generateZone, neighbourId, type RoomNode, type ZoneLayout } from './procgen/zone';
 import { buildRoom, type RoomMarkers } from './procgen/rooms';
 import { planRoom, roomCountMult, type RoomPlan } from './procgen/waves';
@@ -1219,6 +1219,17 @@ export class GameSession {
       e.en!.shards = 0;
       tut.dummy[d.kind] = e.id;
     }
+    // the hazardous-terrain stations stand over a patch of each kind (D126)
+    for (const st of m.stations) {
+      if (st.n !== 10 && st.n !== 11) continue;
+      const kind = st.n === 10 ? TERRAIN.Slow : TERRAIN.Hurt;
+      const [ctx, cty] = worldToTile(st.x, st.y + 150);
+      for (let ty = cty - 2; ty <= cty + 2; ty++)
+        for (let tx = ctx - 3; tx <= ctx + 3; tx++) {
+          if (Math.hypot((tx - ctx) / 3.2, (ty - cty) / 2.2) > 1) continue;
+          if (w.room.get(tx, ty) === T.Floor) w.room.terrain[ty * ROOM_W + tx] = kind;
+        }
+    }
     for (const st of m.stations) {
       const s = TUTORIAL_STATIONS.find((x) => x.n === st.n);
       if (!s) continue;
@@ -1260,6 +1271,10 @@ export class GameSession {
     if (a && a.hp && a.hp.hp < a.hp.max) this.goal('attack');
     if (p.pl!.char.twoHanded !== (p.pl!.char.classId === 'brute')) this.goal('twoHand');
     if (p.pl!.state === 'flask') this.goal('flask');
+    // the hazardous-terrain stations: walk through the slow patch, take a bite from the hurt one (D126)
+    const ground = w.room.terrainAt(p.x, p.y);
+    if (ground === TERRAIN.Slow && p.pl!.state !== 'dodge') this.goal('slowTerrain');
+    if (ground === TERRAIN.Hurt && p.pl!.state !== 'dodge') this.goal('hurtTerrain');
     // Red stomp: dodged if the dummy's stomp lands while Joe is inside and takes nothing
     for (const tele of w.entities.values()) {
       if (tele.type !== 'telegraph' || !tele.tg || tele.tg.fired) continue;

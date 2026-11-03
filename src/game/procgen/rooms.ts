@@ -92,6 +92,8 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
       else if (ch === 'I') m.instructor = c;
       else if (ch === 'E') m.exit = c;
       else if (ch >= '0' && ch <= '9') m.stations.push({ n: ch === '0' ? 10 : Number(ch), x: c[0], y: c[1] });
+      // the Training Hall's hazardous-terrain stations (D126): j = 10, k = 11
+      else if (ch === 'j' || ch === 'k') m.stations.push({ n: ch === 'j' ? 10 : 11, x: c[0], y: c[1] });
       else if ('abcdfh'.includes(ch)) m.dummies.push({ kind: ch, x: c[0], y: c[1] });
       else if (ch === 'K') m.boss = c;
       else if (ch === 'H') m.stairs = c;

@@ -193,7 +193,7 @@ export const ROOM_TUTORIAL: RoomTemplate = {
     '#X.1..2...3....4..5....6....7....8.9...D',
     '#.....................................ED',
     '#......................................#',
-    '#P....................................P#',
+    '#P.........j...............k..........P#',
     '#P....................................P#',
     '#P....................................P#',
     '#P....................................P#',
@@ -241,7 +241,7 @@ export interface TutorialStation {
   n: number;
   sign: string;
   /** what completes the floor marker */
-  goal: 'move' | 'aim' | 'attack' | 'block' | 'parry' | 'dodgeRed' | 'escapePierce' | 'twoHand' | 'flask';
+  goal: 'move' | 'aim' | 'attack' | 'block' | 'parry' | 'dodgeRed' | 'escapePierce' | 'twoHand' | 'flask' | 'slowTerrain' | 'hurtTerrain';
 }
 
 export const TUTORIAL_STATIONS: TutorialStation[] = [
@@ -254,4 +254,6 @@ export const TUTORIAL_STATIONS: TutorialStation[] = [
   { n: 7, sign: 'BLUE attacks ignore dodging. Walk out of the drawn area before it lands.', goal: 'escapePierce' },
   { n: 8, sign: 'TWO-HAND with {twoHand}: your Bonk counts ×1.5 for damage and requirements; no shield, weapon guard only.', goal: 'twoHand' },
   { n: 9, sign: "DRINK from Joe's Thermos ({flask}). It refills when you die, or the first time you rest at a bonfire.", goal: 'flask' },
+  { n: 10, sign: 'SLOW GROUND: gooey patches cut your walking speed by 35%. A dodge ({dodge}) still crosses them at full distance.', goal: 'slowTerrain' },
+  { n: 11, sign: 'HURT GROUND: flickering patches bite every half second. Dodging across skips the bite. Step in, feel it, step out.', goal: 'hurtTerrain' },
 ];
