@@ -20,6 +20,7 @@ import { BroadcastTransport } from '../net/broadcast';
 import { joinTrystero } from '../net/trystero';
 import type { Transport } from '../net/transport';
 import type { SaveFile } from '../types';
+import { sanitizeAppearance } from '../../data/appearance';
 
 /** Scene factories set by main.ts (keeps the lobby free of run-scene imports). */
 export const lobbyHooks: {
@@ -105,6 +106,7 @@ export class LobbyScene implements Scene {
     players.forEach((p, i) => {
       const x = 380 + (i - (n - 1) / 2) * 150;
       const c = newCharacter(p.classId, p.name, p.playerId);
+      if (p.appearance) c.appearance = sanitizeAppearance(p.appearance, p.classId);
       drawJoe(ctx, lookFor(c), { x, y: 380 + Math.sin(this.t * 2 + i) * 3, facing: Math.PI / 2, t: this.t + i, moving: 0, scale: 2 });
       drawText(ctx, p.name, x, 470, { size: 16, weight: 'bold', align: 'center', color: p.host ? '#e6b84a' : '#efe6d2' });
       drawText(ctx, `${CLASSES[p.classId].name} · Lv ${p.level}${p.host ? ' · host' : ''}`, x, 490, { size: 12, align: 'center', color: '#a59c8a' });
@@ -116,7 +118,7 @@ export class LobbyScene implements Scene {
     if (this.host) return this.host.lobbyState().players;
     if (this.guest?.lobby) return this.guest.lobby.players;
     const c = this.save.character;
-    return [{ peerId: '', playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: this.o.role === 'host', cycle: c.cycle }];
+    return [{ peerId: '', playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: this.o.role === 'host', cycle: c.cycle, appearance: c.appearance }];
   }
 
   // ------------------------------------------------------------------ host

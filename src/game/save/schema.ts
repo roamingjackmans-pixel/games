@@ -1,6 +1,7 @@
 // Save files (DATA_MODEL §1): creation and a hand-written validator (import refuses bad files).
 import type { Character, SaveFile, WorldState } from '../types';
 import { CLASS_IDS } from '../../data/classes';
+import { sanitizeAppearance } from '../../data/appearance';
 
 export const SAVE_VERSION = 3;
 export const SLOT_COUNT = 10;
@@ -108,5 +109,7 @@ export function normalizeSave(s: SaveFile): SaveFile {
     if (ex && typeof ex === 'object' && !Array.isArray(ex)) for (const [k, v] of Object.entries(ex)) if (typeof v === 'number' && Number.isFinite(v) && v >= 0) clean[k] = v;
     s.stats.extra = clean;
   }
+  // optional: saves from before the character creator's appearance keep the class look
+  if (c.appearance !== undefined) c.appearance = sanitizeAppearance(c.appearance, c.classId);
   return s;
 }

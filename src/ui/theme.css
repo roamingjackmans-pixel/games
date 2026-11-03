@@ -117,6 +117,30 @@ input[type=range] { padding: 0; }
 .tooltip .tt-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
 .tooltip .tt-foot .flavor { margin: 0; }
 .tooltip .tt-foot .money { font-size: 14px; }
+/* character creator: the class card in the tooltip's stacked, aligned style; the appearance pickers */
+.cc { display: grid; grid-template-columns: 248px 300px 392px; gap: 18px; align-items: start; }
+.cc-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cc-classes { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.cc-classes button { text-align: center; }
+.cc-classes button.on { border-color: var(--accent); background: #3a3020; }
+.cc-name { font-size: 18px; font-weight: 600; }
+.cc-sec { color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
+.cc-rows { display: grid; grid-template-columns: max-content max-content max-content 1fr; column-gap: 7px; row-gap: 1px; padding-left: 12px; font-size: 13px; font-variant-numeric: tabular-nums; align-items: center; }
+.cc-rows .sep { color: var(--dim); }
+.cc-rows .val { text-align: right; }
+.cc-rows .wide { grid-column: 3 / -1; text-align: left; }
+.cc-rows .hint { color: var(--dim); font-size: 11px; }
+.cc-bar { height: 6px; border-radius: 3px; background: var(--bg3); overflow: hidden; min-width: 60px; }
+.cc-bar > i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.cc-ap { display: grid; grid-template-columns: 84px 1fr; column-gap: 8px; row-gap: 4px; align-items: center; font-size: 13px; }
+.cc-ap .lbl { color: var(--dim); }
+.cc-cyc { display: flex; align-items: center; gap: 4px; }
+.cc-cyc button { font-size: 12px; padding: 1px 7px; }
+.cc-cyc span { min-width: 92px; text-align: center; }
+.cc-sw { display: flex; flex-wrap: wrap; gap: 3px; }
+.cc-sw button { width: 20px; height: 20px; padding: 0; border-radius: 4px; border-width: 2px; }
+.cc-sw button.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.cc-sw button.none { background: repeating-linear-gradient(45deg, var(--bg3) 0 3px, var(--bg2) 3px 6px); }
 /* paper doll */
 .doll { position: relative; flex: none; }
 .doll-svg { position: absolute; left: 0; top: 0; pointer-events: none; }

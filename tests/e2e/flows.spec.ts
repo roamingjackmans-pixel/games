@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 // pause, then reload and continue the same character from its save.
 
 type DJ = {
-  scenes: { current?: { name: string; session?: { node: { kind: string }; localPlayer: { x: number; y: number }; save: { character: { name: string; classId: string } } } } };
+  scenes: { current?: { name: string; session?: { node: { kind: string }; localPlayer: { x: number; y: number }; save: { character: { name: string; classId: string; appearance?: { legR: string } } } } } };
 };
 
 async function scene(p: Page): Promise<string> {
@@ -18,6 +18,8 @@ test('create a character, play the tutorial hall, pause, save and continue after
   await expect(page.getByTestId('title')).toBeVisible();
   await page.getByRole('button', { name: 'New character' }).click();
   await page.getByRole('button', { name: 'Cleric' }).click();
+  // a peg leg from the appearance panel
+  await page.getByRole('button', { name: 'Next right leg' }).click();
   const name = page.getByTestId('create-name');
   await name.fill('E2E Joe');
   await page.getByRole('button', { name: 'Start' }).click();
@@ -67,6 +69,8 @@ test('create a character, play the tutorial hall, pause, save and continue after
   const who = await page.evaluate(() => (window as unknown as { __dj: DJ }).__dj.scenes.current!.session!.save.character);
   expect(who.name).toBe('E2E Joe');
   expect(who.classId).toBe('cleric');
+  expect(who.appearance?.legR).toBe('peg');
+  // Joe walked past The Instructor to the first bonfire: Continue resumes there, the hall behind him
   expect(await where()).toBe('start');
   expect(errors).toEqual([]);
 });

@@ -10,8 +10,17 @@ import { OUTLINE, glow, hexToRgb, mix, shade, shadow } from './parts';
 
 export type HeadGear = 'none' | 'hood' | 'helm' | 'greathelm' | 'cap' | 'wizard' | 'mitre' | 'horned' | 'bandana' | 'crown' | 'bowler';
 export type BodyGear = 'shirt' | 'leather' | 'chain' | 'plate' | 'robe' | 'cloak' | 'bathrobe' | 'loincloth' | 'suit';
-export type HairStyle = 'short' | 'messy' | 'bald' | 'long' | 'topknot' | 'braids' | 'mohawk' | 'slick';
-export type Beard = 'none' | 'stubble' | 'full' | 'goatee' | 'moustache' | 'braided';
+export type HairStyle = 'short' | 'messy' | 'bald' | 'long' | 'topknot' | 'braids' | 'mohawk' | 'slick' | 'curly' | 'spiky' | 'ponytail' | 'afro';
+export type Beard = 'none' | 'stubble' | 'full' | 'goatee' | 'moustache' | 'braided' | 'mutton' | 'long';
+// ---- the character creator's appearance options (Character.appearance, read by lookFor)
+export type EyeShape = 'dot' | 'round' | 'narrow' | 'sleepy' | 'glow';
+export type NoseShape = 'button' | 'big' | 'long' | 'hooked' | 'pointy' | 'red';
+export type Brows = 'normal' | 'thick' | 'angry' | 'worried' | 'mono' | 'none';
+export type FaceMark = 'none' | 'freckles' | 'rosy' | 'scar' | 'eyepatch' | 'warpaint' | 'rune';
+/** arm features: the forearm and hand of one side (a hook or a strapped mount still holds the weapon) */
+export type ArmFeature = 'none' | 'hook' | 'wooden' | 'clockwork' | 'missing' | 'bandaged' | 'tattoo';
+/** leg features: the shin and foot of one side (a peg still walks) */
+export type LegFeature = 'none' | 'peg' | 'clockwork' | 'bandaged';
 /** sub-style of the head type (cap: coif/mushroom/flaps/feather/goggles/cogcap; helm: kettle/shell/winged/finned/nasal;
  *  greathelm: bucket/great/grille/spiked; horned: horns/antlers; hood: pointed/cowl/deep/ranger; crown: gold/drowned;
  *  bandana: tied/mask) */
@@ -50,6 +59,17 @@ export interface JoeLook {
   beard?: Beard;
   /** heavy, tired eyelids (Hollow Joe) */
   lids?: boolean;
+  /** eye colour (default: plain dark dots) */
+  eyes?: string;
+  eyeShape?: EyeShape;
+  nose?: NoseShape;
+  brows?: Brows;
+  mark?: FaceMark;
+  /** left (off-hand) and right (weapon-hand) arm, left and right leg */
+  armL?: ArmFeature;
+  armR?: ArmFeature;
+  legL?: LegFeature;
+  legR?: LegFeature;
   // ---- head piece extras
   headStyle?: HeadStyle;
   /** band / rim / embroidery colour on the head piece (defaults to trim) */
@@ -402,6 +422,8 @@ interface ArmPlan {
   hy: number;
   pauldronInGroup: boolean;
   showHand: boolean;
+  /** the hand holds nothing (a missing arm shows its tied sleeve) */
+  free?: boolean;
 }
 interface Group {
   front: boolean;
@@ -445,7 +467,7 @@ function planArms(r: Rig, p: JoePose): Group[] {
   } else {
     const h = freeHand(r, 1);
     main.front = isFront(r, h.y, 1);
-    main.arms.push({ side: 1, sx: shR.x, sy: shR.y, hx: h.x, hy: h.y, pauldronInGroup: main.front || far(shR.depth), showHand: true });
+    main.arms.push({ side: 1, sx: shR.x, sy: shR.y, hx: h.x, hy: h.y, pauldronInGroup: main.front || far(shR.depth), showHand: true, free: true });
   }
   groups.push(main);
   // off hand
@@ -478,7 +500,7 @@ function planArms(r: Rig, p: JoePose): Group[] {
     } else {
       const h = freeHand(r, -1);
       off.front = isFront(r, h.y, -1);
-      off.arms.push({ side: -1, sx: shL.x, sy: shL.y, hx: h.x, hy: h.y, pauldronInGroup: off.front || far(shL.depth), showHand: true });
+      off.arms.push({ side: -1, sx: shL.x, sy: shL.y, hx: h.x, hy: h.y, pauldronInGroup: off.front || far(shL.depth), showHand: true, free: true });
     }
   }
   groups.push(off);
@@ -491,7 +513,7 @@ function drawGroup(r: Rig, g: Group, back: boolean): void {
     drawArm(r, a);
     if (a.pauldronInGroup || !back) pauldron(r, a);
   }
-  if (g.hold === 'shield') for (const a of g.arms) hand(r, a.hx, a.hy, a.hx - a.sx, a.hy - a.sy);
+  if (g.hold === 'shield') for (const a of g.arms) armHand(r, a);
   if (g.item?.draw) {
     c.save();
     c.translate(g.item.x, g.item.y);
@@ -504,7 +526,82 @@ function drawGroup(r: Rig, g: Group, back: boolean): void {
     c.restore();
   }
   if (g.thermos) thermos(r, g.thermos.x, g.thermos.y, g.thermos.a);
-  if (g.hold === 'grip') for (const a of g.arms) hand(r, a.hx, a.hy, a.hx - a.sx, a.hy - a.sy);
+  if (g.hold === 'grip') for (const a of g.arms) armHand(r, a);
+}
+
+function armHand(r: Rig, a: ArmPlan): void {
+  if (a.free && armFeat(r.L, a.side) === 'missing') return;
+  hand(r, a.hx, a.hy, a.hx - a.sx, a.hy - a.sy, a.side);
+}
+
+const armFeat = (L: JoeLook, side: 1 | -1): ArmFeature => (side === 1 ? L.armR : L.armL) ?? 'none';
+const legFeat = (L: JoeLook, side: 1 | -1): LegFeature => (side === 1 ? L.legR : L.legL) ?? 'none';
+const WOOD = '#a87a4a';
+const BRASS = '#c09a48';
+const WRAPS = '#e6dcc4';
+const INK = '#2c4f7a';
+
+/** marks along a forearm a→b: bandage turns, tattoo lines, clockwork rivets, wood grain */
+function forearmDetail(r: Rig, feat: ArmFeature, ex: number, ey: number, hx: number, hy: number): void {
+  const c = r.c;
+  const dx = hx - ex;
+  const dy = hy - ey;
+  const l = Math.hypot(dx, dy) || 1;
+  const nx = -dy / l;
+  const ny = dx / l;
+  switch (feat) {
+    case 'bandaged':
+      for (const k of [0.25, 0.5, 0.75]) {
+        const x = ex + dx * k;
+        const y = ey + dy * k;
+        line(c, x + nx * 2 - dx * 0.06, y + ny * 2 - dy * 0.06, x - nx * 2 + dx * 0.06, y - ny * 2 + dy * 0.06, S(r, WRAPS, 0.72), 0.8);
+      }
+      break;
+    case 'tattoo':
+      line(c, ex + dx * 0.25 + nx, ey + dy * 0.25 + ny, ex + dx * 0.45 - nx, ey + dy * 0.45 - ny, C(r, INK), 0.9);
+      line(c, ex + dx * 0.45 - nx, ey + dy * 0.45 - ny, ex + dx * 0.65 + nx, ey + dy * 0.65 + ny, C(r, INK), 0.9);
+      dot(c, ex + dx * 0.8, ey + dy * 0.8, 0.7, C(r, INK));
+      break;
+    case 'clockwork':
+      line(c, ex + dx * 0.2, ey + dy * 0.2, ex + dx * 0.8, ey + dy * 0.8, S(r, BRASS, 0.55), 1.1);
+      dot(c, ex, ey, 2.2, S(r, BRASS, 0.7));
+      dot(c, ex, ey, 0.9, C(r, '#3a2a14'));
+      dot(c, ex + dx * 0.55 + nx * 1.2, ey + dy * 0.55 + ny * 1.2, 0.55, C(r, '#fff1c0'));
+      break;
+    case 'wooden':
+    case 'missing':
+      line(c, ex + dx * 0.2 + nx * 0.6, ey + dy * 0.2 + ny * 0.6, ex + dx * 0.85 + nx * 0.4, ey + dy * 0.85 + ny * 0.4, S(r, WOOD, 0.68), 0.7);
+      // the leather strap where it meets the arm
+      line(c, ex + nx * 2.4 + dx * 0.08, ey + ny * 2.4 + dy * 0.08, ex - nx * 2.4 + dx * 0.08, ey - ny * 2.4 + dy * 0.08, C(r, '#5a3a22'), 1.6);
+      break;
+    default:
+      break;
+  }
+}
+
+/** a missing arm with a free hand: a short stump in its sleeve, the empty cuff tied in a knot */
+function tiedSleeve(r: Rig, a: ArmPlan, upper: string, skin: boolean): void {
+  const c = r.c;
+  const dx = a.hx - a.sx;
+  const dy = a.hy - a.sy;
+  const l = Math.hypot(dx, dy) || 1;
+  const ux = dx / l;
+  const uy = dy / l;
+  const ex = a.sx + ux * 4.2;
+  const ey = a.sy + uy * 4.2 + 0.6;
+  c.lineCap = 'round';
+  line(c, a.sx, a.sy, ex, ey, OUTLINE, 7.4);
+  line(c, a.sx, a.sy, ex, ey, upper, 4.4);
+  if (skin) {
+    // a bare stump, bound with a strip of cloth
+    line(c, ex - uy * 2.2, ey + ux * 2.2, ex + uy * 2.2, ey - ux * 2.2, C(r, WRAPS), 1.4);
+    return;
+  }
+  // the knot and the two tails of the folded-up sleeve
+  ell(c, ex + ux * 1.2, ey + uy * 1.2, 1.7, 1.5, upper, 1.2);
+  const sw = Math.sin(r.t * 5) * 0.6 * (0.3 + r.mv);
+  polyF(c, [ex + ux * 1.8, ey + uy * 1.8, ex + ux * 4.6 - uy * 1.8 + sw, ey + uy * 4.6 + ux * 1.8, ex + ux * 3.2 - uy * 0.2, ey + uy * 3.2 + ux * 0.2], upper, 1);
+  polyF(c, [ex + ux * 1.8, ey + uy * 1.8, ex + ux * 4.2 + uy * 1.9 - sw, ey + uy * 4.2 - ux * 1.9, ex + ux * 3.2 + uy * 0.3, ey + uy * 3.2 - ux * 0.3], upper, 1);
 }
 
 interface ArmLook {
@@ -562,6 +659,22 @@ function drawArm(r: Rig, a: ArmPlan): void {
   const ex = (a.sx + a.hx) / 2 + nx * bend;
   const ey = (a.sy + a.hy) / 2 + ny * bend;
   const al = armLook(r);
+  const feat = armFeat(r.L, a.side);
+  const sleeve = al.fore;
+  if (feat !== 'none') {
+    if (feat === 'missing' && a.free) {
+      tiedSleeve(r, a, al.upper, r.L.body === 'loincloth');
+      return;
+    }
+    // prosthetics show through any sleeve; tattoos only on bare skin
+    if (feat === 'wooden' || feat === 'missing') al.fore = C(r, WOOD);
+    else if (feat === 'clockwork') al.fore = C(r, BRASS);
+    else if (feat === 'bandaged') al.fore = C(r, WRAPS);
+    if (feat !== 'tattoo' && feat !== 'hook' && !al.wide) {
+      al.bracer = null;
+      al.cuff = null;
+    }
+  }
   if (al.wide) {
     limb2(c, a.sx, a.sy, ex, ey, a.hx, a.hy, 4.6, 4.6, al.upper, al.fore);
     // the flared sleeve: a trapezoid widening to the wrist, with an embroidered cuff
@@ -572,11 +685,18 @@ function drawArm(r: Rig, a: ArmPlan): void {
     const qy = ux / ul;
     const wx = a.hx - (ux / ul) * 1.8;
     const wy = a.hy - (uy / ul) * 1.8;
-    polyF(c, [ex + qx * 2.3, ey + qy * 2.3, wx + qx * 4.2, wy + qy * 4.2, wx - qx * 4.2, wy - qy * 4.2, ex - qx * 2.3, ey - qy * 2.3], al.fore, 1.6);
+    polyF(c, [ex + qx * 2.3, ey + qy * 2.3, wx + qx * 4.2, wy + qy * 4.2, wx - qx * 4.2, wy - qy * 4.2, ex - qx * 2.3, ey - qy * 2.3], sleeve, 1.6);
     if (al.cuff) line(c, wx + qx * 3.6, wy + qy * 3.6, wx - qx * 3.6, wy - qy * 3.6, al.cuff, 1.6);
     return;
   }
-  limb2(c, a.sx, a.sy, ex, ey, a.hx, a.hy, 4.4, 3.9, al.upper, al.fore);
+  const foreSkin = al.fore === C(r, r.L.skin);
+  if (feat === 'missing') {
+    // the stump to the elbow, then a strapped-on wooden mount that holds the item
+    limb2(c, a.sx, a.sy, ex, ey, ex, ey, 4.4, 4.4, al.upper, al.upper);
+    line(c, ex, ey, a.hx, a.hy, OUTLINE, 5);
+    line(c, ex, ey, a.hx, a.hy, al.fore, 2.3);
+  } else limb2(c, a.sx, a.sy, ex, ey, a.hx, a.hy, 4.4, 3.9, al.upper, al.fore);
+  if (feat !== 'none' && (feat !== 'tattoo' || foreSkin)) forearmDetail(r, feat, ex, ey, a.hx, a.hy);
   if (al.elbow) dot(c, ex, ey, 1.6, al.elbow);
   if (al.bracer) {
     const bx = ex + (a.hx - ex) * 0.55;
@@ -599,8 +719,50 @@ function handStyle(L: JoeLook): Hands {
   if (L.body === 'chain') return 'glove';
   return 'skin';
 }
-function hand(r: Rig, x: number, y: number, dx = 0, dy = 1): void {
+function hand(r: Rig, x: number, y: number, dx = 0, dy = 1, side: 1 | -1 = 1): void {
   const c = r.c;
+  const feat = armFeat(r.L, side);
+  if (feat !== 'none' && feat !== 'tattoo') {
+    const l = Math.hypot(dx, dy) || 1;
+    const ux = dx / l;
+    const uy = dy / l;
+    switch (feat) {
+      case 'hook': {
+        // a leather cuff and an iron hook curled over the grip
+        ell(c, x - ux * 1.6, y - uy * 1.6, 2.4, 2.4, C(r, '#5a3a22'), 1.5);
+        const a0 = Math.atan2(uy, ux);
+        const cx = x + ux * 1.4;
+        const cy = y + uy * 1.4;
+        c.lineCap = 'round';
+        for (const [col, w] of [[OUTLINE, 2.8], [C(r, '#cfd4dc'), 1.3]] as const) {
+          c.strokeStyle = col;
+          c.lineWidth = w;
+          c.beginPath();
+          c.moveTo(x - ux * 0.6, y - uy * 0.6);
+          c.arc(cx, cy, 2.1, a0 + Math.PI, a0 + Math.PI * 2.3);
+          c.stroke();
+        }
+        return;
+      }
+      case 'wooden':
+        ell(c, x, y, 2.6, 2.5, C(r, WOOD), 1.6);
+        dot(c, x + ux * 0.8, y + uy * 0.8, 0.6, S(r, WOOD, 0.6));
+        return;
+      case 'clockwork':
+        ell(c, x, y, 2.7, 2.6, C(r, BRASS), 1.6);
+        line(c, x - uy * 1.8, y + ux * 1.8, x + uy * 1.8, y - ux * 1.8, S(r, BRASS, 0.6), 0.8);
+        if (!r.flash) dot(c, x - 0.8, y - 0.9, 0.7, 'rgba(255,255,255,0.7)');
+        return;
+      case 'missing':
+        // the iron cap at the end of the mount
+        ell(c, x, y, 2.1, 2.1, C(r, '#6a6a74'), 1.5);
+        return;
+      case 'bandaged':
+        ell(c, x, y, 2.7, 2.7, C(r, WRAPS), 1.6);
+        line(c, x - uy * 2, y + ux * 2, x + uy * 2, y - ux * 2, S(r, WRAPS, 0.72), 0.7);
+        return;
+    }
+  }
   const hs = handStyle(r.L);
   if (hs === 'gauntlet') {
     // an armoured fist with a flared cuff at the wrist
@@ -632,7 +794,7 @@ function thermos(r: Rig, x: number, y: number, a: number): void {
   polyF(c, [6, -2.2, 9, -2.2, 9, 2.2, 6, 2.2], C(r, '#c9ced6'), 1.4);
   line(c, -1, -2.6, -1, 2.6, S(r, '#4a7a5a', 0.7), 1);
   c.restore();
-  hand(r, x, y);
+  hand(r, x, y, 0, 1, -1);
 }
 
 // ------------------------------------------------------------------ pauldrons
@@ -819,6 +981,37 @@ function drawLegs(r: Rig, ux: number, uy: number): void {
     const ay = ft.footY - 1.4;
     const kx = (ft.hipX + ax) / 2 + fx * 1.3 * (0.35 + ft.lift * 0.45);
     const ky = (ft.hipY + ay) / 2 + fy * 0.7 * (0.35 + ft.lift * 0.45);
+    const lf = legFeat(r.L, ft.side);
+    if (lf === 'peg' || lf === 'clockwork') {
+      // the thigh in its trousers, then a wooden peg or a brass leg from the knee down (same walk cycle)
+      if (!robe) limb2(c, ft.hipX, ft.hipY, kx, ky, kx, ky, 5.4, 5.4, ll.thigh, ll.thigh);
+      const k0x = robe ? ax + (kx - ax) * 0.45 : kx;
+      const k0y = robe ? ay + (ky - ay) * 0.45 : ky;
+      const tx = ft.footX + fx * 0.4;
+      const ty = ft.footY + 0.4;
+      const dl = Math.hypot(tx - k0x, ty - k0y) || 1;
+      const nx = -(ty - k0y) / dl;
+      const ny = (tx - k0x) / dl;
+      if (lf === 'peg') {
+        polyF(c, [k0x + nx * 2.7, k0y + ny * 2.7, tx + nx * 1.3, ty + ny * 1.3, tx - nx * 1.3, ty - ny * 1.3, k0x - nx * 2.7, k0y - ny * 2.7], C(r, WOOD), 1.6);
+        line(c, k0x + (tx - k0x) * 0.25, k0y + (ty - k0y) * 0.25, k0x + (tx - k0x) * 0.8, k0y + (ty - k0y) * 0.8, S(r, WOOD, 0.68), 0.7);
+        if (!robe) line(c, k0x + nx * 2.9, k0y + ny * 2.9, k0x - nx * 2.9, k0y - ny * 2.9, C(r, '#5a3a22'), 2);
+        ell(c, tx, ty, 1.5, 1.1, C(r, '#4a4650'), 1.3);
+      } else {
+        line(c, k0x, k0y, ax, ay, OUTLINE, 6.4);
+        line(c, k0x, k0y, ax, ay, C(r, BRASS), 3.6);
+        line(c, k0x + (ax - k0x) * 0.2, k0y + (ay - k0y) * 0.2, ax, ay, S(r, BRASS, 0.55), 1);
+        if (!robe) {
+          dot(c, k0x, k0y, 2.6, OUTLINE);
+          dot(c, k0x, k0y, 1.9, S(r, BRASS, 0.75));
+          dot(c, k0x, k0y, 0.8, C(r, '#3a2a14'));
+        }
+        const bx = ft.footX + fx * 1.3;
+        const by = ft.footY + fy * 0.5;
+        ell(c, bx, by, 2.6 + Math.abs(fx) * 1.4, 2 + Math.abs(fy) * 0.4, S(r, BRASS, 0.8), 1.7);
+      }
+      continue;
+    }
     if (!robe) {
       limb2(c, ft.hipX, ft.hipY, kx, ky, ax, ay, 5.4, 4.9, ll.thigh, ll.shin);
       if (ll.bootTop > 0) {
@@ -847,6 +1040,16 @@ function drawLegs(r: Rig, ux: number, uy: number): void {
         line(c, ft.hipX, ft.hipY + 1, ax, ay - 1, S(r, r.L.legsColor, 1.4), 0.7);
       }
       if (ll.knee) ell(c, kx, ky, 2.4, 2.1, ll.knee, 1.4);
+      if (lf === 'bandaged') {
+        // a bandage wound round the shin over whatever is worn
+        line(c, kx + (ax - kx) * 0.15, ky + (ay - ky) * 0.15, kx + (ax - kx) * 0.8, ky + (ay - ky) * 0.8, C(r, WRAPS), 4.4);
+        for (const k of [0.3, 0.5, 0.7]) {
+          const tx = kx + (ax - kx) * k;
+          const ty = ky + (ay - ky) * k;
+          line(c, tx - 2.2, ty - 0.7, tx + 2.2, ty + 0.7, S(r, WRAPS, 0.7), 0.8);
+        }
+        dot(c, kx + (ax - kx) * 0.5 + 1, ky + (ay - ky) * 0.5, 0.8, C(r, '#b03a3a'));
+      }
     }
     // the foot
     const bx = ft.footX + fx * 1.3;
@@ -1918,12 +2121,13 @@ function drawHead(r: Rig, hx: number, hy: number): void {
   const L = r.L;
   // behind the head: hood drape, mitre lappets, bandana tails, the far horn
   headBehind(r, hx, hy);
+  const cover = coversHead(L);
+  if (!cover) hairBehindHead(r, hx, hy);
   // neck
   c.fillStyle = S(r, L.skin, 0.8);
   c.fillRect(hx - 2.6, hy + 4, 5.2, 5);
   // the head
   ell(c, hx, hy, HR, HR, C(r, L.skin), 2.2);
-  const cover = coversHead(L);
   if (cover) {
     headShell(r, hx, hy);
   } else {
@@ -1999,6 +2203,28 @@ function hair(r: Rig, hx: number, hy: number): void {
     case 'long':
       if (fy <= -0.2) longHair(r, hx, hy);
       break;
+    case 'ponytail':
+      if (fy <= -0.2) ponytail(r, hx, hy);
+      break;
+    case 'curly':
+    case 'afro': {
+      // curls round the hairline, away from the face
+      const big = st === 'afro';
+      for (const a of big ? [-1.5, -0.75, 0, 0.75, 1.5] : [-1.6, -0.8, 0, 0.8, 1.6]) {
+        const p = onHead(r, hx, hy, r.f + Math.PI + a, HR * (big ? 1.02 : 0.86), big ? -4.2 : -3.4);
+        dot(c, p.x, p.y, big ? 3 : 2.4, OUTLINE);
+        dot(c, p.x, p.y, big ? 2.2 : 1.7, hc);
+      }
+      break;
+    }
+    case 'spiky':
+      for (const a of [-1.7, -0.85, 0, 0.85, 1.7]) {
+        const p = onHead(r, hx, hy, r.f + Math.PI + a, HR * 0.55, -5);
+        const tx = p.x + (p.x - hx) * 0.55;
+        const ty = p.y - 5 + Math.abs(a) * 1.2;
+        polyF(c, [p.x - 2, p.y + 1.5, tx, ty, p.x + 2, p.y + 1.5], hc, 1.2);
+      }
+      break;
   }
 }
 
@@ -2008,27 +2234,102 @@ function face(r: Rig, hx: number, hy: number, shadowed: boolean): void {
   const { fx, fy } = r;
   if (fy < -0.35) return;
   const eyeCol = shadowed && L.eyeGlow ? C(r, L.eyeGlow) : r.flash ? '#ffffff' : OUTLINE;
-  // eyes and droopy brows
-  for (const side of [1, -1]) {
-    const p = onHead(r, hx, hy, r.f + 0.43 * side, HR * 0.78, 1.6);
+  const mark: FaceMark = shadowed ? 'none' : (L.mark ?? 'none');
+  const shape: EyeShape = L.eyeShape ?? 'dot';
+  const eyes = [onHead(r, hx, hy, r.f + 0.43, HR * 0.78, 1.6), onHead(r, hx, hy, r.f - 0.43, HR * 0.78, 1.6)] as const;
+  // under the eyes: cheeks, freckles, war paint
+  if (mark === 'rosy' || mark === 'freckles' || mark === 'rune') {
+    for (const side of [1, -1]) {
+      const p = onHead(r, hx, hy, r.f + 0.74 * side, HR * 0.8, 3.7);
+      if (p.v < 0.1) continue;
+      if (mark === 'rosy') {
+        if (r.flash) continue;
+        const ga = c.globalAlpha;
+        c.globalAlpha = ga * 0.42;
+        dot(c, p.x, p.y, 1.8, '#e0607a');
+        c.globalAlpha = ga;
+      } else if (mark === 'freckles') {
+        const fc = S(r, L.skin, 0.62);
+        dot(c, p.x - 0.9, p.y - 0.3, 0.45, fc);
+        dot(c, p.x + 0.7, p.y - 0.6, 0.45, fc);
+        dot(c, p.x, p.y + 0.6, 0.45, fc);
+      } else if (side === 1) {
+        const rc = C(r, '#2a9a94');
+        line(c, p.x, p.y - 1.4, p.x, p.y + 1.4, rc, 0.8);
+        line(c, p.x, p.y - 0.2, p.x - 1, p.y - 1.2, rc, 0.8);
+        line(c, p.x, p.y - 0.2, p.x + 1, p.y - 1.2, rc, 0.8);
+      }
+    }
+  } else if (mark === 'warpaint') {
+    const mid = onHead(r, hx, hy, r.f, HR * 0.9, 1.5);
+    const ga = c.globalAlpha;
+    c.globalAlpha = ga * 0.85;
+    c.lineCap = 'round';
+    for (const side of [1, -1]) {
+      const t = onHead(r, hx, hy, r.f + 0.95 * side, HR * 0.9, 1.3);
+      if (t.v > -0.1) line(c, mid.v > 0 ? mid.x : eyes[side === 1 ? 0 : 1].x, mid.v > 0 ? mid.y : eyes[side === 1 ? 0 : 1].y, t.x, t.y, C(r, '#3a64b8'), 2.8);
+    }
+    c.globalAlpha = ga;
+  }
+  // eyes and brows
+  const browCol = S(r, L.hair, 0.8);
+  const browSt: Brows = L.brows ?? 'normal';
+  const lx = -fy * 1.3;
+  for (const side of [1, -1] as const) {
+    const p = eyes[side === 1 ? 0 : 1];
     if (p.v < 0.05) continue;
-    dot(c, p.x, p.y, shadowed ? 1.1 : 1.25, eyeCol);
-    if (shadowed && L.eyeGlow && !r.flash) glow(c, p.x, p.y, 4, L.eyeGlow, 0.7);
-    if (L.lids && !shadowed && !r.flash) {
-      c.fillStyle = C(r, shade(L.skin, 0.7));
-      c.beginPath();
-      c.arc(p.x, p.y + 0.25, 1.75, Math.PI, TAU);
-      c.fill();
+    if (shadowed) {
+      dot(c, p.x, p.y, 1.1, eyeCol);
+      if (L.eyeGlow && !r.flash) glow(c, p.x, p.y, 4, L.eyeGlow, 0.7);
+      continue;
     }
-    if (!shadowed) {
-      const lx = -fy * 1.3;
-      line(c, p.x - lx * side * 0.9 - 0.2, p.y - 2 + 0.2 * side, p.x + lx * side * 0.9, p.y - 2.3 - 0.1 * side, C(r, shade(L.hair, 0.8)), 0.9);
+    if (mark === 'eyepatch' && side === -1) {
+      // the strap round the head, then the patch
+      const a = onHead(r, hx, hy, r.f - 1.45, HR * 0.98, -0.4);
+      const b = onHead(r, hx, hy, r.f + 0.8, HR * 0.94, -4.6);
+      if (a.v > -0.3) line(c, a.x, a.y, p.x, p.y, OUTLINE, 0.9);
+      if (b.v > -0.3) line(c, p.x, p.y, b.x, b.y, OUTLINE, 0.9);
+      ell(c, p.x, p.y + 0.1, 2.1, 1.9, C(r, '#2a2430'), 0.9);
+    } else {
+      eye(r, p.x, p.y, shape);
+      if (L.lids && !r.flash) {
+        c.fillStyle = S(r, L.skin, 0.7);
+        c.beginPath();
+        c.arc(p.x, p.y + 0.25, 1.75, Math.PI, TAU);
+        c.fill();
+      }
     }
+    if (browSt === 'none' || browSt === 'mono') continue;
+    // inner end first; the default pair is a little lopsided (Joe is unimpressed)
+    const ix = p.x - lx * side * 0.9 - 0.2;
+    const ox = p.x + lx * side * 0.9;
+    const [iy, oy] = browSt === 'angry' ? [p.y - 1.5, p.y - 2.7] : browSt === 'worried' ? [p.y - 2.7, p.y - 1.8] : [p.y - 2 + 0.2 * side, p.y - 2.3 - 0.1 * side];
+    line(c, ix, iy, ox, oy, browCol, browSt === 'thick' ? 1.7 : 0.9);
   }
   if (shadowed) return;
+  if (browSt === 'mono') {
+    const [a, b] = eyes;
+    const pa = a.v >= 0.05 ? a : b;
+    const pb = b.v >= 0.05 ? b : a;
+    c.strokeStyle = browCol;
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.moveTo(pa.x + lx * 0.9, pa.y - 2.3);
+    c.quadraticCurveTo((pa.x + pb.x) / 2, (pa.y + pb.y) / 2 - 1.5, pb.x - lx * 0.9, pb.y - 2.3);
+    c.stroke();
+  }
   // nose
   const np = onHead(r, hx, hy, r.f, HR * (0.88 + 0.14 * (1 - Math.abs(fy))), 3.4);
-  if (np.v > -0.15) ell(c, np.x, np.y, 1.25, 1.1, S(r, L.skin, 0.82), 0);
+  if (np.v > -0.15) nose(r, np.x, np.y, L.nose ?? 'button');
+  if (mark === 'scar') {
+    const p = eyes[0].v >= 0.05 ? eyes[0] : eyes[1];
+    if (p.v >= 0.05) {
+      const sc = C(r, '#b8606a');
+      line(c, p.x + 0.9, p.y - 3.6, p.x - 0.9, p.y + 3.2, sc, 0.9);
+      line(c, p.x + 0.1, p.y - 2.4, p.x + 1.3, p.y - 2, sc, 0.6);
+      line(c, p.x - 0.5, p.y + 1.8, p.x + 0.7, p.y + 2.2, sc, 0.6);
+    }
+  }
   // beard
   const beard = L.beard ?? 'stubble';
   const jaw = onHead(r, hx, hy, r.f, HR * 0.5, 4.9);
@@ -2037,12 +2338,18 @@ function face(r: Rig, hx: number, hy: number, shadowed: boolean): void {
     c.globalAlpha = ga * 0.38;
     lens(c, hx, hy, HR - 1.1, jaw.x + fx * 1.2, jaw.y + 4.2, 5.6, C(r, L.hair));
     c.globalAlpha = ga;
-  } else if (beard === 'full' || beard === 'braided') {
+  } else if (beard === 'mutton') {
+    for (const side of [1, -1]) {
+      const p = onHead(r, hx, hy, r.f + 1.02 * side, HR * 0.84, 3.4);
+      if (p.v > -0.25) ell(c, p.x, p.y, 1.9, 2.9, C(r, L.hair), 1.1);
+    }
+  } else if (beard === 'full' || beard === 'braided' || beard === 'long') {
     const w = HR * 0.78 * (0.6 + 0.4 * Math.abs(fy));
+    const len = beard === 'long' ? 10.5 : 5.4;
     c.beginPath();
     c.moveTo(jaw.x - w, jaw.y - 1.8);
-    c.quadraticCurveTo(jaw.x - w * 0.8, jaw.y + 4.6, jaw.x + fx * 1.5, jaw.y + 5.4);
-    c.quadraticCurveTo(jaw.x + w * 0.8, jaw.y + 4.6, jaw.x + w, jaw.y - 1.8);
+    c.quadraticCurveTo(jaw.x - w * 0.8, jaw.y + len - 0.8, jaw.x + fx * 1.5, jaw.y + len);
+    c.quadraticCurveTo(jaw.x + w * 0.8, jaw.y + len - 0.8, jaw.x + w, jaw.y - 1.8);
     c.quadraticCurveTo(jaw.x, jaw.y + 0.6, jaw.x - w, jaw.y - 1.8);
     c.fillStyle = C(r, L.hair);
     c.fill();
@@ -2057,7 +2364,8 @@ function face(r: Rig, hx: number, hy: number, shadowed: boolean): void {
   } else if (beard === 'goatee') {
     ell(c, jaw.x + fx * 1.2, jaw.y + 2.4, 1.6, 1.5, C(r, L.hair), 1);
   }
-  if (beard === 'moustache' || beard === 'full' || beard === 'braided') {
+  if (beard === 'long' && !r.flash) line(c, jaw.x + fx * 1.2, jaw.y + 2.5, jaw.x + fx * 1.4, jaw.y + 8.5, S(r, L.hair, 0.7), 0.8);
+  if (beard === 'moustache' || beard === 'full' || beard === 'braided' || beard === 'long' || beard === 'mutton') {
     const m = onHead(r, hx, hy, r.f, HR * 0.86, 4.6);
     const w = 2.6 * (0.4 + 0.6 * Math.abs(fy));
     c.strokeStyle = C(r, shade(L.hair, beard === 'moustache' ? 1 : 0.8));
@@ -2071,6 +2379,103 @@ function face(r: Rig, hx: number, hy: number, shadowed: boolean): void {
     const m = onHead(r, hx, hy, r.f, HR * 0.84, 5.2);
     line(c, m.x - 1.1 * fy, m.y, m.x + 1.1 * fy, m.y, C(r, shade(L.skin, 0.55)), 0.8);
   }
+}
+
+function eye(r: Rig, x: number, y: number, shape: EyeShape): void {
+  const c = r.c;
+  const L = r.L;
+  const col = L.eyes;
+  if (r.flash) {
+    dot(c, x, y, 1.25, '#ffffff');
+    return;
+  }
+  switch (shape) {
+    case 'round':
+      // big googly whites with a coloured iris that looks where Joe looks
+      ell(c, x, y, 1.8, 1.65, C(r, '#f4efe4'), 0.7);
+      dot(c, x + r.fx * 0.4, y + r.fy * 0.25, 1, C(r, col ?? '#5a3a22'));
+      dot(c, x + r.fx * 0.45, y + r.fy * 0.3, 0.45, OUTLINE);
+      return;
+    case 'narrow':
+      line(c, x - 1.4, y + 0.1, x + 1.4, y - 0.1, OUTLINE, 1.1);
+      if (col) dot(c, x, y, 0.45, C(r, col));
+      return;
+    case 'sleepy':
+      dot(c, x, y + 0.3, 1.1, OUTLINE);
+      c.fillStyle = S(r, L.skin, 0.72);
+      c.beginPath();
+      c.arc(x, y + 0.35, 1.6, Math.PI, TAU);
+      c.fill();
+      line(c, x - 1.6, y + 0.35, x + 1.6, y + 0.35, OUTLINE, 0.6);
+      return;
+    case 'glow':
+      dot(c, x, y, 1.2, C(r, col ?? '#8fd3ff'));
+      glow(c, x, y, 3.8, col ?? '#8fd3ff', 0.6);
+      return;
+    case 'dot':
+    default:
+      dot(c, x, y, 1.3, OUTLINE);
+      if (col) dot(c, x + r.fx * 0.15, y - 0.1, 0.7, C(r, col));
+  }
+}
+
+function nose(r: Rig, x: number, y: number, st: NoseShape): void {
+  const c = r.c;
+  const L = r.L;
+  const { fx, fy } = r;
+  switch (st) {
+    case 'big':
+      ell(c, x, y + 0.2, 2.1, 1.8, S(r, L.skin, 0.9), 0.9);
+      if (!r.flash) dot(c, x - 0.6, y - 0.4, 0.5, 'rgba(255,255,255,0.45)');
+      return;
+    case 'long':
+      ell(c, x + fx * 0.7, y + 0.7, 1.05 + Math.abs(fx) * 1.1, 2.1, S(r, L.skin, 0.86), 0.8);
+      return;
+    case 'hooked':
+      c.beginPath();
+      c.moveTo(x - 0.8, y - 1.9);
+      c.quadraticCurveTo(x + fx * 2.8 + 1.1 * fy, y - 1.5, x + fx * 1.7 + 0.4, y + 1.3);
+      c.lineTo(x - 0.9, y + 0.9);
+      c.closePath();
+      c.fillStyle = S(r, L.skin, 0.84);
+      c.fill();
+      c.lineWidth = 0.8;
+      c.strokeStyle = OUTLINE;
+      c.stroke();
+      return;
+    case 'pointy':
+      polyF(c, [x - 1, y - 1, x + 1, y - 1, x + fx * 3.4, y + 0.9 + fy * 0.9], S(r, L.skin, 0.88), 0.8);
+      return;
+    case 'red':
+      ell(c, x, y + 0.2, 1.75, 1.6, C(r, '#d0453f'), 0.9);
+      if (!r.flash) dot(c, x - 0.5, y - 0.3, 0.5, 'rgba(255,255,255,0.6)');
+      return;
+    case 'button':
+    default:
+      ell(c, x, y, 1.25, 1.1, S(r, L.skin, 0.82), 0);
+  }
+}
+
+/** hair that sits behind the head itself (drawn before it): the afro's volume, a ponytail seen from the front */
+function hairBehindHead(r: Rig, hx: number, hy: number): void {
+  const st = r.L.hairStyle;
+  if (st === 'afro') {
+    ell(r.c, hx - r.fx * 1.4, hy - 2.6 - r.fy * 0.6, HR * 1.42, HR * 1.3, C(r, r.L.hair), 2);
+  } else if (st === 'ponytail' && r.fy > -0.2) {
+    ponytail(r, hx, hy);
+  }
+}
+
+function ponytail(r: Rig, hx: number, hy: number): void {
+  const c = r.c;
+  const b = onHead(r, hx, hy, r.f + Math.PI, HR * 0.9, -2.5);
+  const sw = Math.sin(r.t * 5) * 0.8 * (0.3 + r.mv);
+  const ex = b.x - r.fx * 4 + sw;
+  const ey = b.y + 8.5;
+  c.lineCap = 'round';
+  line(c, b.x, b.y, ex, ey, OUTLINE, 5.4);
+  line(c, b.x, b.y, ex, ey, C(r, r.L.hair), 3.2);
+  dot(c, b.x + (ex - b.x) * 0.12, b.y + (ey - b.y) * 0.12, 1.5, C(r, r.L.trim));
 }
 
 function headBehind(r: Rig, hx: number, hy: number): void {
