@@ -6,7 +6,7 @@ import { canSocket, itemSellValue } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import type { Character, ConsumableId, Gem, Item, StatId } from '../../game/types';
 import { btn, clearEl, fmt, h, layer, toast } from '../dom';
-import { gemIcon, itemIcon, itemTooltip } from '../tooltip';
+import { gemIcon, glowenEl, itemIcon, itemTooltip } from '../tooltip';
 
 export interface BonfireOps {
   levelUp(stat: StatId): string;
@@ -57,6 +57,27 @@ export function openBonfire(v: BonfireView): HTMLElement {
     if (msg) toast(msg);
     render();
   };
+  /** An item tooltip beside `el` while hovered (kept on screen). */
+  const hoverTip = (el: HTMLElement, make: () => HTMLElement): void => {
+    el.addEventListener('mouseenter', () => {
+      root.querySelectorAll('[data-tt]').forEach((x) => x.remove());
+      const tt = make();
+      tt.setAttribute('data-tt', '1');
+      tt.style.visibility = 'hidden';
+      root.appendChild(tt);
+      const r = el.getBoundingClientRect();
+      const rr = root.getBoundingClientRect();
+      const scale = rr.width / 1280 || 1;
+      const tw = tt.offsetWidth || 320;
+      const th = tt.offsetHeight || 300;
+      let x = (r.right - rr.left) / scale + 8;
+      if (x > 1280 - tw - 6) x = (r.left - rr.left) / scale - tw - 8;
+      tt.style.left = `${Math.max(6, x)}px`;
+      tt.style.top = `${Math.max(6, Math.min(720 - th - 6, (r.top - rr.top) / scale))}px`;
+      tt.style.visibility = '';
+    });
+    el.addEventListener('mouseleave', () => root.querySelectorAll('[data-tt]').forEach((x) => x.remove()));
+  };
 
   function levelTab(el: HTMLElement): void {
     const c = v.char;
@@ -95,7 +116,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
     if (items.length === 0) list.appendChild(h('div', { class: 'dim-text' }, 'Nothing you carry has sockets. Rare and better weapons do.'));
     for (const it of items) {
       const row = h('div', { class: `card ${selItem === it.id ? 'on' : ''}` });
-      row.appendChild(h('div', { class: `r-${it.rarity}` }, it.name));
+      const nameEl = h('div', { class: `r-${it.rarity}` }, it.name);
+      hoverTip(nameEl, () => itemTooltip(it, c, 'auto'));
+      row.appendChild(nameEl);
       const sockets = h('div', { class: 'row' });
       it.sockets.forEach((g, i) => {
         if (g) {
@@ -117,13 +140,13 @@ export function openBonfire(v: BonfireView): HTMLElement {
       if (active.length) row.appendChild(h('div', { class: 'small', style: 'color:#cfc6b4' }, active.map((x) => `${GEMS[x.family].name}: ${gemText(x.family, x.tier)}`).join(' · ')));
       list.appendChild(row);
     }
-    const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;max-height:500px;overflow:auto' }, h('h3', null, `Loose gems · ✦ ${fmt(c.glowen)} Glowen`));
+    const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;max-height:500px;overflow:auto' }, h('h3', null, 'Loose gems · ', glowenEl(c.glowen)));
     c.gems.forEach((g, gi) => {
       const sel = selItem ? items.find((i) => i.id === selItem) : null;
       const free = sel ? sel.sockets.findIndex((x) => !x) : -1;
-      const up = btn(`Upgrade (${fmt(gemUpgradeCost(g.tier))})`, () => say(v.ops.upgradeGem(gi)), 'tiny', g.tier >= 5 || c.glowen < gemUpgradeCost(g.tier));
+      const up = btn(['Upgrade (', glowenEl(gemUpgradeCost(g.tier)), ')'], () => say(v.ops.upgradeGem(gi)), 'tiny', g.tier >= 5 || c.glowen < gemUpgradeCost(g.tier));
       up.title = g.tier >= 5 ? 'Already T5.' : `T${g.tier + 1}: ${gemText(g.family, g.tier + 1)}`;
-      const rr = btn(`Re-roll (${fmt(gemRerollCost(g.tier))})`, () => say(v.ops.rerollGem(gi)), 'tiny', c.glowen < gemRerollCost(g.tier));
+      const rr = btn(['Re-roll (', glowenEl(gemRerollCost(g.tier)), ')'], () => say(v.ops.rerollGem(gi)), 'tiny', c.glowen < gemRerollCost(g.tier));
       rr.title = GEMS[g.family].armorOnly ? 'Becomes a random gem of the same tier.' : 'Becomes a different random weapon gem of the same tier.';
       gems.appendChild(
         h(
@@ -137,7 +160,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
             sel && free >= 0 ? btn('Socket', () => say(v.ops.socket(sel.id, free, gi)), 'tiny', !canSocket(sel, g)) : null,
             up,
             rr,
-            btn(`Sell (+${fmt(gemSellValue(g.tier))})`, () => say(v.ops.sellGem(gi)), 'tiny'),
+            btn(['Sell (', glowenEl(gemSellValue(g.tier), '+'), ')'], () => say(v.ops.sellGem(gi)), 'tiny'),
           ),
           gemInfo(g),
         ),
@@ -149,34 +172,30 @@ export function openBonfire(v: BonfireView): HTMLElement {
 
   function shopTab(el: HTMLElement): void {
     const c = v.char;
-    const buy = h('div', { class: 'col', style: 'gap:6px;width:440px' }, h('h3', null, `Buy · ✦ ${fmt(c.glowen)} Glowen`));
+    const buy = h('div', { class: 'col', style: 'gap:6px;width:440px' }, h('h3', null, 'Buy · ', glowenEl(c.glowen)));
     for (const s of shopConsumables()) {
-      buy.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:150px' }, CONSUMABLES[s.id].name), h('div', { class: 'mono', style: 'width:60px' }, `✦${s.price}`), h('div', { class: 'small dim-text', style: 'width:60px' }, `have ${c.consumables[s.id] ?? 0}`), btn('Buy', () => say(v.ops.buyConsumable(s.id)), 'tiny', c.glowen < s.price)));
+      buy.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:150px' }, CONSUMABLES[s.id].name), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(s.price)), h('div', { class: 'small dim-text', style: 'width:60px' }, `have ${c.consumables[s.id] ?? 0}`), btn('Buy', () => say(v.ops.buyConsumable(s.id)), 'tiny', c.glowen < s.price)));
     }
-    buy.appendChild(h('div', { class: 'row' }, gemIcon(v.shopGem, 22), h('div', { style: 'width:128px' }, gemName(v.shopGem.family, 1)), h('div', { class: 'mono', style: 'width:60px' }, `✦${shopGemPrice()}`), btn('Buy', () => say(v.ops.buyGem()), 'tiny', c.glowen < shopGemPrice())));
+    buy.appendChild(h('div', { class: 'row' }, gemIcon(v.shopGem, 22), h('div', { style: 'width:128px' }, gemName(v.shopGem.family, 1)), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(shopGemPrice())), btn('Buy', () => say(v.ops.buyGem()), 'tiny', c.glowen < shopGemPrice())));
     buy.appendChild(gemInfo(v.shopGem, false));
     if (v.shopPiece) {
       const p = v.shopPiece;
       const price = shopItemPrice(p);
-      const b = h('div', { class: 'row' }, itemIcon(p, 32), h('div', { class: `r-${p.rarity}`, style: 'width:220px' }, p.name), h('div', { class: 'mono' }, `✦${price}`), btn('Buy', () => say(v.ops.buyPiece()), 'tiny', c.glowen < price));
-      b.title = '';
-      b.addEventListener('mouseenter', () => {
-        const tt = itemTooltip(p, c);
-        tt.style.left = '520px';
-        tt.style.top = '120px';
-        tt.setAttribute('data-tt', '1');
-        root.appendChild(tt);
-      });
-      b.addEventListener('mouseleave', () => root.querySelectorAll('[data-tt]').forEach((x) => x.remove()));
+      const b = h('div', { class: 'row' }, itemIcon(p, 32), h('div', { class: `r-${p.rarity}`, style: 'width:220px' }, p.name), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(price)), btn('Buy', () => say(v.ops.buyPiece()), 'tiny', c.glowen < price));
+      hoverTip(b, () => itemTooltip(p, c, 'auto'));
       buy.appendChild(h('div', { class: 'small dim-text' }, 'Rotating piece (changes every rest):'));
       buy.appendChild(b);
     } else buy.appendChild(h('div', { class: 'small dim-text' }, 'The rotating piece is sold. Rest for a new one.'));
     const sell = h('div', { class: 'col', style: 'gap:3px;flex:1;max-height:520px;overflow:auto' }, h('h3', null, 'Sell from your bag'));
-    for (const it of c.bag) sell.appendChild(h('div', { class: 'row' }, itemIcon(it, 24), h('div', { class: `r-${it.rarity}`, style: 'width:260px;font-size:13px' }, it.name), btn(`+${itemSellValue(it)}`, () => say(v.ops.sellItem(it.id)), 'tiny')));
+    for (const it of c.bag) {
+      const row = h('div', { class: 'row' }, itemIcon(it, 24), h('div', { class: `r-${it.rarity}`, style: 'width:260px;font-size:13px' }, it.name), btn(glowenEl(itemSellValue(it), '+'), () => say(v.ops.sellItem(it.id)), 'tiny'));
+      hoverTip(row, () => itemTooltip(it, c, 'auto'));
+      sell.appendChild(row);
+    }
     for (const [id, n] of Object.entries(c.consumables)) {
       if (!n) continue;
       const def = CONSUMABLES[id as ConsumableId];
-      sell.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:290px;font-size:13px' }, `${def.name} ×${n}`), btn(`+${Math.floor((def.price ?? 20) / 2)}`, () => say(v.ops.sellConsumable(id as ConsumableId)), 'tiny')));
+      sell.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:290px;font-size:13px' }, `${def.name} ×${n}`), btn(glowenEl(Math.floor((def.price ?? 20) / 2), '+'), () => say(v.ops.sellConsumable(id as ConsumableId)), 'tiny')));
     }
     if (c.bag.length === 0) sell.appendChild(h('div', { class: 'dim-text' }, 'Your bag is empty.'));
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, buy, sell));
