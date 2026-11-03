@@ -16,6 +16,7 @@ import { runEffects } from '../../src/game/effects/run';
 import { SPELLS } from '../../src/data/spells';
 import { spawnEnemy } from '../../src/game/enemies/spawn';
 import { ENEMIES } from '../../src/data/enemies';
+import { BOSSES } from '../../src/data/bosses';
 import type { ClassId, SaveFile } from '../../src/game/types';
 import type { Entity } from '../../src/game/world';
 
@@ -161,16 +162,20 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     for (const g of p.guests) expect([...g.cw.entities.values()].some((x) => x.type === 'enemy' && !x.hp?.dead)).toBe(false);
   });
 
-  it('enemy HP scales with the party and back when a guest leaves', () => {
+  it('co-op adds bodies, not HP, to room enemies; a boss still grows with the party and back when a guest leaves (D79)', () => {
     const p = party(3);
     p.host.start(p.s);
     p.step(0.5);
+    const solo = spawnEnemy(p.s.w, ENEMIES.shambler!, 600, 300, { tellS: 0, players: 1 });
     const e = spawnEnemy(p.s.w, ENEMIES.shambler!, 640, 300, { tellS: 0 });
-    expect(e.hp!.max).toBeCloseTo(e.en!.hpScaleBase * 5.5, 3);
+    expect(e.hp!.max).toBeCloseTo(solo.hp!.max, 6);
+    const boss = spawnEnemy(p.s.w, BOSSES.the_caretaker!, 640, 200, { tellS: 0 });
+    expect(boss.hp!.max).toBeCloseTo(boss.en!.hpScaleBase * 5.5, 3);
     p.guests[2]!.leave();
     p.step(0.5);
     expect(p.s.players.length).toBe(3);
-    expect(e.hp!.max).toBeCloseTo(e.en!.hpScaleBase * 4, 3);
+    expect(boss.hp!.max).toBeCloseTo(boss.en!.hpScaleBase * 4, 3);
+    expect(e.hp!.max).toBeCloseTo(solo.hp!.max, 6);
   });
 
   it('a silent guest is removed after 10 s', () => {

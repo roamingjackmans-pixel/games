@@ -21,6 +21,8 @@ export interface SpawnOpts {
   zoneImmune?: string[];
   noDrop?: boolean;
   lifeS?: number;
+  /** room-wave enemies (D79): Shards and drop chances are divided by this (the room's count multiplier) */
+  share?: number;
   mimicChestId?: string;
   facing?: number;
 }
@@ -38,13 +40,16 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   const players = o.players ?? w.playerCount;
   const elite = o.elite ?? null;
   const baseHp = isBoss ? ((def as BossDef).baseHp ?? rs.hp) : rs.hp;
-  let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, players) * (o.hpMult ?? 1);
+  // co-op adds bodies to rooms instead of HP to each body (D79); bosses alone still grow with the party
+  let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, isBoss ? players : 1) * (o.hpMult ?? 1);
   if (elite) hp *= 3;
   if (def.traits?.invincible) hp = def.mult?.hp ? baseHp * def.mult.hp : 120000;
   if (def.traits?.fixedHp) hp = def.traits.fixedHp;
   const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
   const speed = (def.speed ?? rs.speed) * (def.mult?.speed ?? 1) * (elite === 'frenzied' ? 1.4 : 1);
-  const shards = Math.round(rs.shards * SHARD_SCALE * zoneShardFactor(zone) * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1));
+  const share = Math.max(1, o.share ?? 1);
+  const rawShards = (rs.shards * SHARD_SCALE * zoneShardFactor(zone) * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1)) / share;
+  const shards = rawShards > 0 ? Math.max(1, Math.round(rawShards)) : 0;
   const radius = (def.radius || rs.radius) * (elite ? 1.3 : 1) * (def.traits?.scale ?? 1);
   // bosses keep a large poise pool that hits wear down; everyone else's poise comes from their size (D78)
   const poise = (isBoss ? rs.poise : poiseForSize(radius)) * (def.mult?.poise ?? 1);
@@ -105,7 +110,8 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
     spawnedAt: now,
     regenBlockedUntil: 0,
     attachedTo: 0,
-    hpScaleBase: hp / Math.max(1, 1 + 1.5 * (players - 1)),
+    hpScaleBase: isBoss ? hp / Math.max(1, 1 + 1.5 * (players - 1)) : hp,
+    share,
     splitDone: false,
     phaseAttacks: isBoss ? (def as BossDef).phases[0]!.attacks : (def as EnemyDef).attacks,
     gary: !!def.traits?.merchant,
@@ -158,11 +164,11 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   return e;
 }
 
-/** Recompute enemy HP for a new player count, keeping each enemy's HP fraction (NETCODE §7). */
+/** Recompute boss HP for a new player count, keeping its HP fraction (NETCODE §7); rooms scale by count (D79). */
 export function rescaleForPlayers(w: World, players: number): void {
   w.playerCount = players;
   for (const e of w.enemies) {
-    if (!e.hp || e.hp.dead || !e.en || e.en.isIllusion || e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
+    if (!e.hp || e.hp.dead || !e.en || !e.en.isBoss || e.en.isIllusion || e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
     const frac = e.hp.hp / e.hp.max;
     e.hp.max = e.en.hpScaleBase * (1 + 1.5 * (players - 1));
     e.hp.hp = Math.max(1, frac * e.hp.max);

@@ -359,7 +359,7 @@ staggered. Weapon tooltips show poise damage and what one hit can stagger.
 
 ### 6.4 Elites (D21)
 
-8% of spawned enemies (never bosses, never swarm pieces) are **Elite**: ×3 HP, ×1.5 damage, 30% larger,
+8% of spawned enemies solo, 12% / 16% / 20% with 2 / 3 / 4 players (D79; never bosses, never swarm pieces) are **Elite**: ×3 HP, ×1.5 damage, 30% larger,
 a colored aura, a named affix shown over them, a guaranteed drop from the Elite row of CONTENT_ITEMS §3
 (never Common) and 3× Shards.
 Affixes (one each): Frenzied (+40% speed), Armored (−40% physical taken), Vampiric (heals 20% of damage
@@ -523,7 +523,10 @@ built for it.
   the host's world at the host's last bonfire. "Return to lobby" from the pause menu brings the party
   back (world saved) so more people can join.
 - The host simulates everything ([NETCODE.md](NETCODE.md)). Guests send inputs, receive state.
-- **Scaling**: enemy and boss HP × (1 + 1.5 × (players − 1)). Damage unchanged. Shards instanced.
+- **Scaling** (D79, replacing D15's per-enemy HP rule): rooms hold **1.5 × players** times the original number of
+  enemies (5 solo → 10 → 15 → 20 with 2–4 players) at solo HP, and Elites come more often (8% → 20%). Each room
+  enemy's Shards and drop chances are divided by the same factor, so every player earns what they would solo.
+  Bosses: HP × (1 + 1.5 × (players − 1)). Damage unchanged. Shards and loot instanced.
 - **Loot** is instanced per player: each player sees and picks up only their own drops.
 - **Downed and revive**: at 0 HP a player becomes a ghost (crawls at 90 px/s, cannot act) for 30 s.
   Teammates revive by **hitting the ghost**. Each hit adds the weapon's **revive value** (CONTENT_ITEMS

@@ -270,6 +270,8 @@ export interface EnemyC {
   regenBlockedUntil: number;
   attachedTo: number;
   hpScaleBase: number;
+  /** room-wave enemies: Shards and drop chances divided by this (D79) */
+  share: number;
   splitDone: boolean;
   phaseAttacks: AttackDef[];
   gary: boolean;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateZone, neighbourId, type ZoneLayout } from '../../src/game/procgen/zone';
-import { planRoom, MAX_LIVE, MAX_PER_WAVE } from '../../src/game/procgen/waves';
+import { planRoom, MAX_LIVE, MAX_PER_WAVE, roomCountMult, threatBudget } from '../../src/game/procgen/waves';
+import { eliteRate } from '../../src/game/procgen/elite';
 import { rollMimic } from '../../src/game/procgen/chests';
 import { mixValid } from '../../src/game/procgen/mix';
 import { ENEMIES, rosterOf } from '../../src/data/enemies';
@@ -81,5 +82,59 @@ describe('procgen (PROCGEN §9)', () => {
       expect(ratio, `zone ${z}: yield ${avg.toFixed(0)} vs needed ${need} (ratio ${ratio.toFixed(2)})`).toBeGreaterThan(0.8);
       expect(ratio, `zone ${z}: yield ${avg.toFixed(0)} vs needed ${need} (ratio ${ratio.toFixed(2)})`).toBeLessThan(1.2);
     }
+  });
+});
+
+describe('room size and Elites by party size (D79)', () => {
+  const plans = (players: number): { units: number; elites: number; rooms: number } => {
+    let units = 0;
+    let elites = 0;
+    let rooms = 0;
+    for (let s = 0; s < 120; s++) {
+      for (const z of [1, 4, 7]) {
+        const L = generateZone(`party-${s}`, z);
+        for (const r of L.rooms) {
+          if (r.kind !== 'combat' && r.kind !== 'ambush') continue;
+          const plan = planRoom(L, r, players);
+          rooms++;
+          for (const w of plan.waves) {
+            units += w.length;
+            elites += w.filter((u) => u.elite).length;
+            expect(w.length).toBeLessThanOrEqual(12 * players);
+          }
+        }
+      }
+    }
+    return { units, elites, rooms };
+  };
+  it('two, three and four players face about 2×, 3× and 4× the enemies of one', () => {
+    const one = plans(1);
+    for (const p of [2, 3, 4]) {
+      const more = plans(p);
+      expect(more.units / one.units, `${p} players`).toBeGreaterThan(p * 0.85);
+      expect(more.units / one.units, `${p} players`).toBeLessThan(p * 1.15);
+    }
+  });
+  it('rooms hold about 50% more enemies than the original budget', () => {
+    expect(roomCountMult(1)).toBe(1.5);
+    let now = 0;
+    let before = 0;
+    for (let s = 0; s < 60; s++) {
+      const L = generateZone(`size-${s}`, 3);
+      for (const r of L.rooms) {
+        if (r.kind !== 'combat') continue;
+        now += threatBudget(Math.max(1, r.depth), 3) * roomCountMult(1);
+        before += threatBudget(Math.max(1, r.depth), 3);
+      }
+    }
+    expect(now / before).toBeCloseTo(1.5, 6);
+  });
+  it('Elites come more often with every extra player', () => {
+    const rates = [1, 2, 3, 4].map((p) => {
+      const r = plans(p);
+      return r.elites / r.units;
+    });
+    for (let i = 1; i < 4; i++) expect(rates[i]!, `${i + 1} players`).toBeGreaterThan(rates[i - 1]!);
+    expect(eliteRate(4)).toBeCloseTo(0.2, 6);
   });
 });

@@ -5,6 +5,7 @@ import { CONSUMABLE_CHANCE, DROP_CHANCE, GEM_CHANCE, STARDUST_MOTE_CHANCE, TEAR_
 import { SPELLS } from '../../data/spells';
 import { WEAPON_IDS } from '../../data/weapons';
 import { itemLevelFor } from '../combat/formulas';
+import { ROOM_ENEMY_MULT } from '../procgen/waves';
 import { generateItem, randomGem } from './generate';
 import type { ConsumableId, Item, Role } from '../types';
 import type { Entity, PickupC, World } from '../world';
@@ -47,26 +48,30 @@ export function enemyDrops(c: DropContext, e: Entity): void {
   const w = c.w;
   const role = en.def.role as Role | 'boss';
   const ilvl = itemLevelFor(c.zone, c.cycle);
+  // a room holds share × the original count of enemies (D79), so each one drops share times less often; an
+  // Elite only divides by the party size, so the extra Elites of a big party are a little extra loot
+  const share = Math.max(1, en.share ?? 1);
+  const divide = en.elite ? Math.max(1, share / ROOM_ENEMY_MULT) : share;
   for (const p of w.players) {
     const pl = p.pl!;
     if (pl.deadUntilRest) continue;
     const pid = pl.playerId;
     const rng = lootRng(c, pid, 'e');
-    const chance = en.elite ? DROP_CHANCE.elite : role === 'swarm' ? DROP_CHANCE.swarm : role === 'fodder' ? DROP_CHANCE.fodder : DROP_CHANCE.other;
+    const chance = (en.elite ? DROP_CHANCE.elite : role === 'swarm' ? DROP_CHANCE.swarm : role === 'fodder' ? DROP_CHANCE.fodder : DROP_CHANCE.other) / divide;
     if (rng.chance(chance)) {
       const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone, ...(en.elite ? { minRarity: 'uncommon' as const } : {}) });
       const [x, y] = scatter(rng, e.x, e.y);
       dropItem(w, pid, item, x, y);
     }
-    if (rng.chance(GEM_CHANCE.enemy * (1 + pl.derived.gemFind))) {
+    if (rng.chance((GEM_CHANCE.enemy * (1 + pl.derived.gemFind)) / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
       spawnPickup(w, x, y, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, 1), amount: 1, rarity: 'rare' });
     }
-    if (role === 'fodder' && rng.chance(CONSUMABLE_CHANCE.fodderSingle)) {
+    if (role === 'fodder' && rng.chance(CONSUMABLE_CHANCE.fodderSingle / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
       spawnPickup(w, x, y, { kind: 'consumable', forPlayer: pid, consumable: rng.chance(0.6) ? 'throwing_knife' : 'firebomb', amount: 1, rarity: 'common' });
     }
-    if (rng.chance(STARDUST_MOTE_CHANCE)) {
+    if (rng.chance(STARDUST_MOTE_CHANCE / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
       spawnPickup(w, x, y, { kind: 'stardust', forPlayer: pid, amount: Math.round(60 * c.zone * (1 + pl.derived.stardustFind)), rarity: 'uncommon' });
     }

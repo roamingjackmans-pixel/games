@@ -12,7 +12,7 @@ import { World, type Entity } from './world';
 import { entryPoint, OPPOSITE, type Side } from './room';
 import { generateZone, neighbourId, type RoomNode, type ZoneLayout } from './procgen/zone';
 import { buildRoom, type RoomMarkers } from './procgen/rooms';
-import { planRoom, type RoomPlan } from './procgen/waves';
+import { planRoom, roomCountMult, type RoomPlan } from './procgen/waves';
 import { smallChest, treasureChest } from './procgen/chests';
 import { spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
 import { spawnPlayer, refreshDerived } from './player/player';
@@ -299,7 +299,7 @@ export class GameSession {
     const cleared = ws.roomsCleared.includes(roomId);
     this.roomPhase = 'peace';
     if ((node.kind === 'combat' || node.kind === 'ambush') && !cleared) {
-      this.plan = planRoom(this.layout, node);
+      this.plan = planRoom(this.layout, node, this.players.length);
       this.roomPhase = 'armed';
       this.lockAt = node.kind === 'ambush' ? w.time : 0;
     }
@@ -498,7 +498,7 @@ export class GameSession {
       chestAt(plan, m.chests[0][0], m.chests[0][1]);
       if (plan.guarded && !cleared && !ws.chestsOpened.includes(plan.id)) {
         // a guard wave: half a normal room's budget from the mix
-        const p = planRoom(this.layout, { ...node, kind: 'combat', depth: Math.max(1, Math.floor(node.depth / 2)) });
+        const p = planRoom(this.layout, { ...node, kind: 'combat', depth: Math.max(1, Math.floor(node.depth / 2)) }, this.players.length);
         this.plan = { waves: p.waves.slice(0, 1), ambush: false };
         this.roomPhase = 'armed';
       }
@@ -662,14 +662,17 @@ export class GameSession {
     this.waveIds = [];
     this.waveSize = 0;
     let k = rng.int(0, Math.max(0, pts.length - 1));
+    const start = k;
     for (const u of wave) {
       const def = ENEMIES[u.defId];
       if (!def) continue;
+      // big (co-op) waves come round each spawn point again; each lap spreads a little wider (D79)
+      const lap = Math.floor((k - start) / Math.max(1, pts.length));
       const base = pts[k++ % Math.max(1, pts.length)] ?? [640, 368];
-      const jx = base[0] + rng.spread(30);
-      const jy = base[1] + rng.spread(30);
+      const jx = base[0] + rng.spread(30 + 22 * lap);
+      const jy = base[1] + rng.spread(30 + 22 * lap);
       const [x, y] = w.room.nearestFloor(jx, jy, def.radius);
-      const ents = spawnUnit(w, def, x, y, { elite: u.elite as EliteAffix | null, tellS, zoneResist: zd.resist, zoneImmune: zd.statusImmune });
+      const ents = spawnUnit(w, def, x, y, { elite: u.elite as EliteAffix | null, tellS, zoneResist: zd.resist, zoneImmune: zd.statusImmune, share: roomCountMult(this.players.length) });
       for (const e of ents) this.waveIds.push(e.id);
       this.waveSize += ents.length;
       w.sfx('spawnTell', x, 0.4);

@@ -86,8 +86,8 @@ that player; other players never see it. Shards: each player gets the full per-k
 
 ## 7. Scaling and rules on the host
 
-- Enemy/boss HP multiplier recomputed on join/leave: `1 + 1.5 × (players − 1)`; live enemies keep their
-  HP fraction when the multiplier changes.
+- Boss HP multiplier recomputed on join/leave: `1 + 1.5 × (players − 1)`; the boss keeps its HP fraction.
+  Rooms scale by **count** instead (D79): a room planned for p players holds 1.5 × p times the original enemies.
 - Downed/revive (D12) is simulated on the host: hits on a ghost add the attacker's weapon revive value;
   `reviveProgress` events drive the ring UI.
 - Zone-progress credit (D31): on boss death the host emits `progress { zone }` to each guest; the guest

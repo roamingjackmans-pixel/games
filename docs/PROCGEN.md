@@ -68,11 +68,18 @@ is shown on the zone's title card ("Mossy Crypt — Shamblers, Bone Archers, Gho
 the BFS distance from the start. Enemy costs by role enum: fodder 2, swarm (one group) 3, ranged 3,
 caster 4, support 4, brute 6, assassin 4, tank 5, hazard 4. Waves: split the budget into 1–3 waves (depth 1–2: one wave;
 3–5: two; 6+: three), each wave spawning when the previous is 70% dead. Casters/support never exceed 2
-per wave; brutes/tanks never exceed 2 per wave; a room never spawns more than 12 live enemies.
+per wave per player; brutes/tanks never exceed 2 per wave per player; a wave holds at most 12 enemies per player
+and a room 18 live enemies per player.
+
+**Room size and the party (D79):** the budget above is multiplied by **1.5 × players**: a room has 50% more
+enemies than the original budget, and 2, 3 and 4 players face 2×, 3× and 4× that (5 → 10 → 15 → 20). Room
+enemies do not gain HP for the party (bosses do). Each room enemy's Shards and per-player drop chances are
+divided by the same 1.5 × players, so what each player earns per room is unchanged; an Elite's drop chance is
+divided only by the party size.
 
 **Spawning**: each enemy appears at a spawn point ≥ 200 px from all players with a 1.0 s floor tell
-(a rising circle) and is invulnerable until it appears. **Elite** roll 8% per non-swarm spawn (max 2
-Elites per room). Ambush rooms spawn all waves at once with a 1.5 s tell.
+(a rising circle) and is invulnerable until it appears. **Elite** roll 8% per non-swarm spawn solo, 12% / 16% /
+20% with 2 / 3 / 4 players (D79), at most 2 Elites per player per room. Ambush rooms spawn all waves at once with a 1.5 s tell.
 
 **Room clear**: no live enemies and no pending waves → doors unlock, a small chest spawns at a C spot
 with 25% chance, Shards and loot already dropped stay for 60 s then are auto-collected to the nearest
