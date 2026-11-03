@@ -36,7 +36,9 @@ import { stream } from '../../engine/rng';
 import { toast } from '../../ui/dom';
 import { openSettings } from '../../ui/menus/settings';
 import { openAchievements } from '../../ui/achievements';
+import { openStatistics } from '../../ui/statistics';
 import { achievements } from '../achievements';
+import { stats } from '../stats';
 import { INSTRUCTOR } from '../../data/enemies/special';
 import { BONFIRE_LINES, DEATH_QUIPS, EMBER_LINES, TIPS, bossIntroId, zoneCutsceneId, zoneLines } from '../../data/story';
 import { ZoneCutscene, bossIntroCut, cutscenesEnabled, defeatCut, drawBossNameCard, drawZoneTitleCard, instructorCut, restLine, type Cutscene } from '../../ui/cutscene';
@@ -215,6 +217,7 @@ export class RunScene extends WorldScene {
 
   protected override afterStep(dt: number): void {
     achievements().frame(this.w, this.local, this.save.character, this.w.events);
+    stats().frame(this.w, this.local, this.save, this.w.events);
     this.net?.afterTick(this.w.events, dt);
   }
 
@@ -400,8 +403,8 @@ export class RunScene extends WorldScene {
           respec: () => r(respec(c)),
           socket: (it, si, gi) => r(socketGem(c, it, si, gi)),
           unsocket: (it, si) => r(unsocketGem(c, it, si)),
-          upgradeGem: (loc, pi) => r(upgradeGem(c, loc, pi)),
-          fuseGem: (o, d, picks) => r(fuseGems(c, o, d, picks)),
+          upgradeGem: (loc, pi) => r(stats().count(upgradeGem(c, loc, pi), 'gemsUpgraded')),
+          fuseGem: (o, d, picks) => r(stats().count(fuseGems(c, o, d, picks), 'gemsFused')),
           sellItem: (it) => r(sellItem(c, it)),
           sellAll: (f) => r(sellAll(c, f)),
           sellGem: (gi) => r(sellGem(c, gi)),
@@ -446,7 +449,7 @@ export class RunScene extends WorldScene {
     const stock = garyStock(this.save.world, this.session.layout.zone, c.cycle);
     const l = layer('dim');
     l.setAttribute('data-testid', 'gary');
-    renderGary(l, { char: c, stock, buy: (e) => buyFromGary(c, e), close: () => this.closeOverlay() }, () => {
+    renderGary(l, { char: c, stock, buy: (e) => stats().count(buyFromGary(c, e), { garyBuys: 1, garyGlowen: e.price }), close: () => this.closeOverlay() }, () => {
       refreshDerived(p);
       this.w.sfx('lootRare', p.x);
       this.persist();
@@ -504,6 +507,11 @@ export class RunScene extends WorldScene {
         btn('Achievements', () => {
           this.overlay?.remove();
           this.overlay = openAchievements(() => this.showPause());
+          this.overlayKind = 'settings';
+        }, 'big'),
+        btn('Statistics', () => {
+          this.overlay?.remove();
+          this.overlay = openStatistics(() => this.showPause(), { save: this.save });
           this.overlayKind = 'settings';
         }, 'big'),
         this.net ? btn('Return to lobby (invite more)', () => this.returnToLobby(), 'big') : null,

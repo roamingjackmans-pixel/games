@@ -197,13 +197,13 @@ export function rawDamage(w: World, e: Entity, amount: number, type: DamageType,
   // two targets, one bar: a split body's damage (burn, bleed…) lands on the boss it is linked to
   const host = barHost(w, e);
   if (host) {
-    if (showNumber) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius, amount, type, crit: false, toPlayer: false, targetId: e.id });
+    if (showNumber) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius, amount, type, crit: false, toPlayer: false, targetId: e.id, src: sourceId });
     rawDamage(w, host, amount, type, sourceId, false);
     return;
   }
   e.hp.hp -= amount;
   e.hp.lastHitBy = sourceId || e.hp.lastHitBy;
-  if (showNumber) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius, amount, type, crit: false, toPlayer: !!e.pl, targetId: e.id });
+  if (showNumber) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius, amount, type, crit: false, toPlayer: !!e.pl, targetId: e.id, src: sourceId });
   if (e.en?.isBoss) bossPhaseCheck(w, e);
   checkDeath(w, e, sourceId);
 }
@@ -234,7 +234,7 @@ export function checkDeath(w: World, e: Entity, killerId: number): void {
   }
   e.hp.hp = 0;
   e.hp.dead = true;
-  w.emit({ t: 'death', id: e.id, x: e.x, y: e.y, isPlayer: false, defId: e.en?.def.id ?? '' });
+  w.emit({ t: 'death', id: e.id, x: e.x, y: e.y, isPlayer: false, defId: e.en?.def.id ?? '', by: killerId, elite: e.en?.elite ?? null });
   w.hooks.onEnemyKilled?.(w, e, killerId);
 }
 
@@ -380,6 +380,7 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
       hitEnemy(w, p, attacker, back, p.x, p.y);
     }
     if (d.shield?.blockHealPct) heal(w, p, hp.max * d.shield.blockHealPct, false);
+    w.emit({ t: 'stat', key: 'blocks', playerId: pl.playerId });
     w.hooks.onPlayerBlocked?.(w, p, attacker ?? null);
   }
   if (guardBroke) {
@@ -414,7 +415,7 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   }
   p.anim.flashUntil = now + 0.08;
   if (total > 0) {
-    w.emit({ t: 'dmg', x: p.x, y: p.y - 20, amount: total, type: dominantType(spec), crit: false, toPlayer: true, targetId: p.id });
+    w.emit({ t: 'dmg', x: p.x, y: p.y - 20, amount: total, type: dominantType(spec), crit: false, toPlayer: true, targetId: p.id, src: attackerId });
     w.emit({ t: 'shake', amount: Math.min(14, 3 + (total / Math.max(1, hp.max)) * 40) });
     w.sfx('hitFlesh', p.x, 0.9, 0.8);
   }
@@ -688,7 +689,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   e.anim.flashUntil = now + 0.08;
   if (traits.revealedByHoly && (spec.dmg.holy ?? 0) > 0) en.revealedUntil = now + traits.revealedByHoly;
   const shown = total;
-  w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius - 4, amount: shown, type: dominantTypeOf(spec), crit, toPlayer: false, targetId: e.id, ...(affinity ? { affinity } : {}) });
+  w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius - 4, amount: shown, type: dominantTypeOf(spec), crit, toPlayer: false, targetId: e.id, src: attacker?.id ?? 0, ...(affinity ? { affinity } : {}) });
   w.sfx(en.def.hitSound ?? 'hitFlesh', e.x, 0.8, 0.9 + (w.tick % 5) * 0.04);
   w.fx('hit', e.x, e.y, { color: typeColor(dominantTypeOf(spec)), n: crit ? 14 : 7, a: Math.atan2(e.y - fromY, e.x - fromX) });
 

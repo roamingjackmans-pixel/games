@@ -686,3 +686,32 @@ if missing or corrupt, and unknown ids are kept for newer builds.
 - **UI** (`src/ui/achievements.ts`): an unlock toast top-right (icon, name, description, 4 s, queued, a small
   bell); the Achievements screen from the title menu and the pause menu, with the total, The Dark Shard on
   top, unlocked ones first, progress bars on counters. Icons are inline SVG drawn in code.
+
+## 21. Statistics
+
+About forty fun numbers, counted **twice**: per character (in the save, `stats.extra`, so it travels with
+export / import; older saves start from the counters they already had — kills, deaths, bosses, elites,
+mimics, mimic bites, playtime) and **account-wide** for every character this browser has played, deleted
+ones included (`localStorage` `dj.stats`; on the first run it starts from the sum of the existing saves).
+Plain counters add up, `best:` ones keep the lowest (fastest boss kills) and `most:` ones the highest.
+
+- **Combat**: enemies killed (and per enemy type and per zone), elites (and per affix), bosses (per boss, with
+  the fastest kill from the end of its intro), mimics, damage dealt and taken, the biggest single hit, crits,
+  Weak! and resisted hits, parries, ripostes, dodges, blocks, Thermos sips.
+- **Death & Shards**: deaths (and per killer; deaths in boss fights), falls into pits, mimic bites, Shards
+  gained / spent / dropped on death / recovered, the most held at once, levels gained, Glowen earned / spent.
+- **Loot**: items found by rarity, gems found / upgraded / fused, chests opened, Gary visits, purchases and
+  Glowen spent at Gary.
+- **Exploration**: time played (paused time excluded), distance walked (a tile is a metre), rooms entered and
+  cleared, bonfires lit, the deepest zone, NG+ cycles finished.
+- **Co-op**: time in co-op, biggest party, revives given / received, times downed.
+- **Tracking** (`src/game/stats.ts`) works like the achievements: the run scenes pass each frame's world events,
+  the local body and the save; the client counts only its own player (kills and damage carry their source in
+  the `death` / `dmg` events, and a `stat` event carries the rest — dodges, blocks, falls, chests, recovered
+  Shards — for one player or the party). Shards, Glowen, levels, sips and cycles come from the character's
+  numbers changing; distance from the body moving (a jump of more than 40 px in a frame is a teleport). So a
+  co-op guest's numbers are theirs, not the host's.
+- **Screen** (`src/ui/statistics.ts`): from the title menu and the pause menu, directly below Achievements.
+  Tabs "This character" (the title screen picks a save slot) and "All characters"; a headline strip — most
+  hated enemy, nemesis, Shards donated to the floor (dropped minus recovered), favourite elite affix to
+  flatten, kills per death — then Combat, Death & Shards, Co-op, Loot, Exploration, Bosses and Kills by zone.

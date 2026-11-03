@@ -764,6 +764,8 @@ export interface SaveStats {
   elitesKilled: number;
   mimicsKilled: number;
   mimicDeaths: number;
+  /** the Statistics screen's counters for this character (src/game/stats.ts; missing in older saves) */
+  extra?: Record<string, number>;
 }
 
 export interface SaveFile {

@@ -470,6 +470,7 @@ function startDodge(w: World, e: Entity): void {
   if (pl.derived.powers.has('cowards_comfort')) {
     e.buffs!.push({ id: 'cowards', stat: 'moveSpeedPct', amount: 0.4, until: now + 1.4, stacks: 1, maxStacks: 1, sourceId: e.id });
   }
+  w.emit({ t: 'stat', key: 'dodges', playerId: pl.playerId });
   w.hooks.onDodge?.(w, e);
 }
 

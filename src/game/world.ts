@@ -490,11 +490,11 @@ export interface Entity {
 export type GameEvent =
   | { t: 'sfx'; id: string; x?: number; vol?: number; rate?: number }
   | { t: 'fx'; kind: string; x: number; y: number; a?: number; color?: string; n?: number; r?: number; x2?: number; y2?: number }
-  | { t: 'dmg'; x: number; y: number; amount: number; type: DamageType; crit: boolean; toPlayer: boolean; heal?: boolean; targetId?: number; affinity?: 'weak' | 'resist' }
+  | { t: 'dmg'; x: number; y: number; amount: number; type: DamageType; crit: boolean; toPlayer: boolean; heal?: boolean; targetId?: number; affinity?: 'weak' | 'resist'; src?: number }
   | { t: 'shake'; amount: number }
   | { t: 'hitstop'; ms: number; ids: number[] }
   | { t: 'msg'; text: string; forPlayer?: string | undefined; color?: string }
-  | { t: 'death'; id: number; x: number; y: number; isPlayer: boolean; defId?: string; playerId?: string }
+  | { t: 'death'; id: number; x: number; y: number; isPlayer: boolean; defId?: string; playerId?: string; by?: number; elite?: string | null }
   | { t: 'telegraph'; id: number }
   | { t: 'parry'; x: number; y: number; playerId: string }
   | { t: 'guardBreak'; playerId: string }
@@ -505,7 +505,9 @@ export type GameEvent =
   | { t: 'shardGain'; playerId: string; amount: number; x: number; y: number }
   | { t: 'loot'; playerId: string; rarity: string; x: number; y: number }
   /** a player landed a riposte on targetId, or finished reviving the ghost targetId (achievements read these) */
-  | { t: 'feat'; kind: 'riposte' | 'revive'; playerId: string; targetId: number };
+  | { t: 'feat'; kind: 'riposte' | 'revive'; playerId: string; targetId: number }
+  /** a statistic for one player ('' = the whole party), counted by src/game/stats.ts */
+  | { t: 'stat'; key: string; playerId: string; n?: number };
 
 export const ALL_STATUS: StatusId[] = ['burn', 'chill', 'shock', 'bleed', 'poison'];
 export const ALL_CONTROL: ControlId[] = ['freeze', 'blind', 'hexed', 'silence', 'root', 'hold'];
