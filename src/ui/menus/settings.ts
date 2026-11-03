@@ -20,7 +20,7 @@ import { FRIENDLY_FIRE_MAX, FRIENDLY_FIRE_STEP, PROMPT_SETTINGS, normalizeFriend
 import { btn, clearEl, h, layer } from '../dom';
 import { GLYPH_LABEL, glyphEl, inputGlyphEl, inputText, padStyle, promptStyle, refreshGlyphs, type GlyphAction, type GlyphInput } from '../glyphs';
 
-type Tab = 'video' | 'audio' | 'controls' | 'gamepad' | 'game';
+type Tab = 'video' | 'audio' | 'controls' | 'gamepad' | 'coop' | 'game';
 type BindTarget = Action | 'menuConfirm' | 'menuBack';
 
 /** the tab the screen reopens on */
@@ -146,7 +146,6 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     el.appendChild(slider('Master volume', () => s.audio.master, (v) => (s.audio.master = v)));
     el.appendChild(slider('Sound effects', () => s.audio.sfx, (v) => (s.audio.sfx = v)));
     el.appendChild(slider('Music', () => s.audio.music, (v) => (s.audio.music = v)));
-    el.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:240px' }, 'Name in co-op'), nameInput()));
   }
   function nameInput(): HTMLElement {
     const i = h('input', { value: s.net.name, maxlength: '16' });
@@ -486,10 +485,11 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     el.appendChild(list);
   }
 
-  // ---- game: the offline download ---------------------------------------------------------------------------
+  // ---- co-op: your name and friendly fire -------------------------------------------------------------------
 
-  function game(el: HTMLElement): void {
-    el.appendChild(h('h3', null, 'Co-op'));
+  function coop(el: HTMLElement): void {
+    el.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:240px' }, 'Name in co-op'), nameInput()));
+    el.appendChild(h('div', { class: 'small dim-text', style: 'max-width:760px' }, 'What your friends see over your head and on the party cards.'));
     const host = opts.hostFriendlyFire;
     el.appendChild(friendlyFireRow(host ? { hostValue: host() } : {}));
     el.appendChild(
@@ -501,6 +501,11 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
           : "How hard your party's attacks hit each other in co-op, from off (0%) to double (200%). When you host, everyone plays by your setting. Hitting a downed friend's ghost still revives them.",
       ),
     );
+  }
+
+  // ---- game: the offline download ---------------------------------------------------------------------------
+
+  function game(el: HTMLElement): void {
     el.appendChild(h('h3', null, 'Download the game'));
     el.appendChild(
       h(
@@ -578,6 +583,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
       ['audio', 'Audio'],
       ['controls', 'Keyboard & mouse'],
       ['gamepad', 'Gamepad'],
+      ['coop', 'Co-op'],
       ['game', 'Game'],
     ] as const) {
       const b = btn(l, () => {
@@ -604,6 +610,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     const body = h('div', { class: 'col scroll settings-body' });
     if (tab === 'video') video(body);
     else if (tab === 'audio') audio(body);
+    else if (tab === 'coop') coop(body);
     else if (tab === 'game') game(body);
     else bindings(body, tab === 'gamepad');
     panel.appendChild(body);
