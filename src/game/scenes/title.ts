@@ -107,9 +107,10 @@ export class TitleScene implements Scene {
     const t = this.t;
     ctx.fillStyle = '#0d0b12';
     ctx.fillRect(0, 0, 1280, 720);
-    // an endless staircase going down
+    // an endless staircase going down: Joe faces us and walks down it, so the steps slide away from him into the
+    // distance (they used to come toward us, which read as climbing, D146)
     for (let i = 0; i < 14; i++) {
-      const k = (i + (t * 0.4) % 1) / 14;
+      const k = (i + 1 - ((t * 0.4) % 1)) / 14;
       const y = 120 + k * 640;
       const w = 220 + k * 520;
       ctx.fillStyle = `rgba(${40 + k * 40},${36 + k * 30},${50 + k * 30},1)`;
