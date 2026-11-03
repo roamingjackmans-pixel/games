@@ -853,6 +853,12 @@ export function noteImpacts(id: number, start: number, pulsesDone: number, shape
   if (seen.size > 400) for (const [k, v] of seen) if (now - v.at > 3 || v.at > now) seen.delete(k);
 }
 
+/** Forget every impact echo (a room change, a respawn): nothing from the last room may flash in the new one. */
+export function clearTelegraphEchoes(): void {
+  for (const e of echoes) e.live = false;
+  seen.clear();
+}
+
 /** Draw the impact echoes (call once per frame after the telegraphs). */
 export function drawTelegraphEchoes(ctx: CanvasRenderingContext2D, now: number, hc: boolean): void {
   let any = false;

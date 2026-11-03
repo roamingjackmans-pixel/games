@@ -13,7 +13,7 @@ import { drawRoomFloor, DEFAULT_PALETTE } from './room';
 import { drawAmbience } from './ambience';
 import { drawMovingFloors } from './movingFloor';
 import { drawAttackIcon, drawTelegraph } from './telegraphs';
-import { drawTelegraphEchoes } from './telegraphFx';
+import { clearTelegraphEchoes, drawTelegraphEchoes } from './telegraphFx';
 import { debugHitboxes, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
 import type { Entity, GameEvent, World } from '../game/world';
@@ -32,6 +32,8 @@ const STATUS_MOTES: ['burn' | 'chill' | 'shock' | 'bleed' | 'poison', string, nu
 
 export class WorldView {
   shake = 0;
+  /** the room the impact echoes belong to (cleared when it changes) */
+  private echoRoom: unknown = null;
   shakeX = 0;
   shakeY = 0;
   palette: Palette = DEFAULT_PALETTE;
@@ -234,7 +236,11 @@ export class WorldView {
       ctx.fillStyle = `rgba(4,2,8,${Math.min(0.8, w.roomMods.dark)})`;
       ctx.fillRect(0, 0, 1280, 720);
     }
-    // telegraphs
+    // telegraphs (a new room, or the same room re-entered on a respawn, starts with no leftover impact flashes)
+    if (w.room !== this.echoRoom) {
+      this.echoRoom = w.room;
+      clearTelegraphEchoes();
+    }
     for (const e of w.entities.values()) if (e.type === 'telegraph' && !e.removed) drawTelegraph(ctx, w, e, st.video.highContrastTelegraphs, now);
     drawTelegraphEchoes(ctx, now, st.video.highContrastTelegraphs);
     // walls (Guardian Wall)
