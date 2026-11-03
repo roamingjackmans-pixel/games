@@ -202,14 +202,16 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   const d = pl.derived;
   const now = w.time;
   const base = d.weaponPower * mult * (1 + d.dmgPct);
-  const dmg: Partial<Record<DamageType, number>> = { physical: base };
-  let physLeft = base;
+  // a hybrid weapon's base damage is its own type (D80); conversion gems take their share from it
+  const own: DamageType = d.weapon.element ?? 'physical';
+  const dmg: Partial<Record<DamageType, number>> = {};
+  let ownLeft = base;
   for (const c of d.convert) {
     const amt = base * c.pct;
-    physLeft -= amt;
+    ownLeft -= amt;
     dmg[c.type] = (dmg[c.type] ?? 0) + amt;
   }
-  dmg.physical = Math.max(0, physLeft);
+  dmg[own] = (dmg[own] ?? 0) + Math.max(0, ownLeft);
   const holyPct = buffSum(e, 'holyConvertPct', now);
   if (holyPct > 0) dmg.holy = (dmg.holy ?? 0) + base * holyPct;
   for (const t of DAMAGE_TYPES) {

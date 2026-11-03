@@ -1,7 +1,7 @@
 // Drops (GAME_DESIGN §8.2, §11; CONTENT_ITEMS §3, §12): rolled per player from that player's own stream
 // `loot:<playerId>:<n>` and visible only to them (D33).
 import { stream, type Rng } from '../../engine/rng';
-import { CONSUMABLE_CHANCE, DROP_CHANCE, GEM_CHANCE, GLOWEN_WISP_CHANCE, TEAR_CHANCE, type LootSource } from '../../data/lootTables';
+import { CONSUMABLE_CHANCE, DROP_CHANCE, GEM_CHANCE, GLOWEN_PUFF, GLOWEN_WISP_CHANCE, TEAR_CHANCE, type LootSource } from '../../data/lootTables';
 import { SPELLS } from '../../data/spells';
 import { WEAPON_IDS } from '../../data/weapons';
 import { itemLevelFor } from '../combat/formulas';
@@ -59,9 +59,15 @@ export function enemyDrops(c: DropContext, e: Entity): void {
     const rng = lootRng(c, pid, 'e');
     const chance = (en.elite ? DROP_CHANCE.elite : role === 'swarm' ? DROP_CHANCE.swarm : role === 'fodder' ? DROP_CHANCE.fodder : DROP_CHANCE.other) / divide;
     if (rng.chance(chance)) {
-      const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone, ...(en.elite ? { minRarity: 'uncommon' as const } : {}) });
+      const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone });
       const [x, y] = scatter(rng, e.x, e.y);
       dropItem(w, pid, item, x, y);
+    }
+    // Glowen seeps out of everything that lived (D83): a small puff from most kills
+    if (!en.def.traits?.noShards && rng.chance(GLOWEN_PUFF.chance / divide)) {
+      const k = en.elite ? GLOWEN_PUFF.elite : role === 'swarm' ? GLOWEN_PUFF.swarm : role === 'fodder' ? GLOWEN_PUFF.fodder : GLOWEN_PUFF.other;
+      const [x, y] = scatter(rng, e.x, e.y);
+      spawnPickup(w, x, y, { kind: 'glowen', forPlayer: pid, amount: Math.max(1, Math.round((4 + 2 * c.zone) * k * (1 + pl.derived.glowenFind))), rarity: 'common' });
     }
     if (rng.chance((GEM_CHANCE.enemy * (1 + pl.derived.gemFind)) / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
@@ -139,7 +145,7 @@ export function instructorDrops(c: DropContext, x: number, y: number): void {
 }
 
 /**
- * A boss (GAME_DESIGN §7, §8.2): per player a Rare+ item, a second Rare+ roll at 50%, one gem, 10% a Tear of
+ * A boss (GAME_DESIGN §7, §8.2, D84): per player 2–5 items from the boss rarity row, one gem, 10% a Tear of
  * Undoing, and some Glowen. The arena's spell reliquary is rolled by the session (it is a world object).
  */
 export function bossDrops(c: DropContext, bossId: string, x: number, y: number): void {
@@ -150,9 +156,9 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
     if (pl.deadUntilRest) continue;
     const pid = pl.playerId;
     const rng = stream(c.seed, `loot:${pid}:boss:${bossId}:${c.cycle}`);
-    const rolls = rng.chance(DROP_CHANCE.bossSecond) ? 2 : 1;
+    const rolls = rng.int(DROP_CHANCE.bossMin, DROP_CHANCE.bossMax);
     for (let i = 0; i < rolls; i++) {
-      const item = generateItem(rng, { source: 'boss', ilvl, zone: c.zone, minRarity: 'rare' });
+      const item = generateItem(rng, { source: 'boss', ilvl, zone: c.zone });
       const [ix, iy] = scatter(rng, x, y, 60);
       dropItem(w, pid, item, ix, iy);
     }

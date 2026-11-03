@@ -7,6 +7,7 @@ import { speedMult } from '../combat/state';
 import { runEffects } from '../effects/run';
 import { attackDamage } from './spawn';
 import { DAMAGE_TYPES, type AttackDef, type DamageType, type PatternDef } from '../types';
+import { ELEMENTS } from '../elements';
 import type { DamageSpec, Entity, World } from '../world';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y } from '../combat/patterns';
 import { ROOM_CX, ROOM_CY, escapeReach } from '../combat/patterns';
@@ -417,7 +418,8 @@ export function spawnEnemyProjectile(
       returns: !!p.returns,
       returning: false,
       drawId: p.drawId ?? 'e_bolt',
-      color: e.en?.def.palette?.[1] ?? '#ff9b6a',
+      // the bolt glows in its damage type's colour (D81)
+      color: ELEMENTS[firstType(spec)].glow,
       reviveValue: 0,
       knockback: spec.knockback,
       lob,

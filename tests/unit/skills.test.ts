@@ -73,7 +73,7 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
         expect(SKILLS[sid]!.weapon).toBe(w.id);
       });
     }
-    expect(Object.keys(SKILLS).length).toBe(48);
+    expect(Object.keys(SKILLS).length).toBe(60);
     expect(validateData().map((i) => `${i.where}: ${i.msg}`)).toEqual([]);
   });
 });

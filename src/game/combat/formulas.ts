@@ -79,17 +79,30 @@ export function weaponBase(base1: number, ilvl: number): number {
   return base1 * (1 + 0.45 * (ilvl - 1));
 }
 
-/** Multiplier from stat scaling: 1 + Σ grade × f(stat), with Bonk ×1.5 while two-handing */
-export function scalingMult(grades: { bonk: Grade; slicey: Grade }, stats: Pick<Stats, 'bonk' | 'slicey'>, twoHanded: boolean): number {
-  return 1 + GRADE_MULT[grades.bonk] * scalingCurve(effBonk(stats.bonk, twoHanded)) + GRADE_MULT[grades.slicey] * scalingCurve(stats.slicey);
+/**
+ * Multiplier from stat scaling: 1 + Σ grade × f(stat), with Bonk ×1.5 while two-handing. Hybrid weapons (D80) add
+ * a Brain or Prayer grade on top of their Bonk or Slicey grade.
+ */
+export function scalingMult(
+  grades: { bonk: Grade; slicey: Grade; brain?: Grade; prayer?: Grade },
+  stats: Pick<Stats, 'bonk' | 'slicey'> & Partial<Pick<Stats, 'brain' | 'prayer'>>,
+  twoHanded: boolean,
+): number {
+  return (
+    1 +
+    GRADE_MULT[grades.bonk] * scalingCurve(effBonk(stats.bonk, twoHanded)) +
+    GRADE_MULT[grades.slicey] * scalingCurve(stats.slicey) +
+    (grades.brain ? GRADE_MULT[grades.brain] * scalingCurve(stats.brain ?? 0) : 0) +
+    (grades.prayer ? GRADE_MULT[grades.prayer] * scalingCurve(stats.prayer ?? 0) : 0)
+  );
 }
 
 /** weaponDamage = base × (1 + Σ grade × f(effStat)) × attackMultiplier × mods; 40% below requirement */
 export function weaponDamage(
   base1: number,
   ilvl: number,
-  grades: { bonk: Grade; slicey: Grade },
-  stats: Pick<Stats, 'bonk' | 'slicey'>,
+  grades: { bonk: Grade; slicey: Grade; brain?: Grade; prayer?: Grade },
+  stats: Pick<Stats, 'bonk' | 'slicey'> & Partial<Pick<Stats, 'brain' | 'prayer'>>,
   twoHanded: boolean,
   attackMult: number,
   mods = 1,

@@ -1,4 +1,4 @@
-// CONTENT_ITEMS §4.1: 3 skills per weapon class (48), unlocked in order Q → E → R by item tier.
+// CONTENT_ITEMS §4.1: 3 skills per weapon class (60 with the hybrids), unlocked in order Q → E → R by item tier.
 // Damage multipliers are × weapon damage (the effect system builds the weapon's damage spec).
 import type { EffectDef, PatternDef, SkillDef } from '../game/types';
 
@@ -107,6 +107,96 @@ const LIST: SkillDef[] = [
   S('twinaxes_whirlwind', 'twin_axes', 0, 'Whirlwind', 12, 26, [{ op: 'channel', durationS: 2, tickS: 0.3, moveSpeedPct: 0.8, tick: [hit(circle(110), 0.6)] }], '2 s spin: 360° r110 ×0.6 every 0.3 s, moving at 80%.'),
   S('twinaxes_throw', 'twin_axes', 1, 'Throw', 8, 14, [{ op: 'damage', pattern: { kind: 'projectile', speed: 560, r: 10, count: 2, spreadDeg: 14, returns: true, range: 420, drawId: 'p_axe' }, mult: 1.2, type: 'physical' }], 'Two axes ×1.2 that come back (hit twice).', { castMs: 150 }),
   S('twinaxes_rampage', 'twin_axes', 2, 'Rampage', 22, 10, [{ op: 'buff', stat: 'attackSpeedPct', amount: 0.05, durationS: 10, maxStacks: 5, stackOn: 'kill', id: 'rampage', onStack: [{ op: 'resetCooldown', skill: 'twinaxes_throw' }] }], '10 s: kills reset Throw and grant +5% attack speed (max 5).'),
+  // Hollow Maul (Bonk + Brain, Void)
+  S(
+    'hollowmaul_singularity',
+    'hollow_maul',
+    0,
+    'Singularity',
+    12,
+    28,
+    [{ op: 'pull', r: 200, speed: 280, durationS: 0.6, at: 'aim', bosses: 'immune' }, hit(atAim(110), 1.9, { delayS: 0.6, poiseDmg: 70 })],
+    'Open a hole at the cursor: pulls foes within 200 px in for 0.6 s, then crushes circle(110) ×1.9.',
+    { castMs: 300, range: 260 },
+  ),
+  S(
+    'hollowmaul_event_horizon',
+    'hollow_maul',
+    1,
+    'Event Horizon',
+    15,
+    24,
+    [hit(circle(120), 1.2), { op: 'zone', pattern: circle(140), durationS: 4, tickS: 0.5, slowPct: 0.35, enemiesOnly: true, tick: [{ op: 'damage', pattern: { kind: 'circle', r: 12, anchor: 'target' }, mult: 0.3, type: 'void' }] }],
+    'Slam circle(120) ×1.2 and leave a void for 4 s: foes inside are 35% slower and take ×0.3 every 0.5 s.',
+    { castMs: 400, castHyperArmor: true },
+  ),
+  S('hollowmaul_null_shell', 'hollow_maul', 2, 'Null Shell', 22, 15, [{ op: 'barrier', pctMaxHp: 0.25, durationS: 6 }, { op: 'hyperArmor', durationS: 3 }], 'A shell of nothing: a barrier of 25% max HP for 6 s and 3 s of hyper armor.'),
+  // Spellblade (Slicey + Brain, Magic)
+  S('spellblade_arc_wave', 'spellblade', 0, 'Arc Wave', 8, 18, [{ op: 'damage', pattern: { kind: 'projectile', speed: 560, r: 20, pierce: 99, drawId: 'p_crescent', range: 600 }, mult: 1.4, type: 'magic' }], 'Fling the edge: a magic wave (560 px/s) through enemies ×1.4.', { castMs: 180 }),
+  S('spellblade_blink_strike', 'spellblade', 1, 'Blink Strike', 11, 18, [{ op: 'teleport', distance: 220, toward: 'aim' }, hit(circle(95), 1.7)], 'Blink 220 px toward the cursor and strike circle(95) ×1.7.', { castMs: 120 }),
+  S(
+    'spellblade_runic_edge',
+    'spellblade',
+    2,
+    'Runic Edge',
+    20,
+    15,
+    [
+      { op: 'buff', stat: 'damagePct', amount: 0.25, durationS: 8, id: 'runic_edge_dmg' },
+      { op: 'buff', stat: 'castSpeedPct', amount: 0.25, durationS: 8, id: 'runic_edge_cast' },
+    ],
+    'The runes wake: +25% damage and +25% cast speed for 8 s.',
+  ),
+  // Censer Flail (Bonk + Prayer, Fire)
+  S(
+    'censer_incense',
+    'censer_flail',
+    0,
+    'Incense',
+    14,
+    20,
+    [
+      {
+        op: 'zone',
+        pattern: circle(130),
+        durationS: 4,
+        tickS: 0.5,
+        follow: true,
+        enemiesOnly: true,
+        tick: [{ op: 'damage', pattern: { kind: 'circle', r: 12, anchor: 'target' }, mult: 0.35, type: 'fire', status: { id: 'burn', buildup: 15 } }],
+      },
+    ],
+    'Swing the censer: a 130 px cloud of burning incense follows you for 4 s, ×0.35 Fire and Burn 15 every 0.5 s.',
+    { castMs: 250 },
+  ),
+  S(
+    'censer_brimstone',
+    'censer_flail',
+    1,
+    'Brimstone',
+    11,
+    22,
+    [{ op: 'damage', pattern: { kind: 'projectile', speed: 480, r: 10, lob: true, drawId: 'p_magic', onImpact: { kind: 'circle', r: 110, anchor: 'point' } }, mult: 1.9, type: 'fire', status: { id: 'burn', buildup: 45 } }],
+    'Lob a coal from the censer: it bursts circle(110) ×1.9 Fire, Burn 45.',
+    { castMs: 220 },
+  ),
+  S(
+    'censer_sanctified_flame',
+    'censer_flail',
+    2,
+    'Sanctified Flame',
+    22,
+    15,
+    [
+      { op: 'heal', pct: 0.15, overS: 3 },
+      { op: 'buff', stat: 'damagePct', amount: 0.15, durationS: 6, id: 'sanctified_flame' },
+    ],
+    'Breathe in the holy smoke (not recommended): heal 15% over 3 s and +15% damage for 6 s.',
+  ),
+  // Dawn Glaive (Slicey + Prayer, Holy)
+  S('glaive_sunrise', 'dawn_glaive', 0, 'Sunrise', 9, 22, [hit(arc(180, 160), 1.8, { knockback: 120 })], 'A rising half-moon arc(180°,160) ×1.8 that knocks foes back.', { castMs: 300, castHyperArmor: true }),
+  S('glaive_halo_throw', 'dawn_glaive', 1, 'Halo Throw', 10, 18, [{ op: 'damage', pattern: { kind: 'projectile', speed: 520, r: 18, pierce: 99, returns: true, range: 420, drawId: 'p_crescent' }, mult: 1.2, type: 'holy' }], 'Throw the blade like a halo: ×1.2 Holy out and ×1.2 back.', { castMs: 180 }),
+  S('glaive_judgement_ray', 'dawn_glaive', 2, 'Judgement Ray', 18, 28, [hit(thrust(44, 700), 2.4, { telegraphS: 0.5 })], 'Point at the problem: after 0.5 s a ray of dawn line(44,700) ×2.4 Holy.', { castMs: 200 }),
 ];
 
 export const SKILLS: Record<string, SkillDef> = Object.fromEntries(LIST.map((s) => [s.id, s]));

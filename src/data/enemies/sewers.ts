@@ -370,7 +370,7 @@ export const SEWERS: Record<string, EnemyDef> = {
     moveStyle: 'stationary',
     preferredRange: 0,
     attacks: [
-      { id: 'water_bolt', name: 'Water Bolt', kind: 'normal', pattern: { kind: 'projectile', speed: 340, r: 8, range: 1000 }, windupMs: 550, recoverMs: 450, dmgMult: 0.9, type: 'physical', cooldownS: 2, range: [40, 900], weight: 3 },
+      { id: 'water_bolt', name: 'Water Bolt', kind: 'normal', pattern: { kind: 'projectile', speed: 340, r: 8, range: 1000 }, windupMs: 550, recoverMs: 450, dmgMult: 0.9, type: 'magic', cooldownS: 2, range: [40, 900], weight: 3 },
       {
         id: 'tide_wave',
         name: 'Wave',
@@ -381,7 +381,7 @@ export const SEWERS: Record<string, EnemyDef> = {
         recoverMs: 1200,
         dmgMult: 1.3,
         knockback: 160,
-        type: 'physical',
+        type: 'magic',
         cooldownS: 11,
         range: [0, 1400],
         weight: 2,

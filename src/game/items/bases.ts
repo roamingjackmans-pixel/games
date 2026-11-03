@@ -53,6 +53,9 @@ export function itemRequirements(item: Pick<Item, 'baseId' | 'ilvl'>): Requireme
     const bonkPrimary = req.bonk >= req.slicey;
     r.bonk = req.bonk > 0 ? reqAtIlvl(req.bonk, item.ilvl, bonkPrimary) : 0;
     r.slicey = req.slicey > 0 ? reqAtIlvl(req.slicey, item.ilvl, !bonkPrimary) : 0;
+    // hybrid weapons (D80): the Brain / Prayer requirement stays at its base value like a secondary stat
+    if (w?.req.brain) r.brain = w.req.brain;
+    if (w?.req.prayer) r.prayer = w.req.prayer;
     return r;
   }
   const t = CASTING_TOOLS[item.baseId];

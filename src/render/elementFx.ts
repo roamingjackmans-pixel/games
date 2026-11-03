@@ -1,0 +1,99 @@
+// Damage-type colour on enemies (D81): a faint glow of an elemental enemy's own type under it, and while it
+// attacks, a charge-up aura and a strike streak in the colour of the attack's damage type. The draw functions
+// colour the striking limb or weapon themselves (DrawState.atk); this is the shared layer around them.
+import { glow, withAlpha } from '../engine/draw/parts';
+import { ELEMENTS, enemyElement } from '../game/elements';
+import type { Entity } from '../game/world';
+
+/** states in which the body is hidden or not yet there: no glow may give it away */
+const HIDDEN = new Set(['dormant', 'spawning', 'ceiling', 'stealth', 'invisible', 'submerged', 'dead']);
+
+/** Under the body: the enemy's own type as a soft pool of light, and the gathering aura of an attack. */
+export function drawElementUnder(ctx: CanvasRenderingContext2D, e: Entity, x: number, y: number, now: number): void {
+  const en = e.en;
+  if (!en || HIDDEN.has(en.state) || e.anim.alpha < 0.3) return;
+  const own = enemyElement(en.def);
+  const r = e.radius * (e.anim.scale || 1);
+  if (own !== 'physical') {
+    const el = ELEMENTS[own];
+    // void is grey-black: a dark pool with a pale rim reads better than a dark glow
+    if (own === 'void') {
+      ctx.save();
+      ctx.fillStyle = withAlpha(el.deep, 0.45);
+      ctx.beginPath();
+      ctx.ellipse(x, y + r * 0.7, r * 1.35, r * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      glow(ctx, x, y + r * 0.5, r * 1.6, el.glow, 0.16 + Math.sin(now * 2.2 + e.id) * 0.04);
+    } else glow(ctx, x, y + r * 0.4, r * 1.9, el.glow, 0.18 + Math.sin(now * 2.2 + e.id) * 0.05);
+  }
+  const a = en.attack;
+  if (!a || a.def.kind === 'utility') return;
+  const el = ELEMENTS[a.def.type];
+  if (a.phase === 'windup') {
+    const k = Math.min(1, a.t / Math.max(0.05, a.windup));
+    glow(ctx, x, y, r * (1.6 + k * 1.2), el.glow, 0.15 + k * 0.45);
+  } else if (a.phase === 'active') glow(ctx, x, y, r * 2.6, el.glow, 0.55);
+}
+
+/** Over the body: motes drawn inward while winding up, and a bright streak along a melee strike. */
+export function drawElementOver(ctx: CanvasRenderingContext2D, e: Entity, x: number, y: number, now: number): void {
+  const en = e.en;
+  if (!en || HIDDEN.has(en.state) || e.anim.alpha < 0.3) return;
+  const a = en.attack;
+  if (!a || a.def.kind === 'utility') return;
+  if (en.def.swarm && en.pieceIndex > 0) return;
+  const el = ELEMENTS[a.def.type];
+  const r = e.radius * (e.anim.scale || 1);
+  if (a.phase === 'windup') {
+    const k = Math.min(1, a.t / Math.max(0.05, a.windup));
+    const n = 6;
+    ctx.save();
+    ctx.fillStyle = el.glow;
+    for (let i = 0; i < n; i++) {
+      // each mote spirals in from 2.2 r to the body, looping faster as the windup fills
+      const ph = (now * (1.2 + k * 2.4) + i / n) % 1;
+      const ang = e.id * 1.7 + i * ((Math.PI * 2) / n) + ph * 1.6;
+      const d = r * (2.3 - ph * 1.6);
+      ctx.globalAlpha = (0.25 + k * 0.6) * Math.sin(ph * Math.PI);
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(ang) * d, y + Math.sin(ang) * d, 1.6 + k * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  } else if (a.phase === 'active' && a.def.pattern?.kind === 'melee') {
+    const p = a.def.pattern;
+    const reach = p.shape === 'arc' ? (p.r ?? r * 2.5) : (p.l ?? r * 3);
+    const k = Math.min(1, a.t / Math.max(0.05, a.active));
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.7 * (1 - k * 0.6);
+    if (p.shape === 'arc') {
+      const half = ((p.angleDeg ?? 90) * Math.PI) / 360;
+      const a0 = a.angle - half;
+      const a1 = a.angle - half + 2 * half * Math.min(1, k * 1.4);
+      ctx.strokeStyle = withAlpha(el.glow, 0.85);
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(x, y, reach * 0.8, a0, a1);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(x, y, reach * 0.8, a0, a1);
+      ctx.stroke();
+    } else {
+      const l = reach * Math.min(1, 0.4 + k);
+      ctx.strokeStyle = withAlpha(el.glow, 0.85);
+      ctx.lineWidth = Math.max(6, (p.w ?? 20) * 0.4);
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(a.angle) * r * 0.6, y + Math.sin(a.angle) * r * 0.6);
+      ctx.lineTo(x + Math.cos(a.angle) * l, y + Math.sin(a.angle) * l);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}

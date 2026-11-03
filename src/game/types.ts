@@ -506,8 +506,11 @@ export interface WeaponDef {
   name: string;
   /** equip load weight (D82) */
   weight: number;
-  grades: { bonk: Grade; slicey: Grade };
-  req: { bonk: number; slicey: number };
+  /** hybrid weapons (D80) also scale with Brain or Prayer and need it */
+  grades: { bonk: Grade; slicey: Grade; brain?: Grade; prayer?: Grade };
+  req: { bonk: number; slicey: number; brain?: number; prayer?: number };
+  /** the weapon's own damage type (hybrids: Bonk+Brain Void, Slicey+Brain Magic, Bonk+Prayer Fire, Slicey+Prayer Holy) */
+  element?: DamageType;
   speedClass: SpeedClass;
   combo: SwingDef[];
   base1: number;

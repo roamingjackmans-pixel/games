@@ -314,7 +314,7 @@ export const CRYPT: Record<string, EnemyDef> = {
     moveStyle: 'stationary',
     preferredRange: 0,
     attacks: [
-      { id: 'bell_chime', name: 'Chime', kind: 'normal', pattern: { kind: 'ring', rIn: 0, rOut: 90, anchor: 'self' }, windupMs: 500, recoverMs: 500, dmgMult: 0.6, type: 'physical', cooldownS: 3, range: [0, 90], weight: 3, parryable: false },
+      { id: 'bell_chime', name: 'Chime', kind: 'normal', pattern: { kind: 'ring', rIn: 0, rOut: 90, anchor: 'self' }, windupMs: 500, recoverMs: 500, dmgMult: 0.6, type: 'void', cooldownS: 3, range: [0, 90], weight: 3, parryable: false },
       {
         id: 'bell_toll',
         name: 'Toll',
@@ -323,7 +323,7 @@ export const CRYPT: Record<string, EnemyDef> = {
         windupMs: 1000,
         recoverMs: 2600,
         dmgMult: 0.8,
-        type: 'physical',
+        type: 'void',
         cooldownS: 14,
         range: [0, 900],
         weight: 2,
