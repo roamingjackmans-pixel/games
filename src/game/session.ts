@@ -1219,7 +1219,7 @@ export class GameSession {
       f.anim.pose = 'attack';
       w.sfx('swingMedium', f.x);
       rawDamage(w, p, p.hp!.max * 0.1, 'physical', f.id);
-      w.emit({ t: 'msg', text: 'Ow. Drink from the Thermos (C).', forPlayer: p.pl!.playerId });
+      w.emit({ t: 'msg', text: 'Ow. Drink from the Thermos ({flask}).', forPlayer: p.pl!.playerId });
     }
     // sign text when close
     let sign: string | null = null;

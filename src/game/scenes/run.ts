@@ -1,5 +1,6 @@
 // The run scene: a playthrough on screen. Wraps a GameSession (the run rules) with rendering, the HUD,
 // minimap, map screen, title cards, room fades, the death screen, bonfire menu and autosaves.
+import { drawGlyphLabel, drawPromptText, promptLabel } from '../../ui/glyphs';
 import '../../engine/draw/enemies';
 import '../../engine/draw/props';
 import { app } from '../../app';
@@ -561,7 +562,7 @@ export class RunScene extends WorldScene {
         h('h2', null, `${z.name}${this.save.character.cycle ? ` — Cycle ${this.save.character.cycle + 1}` : ''}`),
         c,
         h('div', { class: 'small dim-text' }, '▲ bonfire (orange: fresh, brown: embers) · ■ treasure · ✦ reliquary · $ merchant · ☠ boss · blue dot: your Shardpile'),
-        btn('Close (M)', () => this.closeOverlay()),
+        btn(promptLabel('map', 'Close', 'suffix'), () => this.closeOverlay()),
       ),
     );
     this.overlay = l;
@@ -585,7 +586,7 @@ export class RunScene extends WorldScene {
       const label = t.type === 'enemy' ? 'Open' : t.it?.label || '';
       if (label && t.it?.kind !== 'station') {
         const prog = this.session.holdProgress(p);
-        drawText(ctx, `F  ${label}`, t.x, t.y - t.radius - 26, { size: 15, align: 'center', weight: 'bold' });
+        drawGlyphLabel(ctx, 'interact', label, t.x, t.y - t.radius - 31, { size: 15 });
         if (prog > 0) {
           ctx.save();
           ctx.strokeStyle = '#e6b84a';
@@ -605,7 +606,7 @@ export class RunScene extends WorldScene {
       ctx.strokeStyle = '#8a6a3a';
       ctx.strokeRect(240, 600, 800, 52);
       ctx.restore();
-      drawText(ctx, this.signText, 640, 632, { size: 15, align: 'center', maxWidth: 780 });
+      drawPromptText(ctx, this.signText, 640, 627, { size: 15, maxWidth: 780, weight: 'normal' });
     }
     // locked boss door hint
     const node = this.session.node;

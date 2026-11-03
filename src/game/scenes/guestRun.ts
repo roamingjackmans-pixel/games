@@ -1,6 +1,7 @@
 // A co-op guest's game screen: draws the mirror of the host's world with the normal view and HUD, sends
 // input every frame, opens its own bonfire/inventory menus (its character is its own, D31/NETCODE §6) and
 // syncs changes back to the host. No pause in co-op: menus are overlays (GAME_DESIGN §12).
+import { drawGlyphLabel, promptLabel } from '../../ui/glyphs';
 import { app } from '../../app';
 import { mixer } from '../../engine/audio/mixer';
 import { music } from '../../engine/audio/music';
@@ -374,7 +375,7 @@ export class GuestRunScene extends WorldScene {
     ctx.fillStyle = '#14121a';
     ctx.fillRect(0, 0, 700, 520);
     drawMap(ctx, { layout: lay, ws: this.mapWs(), currentId: this.net.nodeId, revealAll: false }, 40, 40, 64, 42, 10, true);
-    l.appendChild(h('div', { class: 'panel col', style: 'align-items:center' }, h('h2', null, ZONES[lay.zone - 1]?.name ?? ''), cv, btn('Close (M)', () => this.closeOverlay())));
+    l.appendChild(h('div', { class: 'panel col', style: 'align-items:center' }, h('h2', null, ZONES[lay.zone - 1]?.name ?? ''), cv, btn(promptLabel('map', 'Close', 'suffix'), () => this.closeOverlay())));
     this.overlay = l;
     this.overlayKind = 'map';
     this.menuOpen = true;
@@ -386,7 +387,7 @@ export class GuestRunScene extends WorldScene {
     const p = this.local;
     if (!p || this.overlay) return;
     const t = nearestInteractable(this.w.entities.values(), p);
-    if (t?.it?.label && t.it.kind !== 'station') drawText(ctx, `F  ${t.it.label}`, t.x, t.y - t.radius - 26, { size: 15, align: 'center', weight: 'bold' });
+    if (t?.it?.label && t.it.kind !== 'station') drawGlyphLabel(ctx, 'interact', t.it.label, t.x, t.y - t.radius - 31, { size: 15 });
   }
 
   protected override renderTop(ctx: CanvasRenderingContext2D, _alpha: number, realDt: number): void {

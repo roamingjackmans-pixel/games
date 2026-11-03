@@ -1,5 +1,6 @@
 // The world view: draws a World in ART_AUDIO §1 layer order and turns sim events into sound and particles.
 // Client side only (canvas + audio).
+import { formatPrompts } from '../ui/glyphs';
 import { playSfx, type SfxId, SFX } from '../engine/audio/sfx';
 import { glow, withAlpha } from '../engine/draw/parts';
 import type { Particles } from '../engine/particles';
@@ -84,7 +85,7 @@ export class WorldView {
           break;
         case 'msg':
           if (ev.text && (!ev.forPlayer || ev.forPlayer === this.localPlayerId)) {
-            this.messages.push({ text: ev.text, until: now + 2.2, color: ev.color ?? '#efe6d2' });
+            this.messages.push({ text: formatPrompts(ev.text), until: now + 2.2, color: ev.color ?? '#efe6d2' });
             if (this.messages.length > 4) this.messages.shift();
           }
           break;
