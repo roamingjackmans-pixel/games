@@ -80,8 +80,10 @@ export function wearsFullSet(c: Character): boolean {
 }
 
 export function hasMaxGem(c: Character): boolean {
-  if (c.gems.some((g) => g.tier >= 5)) return true;
-  return itemsOf(c).some((it) => it.sockets.some((g) => !!g && g.tier >= 5));
+  // a gem perk at Tier 5 (perks carry the tiers since gems can hold several)
+  const maxed = (g: { perks: { tier: number }[] } | null): boolean => !!g && g.perks.some((p) => p.tier >= 5);
+  if (c.gems.some(maxed)) return true;
+  return itemsOf(c).some((it) => it.sockets.some(maxed));
 }
 
 /** The boss fight in progress, from the local player's side. */

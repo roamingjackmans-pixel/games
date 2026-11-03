@@ -154,7 +154,7 @@ describe('unlocking', () => {
     // the Knight starts in a full zone-1 set: that is not finding one
     expect(wearsFullSet(c)).toBe(false);
     c.glowen = 10000;
-    c.gems.push({ family: c.gems[0]?.family ?? 'quicksilver', tier: 5 });
+    c.gems.push({ perks: [{ family: 'quicksilver', tier: 5 }] });
     c.equipment.head = { id: 'h', baseId: 'mycelial_head', slot: 'head', kind: 'armor', rarity: 'common', ilvl: 1, name: 'h', affixes: [], sockets: [] };
     c.equipment.body = { id: 'b', baseId: 'mycelial_body', slot: 'body', kind: 'armor', rarity: 'common', ilvl: 1, name: 'b', affixes: [], sockets: [] };
     c.equipment.legs = { id: 'l', baseId: 'mycelial_legs', slot: 'legs', kind: 'armor', rarity: 'legendary', ilvl: 1, name: 'l', affixes: [], sockets: [] };
