@@ -4,7 +4,8 @@ import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
 import { Rng } from '../../src/engine/rng';
 import { stepWorld } from '../../src/game/sim';
-import { rawDamage } from '../../src/game/combat/damage';
+import { emptySpec, hitPlayer, rawDamage } from '../../src/game/combat/damage';
+import { refreshDerived } from '../../src/game/player/player';
 import { neighbourId } from '../../src/game/procgen/zone';
 import { smallChest } from '../../src/game/procgen/chests';
 import type { Side } from '../../src/game/room';
@@ -230,6 +231,24 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     s.respawn();
     expect(s.node.kind).toBe('start');
     expect(s.save.character.tutorialDone).toBe(true);
+  });
+
+  it('a block timed like a parry checks off the parry station even without a parrying shield (D96)', () => {
+    const s = session(true);
+    const p = s.localPlayer!;
+    p.pl!.char.twoHanded = true;
+    refreshDerived(p);
+    expect(p.pl!.derived.shield).toBeNull();
+    const dummy = [...s.w.entities.values()].find((e) => e.en)!;
+    const spec = { ...emptySpec('normal'), dmg: { physical: 5 }, parryable: true };
+    // a late block does nothing for the station
+    hitPlayer(s.w, dummy.id, p, spec, p.x + 40, p.y);
+    expect(s.tutorialDone('parry')).toBe(false);
+    // a block pressed just before the swing lands does
+    p.facing = 0;
+    p.pl!.bareParryUntil = s.w.time + 0.1;
+    hitPlayer(s.w, dummy.id, p, spec, p.x + 40, p.y);
+    expect(s.tutorialDone('parry')).toBe(true);
   });
 
   it('walking past him and out his east door reaches the start room', () => {

@@ -249,7 +249,7 @@ export const TUTORIAL_STATIONS: TutorialStation[] = [
   { n: 2, sign: 'AIM with the mouse (or the right stick). Point the pointy end at the problem.', goal: 'aim' },
   { n: 3, sign: 'ATTACK the dummy: {attack}. Hold to keep swinging. Watch your stamina (green).', goal: 'attack' },
   { n: 4, sign: 'BLOCK its swing: hold {block}. Blocking costs stamina; at zero you are guard broken.', goal: 'block' },
-  { n: 5, sign: 'PARRY: tap block just as the swing lands. A parried enemy takes a ×2 riposte.', goal: 'parry' },
+  { n: 5, sign: 'PARRY: tap block just as the swing lands. A parried enemy takes a ×2 riposte. No shield? The timing still counts here.', goal: 'parry' },
   { n: 6, sign: 'RED attacks cannot be blocked or parried. DODGE through them ({dodge}). One dodge per 5 seconds.', goal: 'dodgeRed' },
   { n: 7, sign: 'BLUE attacks ignore dodging. Walk out of the drawn area before it lands.', goal: 'escapePierce' },
   { n: 8, sign: 'TWO-HAND with {twoHand}: your Bonk counts ×1.5 for damage and requirements; no shield, weapon guard only.', goal: 'twoHand' },

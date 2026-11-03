@@ -47,6 +47,7 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     parryReadyAt: 0,
     guardBrokenUntil: 0,
     dodgeReadyAt: 0,
+    bareParryUntil: 0,
     lastBowHintAt: -9,
     dodgeRechargeTotal: derived.dodgeRecharge,
     dodgeUntil: 0,
@@ -641,6 +642,11 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
       pl.parryReadyAt = now + 0.45;
       e.anim.pose = 'parry';
       e.anim.poseT = 0;
+    } else if (canAct(w, e) && now >= pl.parryReadyAt) {
+      // no shield that parries (two-handing, a greatshield, a staff, bare hands): the timing still counts for the
+      // tutorial's parry station, with a buckler's window (D96)
+      pl.bareParryUntil = now + 0.18;
+      pl.parryReadyAt = now + 0.45;
     }
   }
   const wantBlock = holdToBlock ? held(inp, 'block') : pl.blockToggled;

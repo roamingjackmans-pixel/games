@@ -155,6 +155,12 @@ export class GameSession {
     this.w.hooks.onGaryHit = (_w, g) => this.garyHit(g);
     this.w.hooks.onPlayerDied = (_w, p) => this.bledOut(p);
     this.w.hooks.onPlayerParried = () => this.goal('parry');
+    // the parry station also accepts a perfectly timed block without a parrying shield (D96)
+    this.w.hooks.onTimedBlock = (w, p) => {
+      if (!this.tutorial || this.tutorial.goals.has('parry')) return;
+      this.goal('parry');
+      w.emit({ t: 'msg', text: 'Perfect timing! With a buckler or a medium shield, that would have been a parry.', forPlayer: p.pl!.playerId, color: '#ffd27a' });
+    };
     this.w.hooks.onPlayerBlocked = () => this.goal('block');
     this.w.hooks.onMimicWake = (_w, e) => {
       const id = e.en?.mimicChestId?.replace('awake:', '');

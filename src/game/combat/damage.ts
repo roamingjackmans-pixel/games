@@ -311,6 +311,12 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
     return 'parried';
   }
 
+  // a well-timed block with nothing to parry with: no parry, but the timing is noted (D96)
+  if (pl.bareParryUntil > now && facingHit && spec.kind === 'normal' && spec.parryable && attacker?.en) {
+    pl.bareParryUntil = 0;
+    w.hooks.onTimedBlock?.(w, p, attacker);
+  }
+
   let mult = 1;
   if (pl.guardBrokenUntil > now) mult *= 1.5;
   if (p.st?.shockArmed) {

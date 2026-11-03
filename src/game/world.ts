@@ -121,6 +121,8 @@ export interface ChargeRun {
 }
 
 export interface PlayerC {
+  /** a block pressed with no parrying shield: its parry-timing window (only the tutorial cares, D96) */
+  bareParryUntil: number;
   /** last "a bow needs both hands" hint (D88) */
   lastBowHintAt: number;
   slot: number;
@@ -538,6 +540,8 @@ export interface WorldHooks {
   onBossPhase?(w: World, e: Entity, phase: number): void;
   onPlayerBlocked?(w: World, p: Entity, attacker: Entity | null): void;
   onPlayerParried?(w: World, p: Entity, attacker: Entity): void;
+  /** a block timed like a parry by someone with nothing to parry with (D96) */
+  onTimedBlock?(w: World, p: Entity, attacker: Entity): void;
   onEnemyHitEffects?(w: World, attacker: Entity, victim: Entity, effects: EffectDef[]): void;
   onGaryHit?(w: World, gary: Entity, attacker: Entity | null): void;
   onEnemyHurt?(w: World, e: Entity, attacker: Entity | null): void;
