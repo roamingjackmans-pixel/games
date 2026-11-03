@@ -268,7 +268,9 @@ describe('offline download files', () => {
     expect(cmd).toContain('start "" /wait');
     const readme = readmeTxt('1.2.3', '2026-11-02');
     expect(readme).toContain('Add a Non-Steam Game to My Library');
-    expect(readme).toContain('Play Dungeon Joe.cmd');
+    expect(readme).toContain('Dungeon Joe.cmd');
+    expect(readme).toContain('DungeonJoe.ico');
+    expect(readme).toContain('Properties');
     expect(readme).toContain('All Files');
     expect(readme).toContain('Export');
     expect(readme).toContain('internet');

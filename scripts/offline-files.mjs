@@ -46,7 +46,7 @@ export function inlineHtml(html, files, faviconSvg) {
 }
 
 /**
- * "Play Dungeon Joe.cmd": opens DungeonJoe.html in its own full-screen app window (Edge, then Chrome, then the
+ * "Dungeon Joe.cmd": opens DungeonJoe.html in its own full-screen app window (Edge, then Chrome, then the
  * default browser). Its own browser profile beside it keeps the saves, and `start /wait` keeps this process alive
  * while the game window is open, so Steam shows the game as running.
  */
@@ -89,7 +89,7 @@ start "" "%GAME%"
 exit /b 0
 
 :missing
-echo DungeonJoe.html was not found. Keep "Play Dungeon Joe.cmd" in the same folder as DungeonJoe.html.
+echo DungeonJoe.html was not found. Keep "Dungeon Joe.cmd" in the same folder as DungeonJoe.html.
 pause
 exit /b 1
 `);
@@ -109,7 +109,7 @@ PLAY
 ----
 1. Unzip this download into a folder you will keep, for example Documents\\Games\\Dungeon Joe
    (right-click the .zip > Extract All...). Do not play from inside the .zip.
-2. Double-click "Play Dungeon Joe.cmd".
+2. Double-click "Dungeon Joe.cmd".
    It opens DungeonJoe.html full screen in its own window, using Microsoft Edge (or Google Chrome;
    if neither is installed, your default browser). A small black launcher window stays open while
    you play; leave it be. Alt+F4 quits. F11 leaves or enters full screen.
@@ -122,11 +122,13 @@ ADD IT TO STEAM (your library only, not the Steam store)
 ----------------------------------------------------------
 1. Open Steam.
 2. Games menu > "Add a Non-Steam Game to My Library..."
-3. Click "Browse..." and go to this folder. If "Play Dungeon Joe.cmd" is not listed, set the file
+3. Click "Browse..." and go to this folder. If "Dungeon Joe.cmd" is not listed, set the file
    type box at the bottom of the window to "All Files (*.*)".
-4. Choose "Play Dungeon Joe.cmd", click Open, then click "Add Selected Programs".
-5. Optional: right-click it in your Library > Properties to rename it "Dungeon Joe" and pick an icon;
-   right-click > Manage > Set custom artwork for library images.
+4. Choose "Dungeon Joe.cmd", click Open, then click "Add Selected Programs".
+   Steam lists it with a blank name and no icon: that is normal for a launcher that is not an .exe.
+5. Name it and give it its icon: in your Library, right-click it > Properties. Type "Dungeon Joe" in
+   the name box, click the blank icon square beside it and choose DungeonJoe.ico from this folder.
+6. Optional: right-click > Manage > Set custom artwork for library images.
 Tip: if your controller behaves oddly when the game is started from Steam, right-click it >
 Properties > Controller > "Disable Steam Input".
 

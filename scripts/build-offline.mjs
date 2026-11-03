@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 import { inlineHtml, launcherCmd, readmeTxt } from './offline-files.mjs';
 import { makeZip } from './zip.mjs';
+import { iconIco } from './icon.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = resolve(root, 'dist');
@@ -56,7 +57,9 @@ const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 const built = new Date().toISOString().slice(0, 10);
 const zip = makeZip([
   { name: 'DungeonJoe.html', data: page },
-  { name: 'Play Dungeon Joe.cmd', data: launcherCmd() },
+  { name: 'Dungeon Joe.cmd', data: launcherCmd() },
+  // Steam reads no name or icon from a .cmd, so the icon comes beside it to pick in Properties (D133)
+  { name: 'DungeonJoe.ico', data: iconIco() },
   { name: 'README.txt', data: readmeTxt(pkg.version, built) },
 ]);
 mkdirSync(dist, { recursive: true });
