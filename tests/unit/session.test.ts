@@ -287,3 +287,27 @@ describe('The Instructor (D107)', () => {
     expect(p2.find((a) => a.id === 'instructor_overhead_2')!.windupMs).toBeLessThan(1400);
   });
 });
+
+describe('The Instructor walks the whole room (D110)', () => {
+  it('chases a player to the far side in phase one, past his old 230 px leash', () => {
+    const ch = newCharacter('knight', 'Joe', 'p1', new Rng('inst2'));
+    ch.tutorialDone = false;
+    const s = new GameSession(newSave(1, ch, 'INSTRUCTOR-LEASH'));
+    s.start();
+    s.enterRoom(s.layout.trialId!, 'w');
+    s.w.god = true;
+    const inst = [...s.w.entities.values()].find((e) => e.en?.def.id === 'the_instructor')!;
+    const x0 = inst.x;
+    const y0 = inst.y;
+    const p = s.localPlayer!;
+    p.x = 1180;
+    p.y = 600;
+    for (let i = 0; i < 60 * 12; i++) {
+      p.x = 1180;
+      p.y = 600;
+      stepWorld(s.w);
+    }
+    expect(inst.en!.phase).toBe(0);
+    expect(Math.hypot(inst.x - x0, inst.y - y0)).toBeGreaterThan(260);
+  });
+});

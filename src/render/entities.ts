@@ -475,6 +475,54 @@ export function drawProjectile(ctx: CanvasRenderingContext2D, e: Entity, x: numb
       blob(ctx, -8, 0, 3, 3, { fill: '#e8e1c8', outlineW: 1.5 });
       blob(ctx, 8, 0, 3, 3, { fill: '#e8e1c8', outlineW: 1.5 });
       break;
+    case 'e_soccer': {
+      // The Instructor's soccer balls (D110): white with black pentagons, spinning as they fly
+      const R = Math.max(7, e.radius);
+      ctx.rotate(now * 9);
+      blob(ctx, 0, 0, R, R, { fill: '#f4f4ee', under: '#cfcfc6', outlineW: 1.6 });
+      ctx.fillStyle = '#1a1a1e';
+      const pent = (cx: number, cy: number, s: number): void => {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const a = -Math.PI / 2 + (i * Math.PI * 2) / 5;
+          if (i === 0) ctx.moveTo(cx + Math.cos(a) * s, cy + Math.sin(a) * s);
+          else ctx.lineTo(cx + Math.cos(a) * s, cy + Math.sin(a) * s);
+        }
+        ctx.closePath();
+        ctx.fill();
+      };
+      pent(0, 0, R * 0.36);
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI * 2) / 5;
+        pent(Math.cos(a) * R * 0.82, Math.sin(a) * R * 0.82, R * 0.24);
+      }
+      break;
+    }
+    case 'e_basketball': {
+      // The Instructor's basketball (D110): orange with black seams, tumbling through its lob
+      const R = Math.max(9, e.radius);
+      ctx.rotate(now * 5);
+      blob(ctx, 0, 0, R, R, { fill: '#e8742a', under: '#b5501a', outlineW: 1.8 });
+      ctx.strokeStyle = '#1a1210';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-R, 0);
+      ctx.lineTo(R, 0);
+      ctx.moveTo(0, -R);
+      ctx.lineTo(0, R);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(-R * 1.15, 0, R * 0.85, -0.95, 0.95);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(R * 1.15, 0, R * 0.85, Math.PI - 0.95, Math.PI + 0.95);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.beginPath();
+      ctx.arc(-R * 0.35, -R * 0.4, R * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
     case 'e_paper':
       ctx.rotate(Math.sin(now * 10) * 0.5);
       ctx.fillStyle = '#f4f0e0';
