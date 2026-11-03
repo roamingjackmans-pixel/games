@@ -2,7 +2,7 @@
 import { DEG, angleDiff, circleHit, clamp, dist, turnToward } from '../../engine/math';
 import { emptySpec, hitPlayer } from '../combat/damage';
 import { spawnShapeTelegraph, spawnTelegraphs } from '../combat/telegraph';
-import { resolvePattern, type PatternCtx } from '../combat/patterns';
+import { behindGap, resolvePattern, waveFair, type PatternCtx } from '../combat/patterns';
 import { speedMult } from '../combat/state';
 import { runEffects } from '../effects/run';
 import { attackDamage } from './spawn';
@@ -613,9 +613,14 @@ export function patternAllowed(w: World, e: Entity, atk: AttackDef, target: Enti
       return w.livingPlayers().every((pl) => s.pockets.some((q) => dist(q.x, q.y, pl.x, pl.y) - q.r <= reach));
     }
   }
-  if (p.kind === 'wave' && p.safeTiles === 'G') {
-    const reach = (atk.windupMs / 1000 - 0.1) * 260 - 40 + 120;
-    return w.livingPlayers().every((pl) => nearestGrate(w, pl.x, pl.y) <= reach);
+  // a wave dodged on the grates (alone or in a sequence: the Crosswave): from its fairest side every player can
+  // still wade to a grate before the band arrives (D89)
+  if (p.kind === 'wave' || p.kind === 'sequence') return waveFair(p, patternCtx(w, e, target.x, target.y, atk.windupMs / 1000));
+  // a ring whose only gap is behind him: some side must have open floor everyone can walk to (D89)
+  if (p.kind === 'expandingRing' && p.gapBehind) {
+    const ctx = patternCtx(w, e, target.x, target.y, atk.windupMs / 1000);
+    ctx.facing = Math.atan2(target.y - e.y, target.x - e.x);
+    return behindGap(ctx, e.x, e.y).fair;
   }
   return true;
 }
@@ -630,18 +635,6 @@ export function ringReachable(w: World, e: Entity, atk: AttackDef, target: Entit
   const [ax, ay] = p.anchor === 'center' ? [ROOM_CX, ROOM_CY] : p.anchor === 'target' || p.anchor === 'aim' || p.anchor === 'point' ? [target.x, target.y] : [e.x, e.y];
   const reach = escapeReach(atk.windupMs / 1000, p.pullSpeed ?? 0);
   return w.livingPlayers().every((pl) => dist(pl.x, pl.y, ax, ay) - p.rIn <= reach);
-}
-
-function nearestGrate(w: World, x: number, y: number): number {
-  let best = Infinity;
-  const r = w.room;
-  for (let ty = 0; ty < 22; ty++)
-    for (let tx = 0; tx < 40; tx++) {
-      if (r.get(tx, ty) !== 6) continue;
-      const d = Math.hypot(tx * 32 + 16 - x, 16 + ty * 32 + 16 - y);
-      if (d < best) best = d;
-    }
-  return best;
 }
 
 export { angleDiff };

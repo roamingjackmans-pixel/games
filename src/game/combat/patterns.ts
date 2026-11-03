@@ -4,6 +4,7 @@ import { DEG, angleDiff, clamp, coneHit, dist, lineHit, ringHit, circleHit } fro
 import type { Rng } from '../../engine/rng';
 import type { Anchor, PatternDef } from '../types';
 import type { Room } from '../room';
+import { floorSpeedAt } from '../systems/movingFloor';
 import { ROOM_PX_W, ROOM_Y0, ROOM_PX_H } from '../room';
 
 export const ROOM_MIN_X = 32;
@@ -149,6 +150,9 @@ function lenTo(c: PatternCtx, x: number, y: number, a: number, l: number | 'room
   return c.room ? c.room.rayToWall(x, y, a) : ROOM_DIAG;
 }
 
+/** The narrowest safe gap an area may leave: a player's body (28 px) and a little room to stand in it. */
+export const SAFE_GAP = 32;
+
 /** Escape reach in px for a telegraph of `teleS` seconds under a pull (GAME_DESIGN §5.6). */
 export function escapeReach(teleS: number, pullSpeed = 0): number {
   return (teleS - 0.1) * (BASE_WALK - pullSpeed) - 40;
@@ -162,7 +166,138 @@ export function resolvePattern(p: PatternDef, c: PatternCtx): TeleSpec[] {
   return out;
 }
 
-function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
+type WaveDir = 'north' | 'south' | 'east' | 'west';
+const WAVE_DIRS: readonly WaveDir[] = ['north', 'south', 'east', 'west'];
+
+/**
+ * Wading speed used to aim waves fairly: off a grate the Bloatking's water (×0.85) and phase-2 flood (×0.7) slow
+ * you (D89).
+ */
+export const WAVE_WADE_SPEED = BASE_WALK * 0.85 * 0.7;
+/** px a wave leaves spare on top of the straight-line wade (walking round the boss or a pillar) */
+const WAVE_MARGIN = 40;
+
+/** Distance from (x, y) to the nearest raised grate tile (a body is safe from a wave once its centre is on one). */
+export function grateDistance(room: Room, x: number, y: number): number {
+  let best = Infinity;
+  for (let ty = 0; ty < ROOM_PX_H / 32; ty++)
+    for (let tx = 0; tx < ROOM_PX_W / 32; tx++) {
+      const px = tx * 32 + 16;
+      const py = ROOM_Y0 + ty * 32 + 16;
+      if (!room.isGrateAt(px, py)) continue;
+      const dx = Math.max(0, Math.abs(x - px) - 15);
+      const dy = Math.max(0, Math.abs(y - py) - 15);
+      best = Math.min(best, Math.hypot(dx, dy));
+    }
+  return best;
+}
+
+/**
+ * The wade to the nearest grate in px of open water: the straight distance plus what crossing a moving floor
+ * against you costs (the Bloatking's whirlpool), counted as if it carried you the wrong way the whole time.
+ */
+function grateWade(room: Room, x: number, y: number): number {
+  let best = Infinity;
+  for (let ty = 0; ty < ROOM_PX_H / 32; ty++)
+    for (let tx = 0; tx < ROOM_PX_W / 32; tx++) {
+      const gx = tx * 32 + 16;
+      const gy = ROOM_Y0 + ty * 32 + 16;
+      if (!room.isGrateAt(gx, gy)) continue;
+      const ex = clamp(x, gx - 15, gx + 15);
+      const ey = clamp(y, gy - 15, gy + 15);
+      const d = Math.hypot(ex - x, ey - y);
+      if (d >= best) continue;
+      let cost = d;
+      if (room.rotFloor || room.movers.length) {
+        const n = Math.ceil(d / 8);
+        for (let i = 1; i <= n; i++) {
+          const fs = floorSpeedAt(room, x + ((ex - x) * i) / n, y + ((ey - y) * i) / n);
+          if (fs > 0) cost += ((d / n) * fs) / Math.max(20, WAVE_WADE_SPEED - fs);
+        }
+      }
+      best = Math.min(best, cost);
+    }
+  return best;
+}
+
+/**
+ * Slack (px of wading to spare, the worst player) against a wave from `dir` whose band sets off `delayS` after
+ * the telegraph ends: the time until its front reaches each player, minus the wade to their nearest grate.
+ */
+function waveSlack(p: Extract<PatternDef, { kind: 'wave' }>, dir: WaveDir, c: PatternCtx, delayS: number): number {
+  if (!c.room) return 0;
+  let worst = Infinity;
+  for (const pl of c.players) {
+    const run = dir === 'west' ? pl.x - ROOM_MIN_X : dir === 'east' ? ROOM_MAX_X - pl.x : dir === 'north' ? pl.y - ROOM_MIN_Y : ROOM_MAX_Y - pl.y;
+    const tHit = Math.max(0, run - 7) / p.speed;
+    const t = c.telegraphS + delayS + tHit - 0.1;
+    worst = Math.min(worst, t * WAVE_WADE_SPEED - WAVE_MARGIN - grateWade(c.room, pl.x, pl.y));
+  }
+  return worst;
+}
+
+/** How fair the fairest side for a wave is (see waveSlack); a wave that a cross wave follows counts that one too. */
+function bestWaveSlack(p: Extract<PatternDef, { kind: 'wave' }>, c: PatternCtx, pool: readonly WaveDir[], delay: number, crossAfter: number | undefined): { d: WaveDir; s: number }[] {
+  return pool.map((d) => {
+    const s = waveSlack(p, d, c, delay);
+    if (crossAfter === undefined) return { d, s };
+    return { d, s: Math.min(s, Math.max(...PERP[d].map((q) => waveSlack(p, q, c, delay + crossAfter)))) };
+  });
+}
+
+/**
+ * May a grate-dodged wave (alone, or a sequence of them: the Crosswave) be thrown now? Only when, from its fairest
+ * side, every player can still wade to a grate before the band reaches them (D89). Other patterns: always.
+ */
+export function waveFair(p: PatternDef, c: PatternCtx): boolean {
+  if (!c.room) return true;
+  let wave: Extract<PatternDef, { kind: 'wave' }> | null = null;
+  let crossAfter: number | undefined;
+  let delay = 0;
+  if (p.kind === 'wave') wave = p;
+  else if (p.kind === 'sequence') {
+    const i = p.steps.findIndex((s) => s.pattern.kind === 'wave');
+    const st = p.steps[i];
+    if (st && st.pattern.kind === 'wave') {
+      wave = st.pattern;
+      delay = p.steps.slice(0, i + 1).reduce((a, s) => a + s.delayS, 0);
+      const next = p.steps[i + 1];
+      if (next && next.pattern.kind === 'wave' && next.pattern.from === 'cross') crossAfter = next.delayS;
+    }
+  }
+  if (!wave || wave.safeTiles !== 'G' || grateDistance(c.room, ROOM_CX, ROOM_CY) === Infinity) return true;
+  const pool = wave.from === 'random' || wave.from === 'cross' ? WAVE_DIRS : [wave.from];
+  return bestWaveSlack(wave, c, pool, delay, crossAfter).some((x) => x.s >= 0);
+}
+
+const PERP: Record<WaveDir, WaveDir[]> = { north: ['east', 'west'], south: ['east', 'west'], east: ['north', 'south'], west: ['north', 'south'] };
+
+/**
+ * Where a grate-dodged wave comes from (D89). 'random' and 'cross' (perpendicular to the wave before it) pick at
+ * random among the sides every player can still reach a grate from in time, else the fairest side; a fixed side
+ * is kept. Without grates or a room it is the old uniform pick.
+ */
+function pickWaveDir(p: Extract<PatternDef, { kind: 'wave' }>, c: PatternCtx, o: ResolveOpts): WaveDir {
+  if (p.from !== 'random' && p.from !== 'cross') return p.from;
+  const pool = p.from === 'cross' && o.prevWave ? PERP[o.prevWave] : WAVE_DIRS;
+  if (p.safeTiles !== 'G' || !c.room || !c.players.length || grateDistance(c.room, ROOM_CX, ROOM_CY) === Infinity) return c.rng.pick(pool);
+  // a wave that a cross wave follows must leave a fair perpendicular one too
+  const scored = bestWaveSlack(p, c, pool, o.delay ?? 0, o.crossAfter);
+  const fair = scored.filter((x) => x.s >= 0);
+  if (fair.length) return c.rng.pick(fair).d;
+  return scored.reduce((a, b) => (b.s > a.s ? b : a)).d;
+}
+
+interface ResolveOpts {
+  /** seconds after the telegraph this piece sets off (sequence steps) */
+  delay?: number;
+  /** the wave before this one in the sequence ('cross' waves turn 90° from it) */
+  prevWave?: WaveDir | undefined;
+  /** a 'cross' wave follows this one after this many seconds */
+  crossAfter?: number | undefined;
+}
+
+function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSpec[] {
   switch (p.kind) {
     case 'melee': {
       if (p.shape === 'arc') return [spec([{ k: 'cone', x: c.ox, y: c.oy, a: c.facing, half: ((p.angleDeg ?? 90) * DEG) / 2, r: p.r ?? 60 }])];
@@ -347,8 +482,7 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
       return [spec(shapes, { area: true })];
     }
     case 'wave': {
-      const dirs = ['north', 'south', 'east', 'west'] as const;
-      const dir = p.from === 'random' ? c.rng.pick(dirs) : p.from;
+      const dir = pickWaveDir(p, c, o);
       const across = dir === 'east' || dir === 'west' ? ROOM_PX_W : ROOM_PX_H;
       return [spec([{ k: 'wave', dir, w: p.w, speed: p.speed, safeGrates: p.safeTiles === 'G' }], { mode: 'once', activeS: across / p.speed, area: true })];
     }
@@ -382,10 +516,16 @@ function resolveInner(p: PatternDef, c: PatternCtx): TeleSpec[] {
     case 'sequence': {
       const out: TeleSpec[] = [];
       let t = 0;
-      for (const s of p.steps) {
+      let prevWave: WaveDir | undefined;
+      p.steps.forEach((s, i) => {
         t += s.delayS;
-        for (const r of resolveInner(s.pattern, c)) out.push({ ...r, delay: r.delay + t });
-      }
+        const next = p.steps[i + 1];
+        const crossAfter = next && next.pattern.kind === 'wave' && next.pattern.from === 'cross' ? next.delayS : undefined;
+        for (const r of resolveInner(s.pattern, c, { delay: t, prevWave, crossAfter })) {
+          out.push({ ...r, delay: r.delay + t });
+          for (const sh of r.shapes) if (sh.k === 'wave') prevWave = sh.dir;
+        }
+      });
       return out;
     }
   }
@@ -421,13 +561,38 @@ function remoteSweeps(p: Extract<PatternDef, { kind: 'sweep' }>, c: PatternCtx):
   });
 }
 
+/**
+ * The one gap of a gap-behind ring around (x, y): behind the attacker, unless his back is to a wall, a pillar, a
+ * hole or the lava; then the side nearest to behind whose corridor is open floor every player can walk straight
+ * to (D89). `fair` is false when no side is (the attack is then not thrown, `patternAllowed`).
+ */
+export function behindGap(c: PatternCtx, x: number, y: number): { a: number; fair: boolean } {
+  const behind = c.facing + Math.PI;
+  if (!c.room) return { a: behind, fair: true };
+  const room = c.room;
+  const bad = (px: number, py: number): boolean =>
+    px < ROOM_MIN_X || px > ROOM_MAX_X || py < ROOM_MIN_Y || py > ROOM_MAX_Y || room.circleBlocked(px, py, 14) || room.isFallAt(px, py) || room.isHazardAt(px, py);
+  // a straight walk from (ax, ay) to (bx, by) without crossing a wall, a pillar, a hole or the lava
+  const walkable = (ax: number, ay: number, bx: number, by: number): boolean => {
+    const n = Math.ceil(Math.hypot(bx - ax, by - ay) / 12);
+    for (let i = 1; i <= n; i++) if (bad(ax + ((bx - ax) * i) / n, ay + ((by - ay) * i) / n)) return false;
+    return true;
+  };
+  const open = (a: number): boolean => {
+    for (let d = 80; d <= 220; d += 20) if (bad(x + Math.cos(a) * d, y + Math.sin(a) * d)) return false;
+    // ...and every player can walk round to its mouth (not across the lava from the other bank)
+    const mx = x + Math.cos(a) * 110;
+    const my = y + Math.sin(a) * 110;
+    return c.players.every((pl) => walkable(pl.x, pl.y, mx, my));
+  };
+  for (let k = 0; k <= 12; k++) for (const sgn of k ? [1, -1] : [1]) if (open(behind + sgn * k * 15 * DEG)) return { a: behind + sgn * k * 15 * DEG, fair: true };
+  return { a: behind, fair: false };
+}
+
 /** Expanding-ring gaps: one gap within escape reach of every player (D47), the rest random. */
 function placeRingGaps(p: Extract<PatternDef, { kind: 'expandingRing' }>, c: PatternCtx, x: number, y: number, k: number): number[] {
   const gaps: number[] = [];
-  if (p.gapBehind) {
-    gaps.push(c.facing + Math.PI);
-    return gaps;
-  }
+  if (p.gapBehind) return [behindGap(c, x, y).a];
   const n = Math.max(1, p.gaps);
   const reach = escapeReach(c.telegraphS + k * (p.spacingS ?? 1.2), p.pullSpeed ?? 0);
   for (let i = 0; i < n; i++) {
@@ -589,10 +754,19 @@ export function checkEscapable(p: PatternDef, teleS: number, opts: { condition?:
       return res(p.w / 2, `line w${p.w}`);
     case 'melee':
       return res(p.shape === 'arc' ? (p.r ?? 60) : (p.w ?? 40) / 2, 'melee');
-    case 'lanes':
+    case 'lanes': {
+      // each set's lanes must leave a gap a body fits in (D89: Rain of Caps once left 27 px gaps, no way out)
+      const span = p.orientation === 'vertical' ? ROOM_MAX_X - ROOM_MIN_X : ROOM_MAX_Y - ROOM_MIN_Y;
+      const gap = span / p.n - (p.roll ? p.w * 0.9 : p.w);
+      if (gap < SAFE_GAP) return { ok: false, needed: SAFE_GAP, available: gap, reason: `lanes leave ${gap.toFixed(0)} px gaps` };
       return res(p.w / 2, `lanes w${p.w}`);
-    case 'grid':
+    }
+    case 'grid': {
+      // the middle of each grid square must stay clear of its four circles (D89)
+      const clear = (p.spacing * Math.SQRT2) / 2 - p.r;
+      if (clear * 2 < SAFE_GAP) return { ok: false, needed: SAFE_GAP, available: clear * 2, reason: `grid leaves ${(clear * 2).toFixed(0)} px` };
       return res(p.r, `grid r${p.r}`);
+    }
     case 'randomCircles':
       return res(p.r, `randomCircles r${p.r}`);
     case 'sweep': {

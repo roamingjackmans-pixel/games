@@ -158,7 +158,11 @@ export const SAINT_AURELIA: BossDef = {
       speedMult: 1.2,
       dmgMult: 1.25,
       // "the floor is 50% ice patches": 20 patches of r 80 cover about half of the nave
-      arena: [{ op: 'iceFloor', value: 20 }],
+      arena: [
+        { op: 'iceFloor', value: 20 },
+        // the nave's middle breaks into a floe ring that slides 50 px/s anticlockwise (D90)
+        { op: 'movingFloor', floor: { kind: 'ring', x: 640, y: 368, rIn: 110, rOut: 220, speed: -50, look: 'ice' } },
+      ],
       attacks: [blessedBlade, iceSpears(true), frostbiteLunge, hymn(true), mirrorOfFaith, avalanche, judgment],
     },
   ],

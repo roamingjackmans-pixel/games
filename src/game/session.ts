@@ -466,6 +466,11 @@ export class GameSession {
     }
     w.roomMods.dark = 0;
     w.roomMods.floodUntil = 0;
+    // phase moving floors stop with their boss (Tock's own ring is part of his arena and keeps turning)
+    if (w.room.movers.length) {
+      w.room.movers = [];
+      w.room.version++;
+    }
     w.bossId = 0;
     this.roomPhase = 'cleared';
     if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
@@ -521,9 +526,11 @@ export class GameSession {
         this.roomPhase = 'armed';
       }
     }
-    if ((node.kind === 'combat' || node.kind === 'ambush') && cleared && m.chests[0]) {
+    // a combat room's chest (rolled with the zone, D88) stands there from the moment you walk in, fight or not
+    if (node.kind === 'combat' || node.kind === 'ambush') {
       const plan = smallChest(this.layout, node, noMimics);
-      if (plan) chestAt(plan, m.chests[0][0], m.chests[0][1]);
+      const at = m.chests[0] ?? w.room.nearestFloor(640, 368, 22);
+      if (plan) chestAt(plan, at[0], at[1]);
     }
     if (node.kind === 'reliquary' && m.reliquary && !ws.reliquariesOpened.includes(node.id)) {
       w.spawn('interact', m.reliquary[0], m.reliquary[1], { radius: 20, drawId: 'reliquary', it: { kind: 'reliquary', key: node.id, label: 'Open the reliquary', used: false, holdS: HOLD_S } });
@@ -705,15 +712,7 @@ export class GameSession {
     this.applyDoorLocks();
     w.sfx('doorOpen');
     w.emit({ t: 'msg', text: 'Room cleared.', color: '#a9b7a0' });
-    const m = this.markers.chests[0];
-    if ((this.node.kind === 'combat' || this.node.kind === 'ambush') && m) {
-      const noMimics = this.players.some((p) => p.entity?.pl?.derived.powers.has('mimics_tooth'));
-      const plan = smallChest(this.layout, this.node, noMimics);
-      if (plan && !ws.chestsOpened.includes(plan.id)) {
-        if (plan.mimic) spawnEnemy(w, MIMIC, m[0], m[1], { tellS: 0.6, mimicChestId: plan.id, zone: this.layout.zone });
-        else w.spawn('interact', m[0], m[1], { radius: 18, drawId: 'chest', it: { kind: 'chest', key: plan.id, label: 'Open', used: false, holdS: HOLD_S, chestKind: 'small' } });
-      }
-    }
+    // no reward chest: a room's chest (if it has one) was already standing there when you came in (D88)
     // dropped Shards are granted instantly; items stay until the room is left (PROCGEN §4)
   }
 

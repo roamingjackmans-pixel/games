@@ -90,8 +90,8 @@ const crosswave: AttackDef = {
   pattern: {
     kind: 'sequence',
     steps: [
-      { pattern: { kind: 'wave', w: 140, speed: 340, from: 'north', safeTiles: 'G' }, delayS: 0 },
-      { pattern: { kind: 'wave', w: 140, speed: 340, from: 'west', safeTiles: 'G' }, delayS: 0.8 },
+      { pattern: { kind: 'wave', w: 140, speed: 340, from: 'random', safeTiles: 'G' }, delayS: 0 },
+      { pattern: { kind: 'wave', w: 140, speed: 340, from: 'cross', safeTiles: 'G' }, delayS: 0.8 },
     ],
   },
   windupMs: 1200,
@@ -139,7 +139,9 @@ export const THE_BLOATKING: BossDef = {
       name: 'The throne sinks',
       speedMult: 1.2,
       dmgMult: 1.25,
-      arena: [{ op: 'floodAll', value: 0.3 }],
+      // the flood swirls into a whirlpool round the middle of the hall that carries everyone 55 px/s anticlockwise
+      // (D90); it stops short of the grates
+      arena: [{ op: 'floodAll', value: 0.3 }, { op: 'movingFloor', floor: { kind: 'ring', x: 640, y: 368, rIn: 60, rOut: 150, speed: -55, look: 'water' } }],
       attacks: [scepterSwing, wave, royalDecree, summonCourt(true), belch(true), crosswave, drowningGrasp],
     },
   ],

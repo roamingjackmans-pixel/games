@@ -128,7 +128,7 @@ export type PatternDef = PatternCommon &
       }
     | { kind: 'expandingRing'; speed: number; thickness?: number; gaps: number; gapW?: number; anchor: Anchor; gapBehind?: boolean; count?: number; spacingS?: number }
     | { kind: 'randomCircles'; n: number; r: number; within?: number; anchor: Anchor; overS?: number }
-    | { kind: 'wave'; w: number; speed: number; from: 'north' | 'south' | 'east' | 'west' | 'random'; safeTiles?: 'G' }
+    | { kind: 'wave'; w: number; speed: number; from: 'north' | 'south' | 'east' | 'west' | 'random' | 'cross'; safeTiles?: 'G' }
     | { kind: 'pockets'; n: number; pocketR: number; anchor?: Anchor }
     | { kind: 'trail'; durationS: number; r: number; hazard: HazardId }
     | { kind: 'beam'; w: number; l: number | 'room'; turnRateDeg: number; durationS: number; tickS: number; anchor: Anchor; count?: number; opposite?: boolean }
@@ -451,13 +451,29 @@ export interface ArenaChange {
     | 'spawnProps'
     | 'removeProps'
     /** every hazard tile ('~') becomes a live `hazard` (the Forge's lava channel); re-applying replaces the last set */
-    | 'hazardTiles';
+    | 'hazardTiles'
+    /** a moving floor starts (`floor`): a ring that carries bodies round, or a conveyor belt (D90) */
+    | 'movingFloor';
   value?: number;
   hazard?: HazardId;
   tiles?: string[];
   /** thornWalls: damage per touch as a multiple of the boss's hit (else the zone thorn damage) */
   mult?: number;
+  /** movingFloor: the floor to start */
+  floor?: MovingFloorDef;
 }
+
+/** How a moving floor is drawn: Tock's brass ring, a whirlpool, an ice floe, a ring of roots, a forge belt. */
+export type MovingFloorLook = 'brass' | 'water' | 'ice' | 'roots' | 'forge';
+
+/**
+ * A moving floor (D90) that carries every walking body on it, players and enemies alike (flying ones are not
+ * carried). `speed` is in px/s: along the ring (positive = clockwise on screen) or along the belt's direction.
+ * Rectangles are in room pixels (x, y = top-left corner).
+ */
+export type MovingFloorDef =
+  | { kind: 'ring'; x: number; y: number; rIn: number; rOut: number; speed: number; look: MovingFloorLook }
+  | { kind: 'belt'; x: number; y: number; w: number; h: number; dir: 'n' | 's' | 'e' | 'w'; speed: number; look: MovingFloorLook };
 
 export interface SummonDef {
   enemyId: string;

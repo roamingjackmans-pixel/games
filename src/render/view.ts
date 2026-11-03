@@ -2,7 +2,7 @@
 // Client side only (canvas + audio).
 import { formatPrompts } from '../ui/glyphs';
 import { playSfx, type SfxId, SFX } from '../engine/audio/sfx';
-import { glow, withAlpha } from '../engine/draw/parts';
+import { glow } from '../engine/draw/parts';
 import type { Particles } from '../engine/particles';
 import type { Settings } from '../engine/settings';
 import { drawText } from '../engine/text';
@@ -10,6 +10,7 @@ import { overlays } from '../game/debug/menu';
 import { HAZARDS } from '../game/systems/hazards';
 import { typeColor } from '../game/combat/damage';
 import { drawRoomFloor, DEFAULT_PALETTE } from './room';
+import { drawMovingFloors } from './movingFloor';
 import { drawAttackIcon, drawTelegraph } from './telegraphs';
 import { debugHitboxes, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
@@ -224,28 +225,7 @@ export class WorldView {
       ctx.translate(-this.camera.x, -this.camera.y);
     }
     drawRoomFloor(ctx, w.room, this.palette, this.propStyle, 0);
-    if (w.room.rotFloor) {
-      const rf = w.room.rotFloor;
-      ctx.save();
-      ctx.strokeStyle = withAlpha('#b08d3c', 0.5);
-      ctx.lineWidth = rf.rOut - rf.rIn;
-      ctx.setLineDash([18, 14]);
-      // the dashes travel with the floor (speed is px/s along the ring)
-      ctx.lineDashOffset = -now * rf.speed;
-      ctx.beginPath();
-      ctx.arc(rf.x, rf.y, (rf.rIn + rf.rOut) / 2, 0, Math.PI * 2);
-      ctx.stroke();
-      // brass rims mark where the moving floor starts and ends
-      ctx.setLineDash([]);
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = withAlpha('#d4b060', 0.8);
-      for (const rr of [rf.rIn, rf.rOut]) {
-        ctx.beginPath();
-        ctx.arc(rf.x, rf.y, rr, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
+    drawMovingFloors(ctx, w.room, now);
     this.underlay?.(ctx, w, now);
     // hazards
     for (const e of w.entities.values()) if (e.type === 'hazard' && !e.removed) drawHazardEntity(ctx, e, now, HAZARDS[e.hz!.hazard].color);

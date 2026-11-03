@@ -6,6 +6,7 @@ import { Rng } from '../../src/engine/rng';
 import { stepWorld } from '../../src/game/sim';
 import { rawDamage } from '../../src/game/combat/damage';
 import { neighbourId } from '../../src/game/procgen/zone';
+import { smallChest } from '../../src/game/procgen/chests';
 import type { Side } from '../../src/game/room';
 import type { Entity } from '../../src/game/world';
 
@@ -88,6 +89,61 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     run(s, 0.2);
     expect(s.save.character.shards).toBe(shards);
     expect(s.save.world.shardpile).toBeUndefined();
+  });
+  it('a combat room either has its chest standing there on entry or none; clearing never spawns one (D88)', () => {
+    const s = session();
+    const noMimics = false;
+    const combat = s.layout.rooms.filter((r) => r.kind === 'combat' || r.kind === 'ambush');
+    const withChest = combat.filter((r) => smallChest(s.layout, r, noMimics));
+    const without = combat.filter((r) => !smallChest(s.layout, r, noMimics) && !r.bonusChest);
+    expect(withChest.length).toBeGreaterThan(0);
+    expect(without.length).toBeGreaterThan(0);
+    // "on occasion": over many zones about a quarter of the non-dead-end combat rooms
+    let n = 0;
+    let k = 0;
+    for (let i = 0; i < 40; i++) {
+      const lay = { ...s.layout, seed: `CHESTS-${i}` };
+      for (const r of combat) {
+        if (r.bonusChest) continue;
+        k++;
+        if (smallChest(lay, r, noMimics)) n++;
+      }
+    }
+    expect(n / k).toBeGreaterThan(0.18);
+    expect(n / k).toBeLessThan(0.32);
+    const chestsHere = (): Entity[] => [...s.w.entities.values()].filter((e) => !e.removed && (e.it?.kind === 'chest' || (e.en?.def.traits?.mimic ?? false)));
+    const clearHere = (): void => {
+      s.w.god = true;
+      const p = s.localPlayer!;
+      [p.x, p.y] = s.w.room.nearestFloor(s.entry[0] + 160, s.entry[1], p.radius);
+      run(s, 1.5);
+      for (let i = 0; i < 12 && s.roomPhase !== 'cleared'; i++) {
+        for (const e of s.w.enemies) if (!e.hp!.dead && !e.en!.def.traits?.mimic) rawDamage(s.w, e, 1e9, 'holy', p.id);
+        run(s, 1.5);
+      }
+      expect(s.roomPhase).toBe('cleared');
+    };
+    // a room with a chest: it is there before the fight starts and can be opened mid-fight
+    const a = withChest[0]!;
+    const planA = smallChest(s.layout, a, noMimics)!;
+    s.enterRoom(a.id, 'bonfire');
+    expect(s.roomPhase).toBe('armed');
+    expect(chestsHere()).toHaveLength(1);
+    clearHere();
+    expect(chestsHere()).toHaveLength(1);
+    if (!planA.mimic) {
+      const c = chestsHere()[0]!;
+      s.interact(s.localPlayer!, c);
+      expect(s.save.world.chestsOpened).toContain(planA.id);
+      s.enterRoom(a.id, 'bonfire');
+      expect(chestsHere()).toHaveLength(0);
+    }
+    // a room without one: none on entry, none after the clear
+    const b = without[0]!;
+    s.enterRoom(b.id, 'bonfire');
+    expect(chestsHere()).toHaveLength(0);
+    clearHere();
+    expect(chestsHere()).toHaveLength(0);
   });
   it('a second death before recovering loses the old pile', () => {
     const s = session();

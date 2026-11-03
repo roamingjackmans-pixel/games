@@ -95,17 +95,19 @@ const stoke: AttackDef = {
 };
 
 const moltenShockwave: AttackDef = {
-  // the only gap is behind the Golem: get round it
+  // the only gap is behind the Golem: get round it. Thrown only up close, with a 1.2 s tell (D89): from farther
+  // out the ring (300 px/s, faster than a walk) caught you before you could get round him. With his back to a
+  // wall, a pillar or the lava the gap opens on the nearest open side instead.
   id: 'ign_molten_shockwave',
   name: 'Molten Shockwave',
   kind: 'pierce',
   pattern: { kind: 'expandingRing', speed: 300, gaps: 1, gapW: 110, gapBehind: true, anchor: 'self' },
-  windupMs: 1000,
+  windupMs: 1200,
   recoverMs: 1000,
   dmgMult: 1.3,
   type: 'fire',
   cooldownS: 11,
-  range: [0, 800],
+  range: [0, 200],
   weight: 3,
   area: true,
 };
@@ -166,6 +168,10 @@ function widenedChannel(): string[] {
 
 const LAVA: ArenaChange = { op: 'hazardTiles', hazard: 'lava' };
 
+/** Phase 2's conveyor belts (D90): they run along the channel, never toward it, so they carry you past the lava. */
+const BELT_NORTH: ArenaChange = { op: 'movingFloor', floor: { kind: 'belt', x: 64, y: 48, w: 1152, h: 64, dir: 'e', speed: 70, look: 'forge' } };
+const BELT_MIDDLE: ArenaChange = { op: 'movingFloor', floor: { kind: 'belt', x: 64, y: 240, w: 1152, h: 64, dir: 'w', speed: 70, look: 'forge' } };
+
 export const FOREMAN_IGNATIUS: BossDef = {
   id: 'foreman_ignatius',
   zone: 5,
@@ -184,7 +190,8 @@ export const FOREMAN_IGNATIUS: BossDef = {
       name: 'The Golem goes molten',
       speedMult: 1.2,
       dmgMult: 1.25,
-      arena: [{ op: 'setTiles', tiles: widenedChannel() }, LAVA],
+      // the forge's conveyor belts start: east along the north wall, west through the middle of the floor (D90)
+      arena: [{ op: 'setTiles', tiles: widenedChannel() }, LAVA, BELT_NORTH, BELT_MIDDLE],
       passive: { splitBody: 'ignatius_on_foot' },
       attacks: [golemSlam, forgeStrike, stoke, moltenShockwave, hammerThrow('split'), flamePillars(0.5, 'split'), immolation],
     },
