@@ -569,7 +569,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
             null,
             h('b', null, 'Give it its icon in Steam. '),
             'Steam does not copy the icon by itself (D138): ',
-            h('a', { href: `${import.meta.env.BASE_URL}icons/DungeonJoe.ico`, download: 'DungeonJoe.ico', 'data-testid': 'download-icon' }, 'download DungeonJoe.ico'),
+            h('a', { href: `${import.meta.env.BASE_URL}icons/DungeonJoe.png`, download: 'DungeonJoe.png', 'data-testid': 'download-icon' }, 'download DungeonJoe.png'),
             ', then in your Library right-click Dungeon Joe → Properties → click the blank icon square → choose the file.',
           ),
           h(
@@ -610,7 +610,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
           'Games → Add a Non-Steam Game… → Browse… → file type "All Files" → ',
           h('span', { class: 'mono' }, 'Dungeon Joe.cmd'),
           ' → Add Selected Programs. Then in your Library right-click it → Properties: name it Dungeon Joe and click the icon square to pick ',
-          h('span', { class: 'mono' }, 'DungeonJoe.ico'),
+          h('span', { class: 'mono' }, 'DungeonJoe.png'),
           '.',
         ),
         h('li', null, h('b', null, 'Saves '), 'stay apart from the website’s. To move a character, use Load Character → Export on one and Import a .dungeonjoe.json on the other.'),

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 import { inlineHtml, launcherCmd, readmeTxt } from './offline-files.mjs';
 import { makeZip } from './zip.mjs';
-import { iconIco } from './icon.mjs';
+import { encodePng, iconIco, renderIcon } from './icon.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = resolve(root, 'dist');
@@ -60,6 +60,8 @@ const zip = makeZip([
   { name: 'Dungeon Joe.cmd', data: launcherCmd() },
   // Steam reads no name or icon from a .cmd, so the icon comes beside it to pick in Properties (D133)
   { name: 'DungeonJoe.ico', data: iconIco() },
+  // Steam's Properties icon box takes .png, not .ico (D139)
+  { name: 'DungeonJoe.png', data: encodePng(256, renderIcon(256)) },
   { name: 'README.txt', data: readmeTxt(pkg.version, built) },
 ]);
 mkdirSync(dist, { recursive: true });

@@ -129,7 +129,8 @@ ADD IT TO STEAM (your library only, not the Steam store)
 4. Choose "Dungeon Joe.cmd", click Open, then click "Add Selected Programs".
    Steam lists it with a blank name and no icon: that is normal for a launcher that is not an .exe.
 5. Name it and give it its icon: in your Library, right-click it > Properties. Type "Dungeon Joe" in
-   the name box, click the blank icon square beside it and choose DungeonJoe.ico from this folder.
+   the name box, click the blank icon square beside it and choose DungeonJoe.png from this folder
+   (Steam takes .png, not .ico).
 6. Optional: right-click > Manage > Set custom artwork for library images.
 Tip: if your controller behaves oddly when the game is started from Steam, right-click it >
 Properties > Controller > "Disable Steam Input".

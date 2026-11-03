@@ -44,6 +44,8 @@ describe('installable app icons and manifest (D135)', () => {
     const want: Record<string, number> = { 'icons/icon-192.png': 192, 'icons/icon-512.png': 512, 'icons/icon-maskable-192.png': 192, 'icons/icon-maskable-512.png': 512, 'icons/apple-touch-icon.png': 180 };
     expect(icons['icons/DungeonJoe.ico']!.readUInt16LE(2)).toBe(1);
     delete icons['icons/DungeonJoe.ico'];
+    expect(icons['icons/DungeonJoe.png']!.readUInt32BE(16)).toBe(256);
+    delete icons['icons/DungeonJoe.png'];
     expect(Object.keys(icons).sort()).toEqual(Object.keys(want).sort());
     for (const [k, size] of Object.entries(want)) expect(icons[k]!.readUInt32BE(16)).toBe(size);
     const full = renderIcon(32, true);
