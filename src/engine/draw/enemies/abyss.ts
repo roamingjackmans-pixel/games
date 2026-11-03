@@ -49,6 +49,7 @@ const HOLLOW_LOOK: JoeLook = {
   legsColor: '#46434e',
   trim: '#87838f',
   headColor: '#77737f',
+  lids: true,
 };
 /** weaponPick order: longsword, club, twin daggers, spear (one per spawn variant) */
 const HOLLOW_WEAPONS = ['w_longsword', 'w_club', 'w_daggers', 'w_spear'];

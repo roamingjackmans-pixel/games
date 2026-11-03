@@ -8,7 +8,22 @@ export interface ClassDef {
   start: { main: string; off?: string; armor: string[]; spells: string[]; bag?: string[]; gems?: number };
   twoHanded?: boolean;
   blurb: string;
-  look: { skin: string; hair: string; shirt: string; legs: string; head: string; trim: string };
+  look: {
+    skin: string;
+    hair: string;
+    shirt: string;
+    legs: string;
+    head: string;
+    trim: string;
+    /** the person under the armor */
+    hairStyle?: string;
+    beard?: string;
+    /** colour of the class's own hat/hood/helm (defaults to trim) */
+    hat?: string;
+    /** belt and chest device on the unarmored tunic */
+    belt?: string;
+    emblem?: string;
+  };
 }
 
 const S = (hp: number, endurance: number, bonk: number, slicey: number, brain: number, prayer: number): Stats => ({ hp, endurance, bonk, slicey, brain, prayer });
@@ -20,7 +35,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(10, 8, 10, 9, 4, 7),
     start: { main: 'longsword', off: 'kite_shield', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: [] },
     blurb: 'Took the job for the armour. The job came with stairs.',
-    look: { skin: '#e8c9a0', hair: '#5a3a22', shirt: '#4a6aa0', legs: '#3d3a4a', head: 'none', trim: '#c9b98a' },
+    look: { skin: '#e8c9a0', hair: '#5a3a22', shirt: '#4a6aa0', legs: '#3d3a4a', head: 'none', trim: '#c9b98a', hairStyle: 'short', beard: 'stubble', belt: '#5a3a22', emblem: 'cross' },
   },
   brute: {
     id: 'brute',
@@ -29,7 +44,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     start: { main: 'greathammer', armor: ['caretakers_plate_body'], spells: [] },
     twoHanded: true,
     blurb: 'Solves things.',
-    look: { skin: '#d9b088', hair: '#2a1a10', shirt: '#7a4a2a', legs: '#4a3a2a', head: 'none', trim: '#a07a4a' },
+    look: { skin: '#d9b088', hair: '#2a1a10', shirt: '#7a4a2a', legs: '#4a3a2a', head: 'none', trim: '#a07a4a', hairStyle: 'bald', beard: 'full', belt: '#3a2414' },
   },
   duelist: {
     id: 'duelist',
@@ -37,7 +52,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(8, 11, 5, 14, 5, 5),
     start: { main: 'twin_daggers', off: 'buckler', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [] },
     blurb: 'Has never been hit. Says so.',
-    look: { skin: '#f0d0b0', hair: '#1a1a1a', shirt: '#7a2a3a', legs: '#2a2a3a', head: 'bandana', trim: '#e6b84a' },
+    look: { skin: '#f0d0b0', hair: '#1a1a1a', shirt: '#7a2a3a', legs: '#2a2a3a', head: 'bandana', trim: '#e6b84a', hairStyle: 'slick', beard: 'moustache', hat: '#a02030', belt: '#1a1a1a' },
   },
   scholar: {
     id: 'scholar',
@@ -45,7 +60,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(7, 7, 3, 10, 15, 6),
     start: { main: 'rapier', off: 'apprentice_staff', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: ['arcane_bolt', 'frost_lance'] },
     blurb: 'Read about dungeons once.',
-    look: { skin: '#f0d8b8', hair: '#8a6a3a', shirt: '#3a4a8a', legs: '#2a2a3a', head: 'wizard', trim: '#e6b84a' },
+    look: { skin: '#f0d8b8', hair: '#8a6a3a', shirt: '#3a4a8a', legs: '#2a2a3a', head: 'wizard', trim: '#e6b84a', hairStyle: 'long', beard: 'goatee', hat: '#3a4a8a', belt: '#e6b84a', emblem: 'star' },
   },
   cleric: {
     id: 'cleric',
@@ -53,7 +68,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(10, 7, 11, 3, 4, 13),
     start: { main: 'mace', off: 'wooden_talisman', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: ['heal', 'bless_weapon'] },
     blurb: 'Prays mostly for himself.',
-    look: { skin: '#e8c9a0', hair: '#c0c0c0', shirt: '#e8e1c8', legs: '#6a5a4a', head: 'mitre', trim: '#d4af37' },
+    look: { skin: '#e8c9a0', hair: '#c0c0c0', shirt: '#e8e1c8', legs: '#6a5a4a', head: 'mitre', trim: '#d4af37', hairStyle: 'bald', beard: 'full', hat: '#e8e1c8', belt: '#d4af37', emblem: 'sun' },
   },
   spearman: {
     id: 'spearman',
@@ -61,7 +76,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(9, 9, 9, 10, 5, 6),
     start: { main: 'spear', off: 'round_shield', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: [] },
     blurb: 'Friendly from a distance. Exactly one spear’s distance.',
-    look: { skin: '#d8b090', hair: '#3a2a1a', shirt: '#6a7a3a', legs: '#3a3a2a', head: 'none', trim: '#c9b98a' },
+    look: { skin: '#d8b090', hair: '#3a2a1a', shirt: '#6a7a3a', legs: '#3a3a2a', head: 'none', trim: '#c9b98a', hairStyle: 'topknot', beard: 'stubble', belt: '#4a3a1a' },
   },
   hunter: {
     id: 'hunter',
@@ -69,7 +84,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(8, 12, 5, 12, 6, 5),
     start: { main: 'bow', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [], bag: ['whip'] },
     blurb: 'Can track anything. Mostly tracks in mud.',
-    look: { skin: '#e0b890', hair: '#6a3a1a', shirt: '#3a5a2a', legs: '#3a3020', head: 'hood', trim: '#a0803a' },
+    look: { skin: '#e0b890', hair: '#6a3a1a', shirt: '#3a5a2a', legs: '#3a3020', head: 'hood', trim: '#a0803a', hairStyle: 'short', beard: 'stubble', hat: '#3a5a2a', belt: '#3a2a1a', emblem: 'leaf' },
   },
   nobody: {
     id: 'nobody',
@@ -77,7 +92,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(8, 8, 8, 8, 8, 8),
     start: { main: 'club', armor: ['loincloth_legs'], spells: [], gems: 1 },
     blurb: 'Joe.',
-    look: { skin: '#e8c9a0', hair: '#4a3626', shirt: '#9a8a7a', legs: '#8a6a3a', head: 'none', trim: '#c9b98a' },
+    look: { skin: '#e8c9a0', hair: '#4a3626', shirt: '#9a8a7a', legs: '#8a6a3a', head: 'none', trim: '#c9b98a', hairStyle: 'messy', beard: 'stubble' },
   },
   berserker: {
     id: 'berserker',
@@ -85,7 +100,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(10, 10, 11, 10, 3, 4),
     start: { main: 'twin_axes', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
     blurb: 'Was asked to calm down once. Once.',
-    look: { skin: '#e0b088', hair: '#a03a1a', shirt: '#5a2a1a', legs: '#3a2a1a', head: 'horned', trim: '#c9b98a' },
+    look: { skin: '#e0b088', hair: '#a03a1a', shirt: '#5a2a1a', legs: '#3a2a1a', head: 'horned', trim: '#c9b98a', hairStyle: 'braids', beard: 'braided', hat: '#7a7f88', belt: '#2a1a10' },
   },
   occultist: {
     id: 'occultist',
@@ -93,7 +108,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(7, 7, 3, 10, 15, 6),
     start: { main: 'rapier', off: 'void_staff', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: ['void_rift', 'arcane_bolt'] },
     blurb: 'Heard a voice in the bins. Answered it.',
-    look: { skin: '#d8c0b0', hair: '#1a0a2a', shirt: '#2a1a3a', legs: '#1a1a2a', head: 'hood', trim: '#7a2bd6' },
+    look: { skin: '#d8c0b0', hair: '#1a0a2a', shirt: '#2a1a3a', legs: '#1a1a2a', head: 'hood', trim: '#7a2bd6', hairStyle: 'long', beard: 'none', hat: '#2a1a3a', belt: '#7a2bd6', emblem: 'eye' },
   },
 };
 
