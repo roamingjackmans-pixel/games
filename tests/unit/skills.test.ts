@@ -87,8 +87,9 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
     const bz = CLASSES.berserker;
     expect(bz.start.main).toBe('twin_daggers');
     expect(bz.twoHanded).toBe(true);
-    const others = [bz.stats.bonk, bz.stats.slicey, bz.stats.brain, bz.stats.prayer];
-    expect(Math.min(bz.stats.hp, bz.stats.endurance)).toBeGreaterThan(Math.max(...others));
+    // D123: real Bonk and Slicey behind the daggers
+    expect(bz.stats.bonk).toBe(13);
+    expect(bz.stats.slicey).toBe(14);
     expect(bz.stats.slicey).toBe(WEAPONS.twin_daggers!.req.slicey); // exactly the daggers' minimum, no lowered requirement
     const z = CLASSES.occultist;
     expect(z.start.main).toBe('dawn_glaive');

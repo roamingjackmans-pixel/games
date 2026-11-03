@@ -91,24 +91,6 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     blurb: 'Can track anything. Mostly tracks in mud.',
     look: { skin: '#e0b890', hair: '#6a3a1a', shirt: '#3a5a2a', legs: '#3a3020', head: 'hood', trim: '#a0803a', hairStyle: 'short', beard: 'stubble', hat: '#3a5a2a', belt: '#3a2a1a', emblem: 'leaf' },
   },
-  nobody: {
-    id: 'nobody',
-    name: 'Nobody',
-    stats: S(8, 8, 8, 8, 8, 8),
-    start: { main: 'club', armor: ['loincloth_legs'], spells: [], gems: 1 },
-    blurb: 'Joe.',
-    look: { skin: '#e8c9a0', hair: '#4a3626', shirt: '#9a8a7a', legs: '#8a6a3a', head: 'none', trim: '#c9b98a', hairStyle: 'messy', beard: 'stubble' },
-  },
-  // dual daggers on the bare minimum Slicey; everything else poured into HP and Endurance (D120)
-  berserker: {
-    id: 'berserker',
-    name: 'Berserker',
-    stats: S(16, 15, 1, 14, 1, 1),
-    start: { main: 'twin_daggers', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
-    twoHanded: true,
-    blurb: 'Was asked to calm down once. Once. Has never been asked to count.',
-    look: { skin: '#e0b088', hair: '#a03a1a', shirt: '#5a2a1a', legs: '#3a2a1a', head: 'horned', trim: '#c9b98a', hairStyle: 'braids', beard: 'braided', hat: '#7a7f88', belt: '#2a1a10' },
-  },
   // id kept for saves; the Occultist became the Zealot, Slicey + Prayer with the Dawn Glaive (D121)
   occultist: {
     id: 'occultist',
@@ -118,6 +100,26 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     blurb: 'Up at five to pray. Up at five past to stab whoever was not.',
     look: { skin: '#d8c0b0', hair: '#e8d8a0', shirt: '#efe6d2', legs: '#5a4a2a', head: 'hood', trim: '#e6b84a', hairStyle: 'long', beard: 'none', hat: '#d8c8a0', belt: '#e6b84a', emblem: 'sun' },
   },
+  // dual daggers with real Bonk and Slicey behind them (D123; was HP/Endurance-heavy, D120)
+  berserker: {
+    id: 'berserker',
+    name: 'Berserker',
+    stats: S(10, 7, 13, 14, 2, 2), // D123: Bonk 13 and Slicey 14 (Twin Daggers need Slicey 14)
+    start: { main: 'twin_daggers', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
+    twoHanded: true,
+    blurb: 'Was asked to calm down once. Once. Has never been asked to count.',
+    look: { skin: '#e0b088', hair: '#a03a1a', shirt: '#5a2a1a', legs: '#3a2a1a', head: 'horned', trim: '#c9b98a', hairStyle: 'braids', beard: 'braided', hat: '#7a7f88', belt: '#2a1a10' },
+  },
+  // id kept for saves; the Occultist became the Zealot, Slicey + Prayer with the Dawn Glaive (D121)
+  nobody: {
+    id: 'nobody',
+    name: 'Nobody',
+    stats: S(8, 8, 8, 8, 8, 8),
+    start: { main: 'club', armor: ['loincloth_legs'], spells: [], gems: 1 },
+    blurb: 'Joe.',
+    look: { skin: '#e8c9a0', hair: '#4a3626', shirt: '#9a8a7a', legs: '#8a6a3a', head: 'none', trim: '#c9b98a', hairStyle: 'messy', beard: 'stubble' },
+  },
+  // dual daggers with real Bonk and Slicey behind them (D123; was HP/Endurance-heavy, D120)
 };
 
 export const CLASS_IDS = Object.keys(CLASSES) as ClassId[];
