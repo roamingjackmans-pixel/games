@@ -168,7 +168,7 @@ function moveByStyle(w: World, e: Entity, target: Entity, dt: number): void {
     return;
   }
   // leashed enemies (The Instructor) never leave their home area
-  const home = def.traits?.homeRadius;
+  const home = en.phase >= 1 && (def as { phase2?: { noLeash?: boolean } }).phase2?.noLeash ? undefined : def.traits?.homeRadius;
   if (home && dist(e.x, e.y, en.homeX, en.homeY) > home) {
     stepTo(w, e, en.homeX, en.homeY, sp, dt);
     face();
@@ -375,6 +375,16 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
   // boss phase passives: pull toward it, a stationary form, size, projectile speed (BossPhase.passive)
   if (en.isBoss) tickBossPassive(w, e, dt);
 
+  // a non-boss second phase (The Instructor, D107): a new, faster attack list below a health line
+  const p2 = (def as { phase2?: { untilHpPct: number; attacks: AttackDef[]; name?: string } }).phase2;
+  if (p2 && !en.isBoss && en.phase === 0 && hp.hp <= hp.max * (p2.untilHpPct / 100)) {
+    en.phase = 1;
+    en.phaseAttacks = p2.attacks;
+    en.cooldowns = {};
+    w.emit({ t: 'msg', text: `${def.name}: ${p2.name ?? 'Phase two'}!`, color: '#ffd27a' });
+    w.sfx('phaseChange', e.x);
+    w.emit({ t: 'shake', amount: 6 });
+  }
   // regeneration out of combat (The Instructor)
   if (traits.regenPctPerS && now - hp.lastHitAt > 5) hp.hp = Math.min(hp.max, hp.hp + hp.max * traits.regenPctPerS * dt);
 

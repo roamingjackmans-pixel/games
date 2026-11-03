@@ -609,9 +609,6 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   if (traits.submerged && en.state === 'submerged') mult *= 0.5;
   if (pl) {
     const wpn = pl.derived.weapon;
-    // a hit from behind is noted for the Training Hall's backstab station (D97); only weapons with their own
-    // backstab (Twin Daggers) and enemies with a weak back (Brass Juggernaut) deal more from there
-    if (attacker && behind(e, fromX, fromY)) w.hooks.onBackstab?.(w, attacker, e);
     if (wpn.backstabMult && behind(e, fromX, fromY) && o.light) {
       mult *= wpn.backstabMult;
       crit = true;

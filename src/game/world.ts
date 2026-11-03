@@ -544,8 +544,6 @@ export interface WorldHooks {
   onBossPhase?(w: World, e: Entity, phase: number): void;
   onPlayerBlocked?(w: World, p: Entity, attacker: Entity | null): void;
   onPlayerParried?(w: World, p: Entity, attacker: Entity): void;
-  /** a player hit an enemy from behind (D97) */
-  onBackstab?(w: World, p: Entity, target: Entity): void;
   /** a block timed like a parry by someone with nothing to parry with (D96) */
   onTimedBlock?(w: World, p: Entity, attacker: Entity): void;
   onEnemyHitEffects?(w: World, attacker: Entity, victim: Entity, effects: EffectDef[]): void;

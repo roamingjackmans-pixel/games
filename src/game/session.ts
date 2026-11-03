@@ -156,7 +156,6 @@ export class GameSession {
     this.w.hooks.onGaryHit = (_w, g) => this.garyHit(g);
     this.w.hooks.onPlayerDied = (_w, p) => this.bledOut(p);
     this.w.hooks.onPlayerParried = () => this.goal('parry');
-    this.w.hooks.onBackstab = () => this.goal('backstab');
     // the parry station also accepts a perfectly timed block without a parrying shield (D96)
     this.w.hooks.onTimedBlock = (w, p) => {
       if (!this.tutorial || this.tutorial.goals.has('parry')) return;
@@ -1167,15 +1166,13 @@ export class GameSession {
       tut.sy = p.y;
       tut.aim0 = Math.atan2(p.pl!.input.aimY - p.y, p.pl!.input.aimX - p.x);
     }
-    const defs: Record<string, typeof DUMMY_STILL> = { a: DUMMY_STILL, b: DUMMY_SWING, c: DUMMY_RED, d: DUMMY_PIERCE, f: DUMMY_STILL, h: DUMMY_STILL };
+    const defs: Record<string, typeof DUMMY_STILL> = { a: DUMMY_STILL, b: DUMMY_SWING, c: DUMMY_RED, d: DUMMY_PIERCE, f: DUMMY_STILL };
     for (const d of m.dummies) {
       const def = defs[d.kind];
       if (!def) continue;
       const e = spawnEnemy(w, def, d.x, d.y, { tellS: 0.05, noDrop: true });
       e.en!.shards = 0;
       tut.dummy[d.kind] = e.id;
-      // the backstab dummy stares at the back wall, away from the path (D97)
-      if (d.kind === 'h') e.facing = -Math.PI / 2;
     }
     for (const st of m.stations) {
       const s = TUTORIAL_STATIONS.find((x) => x.n === st.n);
@@ -1216,9 +1213,6 @@ export class GameSession {
     if (Math.abs(aim - t.aim0) > 1.0) this.goal('aim');
     const a = w.get(t.dummy.a ?? 0);
     if (a && a.hp && a.hp.hp < a.hp.max) this.goal('attack');
-    // the backstab dummy keeps staring at the back wall (D97)
-    const hd = w.get(t.dummy.h ?? 0);
-    if (hd) hd.facing = -Math.PI / 2;
     if (p.pl!.char.twoHanded !== (p.pl!.char.classId === 'brute')) this.goal('twoHand');
     if (p.pl!.state === 'flask') this.goal('flask');
     // Red stomp: dodged if the dummy's stomp lands while Joe is inside and takes nothing
@@ -1228,7 +1222,7 @@ export class GameSession {
       const owner = tele.tg.ownerId;
       const shape = tele.tg.shapes[0];
       if (!shape || shape.k === 'pockets' || shape.k === 'wave' || !('x' in shape)) continue;
-      const near = dist(p.x, p.y, shape.x, shape.y) < 300;
+      const near = dist(p.x, p.y, shape.x, shape.y) < (owner === t.dummy.d ? 220 : 300);
       if (owner === t.dummy.c && near && p.pl!.state === 'dodge') this.goal('dodgeRed');
       if (owner === t.dummy.d && near) {
         const hp0 = p.hp!.hp;

@@ -4,7 +4,7 @@ import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
 import { Rng } from '../../src/engine/rng';
 import { stepWorld } from '../../src/game/sim';
-import { emptySpec, hitEnemy, hitPlayer, rawDamage } from '../../src/game/combat/damage';
+import { emptySpec, hitPlayer, rawDamage } from '../../src/game/combat/damage';
 import { refreshDerived } from '../../src/game/player/player';
 import { neighbourId } from '../../src/game/procgen/zone';
 import { smallChest } from '../../src/game/procgen/chests';
@@ -251,24 +251,6 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     expect(s.tutorialDone('parry')).toBe(true);
   });
 
-  it('station 10: a hit from behind checks off the backstab station; only Twin Daggers deal more there (D97)', () => {
-    const s = session(true);
-    const p = s.localPlayer!;
-    for (let i = 0; i < 60; i++) stepWorld(s.w);
-    const h = s.w.get(s.tutorial!.dummy.h!)!;
-    expect(h).toBeDefined();
-    // it still looks at the back wall after a second of play
-    expect(Math.abs(h.facing + Math.PI / 2)).toBeLessThan(0.2);
-    h.hp!.max = h.hp!.hp = 1e6;
-    const spec = () => ({ ...emptySpec('player'), dmg: { physical: 100 } });
-    const front = hitEnemy(s.w, p, h, spec(), h.x, h.y - 40);
-    expect(s.tutorialDone('backstab')).toBe(false);
-    const back = hitEnemy(s.w, p, h, spec(), h.x, h.y + 40);
-    // the Knight's longsword has no backstab of its own: same damage, station done
-    expect(back).toBeCloseTo(front, 5);
-    expect(s.tutorialDone('backstab')).toBe(true);
-  });
-
   it('walking past him and out his east door reaches the start room', () => {
     const s = session(true);
     expect([...s.w.entities.values()].some((e) => e.en?.def.id === 'the_instructor')).toBe(false);
@@ -282,4 +264,26 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     expect(s.save.character.tutorialDone).toBe(true);
   });
 
+});
+
+describe('The Instructor (D107)', () => {
+  it('has 14,420 HP and below half switches to a faster list with attacks for players who stand back', () => {
+    const ch = newCharacter('knight', 'Joe', 'p1', new Rng('inst'));
+    ch.tutorialDone = false;
+    const s = new GameSession(newSave(1, ch, 'INSTRUCTOR-SEED'));
+    s.start();
+    s.enterRoom(s.layout.trialId!, 'w');
+    const inst = [...s.w.entities.values()].find((e) => e.en?.def.id === 'the_instructor')!;
+    expect(inst.hp!.max).toBe(14420);
+    const p1 = inst.en!.phaseAttacks.map((a) => a.id);
+    inst.hp!.hp = inst.hp!.max * 0.49;
+    inst.hp!.lastHitAt = s.w.time;
+    for (let i = 0; i < 5; i++) stepWorld(s.w);
+    expect(inst.en!.phase).toBe(1);
+    const p2 = inst.en!.phaseAttacks;
+    expect(p2.some((a) => a.range[0] >= 250)).toBe(true);
+    const over1 = p1.indexOf('instructor_overhead');
+    expect(over1).toBeGreaterThanOrEqual(0);
+    expect(p2.find((a) => a.id === 'instructor_overhead_2')!.windupMs).toBeLessThan(1400);
+  });
 });

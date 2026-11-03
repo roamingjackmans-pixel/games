@@ -465,6 +465,8 @@ export interface EnemyDef {
   construct?: boolean;
   /** not part of the zone roster (summons, mimic, gary, instructor) */
   special?: boolean;
+  /** a non-boss second phase (The Instructor, D107): below this HP its attack list is replaced */
+  phase2?: { untilHpPct: number; attacks: AttackDef[]; name?: string; noLeash?: boolean };
 }
 
 export interface ArenaChange {

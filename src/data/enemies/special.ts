@@ -31,7 +31,8 @@ export const TRAINING_DUMMY: EnemyDef = {
 /** Tutorial dummies: each performs a single attack on a timer. */
 export const DUMMY_SWING: EnemyDef = { ...TRAINING_DUMMY, id: 'dummy_swing', name: 'Swinging Dummy', attacks: [TRAINING_DUMMY.attacks[0]!] };
 export const DUMMY_RED: EnemyDef = { ...TRAINING_DUMMY, id: 'dummy_red', name: 'Stomping Dummy', attacks: [TRAINING_DUMMY.attacks[1]!] };
-export const DUMMY_PIERCE: EnemyDef = { ...TRAINING_DUMMY, id: 'dummy_pierce', name: 'Ringing Dummy', attacks: [TRAINING_DUMMY.attacks[2]!] };
+// its ring stops at 150 px so the station's sign (about 200 px away) can be read in peace (D107)
+export const DUMMY_PIERCE: EnemyDef = { ...TRAINING_DUMMY, id: 'dummy_pierce', name: 'Ringing Dummy', attacks: [{ ...TRAINING_DUMMY.attacks[2]!, pattern: { kind: 'ring', rIn: 40, rOut: 150, anchor: 'self' }, range: [0, 900] }] };
 export const DUMMY_POKE: EnemyDef = {
   ...TRAINING_DUMMY,
   id: 'dummy_poke',
@@ -104,7 +105,7 @@ export const INSTRUCTOR: EnemyDef = {
   zone: 0,
   name: 'The Instructor',
   role: 'brute',
-  mult: { hp: 667, dmg: 2.7, poise: 1000, shards: 0 },
+  mult: { dmg: 2.7, poise: 1000, shards: 0 },
   speed: 70,
   radius: 34,
   resist: {},
@@ -117,7 +118,23 @@ export const INSTRUCTOR: EnemyDef = {
     { id: 'instructor_stomp', name: 'Stomp', kind: 'red', pattern: { kind: 'circle', r: 140, anchor: 'self' }, windupMs: 1000, recoverMs: 900, dmgMult: 1, type: 'physical', cooldownS: 6, range: [0, 150], weight: 2 },
     { id: 'instructor_clap', name: 'Clap', kind: 'pierce', pattern: { kind: 'ring', rIn: 60, rOut: 260, anchor: 'self' }, windupMs: 1500, recoverMs: 900, dmgMult: 0.8, type: 'physical', cooldownS: 8, range: [40, 270], weight: 2, area: true },
   ],
-  traits: { noFlinch: true, regenPctPerS: 0.02, homeRadius: 230, noDrops: true },
+  traits: { noFlinch: true, regenPctPerS: 0.02, homeRadius: 230, noDrops: true, fixedHp: 14420 },
+  // below half health he blows the whistle: everything comes faster, he leaves his corner, and people who stand far
+  // away get homework (D107)
+  phase2: {
+    untilHpPct: 50,
+    name: 'Second half',
+    noLeash: true,
+    attacks: [
+      { id: 'instructor_overhead_2', name: 'Overhead', kind: 'normal', pattern: { kind: 'line', w: 80, l: 160, anchor: 'self' }, windupMs: 900, recoverMs: 550, dmgMult: 1, type: 'physical', cooldownS: 1.5, range: [0, 170], weight: 3 },
+      { id: 'instructor_stomp_2', name: 'Stomp', kind: 'red', pattern: { kind: 'circle', r: 140, anchor: 'self' }, windupMs: 700, recoverMs: 550, dmgMult: 1, type: 'physical', cooldownS: 3.6, range: [0, 150], weight: 2 },
+      { id: 'instructor_clap_2', name: 'Clap', kind: 'pierce', pattern: { kind: 'ring', rIn: 60, rOut: 260, anchor: 'self' }, windupMs: 1000, recoverMs: 550, dmgMult: 0.8, type: 'physical', cooldownS: 5, range: [40, 270], weight: 2, area: true },
+      // for anyone standing back: a fan of whistles, a running leap, and a medicine ball lobbed at your feet
+      { id: 'instructor_whistles', name: 'Whistle Volley', kind: 'normal', pattern: { kind: 'projectile', speed: 480, r: 9, count: 5, spreadDeg: 36, range: 1100 }, windupMs: 800, recoverMs: 500, dmgMult: 0.6, type: 'physical', cooldownS: 4, range: [260, 1200], weight: 3 },
+      { id: 'instructor_laps', name: 'Run a Lap', kind: 'red', pattern: { kind: 'circle', r: 110, anchor: 'target' }, move: { kind: 'leap' }, windupMs: 900, activeMs: 450, recoverMs: 900, dmgMult: 1.3, type: 'physical', cooldownS: 7, range: [300, 900], weight: 2 },
+      { id: 'instructor_medicine_ball', name: 'Medicine Ball', kind: 'pierce', pattern: { kind: 'projectile', speed: 420, r: 12, lob: true, onImpact: { kind: 'circle', r: 95, anchor: 'point' } }, windupMs: 1000, recoverMs: 700, dmgMult: 0.9, type: 'physical', cooldownS: 5, range: [250, 1100], weight: 2 },
+    ],
+  },
   flavor: 'He has a whistle. He will use it.',
   draw: 'the_instructor',
   hitSound: 'hitFlesh',

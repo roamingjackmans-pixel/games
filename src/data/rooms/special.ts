@@ -185,12 +185,12 @@ export const ROOM_TUTORIAL: RoomTemplate = {
     '#P....................................P#',
     '#P....................................P#',
     '#P....................................P#',
-    '#P......a.....b.......c......d......h.P#',
+    '#P......a.....b.......c......d........P#',
     '#P....................................P#',
     '#P....................................P#',
     '#P...........................f........P#',
     '#......................................#',
-    '#X.1..2...3....4..5....6....7....8.9.0.D',
+    '#X.1..2...3....4..5....6....7....8.9...D',
     '#.....................................ED',
     '#......................................#',
     '#P....................................P#',
@@ -241,7 +241,7 @@ export interface TutorialStation {
   n: number;
   sign: string;
   /** what completes the floor marker */
-  goal: 'move' | 'aim' | 'attack' | 'block' | 'parry' | 'dodgeRed' | 'escapePierce' | 'twoHand' | 'flask' | 'backstab';
+  goal: 'move' | 'aim' | 'attack' | 'block' | 'parry' | 'dodgeRed' | 'escapePierce' | 'twoHand' | 'flask';
 }
 
 export const TUTORIAL_STATIONS: TutorialStation[] = [
@@ -254,5 +254,4 @@ export const TUTORIAL_STATIONS: TutorialStation[] = [
   { n: 7, sign: 'BLUE attacks ignore dodging. Walk out of the drawn area before it lands.', goal: 'escapePierce' },
   { n: 8, sign: 'TWO-HAND with {twoHand}: your Bonk counts ×1.5 for damage and requirements; no shield, weapon guard only.', goal: 'twoHand' },
   { n: 9, sign: "DRINK from Joe's Thermos ({flask}). It refills when you die, or the first time you rest at a bonfire.", goal: 'flask' },
-  { n: 10, sign: 'BACKSTAB: hit that dummy from behind. Twin Daggers deal ×1.5 to backs; other weapons hit backs normally, but some big foes (Brass Juggernaut) have weak backs.', goal: 'backstab' },
 ];
