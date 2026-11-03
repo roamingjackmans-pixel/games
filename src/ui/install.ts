@@ -105,6 +105,8 @@ export function installSteps(): { title: string; steps: string[] } {
         : 'Click the small install icon (a screen with a down arrow) at the right end of the address bar. Or click the Chrome menu (⋮ at the top right) → Cast, save, and share → Install Dungeon Joe…',
       'Click Install. Dungeon Joe opens in its own window and gets a Start menu and desktop shortcut.',
       `If the menu says Open in Dungeon Joe (or Open in app) instead, it is already installed: start it from the Start menu.`,
+      // D137: an app installed from this site's old addresses can claim every page under it
+      `If it says Open in another game from this site (such as Alt Whisker Wars), that app was installed from an older address and claims this page too. Uninstall it (in Chrome go to chrome://apps, right-click it → Remove from Chrome; leave "Also clear data" unticked, or every game here loses its saves), install Dungeon Joe, then install the other game again from its own page.`,
     ],
   };
 }
