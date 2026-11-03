@@ -91,15 +91,7 @@ export function tryUseSkill(w: World, e: Entity, i: number): boolean {
   const d = pl.derived;
   const s = skillOf(e, i);
   const now = w.time;
-  if (!s) {
-    // a staff or talisman in the weapon hand has no weapon skills (D117): say so instead of doing nothing (D129)
-    if (d.mainTool && now - pl.lastBowHintAt > 1.5) {
-      pl.lastBowHintAt = now;
-      const what = d.mainTool.def.school === 'brain' ? 'staff' : 'talisman';
-      msg(w, e, `A ${what} in your weapon hand has no weapon skills (its spells are on {spell1} {spell2} {spell3}). Swap to a weapon ({swapWeapon}) or hold the ${what} in your off hand.`);
-    }
-    return false;
-  }
+  if (!s) return false;
   if (i >= d.skillsUnlocked) {
     msg(w, e, d.weaponMeetsReq ? `${s.name} is locked (better item tier needed).` : 'Skills are locked: weapon below requirement.');
     return false;
@@ -164,6 +156,11 @@ export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = '
     return false;
   }
   if (readyAt[i]! > now) return false;
+  // a weapon buff needs a weapon to buff (D131): not a staff or talisman in the weapon hand, not bare fists
+  if (sp.weaponBuff && (d.mainTool || !d.weaponItem)) {
+    msg(w, e, `${sp.name} needs a weapon in your weapon hand.`);
+    return false;
+  }
   const boost = pl.nextSpellFree && pl.nextSpellFree.until > now && pl.nextSpellFree.count > 0 ? pl.nextSpellFree : null;
   const free = !!boost?.noStamina || (d.powers.has('font') && e.hp!.hp > e.hp!.max * 0.8) || (d.powers.has('spellsword') && now - pl.lastLightAttackAt < 2);
   if (!free) {

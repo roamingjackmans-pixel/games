@@ -607,6 +607,8 @@ export interface SpellDef {
   description: string;
   aimed?: boolean;
   element?: DamageType;
+  /** buffs the weapon in hand (D131): refuses to cast with a staff, talisman or nothing in the weapon hand */
+  weaponBuff?: boolean;
 }
 
 export interface ShieldDef {

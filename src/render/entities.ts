@@ -166,7 +166,8 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   const wDraw = pl.derived.weapon.draw;
   const wItem = pl.derived.weaponItem;
   // a weapon buffed with an element (Bless Weapon, Consecrate…) glows that element's colour (D129)
-  const buffEl = weaponBuffElement(e, now);
+  // (only on a weapon: a staff or talisman swapped into the hand mid-buff does not glow, D131)
+  const buffEl = pl.derived.mainTool || !wItem ? null : weaponBuffElement(e, now);
   const legendName = wItem?.rarity === 'legendary' ? wItem.name : undefined;
   const offItem = pl.char.equipment.off;
   const shield = offItem ? SHIELDS[offItem.baseId] : undefined;

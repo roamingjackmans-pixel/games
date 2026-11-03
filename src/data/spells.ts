@@ -94,7 +94,7 @@ const PRAYER: SpellDef[] = [
     'You and allies within 140 px: clear all statuses; undead and void within 140 px take 30 Holy.',
     'holy',
   ),
-  P('bless_weapon', 'Bless Weapon', 12, 0.6, 25, 14, [{ op: 'buff', stat: 'holyConvertPct', amount: 0.2, durationS: 20, id: 'bless' }], '20 s: your weapon deals +20% as Holy; undead and void take +15% more.', 'holy'),
+  { ...P('bless_weapon', 'Bless Weapon', 12, 0.6, 25, 14, [{ op: 'buff', stat: 'holyConvertPct', amount: 0.2, durationS: 20, id: 'bless' }], '20 s: your weapon deals +20% as Holy; undead and void take +15% more.', 'holy'), weaponBuff: true },
   P('regen_aura', 'Regen Aura', 12, 0.8, 36, 18, [{ op: 'zone', pattern: { kind: 'circle', r: 180, anchor: 'self' }, durationS: 50, tickS: 1, hazard: 'regenAura', follow: true, alliesOnly: true, tick: [], allyTick: [{ op: 'heal', pct: 0.003, target: 'target', spell: true }] }], 'circle(180) around you for 50 s: allies inside heal 0.3% per second.'),
   P('sunray', 'Sunray', 14, 0.5, 6, 14, [dmg({ kind: 'line', w: 30, l: 450, anchor: 'self' }, 36, 'holy'), { op: 'reveal', r: 450, durationS: 4 }], 'line(30,450) 36 Holy, reveals hidden and invisible enemies for 4 s.', 'holy'),
   P(

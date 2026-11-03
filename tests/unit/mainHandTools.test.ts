@@ -152,3 +152,41 @@ describe('staffs and talismans in either hand (D117)', () => {
     expect(a - b).toBeCloseTo(16 - 2.5, 1);
   });
 });
+
+describe('weapon buff spells need a weapon (D131)', () => {
+  const blessSetup = (main: string | null, off: string): { w: World; p: Entity } => {
+    const { w, p, c } = mage();
+    c.equipment.main = main ? makeItem(main, 'common', 1) : null;
+    c.equipment.off = makeItem(off, 'common', 1);
+    c.stats.prayer = 30;
+    c.stats.bonk = 30;
+    c.knownSpells.push('bless_weapon');
+    c.spellLoadout.prayer = ['bless_weapon', null, null];
+    refreshDerived(p);
+    return { w, p };
+  };
+  const blessed = (p: Entity): boolean => !!p.buffs?.some((b) => b.stat === 'holyConvertPct');
+  it('Bless Weapon fails with a talisman in the weapon hand, and says why', () => {
+    const { w, p } = blessSetup('wooden_talisman', 'kite_shield');
+    const msgs: string[] = [];
+    const emit = w.emit.bind(w);
+    w.emit = (ev) => {
+      if (ev.t === 'msg') msgs.push(ev.text);
+      emit(ev);
+    };
+    expect(tryCastSpell(w, p, 0)).toBe(false);
+    run(w, 1);
+    expect(blessed(p)).toBe(false);
+    expect(msgs.some((m) => m.includes('needs a weapon'))).toBe(true);
+  });
+  it('Bless Weapon fails bare-handed', () => {
+    const { w, p } = blessSetup(null, 'wooden_talisman');
+    expect(tryCastSpell(w, p, 0)).toBe(false);
+  });
+  it('Bless Weapon casts with a weapon in hand and the talisman in the off hand', () => {
+    const { w, p } = blessSetup('censer_flail', 'wooden_talisman');
+    expect(tryCastSpell(w, p, 0)).toBe(true);
+    run(w, 1.5);
+    expect(blessed(p)).toBe(true);
+  });
+});
