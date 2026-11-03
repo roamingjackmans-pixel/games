@@ -496,6 +496,51 @@ export function drawHazardEntity(ctx: CanvasRenderingContext2D, e: Entity, now: 
   ctx.restore();
 }
 
+/** Glowen (D83): a ghostly green blob of ectoplasm with a wobbling skin and a wisp of tail; bigger for more. */
+export const GLOWEN_COLOR = '#9dffcf';
+function drawGlowenWisp(ctx: CanvasRenderingContext2D, x: number, y: number, now: number, id: number, amount: number): void {
+  const s = Math.min(1.8, 0.75 + Math.log10(Math.max(1, amount)) * 0.35);
+  glow(ctx, x, y, 22 * s, GLOWEN_COLOR, 0.55 + Math.sin(now * 4 + id) * 0.1);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  // a trailing wisp that curls upward
+  ctx.strokeStyle = withAlpha(GLOWEN_COLOR, 0.45);
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, -4);
+  ctx.quadraticCurveTo(Math.sin(now * 3 + id) * 6, -12, Math.sin(now * 2.2 + id) * 4, -18);
+  ctx.stroke();
+  // the wobbling blob
+  ctx.beginPath();
+  for (let i = 0; i <= 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const r = 6.5 + Math.sin(a * 3 + now * 5 + id) * 1.1;
+    const px = Math.cos(a) * r;
+    const py = Math.sin(a) * r * 0.85 + (Math.sin(a) > 0 ? 1.5 : 0);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = withAlpha(GLOWEN_COLOR, 0.75);
+  ctx.fill();
+  ctx.strokeStyle = withAlpha('#2f8a66', 0.9);
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // two faint eye-holes: it was alive once
+  ctx.fillStyle = withAlpha('#1f5a44', 0.55);
+  ctx.beginPath();
+  ctx.arc(-2.2, -1, 1.1, 0, Math.PI * 2);
+  ctx.arc(2.2, -1, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath();
+  ctx.arc(-3, -3.5, 1.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 export function drawPickup(ctx: CanvasRenderingContext2D, e: Entity, now: number): void {
   const pk = e.pk!;
   const bob = Math.sin(now * 3 + e.id) * 3;
@@ -507,6 +552,10 @@ export function drawPickup(ctx: CanvasRenderingContext2D, e: Entity, now: number
       const a = now * 1.5 + i * 1.3;
       poly(ctx, [x + Math.cos(a) * 6, y - 8 + Math.sin(a) * 3, x + 4 + Math.cos(a) * 6, y + Math.sin(a) * 3, x + Math.cos(a) * 6, y + 8 + Math.sin(a) * 3, x - 4 + Math.cos(a) * 6, y + Math.sin(a) * 3], '#cfeaff', OUTLINE, 1.5);
     }
+    return;
+  }
+  if (pk.kind === 'glowen') {
+    drawGlowenWisp(ctx, x, y, now, e.id, pk.amount);
     return;
   }
   const color = rarityColor(pk.rarity);
@@ -523,8 +572,8 @@ export function drawPickup(ctx: CanvasRenderingContext2D, e: Entity, now: number
   glow(ctx, x, y, 20, color, 0.6);
   if (pk.kind === 'gem') {
     poly(ctx, [x, y - 8, x + 7, y, x, y + 8, x - 7, y], color, OUTLINE, 2);
-  } else if (pk.kind === 'consumable' || pk.kind === 'glowen') {
-    blob(ctx, x, y, 6, 7, { fill: pk.kind === 'glowen' ? '#fff3b0' : '#b08d6a' });
+  } else if (pk.kind === 'consumable') {
+    blob(ctx, x, y, 6, 7, { fill: '#b08d6a' });
   } else if (pk.kind === 'spell' || pk.kind === 'tear') {
     blob(ctx, x, y, 8, 8, { fill: pk.kind === 'tear' ? '#9ad0ff' : '#c58cff' });
   } else {
