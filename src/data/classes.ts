@@ -5,7 +5,8 @@ export interface ClassDef {
   id: ClassId;
   name: string;
   stats: Stats;
-  start: { main: string; off?: string; armor: string[]; spells: string[]; bag?: string[]; gems?: number };
+  /** `alt` is the 2nd (quick-swap) weapon slot: a weapon, staff or talisman (D115) */
+  start: { main: string; off?: string; alt?: string; armor: string[]; spells: string[]; bag?: string[]; gems?: number };
   twoHanded?: boolean;
   blurb: string;
   look: {
@@ -62,21 +63,24 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     blurb: 'Read about dungeons once.',
     look: { skin: '#f0d8b8', hair: '#8a6a3a', shirt: '#3a4a8a', legs: '#2a2a3a', head: 'wizard', trim: '#e6b84a', hairStyle: 'long', beard: 'goatee', hat: '#3a4a8a', belt: '#e6b84a', emblem: 'star' },
   },
+  // id kept for saves; the Cleric became the Pyre Priest, a fire-and-brimstone healer (D116)
   cleric: {
     id: 'cleric',
-    name: 'Cleric',
+    name: 'Pyre Priest',
     stats: S(10, 7, 11, 3, 4, 13),
-    start: { main: 'mace', off: 'wooden_talisman', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: ['heal', 'bless_weapon'] },
-    blurb: 'Prays mostly for himself.',
-    look: { skin: '#e8c9a0', hair: '#c0c0c0', shirt: '#e8e1c8', legs: '#6a5a4a', head: 'mitre', trim: '#d4af37', hairStyle: 'bald', beard: 'full', hat: '#e8e1c8', belt: '#d4af37', emblem: 'sun' },
+    // no helm: the ember mitre shows
+    start: { main: 'censer_flail', off: 'wooden_talisman', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: ['heal', 'bless_weapon'] },
+    blurb: 'Heals the faithful. Cremates the rest. Same sermon either way.',
+    look: { skin: '#e8c9a0', hair: '#c0c0c0', shirt: '#9a2a1a', legs: '#3a2420', head: 'mitre', trim: '#ff9a2a', hairStyle: 'bald', beard: 'full', hat: '#c8401a', belt: '#ffb84a', emblem: 'flame' },
   },
+  // id kept for saves; the Spearman became the Battlemage: colossal sword and shield, a staff on the swap (D117)
   spearman: {
     id: 'spearman',
-    name: 'Spearman',
-    stats: S(9, 9, 9, 10, 5, 6),
-    start: { main: 'spear', off: 'round_shield', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: [] },
-    blurb: 'Friendly from a distance. Exactly one spear’s distance.',
-    look: { skin: '#d8b090', hair: '#3a2a1a', shirt: '#6a7a3a', legs: '#3a3a2a', head: 'none', trim: '#c9b98a', hairStyle: 'topknot', beard: 'stubble', belt: '#4a3a1a' },
+    name: 'Battlemage',
+    stats: S(7, 7, 13, 8, 10, 3),
+    start: { main: 'colossal_sword', off: 'targe', alt: 'apprentice_staff', armor: ['crypt_rags_body', 'crypt_rags_legs'], spells: ['arcane_bolt', 'scatter_shards'] },
+    blurb: 'Read one book on magic. Hit the librarian with a sword the size of the shelf.',
+    look: { skin: '#d8b090', hair: '#3a2a1a', shirt: '#34508a', legs: '#2a2a3a', head: 'wizard', trim: '#8fd3ff', hairStyle: 'topknot', beard: 'full', hat: '#2a3a6a', belt: '#5a4a2a', emblem: 'star' },
   },
   hunter: {
     id: 'hunter',
@@ -95,21 +99,24 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     blurb: 'Joe.',
     look: { skin: '#e8c9a0', hair: '#4a3626', shirt: '#9a8a7a', legs: '#8a6a3a', head: 'none', trim: '#c9b98a', hairStyle: 'messy', beard: 'stubble' },
   },
+  // dual daggers on the bare minimum Slicey; everything else poured into HP and Endurance (D118)
   berserker: {
     id: 'berserker',
     name: 'Berserker',
-    stats: S(10, 10, 11, 10, 3, 4),
-    start: { main: 'twin_axes', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
-    blurb: 'Was asked to calm down once. Once.',
+    stats: S(16, 15, 1, 14, 1, 1),
+    start: { main: 'twin_daggers', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
+    twoHanded: true,
+    blurb: 'Was asked to calm down once. Once. Has never been asked to count.',
     look: { skin: '#e0b088', hair: '#a03a1a', shirt: '#5a2a1a', legs: '#3a2a1a', head: 'horned', trim: '#c9b98a', hairStyle: 'braids', beard: 'braided', hat: '#7a7f88', belt: '#2a1a10' },
   },
+  // id kept for saves; the Occultist became the Zealot, Slicey + Prayer with the Dawn Glaive (D119)
   occultist: {
     id: 'occultist',
-    name: 'Occultist',
-    stats: S(7, 7, 3, 10, 15, 6),
-    start: { main: 'rapier', off: 'void_staff', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: ['void_rift', 'arcane_bolt'] },
-    blurb: 'Heard a voice in the bins. Answered it.',
-    look: { skin: '#d8c0b0', hair: '#1a0a2a', shirt: '#2a1a3a', legs: '#1a1a2a', head: 'hood', trim: '#7a2bd6', hairStyle: 'long', beard: 'none', hat: '#2a1a3a', belt: '#7a2bd6', emblem: 'eye' },
+    name: 'Zealot',
+    stats: S(8, 8, 3, 12, 3, 14),
+    start: { main: 'dawn_glaive', off: 'silver_talisman', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: ['sunray', 'bless_weapon'] },
+    blurb: 'Up at five to pray. Up at five past to stab whoever was not.',
+    look: { skin: '#d8c0b0', hair: '#e8d8a0', shirt: '#efe6d2', legs: '#5a4a2a', head: 'hood', trim: '#e6b84a', hairStyle: 'long', beard: 'none', hat: '#d8c8a0', belt: '#e6b84a', emblem: 'sun' },
   },
 };
 

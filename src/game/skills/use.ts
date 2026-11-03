@@ -6,6 +6,7 @@ import { runEffects } from '../effects/run';
 import { itemLevelFor, scalingCurve, STAMINA_COST_MULT } from '../combat/formulas';
 import { buffSum } from '../combat/state';
 import { dist } from '../../engine/math';
+import { toolForSchool, type SpellSchool } from '../player/derived';
 import type { EffectDef, SkillDef, SpellDef } from '../types';
 import type { Entity, World } from '../world';
 
@@ -31,9 +32,21 @@ export function skillOf(e: Entity, i: number): SkillDef | null {
   return SKILLS[e.pl!.derived.weapon.skills[i] ?? ''] ?? null;
 }
 
-export function spellOf(e: Entity, i: number): SpellDef | null {
+/**
+ * Which keys cast (D115): 1/2/3 ('spell') cast the school of the tool in your weapon hand, else the off hand's;
+ * with a staff and a talisman in both hands, Q/E/R ('skill') cast the off-hand tool's school (a tool in the
+ * weapon hand has no weapon skills to put there).
+ */
+export type SpellKeys = 'spell' | 'skill';
+
+export function spellSchoolFor(e: Entity, keys: SpellKeys = 'spell'): SpellSchool | null {
+  const d = e.pl!.derived;
+  return keys === 'spell' ? d.spellKeys : d.skillKeySchool;
+}
+
+export function spellOf(e: Entity, i: number, keys: SpellKeys = 'spell'): SpellDef | null {
   const pl = e.pl!;
-  const school = pl.derived.offKind === 'staff' ? 'brain' : pl.derived.offKind === 'talisman' ? 'prayer' : null;
+  const school = spellSchoolFor(e, keys);
   if (!school) return null;
   const id = pl.char.spellLoadout[school][i];
   return id ? (SPELLS[id] ?? null) : null;
@@ -44,8 +57,9 @@ export function spellPowerMult(e: Entity, sp: SpellDef): number {
   const d = e.pl!.derived;
   const stat = sp.school === 'brain' ? d.stats.brain : d.stats.prayer;
   const curve = sp.school === 'brain' ? 1 + 1.2 * scalingCurve(stat) : 1 + 1.0 * scalingCurve(stat);
-  let m = curve * Math.max(0.5, d.toolMult);
-  if (d.tool?.bonus?.heals && sp.effect.some((x) => x.op === 'heal')) m *= 1 + d.tool.bonus.pct;
+  const tool = toolForSchool(d, sp.school);
+  let m = curve * Math.max(0.5, tool?.mult ?? 0);
+  if (tool?.def.bonus?.heals && sp.effect.some((x) => x.op === 'heal')) m *= 1 + tool.def.bonus.pct;
   return m;
 }
 
@@ -116,19 +130,22 @@ export function tryUseSkill(w: World, e: Entity, i: number): boolean {
   return true;
 }
 
-export function tryCastSpell(w: World, e: Entity, i: number): boolean {
+export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = 'spell'): boolean {
   const pl = e.pl!;
   const d = pl.derived;
   const now = w.time;
-  if (d.offKind !== 'staff' && d.offKind !== 'talisman') {
-    msg(w, e, pl.char.twoHanded ? 'Two-handing: no casting.' : 'Spells need a staff or talisman in your off hand.');
+  const school = spellSchoolFor(e, keys);
+  const tool = school ? toolForSchool(d, school) : null;
+  if (!tool) {
+    msg(w, e, pl.char.twoHanded && d.offKind && d.offKind !== 'shield' ? 'Two-handing: no casting from the off hand.' : 'Spells need a staff or talisman in either hand.');
     return false;
   }
-  if (!d.toolMeetsReq) {
-    msg(w, e, 'Your casting tool is beyond your stats: it cannot cast.');
+  if (!tool.meetsReq) {
+    msg(w, e, `Your ${tool.def.name} is beyond your stats: it cannot cast.`);
     return false;
   }
-  const sp = spellOf(e, i);
+  const readyAt = keys === 'spell' ? pl.spellReadyAt : pl.skillReadyAt;
+  const sp = spellOf(e, i, keys);
   if (!sp) {
     msg(w, e, 'No spell in that slot (inventory → Spells).');
     return false;
@@ -138,7 +155,7 @@ export function tryCastSpell(w: World, e: Entity, i: number): boolean {
     msg(w, e, `${sp.name} needs ${sp.school === 'brain' ? 'Brain' : 'Prayer'} ${sp.req}.`);
     return false;
   }
-  if (pl.spellReadyAt[i]! > now) return false;
+  if (readyAt[i]! > now) return false;
   const boost = pl.nextSpellFree && pl.nextSpellFree.until > now && pl.nextSpellFree.count > 0 ? pl.nextSpellFree : null;
   const free = !!boost?.noStamina || (d.powers.has('font') && e.hp!.hp > e.hp!.max * 0.8) || (d.powers.has('spellsword') && now - pl.lastLightAttackAt < 2);
   if (!free) {
@@ -153,7 +170,7 @@ export function tryCastSpell(w: World, e: Entity, i: number): boolean {
     boost.count--;
     if (boost.count <= 0) pl.nextSpellFree = null;
   }
-  pl.spellReadyAt[i] = now + cooldown;
+  readyAt[i] = now + cooldown;
   pl.combo = null;
   pl.blocking = false;
   pl.state = 'cast';

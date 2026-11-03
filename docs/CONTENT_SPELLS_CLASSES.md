@@ -59,16 +59,24 @@ already known. Every class starts with 1 flask charge, 0 Shards, 0 Glowen, 3 Thr
 | **Brute** | 12 | 8 | 14 | 5 | 4 | 5 | Greathammer (req Bonk 14; starts two-handed) | — | Heavy body only | — | "Solves things." |
 | **Duelist** | 8 | 11 | 5 | 14 | 5 | 5 | Twin Daggers (req Slicey 14) | Buckler (req Slicey 8) | Light set | — | "Has never been hit. Says so." |
 | **Scholar** | 7 | 7 | 3 | 10 | 15 | 6 | Rapier (req Slicey 10) | Apprentice Staff (req Brain 8) | Light set | Arcane Bolt (8), Frost Lance (12) | "Read about dungeons once." |
-| **Cleric** | 10 | 7 | 11 | 3 | 4 | 13 | Mace (req Bonk 11) | Wooden Talisman (req Prayer 8) | Medium set | Heal (8), Bless Weapon (12) | "Prays mostly for himself." |
-| **Spearman** | 9 | 9 | 9 | 10 | 5 | 6 | Spear (req 8/10) | Round Shield (req Bonk 8) | Medium set | — | "Keeps a polite distance." |
+| **Pyre Priest** (id `cleric`, D116) | 10 | 7 | 11 | 3 | 4 | 13 | Censer Flail (Fire hybrid, req Bonk 11 + Prayer 11) | Wooden Talisman (req Prayer 8) | Medium body + legs (the ember mitre shows) | Heal (8), Bless Weapon (12) | "Heals the faithful. Cremates the rest. Same sermon either way." |
+| **Battlemage** (id `spearman`, D117) | 7 | 7 | 13 | 8 | 10 | 3 | Colossal Sword (req 13/8); 2nd weapon: Apprentice Staff (req Brain 8) | Targe (req 6/6) | Light body + legs (Medium load) | Arcane Bolt (8), Scatter Shards (10) | "Read one book on magic. Hit the librarian with a sword the size of the shelf." |
 | **Hunter** | 8 | 12 | 5 | 12 | 6 | 5 | Bow (req Slicey 10) | — (a Whip, req Slicey 9, in the bag) | Light set | — | "Never misses. Rarely hits." |
 | **Nobody** | 8 | 8 | 8 | 8 | 8 | 8 | Club (req Bonk 8) | — | Loincloth (legs only, 0 def) | — | One random T1 gem in the bag. "Joe." |
-| **Berserker** | 10 | 10 | 11 | 10 | 3 | 4 | Twin Axes (req 10/10) | — | Medium body + legs | — | "Has two of everything except plans." |
-| **Occultist** | 7 | 7 | 3 | 10 | 15 | 6 | Rapier (req Slicey 10) | Void Staff (req Brain 12) | Light set | Void Rift (15), Arcane Bolt (8) | "Found the staff in a dumpster. It found him back." |
+| **Berserker** (D118) | 16 | 15 | 1 | 14 | 1 | 1 | Twin Daggers (req Slicey 14; starts dual-wielding, i.e. two-handed) | — | Medium body + legs | — | "Was asked to calm down once. Once. Has never been asked to count." |
+| **Zealot** (id `occultist`, D119) | 8 | 8 | 3 | 12 | 3 | 14 | Dawn Glaive (Holy hybrid, req Slicey 11 + Prayer 11) | Silver Talisman (req Prayer 14) | Medium set | Sunray (14), Bless Weapon (12) | "Up at five to pray. Up at five past to stab whoever was not." |
 
-Every kit meets its own requirements at level 1 (test §4.2). The Hunter's Bow is the main hand and the
-Whip sits in the bag to swap; the inventory supports a quick main-hand swap (two weapon slots, toggled
-with a bindable key; default none).
+Every kit meets its own requirements at level 1 (test §4.2), its 2nd weapon included, and no kit starts
+Encumbered. The Hunter's Bow is the main hand and the Whip sits in the bag to swap; the inventory supports
+a quick main-hand swap (two weapon slots, toggled with a bindable key). The Battlemage starts sword and
+shield with the staff on the swap: swap to it to cast behind the shield (D115).
+
+**Casting tools in either hand (D115).** A staff or talisman goes in the off hand, the weapon hand or the
+2nd weapon slot. In the weapon hand it swings a modest bash (staff: base 20, Bonk D / Brain E, arc 85 then
+a thrust; talisman: base 16, Bonk E / Prayer D, a quarter Holy, fist reach), has no weapon skills, and
+casts; a shield in the off hand blocks and parries as usual. Keys 1/2/3 cast the school of the weapon-hand
+tool, else the off hand's. With a staff and a talisman in both hands, Q/E/R cast the off-hand tool's school
+(own cooldowns). Two-handing a weapon-hand tool is allowed: it still casts, and the off hand is set aside.
 
 ## 4. Validation tests
 

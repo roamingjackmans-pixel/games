@@ -79,8 +79,11 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
     let amt = base * mult;
     // ilvl scaling for consumables happens in the caller via powerMult
     if (src?.pl && ctx.isSpell) {
-      const tool = src.pl.derived.tool;
-      if (tool?.bonus?.element === e.type) amt *= 1 + tool.bonus.pct;
+      // either hand's tool (D115): staff bonuses are Void/Magic and talisman bonuses Holy, which only that
+      // school's spells deal, so a bonus never crosses schools
+      const d = src.pl.derived;
+      const tool = [d.mainTool, d.offTool].find((t) => t?.def.bonus?.element === e.type)?.def;
+      if (tool?.bonus) amt *= 1 + tool.bonus.pct;
       if (src.pl.derived.powers.has('overcharge')) amt *= 1.25;
     }
     spec.dmg = { [e.type]: amt };

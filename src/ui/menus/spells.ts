@@ -68,6 +68,14 @@ export function renderSpellTab(el: HTMLElement, c: Character, onChange: () => vo
     return box;
   };
   el.appendChild(h('div', { class: 'dim-text small' }, `A staff casts Brain spells, a talisman casts Prayer spells (3 slots each: ${glyphText('spell1')} / ${glyphText('spell2')} / ${glyphText('spell3')}). Each school keeps its own loadout.`));
+  // D115: which keys cast which school when a tool is in the weapon hand
+  el.appendChild(
+    h(
+      'div',
+      { class: 'dim-text small' },
+      `Either hand can hold the tool. ${glyphText('spell1')} / ${glyphText('spell2')} / ${glyphText('spell3')} cast the school of the tool in your weapon hand (or your off hand's, if the weapon hand has none). A staff and a talisman together: the weapon hand's school stays on ${glyphText('spell1')} / ${glyphText('spell2')} / ${glyphText('spell3')}, and the off hand's goes on ${glyphText('skill1')} / ${glyphText('skill2')} / ${glyphText('skill3')}, where a weapon's skills would be.`,
+    ),
+  );
   el.appendChild(status);
   el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:24px' }, col('brain'), col('prayer')));
 }

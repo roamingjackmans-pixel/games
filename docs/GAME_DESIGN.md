@@ -234,7 +234,7 @@ weapon active frames: Greathammer, Greataxe, Colossal Sword, Club, Mace, Battlea
 skills/spells that grant it) ignores interruptions from any hit. Grabs and holds interrupt regardless.
 Effects described as "+N poise" for players raise the interruption threshold by N% of max HP.
 
-**Two-handing** (Shift): the off-hand is disabled (no shield, no casting). Bonk (strength) counts ×1.5
+**Two-handing** (Shift): the off-hand is disabled (no shield, no off-hand casting; a staff or talisman in the weapon hand still casts, D115). Bonk (strength) counts ×1.5
 for scaling and requirements; Slicey does not change (D72). Holding block performs a **weapon guard**: 45% physical, 15% elemental,
 stability 12 (stamina drains fast). No parry.
 
@@ -393,7 +393,7 @@ Full boss sheets: CONTENT_ENEMIES §9.
 
 ### 8.1 Slots
 
-Main hand (weapon) · Off hand (shield, staff or talisman) · Head · Body · Legs · 2 Rings · Quick-use.
+Main hand (weapon, staff or talisman) · Off hand (shield, staff or talisman) · Head · Body · Legs · 2 Rings · Quick-use.
 Weapons and off-hands can be swapped any time from the inventory (not during an attack).
 
 ### 8.2 Rarity (Diablo)
@@ -511,7 +511,7 @@ killed mimics stay done). The map does not change.
 
 ## 10. Spells
 
-Spells are cast with an **off-hand casting tool**: a **staff** casts **Brain** spells only, a **talisman**
+Spells are cast with a **casting tool** in either hand (off hand, weapon hand or the 2nd weapon slot, D115): a **staff** casts **Brain** spells only, a **talisman**
 casts **Prayer** spells only. The tool has **3 spell slots**; any known spell of that school can be
 slotted at any time, subject to its requirement. The character keeps **one loadout per school** (a
 Brain loadout and a Prayer loadout), so swapping between a staff and a talisman keeps both arrangements.
@@ -581,10 +581,11 @@ up, pickup (debounced 2 s), every 30 s, and on `beforeunload`. Settings and key 
 Ten starting classes with different stats, gear and spells (the table in CONTENT_SPELLS_CLASSES §3 is
 the source of truth): **Knight** (longsword + kite shield), **Brute** (greathammer, two-handed),
 **Duelist** (twin daggers + buckler), **Scholar** (rapier + apprentice staff: Arcane Bolt, Frost Lance),
-**Cleric** (mace + wooden talisman: Heal, Bless Weapon), **Spearman** (spear + round shield), **Hunter**
-(bow, with a whip in the bag), **Nobody** (club, a loincloth, one random gem, 8 in everything),
-**Berserker** (twin axes), **Occultist** (rapier + void staff: Void Rift, Arcane Bolt). Every starting
-kit meets its own requirements (tested).
+**Pyre Priest** (censer flail + wooden talisman: Heal, Bless Weapon), **Battlemage** (colossal sword +
+targe, apprentice staff on the swap: Arcane Bolt, Scatter Shards), **Hunter** (bow, with a whip in the
+bag), **Nobody** (club, a loincloth, one random gem, 8 in everything), **Berserker** (dual twin daggers,
+all HP and Endurance), **Zealot** (dawn glaive + silver talisman: Sunray, Bless Weapon). Every starting
+kit meets its own requirements (tested). Staffs and talismans may be held in either hand (D115).
 
 Character creation: name (default "Joe"), class, optional **seed** (text; blank = random), a preview of
 the vector character with the class's starting gear, and the class's dry one-line blurb.

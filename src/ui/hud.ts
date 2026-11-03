@@ -14,6 +14,7 @@ import type { Entity, World } from '../game/world';
 import type { ControlId, StatusId } from '../game/types';
 import { buffSum } from '../game/combat/state';
 import { flaskCap } from '../game/combat/formulas';
+import { toolForSchool } from '../game/player/derived';
 
 const STATUS_COLOR: Record<StatusId, string> = { burn: '#ff7a1a', chill: '#9ad0ff', shock: '#ffe14a', bleed: '#c01828', poison: '#7ad040' };
 const CONTROL_LABEL: Record<ControlId, string> = { freeze: 'FROZEN', blind: 'BLIND', hexed: 'HEXED', silence: 'SILENCED', root: 'ROOTED', hold: 'HELD' };
@@ -142,30 +143,36 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   // skills (bottom-left): Q/E/R on a keyboard, LB/RB/Y on an Xbox pad… whatever is bound
   const pad = 20;
   const by = 720 - 60;
-  const skillIds = d.weapon.skills;
-  for (let i = 0; i < 3; i++) {
-    const sid = skillIds[i] ?? '';
-    const def = SKILLS[sid];
-    const locked = !def || i >= d.skillsUnlocked;
-    const ready = pl.skillReadyAt[i]!;
-    const total = def ? def.cooldownS * (1 - d.cdr) : 1;
-    const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-    const action = (['skill1', 'skill2', 'skill3'] as const)[i]!;
-    cdIcon(ctx, pad + i * 46, by, def?.name ?? '—', action, frac, locked, '#ffd27a', ready > now ? `${Math.ceil(ready - now)}` : '');
+  // a spell loadout drawn on three keys (1/2/3, or Q/E/R with a staff and a talisman in both hands: D115)
+  const spellRow = (school: 'brain' | 'prayer' | null, keys: readonly Action[], readyAt: readonly number[], x0: number): void => {
+    const loadout = school ? ch.spellLoadout[school] : [null, null, null];
+    const tool = school ? toolForSchool(d, school) : null;
+    for (let i = 0; i < 3; i++) {
+      const id = loadout[i] ?? null;
+      const def = id ? SPELLS[id] : undefined;
+      const locked = !def || !tool?.meetsReq;
+      const ready = readyAt[i]!;
+      const total = def ? def.cooldownS : 1;
+      const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
+      cdIcon(ctx, x0 + i * 46, by, def?.name ?? '—', keys[i]!, frac, locked, school === 'brain' ? '#8fd3ff' : '#fff3b0', ready > now ? `${Math.ceil(ready - now)}` : '');
+    }
+  };
+  if (d.skillKeySchool) spellRow(d.skillKeySchool, ['skill1', 'skill2', 'skill3'], pl.skillReadyAt, pad);
+  else {
+    const skillIds = d.weapon.skills;
+    for (let i = 0; i < 3; i++) {
+      const sid = skillIds[i] ?? '';
+      const def = SKILLS[sid];
+      const locked = !def || i >= d.skillsUnlocked;
+      const ready = pl.skillReadyAt[i]!;
+      const total = def ? def.cooldownS * (1 - d.cdr) : 1;
+      const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
+      const action = (['skill1', 'skill2', 'skill3'] as const)[i]!;
+      cdIcon(ctx, pad + i * 46, by, def?.name ?? '—', action, frac, locked, '#ffd27a', ready > now ? `${Math.ceil(ready - now)}` : '');
+    }
   }
-  // spells (1/2/3, or the D-pad)
-  const school = d.offKind === 'staff' ? 'brain' : d.offKind === 'talisman' ? 'prayer' : null;
-  const loadout = school ? ch.spellLoadout[school] : [null, null, null];
-  for (let i = 0; i < 3; i++) {
-    const id = loadout[i] ?? null;
-    const def = id ? SPELLS[id] : undefined;
-    const locked = !def || !d.toolMeetsReq;
-    const ready = pl.spellReadyAt[i]!;
-    const total = def ? def.cooldownS : 1;
-    const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-    const action = (['spell1', 'spell2', 'spell3'] as const)[i]!;
-    cdIcon(ctx, pad + 160 + i * 46, by, def?.name ?? '—', action, frac, locked, school === 'brain' ? '#8fd3ff' : '#fff3b0', ready > now ? `${Math.ceil(ready - now)}` : '');
-  }
+  // spells (1/2/3, or the D-pad): the weapon-hand tool's school, else the off hand's
+  spellRow(d.spellKeys, ['spell1', 'spell2', 'spell3'], pl.spellReadyAt, pad + 160);
   // quick-use, and the "next item" button when there is more than one kind to cycle through
   const q = ch.quickSlot;
   const qn = q ? (ch.consumables[q] ?? 0) : 0;

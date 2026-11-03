@@ -98,12 +98,12 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   cls('brute', 'Blunt Instrument', 'Finish a zone as a Brute.'),
   cls('duelist', 'En Garde, En Route', 'Finish a zone as a Duelist.'),
   cls('scholar', 'Required Reading', 'Finish a zone as a Scholar.'),
-  cls('cleric', 'Thoughts and Prayers', 'Finish a zone as a Cleric.'),
-  cls('spearman', 'Personal Space', 'Finish a zone as a Spearman.'),
+  cls('cleric', 'Thoughts and Pyres', 'Finish a zone as a Pyre Priest.'),
+  cls('spearman', 'Hit the Books', 'Finish a zone as a Battlemage.'),
   cls('hunter', 'Long-Distance Relationship', 'Finish a zone as a Hunter.'),
   cls('nobody', 'Nobody Did It', 'Finish a zone as a Nobody.'),
   cls('berserker', 'Anger Management', 'Finish a zone as a Berserker.'),
-  cls('occultist', 'Dabbling', 'Finish a zone as an Occultist.'),
+  cls('occultist', 'Early Riser', 'Finish a zone as a Zealot.'),
 
   // ---- dying, which is most of it
   once('die_1', 'First Eviction Notice', 'Die. It happens.', 'skull', 'deaths'),
