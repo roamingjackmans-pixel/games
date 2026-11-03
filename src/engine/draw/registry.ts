@@ -1,5 +1,6 @@
 // Draw-function registry: every enemy/boss/prop references a DrawId implemented under src/engine/draw/.
 import { OUTLINE, blob, eyes, glow, shadow } from './parts';
+import type { DamageType } from '../../game/types';
 
 export interface DrawState {
   x: number;
@@ -26,6 +27,13 @@ export interface DrawState {
   awake: boolean;
   /** where the entity's next gaze attack strikes (AttackDef.gazeTurnDeg), for its sweep arrow */
   gaze?: number;
+  /**
+   * the enemy's own damage type (D81): what most of its attacks deal. Colour elemental enemies with
+   * ELEMENTS[elem] from src/game/elements.ts so players can read what they are fighting.
+   */
+  elem: DamageType;
+  /** the damage type of the attack it is winding up or swinging right now (null when not attacking) */
+  atk: DamageType | null;
 }
 
 export type DrawFn = (ctx: CanvasRenderingContext2D, s: DrawState) => void;

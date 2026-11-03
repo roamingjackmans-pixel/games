@@ -11,6 +11,7 @@ import { SHIELDS } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
 import { shapeHit } from '../game/combat/patterns';
 import { drawAttackIcon } from './telegraphs';
+import { enemyElement } from '../game/elements';
 import type { Character } from '../game/types';
 import type { Entity, World } from '../game/world';
 
@@ -237,6 +238,8 @@ export function enemyDrawState(e: Entity, x: number, y: number, now: number, pal
     variant: en.pieceIndex,
     awake: en.state !== 'dormant',
     ...(en.gaze !== undefined ? { gaze: en.gaze } : {}),
+    elem: enemyElement(en.def),
+    atk: en.attack ? en.attack.def.type : null,
   };
 }
 
