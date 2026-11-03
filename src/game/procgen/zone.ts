@@ -5,6 +5,7 @@ import { ROOM_TEMPLATES } from '../../data/rooms';
 import { zoneDef } from '../../data/zones';
 import { ENEMIES, rosterOf } from '../../data/enemies';
 import { pickMix } from './mix';
+import { shapeIds } from './shapes';
 import type { Side } from '../room';
 
 export type RoomKind = 'start' | 'combat' | 'ambush' | 'treasure' | 'reliquary' | 'merchant' | 'anteroom' | 'boss' | 'tutorial' | 'trial';
@@ -22,6 +23,8 @@ export interface RoomNode {
   mirrorV: boolean;
   /** dead-end combat rooms get a small-chest bonus */
   bonusChest: boolean;
+  /** the room's shape family (procgen/shapes.ts); '' = plain template (special rooms get their zone frame) */
+  shape: string;
 }
 
 export interface ZoneLayout {
@@ -211,7 +214,23 @@ export function generateZone(seed: string, zone: number, o: ZoneOpts = {}): Zone
         mirrorH: rng.chance(0.5),
         mirrorV: rng.chance(0.5),
         bonusChest: kind === 'combat' && bonusDead.has(k),
+        shape: '',
       });
+    }
+    // room shapes (PROCGEN §3.1): every combat room gets a shape family from its own stream (the map stream
+    // above is untouched), never the same family as a neighbouring room while the zone has one to spare
+    const families = shapeIds(zone);
+    const shapeRng = stream(seed, `shapes:${zone}:${cycle}`);
+    const atCell = new Map(rooms.map((r) => [key(r.gx, r.gy), r]));
+    for (const r of rooms) {
+      if (r.kind !== 'combat' && r.kind !== 'ambush') continue;
+      const near = new Set<string>();
+      for (const [, dx, dy] of DIRS) {
+        const n = atCell.get(key(r.gx + dx, r.gy + dy));
+        if (n?.shape) near.add(n.shape);
+      }
+      const free = families.filter((f) => !near.has(f));
+      r.shape = shapeRng.pick(free.length ? free : families);
     }
     // Training Hall → The Instructor's room → the start room (D90): the hall's east door opens on his room, and his
     // room's east door is the way down to the first bonfire (the start room's south door)
@@ -225,7 +244,7 @@ export function generateZone(seed: string, zone: number, o: ZoneOpts = {}): Zone
       const startNode = rooms.find((r) => r.kind === 'start')!;
       if (!startNode.doors.includes('s')) startNode.doors.push('s');
       trialId = `z${zone}-trial`;
-      rooms.push({ id: trialId, gx: -100, gy: -100, kind: 'trial', depth: 0, doors: ['w', 'e'], template: 'trial', mirrorH: false, mirrorV: false, bonusChest: false });
+      rooms.push({ id: trialId, gx: -100, gy: -100, kind: 'trial', depth: 0, doors: ['w', 'e'], template: 'trial', mirrorH: false, mirrorV: false, bonusChest: false, shape: '' });
       links[`${tutNode.id}|e`] = { to: trialId, entry: 'w' };
       links[`${trialId}|w`] = { to: tutNode.id, entry: 'e' };
       links[`${trialId}|e`] = { to: `z${zone}-start`, entry: 's' };
