@@ -63,7 +63,7 @@ already known. Every class starts with 1 flask charge, 0 Shards, 0 Glowen, 3 Thr
 | **Battlemage** (id `spearman`, D119) | 7 | 7 | 13 | 8 | 10 | 3 | Colossal Sword (req 13/8); 2nd weapon: Apprentice Staff (req Brain 8) | Targe (req 6/6) | Light body + legs (Medium load) | Arcane Bolt (8), Scatter Shards (10) | "Read one book on magic. Hit the librarian with a sword the size of the shelf." |
 | **Hunter** | 8 | 12 | 5 | 12 | 6 | 5 | Bow (req Slicey 10) | — (a Whip, req Slicey 9, in the bag) | Light set | — | "Never misses. Rarely hits." |
 | **Nobody** | 8 | 8 | 8 | 8 | 8 | 8 | Club (req Bonk 8) | — | Loincloth (legs only, 0 def) | — | One random T1 gem in the bag. "Joe." |
-| **Berserker** (D120) | 16 | 15 | 1 | 14 | 1 | 1 | Twin Daggers (req Slicey 14; starts dual-wielding, i.e. two-handed) | — | Medium body + legs | — | "Was asked to calm down once. Once. Has never been asked to count." |
+| **Berserker** (D120, D123, D140) | 9 | 7 | 13 | 14 | 2 | 3 | Twin Axes (req Bonk 10 / Slicey 10; starts dual-wielding, i.e. two-handed) | — | Medium body + legs | — | "Was asked to calm down once. Once. Has never been asked to count." |
 | **Zealot** (id `occultist`, D121) | 8 | 8 | 3 | 12 | 3 | 14 | Dawn Glaive (Holy hybrid, req Slicey 11 + Prayer 11) | Silver Talisman (req Prayer 14) | Medium set | Sunray (14), Bless Weapon (12) | "Up at five to pray. Up at five past to stab whoever was not." |
 
 Every kit meets its own requirements at level 1 (test §4.2), its 2nd weapon included, and no kit starts

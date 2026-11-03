@@ -85,12 +85,15 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
     expect(bm.stats.brain).toBeGreaterThanOrEqual(10);
     expect(computeDerived(newCharacter('spearman', 'J', 'p', new Rng(1))).load.tier).toBe('medium');
     const bz = CLASSES.berserker;
-    expect(bz.start.main).toBe('twin_daggers');
+    expect(bz.start.main).toBe('twin_axes');
     expect(bz.twoHanded).toBe(true);
-    // D123: real Bonk and Slicey behind the daggers
+    // D123 / D140: real Bonk and Slicey behind the axes, HP 9 and Prayer 3
     expect(bz.stats.bonk).toBe(13);
     expect(bz.stats.slicey).toBe(14);
-    expect(bz.stats.slicey).toBe(WEAPONS.twin_daggers!.req.slicey); // exactly the daggers' minimum, no lowered requirement
+    expect(bz.stats.hp).toBe(9);
+    expect(bz.stats.prayer).toBe(3);
+    expect(bz.stats.bonk).toBeGreaterThanOrEqual(WEAPONS.twin_axes!.req.bonk);
+    expect(bz.stats.slicey).toBeGreaterThanOrEqual(WEAPONS.twin_axes!.req.slicey);
     const z = CLASSES.occultist;
     expect(z.start.main).toBe('dawn_glaive');
     expect(z.stats.slicey + z.stats.prayer).toBeGreaterThanOrEqual(24);

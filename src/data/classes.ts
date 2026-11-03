@@ -100,12 +100,12 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     blurb: 'Up at five to pray. Up at five past to stab whoever was not.',
     look: { skin: '#d8c0b0', hair: '#e8d8a0', shirt: '#efe6d2', legs: '#5a4a2a', head: 'hood', trim: '#e6b84a', hairStyle: 'long', beard: 'none', hat: '#d8c8a0', belt: '#e6b84a', emblem: 'sun' },
   },
-  // dual daggers with real Bonk and Slicey behind them (D123; was HP/Endurance-heavy, D120)
+  // dual Twin Axes with real Bonk and Slicey behind them (D140; daggers D123, HP/Endurance-heavy D120)
   berserker: {
     id: 'berserker',
     name: 'Berserker',
-    stats: S(10, 7, 13, 14, 2, 2), // D123: Bonk 13 and Slicey 14 (Twin Daggers need Slicey 14)
-    start: { main: 'twin_daggers', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
+    stats: S(9, 7, 13, 14, 2, 3), // D140: HP 9, Prayer 3; Bonk 13 and Slicey 14 (D123) clear the axes' 10 / 10
+    start: { main: 'twin_axes', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
     twoHanded: true,
     blurb: 'Was asked to calm down once. Once. Has never been asked to count.',
     look: { skin: '#e0b088', hair: '#a03a1a', shirt: '#5a2a1a', legs: '#3a2a1a', head: 'horned', trim: '#c9b98a', hairStyle: 'braids', beard: 'braided', hat: '#7a7f88', belt: '#2a1a10' },
@@ -119,7 +119,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     blurb: 'Joe.',
     look: { skin: '#e8c9a0', hair: '#4a3626', shirt: '#9a8a7a', legs: '#8a6a3a', head: 'none', trim: '#c9b98a', hairStyle: 'messy', beard: 'stubble' },
   },
-  // dual daggers with real Bonk and Slicey behind them (D123; was HP/Endurance-heavy, D120)
+  // dual Twin Axes with real Bonk and Slicey behind them (D140; daggers D123, HP/Endurance-heavy D120)
 };
 
 export const CLASS_IDS = Object.keys(CLASSES) as ClassId[];
