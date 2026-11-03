@@ -595,8 +595,9 @@ export function behindGap(c: PatternCtx, x: number, y: number): { a: number; fai
 /** Expanding-ring gaps: one gap within escape reach of every player (D47), the rest random. */
 function placeRingGaps(p: Extract<PatternDef, { kind: 'expandingRing' }>, c: PatternCtx, x: number, y: number, k: number): number[] {
   const gaps: number[] = [];
-  if (p.gapBehind) return [behindGap(c, x, y).a];
-  const n = Math.max(1, p.gaps);
+  // a ring with its gap behind the caster keeps that gap first; any further gaps are placed as usual (D114)
+  if (p.gapBehind) gaps.push(behindGap(c, x, y).a);
+  const n = Math.max(p.gapBehind ? 0 : 1, p.gapBehind ? p.gaps - 1 : p.gaps);
   const reach = escapeReach(c.telegraphS + k * (p.spacingS ?? 1.2), p.pullSpeed ?? 0);
   for (let i = 0; i < n; i++) {
     const pl = c.players[i % Math.max(1, c.players.length)];

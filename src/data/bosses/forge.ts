@@ -101,7 +101,7 @@ const moltenShockwave: AttackDef = {
   id: 'ign_molten_shockwave',
   name: 'Molten Shockwave',
   kind: 'pierce',
-  pattern: { kind: 'expandingRing', speed: 300, gaps: 1, gapW: 110, gapBehind: true, anchor: 'self' },
+  pattern: { kind: 'expandingRing', speed: 300, gaps: 3, gapW: 110, gapBehind: true, anchor: 'self', centerGapDeg: 15 },
   windupMs: 1200,
   recoverMs: 1000,
   dmgMult: 1.3,

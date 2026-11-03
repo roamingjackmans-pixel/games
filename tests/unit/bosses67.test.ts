@@ -89,7 +89,7 @@ describe('bosses 6–7: data and arenas', () => {
     const judgment = attackOf(SAINT_AURELIA, 1, 'aurelia_judgment');
     expect(judgment.kind).toBe('red');
     expect(judgment.chain?.kind).toBe('pierce');
-    expect(judgment.chain?.pattern?.kind === 'expandingRing' && judgment.chain.pattern.gaps).toBe(3);
+    expect(judgment.chain?.pattern?.kind === 'expandingRing' && judgment.chain.pattern.gaps).toBe(4); // D114: 4 gaps plus one toward the centre
   });
 });
 
@@ -168,7 +168,7 @@ describe('Saint Aurelia the Unthawed', () => {
     }
     expect([...seen.values()]).toEqual([false, false, true]);
   });
-  it('Judgment dives through the target, then a Piercing Frost Nova with 3 gaps rings out where she lands', () => {
+  it('Judgment dives through the target, then a Piercing Frost Nova with 5 gaps (one toward the centre) rings out where she lands', () => {
     const { s, b, p } = fight(6);
     toPhase2(s, b);
     quiet(s, b);
@@ -189,7 +189,7 @@ describe('Saint Aurelia the Unthawed', () => {
     expect(nova).toBeDefined();
     const ring = nova!.tg!.shapes[0] as Extract<Shape, { k: 'expRing' }>;
     expect(nova!.tg!.kind).toBe('pierce');
-    expect(ring.gaps.length).toBe(3);
+    expect(ring.gaps.length).toBe(5); // D114: 4 + the centre gap
     expect(ring.gapW).toBeGreaterThanOrEqual(90);
     // she went through the target (past where it stood) before the nova
     expect(landedX).toBeGreaterThan(x0 + 260);

@@ -84,7 +84,7 @@ const graveQuake: AttackDef = {
   id: 'caretaker_grave_quake',
   name: 'Grave Quake',
   kind: 'pierce',
-  pattern: { kind: 'expandingRing', speed: 320, thickness: 40, gaps: 2, gapW: 110, anchor: 'self' },
+  pattern: { kind: 'expandingRing', speed: 320, thickness: 40, gaps: 4, gapW: 110, anchor: 'self', centerGapDeg: 15 },
   windupMs: 1000,
   recoverMs: 900,
   dmgMult: 1.2,

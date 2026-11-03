@@ -224,7 +224,7 @@ export const FORGE: Record<string, EnemyDef> = {
         id: 'molten_shockwave',
         name: 'Molten Shockwave',
         kind: 'pierce',
-        pattern: { kind: 'expandingRing', speed: 280, gaps: 1, gapW: 100, gapBehind: true, anchor: 'self' },
+        pattern: { kind: 'expandingRing', speed: 280, gaps: 3, gapW: 100, gapBehind: true, anchor: 'self', centerGapDeg: 15 },
         windupMs: 1000,
         recoverMs: 1000,
         dmgMult: 1.2,

@@ -144,7 +144,7 @@ export const CRYPT: Record<string, EnemyDef> = {
         id: 'grave_quake',
         name: 'Grave Quake',
         kind: 'pierce',
-        pattern: { kind: 'expandingRing', speed: 300, gaps: 2, gapW: 90, anchor: 'self' },
+        pattern: { kind: 'expandingRing', speed: 300, gaps: 4, gapW: 90, anchor: 'self', centerGapDeg: 15 },
         windupMs: 1000,
         recoverMs: 900,
         dmgMult: 1.0,

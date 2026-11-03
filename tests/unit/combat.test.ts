@@ -343,3 +343,24 @@ describe('the Plague Bell toll (D101)', () => {
     }
   });
 });
+
+describe('every expanding ring has room to breathe (D114)', () => {
+  it('has 4+ gaps (3+ beside a behind-the-caster gap) and one toward the room centre', async () => {
+    const { ENEMIES } = await import('../../src/data/enemies');
+    const { BOSSES } = await import('../../src/data/bosses');
+    const rings: { where: string; p: { gaps: number; gapBehind?: boolean; centerGapDeg?: number } }[] = [];
+    const visit = (where: string, p: unknown): void => {
+      if (!p || typeof p !== 'object') return;
+      const o = p as Record<string, unknown>;
+      if (o.kind === 'expandingRing') rings.push({ where, p: o as never });
+      for (const v of Object.values(o)) if (v && typeof v === 'object') visit(where, v);
+    };
+    for (const d of Object.values(ENEMIES)) visit(d.id, d.attacks);
+    for (const b of Object.values(BOSSES)) for (const ph of b.phases) visit(b.id, ph.attacks);
+    expect(rings.length).toBeGreaterThan(5);
+    for (const r of rings) {
+      expect(r.p.centerGapDeg, r.where).toBe(15);
+      expect(r.p.gaps, r.where).toBeGreaterThanOrEqual(r.p.gapBehind ? 3 : 4);
+    }
+  });
+});
