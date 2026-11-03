@@ -52,6 +52,8 @@ export class NetHost {
   /** UI callbacks */
   onLobbyChange: () => void = () => undefined;
   onGuestLeft: (name: string) => void = () => undefined;
+  /** the host's friendly-fire percent for the lobby (the scene reads Settings → Game; D114) */
+  friendlyFire: () => number = () => 100;
   private ch: {
     hello: NetChannel<Hello & Record<string, unknown>>;
     lobby: NetChannel<LobbyState & Record<string, unknown>>;
@@ -106,12 +108,13 @@ export class NetHost {
     const c = this.save.character;
     const players: PublicPlayer[] = [{ peerId: this.t.selfId, playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: true, cycle: c.cycle, appearance: c.appearance }];
     for (const g of this.guests.values()) players.push({ peerId: g.peerId, playerId: g.char.playerId, name: g.char.name, classId: g.char.classId, level: g.char.level, host: false, cycle: g.char.cycle, appearance: g.char.appearance });
-    return { code: this.code, players, zone: this.save.world.zone };
+    return { code: this.code, players, zone: this.save.world.zone, ff: this.friendlyFire() };
   }
 
-  sendLobby(): void {
+  /** Send everyone the lobby; `notify` false skips the host's own redraw (a setting being dragged). */
+  sendLobby(notify = true): void {
     this.ch.lobby.send(this.lobbyState() as LobbyState & Record<string, unknown>);
-    this.onLobbyChange();
+    if (notify) this.onLobbyChange();
   }
 
   private onHello(h: Hello, from: string): void {
@@ -327,7 +330,7 @@ export class NetHost {
       g.sentRecs.delete(id);
       g.sentMeta.delete(id);
     }
-    const json: SnapJson = { bossId: w.bossId, roomMods: { dark: w.roomMods.dark, floodUntil: w.roomMods.floodUntil } };
+    const json: SnapJson = { bossId: w.bossId, roomMods: { dark: w.roomMods.dark, floodUntil: w.roomMods.floodUntil }, ff: Math.round(w.friendlyFire * 100) };
     if (Object.keys(meta).length) json.meta = meta;
     const rk = `${w.room.id}|${w.room.version}|${s.save.world.roomsVisited.length}|${s.save.world.roomsCleared.length}`;
     if (full || rk !== g.roomSent) {

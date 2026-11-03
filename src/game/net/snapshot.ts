@@ -200,6 +200,8 @@ export interface SnapJson {
   self?: SelfState;
   bossId?: number;
   roomMods?: { dark: number; floodUntil: number };
+  /** the host's friendly-fire percent (0–200, D114), in every snapshot so a change mid-run reaches guests */
+  ff?: number;
 }
 
 export interface Snap {

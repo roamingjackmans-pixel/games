@@ -2,7 +2,7 @@
 // counters (src/game/achievements.ts keeps them in `dj.achievements`); none of them special-cases a save.
 // Counter keys: kills, deaths, parries, riposteKills, level, glowen, party, encumberedS (longest unbroken
 // stretch, seconds), credits, instructor, mimicKill, mimicDeath, legendary, fullSet, gemMax, flaskless,
-// fists, revive, gary, garyGone, ng1, ng2, boss:<bossId>, class:<classId>, clean:<zone>.
+// fists, revive, ffDown, ffAbandon, gary, garyGone, ng1, ng2, boss:<bossId>, class:<classId>, clean:<zone>.
 import type { ClassId } from '../game/types';
 
 /** What a check can see: the counters and the achievements already unlocked. */
@@ -141,6 +141,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   // ---- co-op
   once('revive', 'Get Up, Joe', 'Revive a fallen friend in co-op.', 'heart', 'revive'),
   reach('party_4', 'Full House', 'Play in a four-player party.', 'party', 'party', 4),
+  once('ff_down', 'Friendly Fire', 'Down a friend in co-op with your own attack. It was an accident. Probably.', 'dagger', 'ffDown', true),
+  once('ff_abandon', 'Not My Problem', 'Let a friend you downed bleed out without anyone reviving them.', 'skull', 'ffAbandon', true),
 
   // ---- getting big
   reach('level_50', 'Middle Management', 'Reach level 50.', 'level', 'level', 50),

@@ -555,6 +555,20 @@ built for it.
   timer expires → the player is **dead** until the party rests at a bonfire or wipes, and returns then
   with full HP and a full Thermos (death refills, §9.3). Everyone down → party wipe → all respawn at the
   host's bonfire with full HP and Thermos, each player's Shards dropped where they fell.
+- **Nobody leaves a ghost behind** (D114): while any player is a ghost waiting for a revive, the room's doors
+  and the stairs let nobody through; whoever tries hears "Revive *name* first!". A revive or a bleed-out (the
+  player is then out until the bonfire and holds nobody up) opens the way again. Everyone down is still a wipe.
+- **Friendly fire** (D114): on by default. A player's damaging attacks (weapon swings, shots and thrown
+  weapons, weapon skills, damaging spells and their blasts and chains, consumables, burning ground they leave)
+  also hit the **other standing players** at the friendly-fire percentage: Settings → Game → *Friendly fire
+  damage*, 0–200% in steps of 10, default 100%, 0% = off. The **host's** setting is the party's: it travels to
+  guests in the lobby and in every snapshot, and guests see it read-only ("set by the host"); a change mid-run
+  applies at once. An ally hit goes through the normal player hit pipeline (i-frames, block and stamina,
+  defense, barrier; status buildup scaled the same way) with the damage kind `player`: never parried, never
+  riposted (Riposte Stance only blocks it), no stagger for the attacker. Your own attacks never hit you, attacks
+  without damage (control, buffs, heals) never hit allies, healing and buffs aimed at allies still work, and
+  hitting a **downed** ally's ghost still revives them (D12). Downing an ally counts toward "Friendly Fire";
+  letting an ally you downed bleed out counts toward "Not My Problem" (§20).
 - **Progress for guests**: Shards, loot, levels, spells, gems, Glowen, flask upgrades always carry
   home. A boss beaten at zone `z` also marks zone `z` beaten in a guest's own world **if** `z` = the
   guest's highest beaten zone + 1 (D31); their world then starts them at the zone `z+1` start bonfire.
@@ -608,7 +622,8 @@ the vector character with the class's starting gear, and the class's dry one-lin
 
 Resolution scale, fullscreen, VSync-ish frame cap, screen shake 0–100%, hitstop on/off, damage numbers
 on/off, colorblind telegraph icons (always on, can enlarge), high-contrast telegraphs, master/SFX/music
-volume, key rebinding (keyboard and gamepad), aim-assist strength, "hold to block" vs "toggle".
+volume, key rebinding (keyboard and gamepad), aim-assist strength, "hold to block" vs "toggle", co-op friendly
+fire damage 0–200% (Game tab, default 100%; the host's value rules a co-op session, §12).
 
 ## 18. Glossary of names
 
@@ -663,7 +678,7 @@ Automated test panes (`?auto=…`) and `?nocut` skip cutscenes; `?cutscenes=1` f
 
 ## 20. Achievements
 
-49 achievements, all in `src/data/achievements.ts` (id, name, description, icon, optional `hidden`, a check
+51 achievements, all in `src/data/achievements.ts` (id, name, description, icon, optional `hidden`, a check
 on the tracker's counters, an optional progress bar). They are **account-wide**: one record in
 `localStorage` (`dj.achievements`: unlock dates and counters) shared by all ten save slots, rebuilt empty
 if missing or corrupt, and unknown ids are kept for newer builds.
@@ -675,13 +690,14 @@ if missing or corrupt, and unknown ids are kept for newer builds.
   (every starting kit is a zone-1 set), a Tier 5 gem, 50 parries, 10 riposte kills, a boss without the
   Thermos, a boss with nothing in the weapon hand, a zone cleared without dying (from arriving by the stairs
   to its boss; a character that has never died counts its current zone) and each of the 8 that way, reviving
-  a friend, a four-player party, levels 50 and 100, 10,000 Glowen held, a minute Encumbered, finding Gary and
-  driving him off. Four are hidden ("???") until unlocked.
+  a friend, downing a friend with friendly fire and letting a friend you downed bleed out (D114), a four-player
+  party, levels 50 and 100, 10,000 Glowen held, a minute Encumbered, finding Gary and
+  driving him off. Six are hidden ("???") until unlocked.
 - **The Dark Shard** unlocks with the last of the others.
 - **Tracking** (`src/game/achievements.ts`) reads each client's own view: the run scenes pass every frame's
   world events and the local player, so a co-op guest tracks theirs exactly like a host. Party kills count for
   everyone in the room; parries, ripostes, revives and loot count only for the player who did them (`feat`
-  events carry the player for ripostes and revives). The session notes deaths (with the killer) and Gary
+  events carry the player for ripostes, revives, friendly-fire downs and bleed-outs). The session notes deaths (with the killer) and Gary
   leaving; the scenes note the credits.
 - **UI** (`src/ui/achievements.ts`): an unlock toast top-right (icon, name, description, 4 s, queued, a small
   bell); the Achievements screen from the title menu and the pause menu, with the total, The Dark Shard on

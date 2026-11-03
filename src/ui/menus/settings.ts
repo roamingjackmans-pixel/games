@@ -16,7 +16,7 @@ import {
   type RebindResult,
 } from '../../engine/input/bindings';
 import { HOLD_S } from '../../engine/input/input';
-import { PROMPT_SETTINGS, type PromptSetting } from '../../engine/settings';
+import { FRIENDLY_FIRE_MAX, FRIENDLY_FIRE_STEP, PROMPT_SETTINGS, normalizeFriendlyFire, type PromptSetting } from '../../engine/settings';
 import { btn, clearEl, h, layer } from '../dom';
 import { GLYPH_LABEL, glyphEl, inputGlyphEl, inputText, padStyle, promptStyle, refreshGlyphs, type GlyphAction, type GlyphInput } from '../glyphs';
 
@@ -38,7 +38,37 @@ const PREVIEW: GlyphAction[] = ['attack', 'block', 'dodge', 'skill1', 'skill2', 
 /** The offline zip sits next to index.html on the website build (scripts/build-offline.mjs). */
 export const OFFLINE_ZIP = 'dungeonjoe-offline.zip';
 
-export function openSettings(onClose: () => void): HTMLElement {
+/** What the settings screen needs to know about a co-op session it opens in. */
+export interface SettingsOpts {
+  /** a co-op guest: the host's friendly-fire percent (read-only here; the host sets it for everyone, D114) */
+  hostFriendlyFire?: () => number | null;
+}
+
+const ffText = (v: number): string => (v <= 0 ? 'Off (0%)' : `${v}%`);
+
+/**
+ * The friendly-fire row (D114): a 0–200% slider in steps of 10 for the host or a solo player, or the host's value,
+ * read-only, with "set by the host" for a co-op guest. `changed` runs after the value is saved.
+ */
+export function friendlyFireRow(o: { hostValue?: number | null; changed?: () => void } = {}): HTMLElement {
+  const a = app();
+  const guest = o.hostValue !== undefined;
+  const cur = (): number => (guest ? (o.hostValue ?? 100) : a.settings.game.friendlyFire);
+  const val = h('span', { class: 'mono', style: 'width:80px', 'data-testid': 'ff-value' }, ffText(cur()));
+  const inp = h('input', { type: 'range', min: '0', max: String(FRIENDLY_FIRE_MAX), step: String(FRIENDLY_FIRE_STEP), value: String(cur()), style: 'width:260px', 'data-testid': 'ff-slider', 'aria-label': 'Friendly fire damage' }) as HTMLInputElement;
+  if (guest) inp.disabled = true;
+  else
+    inp.addEventListener('input', () => {
+      a.settings.game.friendlyFire = normalizeFriendlyFire(Number(inp.value));
+      val.textContent = ffText(a.settings.game.friendlyFire);
+      a.saveSettings();
+      o.changed?.();
+    });
+  const note = guest ? h('span', { class: 'small dim-text', 'data-testid': 'ff-host-note' }, 'set by the host') : null;
+  return h('div', { class: 'row' }, h('div', { style: 'width:240px' }, 'Friendly fire damage'), inp, val, note);
+}
+
+export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTMLElement {
   const a = app();
   const s = a.settings;
   const root = layer('dim');
@@ -459,6 +489,18 @@ export function openSettings(onClose: () => void): HTMLElement {
   // ---- game: the offline download ---------------------------------------------------------------------------
 
   function game(el: HTMLElement): void {
+    el.appendChild(h('h3', null, 'Co-op'));
+    const host = opts.hostFriendlyFire;
+    el.appendChild(friendlyFireRow(host ? { hostValue: host() } : {}));
+    el.appendChild(
+      h(
+        'div',
+        { class: 'small dim-text', style: 'max-width:760px' },
+        host
+          ? "You are in someone else's game: the host decides how hard everyone's attacks hit each other."
+          : "How hard your party's attacks hit each other in co-op, from off (0%) to double (200%). When you host, everyone plays by your setting. Hitting a downed friend's ghost still revives them.",
+      ),
+    );
     el.appendChild(h('h3', null, 'Download the game'));
     el.appendChild(
       h(

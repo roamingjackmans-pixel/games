@@ -1,7 +1,7 @@
 // Telegraph system: resolves impacts, pulses, continuous areas (sweeps, rings, waves, beams) and persistence.
 import { DEG, turnToward } from '../../engine/math';
 import { shapeHit, type Shape } from '../combat/patterns';
-import { addRevive, hitEnemy, hitPlayer } from '../combat/damage';
+import { addRevive, ffVictims, hitAlly, hitEnemy, hitPlayer } from '../combat/damage';
 import { runEffects } from '../effects/run';
 import { spawnHazard } from './hazards';
 import { attackDamage } from '../enemies/spawn';
@@ -15,7 +15,8 @@ function targetsFor(w: World, t: Entity): Entity[] {
     if (owner?.en?.def.traits?.friendlyFire) return [...list, ...w.livingEnemies().filter((e) => e.id !== owner.id)];
     return list;
   }
-  return w.livingEnemies();
+  // friendly fire (D114): a player's areas also catch the other standing players
+  return [...w.livingEnemies(), ...ffVictims(w, w.get(tg.ownerId))];
 }
 
 function applyHit(w: World, t: Entity, target: Entity): void {
@@ -28,7 +29,8 @@ function applyHit(w: World, t: Entity, target: Entity): void {
   const fromX = tg.area ? target.x + Math.cos(target.facing) * 10 : ox;
   const fromY = tg.area ? target.y + Math.sin(target.facing) * 10 : oy;
   if (!spec) return;
-  if (target.pl) hitPlayer(w, tg.ownerId, target, spec, tg.area && tg.kind === 'pierce' ? fromX : ox, tg.area && tg.kind === 'pierce' ? fromY : oy);
+  if (target.pl && tg.team === 0) hitAlly(w, owner, target, spec, ox, oy);
+  else if (target.pl) hitPlayer(w, tg.ownerId, target, spec, tg.area && tg.kind === 'pierce' ? fromX : ox, tg.area && tg.kind === 'pierce' ? fromY : oy);
   else if (target.en) {
     if (tg.team === 1) {
       if (target.en.isBoss) return;

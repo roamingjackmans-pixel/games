@@ -57,6 +57,9 @@ export abstract class WorldScene implements Scene {
     const w = this.w;
     a.input.gameplayEnabled = !this.menuOpen;
     w.hitstopEnabled = a.settings.video.hitstop;
+    // the simulating side (solo or the co-op host) uses its own friendly-fire setting; a guest's mirror gets the
+    // host's with each snapshot (D114)
+    if (this.simulate) w.friendlyFire = a.settings.game.friendlyFire / 100;
     if (this.local?.pl) {
       const inp = a.input.sample(this.local.x, this.local.y);
       this.local.pl.input = inp;

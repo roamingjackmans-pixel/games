@@ -282,8 +282,8 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
     return 'dodged';
   }
 
-  // Riposte Stance: any non-Red hit is parried and auto-riposted
-  if (pl.stanceUntil > now && spec.kind !== 'red' && spec.kind !== 'pierce') {
+  // Riposte Stance: any non-Red enemy hit is parried and auto-riposted (an ally's friendly fire is only blocked)
+  if (pl.stanceUntil > now && spec.kind !== 'red' && spec.kind !== 'pierce' && spec.kind !== 'player') {
     if (attacker && attacker.en) {
       parryEnemy(w, p, attacker);
       const riposte = { ...emptySpec('player'), dmg: { physical: pl.derived.weaponPower * pl.stanceRiposteMult } };
@@ -444,6 +444,40 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   if (spec.onHitEffects && attacker) w.hooks.onEnemyHitEffects?.(w, attacker, p, spec.onHitEffects);
   checkDeath(w, p, attackerId);
   return blockedAny ? 'blocked' : 'hit';
+}
+
+// ---------------------------------------------------------------- players hit players (friendly fire, D114)
+
+/**
+ * The co-op allies a player's attack can hurt: every other standing player, while the host's friendly fire is
+ * above 0%. Never the attacker; never a ghost (hitting a downed ally's ghost revives them, D12); nobody in solo.
+ */
+export function ffVictims(w: World, attacker: Entity | null | undefined): Entity[] {
+  if (!attacker?.pl || !(w.friendlyFire > 0) || w.players.length < 2) return [];
+  return w.livingPlayers().filter((p) => p !== attacker);
+}
+
+/**
+ * A player's damaging attack lands on a standing co-op ally: the normal player hit pipeline (i-frames, block,
+ * defense, barrier, statuses) with the damage and status buildup scaled by the friendly-fire multiplier. The hit
+ * is of kind 'player', so it is never parried or riposted and never staggers the attacker; grabs, pulls and
+ * enemy on-hit effects do not carry over. Attacks that deal no damage (pure control, buffs) never hit allies.
+ */
+export function hitAlly(w: World, attacker: Entity | null | undefined, p: Entity, spec: DamageSpec, fromX: number, fromY: number, projectile?: Entity): HitResult {
+  const k = w.friendlyFire;
+  if (!attacker?.pl || !p.pl || p === attacker || !(k > 0) || w.players.length < 2) return 'none';
+  if (specTotal(spec) <= 0) return 'none';
+  const s: DamageSpec = {
+    ...scaleSpec(spec, k),
+    kind: 'player',
+    parryable: false,
+    status: spec.status.map((x) => ({ ...x, buildup: x.buildup * k })),
+    grab: null,
+    pull: null,
+    staminaDrain: 0,
+  };
+  delete s.onHitEffects;
+  return hitPlayer(w, attacker.id, p, s, fromX, fromY, projectile);
 }
 
 function sanctuaryEnemyMult(w: World, p: Entity): number {

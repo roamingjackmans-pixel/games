@@ -4,7 +4,7 @@ import { ELEMENTS } from '../elements';
 import { DEG, clamp, dist } from '../../engine/math';
 import { ENEMIES } from '../../data/enemies';
 import { addBuff, buffSum } from '../combat/state';
-import { addRevive, applyControl, checkDeath, cleanse, emptySpec, grantBarrier, heal, hitEnemy, hitPlayer, interrupt } from '../combat/damage';
+import { addRevive, applyControl, checkDeath, cleanse, emptySpec, ffVictims, grantBarrier, heal, hitAlly, hitEnemy, hitPlayer, interrupt } from '../combat/damage';
 import { spawnTelegraphs } from '../combat/telegraph';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, resolvePattern, type PatternCtx, type Shape } from '../combat/patterns';
 import { spawnHazard } from '../systems/hazards';
@@ -520,7 +520,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       for (let j = 0; j <= e.jumps; j++) {
         let best: Entity | null = null;
         let bd = j === 0 ? e.r * 1.5 : e.r;
-        for (const t of enemiesOf(w, ctx.team)) {
+        // friendly fire (D114): a player's chain can jump to the other standing players too
+        for (const t of ctx.team === 0 ? [...enemiesOf(w, 0), ...ffVictims(w, src)] : enemiesOf(w, ctx.team)) {
           if (hit.has(t.id)) continue;
           const d = dist(t.x, t.y, fx, fy);
           if (d < bd) {
@@ -534,6 +535,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         if (e.hit.op === 'damage') {
           const spec = damageSpec(w, e.hit, { ...ctx, powerMult: ctx.powerMult * k }, src);
           if (best.en) hitEnemy(w, src ?? null, best, spec, fx, fy);
+          else if (best.pl && ctx.team === 0) hitAlly(w, src, best, spec, fx, fy);
           else if (best.pl) hitPlayer(w, ctx.sourceId, best, spec, fx, fy);
         }
         fx = best.x;
