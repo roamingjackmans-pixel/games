@@ -1,5 +1,6 @@
 // Spell loadout (GAME_DESIGN §10): one 3-slot loadout per school; a spell below its requirement cannot be
 // slotted (shown greyed with the number needed). Used as a tab in the inventory and the bonfire menu.
+import { glyphText } from '../glyphs';
 import { SPELLS } from '../../data/spells';
 import type { Character } from '../../game/types';
 import { btn, h } from '../dom';
@@ -66,7 +67,7 @@ export function renderSpellTab(el: HTMLElement, c: Character, onChange: () => vo
     }
     return box;
   };
-  el.appendChild(h('div', { class: 'dim-text small' }, 'A staff casts Brain spells, a talisman casts Prayer spells (3 slots each, keys 1/2/3). Each school keeps its own loadout.'));
+  el.appendChild(h('div', { class: 'dim-text small' }, `A staff casts Brain spells, a talisman casts Prayer spells (3 slots each: ${glyphText('spell1')} / ${glyphText('spell2')} / ${glyphText('spell3')}). Each school keeps its own loadout.`));
   el.appendChild(status);
   el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:24px' }, col('brain'), col('prayer')));
 }

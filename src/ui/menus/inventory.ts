@@ -1,6 +1,7 @@
 // Inventory / character screen (GAME_DESIGN §16): stats, a paper doll of the equipment, equip load, the
 // 60-slot bag, gems, consumables, compare tooltips, two-hand toggle, second weapon, quick-use selection.
 // Mouse, keyboard and gamepad (every slot is a focusable button; menuPad moves focus spatially).
+import { glyphText } from '../glyphs';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
@@ -131,7 +132,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
         ...kv('Tears of Undoing', c.tears),
         ...kv("Joe's Thermos", `${c.flaskCur}/${c.flaskMax}`),
       ),
-      btn(c.twoHanded ? 'Two-handing (Shift) — click to one-hand' : 'One-handing (Shift) — click to two-hand', () => {
+      btn(c.twoHanded ? `Two-handing (${glyphText('twoHand')}) — click to one-hand` : `One-handing (${glyphText('twoHand')}) — click to two-hand`, () => {
         host.toggleTwoHand();
         render();
       }, 'tiny'),
@@ -221,7 +222,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       );
     }
     if (!cons.childElementCount) cons.appendChild(h('div', { class: 'small dim-text' }, 'Nothing to quick-use.'));
-    bag.appendChild(h('h3', { style: 'margin:4px 0 0' }, 'Quick-use (G)'));
+    bag.appendChild(h('h3', { style: 'margin:4px 0 0' }, `Quick-use (${glyphText('quick')})`));
     bag.appendChild(cons);
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:22px' }, dollCol, bag));
   }
@@ -240,7 +241,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       tabs.appendChild(b);
     }
     tabs.appendChild(h('div', { class: 'grow' }));
-    tabs.appendChild(btn('Close (Tab)', () => host.close(), 'primary'));
+    tabs.appendChild(btn(`Close (${glyphText('inventory')})`, () => host.close(), 'primary'));
     body.appendChild(tabs);
     const content = h('div', { class: 'row', style: 'align-items:flex-start;gap:22px;flex:1;overflow:auto' });
     content.appendChild(statsPanel());

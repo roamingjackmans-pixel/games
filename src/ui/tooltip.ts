@@ -1,5 +1,6 @@
 // Item tooltips (GAME_DESIGN §16): one organised, stacked layout for every item kind, side-by-side compare
 // against what is worn in that slot (green better, white same, red worse), and small item icons.
+import { glyphEl } from './glyphs';
 import { WEAPONS } from '../data/weapons';
 import { SHIELDS, shieldValues } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
@@ -308,7 +309,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const skills = h('div', { class: 'tt-rows' });
     w.skills.forEach((sid, i) => {
       const locked = i >= n || !meets;
-      skills.appendChild(h('div', { class: `lbl ${locked ? 'dim-text' : ''}` }, ['Q', 'E', 'R'][i]!));
+      skills.appendChild(h('div', { class: `lbl ${locked ? 'dim-text' : ''}` }, glyphEl((['skill1', 'skill2', 'skill3'] as const)[i]!, 16)));
       skills.appendChild(h('div', { class: 'sep' }, '-'));
       skills.appendChild(h('div', { class: `skill ${locked ? 'locked' : ''}` }, SKILLS[sid]?.name ?? sid));
       skills.appendChild(h('div'));

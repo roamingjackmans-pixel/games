@@ -1,6 +1,7 @@
 // In-game HUD drawn on the canvas (GAME_DESIGN §16): HP/stamina, status meters, control icons, flask,
 // Shards/Glowen, the three weapon skills with radial cooldowns, three spells, quick-use item. Every key hint is
 // a button glyph for the chosen prompt style and the current bindings (glyphs.ts).
+import { GLOWEN_COLOR } from './tooltip';
 import { drawText, FONT, MONO } from '../engine/text';
 import { glow, withAlpha } from '../engine/draw/parts';
 import type { Action } from '../engine/input/actions';
@@ -134,7 +135,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   ctx.font = `bold 15px ${MONO}`;
   const cx = Math.max(110, fx + 28 + fw + ctx.measureText(flaskText).width + 14);
   drawText(ctx, `◆ ${Math.floor(ch.shards).toLocaleString('en-US')}`, cx, fy + 20, { size: 15, color: '#9ad0ff', mono: true });
-  drawText(ctx, `✦ ${Math.floor(ch.glowen).toLocaleString('en-US')}`, cx + 120, fy + 20, { size: 15, color: '#fff3b0', mono: true });
+  drawText(ctx, `${Math.floor(ch.glowen).toLocaleString('en-US')}G`, cx + 120, fy + 20, { size: 15, color: GLOWEN_COLOR, mono: true });
   if (ch.twoHanded) drawText(ctx, 'TWO-HANDED', cx + 230, fy + 20, { size: 12, color: '#ffd27a', weight: 'bold' });
   if (!d.weaponMeetsReq) drawText(ctx, '! weapon below requirement (40% damage)', 20, fy + 44, { size: 12, color: '#ff6a5a' });
 
