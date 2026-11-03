@@ -613,6 +613,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
       pl.riposteBuffUntil = 0;
       hp.riposteUntil = 0;
       w.sfx('riposte', e.x);
+      w.emit({ t: 'feat', kind: 'riposte', playerId: pl.playerId, targetId: e.id });
       if (pl.derived.powers.has('riposte_master')) heal(w, attacker!, attacker!.hp!.max * 0.05);
     }
     if (spec.critVs) {
@@ -774,7 +775,9 @@ export function addRevive(w: World, ghost: Entity, attacker: Entity, value: numb
   gp.reviveProgress += v;
   w.sfx('reviveTick', ghost.x);
   w.fx('revive', ghost.x, ghost.y);
-  if (gp.reviveProgress >= gp.reviveNeed) w.hooks.onRevive?.(w, ghost);
+  if (gp.reviveProgress < gp.reviveNeed) return;
+  if (attacker.pl) w.emit({ t: 'feat', kind: 'revive', playerId: attacker.pl.playerId, targetId: ghost.id });
+  w.hooks.onRevive?.(w, ghost);
 }
 
 export { reviveRequirement };

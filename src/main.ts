@@ -8,6 +8,7 @@ import { CreditsScene } from './game/scenes/credits';
 import { LobbyScene, lobbyHooks } from './game/scenes/lobby';
 import { GuestRunScene, guestHooks } from './game/scenes/guestRun';
 import { installDebugMenu } from './ui/menus/debug';
+import { installAchievementToasts } from './ui/achievements';
 import { h, uiRoot } from './ui/dom';
 import { newSave } from './game/save/schema';
 import { newCharacter } from './game/player/character';
@@ -33,6 +34,7 @@ function boot(): void {
   const a = createApp(canvasEl, overlay);
   a.canvas.applyOverlayScale(uiRoot());
   installDebugMenu();
+  installAchievementToasts();
 
   const toTitle = (): void => a.scenes.go(new TitleScene());
   titleHooks.start = (save, mode) => {

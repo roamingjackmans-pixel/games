@@ -495,7 +495,9 @@ export type GameEvent =
   | { t: 'levelBanner'; text: string; sub?: string }
   | { t: 'bossPhase'; phase: number; name?: string }
   | { t: 'shardGain'; playerId: string; amount: number; x: number; y: number }
-  | { t: 'loot'; playerId: string; rarity: string; x: number; y: number };
+  | { t: 'loot'; playerId: string; rarity: string; x: number; y: number }
+  /** a player landed a riposte on targetId, or finished reviving the ghost targetId (achievements read these) */
+  | { t: 'feat'; kind: 'riposte' | 'revive'; playerId: string; targetId: number };
 
 export const ALL_STATUS: StatusId[] = ['burn', 'chill', 'shock', 'bleed', 'poison'];
 export const ALL_CONTROL: ControlId[] = ['freeze', 'blind', 'hexed', 'silence', 'root', 'hold'];

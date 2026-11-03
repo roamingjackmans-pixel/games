@@ -216,6 +216,14 @@ export const SFX = {
   },
   wipe: { voices: [{ wave: 'saw', f0: 110, f1: 40, dur: 1.4, vol: 0.3, lp: 600 }] },
   join: { voices: [{ wave: 'sine', f0: 660, dur: 0.12, vol: 0.15 }, { wave: 'sine', f0: 880, dur: 0.15, delay: 0.1, vol: 0.15 }] },
+  /** an achievement unlocks: a small rising bell */
+  achievement: {
+    voices: [
+      { wave: 'tri', f0: 784, dur: 0.12, vol: 0.14 },
+      { wave: 'tri', f0: 1047, dur: 0.14, delay: 0.09, vol: 0.14 },
+      { wave: 'sine', f0: 1568, dur: 0.45, delay: 0.18, a: 0.01, vol: 0.12, vib: 0.02 },
+    ],
+  },
 } satisfies Record<string, SfxDef>;
 
 export type SfxId = keyof typeof SFX;

@@ -15,6 +15,8 @@ import { openInventory } from '../../ui/menus/inventory';
 import { openBonfire } from '../../ui/menus/bonfire';
 import { renderSpellTab } from '../../ui/menus/spells';
 import { openSettings } from '../../ui/menus/settings';
+import { openAchievements } from '../../ui/achievements';
+import { achievements } from '../achievements';
 import { drawInteractable, nearestInteractable } from '../../render/interactables';
 import { buyConsumable, buyGem, levelUp, rerollGem, respec, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
 import { shopGem, shopGemPrice } from '../bonfire/shop';
@@ -79,6 +81,7 @@ export class GuestRunScene extends WorldScene {
     };
     this.view.drawInteract = (ctx, e, now) => drawInteractable(ctx, e, now, { bonfireUsed: (k) => this.rested.has(k), stationDone: () => false });
     super.enter();
+    achievements().begin({ clean: this.save.stats.deaths === 0 });
   }
 
   override exit(): void {
@@ -132,6 +135,7 @@ export class GuestRunScene extends WorldScene {
   private bossMusic = { root: 45, tempo: 112, bright: 0.35, scale: [0, 3, 5, 7, 10], wave: 'sawtooth' as OscillatorType };
 
   protected override afterStep(): void {
+    achievements().frame(this.w, this.local, this.save.character, this.w.events);
     // a boss died in the host's world: its defeat lines play here once it has finished exploding
     for (const ev of this.w.events) {
       if (ev.t !== 'death' || ev.isPlayer || !ev.defId) continue;
@@ -222,11 +226,13 @@ export class GuestRunScene extends WorldScene {
       this.rested.add(e.id);
       this.showBonfire(e.first);
     } else if (e.t === 'wipe') {
+      achievements().note({ k: 'death' });
       this.banner = { text: 'THE PARTY WAS EVICTED', until: performance.now() / 1000 + 3 };
       this.quip = this.pickLine(DEATH_QUIPS, 'quip');
     }
     else if (e.t === 'chat') toast(`${e.from}: ${e.text}`, 4000);
     else if (e.t === 'credits') {
+      achievements().note({ k: 'credits' });
       this.persist();
       this.closeOverlay();
       guestHooks.credits?.();
@@ -343,6 +349,11 @@ export class GuestRunScene extends WorldScene {
           },
           'big',
         ),
+        btn('Achievements', () => {
+          this.overlay?.remove();
+          this.overlay = openAchievements(() => this.showPause());
+          this.overlayKind = 'settings';
+        }, 'big'),
         btn(
           'Leave the game',
           () => {
