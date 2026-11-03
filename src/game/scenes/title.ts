@@ -73,6 +73,10 @@ export class TitleScene implements Scene {
   private root: HTMLElement | null = null;
   private t = 0;
   private preview: { classId: ClassId; canvas: HTMLCanvasElement; char: Character; bareHead: boolean } | null = null;
+  /** how far the creator's preview has been turned (radians): right stick, or click and drag (D125) */
+  private previewTurn = 0;
+  private previewDragX: number | null = null;
+  private previewClock = 0;
 
   enter(): void {
     this.root = layer('clear');
@@ -302,7 +306,24 @@ export class TitleScene implements Scene {
     let custom = false;
     const name = h('input', { value: app().settings.net.name || 'Joe', maxlength: '16', 'data-testid': 'create-name', style: 'flex:1;min-width:0' });
     const seed = h('input', { placeholder: 'blank = random', maxlength: '24', 'data-testid': 'create-seed' });
-    const canvas = h('canvas', { width: 248, height: 250, style: 'background:#14121a;border:2px solid #3a3447;border-radius:8px;display:block' });
+    const canvas = h('canvas', { width: 248, height: 250, style: 'background:#14121a;border:2px solid #3a3447;border-radius:8px;display:block;cursor:grab', title: 'Drag to turn' });
+    // click and drag left or right to turn the character (D125)
+    canvas.addEventListener('pointerdown', (e) => {
+      this.previewDragX = e.clientX;
+      canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (this.previewDragX === null) return;
+      this.previewTurn += (e.clientX - this.previewDragX) * 0.02;
+      this.previewDragX = e.clientX;
+    });
+    const endDrag = (): void => {
+      this.previewDragX = null;
+      canvas.style.cursor = 'grab';
+    };
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
     const classes = h('div', { class: 'cc-classes' });
     const card = h('div', { class: 'cc-col', 'data-testid': 'create-class-card' });
 
@@ -506,8 +527,17 @@ export class TitleScene implements Scene {
       delete look.eyeGlow;
     }
     const cls = CLASSES[p.classId];
-    // stands still facing you, turned a touch to the side so the gear in both hands shows (no more spinning)
-    const facing = Math.PI / 2 - 0.3;
+    const now = performance.now() / 1000;
+    const dt = Math.min(0.1, Math.max(0, now - this.previewClock));
+    this.previewClock = now;
+    try {
+      const [rx] = app().input.padRightStick();
+      if (Math.abs(rx) > 0.2) this.previewTurn += rx * 3.2 * dt;
+    } catch {
+      // no input manager (tests)
+    }
+    // stands still facing you, turned a touch to the side; the right stick or a drag turns it (D125)
+    const facing = Math.PI / 2 - 0.3 + this.previewTurn;
     const wDraw = WEAPONS[cls.start.main]?.draw ?? CASTING_TOOLS[cls.start.main]?.draw ?? 'w_fists';
     const off = cls.start.off;
     drawJoe(ctx, look, {
