@@ -6,7 +6,7 @@ import { runEffects } from '../effects/run';
 import { itemLevelFor, scalingCurve, STAMINA_COST_MULT } from '../combat/formulas';
 import { buffSum } from '../combat/state';
 import { dist } from '../../engine/math';
-import { toolForSchool, type SpellSchool } from '../player/derived';
+import { toolForSchool, type Derived, type SpellSchool } from '../player/derived';
 import type { EffectDef, SkillDef, SpellDef } from '../types';
 import type { Entity, World } from '../world';
 
@@ -52,13 +52,18 @@ export function spellOf(e: Entity, i: number, keys: SpellKeys = 'spell'): SpellD
   return id ? (SPELLS[id] ?? null) : null;
 }
 
+/** A school's spell power for these derived stats: the Brain / Prayer curve × the casting tool (the bonfire's before / after uses it too, D142). */
+export function schoolPower(d: Pick<Derived, 'stats' | 'mainTool' | 'offTool'>, school: SpellSchool): number {
+  const stat = school === 'brain' ? d.stats.brain : d.stats.prayer;
+  const curve = school === 'brain' ? 1 + 1.2 * scalingCurve(stat) : 1 + 1.0 * scalingCurve(stat);
+  return curve * Math.max(0.5, toolForSchool(d, school)?.mult ?? 0);
+}
+
 /** The power multiplier of a spell for this caster: Brain/Prayer curve × casting tool (GAME_DESIGN §3.1). */
 export function spellPowerMult(e: Entity, sp: SpellDef): number {
   const d = e.pl!.derived;
-  const stat = sp.school === 'brain' ? d.stats.brain : d.stats.prayer;
-  const curve = sp.school === 'brain' ? 1 + 1.2 * scalingCurve(stat) : 1 + 1.0 * scalingCurve(stat);
   const tool = toolForSchool(d, sp.school);
-  let m = curve * Math.max(0.5, tool?.mult ?? 0);
+  let m = schoolPower(d, sp.school);
   if (tool?.def.bonus?.heals && sp.effect.some((x) => x.op === 'heal')) m *= 1 + tool.def.bonus.pct;
   return m;
 }

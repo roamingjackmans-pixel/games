@@ -1,10 +1,13 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
 import { GEMS, gemColor, gemKind, gemKindLabel, gemText, gemTitle, perkName, perkText } from '../../data/gems';
-import { levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
-import { canSocket, fusePreview, gemAt, itemSellValue, sellAllPreview, type FusePick, type GemLoc, type SellAllFilter } from '../../game/items/inventory';
+import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
+import { computeDerived } from '../../game/player/derived';
+import { schoolPower } from '../../game/skills/use';
+import { ELEMENTS } from '../../game/elements';
+import { canSocket, fusePreview, gemAt, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
-import type { Character, ConsumableId, Gem, Item, StatId } from '../../game/types';
+import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { btn, clearEl, fmt, h, layer, toast } from '../dom';
 import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
@@ -71,6 +74,10 @@ export function openBonfire(v: BonfireView): HTMLElement {
   /** the Sell all confirmation */
   let confirmSell: SellAllFilter | null = null;
   let modal: HTMLElement | null = null;
+  /** level-up points planned but not yet spent (D142) */
+  let pending: PendingPoints = {};
+  /** what to do after the Lock in / Discard question, while it is open */
+  let confirmLeave: (() => void) | null = null;
   const say = (msg: string): void => {
     if (msg) toast(msg);
     render();
@@ -81,9 +88,14 @@ export function openBonfire(v: BonfireView): HTMLElement {
       window.removeEventListener('keydown', onKey, true);
       return;
     }
-    if (e.code !== 'Escape' || (!fuse && !confirmSell)) return;
+    if (e.code !== 'Escape') return;
+    // leaving with planned level-up points asks first (D142); Escape on that question means keep editing
+    const askLeave = !fuse && !confirmSell && !confirmLeave && pendingCount() > 0;
+    if (!fuse && !confirmSell && !confirmLeave && !askLeave) return;
     e.stopImmediatePropagation();
     e.preventDefault();
+    if (askLeave) confirmLeave = () => v.close();
+    else if (confirmLeave) confirmLeave = null;
     fuse = null;
     confirmSell = null;
     render();
@@ -111,26 +123,183 @@ export function openBonfire(v: BonfireView): HTMLElement {
     el.addEventListener('mouseleave', () => root.querySelectorAll('[data-tt]').forEach((x) => x.remove()));
   };
 
+  // ---- level up (D142): points are only planned until Confirm; the right side shows what they change
+
+  const pendingCount = (): number => STATS.reduce((n, s) => n + (pending[s.id] ?? 0), 0);
+
+  /** Spend the planned points for real, one at a time, through the same op as before. */
+  function commitPending(): void {
+    let last = '';
+    for (const s of STATS) for (let i = 0; i < (pending[s.id] ?? 0); i++) last = v.ops.levelUp(s.id) || last;
+    pending = {};
+    if (last) toast(last);
+  }
+
+  /** Leave the bonfire (or open the inventory): first ask about planned points that were never confirmed. */
+  function leave(then: () => void): void {
+    if (pendingCount() > 0) {
+      confirmLeave = then;
+      render();
+      return;
+    }
+    then();
+  }
+
+  /** The numbers a stat point can change, for one character, so the before and after can sit side by side. */
+  function numbers(ch: Character): { label: string; value: number; fmt: (x: number) => string; lowerIsBetter?: boolean; neutral?: boolean; head?: string }[] {
+    const d = computeDerived(ch);
+    const rows: { label: string; value: number; fmt: (x: number) => string; lowerIsBetter?: boolean; neutral?: boolean; head?: string }[] = [];
+    const n0 = (x: number): string => String(Math.round(x));
+    const n1 = (x: number): string => x.toFixed(1);
+    const times = (x: number): string => `×${x.toFixed(2)}`;
+    const pct = (x: number): string => `${Math.round(x * 100)}%`;
+    rows.push({ head: 'Character', label: 'Level', value: ch.level, fmt: n0 });
+    rows.push({ label: 'Shards', value: ch.shards, fmt: (x) => fmt(Math.round(x)), neutral: true });
+    rows.push({ head: 'Body', label: 'Max HP', value: d.maxHp, fmt: n0 });
+    rows.push({ label: 'Max stamina', value: d.maxStam, fmt: n0 });
+    rows.push({ label: 'Stamina regen /s', value: d.regen, fmt: n1 });
+    rows.push({ label: 'Equip load max', value: d.load.max, fmt: n1 });
+    rows.push({ label: `Equip load (${d.load.tier})`, value: d.load.frac, fmt: pct, lowerIsBetter: true });
+    rows.push({ label: 'Thermos heal', value: flaskHeal(d.maxHp, d.stats.prayer, d.flaskBonus), fmt: n0 });
+    rows.push({ head: 'Attack', label: `${ch.equipment.main?.name ?? 'Fists'} power`, value: d.weaponPower, fmt: n0 });
+    if (ch.altMain) {
+      const alt = structuredClone(ch);
+      alt.equipment.main = alt.altMain;
+      rows.push({ label: `${ch.altMain.name} power`, value: computeDerived(alt).weaponPower, fmt: n0 });
+    }
+    rows.push({ label: 'Attack speed', value: d.attackSpeed, fmt: times });
+    for (const school of ['brain', 'prayer'] as const) {
+      const tool = d.mainTool?.def.school === school ? d.mainTool : d.offTool?.def.school === school ? d.offTool : null;
+      if (tool) rows.push({ label: `${school === 'brain' ? 'Brain' : 'Prayer'} spell power`, value: schoolPower(d, school), fmt: times });
+    }
+    rows.push({ label: 'Cast speed', value: d.castSpeed, fmt: times });
+    rows.push({ label: 'Walk while casting', value: d.castMoveMult, fmt: pct });
+    rows.push({ label: 'Dodge recharge', value: d.dodgeRecharge, fmt: (x) => `${x.toFixed(1)} s`, lowerIsBetter: true });
+    DAMAGE_TYPES.forEach((k, i) => rows.push({ ...(i === 0 ? { head: 'Defense' } : {}), label: ELEMENTS[k].short, value: d.defense[k], fmt: n0 }));
+    return rows;
+  }
+
   function levelTab(el: HTMLElement): void {
     const c = v.char;
-    const cost = levelCost(c.level);
-    el.appendChild(h('div', { class: 'row', style: 'gap:30px' }, h('div', null, `Level ${c.level}`), h('div', { class: 'mono' }, `◆ ${fmt(c.shards)} Shards`), h('div', { class: c.freePoints ? 'good' : c.shards >= cost ? 'good' : 'bad' }, c.freePoints ? `${c.freePoints} free points from a Tear` : `Next level: ${fmt(cost)}`)));
-    const grid = h('div', { class: 'col', style: 'gap:6px;margin-top:10px' });
+    // shards spent elsewhere since (the shop) can make a plan too dear: drop points from the end until it fits
+    let plan = planLevelUps(c, pending);
+    while (!plan.ok && pendingCount() > 0) {
+      const last = [...STATS].reverse().find((s) => (pending[s.id] ?? 0) > 0)!;
+      pending[last.id] = (pending[last.id] ?? 0) - 1;
+      plan = planLevelUps(c, pending);
+    }
+    const after = plan.char;
+    const count = pendingCount();
+    const nextCost = after.freePoints > 0 ? 0 : levelCost(after.level);
+    el.appendChild(
+      h(
+        'div',
+        { class: 'row', style: 'gap:30px' },
+        h('div', null, count ? `Level ${c.level} → ${after.level}` : `Level ${c.level}`),
+        h('div', { class: 'mono' }, count ? `◆ ${fmt(c.shards)} → ${fmt(after.shards)} Shards` : `◆ ${fmt(c.shards)} Shards`),
+        h('div', { class: after.freePoints ? 'good' : after.shards >= nextCost ? 'good' : 'bad' }, after.freePoints ? `${after.freePoints} free points from a Tear` : `Next point: ${fmt(nextCost)}`),
+      ),
+    );
+    const body = h('div', { class: 'row', style: 'align-items:flex-start;gap:28px;margin-top:10px' });
+    // ---- left: the stats with −1 / +1
+    const left = h('div', { class: 'col', style: 'gap:6px;min-width:520px' });
     for (const s of STATS) {
-      grid.appendChild(
+      const p = pending[s.id] ?? 0;
+      const canAdd = planLevelUps(c, { ...pending, [s.id]: p + 1 }).ok;
+      const minus = btn('−1', () => {
+        pending[s.id] = Math.max(0, p - 1);
+        render();
+      }, 'tiny', p <= 0);
+      minus.setAttribute('data-focus', `lvl-minus-${s.id}`);
+      minus.setAttribute('aria-label', `${s.label} minus one`);
+      const plus = btn('+1', () => {
+        pending[s.id] = p + 1;
+        render();
+      }, 'tiny', !canAdd);
+      plus.setAttribute('data-focus', `lvl-plus-${s.id}`);
+      plus.setAttribute('aria-label', `${s.label} plus one`);
+      left.appendChild(
         h(
           'div',
-          { class: 'row' },
-          h('div', { style: 'width:110px' }, s.label),
-          h('div', { class: 'mono', style: 'width:40px' }, String(c.stats[s.id])),
-          btn('+1', () => say(v.ops.levelUp(s.id)), 'tiny', c.stats[s.id] >= 99 || (c.freePoints <= 0 && c.shards < cost)),
+          { class: 'row', 'data-testid': `lvl-row-${s.id}` },
+          h('div', { style: 'width:100px' }, s.label),
+          h('div', { class: 'mono', style: 'width:76px' }, p ? h('span', null, `${c.stats[s.id]} → `, h('b', { class: 'good' }, String(after.stats[s.id]))) : String(c.stats[s.id])),
+          minus,
+          plus,
           h('div', { class: 'small dim-text' }, s.what),
         ),
       );
     }
-    el.appendChild(grid);
-    el.appendChild(h('hr'));
-    el.appendChild(h('div', { class: 'row' }, btn(`Respec with a Tear of Undoing (${c.tears})`, () => say(v.ops.respec()), 'danger', c.tears <= 0), h('div', { class: 'small dim-text' }, 'Stats return to your class base; every point comes back to place freely.')));
+    const confirm = btn(count ? `Confirm ${count} point${count === 1 ? '' : 's'}${plan.shardsSpent ? ` (◆ ${fmt(plan.shardsSpent)})` : ''}` : 'Confirm', () => {
+      commitPending();
+      render();
+    }, 'primary', count === 0);
+    confirm.setAttribute('data-focus', 'lvl-confirm');
+    confirm.setAttribute('data-testid', 'lvl-confirm');
+    const reset = btn('Reset', () => {
+      pending = {};
+      render();
+    }, '', count === 0);
+    reset.setAttribute('data-focus', 'lvl-reset');
+    left.appendChild(h('div', { class: 'row', style: 'margin-top:8px' }, confirm, reset, h('div', { class: 'small dim-text' }, count ? 'Nothing is spent until you confirm.' : 'Plan points with +1 and −1, then confirm.')));
+    left.appendChild(h('hr'));
+    left.appendChild(
+      h(
+        'div',
+        { class: 'row' },
+        btn(`Respec with a Tear of Undoing (${c.tears})`, () => {
+          pending = {};
+          say(v.ops.respec());
+        }, 'danger', c.tears <= 0),
+        h('div', { class: 'small dim-text' }, 'Stats return to your class base; every point comes back to place freely.'),
+      ),
+    );
+    body.appendChild(left);
+    // ---- right: every number the points change, before → after
+    const before = numbers(c);
+    const now = numbers(after);
+    const table = h('div', { class: 'kv stats-kv', style: 'min-width:360px;grid-template-columns:auto auto auto', 'data-testid': 'lvl-compare' });
+    before.forEach((r, i) => {
+      const a = now[i]!;
+      if (r.head) table.append(h('div', { class: 'kv-head', style: 'grid-column:1 / -1' }, r.head));
+      const changed = count > 0 && Math.abs(a.value - r.value) > 1e-6;
+      const better = r.lowerIsBetter ? a.value < r.value : a.value > r.value;
+      table.append(h('div', { class: 'k' }, r.label), h('div', { class: 'mono' }, r.fmt(r.value)), h('div', { class: `mono ${changed ? (r.neutral ? '' : better ? 'good' : 'bad') : 'dim-text'}` }, changed ? `→ ${a.fmt(a.value)}` : ''));
+    });
+    body.appendChild(h('div', { class: 'col', style: 'gap:4px' }, h('div', { class: 'small dim-text' }, count ? 'Now → after your planned points' : 'Your numbers now (plan points to see what changes)'), table));
+    el.appendChild(body);
+  }
+
+  /** "Lock in your stat changes?" when leaving with planned points (D142). */
+  function leaveDialog(): HTMLElement | null {
+    if (!confirmLeave) return null;
+    const then = confirmLeave;
+    const count = pendingCount();
+    const plan = planLevelUps(v.char, pending);
+    return h(
+      'div',
+      { class: 'panel col', style: 'max-width:520px;gap:10px', 'data-testid': 'lvl-leave-dialog' },
+      h('h2', { style: 'margin:0' }, 'Lock in your stat changes?'),
+      h('div', null, `You planned ${count} point${count === 1 ? '' : 's'}${plan.shardsSpent ? ` (◆ ${fmt(plan.shardsSpent)} Shards)` : ''} but did not confirm them.`),
+      h(
+        'div',
+        { class: 'row' },
+        btn('Lock in', () => {
+          confirmLeave = null;
+          commitPending();
+          then();
+        }, 'primary'),
+        btn('Discard', () => {
+          confirmLeave = null;
+          pending = {};
+          then();
+        }),
+        btn('Keep editing', () => {
+          confirmLeave = null;
+          render();
+        }),
+      ),
+    );
   }
 
   /** Perk names in their colours with their tiers, and the Weapon / Armor chip. */
@@ -423,6 +592,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   }
 
   function render(): void {
+    // keep the pad / keyboard focus on the same control across a redraw (a pressed +1 stays focused, D142)
+    const keep = (document.activeElement as HTMLElement | null)?.getAttribute?.('data-focus') ?? null;
     clearEl(panel);
     root.querySelectorAll('[data-tt]').forEach((x) => x.remove());
     modal?.remove();
@@ -445,22 +616,28 @@ export function openBonfire(v: BonfireView): HTMLElement {
       if (tab === d.key) b.classList.add('on');
       tabs.appendChild(b);
     }
-    tabs.appendChild(btn('Inventory', () => v.openInventory()));
+    tabs.appendChild(btn('Inventory', () => leave(() => v.openInventory())));
     tabs.appendChild(h('div', { class: 'grow' }));
-    tabs.appendChild(btn('Leave', () => v.close(), 'primary'));
+    tabs.appendChild(btn('Leave', () => leave(() => v.close()), 'primary'));
     panel.appendChild(h('div', { class: 'row' }, h('h2', { class: 'grow', style: 'margin:0' }, 'Bonfire'), h('div', { class: v.firstRest ? 'good' : 'dim-text' }, v.firstRest ? 'You rest. HP and Thermos restored.' : 'Embers: resting restores nothing here. Enemies have returned.')));
     panel.appendChild(tabs);
     const content = h('div', { style: 'flex:1;overflow:auto' });
     defs.find((d) => d.key === tab)?.fn?.(content);
     panel.appendChild(content);
-    const box = tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : null;
+    const box = confirmLeave ? leaveDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : null;
     if (box) {
       // a layer of its own so the pad's focus stays inside the dialog
       modal = h('div', { class: 'layer dim', style: 'z-index:40' }, box);
       root.appendChild(modal);
       const m = modal;
       setTimeout(() => m.querySelector<HTMLElement>('button:not(:disabled)')?.focus(), 0);
-    } else setTimeout(() => panel.querySelector<HTMLElement>('.tabs button')?.focus(), 0);
+    } else
+      setTimeout(() => {
+        const same = keep ? panel.querySelector<HTMLButtonElement>(`[data-focus="${keep}"]`) : null;
+        // the same button, or (when it just turned disabled) its neighbour in the row, or Confirm
+        const near = same && same.disabled ? (same.parentElement?.querySelector<HTMLButtonElement>('button:not(:disabled)') ?? panel.querySelector<HTMLButtonElement>('[data-focus="lvl-confirm"]:not(:disabled)')) : same;
+        (near ?? panel.querySelector<HTMLElement>('.tabs button'))?.focus();
+      }, 0);
   }
   render();
   return root;

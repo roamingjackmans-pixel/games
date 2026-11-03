@@ -296,6 +296,27 @@ export function levelUp(c: Character, stat: StatId): OpResult {
   return ok(`Level ${c.level}.`);
 }
 
+/** Level-up points not yet spent, by stat (the bonfire holds them until Confirm, D142). */
+export type PendingPoints = Partial<Record<StatId, number>>;
+const PLAN_ORDER: StatId[] = ['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'];
+
+/**
+ * Try pending level-up points on a copy of the character: free points first, then Shards at the rising level cost.
+ * The copy shows the stats, level and Shards after; nothing on the real character changes.
+ */
+export function planLevelUps(c: Character, pending: PendingPoints): { ok: boolean; char: Character; points: number; shardsSpent: number; freeUsed: number; msg: string } {
+  const copy = structuredClone(c);
+  let points = 0;
+  for (const st of PLAN_ORDER) {
+    for (let i = 0; i < (pending[st] ?? 0); i++) {
+      const r = levelUp(copy, st);
+      if (!r.ok) return { ok: false, char: copy, points, shardsSpent: c.shards - copy.shards, freeUsed: c.freePoints - copy.freePoints, msg: r.msg };
+      points++;
+    }
+  }
+  return { ok: true, char: copy, points, shardsSpent: c.shards - copy.shards, freeUsed: c.freePoints - copy.freePoints, msg: '' };
+}
+
 /** Tear of Undoing: stats back to the class base, the points come back as free points to spend. */
 export function respec(c: Character): OpResult {
   if (c.tears <= 0) return no('You need a Tear of Undoing.');
