@@ -52,7 +52,7 @@ export class NetHost {
   /** UI callbacks */
   onLobbyChange: () => void = () => undefined;
   onGuestLeft: (name: string) => void = () => undefined;
-  /** the host's friendly-fire percent for the lobby (the scene reads Settings → Game; D114) */
+  /** the host's friendly-fire percent for the lobby (the scene reads Settings → Game; D115) */
   friendlyFire: () => number = () => 100;
   private ch: {
     hello: NetChannel<Hello & Record<string, unknown>>;

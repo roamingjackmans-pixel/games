@@ -355,7 +355,7 @@ function swingHits(w: World, e: Entity): void {
     c.hit.add(g.id);
     addRevive(w, g, e, pl.derived.weapon.reviveValue + pl.derived.reviveBonus);
   }
-  // friendly fire (D114): standing allies in the arc take the hit too
+  // friendly fire (D115): standing allies in the arc take the hit too
   for (const a of ffVictims(w, e)) {
     if (c.hit.has(a.id) || !test(a)) continue;
     c.hit.add(a.id);
@@ -679,7 +679,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     else if (!silenced) {
       for (let i = 0; i < 3; i++) {
         if (pressed(inp, (['skill1', 'skill2', 'skill3'] as const)[i]!)) {
-          if (tryUseSkill(w, e, i)) break;
+          // a staff and a talisman in both hands: Q/E/R cast the off-hand tool's school (D117)
+          if (pl.derived.skillKeySchool ? tryCastSpell(w, e, i, 'skill') : tryUseSkill(w, e, i)) break;
         }
         if (pressed(inp, (['spell1', 'spell2', 'spell3'] as const)[i]!)) {
           if (tryCastSpell(w, e, i)) break;

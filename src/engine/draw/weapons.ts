@@ -1034,6 +1034,8 @@ export const WEAPON_DRAW_IDS: string[] = Object.keys(BASE);
 
 /** Draw a base weapon by draw id, ignoring legendary designs. */
 export function drawBaseWeapon(ctx: Ctx, id: string, t = 0, charge = 0): void {
+  // a staff or talisman held in the weapon hand (D117) draws as itself
+  if (!BASE[id] && id.startsWith('t_')) return drawTool(ctx, id, t);
   (BASE[id] ?? fists)(ctx, t, charge);
 }
 

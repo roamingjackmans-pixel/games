@@ -40,7 +40,7 @@ export class NetGuest {
   nodeId = '';
   nodeKind = '';
   rtt = 0;
-  /** the host's friendly-fire percent (D114): from the lobby, then from every snapshot; null until heard */
+  /** the host's friendly-fire percent (D115): from the lobby, then from every snapshot; null until heard */
   hostFriendlyFire: number | null = null;
   // callbacks for the scene
   onLobby: () => void = () => undefined;

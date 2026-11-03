@@ -1,6 +1,7 @@
 // Character creation from a class (CONTENT_SPELLS_CLASSES §3) and level/stat helpers.
 import { CLASSES } from '../../data/classes';
 import { GEM_FAMILIES, makeGem } from '../../data/gems';
+import { SPELLS } from '../../data/spells';
 import type { Rng } from '../../engine/rng';
 import { makeItem } from '../items/make';
 import type { Character, ClassId, Gem, Item, StatId } from '../types';
@@ -17,8 +18,12 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
   }
   const gems: Gem[] = [];
   for (let i = 0; i < (cls.start.gems ?? 0); i++) gems.push(makeGem(rng ? rng.pick(GEM_FAMILIES) : 'brutal', 1));
-  const school = cls.start.off?.includes('staff') ? 'brain' : 'prayer';
-  const loadout: [string | null, string | null, string | null] = [cls.start.spells[0] ?? null, cls.start.spells[1] ?? null, null];
+  const altMain = cls.start.alt ? mk(cls.start.alt) : null;
+  // each starting spell goes in its own school's loadout, in order
+  const loadoutOf = (school: 'brain' | 'prayer'): [string | null, string | null, string | null] => {
+    const ids = cls.start.spells.filter((id) => SPELLS[id]?.school === school);
+    return [ids[0] ?? null, ids[1] ?? null, ids[2] ?? null];
+  };
   return {
     playerId,
     name: name.trim() || 'Joe',
@@ -33,7 +38,7 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
     highestZoneBeaten: 0,
     cycle: 0,
     equipment,
-    altMain: null,
+    altMain,
     twoHanded: !!cls.twoHanded,
     bag: (cls.start.bag ?? []).map(mk),
     gems,
@@ -41,8 +46,8 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
     quickSlot: 'throwing_knife',
     knownSpells: [...cls.start.spells],
     spellLoadout: {
-      brain: school === 'brain' ? loadout : [null, null, null],
-      prayer: school === 'prayer' ? loadout : [null, null, null],
+      brain: loadoutOf('brain'),
+      prayer: loadoutOf('prayer'),
     },
     tears: 0,
     freePoints: 0,

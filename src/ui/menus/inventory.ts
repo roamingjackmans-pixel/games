@@ -5,7 +5,7 @@ import { glyphText } from '../glyphs';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
-import { BAG_SIZE, equip, unequip, type EquipSlot } from '../../game/items/inventory';
+import { BAG_SIZE, equip, isToolItem, unequip, type EquipSlot } from '../../game/items/inventory';
 import { itemRequirements, meetsRequirements } from '../../game/items/bases';
 import { levelCost } from '../../game/combat/formulas';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
@@ -74,7 +74,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
   const body = h('div', { class: 'panel', style: 'width:1180px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(body);
 
-  function cell(item: Item | null, onClick: () => void, onAlt?: () => void, extra = ''): HTMLButtonElement {
+  function cell(item: Item | null, onClick: () => void, onAlt?: (ev: MouseEvent) => void, extra = ''): HTMLButtonElement {
     const b = h('button', { class: `cell ${extra}`, style: item ? `border-color:${RARITY_BORDER[item.rarity] ?? '#3a3447'}` : '' }) as HTMLButtonElement;
     if (item) {
       b.appendChild(itemIcon(item, 40));
@@ -92,7 +92,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     if (onAlt)
       b.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-        onAlt();
+        onAlt(e);
       });
     return b;
   }
@@ -186,9 +186,11 @@ export function openInventory(host: InventoryHost): HTMLElement {
         cell(
           item,
           () => item && doEquip(item.id),
-          () => {
+          (ev) => {
             if (!item) return;
-            if (item.slot === 'main') doEquip(item.id, 'altMain');
+            // a staff or talisman (D117): right-click holds it in the weapon hand, Shift+right-click makes it the 2nd weapon
+            if (isToolItem(item)) doEquip(item.id, ev.shiftKey ? 'altMain' : 'main');
+            else if (item.slot === 'main') doEquip(item.id, 'altMain');
             else if (item.slot === 'ring') doEquip(item.id, 'ring2');
             else doEquip(item.id);
           },
@@ -196,7 +198,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       );
     }
     bag.appendChild(bagGrid);
-    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, 'Click a bag item to equip it. Right-click a weapon to make it your 2nd weapon (swap with X); right-click a ring for the second ring slot. Click worn gear to take it off.'));
+    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it. Right-click a weapon to make it your 2nd weapon (swap with ${glyphText('swapWeapon')}); right-click a ring for the second ring slot. Staffs and talismans go in either hand: click for the off hand, right-click for the weapon hand, Shift+right-click for the 2nd weapon. Click worn gear to take it off.`));
     const gems = h('div', { class: 'row wrap', style: 'gap:4px;max-width:476px' });
     c.gems.forEach((g) => {
       const b = h('span', { tabindex: '0', style: 'display:inline-flex' }, gemIcon(g, 28));

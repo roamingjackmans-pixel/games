@@ -119,13 +119,13 @@ Block values improve +1% physical / +1.5% elemental per ilvl above 1 (caps 100% 
 
 | Tool | School | Req | Grade | Cast speed | Notes |
 |---|---|---|---|---|---|
-| Apprentice Staff | Brain | 8 | C 0.9 | 1.0 | Scholar's start. |
+| Apprentice Staff | Brain | 8 | C 0.9 | 1.0 | Scholar's start; the Battlemage's 2nd weapon. |
 | Arcane Staff | Brain | 14 | B 1.0 | 1.0 | — |
-| Void Staff | Brain | 12 | B 1.0 | 1.0 | Void spells +20%; Occultist's start. |
+| Void Staff | Brain | 12 | B 1.0 | 1.0 | Void spells +20%. |
 | Storm Staff | Brain | 16 | B 1.0 | 1.1 | Lightning spells +20%. |
 | Archmagister's Rod | Brain | 24 | S 1.25 | 1.15 | — |
-| Wooden Talisman | Prayer | 8 | C 0.9 | 1.0 | Cleric's start. |
-| Silver Talisman | Prayer | 14 | B 1.0 | 1.0 | — |
+| Wooden Talisman | Prayer | 8 | C 0.9 | 1.0 | Pyre Priest's start. |
+| Silver Talisman | Prayer | 14 | B 1.0 | 1.0 | Zealot's start. |
 | Sunlight Talisman | Prayer | 20 | A 1.1 | 1.05 | Holy damage +20%. |
 | Saint's Relic | Prayer | 26 | S 1.25 | 1.15 | Heals +15%. |
 

@@ -146,7 +146,7 @@ export class LobbyScene implements Scene {
   }
 
   private wireHost(n: NetHost): void {
-    // the host's friendly fire is the party's (D114)
+    // the host's friendly fire is the party's (D115)
     n.friendlyFire = () => app().settings.game.friendlyFire;
     n.onLobbyChange = () => {
       this.draw();

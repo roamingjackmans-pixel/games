@@ -1,4 +1,4 @@
-// Friendly fire in co-op (D114): players' attacks hit standing allies at the host's 0–200%, ghosts are still revived
+// Friendly fire in co-op (D115): players' attacks hit standing allies at the host's 0–200%, ghosts are still revived
 // by hits (D12), nobody leaves the room while a ghost waits for its revive, and the two achievements that go with it.
 import { describe, expect, it } from 'vitest';
 import { GameSession } from '../../src/game/session';
@@ -50,7 +50,7 @@ function lost(s: GameSession, host: Entity, ally: Entity, k: number): number {
   return ally.hp!.max - ally.hp!.hp;
 }
 
-describe('friendly fire (D114)', () => {
+describe('friendly fire (D115)', () => {
   it('scales an ally hit by the host setting: 0% nothing, 100% a normal player hit, 200% double', () => {
     const { s, host, ally } = party();
     expect(lost(s, host, ally, 0)).toBe(0);
@@ -129,7 +129,7 @@ describe('friendly fire (D114)', () => {
   });
 });
 
-describe('downed allies hold the doors (D114)', () => {
+describe('downed allies hold the doors (D115)', () => {
   /** stand the host in an open door of the start room */
   function atDoor(s: GameSession, host: Entity): void {
     for (const side of ['n', 's', 'e', 'w'] as Side[]) {
@@ -185,7 +185,7 @@ describe('downed allies hold the doors (D114)', () => {
   });
 });
 
-describe('friendly-fire achievements (D114)', () => {
+describe('friendly-fire achievements (D115)', () => {
   it('"Friendly Fire" for the one who downs an ally; "Not My Problem" when that ally bleeds out', () => {
     const { s, host, ally } = party();
     const seen: GameEvent[] = [];
@@ -240,7 +240,7 @@ describe('friendly-fire achievements (D114)', () => {
   });
 });
 
-describe('the host sets friendly fire for the party (D114)', () => {
+describe('the host sets friendly fire for the party (D115)', () => {
   it('guests see the host value in the lobby and get changes mid-run with the snapshots', () => {
     const hub = new LoopbackHub({ latencyMs: 20, jitterMs: 0 });
     const clock = (): number => hub.now / 1000;

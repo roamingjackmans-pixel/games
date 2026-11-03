@@ -36,8 +36,13 @@ export function defaultSlotFor(c: Character, item: Item): EquipSlot | null {
   }
 }
 
-function slotAccepts(slot: EquipSlot, item: Item): boolean {
-  if (slot === 'altMain' || slot === 'main') return item.slot === 'main';
+/** Staffs and talismans go in the off hand by default but may be held in the weapon hand too (D117). */
+export function isToolItem(item: Pick<Item, 'kind'>): boolean {
+  return item.kind === 'staff' || item.kind === 'talisman';
+}
+
+export function slotAccepts(slot: EquipSlot, item: Item): boolean {
+  if (slot === 'altMain' || slot === 'main') return item.slot === 'main' || isToolItem(item);
   if (slot === 'ring1' || slot === 'ring2') return item.slot === 'ring';
   return item.slot === slot;
 }

@@ -446,7 +446,7 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   return blockedAny ? 'blocked' : 'hit';
 }
 
-// ---------------------------------------------------------------- players hit players (friendly fire, D114)
+// ---------------------------------------------------------------- players hit players (friendly fire, D115)
 
 /**
  * The co-op allies a player's attack can hurt: every other standing player, while the host's friendly fire is

@@ -586,7 +586,7 @@ export class World {
   /** hitstop freeze frames (Settings → Video) */
   hitstopEnabled = true;
   /**
-   * Friendly fire (D114): how hard a player's attacks hit standing co-op allies, as a multiplier (0 = off,
+   * Friendly fire (D115): how hard a player's attacks hit standing co-op allies, as a multiplier (0 = off,
    * 1 = 100%, 2 = 200%). The host's Settings → Game value; guests get it with each snapshot. Solo has no allies.
    */
   friendlyFire = 1;

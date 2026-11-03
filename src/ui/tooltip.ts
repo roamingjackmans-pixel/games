@@ -1,9 +1,9 @@
 // Item tooltips (GAME_DESIGN §16): one organised, stacked layout for every item kind, side-by-side compare
 // against what is worn in that slot (green better, white same, red worse), and small item icons.
-import { glyphEl } from './glyphs';
+import { glyphEl, glyphText } from './glyphs';
 import { WEAPONS } from '../data/weapons';
 import { SHIELDS, shieldValues } from '../data/shields';
-import { CASTING_TOOLS } from '../data/castingTools';
+import { CASTING_TOOLS, toolBash } from '../data/castingTools';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
 import { SKILLS } from '../data/skills';
 import { GEMS, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkText } from '../data/gems';
@@ -390,6 +390,18 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const reqEl = requirementsEl(req, stats, false, false);
     if (reqEl) out.push(reqEl);
     if (!meets) out.push(h('div', { class: 'small req-bad' }, 'Below requirement: cannot cast.'));
+    // either hand (D117): in the weapon hand it bashes (no weapon skills) and still casts, so a shield fits beside it
+    const bash = toolBash(t);
+    out.push(
+      section(
+        'Main hand or off hand',
+        h(
+          'div',
+          { class: 'tt-text' },
+          `In the weapon hand: casts, swings a modest ${t.school === 'brain' ? 'staff bash' : 'talisman smack'} (${int0(weaponBase(bash.base1, item.ilvl))} base, ${t.school === 'brain' ? 'Bonk D, Brain E' : 'Bonk E, Prayer D, a quarter Holy'}), no weapon skills. A shield in the off hand still blocks. With a staff and a talisman in both hands, ${glyphText('skill1')} ${glyphText('skill2')} ${glyphText('skill3')} cast the off-hand one's spells.`,
+        ),
+      ),
+    );
   }
 
   if (armor) {

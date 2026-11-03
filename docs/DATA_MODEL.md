@@ -233,6 +233,6 @@ interface Settings {
   audio: { master: number; sfx: number; music: number };
   controls: { keyboard: Record<Action, string[]>; gamepad: Record<Action, number[]>; aimAssist: number; holdToBlock: boolean };
   net: { name: string };
-  game: { friendlyFire: number };   // co-op friendly fire %, 0–200 in steps of 10, default 100 (D114; older settings → 100)
+  game: { friendlyFire: number };   // co-op friendly fire %, 0–200 in steps of 10, default 100 (D115; older settings → 100)
 }
 ```

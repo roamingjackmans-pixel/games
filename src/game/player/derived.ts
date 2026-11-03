@@ -2,7 +2,7 @@
 // Recomputed on every equipment, stat or two-hand change. Never stored.
 import { WEAPONS } from '../../data/weapons';
 import { SHIELDS, shieldValues } from '../../data/shields';
-import { CASTING_TOOLS } from '../../data/castingTools';
+import { CASTING_TOOLS, toolBash } from '../../data/castingTools';
 import { armorPieceDefense } from '../../data/armor';
 import { AFFIXES, affixBuildup } from '../../data/affixes';
 import { GEMS, gemBuildup, gemValue } from '../../data/gems';
@@ -48,10 +48,18 @@ export interface Derived {
   shieldVals: { physical: number; elemental: number; holyVoid: number };
   shieldMeetsReq: boolean;
   stabilityMult: number;
+  /** the casting tool keys 1–3 cast with: the one in the weapon hand if it holds one, else the off hand's (D117) */
   tool: CastingToolDef | null;
   toolIlvl: number;
   toolMeetsReq: boolean;
   toolMult: number;
+  /** a staff or talisman held in the weapon hand (its light attack is `weapon`, a bash) */
+  mainTool: HeldTool | null;
+  /** a staff or talisman in the off hand (null while two-handing) */
+  offTool: HeldTool | null;
+  /** the school keys 1–3 cast, and the school Q/E/R cast (only with two tools of different schools) */
+  spellKeys: SpellSchool | null;
+  skillKeySchool: SpellSchool | null;
   shardFind: number;
   glowenFind: number;
   gemFind: number;
@@ -66,6 +74,24 @@ export interface Derived {
   redTakenMult: number;
   /** equip load and its tier (D82); `walk` already includes the tier's speed */
   load: EquipLoadInfo;
+}
+
+export type SpellSchool = 'brain' | 'prayer';
+
+export interface HeldTool {
+  def: CastingToolDef;
+  item: Item;
+  hand: 'main' | 'off';
+  ilvl: number;
+  meetsReq: boolean;
+  mult: number;
+}
+
+/** The tool that casts spells of `school`: the weapon hand's if it is of that school, else the off hand's. */
+export function toolForSchool(d: Pick<Derived, 'mainTool' | 'offTool'>, school: SpellSchool): HeldTool | null {
+  if (d.mainTool?.def.school === school) return d.mainTool;
+  if (d.offTool?.def.school === school) return d.offTool;
+  return null;
 }
 
 const FIST: WeaponDef = {
@@ -119,13 +145,23 @@ export function computeDerived(c: Character): Derived {
   }
 
   const main = c.equipment.main;
-  const weapon = main ? (WEAPONS[main.baseId] ?? FIST) : FIST;
+  // a staff or talisman may be held in the weapon hand (D117): it swings as a bash and still casts
+  const mainToolDef = main ? (CASTING_TOOLS[main.baseId] ?? null) : null;
+  const weapon = main ? (WEAPONS[main.baseId] ?? (mainToolDef ? toolBash(mainToolDef) : FIST)) : FIST;
   const weaponIlvl = main?.ilvl ?? 1;
   const off = c.equipment.off;
   const shield = off ? (SHIELDS[off.baseId] ?? null) : null;
   const tool = off ? (CASTING_TOOLS[off.baseId] ?? null) : null;
   const twoHanded = c.twoHanded;
   const weaponMeetsReq = main ? meetsRequirements(itemRequirements(main), stats, twoHanded) : true;
+  const held = (def: CastingToolDef | null, item: Item | null, hand: 'main' | 'off'): HeldTool | null =>
+    def && item ? { def, item, hand, ilvl: item.ilvl, meetsReq: meetsRequirements(itemRequirements(item), stats, false), mult: toolMult(def.grade, item.ilvl) } : null;
+  // two-handing sets the off hand aside but a tool in the weapon hand still casts (held in both hands)
+  const mainTool = held(mainToolDef, main, 'main');
+  const offTool = twoHanded ? null : held(tool, off, 'off');
+  const castTool = mainTool ?? offTool;
+  const spellKeys = castTool?.def.school ?? null;
+  const skillKeySchool = mainTool && offTool && offTool.def.school !== mainTool.def.school ? offTool.def.school : null;
 
   let dmgPct = 0;
   const flat: Partial<Record<DamageType, number>> = {};
@@ -325,7 +361,7 @@ export function computeDerived(c: Character): Derived {
     statusBuild,
     attackSpeed: Math.min(1.6, 1 + attackSpeedPct),
     // Slicey quickens your casting hands a little: up to about +21% at 99 (D106)
-    castSpeed: Math.min(1.6, (tool?.castSpeed ?? 1) * (1 + castSpeedPct) * slickCast(stats.slicey)),
+    castSpeed: Math.min(1.6, (castTool?.def.castSpeed ?? 1) * (1 + castSpeedPct) * slickCast(stats.slicey)),
     castMoveMult: castMoveMult(stats.bonk),
     cdr: Math.min(0.5, cdrPct),
     dodgeRecharge: dodgeRecharge(dodgeRed),
@@ -340,10 +376,14 @@ export function computeDerived(c: Character): Derived {
     shieldVals: sv,
     shieldMeetsReq: off && shield ? meetsRequirements(itemRequirements(off), stats, false) : false,
     stabilityMult: Math.max(0.2, 1 - stabilityRed),
-    tool: twoHanded ? null : tool,
-    toolIlvl,
-    toolMeetsReq: off && tool ? meetsRequirements(itemRequirements(off), stats, false) : false,
-    toolMult: tool ? toolMult(tool.grade, toolIlvl) : 0,
+    tool: castTool?.def ?? null,
+    toolIlvl: castTool?.ilvl ?? toolIlvl,
+    toolMeetsReq: castTool?.meetsReq ?? false,
+    toolMult: castTool?.mult ?? 0,
+    mainTool,
+    offTool,
+    spellKeys,
+    skillKeySchool,
     shardFind,
     glowenFind,
     gemFind,

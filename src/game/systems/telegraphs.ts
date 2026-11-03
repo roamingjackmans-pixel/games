@@ -15,7 +15,7 @@ function targetsFor(w: World, t: Entity): Entity[] {
     if (owner?.en?.def.traits?.friendlyFire) return [...list, ...w.livingEnemies().filter((e) => e.id !== owner.id)];
     return list;
   }
-  // friendly fire (D114): a player's areas also catch the other standing players
+  // friendly fire (D115): a player's areas also catch the other standing players
   return [...w.livingEnemies(), ...ffVictims(w, w.get(tg.ownerId))];
 }
 

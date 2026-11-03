@@ -40,14 +40,14 @@ export const OFFLINE_ZIP = 'dungeonjoe-offline.zip';
 
 /** What the settings screen needs to know about a co-op session it opens in. */
 export interface SettingsOpts {
-  /** a co-op guest: the host's friendly-fire percent (read-only here; the host sets it for everyone, D114) */
+  /** a co-op guest: the host's friendly-fire percent (read-only here; the host sets it for everyone, D115) */
   hostFriendlyFire?: () => number | null;
 }
 
 const ffText = (v: number): string => (v <= 0 ? 'Off (0%)' : `${v}%`);
 
 /**
- * The friendly-fire row (D114): a 0–200% slider in steps of 10 for the host or a solo player, or the host's value,
+ * The friendly-fire row (D115): a 0–200% slider in steps of 10 for the host or a solo player, or the host's value,
  * read-only, with "set by the host" for a co-op guest. `changed` runs after the value is saved.
  */
 export function friendlyFireRow(o: { hostValue?: number | null; changed?: () => void } = {}): HTMLElement {

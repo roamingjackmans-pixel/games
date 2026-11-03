@@ -224,7 +224,7 @@ export function updateHazards(w: World, _dt: number): void {
           tag: `hz:${hz.hazard}:${friendly ? 'ally' : 'foe'}`,
         });
       }
-      // friendly fire (D114): a player's harmful ground (fire puddles, fire walls) burns allies too; zones that do
+      // friendly fire (D115): a player's harmful ground (fire puddles, fire walls) burns allies too; zones that do
       // something for allies (allyEffects, alliesOnly) never hurt them
       if (friendly && v.pl && hz.team === 0 && hz.spec && def.dmg > 0 && !hz.alliesOnly && !hz.allyEffects.length) {
         hitAlly(w, w.get(hz.ownerId), v, hz.spec, h.x, h.y);

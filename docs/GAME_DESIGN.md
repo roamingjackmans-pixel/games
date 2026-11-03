@@ -234,7 +234,7 @@ weapon active frames: Greathammer, Greataxe, Colossal Sword, Club, Mace, Battlea
 skills/spells that grant it) ignores interruptions from any hit. Grabs and holds interrupt regardless.
 Effects described as "+N poise" for players raise the interruption threshold by N% of max HP.
 
-**Two-handing** (Shift): the off-hand is disabled (no shield, no casting). Bonk (strength) counts ×1.5
+**Two-handing** (Shift): the off-hand is disabled (no shield, no off-hand casting; a staff or talisman in the weapon hand still casts, D117). Bonk (strength) counts ×1.5
 for scaling and requirements; Slicey does not change (D72). Holding block performs a **weapon guard**: 45% physical, 15% elemental,
 stability 12 (stamina drains fast). No parry.
 
@@ -393,7 +393,7 @@ Full boss sheets: CONTENT_ENEMIES §9.
 
 ### 8.1 Slots
 
-Main hand (weapon) · Off hand (shield, staff or talisman) · Head · Body · Legs · 2 Rings · Quick-use.
+Main hand (weapon, staff or talisman) · Off hand (shield, staff or talisman) · Head · Body · Legs · 2 Rings · Quick-use.
 Weapons and off-hands can be swapped any time from the inventory (not during an attack).
 
 ### 8.2 Rarity (Diablo)
@@ -511,7 +511,7 @@ killed mimics stay done). The map does not change.
 
 ## 10. Spells
 
-Spells are cast with an **off-hand casting tool**: a **staff** casts **Brain** spells only, a **talisman**
+Spells are cast with a **casting tool** in either hand (off hand, weapon hand or the 2nd weapon slot, D117): a **staff** casts **Brain** spells only, a **talisman**
 casts **Prayer** spells only. The tool has **3 spell slots**; any known spell of that school can be
 slotted at any time, subject to its requirement. The character keeps **one loadout per school** (a
 Brain loadout and a Prayer loadout), so swapping between a staff and a talisman keeps both arrangements.
@@ -555,10 +555,10 @@ built for it.
   timer expires → the player is **dead** until the party rests at a bonfire or wipes, and returns then
   with full HP and a full Thermos (death refills, §9.3). Everyone down → party wipe → all respawn at the
   host's bonfire with full HP and Thermos, each player's Shards dropped where they fell.
-- **Nobody leaves a ghost behind** (D114): while any player is a ghost waiting for a revive, the room's doors
+- **Nobody leaves a ghost behind** (D115): while any player is a ghost waiting for a revive, the room's doors
   and the stairs let nobody through; whoever tries hears "Revive *name* first!". A revive or a bleed-out (the
   player is then out until the bonfire and holds nobody up) opens the way again. Everyone down is still a wipe.
-- **Friendly fire** (D114): on by default. A player's damaging attacks (weapon swings, shots and thrown
+- **Friendly fire** (D115): on by default. A player's damaging attacks (weapon swings, shots and thrown
   weapons, weapon skills, damaging spells and their blasts and chains, consumables, burning ground they leave)
   also hit the **other standing players** at the friendly-fire percentage: Settings → Game → *Friendly fire
   damage*, 0–200% in steps of 10, default 100%, 0% = off. The **host's** setting is the party's: it travels to
@@ -595,10 +595,11 @@ up, pickup (debounced 2 s), every 30 s, and on `beforeunload`. Settings and key 
 Ten starting classes with different stats, gear and spells (the table in CONTENT_SPELLS_CLASSES §3 is
 the source of truth): **Knight** (longsword + kite shield), **Brute** (greathammer, two-handed),
 **Duelist** (twin daggers + buckler), **Scholar** (rapier + apprentice staff: Arcane Bolt, Frost Lance),
-**Cleric** (mace + wooden talisman: Heal, Bless Weapon), **Spearman** (spear + round shield), **Hunter**
-(bow, with a whip in the bag), **Nobody** (club, a loincloth, one random gem, 8 in everything),
-**Berserker** (twin axes), **Occultist** (rapier + void staff: Void Rift, Arcane Bolt). Every starting
-kit meets its own requirements (tested).
+**Pyre Priest** (censer flail + wooden talisman: Heal, Bless Weapon), **Battlemage** (colossal sword +
+targe, apprentice staff on the swap: Arcane Bolt, Scatter Shards), **Hunter** (bow, with a whip in the
+bag), **Nobody** (club, a loincloth, one random gem, 8 in everything), **Berserker** (dual twin daggers,
+all HP and Endurance), **Zealot** (dawn glaive + silver talisman: Sunray, Bless Weapon). Every starting
+kit meets its own requirements (tested). Staffs and talismans may be held in either hand (D117).
 
 Character creation: name (default "Joe"), class, optional **seed** (text; blank = random), a preview of
 the vector character with the class's starting gear, and the class's dry one-line blurb.
@@ -690,7 +691,7 @@ if missing or corrupt, and unknown ids are kept for newer builds.
   (every starting kit is a zone-1 set), a Tier 5 gem, 50 parries, 10 riposte kills, a boss without the
   Thermos, a boss with nothing in the weapon hand, a zone cleared without dying (from arriving by the stairs
   to its boss; a character that has never died counts its current zone) and each of the 8 that way, reviving
-  a friend, downing a friend with friendly fire and letting a friend you downed bleed out (D114), a four-player
+  a friend, downing a friend with friendly fire and letting a friend you downed bleed out (D115), a four-player
   party, levels 50 and 100, 10,000 Glowen held, a minute Encumbered, finding Gary and
   driving him off. Six are hidden ("???") until unlocked.
 - **The Dark Shard** unlocks with the last of the others.

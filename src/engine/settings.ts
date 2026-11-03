@@ -38,14 +38,14 @@ export interface Settings {
     prompts: PromptSetting;
   };
   net: { name: string };
-  /** co-op rules the host sets for the whole party (D114) */
+  /** co-op rules the host sets for the whole party (D115) */
   game: {
     /** friendly fire: how hard your attacks hit co-op allies, in percent (0 = off … 200), steps of 10 */
     friendlyFire: number;
   };
 }
 
-/** Friendly fire range and default (D114). */
+/** Friendly fire range and default (D115). */
 export const FRIENDLY_FIRE_MAX = 200;
 export const FRIENDLY_FIRE_STEP = 10;
 export const FRIENDLY_FIRE_DEFAULT = 100;

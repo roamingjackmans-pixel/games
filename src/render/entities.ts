@@ -12,6 +12,8 @@ import { CLASSES } from '../data/classes';
 import { parseArmorBase } from '../data/armor';
 import { SHIELDS } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
+import { SPELLS } from '../data/spells';
+import { toolForSchool } from '../game/player/derived';
 import { shapeHit } from '../game/combat/patterns';
 import { drawAttackIcon } from './telegraphs';
 import { ELEMENTS, enemyElement } from '../game/elements';
@@ -44,7 +46,7 @@ export function lookFor(c: Character): JoeLook {
   if (cl.belt) look.belt = cl.belt;
   if (cl.emblem) look.emblem = cl.emblem as Emblem;
   if (look.head === 'hood') look.headStyle = c.classId === 'occultist' ? 'deep' : 'ranger';
-  if (c.classId === 'occultist') look.eyeGlow = '#b06bff';
+  if (c.classId === 'occultist') look.eyeGlow = '#ffd27a'; // the Zealot's eyes burn like dawn (D121)
   // the person from the character creator (old saves have none: the class look stands)
   const ap = c.appearance;
   if (ap) {
@@ -103,6 +105,12 @@ function weaponPose(e: Entity): { rot: number; ext: number } {
   const c = pl.combo;
   if (!c) {
     if (pl.blocking) return { rot: -0.9, ext: 0 };
+    // a staff or talisman in the weapon hand points at the target while it casts (D117)
+    const a = pl.action;
+    if (a?.kind === 'spell' && pl.derived.mainTool && SPELLS[a.id]?.school === pl.derived.mainTool.def.school) {
+      const k = Math.min(1, a.t / Math.max(0.05, a.castS) + 0.4);
+      return { rot: lerp(0.7, 0.1, k), ext: 4 * k };
+    }
     return { rot: 0.7 + Math.sin(e.anim.t * 2) * 0.03, ext: 0 };
   }
   const hb = c.swing.hitbox;
@@ -201,7 +209,9 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
       // the shield stays upright whichever way Joe faces, leaning a touch toward his facing (D113); it used to spin with him
       off = { x: Math.cos(f + side) * 13, y: Math.sin(f + side) * 13 + 2, a: Math.cos(f) * 0.18, hold: 'shield', draw: (c) => drawShield(c, shield.draw), ...(pl.blocking ? { layer: blockLayer } : {}) };
     } else if (tool) {
-      const cast = pl.state === 'cast' && pl.action ? Math.min(1, pl.action.t / Math.max(0.05, pl.action.castS) + 0.4) : 0;
+      // thrust forward only when this off-hand tool is the one casting (not a main-hand tool of the same school)
+      const castsHere = pl.action?.kind === 'spell' && toolForSchool(pl.derived, SPELLS[pl.action.id]?.school ?? 'brain')?.hand === 'off';
+      const cast = pl.state === 'cast' && pl.action && castsHere ? Math.min(1, pl.action.t / Math.max(0.05, pl.action.castS) + 0.4) : 0;
       const side = -1.1 + 0.7 * cast;
       const rad = 13 + 2 * cast;
       off = { x: Math.cos(f + side) * rad, y: Math.sin(f + side) * rad + 2, a: f - 0.4 + 0.32 * cast, draw: (c) => drawTool(c, tool.draw, now) };

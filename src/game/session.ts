@@ -749,7 +749,7 @@ export class GameSession {
       if (!d.exists || !d.open) continue;
       const n = neighbourId(this.layout, this.node.id, side);
       if (!n) continue;
-      // nobody leaves while a ghost waits for its revive (D114)
+      // nobody leaves while a ghost waits for its revive (D115)
       const ghost = this.waitingGhost();
       if (ghost) {
         this.reviveFirst(p, ghost);
@@ -765,7 +765,7 @@ export class GameSession {
 
   /**
    * A co-op ghost still waiting for a revive (downed, not bled out yet). While there is one, the room's doors and
-   * stairs let nobody through (D114). A player who bled out (out until the next bonfire) does not hold the party up,
+   * stairs let nobody through (D115). A player who bled out (out until the next bonfire) does not hold the party up,
    * and a party that is all ghosts is wiped at once, so this never traps anyone.
    */
   waitingGhost(): Entity | null {
@@ -1034,7 +1034,7 @@ export class GameSession {
     pl.state = 'idle';
     pl.combo = null;
     p.hp!.hp = 0;
-    // friendly fire (D114): note which ally's attack (or the burn, bleed… it left, within 10 s) put this player down
+    // friendly fire (D115): note which ally's attack (or the burn, bleed… it left, within 10 s) put this player down
     const by = this.w.get(p.hp!.lastHitBy);
     pl.downedBy = by && by !== p && by.pl && this.w.time - p.hp!.lastHitAt <= 10 ? by.pl.playerId : '';
     this.w.emit({ t: 'downed', playerId: pl.playerId });
@@ -1068,7 +1068,7 @@ export class GameSession {
   private bledOut(p: Entity): void {
     const pl = p.pl!;
     this.w.emit({ t: 'msg', text: `${pl.name} is out until the next bonfire.`, color: '#ff6a5a' });
-    // the ally who downed them let them bleed out: nobody revived them in 30 s (D114)
+    // the ally who downed them let them bleed out: nobody revived them in 30 s (D115)
     if (pl.downedBy) this.w.emit({ t: 'feat', kind: 'abandonAlly', playerId: pl.downedBy, targetId: p.id });
     pl.downedBy = '';
     if (this.w.players.every((x) => x.pl!.downed || x.pl!.deadUntilRest)) this.wipe();

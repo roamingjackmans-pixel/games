@@ -79,8 +79,11 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
     let amt = base * mult;
     // ilvl scaling for consumables happens in the caller via powerMult
     if (src?.pl && ctx.isSpell) {
-      const tool = src.pl.derived.tool;
-      if (tool?.bonus?.element === e.type) amt *= 1 + tool.bonus.pct;
+      // either hand's tool (D117): staff bonuses are Void/Magic and talisman bonuses Holy, which only that
+      // school's spells deal, so a bonus never crosses schools
+      const d = src.pl.derived;
+      const tool = [d.mainTool, d.offTool].find((t) => t?.def.bonus?.element === e.type)?.def;
+      if (tool?.bonus) amt *= 1 + tool.bonus.pct;
       if (src.pl.derived.powers.has('overcharge')) amt *= 1.25;
     }
     spec.dmg = { [e.type]: amt };
@@ -520,7 +523,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       for (let j = 0; j <= e.jumps; j++) {
         let best: Entity | null = null;
         let bd = j === 0 ? e.r * 1.5 : e.r;
-        // friendly fire (D114): a player's chain can jump to the other standing players too
+        // friendly fire (D115): a player's chain can jump to the other standing players too
         for (const t of ctx.team === 0 ? [...enemiesOf(w, 0), ...ffVictims(w, src)] : enemiesOf(w, ctx.team)) {
           if (hit.has(t.id)) continue;
           const d = dist(t.x, t.y, fx, fy);

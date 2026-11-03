@@ -219,7 +219,7 @@ export function updateProjectiles(w: World, dt: number): void {
           break;
         }
       }
-      // friendly fire (D114): a player's shot hits standing allies in its path like it hits enemies
+      // friendly fire (D115): a player's shot hits standing allies in its path like it hits enemies
       if (!e.removed && owner) {
         for (const a of ffVictims(w, owner)) {
           if (pr.hit.has(a.id)) continue;

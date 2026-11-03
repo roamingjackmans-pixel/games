@@ -17,7 +17,7 @@ test('create a character, play the tutorial hall, pause, save and continue after
   await page.goto('./');
   await expect(page.getByTestId('title')).toBeVisible();
   await page.getByRole('button', { name: 'New character' }).click();
-  await page.getByRole('button', { name: 'Cleric' }).click();
+  await page.getByRole('button', { name: 'Pyre Priest' }).click();
   // a peg leg from the appearance panel
   await page.getByRole('button', { name: 'Next right leg' }).click();
   const name = page.getByTestId('create-name');
@@ -48,7 +48,7 @@ test('create a character, play the tutorial hall, pause, save and continue after
   // Statistics from the pause menu: this character first, all characters a tab away, Esc back to the pause menu
   await page.getByRole('button', { name: 'Statistics' }).click();
   await expect(page.getByTestId('statistics')).toBeVisible();
-  await expect(page.getByText('E2E Joe, Cleric')).toBeVisible();
+  await expect(page.getByText('E2E Joe, Pyre Priest')).toBeVisible();
   await page.getByTestId('stat-tab-all').click();
   await expect(page.getByText('Every character this browser has ever played')).toBeVisible();
   await page.keyboard.press('Escape');
@@ -58,7 +58,7 @@ test('create a character, play the tutorial hall, pause, save and continue after
   // and from the title menu, with the saved character to pick
   await page.getByRole('button', { name: 'Statistics' }).click();
   await expect(page.getByTestId('statistics')).toBeVisible();
-  await expect(page.getByText('E2E Joe, Cleric')).toBeVisible();
+  await expect(page.getByText('E2E Joe, Pyre Priest')).toBeVisible();
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByTestId('title')).toBeVisible();
   // reload: the save is still there and continues

@@ -58,12 +58,41 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
       const d = computeDerived(c);
       expect(d.weaponMeetsReq, `${id} weapon`).toBe(true);
       if (c.equipment.off) expect(meetsRequirements(itemRequirements(c.equipment.off), c.stats, false), `${id} off-hand`).toBe(true);
+      if (c.altMain) expect(meetsRequirements(itemRequirements(c.altMain), c.stats, c.twoHanded), `${id} 2nd weapon`).toBe(true);
+      expect(d.load.tier, `${id} equip load`).not.toBe('encumbered');
+      // every starting spell is castable with a starting tool of its school, in its own loadout
+      for (const sid of cls.start.spells) {
+        const sp = SPELLS[sid]!;
+        const tools = [c.equipment.main, c.equipment.off, c.altMain].filter((it) => it && CASTING_TOOLS[it.baseId]?.school === sp.school);
+        expect(tools.length, `${id} has a tool for ${sid}`).toBeGreaterThan(0);
+        expect(c.spellLoadout[sp.school], `${id} loadout`).toContain(sid);
+      }
       for (const sid of cls.start.spells) {
         const sp = SPELLS[sid]!;
         expect(sp, sid).toBeDefined();
         expect((sp.school === 'brain' ? st.brain : st.prayer) >= sp.req, `${id} ${sid}`).toBe(true);
       }
     }
+  });
+  it('the reworked classes (D118–D121) keep their ids and get their new kits', () => {
+    expect(CLASSES.cleric.name).toBe('Pyre Priest');
+    expect(CLASSES.cleric.start.main).toBe('censer_flail');
+    expect(WEAPONS.censer_flail!.element).toBe('fire');
+    const bm = CLASSES.spearman;
+    expect(bm.name).toBe('Battlemage');
+    expect([bm.start.main, bm.start.alt]).toEqual(['colossal_sword', 'apprentice_staff']);
+    expect(bm.stats.bonk).toBeGreaterThanOrEqual(13);
+    expect(bm.stats.brain).toBeGreaterThanOrEqual(10);
+    expect(computeDerived(newCharacter('spearman', 'J', 'p', new Rng(1))).load.tier).toBe('medium');
+    const bz = CLASSES.berserker;
+    expect(bz.start.main).toBe('twin_daggers');
+    expect(bz.twoHanded).toBe(true);
+    const others = [bz.stats.bonk, bz.stats.slicey, bz.stats.brain, bz.stats.prayer];
+    expect(Math.min(bz.stats.hp, bz.stats.endurance)).toBeGreaterThan(Math.max(...others));
+    expect(bz.stats.slicey).toBe(WEAPONS.twin_daggers!.req.slicey); // exactly the daggers' minimum, no lowered requirement
+    const z = CLASSES.occultist;
+    expect(z.start.main).toBe('dawn_glaive');
+    expect(z.stats.slicey + z.stats.prayer).toBeGreaterThanOrEqual(24);
   });
   it('every weapon class has 3 existing skills in Q/E/R order and the data validates', () => {
     for (const w of Object.values(WEAPONS)) {

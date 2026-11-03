@@ -32,6 +32,7 @@ import { computeDerived } from '../player/derived';
 import { LOAD_TIERS } from '../player/equipLoad';
 import { SPELLS } from '../../data/spells';
 import { STAT_LABEL } from '../../ui/tooltip';
+import { glyphText } from '../../ui/glyphs';
 import {
   ARM_FEATURES, BEARDS, BROWS, EYE_COLORS, EYE_SHAPES, HAIR_COLORS, HAIR_STYLES, LEG_FEATURES, MARKS, NOSES, SKIN_TONES,
   defaultAppearance, randomAppearance, type Choice, type Swatch,
@@ -327,8 +328,10 @@ export class TitleScene implements Scene {
         kit.append(h('div', { class: 'lbl' }, label), h('div', { class: 'sep' }, '-'), h('div', { class: `wide${dim ? ' dim-text' : ''}` }, value));
       };
       const eq = ch.equipment;
-      kitRow('Weapon', `${eq.main?.name ?? 'Fists'}${cls.twoHanded ? ' (two-handed)' : ''}`);
+      const paired = isPairedWeapon(WEAPONS[cls.start.main]?.draw ?? '');
+      kitRow('Weapon', `${eq.main?.name ?? 'Fists'}${cls.twoHanded ? (paired ? ' (dual-wielding)' : ' (two-handed)') : ''}`);
       kitRow('Off hand', eq.off?.name ?? '—', !eq.off);
+      if (ch.altMain) kitRow('2nd weapon', `${ch.altMain.name} (swap: ${glyphText('swapWeapon')})`);
       kitRow('Head', eq.head?.name ?? '—', !eq.head);
       kitRow('Body', eq.body?.name ?? '—', !eq.body);
       kitRow('Legs', eq.legs?.name ?? '—', !eq.legs);
@@ -505,7 +508,7 @@ export class TitleScene implements Scene {
     const cls = CLASSES[p.classId];
     // stands still facing you, turned a touch to the side so the gear in both hands shows (no more spinning)
     const facing = Math.PI / 2 - 0.3;
-    const wDraw = WEAPONS[cls.start.main]?.draw ?? 'w_fists';
+    const wDraw = WEAPONS[cls.start.main]?.draw ?? CASTING_TOOLS[cls.start.main]?.draw ?? 'w_fists';
     const off = cls.start.off;
     drawJoe(ctx, look, {
       x: W / 2,
