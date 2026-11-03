@@ -16,6 +16,7 @@
   --rare: #4aa3ff;
   --epic: #b06bff;
   --legendary: #ff9b2e;
+  --glowen: #9dffcf;
   --font: 'Segoe UI', system-ui, sans-serif;
   --mono: Consolas, 'Cascadia Mono', ui-monospace, monospace;
 }
@@ -70,7 +71,7 @@ input[type=range] { padding: 0; }
 .cell .badge { position: absolute; right: 2px; bottom: 0; font-size: 10px; color: var(--text); text-shadow: 0 0 2px #000; }
 .cell .warn { position: absolute; left: 2px; top: 0; color: var(--bad); font-weight: 700; }
 .equip-slot { width: 60px; height: 60px; }
-.tooltip { position: absolute; pointer-events: none; z-index: 50; background: rgba(12,10,16,.97); border: 2px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 300px; font-size: 13px; line-height: 1.35; }
+.tooltip { position: absolute; pointer-events: none; z-index: 50; background: #0c0a10; border: 2px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 320px; font-size: 13px; line-height: 1.35; }
 .tooltip .name { font-size: 16px; font-weight: 600; }
 .tooltip .flavor { color: var(--dim); font-style: italic; margin-top: 6px; }
 .tooltip hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
@@ -97,3 +98,42 @@ input[type=range] { padding: 0; }
 .scroll { overflow: auto; }
 .death-title { font-size: 72px; font-weight: 700; color: #b02020; letter-spacing: .06em; text-shadow: 0 0 30px rgba(176,32,32,.5), 0 4px 0 #000; }
 .credits { font-size: 20px; line-height: 1.8; text-align: center; }
+/* money: "<n>G", the G in Glowen's ghostly green, never boxed */
+.money { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.glowen-g { color: var(--glowen); font-weight: 700; text-shadow: 0 0 6px rgba(157, 255, 207, .45); }
+/* item tooltips: stacked sections, values lined up, compare column (green better, white same, red worse) */
+.tooltip .tt-title { color: var(--dim); font-size: 12px; margin-top: 1px; }
+.tooltip .tt-vs { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.tooltip .tt-head { margin-top: 4px; }
+.tooltip .tt-section { margin-top: 6px; }
+.tooltip .tt-sec { color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.tooltip .tt-rows { display: grid; grid-template-columns: max-content max-content max-content 1fr; column-gap: 7px; padding-left: 14px; font-variant-numeric: tabular-nums; }
+.tooltip .tt-rows.flat { padding-left: 0; }
+.tooltip .tt-rows .sep, .tooltip .tt-arrow { color: var(--dim); }
+.tooltip .tt-rows .note { grid-column: 1 / -1; font-size: 11px; color: var(--dim); margin: -1px 0 1px 10px; }
+.tooltip .tt-rows .skill.locked { color: var(--dim); text-decoration: line-through; }
+.tooltip .tt-text { padding-left: 14px; }
+.tt-up { color: var(--good); } .tt-same { color: var(--text); } .tt-down { color: var(--bad); }
+.tooltip .tt-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.tooltip .tt-foot .flavor { margin: 0; }
+.tooltip .tt-foot .money { font-size: 14px; }
+/* paper doll */
+.doll { position: relative; flex: none; }
+.doll-svg { position: absolute; left: 0; top: 0; pointer-events: none; }
+.cell.doll-slot { position: absolute; background: rgba(29, 26, 38, .85); }
+.cell.doll-slot.empty { background: rgba(18, 16, 26, .4); border-style: dashed; border-color: #4a4260; }
+.cell.doll-slot.empty:hover, .cell.doll-slot.empty:focus-visible { border-color: var(--accent); }
+.cell.doll-slot.idle { opacity: .45; }
+.doll-label { font-size: 10px; color: var(--dim); line-height: 1.1; padding: 2px; pointer-events: none; }
+.cell .tag2h { position: absolute; right: 2px; top: 0; font-size: 10px; font-weight: 700; color: var(--accent); text-shadow: 0 0 2px #000; }
+/* character stats */
+.stats-kv { font-size: 13px; gap: 0 14px; }
+.kv-head { grid-column: 1 / -1; color: var(--accent); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-top: 5px; }
+/* equip load */
+.load-panel { background: var(--bg2); border: 2px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
+.load-bar { position: relative; height: 12px; background: #2a2433; border-radius: 4px; margin: 4px 0 14px; }
+.load-zone { position: absolute; top: 0; bottom: 0; opacity: .16; }
+.load-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.load-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--text); opacity: .75; }
+.load-mark span { position: absolute; top: 17px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--dim); white-space: nowrap; }
+.load-tier { line-height: 1.3; }
