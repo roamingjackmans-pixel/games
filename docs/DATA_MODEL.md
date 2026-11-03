@@ -76,7 +76,8 @@ interface Item {
   sockets: (Gem | null)[];          // length = socket count
   legendaryPower?: LegendaryPowerId;
 }
-interface Gem { family: GemFamily; tier: 1 | 2 | 3 | 4 | 5; }
+interface GemPerk { family: GemFamily; tier: 1 | 2 | 3 | 4 | 5; }
+interface Gem { perks: GemPerk[]; }   // 1–3 perks, distinct families, all weapon or all armor (save v3)
 ```
 
 Derived at runtime (never stored): base damage/defense from `baseId` + `ilvl`, requirements, skills

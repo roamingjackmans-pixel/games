@@ -611,9 +611,15 @@ export interface RingDef {
   flavor: string;
 }
 
-export interface Gem {
+export type GemTier = 1 | 2 | 3 | 4 | 5;
+/** One effect on a gem. The tier belongs to the perk, not the gem: each perk is upgraded on its own. */
+export interface GemPerk {
   family: GemFamily;
-  tier: 1 | 2 | 3 | 4 | 5;
+  tier: GemTier;
+}
+/** A gem: 1–3 perks of distinct families, all weapon perks or all armor perks (NG+ gems carry more). */
+export interface Gem {
+  perks: GemPerk[];
 }
 export type GemFamily =
   | 'quicksilver'
@@ -627,7 +633,10 @@ export type GemFamily =
   | 'dusk'
   | 'leech'
   | 'vigor'
-  | 'bulwark';
+  | 'bulwark'
+  | 'hearth'
+  | 'zephyr'
+  | 'gilt';
 
 export interface Item {
   id: string;

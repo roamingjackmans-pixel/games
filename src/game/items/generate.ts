@@ -9,10 +9,10 @@ import { RINGS } from '../../data/rings';
 import { AFFIXES, type AffixDef, type AffixSlotGroup } from '../../data/affixes';
 import { LEGENDARY_NAMES, powersFor, type PowerSlot } from '../../data/legendaries';
 import { RARITY_ORDER, RARITY_WEIGHTS, SLOT_WEIGHTS, type LootSource } from '../../data/lootTables';
-import { GEM_FAMILIES } from '../../data/gems';
+import { GEM_FAMILIES, GEMS, familiesOfKind, type GemKind } from '../../data/gems';
 import { baseInfo } from './bases';
 import { makeItem, newId, socketCount } from './make';
-import type { Gem, Item, Rarity } from '../types';
+import type { Gem, GemPerk, GemTier, Item, Rarity } from '../types';
 
 export const AFFIX_COUNT: Record<Rarity, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 3 };
 
@@ -150,7 +150,29 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
   return item;
 }
 
-export function randomGem(rng: Rng, tier: 1 | 2 | 3 | 4 | 5 = 1, armor = false): Gem {
-  const fams = armor ? (['bulwark'] as const) : GEM_FAMILIES;
-  return { family: rng.pick(fams as readonly Gem['family'][]), tier };
+/** Chance of a second and third perk on a dropped gem by NG+ cycle (cycle 0 gems always have one). */
+export function gemPerkCountChances(cycle: number): { two: number; three: number } {
+  if (cycle <= 0) return { two: 0, three: 0 };
+  if (cycle === 1) return { two: 0.35, three: 0 };
+  return { two: 0.4, three: 0.25 };
+}
+
+/**
+ * A random gem with every perk at `tier`. The first perk is any family (or one of `kind`); NG+ adds a
+ * chance of more perks of the same kind (distinct families). Cycle 0 draws exactly one number from `rng`.
+ */
+export function randomGem(rng: Rng, tier: GemTier = 1, cycle = 0, kind?: GemKind): Gem {
+  const first = rng.pick(kind ? familiesOfKind(kind) : GEM_FAMILIES);
+  const perks: GemPerk[] = [{ family: first, tier }];
+  const ch = gemPerkCountChances(cycle);
+  if (ch.two + ch.three > 0) {
+    const r = rng.next();
+    const n = r < ch.three ? 3 : r < ch.three + ch.two ? 2 : 1;
+    const pool = familiesOfKind(GEMS[first].armorOnly ? 'armor' : 'weapon').filter((f) => f !== first);
+    for (let i = 1; i < n && pool.length; i++) {
+      const f = pool.splice(rng.int(0, pool.length - 1), 1)[0]!;
+      perks.push({ family: f, tier });
+    }
+  }
+  return { perks };
 }

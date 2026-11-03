@@ -144,7 +144,7 @@ Body 1.4, Legs 0.8) × `(1 + 0.6 (ilvl − 1))`. A full heavy set at ilvl 1 ther
 
 Armor sets are named per zone and weight (24 sets, names in `armor.ts`): e.g. Crypt Rags (light, z1),
 Sexton's Mail (medium, z1), Caretaker's Plate (heavy, z1) … Lessee's Suit (light, z8), Abyssal Scale
-(medium, z8), Foreclosure Plate (heavy, z8). Armor rolls affixes and 0–1 socket (Bulwark gems only).
+(medium, z8), Foreclosure Plate (heavy, z8). Armor rolls affixes and 0–1 socket (armor gems only).
 
 ## 8. Rings (2 slots)
 
@@ -221,10 +221,11 @@ at ilvl 1, ×(1 + 0.2 (ilvl − 1)) for flat values; percents fixed).
 
 ## 11. Gems
 
-Defined in GAME_DESIGN §8.5. Tiers T1–T5. Drop sources and Glowen economy there. Gem names in the
-inventory: "Quicksilver (T3)" with a cut-gem icon per family color (Quicksilver silver, Tempo gold,
-Fleetfoot green, Brutal red, Ember orange, Rime ice blue, Storm yellow, Dawn white, Dusk violet, Leech
-dark red, Vigor teal, Bulwark grey).
+Defined in GAME_DESIGN §8.5. A gem has 1–3 perks, each with its own tier T1–T5. Drop sources and Glowen
+economy there. Gem names in the inventory list the perks: "Quicksilver (T3) + Leech (T1)" with a "Weapon gem"
+or "Armor gem" chip and a cut-gem icon split into one facet per perk colour (Quicksilver silver, Tempo gold,
+Fleetfoot green, Brutal red, Ember orange, Rime ice blue, Storm blue, Dawn pale yellow, Dusk grey-violet, Leech
+dark red, Vigor teal; armor: Bulwark grey, Hearth coral, Zephyr mint, Gilt gold).
 
 ## 12. Consumables (quick-use, max 10 each)
 
@@ -248,7 +249,7 @@ Consumables as drops: 8% of chests give a bundle (3–6 of one kind); fodder 3% 
 ## 13. Sell values (Glowen)
 
 Gear: Common 10, Uncommon 25, Rare 60, Epic 150, Legendary 400, each × (1 + 0.3 (ilvl − 1)).
-Gems: 40 × 3^(tier−1). Consumables sell for half price. Spells cannot be sold.
+Gems: the sum over their perks of 40 × 3^(tier−1). Consumables sell for half price. Spells cannot be sold.
 
 ## 14. Naming
 

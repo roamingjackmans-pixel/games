@@ -16,7 +16,7 @@ import { openBonfire } from '../../ui/menus/bonfire';
 import { renderSpellTab } from '../../ui/menus/spells';
 import { openSettings } from '../../ui/menus/settings';
 import { drawInteractable, nearestInteractable } from '../../render/interactables';
-import { buyConsumable, buyGem, levelUp, rerollGem, respec, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
+import { buyConsumable, buyGem, fuseGems, levelUp, respec, sellAll, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
 import { shopGem, shopGemPrice } from '../bonfire/shop';
 import { refreshDerived } from '../player/player';
 import { writeSave } from '../save/storage';
@@ -258,7 +258,6 @@ export class GuestRunScene extends WorldScene {
       this.changed();
       return o.msg;
     };
-    const rng = stream(seed, `guest-reroll:${c.glowen}:${c.gems.length}:${this.net.cw.tick}`);
     const open = (): void => {
       this.overlay?.remove();
       this.overlay = openBonfire({
@@ -273,13 +272,14 @@ export class GuestRunScene extends WorldScene {
           respec: () => r(respec(c)),
           socket: (it, si, gi) => r(socketGem(c, it, si, gi)),
           unsocket: (it, si) => r(unsocketGem(c, it, si)),
-          upgradeGem: (gi) => r(upgradeGem(c, gi)),
-          rerollGem: (gi) => r(rerollGem(c, gi, rng)),
+          upgradeGem: (loc, pi) => r(upgradeGem(c, loc, pi)),
+          fuseGem: (o, d, picks) => r(fuseGems(c, o, d, picks)),
+          sellAll: (f) => r(sellAll(c, f)),
           sellItem: (it) => r(sellItem(c, it)),
           sellGem: (gi) => r(sellGem(c, gi)),
           sellConsumable: (cid) => r(sellConsumable(c, cid)),
           buyConsumable: (cid) => r(buyConsumable(c, cid)),
-          buyGem: () => r(buyGem(c, shopGem(seed, zone, c.cycle), shopGemPrice())),
+          buyGem: () => r(buyGem(c, shopGem(seed, zone, c.cycle), shopGemPrice(shopGem(seed, zone, c.cycle)))),
           buyPiece: () => 'Only the host can buy from this fire.',
           warp: () => 'Only the host can travel between fires.',
         },

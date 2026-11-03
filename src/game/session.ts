@@ -8,6 +8,7 @@ import { DUMMY_PIERCE, DUMMY_RED, DUMMY_STILL, DUMMY_SWING, GARY, INSTRUCTOR, MI
 import { GARY_HITS_TO_LEAVE, garyStock } from './bonfire/gary';
 import { TUTORIAL_STATIONS } from '../data/rooms/special';
 import { zoneDef } from '../data/zones';
+import { gemColor, gemKindLabel, gemTitle } from '../data/gems';
 import { World, type Entity } from './world';
 import { entryPoint, OPPOSITE, type Side } from './room';
 import { generateZone, neighbourId, type RoomNode, type ZoneLayout } from './procgen/zone';
@@ -883,6 +884,7 @@ export class GameSession {
     if (pk.kind === 'gem' && pk.gem) {
       c.gems.push(pk.gem);
       this.w.sfx('lootRare', e.x);
+      this.w.emit({ t: 'msg', text: `${gemKindLabel(pk.gem)}: ${gemTitle(pk.gem)}`, forPlayer: p.pl!.playerId, color: gemColor(pk.gem) });
       return true;
     }
     if (pk.kind === 'consumable' && pk.consumable) {

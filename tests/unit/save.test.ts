@@ -89,6 +89,24 @@ describe('save schema (DATA_MODEL §1)', () => {
     expect(s.character.freePoints).toBe(0);
     expect(s.world.leftBehind).toEqual({});
   });
+  it('migrates version-2 gems ({family, tier}) to perk lists everywhere they live', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const v2 = JSON.parse(JSON.stringify(newSave(1, newCharacter('knight', 'Joe', 'p'), 'SEED'))) as Record<string, any>;
+    v2.version = 2;
+    const sword = { id: 'x', baseId: 'longsword', slot: 'main', kind: 'weapon', rarity: 'rare', ilvl: 2, name: 'Sword', affixes: [], sockets: [{ family: 'brutal', tier: 3 }, null] };
+    v2.character.gems = [{ family: 'bulwark', tier: 2 }];
+    v2.character.equipment.main = sword;
+    v2.character.bag = [JSON.parse(JSON.stringify(sword))];
+    v2.world.garyStock = { z2c0: [{ kind: 'gem', gem: { family: 'tempo', tier: 2 }, price: 1, sold: false }] };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const m = migrate(v2) as Record<string, any>;
+    expect(m.version).toBe(SAVE_VERSION);
+    expect(validateSave(m)).toEqual([]);
+    expect(m.character.gems).toEqual([{ perks: [{ family: 'bulwark', tier: 2 }] }]);
+    expect(m.character.equipment.main.sockets).toEqual([{ perks: [{ family: 'brutal', tier: 3 }] }, null]);
+    expect(m.character.bag[0].sockets[0]).toEqual({ perks: [{ family: 'brutal', tier: 3 }] });
+    expect(m.world.garyStock.z2c0[0].gem).toEqual({ perks: [{ family: 'tempo', tier: 2 }] });
+  });
 });
 
 describe('export / import', () => {
