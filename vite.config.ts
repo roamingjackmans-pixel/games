@@ -1,6 +1,7 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { appIcons } from './scripts/icon.mjs';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
@@ -25,7 +26,36 @@ function gameVersion(): string {
   return `${major}.${minor}.${patch}`;
 }
 
+/**
+ * The installable app's PNG icons (D135), drawn in code by scripts/icon.mjs: written into the build next to
+ * manifest.webmanifest, and served by the dev server so installing works there too. Drawn once, on first use.
+ */
+function appIconsPlugin(): Plugin {
+  let icons: Record<string, Buffer> | null = null;
+  const all = (): Record<string, Buffer> => (icons ??= appIcons());
+  return {
+    name: 'dungeonjoe-app-icons',
+    // the offline single-file copy cannot install, so it needs no icons
+    apply: (_config, env) => env.mode !== 'offline',
+    configureServer(server) {
+      const base = server.config.base;
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? '').split('?')[0]!;
+        if (!path.startsWith(base + 'icons/')) return next();
+        const png = all()[path.slice(base.length)];
+        if (!png) return next();
+        res.setHeader('Content-Type', 'image/png');
+        res.end(png);
+      });
+    },
+    generateBundle() {
+      for (const [fileName, source] of Object.entries(all())) this.emitFile({ type: 'asset', fileName, source });
+    },
+  };
+}
+
 export default defineConfig({
+  plugins: [appIconsPlugin()],
   base: '/games/dungeonjoe/',
   define: {
     __GAME_VERSION__: JSON.stringify(gameVersion()),

@@ -35,3 +35,34 @@ describe('offline download icon (D133)', () => {
     expect(at(32, 36)).toEqual([0xe8, 0xc9, 0xa0, 255]);
   });
 });
+
+// D135: the installable app (Chrome / Edge "Install", which Steam then lists by name and icon)
+describe('installable app icons and manifest (D135)', () => {
+  it('draws the manifest icons at their sizes; maskable ones fill the whole square', async () => {
+    const { appIcons } = await import('../../scripts/icon.mjs');
+    const icons = appIcons();
+    const want: Record<string, number> = { 'icons/icon-192.png': 192, 'icons/icon-512.png': 512, 'icons/icon-maskable-192.png': 192, 'icons/icon-maskable-512.png': 512, 'icons/apple-touch-icon.png': 180 };
+    expect(Object.keys(icons).sort()).toEqual(Object.keys(want).sort());
+    for (const [k, size] of Object.entries(want)) expect(icons[k]!.readUInt32BE(16)).toBe(size);
+    const full = renderIcon(32, true);
+    for (let i = 3; i < full.length; i += 4) expect(full[i]).toBe(255);
+  }, 20000);
+  it('the manifest names the game and lists every icon the build writes', async () => {
+    const { readFileSync } = await import('node:fs');
+    const man = JSON.parse(readFileSync('public/manifest.webmanifest', 'utf8')) as { name: string; display: string; start_url: string; icons: { src: string; sizes: string; purpose: string }[] };
+    expect(man.name).toBe('Dungeon Joe');
+    expect(man.start_url).toBe('./');
+    expect(man.display).toBe('standalone');
+    const { appIcons } = await import('../../scripts/icon.mjs');
+    const built = Object.keys(appIcons());
+    for (const i of man.icons) expect(built).toContain(i.src);
+    expect(man.icons.some((i) => i.sizes === '512x512' && i.purpose === 'any')).toBe(true);
+    expect(readFileSync('index.html', 'utf8')).toContain('rel="manifest"');
+  }, 20000);
+  it('the offline single-file page drops the manifest and touch icon links', async () => {
+    const { inlineHtml } = await import('../../scripts/offline-files.mjs');
+    const out = inlineHtml('<head><link rel="manifest" href="./manifest.webmanifest" /><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" /></head>', new Map(), null);
+    expect(out).not.toContain('manifest');
+    expect(out).not.toContain('apple-touch-icon');
+  });
+});

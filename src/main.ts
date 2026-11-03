@@ -1,5 +1,7 @@
 // Boot: settings, audio unlock, scene manager, debug menu, the title screen.
 import './ui/theme.css';
+// first, so the browser's one-time install prompt is caught (D135)
+import './ui/install';
 import { createApp } from './app';
 import { ArenaScene } from './game/scenes/arena';
 import { RunScene, runHooks } from './game/scenes/run';

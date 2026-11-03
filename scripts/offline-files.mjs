@@ -25,6 +25,8 @@ export function inlineHtml(html, files, faviconSvg) {
     return v;
   };
   let out = html.replace(/<link\b[^>]*\brel="modulepreload"[^>]*>\s*/gi, '');
+  // the installable app's manifest and touch icon belong to the website (D135); a file:// page cannot install
+  out = out.replace(/<link\b[^>]*\brel="(?:manifest|apple-touch-icon)"[^>]*>\s*/gi, '');
   out = out.replace(/<script\b([^>]*)\bsrc="([^"]+)"([^>]*)><\/script>/gi, (_m, pre, src, post) => {
     const attrs = `${pre} ${post}`;
     const type = /\btype="module"/i.test(attrs) ? ' type="module"' : '';

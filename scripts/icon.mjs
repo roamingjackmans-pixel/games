@@ -84,10 +84,16 @@ function colourAt(x, y) {
   return c;
 }
 
-/** Draw the icon at size×size with 4×4 supersampling; returns RGBA bytes. */
-export function renderIcon(size) {
+/**
+ * Draw the icon at size×size with 4×4 supersampling; returns RGBA bytes. `full` fills the whole square (no rounded,
+ * see-through corners) and keeps Joe inside the middle 80%, the safe zone of a "maskable" app icon that the system
+ * crops to its own shape.
+ */
+export function renderIcon(size, full = false) {
   const out = Buffer.alloc(size * size * 4);
-  const ss = 4;
+  const ss = size >= 256 ? 2 : 4; // big icons need less supersampling to look smooth
+  const scale = full ? 64 / 0.8 : 64;
+  const shift = full ? -6.4 / 0.8 : 0;
   for (let py = 0; py < size; py++) {
     for (let px = 0; px < size; px++) {
       let r = 0;
@@ -96,7 +102,9 @@ export function renderIcon(size) {
       let a = 0;
       for (let sy = 0; sy < ss; sy++) {
         for (let sx = 0; sx < ss; sx++) {
-          const c = colourAt(((px + (sx + 0.5) / ss) * 64) / size, ((py + (sy + 0.5) / ss) * 64) / size);
+          const ux = ((px + (sx + 0.5) / ss) * scale) / size + shift;
+          const uy = ((py + (sy + 0.5) / ss) * scale) / size + shift;
+          const c = colourAt(ux, uy) ?? (full ? BG : null);
           if (!c) continue;
           r += c[0];
           g += c[1];
@@ -156,4 +164,18 @@ export function iconIco(sizes = [256, 48, 32, 16]) {
     offset += pngs[i].length;
   });
   return Buffer.concat([head, ...pngs]);
+}
+
+/**
+ * The installable app's icons (D135), by published path: the manifest's 192/512 px icons, their maskable versions
+ * and the 180 px Apple touch icon. Written by the Vite build and served by the dev server (vite.config.ts).
+ */
+export function appIcons() {
+  return {
+    'icons/icon-192.png': encodePng(192, renderIcon(192)),
+    'icons/icon-512.png': encodePng(512, renderIcon(512)),
+    'icons/icon-maskable-192.png': encodePng(192, renderIcon(192, true)),
+    'icons/icon-maskable-512.png': encodePng(512, renderIcon(512, true)),
+    'icons/apple-touch-icon.png': encodePng(180, renderIcon(180, true)),
+  };
 }

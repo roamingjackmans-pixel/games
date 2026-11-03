@@ -18,6 +18,7 @@ import {
 import { HOLD_S } from '../../engine/input/input';
 import { FRIENDLY_FIRE_MAX, FRIENDLY_FIRE_STEP, PROMPT_SETTINGS, normalizeFriendlyFire, type PromptSetting } from '../../engine/settings';
 import { btn, clearEl, h, layer } from '../dom';
+import { canPromptInstall, installSteps, isInstalledApp, onInstallChange, promptInstall } from '../install';
 import { GLYPH_LABEL, glyphEl, inputGlyphEl, inputText, padStyle, promptStyle, refreshGlyphs, type GlyphAction, type GlyphInput } from '../glyphs';
 
 type Tab = 'video' | 'audio' | 'controls' | 'gamepad' | 'coop' | 'game';
@@ -503,29 +504,81 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     );
   }
 
-  // ---- game: the offline download ---------------------------------------------------------------------------
+  // ---- game: install the app (best for Steam), or the offline download --------------------------------------
 
   function game(el: HTMLElement): void {
-    el.appendChild(h('h3', null, 'Download the game'));
-    el.appendChild(
-      h(
-        'div',
-        { class: 'small', style: 'max-width:760px' },
-        'A copy of Dungeon Joe that runs from your own computer in its own full-screen window, with no website. Add it to your Steam library to launch it from Steam for personal play (this does not put it on the Steam store).',
-      ),
-    );
     const offline = import.meta.env.MODE === 'offline';
     if (offline) {
       el.appendChild(h('div', { class: 'bind-notice' }, 'You are playing the downloaded copy. The newest version is always at josephjackman.com/games/dungeonjoe/.'));
-    } else if (import.meta.env.DEV) {
-      el.appendChild(h('div', { class: 'row' }, btn('Download the game (.zip)', () => undefined, 'primary', true), h('div', { class: 'small dim-text' }, 'This is the dev server: the download is made by the website build (npm run build) and is available on the website.')));
     } else {
+      // ---- the installable app (D135), the way Alt Whisker Wars does it
+      el.appendChild(h('h3', null, 'Install the app (best for Steam)'));
+      el.appendChild(
+        h(
+          'div',
+          { class: 'small', style: 'max-width:760px' },
+          'Installs Dungeon Joe from Edge or Chrome as its own app: its own window, a Start menu and desktop shortcut with its name and icon, and the same saves as this website. Updates arrive by themselves. Online play needs the internet.',
+        ),
+      );
+      const box = h('div', { class: 'col', style: 'gap:8px' });
+      el.appendChild(box);
+      const draw = (): void => {
+        clearEl(box);
+        if (isInstalledApp()) {
+          box.appendChild(h('div', { class: 'bind-notice' }, 'You are playing the installed app.'));
+          return;
+        }
+        const steps = h('div', { class: 'col', style: 'gap:4px' });
+        box.append(
+          h(
+            'div',
+            { class: 'row' },
+            btn('Install Dungeon Joe', () => {
+              void promptInstall().then((r) => {
+                if (r !== 'manual') return;
+                const s = installSteps();
+                clearEl(steps);
+                steps.appendChild(h('b', null, s.title));
+                steps.appendChild(h('ol', { class: 'download-steps' }, ...s.steps.map((t) => h('li', null, t))));
+              });
+            }, 'primary'),
+            h('div', { class: 'small dim-text' }, canPromptInstall() ? 'Your browser is ready to install it.' : 'Edge or Chrome on Windows'),
+          ),
+          steps,
+        );
+      };
+      draw();
+      const stop = onInstallChange(draw);
+      // stop listening once this tab is gone
+      const watch = window.setInterval(() => {
+        if (!box.isConnected) {
+          stop();
+          window.clearInterval(watch);
+        }
+      }, 1000);
+      el.appendChild(
+        h(
+          'ol',
+          { class: 'download-steps' },
+          h('li', null, h('b', null, 'Install. '), 'Click Install Dungeon Joe above, then Install in the box your browser shows.'),
+          h('li', null, h('b', null, 'Add it to Steam. '), 'In Steam: Games → Add a Non-Steam Game to My Library… Dungeon Joe is in the list with its name and icon: tick it → Add Selected Programs.'),
+          h('li', null, h('b', null, 'Play. '), 'Start it from Steam, the Start menu or the desktop. F11 switches full screen.'),
+        ),
+      );
+    }
+
+    // ---- the offline copy (D86, D133)
+    el.appendChild(h('h3', null, offline ? 'This offline copy' : 'Or download an offline copy (.zip)'));
+    el.appendChild(h('div', { class: 'small', style: 'max-width:760px' }, 'A copy that runs from a folder on your computer with no website, with its own saves. Steam lists it without a name or icon, so you name it yourself.'));
+    if (!offline && import.meta.env.DEV) {
+      el.appendChild(h('div', { class: 'row' }, btn('Download the game (.zip)', () => undefined, '', true), h('div', { class: 'small dim-text' }, 'This is the dev server: the download is made by the website build (npm run build) and is available on the website.')));
+    } else if (!offline) {
       el.appendChild(
         h(
           'div',
           { class: 'row' },
-          h('a', { class: 'btn primary', href: `${import.meta.env.BASE_URL}${OFFLINE_ZIP}`, download: 'DungeonJoe-offline.zip', tabindex: '0', 'data-testid': 'download-game' }, 'Download the game (.zip)'),
-          h('div', { class: 'small dim-text' }, 'For Windows · about 350 kB'),
+          h('a', { class: 'btn', href: `${import.meta.env.BASE_URL}${OFFLINE_ZIP}`, download: 'DungeonJoe-offline.zip', tabindex: '0', 'data-testid': 'download-game' }, 'Download the game (.zip)'),
+          h('div', { class: 'small dim-text' }, 'For Windows · about 550 kB'),
         ),
       );
     }
@@ -533,22 +586,20 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
       h(
         'ol',
         { class: 'download-steps' },
-        h('li', null, h('b', null, 'Unzip it. '), 'Right-click the .zip → Extract All…, into a folder you will keep (for example Documents\\Games\\Dungeon Joe).'),
-        h('li', null, h('b', null, 'Play. '), 'Double-click ', h('span', { class: 'mono' }, 'Dungeon Joe.cmd'), '. It opens the game full screen in its own window (Microsoft Edge, or Chrome, or your browser). Alt+F4 quits.'),
+        h('li', null, h('b', null, 'Unzip it '), 'into a folder you will keep (right-click the .zip → Extract All…), then double-click ', h('span', { class: 'mono' }, 'Dungeon Joe.cmd'), ' to play.'),
         h(
           'li',
           null,
-          h('b', null, 'Add it to Steam. '),
-          'In Steam: Games → Add a Non-Steam Game to My Library… → Browse… → set the file type to "All Files" → choose ',
+          h('b', null, 'Steam: '),
+          'Games → Add a Non-Steam Game… → Browse… → file type "All Files" → ',
           h('span', { class: 'mono' }, 'Dungeon Joe.cmd'),
-          ' → Add Selected Programs. Steam shows it with a blank name and no icon (it is not an .exe), so right-click it → Properties: type Dungeon Joe as its name and click the icon square to pick ',
+          ' → Add Selected Programs. Then in your Library right-click it → Properties: name it Dungeon Joe and click the icon square to pick ',
           h('span', { class: 'mono' }, 'DungeonJoe.ico'),
-          ' from the same folder.',
+          '.',
         ),
-        h('li', null, h('b', null, 'Saves. '), 'The downloaded copy keeps its own saves, separate from the website. To move a character, use Load Character → Export on one and Import a .dungeonjoe.json on the other. Online co-op still needs the internet.'),
+        h('li', null, h('b', null, 'Saves '), 'stay apart from the website’s. To move a character, use Load Character → Export on one and Import a .dungeonjoe.json on the other.'),
       ),
     );
-    el.appendChild(h('div', { class: 'small dim-text' }, 'The same steps are in README.txt inside the zip.'));
   }
 
   // ---- frame ------------------------------------------------------------------------------------------------
