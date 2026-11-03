@@ -534,12 +534,14 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
             'div',
             { class: 'row' },
             btn('Install Dungeon Joe', () => {
+              clearEl(steps);
+              steps.appendChild(h('div', { class: 'small dim-text' }, 'Asking your browser to install it…'));
               void promptInstall().then((r) => {
-                if (r !== 'manual') return;
-                const s = installSteps();
                 clearEl(steps);
-                steps.appendChild(h('b', null, s.title));
-                steps.appendChild(h('ol', { class: 'download-steps' }, ...s.steps.map((t) => h('li', null, t))));
+                if (r !== 'manual') return;
+                // no install box from the browser: one clear notice with the steps for this browser (D135)
+                const s = installSteps();
+                steps.appendChild(h('div', { class: 'bind-notice', style: 'max-width:760px' }, h('b', null, s.title), h('ul', { style: 'margin:6px 0 0 18px;padding:0' }, ...s.steps.map((t) => h('li', { style: 'margin:3px 0' }, t)))));
               });
             }, 'primary'),
             h('div', { class: 'small dim-text' }, canPromptInstall() ? 'Your browser is ready to install it.' : 'Edge or Chrome on Windows'),
@@ -560,7 +562,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
         h(
           'ol',
           { class: 'download-steps' },
-          h('li', null, h('b', null, 'Install. '), 'Click Install Dungeon Joe above, then Install in the box your browser shows.'),
+          h('li', null, h('b', null, 'Install. '), 'Click Install Dungeon Joe above, then Install in the box your browser shows (or follow the steps it gives you).'),
           h('li', null, h('b', null, 'Add it to Steam. '), 'In Steam: Games → Add a Non-Steam Game to My Library… Dungeon Joe is in the list with its name and icon: tick it → Add Selected Programs.'),
           h('li', null, h('b', null, 'Play. '), 'Start it from Steam, the Start menu or the desktop. F11 switches full screen.'),
         ),

@@ -49,8 +49,26 @@ export function isInstalledApp(): boolean {
 /** The browser's own install prompt is ready to open. */
 export const canPromptInstall = (): boolean => !!offer;
 
-/** Open the install prompt: 'accepted', 'dismissed', or 'manual' (no prompt here: show the steps instead). */
-export async function promptInstall(): Promise<'accepted' | 'dismissed' | 'manual'> {
+/**
+ * Open the install prompt: 'accepted', 'dismissed', or 'manual' (no prompt here: show the steps instead). The browser
+ * only offers its prompt once the page has been used for a little while, so a click that comes too early waits up to
+ * `waitMs` for it before giving up.
+ */
+export async function promptInstall(waitMs = 3000): Promise<'accepted' | 'dismissed' | 'manual'> {
+  if (!offer && waitMs > 0) {
+    await new Promise<void>((done) => {
+      const stop = onInstallChange(() => {
+        if (!offer) return;
+        stop();
+        window.clearTimeout(t);
+        done();
+      });
+      const t = window.setTimeout(() => {
+        stop();
+        done();
+      }, waitMs);
+    });
+  }
   if (!offer) return 'manual';
   const p = offer;
   offer = null;
@@ -80,12 +98,13 @@ export function installSteps(): { title: string; steps: string[] } {
   }
   const edge = /Edg\//.test(ua);
   return {
-    title: 'Install Dungeon Joe',
+    title: 'Your browser did not open its install box, so install it from the browser itself:',
     steps: [
       edge
-        ? 'Open the Edge menu (… at the top right) → Apps → Install this site as an app. (Or click the install icon at the right end of the address bar.)'
-        : 'Click the install icon at the right end of the address bar, or open the Chrome menu (⋮) → Cast, save and share → Install page as app.',
+        ? 'Click the Edge menu (… at the top right) → Apps → Install Dungeon Joe. Or click the small install icon (a grid with a +) at the right end of the address bar.'
+        : 'Click the small install icon (a screen with a down arrow) at the right end of the address bar. Or click the Chrome menu (⋮ at the top right) → Cast, save, and share → Install Dungeon Joe…',
       'Click Install. Dungeon Joe opens in its own window and gets a Start menu and desktop shortcut.',
+      `If the menu says Open in Dungeon Joe (or Open in app) instead, it is already installed: start it from the Start menu.`,
     ],
   };
 }
