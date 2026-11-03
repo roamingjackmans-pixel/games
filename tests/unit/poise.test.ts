@@ -112,3 +112,26 @@ describe('hyper armor doubles poise mid-swing (D78)', () => {
     expect(staggered(g2)).toBe(true);
   });
 });
+
+describe('stagger grace (D103)', () => {
+  it('a staggered enemy cannot be poise-staggered again until 2 s after it recovers', async () => {
+    const { STAGGER_GRACE_S } = await import('../../src/game/combat/damage');
+    const { startEnemyAttack: start } = await import('../../src/game/enemies/attacks');
+    const s = world();
+    const a = attacking(s, 'shambler');
+    hitWith(s, a, 'greathammer');
+    expect(staggered(a)).toBe(true);
+    const graceEnds = a.en!.staggerImmuneUntil!;
+    expect(graceEnds - s.w.time).toBeCloseTo(0.6 + STAGGER_GRACE_S, 5);
+    // right after recovering it attacks again: the same heavy hit no longer staggers it
+    const atk = a.en!.phaseAttacks.find((x) => x.kind !== 'utility' && !x.trigger)!;
+    a.en!.state = 'alert';
+    start(s.w, a, atk, s.localPlayer!);
+    hitWith(s, a, 'greathammer');
+    expect(staggered(a)).toBe(false);
+    // once the grace is over, it staggers again
+    s.w.time = graceEnds + 0.01;
+    hitWith(s, a, 'greathammer');
+    expect(staggered(a)).toBe(true);
+  });
+});

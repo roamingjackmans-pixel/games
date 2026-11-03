@@ -729,7 +729,9 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   // Poise and stagger (D78). An enemy's poise comes from its size. One hit staggers it, cancelling the attack it
   // is making, only when that hit's poise damage reaches its poise: a greathammer staggers a brute, daggers
   // only stagger rats. Bosses instead have a poise pool that hits wear down (and that regenerates).
-  if (!en.isBoss || spec.poiseDmg > 0) {
+  // a staggered enemy gets a couple of seconds of grace after it recovers, so it cannot be stun-locked (D103)
+  const staggerGrace = (en.staggerImmuneUntil ?? 0) > now;
+  if ((!en.isBoss || spec.poiseDmg > 0) && !staggerGrace) {
     let poise = spec.poiseDmg * (en.isBoss ? (spec.bossPoiseMult ?? 1) : 1);
     if (attacker) poise *= 1 + buffSum(attacker, 'poiseDamagePct', now);
     if (pl) poise *= pl.derived.poiseDmgMult;
@@ -744,7 +746,9 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
     if ((broken || (spec.guaranteedStagger && !hyper)) && !traits.noFlinch) {
       const heavy = o.heavy ?? false;
       hp.poise = hp.poiseMax;
-      interrupt(w, e, en.isBoss ? 1.2 : heavy ? 0.9 : 0.6);
+      const staggerS = en.isBoss ? 1.2 : heavy ? 0.9 : 0.6;
+      interrupt(w, e, staggerS);
+      en.staggerImmuneUntil = now + staggerS + STAGGER_GRACE_S;
       if (traits.shell) en.flippedUntil = now + traits.shell.flipS;
       w.sfx('stagger', e.x);
     }
@@ -776,6 +780,9 @@ function dominantTypeOf(spec: DamageSpec): DamageType {
 export function typeColor(t: DamageType): string {
   return elementGlow(t);
 }
+
+/** Seconds after a poise stagger ends during which the same enemy cannot be poise-staggered again (D103). */
+export const STAGGER_GRACE_S = 2;
 
 /** Add revive progress to a ghost (D12). */
 export function addRevive(w: World, ghost: Entity, attacker: Entity, value: number): void {

@@ -220,6 +220,8 @@ export interface AttackRun {
 }
 
 export interface EnemyC {
+  /** after a poise stagger it cannot be staggered by poise again until this time (D103) */
+  staggerImmuneUntil?: number;
   def: EnemyDef | BossDef;
   isBoss: boolean;
   elite: EliteAffix | null;

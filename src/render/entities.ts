@@ -169,13 +169,20 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   const rot = !pl.combo && two && !pl.blocking && !isPairedWeapon(wDraw) ? 1.0 : pose.rot;
   const ha = f + 0.9 + (rot - 0.7) * 0.55;
   const wa = f + rot;
+  // which way the current arc swing turns: increasing angle moves the blade toward its local +y (D104)
+  const edgeFlip = !!pl.combo && pl.combo.swing.hitbox.shape === 'arc' && pl.combo.idx % 2 === 0;
   const main: HandPose | undefined = ghost
     ? undefined
     : {
         x: Math.cos(ha) * 10 + Math.cos(wa) * pose.ext,
         y: Math.sin(ha) * 10 + 2 + Math.sin(wa) * pose.ext,
         a: wa,
-        draw: (c) => drawWeapon(c, wDraw, now, legendName, charging),
+        draw: (c) => {
+          // the cutting edge is drawn on the weapon's −y side: on swings that turn the other way, mirror it so the
+          // edge leads the swing (D104)
+          if (edgeFlip) c.scale(1, -1);
+          drawWeapon(c, wDraw, now, legendName, charging);
+        },
       };
   let off: HandPose | undefined;
   // paired weapons (twin daggers/axes): one-handed shows only the main-hand blade plus the usual off-hand
@@ -183,7 +190,10 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   const paired = isPairedWeapon(wDraw);
   const dual = paired && two;
   if (!ghost && dual) {
-    off = { x: Math.cos(f - 0.9) * 10, y: Math.sin(f - 0.9) * 10 + 2, a: f - pose.rot * 0.8, draw: (c) => drawWeapon(c, wDraw, now, legendName) };
+    off = { x: Math.cos(f - 0.9) * 10, y: Math.sin(f - 0.9) * 10 + 2, a: f - pose.rot * 0.8, draw: (c) => {
+        if (pl.combo && pl.combo.swing.hitbox.shape === 'arc' && !edgeFlip) c.scale(1, -1);
+        drawWeapon(c, wDraw, now, legendName);
+      } };
   } else if (!ghost && !two) {
     const blockLayer: 'front' | 'back' = Math.sin(f) < -0.35 ? 'back' : 'front';
     if (shield) {
