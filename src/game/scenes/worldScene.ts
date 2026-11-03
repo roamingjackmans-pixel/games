@@ -139,7 +139,7 @@ export abstract class WorldScene implements Scene {
         const ch = pl().pl!.char;
         const target = Math.max(1, Math.min(400, Math.floor(n)));
         let cur = levelFromStats(ch);
-        const order: StatId[] = ['hp', 'stamina', 'bonk', 'slicey', 'brain', 'prayer'];
+        const order: StatId[] = ['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'];
         let i = 0;
         while (cur < target) {
           const s = order[i++ % 6]!;
@@ -199,9 +199,9 @@ export abstract class WorldScene implements Scene {
         pl().pl!.char.shards += Math.floor(n);
         return `Shards ${pl().pl!.char.shards}.`;
       },
-      addStardust(n) {
-        pl().pl!.char.stardust += Math.floor(n);
-        return `Stardust ${pl().pl!.char.stardust}.`;
+      addGlowen(n) {
+        pl().pl!.char.glowen += Math.floor(n);
+        return `Glowen ${pl().pl!.char.glowen}.`;
       },
       addTear() {
         pl().pl!.char.tears++;

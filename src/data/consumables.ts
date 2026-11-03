@@ -5,7 +5,7 @@ export interface ConsumableDef {
   id: ConsumableId;
   name: string;
   short: string;
-  /** bonfire shop price in Stardust; null = drop-only */
+  /** bonfire shop price in Glowen; null = drop-only */
   price: number | null;
   description: string;
   effect: EffectDef[];
@@ -56,7 +56,7 @@ export const CONSUMABLES: Record<ConsumableId, ConsumableDef> = {
         op: 'damage',
         pattern: { kind: 'projectile', speed: 520, r: 8, lob: true, onImpact: { kind: 'circle', r: 100, anchor: 'point' } },
         base: 4,
-        type: 'frost',
+        type: 'magic',
         status: { id: 'chill', buildup: 60 },
         control: { id: 'freeze', durationS: 1.5 },
       },

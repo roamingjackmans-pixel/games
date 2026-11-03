@@ -1,7 +1,7 @@
 // Drops (GAME_DESIGN §8.2, §11; CONTENT_ITEMS §3, §12): rolled per player from that player's own stream
 // `loot:<playerId>:<n>` and visible only to them (D33).
 import { stream, type Rng } from '../../engine/rng';
-import { CONSUMABLE_CHANCE, DROP_CHANCE, GEM_CHANCE, STARDUST_MOTE_CHANCE, TEAR_CHANCE, type LootSource } from '../../data/lootTables';
+import { CONSUMABLE_CHANCE, DROP_CHANCE, GEM_CHANCE, GLOWEN_WISP_CHANCE, TEAR_CHANCE, type LootSource } from '../../data/lootTables';
 import { SPELLS } from '../../data/spells';
 import { WEAPON_IDS } from '../../data/weapons';
 import { itemLevelFor } from '../combat/formulas';
@@ -71,9 +71,9 @@ export function enemyDrops(c: DropContext, e: Entity): void {
       const [x, y] = scatter(rng, e.x, e.y);
       spawnPickup(w, x, y, { kind: 'consumable', forPlayer: pid, consumable: rng.chance(0.6) ? 'throwing_knife' : 'firebomb', amount: 1, rarity: 'common' });
     }
-    if (rng.chance(STARDUST_MOTE_CHANCE / divide)) {
+    if (rng.chance(GLOWEN_WISP_CHANCE / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
-      spawnPickup(w, x, y, { kind: 'stardust', forPlayer: pid, amount: Math.round(60 * c.zone * (1 + pl.derived.stardustFind)), rarity: 'uncommon' });
+      spawnPickup(w, x, y, { kind: 'glowen', forPlayer: pid, amount: Math.round(60 * c.zone * (1 + pl.derived.glowenFind)), rarity: 'uncommon' });
     }
   }
 }
@@ -103,9 +103,9 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
       const [bx, by] = scatter(rng, x, y + 20);
       spawnPickup(w, bx, by, { kind: 'consumable', forPlayer: pid, consumable: rng.pick(BUNDLE), amount: rng.int(3, 6), rarity: 'uncommon' });
     }
-    // a little Stardust always
+    // a little Glowen always
     const [sx, sy] = scatter(rng, x, y + 20);
-    spawnPickup(w, sx, sy, { kind: 'stardust', forPlayer: pid, amount: Math.round((kind === 'treasure' ? 60 : 25) * c.zone * (1 + pl.derived.stardustFind)), rarity: 'common' });
+    spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round((kind === 'treasure' ? 60 : 25) * c.zone * (1 + pl.derived.glowenFind)), rarity: 'common' });
   }
 }
 
@@ -140,7 +140,7 @@ export function instructorDrops(c: DropContext, x: number, y: number): void {
 
 /**
  * A boss (GAME_DESIGN §7, §8.2): per player a Rare+ item, a second Rare+ roll at 50%, one gem, 10% a Tear of
- * Undoing, and some Stardust. The arena's spell reliquary is rolled by the session (it is a world object).
+ * Undoing, and some Glowen. The arena's spell reliquary is rolled by the session (it is a world object).
  */
 export function bossDrops(c: DropContext, bossId: string, x: number, y: number): void {
   const w = c.w;
@@ -164,6 +164,6 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
       spawnPickup(w, tx, ty, { kind: 'tear', forPlayer: pid, amount: 1, rarity: 'legendary' });
     }
     const [sx, sy] = scatter(rng, x, y, 60);
-    spawnPickup(w, sx, sy, { kind: 'stardust', forPlayer: pid, amount: Math.round(150 * c.zone * (1 + pl.derived.stardustFind)), rarity: 'uncommon' });
+    spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round(150 * c.zone * (1 + pl.derived.glowenFind)), rarity: 'uncommon' });
   }
 }

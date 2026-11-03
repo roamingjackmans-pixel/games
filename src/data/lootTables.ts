@@ -37,7 +37,7 @@ export const SLOT_WEIGHTS: { slot: 'weapon' | 'shield' | 'staff' | 'talisman' | 
 export const GEM_CHANCE = { enemy: 0.02, chest: 0.12, boss: 1 };
 /** Chests: 8% a consumable bundle of 3–6 of one kind; fodder 3% a single knife or bomb (CONTENT_ITEMS §12). */
 export const CONSUMABLE_CHANCE = { chestBundle: 0.08, fodderSingle: 0.03 };
-/** Rare "Stardust Mote" drops. */
-export const STARDUST_MOTE_CHANCE = 0.01;
+/** Rare "Glowen Wisp" drops. */
+export const GLOWEN_WISP_CHANCE = 0.01;
 /** Bosses: 10% Tear of Undoing; spell reliquaries 5% a Tear instead of a spell. */
 export const TEAR_CHANCE = { boss: 0.1, reliquary: 0.05 };

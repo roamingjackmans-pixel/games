@@ -13,7 +13,7 @@ export const RINGS: Record<string, RingDef> = {
   fleet_ring: { id: 'fleet_ring', name: 'Fleet Ring', floor: 'rare', effect: '−0.5 s dodge recharge.', flavor: 'Runs in the family.' },
   ring_stillness: { id: 'ring_stillness', name: 'Ring of Stillness', floor: 'epic', effect: 'Standing still 1 s grants +15% damage.', flavor: 'Patience, weaponised.' },
   chloranthy_knot: { id: 'chloranthy_knot', name: 'Chloranthy Knot', floor: 'epic', effect: '+20% stamina regen.', flavor: 'Green, like a second wind.' },
-  starcatcher: { id: 'starcatcher', name: 'Starcatcher', floor: 'epic', effect: '+25% gem drop chance, +20% Stardust.', flavor: 'Shiny things find you.' },
+  glowcatcher: { id: 'glowcatcher', name: 'Glowcatcher', floor: 'epic', effect: '+25% gem drop chance, +20% Glowen.', flavor: 'Shiny things find you.' },
   red_thread: { id: 'red_thread', name: 'Red Thread', floor: 'legendary', effect: 'Blocking is impossible; Red attacks deal −25% to you.', flavor: 'Tied around a finger. Remember to dodge.' },
   ghost_lantern: { id: 'ghost_lantern', name: 'Ghost Lantern', floor: 'legendary', effect: 'Your hits on ghosts count double for reviving.', flavor: 'For friends who fell down the stairs.' },
   slumlords_signet: { id: 'slumlords_signet', name: "Slumlord's Signet", floor: 'legendary', effect: '+15% damage, −15% max HP.', flavor: 'The rent is due.' },
@@ -21,7 +21,7 @@ export const RINGS: Record<string, RingDef> = {
 
 export const RING_IDS = Object.keys(RINGS);
 
-export function bandStat(ringId: string): 'bonk' | 'slicey' | 'brain' | 'prayer' | 'stamina' | 'hp' | null {
+export function bandStat(ringId: string): 'bonk' | 'slicey' | 'brain' | 'prayer' | 'endurance' | 'hp' | null {
   switch (ringId) {
     case 'band_bonk':
       return 'bonk';
@@ -32,7 +32,7 @@ export function bandStat(ringId: string): 'bonk' | 'slicey' | 'brain' | 'prayer'
     case 'band_prayer':
       return 'prayer';
     case 'band_vigor':
-      return 'stamina';
+      return 'endurance';
     case 'band_health':
       return 'hp';
     default:

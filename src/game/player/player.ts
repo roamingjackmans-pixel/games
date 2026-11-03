@@ -443,8 +443,9 @@ function startDodge(w: World, e: Entity): void {
   pl.stateUntil = now + DODGE_S;
   pl.dodgeUntil = now + DODGE_S;
   pl.dodgeDir = [dx, dy];
+  // equip load (D82): heavier loads shorten the invulnerable window (from its start)
   pl.iframesFrom = now + DODGE_IFRAME_FROM;
-  pl.iframesUntil = now + DODGE_IFRAME_TO;
+  pl.iframesUntil = now + DODGE_IFRAME_FROM + (DODGE_IFRAME_TO - DODGE_IFRAME_FROM) * pl.derived.load.effects.iframes;
   pl.iframeKind = 'all';
   let recharge = pl.derived.dodgeRecharge;
   if (hasControl(e, 'hexed', now)) recharge += 2;
@@ -671,7 +672,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   const canMove = (pl.state === 'idle' || pl.state === 'flask' || pl.state === 'cast' || pl.state === 'channel' || pl.state === 'charge') && !e.forced;
   if (pl.state === 'dodge') {
     const t = 1 - (pl.dodgeUntil - now) / DODGE_S;
-    const sp = (DODGE_DIST / DODGE_S) * 1.6 * Math.max(0.1, 1 - t);
+    const sp = (DODGE_DIST / DODGE_S) * 1.6 * Math.max(0.1, 1 - t) * pl.derived.load.effects.dodge;
     const fall = w.room.moveCircle(e, pl.dodgeDir[0] * sp * dt, pl.dodgeDir[1] * sp * dt, false, true);
     void fall;
     mv = 1;

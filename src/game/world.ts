@@ -408,7 +408,7 @@ export interface HazardC {
 }
 
 export interface PickupC {
-  kind: 'item' | 'shards' | 'gem' | 'consumable' | 'shardpile' | 'stardust' | 'spell' | 'tear';
+  kind: 'item' | 'shards' | 'gem' | 'consumable' | 'shardpile' | 'glowen' | 'spell' | 'tear';
   forPlayer: string | null;
   item?: Item;
   gem?: Gem;

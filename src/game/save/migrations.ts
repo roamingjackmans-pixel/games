@@ -1,4 +1,4 @@
-// Save migrations: each entry upgrades a save from `from` to `from + 1`. Version 1 is current.
+// Save migrations: each entry upgrades a save from `from` to `from + 1`. Version 2 is current.
 import { SAVE_VERSION } from './schema';
 
 type Migration = { from: number; up: (s: Record<string, unknown>) => Record<string, unknown> };
@@ -19,6 +19,39 @@ export const MIGRATIONS: Migration[] = [
       w.roomsVisited ??= [];
       w.bossKilled ??= [];
       return { ...s, character: c, world: w, version: 1 };
+    },
+  },
+  {
+    // 1 → 2 (D80, D82, D83): Stardust is Glowen, the Stamina stat is Endurance, the Starcatcher is the
+    // Glowcatcher, Stardusted is Glowing, and Insulated (lightning defense) folded into Spellproof (magic).
+    from: 1,
+    up: (s) => {
+      const c = (s.character ?? {}) as Record<string, unknown>;
+      if (c.glowen === undefined) c.glowen = typeof c.stardust === 'number' ? c.stardust : 0;
+      delete c.stardust;
+      const st = c.stats as Record<string, unknown> | undefined;
+      if (st && st.endurance === undefined) {
+        st.endurance = typeof st.stamina === 'number' ? st.stamina : 10;
+        delete st.stamina;
+      }
+      const fixItem = (it: unknown): void => {
+        if (!it || typeof it !== 'object') return;
+        const o = it as { baseId?: string; affixes?: { id: string }[] };
+        if (o.baseId === 'starcatcher') o.baseId = 'glowcatcher';
+        for (const a of o.affixes ?? []) {
+          if (a.id === 'stardusted') a.id = 'glowing';
+          if (a.id === 'insulated') a.id = 'frostproof';
+        }
+      };
+      const eq = (c.equipment ?? {}) as Record<string, unknown>;
+      for (const k of Object.keys(eq)) fixItem(eq[k]);
+      fixItem(c.altMain);
+      for (const it of (c.bag as unknown[] | undefined) ?? []) fixItem(it);
+      const w = (s.world ?? {}) as Record<string, unknown>;
+      for (const list of Object.values((w.leftBehind ?? {}) as Record<string, { item?: unknown }[]>)) for (const e of list) fixItem(e.item);
+      for (const list of Object.values((w.garyStock ?? {}) as Record<string, { item?: unknown }[]>)) for (const e of list) fixItem(e.item);
+      for (const e of Object.values((w.shopStock ?? {}) as Record<string, { item?: unknown }>)) fixItem(e.item);
+      return { ...s, character: c, world: w, version: 2 };
     },
   },
 ];

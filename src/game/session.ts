@@ -54,7 +54,7 @@ export interface SessionListener {
 
 /**
  * New Game+ (GAME_DESIGN §13): next cycle, a new map seed, zone 1, everything on the character kept
- * (level, gear, spells, gems, flask max, Stardust, Shards), no tutorial. Cycle scaling is applied by the
+ * (level, gear, spells, gems, flask max, Glowen, Shards), no tutorial. Cycle scaling is applied by the
  * formulas (enemy HP ×1.6^c, damage ×1.35^c, Shards ×1.8^c, item level +c).
  */
 export function beginNextCycle(save: SaveFile): void {
@@ -873,8 +873,8 @@ export class GameSession {
       this.w.sfx('lootCommon', e.x);
       return true;
     }
-    if (pk.kind === 'stardust') {
-      c.stardust += pk.amount;
+    if (pk.kind === 'glowen') {
+      c.glowen += pk.amount;
       this.w.sfx('shardPickup', e.x, 0.8, 1.4);
       return true;
     }

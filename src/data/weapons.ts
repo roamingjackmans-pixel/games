@@ -16,6 +16,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   greathammer: {
     id: 'greathammer',
     name: 'Greathammer',
+    weight: 14,
     grades: { bonk: 'S', slicey: '-' },
     req: { bonk: 14, slicey: 0 },
     speedClass: 'veryslow',
@@ -33,6 +34,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   greataxe: {
     id: 'greataxe',
     name: 'Greataxe',
+    weight: 11,
     grades: { bonk: 'A', slicey: '-' },
     req: { bonk: 12, slicey: 0 },
     speedClass: 'slow',
@@ -50,6 +52,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   colossal_sword: {
     id: 'colossal_sword',
     name: 'Colossal Sword',
+    weight: 16,
     grades: { bonk: 'A', slicey: 'E' },
     req: { bonk: 13, slicey: 8 },
     speedClass: 'slow',
@@ -67,6 +70,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   crossbow: {
     id: 'crossbow',
     name: 'Crossbow',
+    weight: 6.5,
     grades: { bonk: 'B', slicey: '-' },
     req: { bonk: 10, slicey: 0 },
     speedClass: 'slow',
@@ -84,6 +88,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   club: {
     id: 'club',
     name: 'Club',
+    weight: 3,
     grades: { bonk: 'E', slicey: '-' },
     req: { bonk: 8, slicey: 0 },
     speedClass: 'mediumslow',
@@ -101,6 +106,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   twin_daggers: {
     id: 'twin_daggers',
     name: 'Twin Daggers',
+    weight: 1.5,
     grades: { bonk: '-', slicey: 'S' },
     req: { bonk: 0, slicey: 14 },
     speedClass: 'veryfast',
@@ -119,6 +125,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   rapier: {
     id: 'rapier',
     name: 'Rapier',
+    weight: 2.5,
     grades: { bonk: '-', slicey: 'A' },
     req: { bonk: 0, slicey: 10 },
     speedClass: 'fast',
@@ -136,6 +143,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   katana: {
     id: 'katana',
     name: 'Katana',
+    weight: 5.5,
     grades: { bonk: 'D', slicey: 'A' },
     req: { bonk: 7, slicey: 12 },
     speedClass: 'fast',
@@ -153,6 +161,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   bow: {
     id: 'bow',
     name: 'Bow',
+    weight: 3,
     grades: { bonk: '-', slicey: 'B' },
     req: { bonk: 0, slicey: 10 },
     speedClass: 'fast',
@@ -170,6 +179,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   whip: {
     id: 'whip',
     name: 'Whip',
+    weight: 2,
     grades: { bonk: '-', slicey: 'E' },
     req: { bonk: 0, slicey: 9 },
     speedClass: 'medium',
@@ -187,6 +197,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   longsword: {
     id: 'longsword',
     name: 'Longsword',
+    weight: 6,
     grades: { bonk: 'B', slicey: 'B' },
     req: { bonk: 9, slicey: 9 },
     speedClass: 'medium',
@@ -203,6 +214,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   spear: {
     id: 'spear',
     name: 'Spear',
+    weight: 5,
     grades: { bonk: 'C', slicey: 'B' },
     req: { bonk: 8, slicey: 10 },
     speedClass: 'medium',
@@ -219,6 +231,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   battleaxe: {
     id: 'battleaxe',
     name: 'Battleaxe',
+    weight: 8,
     grades: { bonk: 'A', slicey: 'D' },
     req: { bonk: 11, slicey: 7 },
     speedClass: 'mediumslow',
@@ -236,6 +249,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   mace: {
     id: 'mace',
     name: 'Mace',
+    weight: 5,
     grades: { bonk: 'B', slicey: 'E' },
     req: { bonk: 11, slicey: 3 },
     speedClass: 'mediumslow',
@@ -254,6 +268,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   halberd: {
     id: 'halberd',
     name: 'Halberd',
+    weight: 10,
     grades: { bonk: 'A', slicey: 'C' },
     req: { bonk: 10, slicey: 10 },
     speedClass: 'mediumslow',
@@ -271,6 +286,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   twin_axes: {
     id: 'twin_axes',
     name: 'Twin Axes',
+    weight: 6.5,
     grades: { bonk: 'C', slicey: 'B' },
     req: { bonk: 10, slicey: 10 },
     speedClass: 'fast',

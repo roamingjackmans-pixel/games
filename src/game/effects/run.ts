@@ -1,5 +1,6 @@
 // EffectDef executor (DATA_MODEL §3): the closed vocabulary shared by weapon skills, spells, consumables,
 // legendary powers, elite affixes, enemy utilities and on-death effects.
+import { ELEMENTS } from '../elements';
 import { DEG, clamp, dist } from '../../engine/math';
 import { ENEMIES } from '../../data/enemies';
 import { addBuff, buffSum } from '../combat/state';
@@ -37,7 +38,7 @@ export interface EffectHooks {
 }
 export const effectHooks: EffectHooks = {};
 
-const ELEMENT_COLOR: Record<DamageType, string> = { physical: '#efe6d2', fire: '#ff7a1a', frost: '#9ad0ff', lightning: '#ffe14a', holy: '#fff3b0', void: '#b06bff' };
+const ELEMENT_COLOR: Record<DamageType, string> = { physical: ELEMENTS.physical.glow, magic: ELEMENTS.magic.glow, void: ELEMENTS.void.glow, fire: ELEMENTS.fire.glow, holy: ELEMENTS.holy.glow };
 
 function enemiesOf(w: World, team: Team): Entity[] {
   return team === 0 ? w.livingEnemies() : w.livingPlayers();
@@ -625,7 +626,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
             t.pl.shardsGained += Math.round(e.shards * k);
             w.emit({ t: 'shardGain', playerId: t.pl.playerId, amount: e.shards * k, x: t.x, y: t.y });
           }
-          if (e.stardust) t.pl.char.stardust += Math.round(e.stardust * Math.max(1, w.zone));
+          if (e.glowen) t.pl.char.glowen += Math.round(e.glowen * Math.max(1, w.zone));
           // e.flask is deliberately ignored: nothing restores a Thermos charge (D38, tested)
         }
         if (e.staminaRegenPct && e.durationS) addBuff(t, w, { id: 'resource_regen', stat: 'staminaRegenPct', amount: e.staminaRegenPct, durationS: e.durationS, maxStacks: 1, sourceId: ctx.sourceId });

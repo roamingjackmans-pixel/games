@@ -20,9 +20,9 @@ import type { ClassId, StatId } from '../../src/game/types';
 const EXPECTED = [12, 22, 32, 42, 52, 62, 72, 80];
 const TRIES = Number(process.env.TRIES ?? 4);
 const BOTS: { name: string; cls: ClassId; style: BotStyle; stats: StatId[] }[] = [
-  { name: 'greathammer', cls: 'brute', style: 'melee', stats: ['bonk', 'hp', 'bonk', 'stamina'] },
-  { name: 'daggers', cls: 'duelist', style: 'melee', stats: ['slicey', 'stamina', 'hp', 'slicey'] },
-  { name: 'caster', cls: 'scholar', style: 'caster', stats: ['brain', 'hp', 'brain', 'stamina'] },
+  { name: 'greathammer', cls: 'brute', style: 'melee', stats: ['bonk', 'hp', 'bonk', 'endurance'] },
+  { name: 'daggers', cls: 'duelist', style: 'melee', stats: ['slicey', 'endurance', 'hp', 'slicey'] },
+  { name: 'caster', cls: 'scholar', style: 'caster', stats: ['brain', 'hp', 'brain', 'endurance'] },
   { name: 'cleric', cls: 'cleric', style: 'melee', stats: ['prayer', 'bonk', 'hp', 'prayer'] },
 ];
 

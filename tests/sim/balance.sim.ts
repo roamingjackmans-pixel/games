@@ -34,9 +34,9 @@ interface BotDef {
   stats: StatId[];
 }
 const BOTS: BotDef[] = [
-  { name: 'greathammer', cls: 'brute', style: 'melee', stats: ['bonk', 'hp', 'bonk', 'stamina'] },
-  { name: 'daggers', cls: 'duelist', style: 'melee', stats: ['slicey', 'stamina', 'hp', 'slicey'] },
-  { name: 'caster', cls: 'scholar', style: 'caster', stats: ['brain', 'hp', 'brain', 'stamina'] },
+  { name: 'greathammer', cls: 'brute', style: 'melee', stats: ['bonk', 'hp', 'bonk', 'endurance'] },
+  { name: 'daggers', cls: 'duelist', style: 'melee', stats: ['slicey', 'endurance', 'hp', 'slicey'] },
+  { name: 'caster', cls: 'scholar', style: 'caster', stats: ['brain', 'hp', 'brain', 'endurance'] },
   { name: 'cleric', cls: 'cleric', style: 'melee', stats: ['prayer', 'bonk', 'hp', 'prayer'] },
 ];
 

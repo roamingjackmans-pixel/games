@@ -39,7 +39,7 @@ export interface BonfireView {
 
 const STATS: { id: StatId; label: string; what: string }[] = [
   { id: 'hp', label: 'HP', what: 'max health' },
-  { id: 'stamina', label: 'Stamina', what: 'max stamina and regen' },
+  { id: 'endurance', label: 'Endurance', what: 'max stamina, regen and equip load' },
   { id: 'bonk', label: 'Bonk', what: 'heavy weapons, crossbows' },
   { id: 'slicey', label: 'Slicey', what: 'fast weapons, bows' },
   { id: 'brain', label: 'Brain', what: 'staff spells' },
@@ -117,13 +117,13 @@ export function openBonfire(v: BonfireView): HTMLElement {
       if (active.length) row.appendChild(h('div', { class: 'small', style: 'color:#cfc6b4' }, active.map((x) => `${GEMS[x.family].name}: ${gemText(x.family, x.tier)}`).join(' · ')));
       list.appendChild(row);
     }
-    const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;max-height:500px;overflow:auto' }, h('h3', null, `Loose gems · ✦ ${fmt(c.stardust)} Stardust`));
+    const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;max-height:500px;overflow:auto' }, h('h3', null, `Loose gems · ✦ ${fmt(c.glowen)} Glowen`));
     c.gems.forEach((g, gi) => {
       const sel = selItem ? items.find((i) => i.id === selItem) : null;
       const free = sel ? sel.sockets.findIndex((x) => !x) : -1;
-      const up = btn(`Upgrade (${fmt(gemUpgradeCost(g.tier))})`, () => say(v.ops.upgradeGem(gi)), 'tiny', g.tier >= 5 || c.stardust < gemUpgradeCost(g.tier));
+      const up = btn(`Upgrade (${fmt(gemUpgradeCost(g.tier))})`, () => say(v.ops.upgradeGem(gi)), 'tiny', g.tier >= 5 || c.glowen < gemUpgradeCost(g.tier));
       up.title = g.tier >= 5 ? 'Already T5.' : `T${g.tier + 1}: ${gemText(g.family, g.tier + 1)}`;
-      const rr = btn(`Re-roll (${fmt(gemRerollCost(g.tier))})`, () => say(v.ops.rerollGem(gi)), 'tiny', c.stardust < gemRerollCost(g.tier));
+      const rr = btn(`Re-roll (${fmt(gemRerollCost(g.tier))})`, () => say(v.ops.rerollGem(gi)), 'tiny', c.glowen < gemRerollCost(g.tier));
       rr.title = GEMS[g.family].armorOnly ? 'Becomes a random gem of the same tier.' : 'Becomes a different random weapon gem of the same tier.';
       gems.appendChild(
         h(
@@ -149,16 +149,16 @@ export function openBonfire(v: BonfireView): HTMLElement {
 
   function shopTab(el: HTMLElement): void {
     const c = v.char;
-    const buy = h('div', { class: 'col', style: 'gap:6px;width:440px' }, h('h3', null, `Buy · ✦ ${fmt(c.stardust)} Stardust`));
+    const buy = h('div', { class: 'col', style: 'gap:6px;width:440px' }, h('h3', null, `Buy · ✦ ${fmt(c.glowen)} Glowen`));
     for (const s of shopConsumables()) {
-      buy.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:150px' }, CONSUMABLES[s.id].name), h('div', { class: 'mono', style: 'width:60px' }, `✦${s.price}`), h('div', { class: 'small dim-text', style: 'width:60px' }, `have ${c.consumables[s.id] ?? 0}`), btn('Buy', () => say(v.ops.buyConsumable(s.id)), 'tiny', c.stardust < s.price)));
+      buy.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:150px' }, CONSUMABLES[s.id].name), h('div', { class: 'mono', style: 'width:60px' }, `✦${s.price}`), h('div', { class: 'small dim-text', style: 'width:60px' }, `have ${c.consumables[s.id] ?? 0}`), btn('Buy', () => say(v.ops.buyConsumable(s.id)), 'tiny', c.glowen < s.price)));
     }
-    buy.appendChild(h('div', { class: 'row' }, gemIcon(v.shopGem, 22), h('div', { style: 'width:128px' }, gemName(v.shopGem.family, 1)), h('div', { class: 'mono', style: 'width:60px' }, `✦${shopGemPrice()}`), btn('Buy', () => say(v.ops.buyGem()), 'tiny', c.stardust < shopGemPrice())));
+    buy.appendChild(h('div', { class: 'row' }, gemIcon(v.shopGem, 22), h('div', { style: 'width:128px' }, gemName(v.shopGem.family, 1)), h('div', { class: 'mono', style: 'width:60px' }, `✦${shopGemPrice()}`), btn('Buy', () => say(v.ops.buyGem()), 'tiny', c.glowen < shopGemPrice())));
     buy.appendChild(gemInfo(v.shopGem, false));
     if (v.shopPiece) {
       const p = v.shopPiece;
       const price = shopItemPrice(p);
-      const b = h('div', { class: 'row' }, itemIcon(p, 32), h('div', { class: `r-${p.rarity}`, style: 'width:220px' }, p.name), h('div', { class: 'mono' }, `✦${price}`), btn('Buy', () => say(v.ops.buyPiece()), 'tiny', c.stardust < price));
+      const b = h('div', { class: 'row' }, itemIcon(p, 32), h('div', { class: `r-${p.rarity}`, style: 'width:220px' }, p.name), h('div', { class: 'mono' }, `✦${price}`), btn('Buy', () => say(v.ops.buyPiece()), 'tiny', c.glowen < price));
       b.title = '';
       b.addEventListener('mouseenter', () => {
         const tt = itemTooltip(p, c);

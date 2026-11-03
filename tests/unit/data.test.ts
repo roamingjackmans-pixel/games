@@ -52,7 +52,7 @@ describe('data validation (npm run validate:data)', () => {
 });
 
 describe('Gary (GAME_DESIGN §11)', () => {
-  it('sells 3–6 special things, the same every visit, in Stardust', () => {
+  it('sells 3–6 special things, the same every visit, in Glowen', () => {
     for (let z = 2; z <= 8; z++) {
       const ws = newWorldState(`GARYSEED${z}`);
       const a = garyStock(ws, z, 0);

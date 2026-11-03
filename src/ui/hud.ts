@@ -1,5 +1,5 @@
 // In-game HUD drawn on the canvas (GAME_DESIGN §16): HP/stamina, status meters, control icons, flask,
-// Shards/Stardust, Q/E/R skills with radial cooldowns, 1/2/3 spells, quick-use item.
+// Shards/Glowen, Q/E/R skills with radial cooldowns, 1/2/3 spells, quick-use item.
 import { drawText, FONT } from '../engine/text';
 import { glow, withAlpha } from '../engine/draw/parts';
 import { keyName } from '../engine/input/bindings';
@@ -124,7 +124,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   drawText(ctx, `${ch.flaskCur}/${flaskCap(ch)}`, fx + 24, fy + 20, { size: 15, weight: 'bold', mono: true });
   // currencies
   drawText(ctx, `◆ ${Math.floor(ch.shards).toLocaleString('en-US')}`, 110, fy + 20, { size: 15, color: '#9ad0ff', mono: true });
-  drawText(ctx, `✦ ${Math.floor(ch.stardust).toLocaleString('en-US')}`, 230, fy + 20, { size: 15, color: '#fff3b0', mono: true });
+  drawText(ctx, `✦ ${Math.floor(ch.glowen).toLocaleString('en-US')}`, 230, fy + 20, { size: 15, color: '#fff3b0', mono: true });
   if (ch.twoHanded) drawText(ctx, 'TWO-HANDED', 340, fy + 20, { size: 12, color: '#ffd27a', weight: 'bold' });
   if (!d.weaponMeetsReq) drawText(ctx, '! weapon below requirement (40% damage)', 20, fy + 44, { size: 12, color: '#ff6a5a' });
 

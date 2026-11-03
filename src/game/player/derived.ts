@@ -9,6 +9,7 @@ import { GEMS, gemBuildup, gemValue } from '../../data/gems';
 import { RINGS, bandAmount, bandStat } from '../../data/rings';
 import { dodgeRecharge, maxHP, maxStamina, scalingMult, skillsUnlocked, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
 import { itemRequirements, meetsRequirements } from '../items/bases';
+import { equipLoadOf, type EquipLoadInfo } from './equipLoad';
 import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatusId, Stats, WeaponDef } from '../types';
 import { DAMAGE_TYPES } from '../types';
 
@@ -50,7 +51,7 @@ export interface Derived {
   toolMeetsReq: boolean;
   toolMult: number;
   shardFind: number;
-  stardustFind: number;
+  glowenFind: number;
   gemFind: number;
   reviveBonus: number;
   flaskBonus: number;
@@ -61,11 +62,14 @@ export interface Derived {
   staminaRegenMult: number;
   canBlock: boolean;
   redTakenMult: number;
+  /** equip load and its tier (D82); `walk` already includes the tier's speed */
+  load: EquipLoadInfo;
 }
 
 const FIST: WeaponDef = {
   id: 'fists',
   name: 'Fists',
+  weight: 0,
   grades: { bonk: 'E', slicey: 'E' },
   req: { bonk: 0, slicey: 0 },
   speedClass: 'fast',
@@ -130,7 +134,7 @@ export function computeDerived(c: Character): Derived {
   let lifesteal = 0;
   let poisePct = 0;
   let shardFind = 0;
-  let stardustFind = 0;
+  let glowenFind = 0;
   let gemFind = 0;
   let reviveBonus = 0;
   let flaskBonus = 0;
@@ -198,8 +202,8 @@ export function computeDerived(c: Character): Derived {
         case 'lucky':
           shardFind += v / 100;
           break;
-        case 'stardusted':
-          stardustFind += v / 100;
+        case 'glowing':
+          glowenFind += v / 100;
           break;
         case 'medic':
           reviveBonus += v;
@@ -256,9 +260,9 @@ export function computeDerived(c: Character): Derived {
   if (rings.has('thermos_lid')) flaskBonus += 0.15;
   if (rings.has('fleet_ring')) dodgeRed += 0.5;
   if (rings.has('chloranthy_knot')) regenMult += 0.2;
-  if (rings.has('starcatcher')) {
+  if (rings.has('glowcatcher')) {
     gemFind += 0.25;
-    stardustFind += 0.2;
+    glowenFind += 0.2;
   }
   if (rings.has('slumlords_signet')) {
     dmgPct += 0.15;
@@ -274,7 +278,7 @@ export function computeDerived(c: Character): Derived {
   if (powers.has('unyielding')) stabilityRed += 0.4;
 
   // ---- defense ----
-  const defense: Record<DamageType, number> = { physical: 0, fire: 0, frost: 0, lightning: 0, holy: 0, void: 0 };
+  const defense: Record<DamageType, number> = { physical: 0, magic: 0, void: 0, fire: 0, holy: 0 };
   for (const slot of ['head', 'body', 'legs'] as const) {
     const it = c.equipment[slot];
     if (!it) continue;
@@ -284,7 +288,7 @@ export function computeDerived(c: Character): Derived {
   for (const t of DAMAGE_TYPES) defense[t] = (defense[t] + defAll) * (1 + (defPct[t] ?? 0));
 
   const hp = maxHP(stats.hp) + hpFlat;
-  const stam = maxStamina(stats.stamina) + stamFlat;
+  const stam = maxStamina(stats.endurance) + stamFlat;
   const legendaryWeapon = main?.rarity === 'legendary';
   const shieldIlvl = off?.ilvl ?? 1;
   const toolIlvl = off?.ilvl ?? 1;
@@ -292,12 +296,13 @@ export function computeDerived(c: Character): Derived {
   sv.elemental = Math.min(0.85, sv.elemental + elemBlockBonus);
   sv.holyVoid = Math.min(0.85, sv.holyVoid + elemBlockBonus);
 
+  const load = equipLoadOf(c.equipment, stats.endurance);
   return {
     stats,
     maxHp: Math.max(1, Math.round(hp * maxHpMult)),
     maxStam: stam,
-    regen: staminaRegen(stats.stamina) * regenMult,
-    walk: 260 * (shield?.walkMult ?? 1),
+    regen: staminaRegen(stats.endurance) * regenMult,
+    walk: 260 * (shield?.walkMult ?? 1) * load.effects.speed,
     twoHanded,
     weapon,
     weaponItem: main,
@@ -329,7 +334,7 @@ export function computeDerived(c: Character): Derived {
     toolMeetsReq: off && tool ? meetsRequirements(itemRequirements(off), stats, false) : false,
     toolMult: tool ? toolMult(tool.grade, toolIlvl) : 0,
     shardFind,
-    stardustFind,
+    glowenFind,
     gemFind,
     reviveBonus,
     flaskBonus,
@@ -340,5 +345,6 @@ export function computeDerived(c: Character): Derived {
     staminaRegenMult: regenMult,
     canBlock: !rings.has('red_thread'),
     redTakenMult,
+    load,
   };
 }

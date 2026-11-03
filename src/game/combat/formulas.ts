@@ -36,6 +36,18 @@ export function maxStamina(stamStat: number): number {
   );
 }
 
+/** Max equip load (D82): 26 + 1.5 per Endurance point to 30, 1.0 to 60, 0.5 to 99. */
+export function maxEquipLoad(endurance: number): number {
+  return (
+    26 +
+    piecewise(endurance, [
+      [30, 1.5],
+      [60, 1.0],
+      [99, 0.5],
+    ])
+  );
+}
+
 export function staminaRegen(stamStat: number): number {
   return 22 + 0.25 * stamStat;
 }
@@ -174,7 +186,7 @@ export function flaskCap(c: { flaskMax: number; equipment: { legs: { legendaryPo
   return Math.min(5, c.flaskMax + (c.equipment.legs?.legendaryPower === 'lucky_socks' ? 1 : 0));
 }
 
-/** Stardust for selling a gem: 40 × 3^(tier−1); upgrade = 10× sell; re-roll = 2× sell. */
+/** Glowen for selling a gem: 40 × 3^(tier−1); upgrade = 10× sell; re-roll = 2× sell. */
 export function gemSellValue(tier: number): number {
   return 40 * Math.pow(3, tier - 1);
 }

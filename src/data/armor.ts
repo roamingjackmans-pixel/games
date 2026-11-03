@@ -1,12 +1,20 @@
-// CONTENT_ITEMS §7: 24 armor sets (3 weights × 8 zones). Weight changes only the defense split (D35).
+// CONTENT_ITEMS §7: 24 armor sets (3 weights × 8 zones). The weight class sets the defense split and the
+// pieces' equip load weight (D82; D35 is superseded).
 import type { ArmorSetDef, ArmorWeight, DamageType } from '../game/types';
 
 export const WEIGHT_DEF: Record<ArmorWeight, Record<DamageType, number>> = {
-  light: { physical: 4, fire: 7, frost: 7, lightning: 7, holy: 6, void: 6 },
-  medium: { physical: 7, fire: 5, frost: 5, lightning: 5, holy: 4, void: 4 },
-  heavy: { physical: 11, fire: 3, frost: 3, lightning: 3, holy: 2, void: 2 },
+  light: { physical: 4, magic: 7, void: 6, fire: 7, holy: 6 },
+  medium: { physical: 7, magic: 5, void: 4, fire: 5, holy: 4 },
+  heavy: { physical: 11, magic: 3, void: 2, fire: 3, holy: 2 },
 };
 export const SLOT_MULT = { head: 0.8, body: 1.4, legs: 0.8 } as const;
+
+/** Equip load weight per piece by weight class (D82); each set is 0.85–1.15× of this (from its id). */
+export const PIECE_WEIGHT: Record<ArmorWeight, { head: number; body: number; legs: number }> = {
+  light: { head: 1.2, body: 3.6, legs: 1.8 },
+  medium: { head: 2.8, body: 7.2, legs: 3.6 },
+  heavy: { head: 5, body: 12, legs: 7 },
+};
 
 const set = (
   id: string,
@@ -74,11 +82,25 @@ export function armorPieceName(baseId: string): string {
 
 /** Defense per type for one piece at an item level. */
 export function armorPieceDefense(baseId: string, ilvl: number): Record<DamageType, number> {
-  const out: Record<DamageType, number> = { physical: 0, fire: 0, frost: 0, lightning: 0, holy: 0, void: 0 };
+  const out: Record<DamageType, number> = { physical: 0, magic: 0, void: 0, fire: 0, holy: 0 };
   const p = parseArmorBase(baseId);
   if (!p || !p.set) return out;
   const base = WEIGHT_DEF[p.set.weight];
   const k = SLOT_MULT[p.slot] * (1 + 0.6 * (ilvl - 1));
   for (const t of Object.keys(out) as DamageType[]) out[t] = base[t] * k;
   return out;
+}
+
+function setWeightFactor(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return 0.85 + (Math.abs(h) % 31) / 100;
+}
+
+/** Equip load weight of one armor piece (D82), to one decimal. The Loincloth weighs almost nothing. */
+export function armorPieceWeight(baseId: string): number {
+  const p = parseArmorBase(baseId);
+  if (!p) return 0;
+  if (!p.set) return 0.2;
+  return Math.round(PIECE_WEIGHT[p.set.weight][p.slot] * setWeightFactor(p.set.id) * 10) / 10;
 }

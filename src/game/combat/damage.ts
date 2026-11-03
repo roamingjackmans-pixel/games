@@ -1,5 +1,6 @@
 // The damage pipeline (GAME_DESIGN §3.1, §5.2–5.6, §6.3): players hit enemies, enemies hit players.
 // Red: block and parry fail (guard break), i-frames work. Piercing: i-frames fail, block works, parry fails.
+import { affinityMult, elementGlow, enemyElement } from '../elements';
 import { damageAfterDefense, reviveRequirement } from './formulas';
 import { bossPhaseCheck } from './bossPhase';
 import { addBuff, behind, buffSum, frontOf, hasControl, statusActive } from './state';
@@ -634,17 +635,19 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
 
   let total = 0;
   const resist = en.def.resist;
+  // the weakness chart (D81): the enemy's own type against each part of the hit
+  const bodyType = enemyElement(en.def);
   for (const t of DAMAGE_TYPES) {
     let amt = spec.dmg[t] ?? 0;
     if (amt <= 0) continue;
     let r = resist[t] ?? 0;
     if (t === 'holy' && traits.holyMult) r = 1 - traits.holyMult;
-    if (t === 'lightning' && w.roomMods.lightningBonusUntil > now) r -= 0.4;
+    if (t === 'magic' && w.roomMods.lightningBonusUntil > now) r -= 0.4;
     if (t === 'holy' && attacker) amt *= 1 + buffSum(attacker, 'holyDamagePct', now);
     if ((t === 'holy' || t === 'void') && spec.undeadMult && (en.def.undead || en.def.zone === 8)) amt *= spec.undeadMult;
     // Sunder: skills ignore 30% of enemy defense (resistances)
     if (spec.isSkill && pl?.derived.powers.has('sunder') && r > 0) r *= 0.7;
-    amt *= Math.max(0, 1 - r);
+    amt *= Math.max(0, 1 - r) * affinityMult(t, bodyType);
     total += amt;
   }
   total *= mult;
@@ -697,7 +700,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
         chained.add(best.id);
         w.fx('line', from.x, from.y, { x2: best.x, y2: best.y, color: '#ffe14a' });
         const zap = emptySpec('player');
-        zap.dmg = { lightning: total * 0.8 };
+        zap.dmg = { magic: total * 0.8 };
         zap.sourceTag = 'thunderclap';
         hitEnemy(w, attacker, best, zap, from.x, from.y, { noLifesteal: true });
         from = best;
@@ -750,21 +753,9 @@ function dominantTypeOf(spec: DamageSpec): DamageType {
   return dominantType(spec);
 }
 
+/** The colour a damage type shows as on the dark floor (damage numbers, hit sparks). */
 export function typeColor(t: DamageType): string {
-  switch (t) {
-    case 'physical':
-      return '#f2e8d8';
-    case 'fire':
-      return '#ff7a1a';
-    case 'frost':
-      return '#9ad0ff';
-    case 'lightning':
-      return '#ffe14a';
-    case 'holy':
-      return '#fff3b0';
-    case 'void':
-      return '#b06bff';
-  }
+  return elementGlow(t);
 }
 
 /** Add revive progress to a ghost (D12). */

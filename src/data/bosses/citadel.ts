@@ -31,7 +31,7 @@ const laserSweep = (turrets: number): AttackDef => ({
   windupMs: 1000,
   recoverMs: 700,
   dmgMult: 1.0,
-  type: 'lightning',
+  type: 'magic',
   cooldownS: 12,
   range: [0, 1400],
   weight: 3,

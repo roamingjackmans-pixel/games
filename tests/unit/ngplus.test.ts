@@ -12,7 +12,7 @@ describe('New Game+ (GAME_DESIGN §13)', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng('n'));
     c.level = 120;
     c.shards = 5000;
-    c.stardust = 900;
+    c.glowen = 900;
     c.flaskMax = 5;
     c.flaskCur = 0;
     c.bossesBeaten = 8;
@@ -26,7 +26,7 @@ describe('New Game+ (GAME_DESIGN §13)', () => {
     expect(c.cycle).toBe(1);
     expect(c.level).toBe(120);
     expect(c.shards).toBe(5000);
-    expect(c.stardust).toBe(900);
+    expect(c.glowen).toBe(900);
     expect(c.flaskMax).toBe(5);
     expect(c.flaskCur).toBe(5);
     expect(c.knownSpells).toContain('heal');

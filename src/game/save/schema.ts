@@ -2,7 +2,7 @@
 import type { Character, SaveFile, WorldState } from '../types';
 import { CLASS_IDS } from '../../data/classes';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const SLOT_COUNT = 10;
 
 export function newWorldState(seed: string, zone = 1): WorldState {
@@ -72,8 +72,8 @@ export function validateSave(raw: unknown, maxVersion = SAVE_VERSION): string[] 
     if (!isStr(c.classId) || !CLASS_IDS.includes(c.classId as never)) p.push('unknown class');
     if (!isNum(c.level) || c.level < 1) p.push('level');
     const st = c.stats;
-    if (!isObj(st) || !['hp', 'stamina', 'bonk', 'slicey', 'brain', 'prayer'].every((k) => isNum(st[k]))) p.push('stats');
-    for (const k of ['shards', 'stardust', 'flaskMax', 'flaskCur', 'bossesBeaten', 'highestZoneBeaten', 'cycle', 'tears']) if (!isNum(c[k])) p.push(`character.${k}`);
+    if (!isObj(st) || !['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'].every((k) => isNum(st[k]))) p.push('stats');
+    for (const k of ['shards', 'glowen', 'flaskMax', 'flaskCur', 'bossesBeaten', 'highestZoneBeaten', 'cycle', 'tears']) if (!isNum(c[k])) p.push(`character.${k}`);
     const eq = c.equipment;
     if (!isObj(eq) || !['main', 'off', 'head', 'body', 'legs', 'ring1', 'ring2'].every((k) => k in eq && validItem(eq[k]))) p.push('equipment');
     if (!Array.isArray(c.bag) || !c.bag.every(validItem)) p.push('bag');

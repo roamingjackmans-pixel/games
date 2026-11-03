@@ -1,15 +1,17 @@
 // Shared game types (DATA_MODEL.md). Data tables in src/data conform to these; systems read them.
 
-export type DamageType = 'physical' | 'fire' | 'frost' | 'lightning' | 'holy' | 'void';
-export const DAMAGE_TYPES: readonly DamageType[] = ['physical', 'fire', 'frost', 'lightning', 'holy', 'void'];
+/** The five damage types (D80): Physical (white), Magic (blue), Void (grey-black), Fire (red), Holy (yellow). */
+export type DamageType = 'physical' | 'magic' | 'void' | 'fire' | 'holy';
+export const DAMAGE_TYPES: readonly DamageType[] = ['physical', 'magic', 'void', 'fire', 'holy'];
 export type StatusId = 'burn' | 'chill' | 'shock' | 'bleed' | 'poison';
 export const STATUS_IDS: readonly StatusId[] = ['burn', 'chill', 'shock', 'bleed', 'poison'];
 export type ControlId = 'freeze' | 'blind' | 'hexed' | 'silence' | 'root' | 'hold';
 export const CONTROL_IDS: readonly ControlId[] = ['freeze', 'blind', 'hexed', 'silence', 'root', 'hold'];
 export type Role = 'fodder' | 'swarm' | 'ranged' | 'caster' | 'support' | 'brute' | 'assassin' | 'tank' | 'hazard';
 export const MELEE_ROLES: readonly Role[] = ['fodder', 'brute', 'assassin', 'tank'];
-export type StatId = 'hp' | 'stamina' | 'bonk' | 'slicey' | 'brain' | 'prayer';
-export const STAT_IDS: readonly StatId[] = ['hp', 'stamina', 'bonk', 'slicey', 'brain', 'prayer'];
+/** Endurance raises max stamina, stamina regen and equip load (D82). */
+export type StatId = 'hp' | 'endurance' | 'bonk' | 'slicey' | 'brain' | 'prayer';
+export const STAT_IDS: readonly StatId[] = ['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'];
 export type Stats = Record<StatId, number>;
 export type Grade = 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | '-';
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
@@ -239,7 +241,7 @@ export type EffectDef = EffectBase &
     | { op: 'reviveValue'; amount: number; lanternAmount?: number; livingHealPct?: number }
     | { op: 'stagger'; durationS: number; bossPoiseMult?: number }
     | { op: 'resetCooldown'; skill: 'this' | 'all' | string; fraction?: number }
-    | { op: 'resource'; stamina?: number; hp?: number; shards?: number; stardust?: number; flask?: number; staminaRegenPct?: number; durationS?: number }
+    | { op: 'resource'; stamina?: number; hp?: number; shards?: number; glowen?: number; flask?: number; staminaRegenPct?: number; durationS?: number }
     | { op: 'hyperArmor'; durationS: number }
     | { op: 'reveal'; r: number; durationS: number }
     | { op: 'hazard'; pattern: PatternDef; hazard: HazardId; durationS: number }
@@ -411,6 +413,8 @@ export interface EnemyDef {
   mult?: { hp?: number; dmg?: number; speed?: number; poise?: number; shards?: number };
   radius: number;
   resist: Partial<Record<DamageType, number>>;
+  /** the enemy's own type for the weakness chart and its colour (D81); derived from its attacks when omitted */
+  element?: DamageType;
   statusImmune?: (StatusId | ControlId)[];
   moveStyle: MoveStyle;
   speed?: number;
@@ -500,6 +504,8 @@ export interface SwingDef {
 export interface WeaponDef {
   id: string;
   name: string;
+  /** equip load weight (D82) */
+  weight: number;
   grades: { bonk: Grade; slicey: Grade };
   req: { bonk: number; slicey: number };
   speedClass: SpeedClass;
@@ -553,6 +559,7 @@ export interface SpellDef {
 export interface ShieldDef {
   id: string;
   name: string;
+  weight: number;
   size: 'small' | 'medium' | 'great';
   req: { bonk: number; slicey: number };
   physical: number;
@@ -571,6 +578,7 @@ export interface ShieldDef {
 export interface CastingToolDef {
   id: string;
   name: string;
+  weight: number;
   school: 'brain' | 'prayer';
   req: number;
   grade: number;
@@ -653,7 +661,7 @@ export interface Character {
   level: number;
   stats: Stats;
   shards: number;
-  stardust: number;
+  glowen: number;
   flaskMax: number;
   flaskCur: number;
   bossesBeaten: number;

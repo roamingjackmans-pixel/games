@@ -271,7 +271,7 @@ export class TitleScene implements Scene {
       blurb.textContent = `“${cls.blurb}”`;
       const st = cls.stats;
       const kit = [WEAPONS[cls.start.main]?.name, cls.start.off ? (SHIELDS[cls.start.off]?.name ?? CASTING_TOOLS[cls.start.off]?.name) : null].filter(Boolean).join(' + ');
-      stats.textContent = `HP ${st.hp} · Stamina ${st.stamina} · Bonk ${st.bonk} · Slicey ${st.slicey} · Brain ${st.brain} · Prayer ${st.prayer}\n${kit}${cls.start.spells.length ? ` · spells: ${cls.start.spells.join(', ').replace(/_/g, ' ')}` : ''}`;
+      stats.textContent = `HP ${st.hp} · Endurance ${st.endurance} · Bonk ${st.bonk} · Slicey ${st.slicey} · Brain ${st.brain} · Prayer ${st.prayer}\n${kit}${cls.start.spells.length ? ` · spells: ${cls.start.spells.join(', ').replace(/_/g, ' ')}` : ''}`;
       stats.style.whiteSpace = 'pre-line';
       for (const b of classes.querySelectorAll('button')) b.classList.toggle('on', b.getAttribute('data-class') === classId);
       this.preview = { classId, canvas };

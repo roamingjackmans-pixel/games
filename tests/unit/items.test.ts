@@ -87,7 +87,7 @@ describe('requirements and penalties (D37)', () => {
   });
 });
 
-describe('inventory, gems, Stardust, levels', () => {
+describe('inventory, gems, Glowen, levels', () => {
   it('equip / unequip swaps through the bag', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
     const sword = c.equipment.main!;
@@ -115,20 +115,20 @@ describe('inventory, gems, Stardust, levels', () => {
     expect([1, 2, 3, 4, 5].map(gemSellValue)).toEqual([40, 120, 360, 1080, 3240]);
     expect(gemUpgradeCost(1)).toBe(400);
     expect(gemRerollCost(2)).toBe(240);
-    c.stardust = 400;
+    c.glowen = 400;
     expect(upgradeGem(c, 0).ok).toBe(true);
     expect(c.gems[0]!.tier).toBe(2);
-    expect(c.stardust).toBe(0);
-    c.stardust = 240;
+    expect(c.glowen).toBe(0);
+    c.glowen = 240;
     expect(rerollGem(c, 0, new Rng(5)).ok).toBe(true);
     expect(c.gems[0]!.family).not.toBe('brutal');
     expect(sellGem(c, 0).ok).toBe(true);
-    expect(c.stardust).toBe(120);
+    expect(c.glowen).toBe(120);
     expect(gearSellValue('legendary', 3)).toBe(Math.round(400 * 1.6));
-    const before = c.stardust;
+    const before = c.glowen;
     const v = itemSellValue(a);
     expect(sellItem(c, a.id).ok).toBe(true);
-    expect(c.stardust - before).toBe(v);
+    expect(c.glowen - before).toBe(v);
   });
   it('level up costs follow the curve; respec refunds points as free points', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
@@ -142,7 +142,7 @@ describe('inventory, gems, Stardust, levels', () => {
     expect(c.freePoints).toBe(1);
     expect(levelUp(c, 'bonk').ok).toBe(true);
     expect(c.level).toBe(2);
-    c.stardust = 15;
+    c.glowen = 15;
     expect(buyConsumable(c, 'throwing_knife').ok).toBe(true);
     expect(c.consumables.throwing_knife).toBe(4);
   });

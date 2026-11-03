@@ -26,7 +26,7 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
     level: 1,
     stats: { ...cls.stats },
     shards: 0,
-    stardust: 0,
+    glowen: 0,
     flaskMax: 1,
     flaskCur: 1,
     bossesBeaten: 0,
@@ -51,7 +51,7 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
 }
 
 export function statTotal(c: Character): number {
-  return c.stats.hp + c.stats.stamina + c.stats.bonk + c.stats.slicey + c.stats.brain + c.stats.prayer;
+  return c.stats.hp + c.stats.endurance + c.stats.bonk + c.stats.slicey + c.stats.brain + c.stats.prayer;
 }
 
 /** Level = 1 + points bought (48 base points). */
@@ -66,7 +66,7 @@ export function canRaise(c: Character, stat: StatId): boolean {
 /** Reset stats to the class base, keeping the level's points as unspent (refunded as levels to re-buy). */
 export function respecStats(c: Character): number {
   const base = CLASSES[c.classId].stats;
-  const refund = statTotal(c) - (base.hp + base.stamina + base.bonk + base.slicey + base.brain + base.prayer);
+  const refund = statTotal(c) - (base.hp + base.endurance + base.bonk + base.slicey + base.brain + base.prayer);
   c.stats = { ...base };
   return refund;
 }

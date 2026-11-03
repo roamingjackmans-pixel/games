@@ -148,7 +148,7 @@ export class GuestRunScene extends WorldScene {
       this.changed();
       return o.msg;
     };
-    const rng = stream(seed, `guest-reroll:${c.stardust}:${c.gems.length}:${this.net.cw.tick}`);
+    const rng = stream(seed, `guest-reroll:${c.glowen}:${c.gems.length}:${this.net.cw.tick}`);
     const open = (): void => {
       this.overlay?.remove();
       this.overlay = openBonfire({

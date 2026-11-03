@@ -517,8 +517,8 @@ export function drawPickup(ctx: CanvasRenderingContext2D, e: Entity, now: number
   glow(ctx, x, y, 20, color, 0.6);
   if (pk.kind === 'gem') {
     poly(ctx, [x, y - 8, x + 7, y, x, y + 8, x - 7, y], color, OUTLINE, 2);
-  } else if (pk.kind === 'consumable' || pk.kind === 'stardust') {
-    blob(ctx, x, y, 6, 7, { fill: pk.kind === 'stardust' ? '#fff3b0' : '#b08d6a' });
+  } else if (pk.kind === 'consumable' || pk.kind === 'glowen') {
+    blob(ctx, x, y, 6, 7, { fill: pk.kind === 'glowen' ? '#fff3b0' : '#b08d6a' });
   } else if (pk.kind === 'spell' || pk.kind === 'tear') {
     blob(ctx, x, y, 8, 8, { fill: pk.kind === 'tear' ? '#9ad0ff' : '#c58cff' });
   } else {

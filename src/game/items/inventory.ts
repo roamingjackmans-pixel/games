@@ -113,8 +113,8 @@ export function upgradeGem(c: Character, gemIdx: number): OpResult {
   if (!gem) return no('No gem.');
   if (gem.tier >= 5) return no('Already T5.');
   const cost = gemUpgradeCost(gem.tier);
-  if (c.stardust < cost) return no(`Needs ${cost} Stardust.`);
-  c.stardust -= cost;
+  if (c.glowen < cost) return no(`Needs ${cost} Glowen.`);
+  c.glowen -= cost;
   gem.tier = (gem.tier + 1) as Gem['tier'];
   return ok(`Upgraded to T${gem.tier}.`);
 }
@@ -123,8 +123,8 @@ export function rerollGem(c: Character, gemIdx: number, rng: Rng): OpResult {
   const gem = c.gems[gemIdx];
   if (!gem) return no('No gem.');
   const cost = gemRerollCost(gem.tier);
-  if (c.stardust < cost) return no(`Needs ${cost} Stardust.`);
-  c.stardust -= cost;
+  if (c.glowen < cost) return no(`Needs ${cost} Glowen.`);
+  c.glowen -= cost;
   const pool = gem.family === 'bulwark' ? GEM_FAMILIES : WEAPON_GEM_FAMILIES.filter((f) => f !== gem.family);
   gem.family = rng.pick(pool);
   return ok(`It became ${GEMS[gem.family].name}.`);
@@ -144,8 +144,8 @@ export function sellItem(c: Character, itemId: string): OpResult {
   const item = c.bag[i]!;
   const v = itemSellValue(item);
   c.bag.splice(i, 1);
-  c.stardust += v;
-  return ok(`Sold ${item.name} for ${v} Stardust.`);
+  c.glowen += v;
+  return ok(`Sold ${item.name} for ${v} Glowen.`);
 }
 
 export function sellGem(c: Character, gemIdx: number): OpResult {
@@ -153,8 +153,8 @@ export function sellGem(c: Character, gemIdx: number): OpResult {
   if (!gem) return no('No gem.');
   const v = gemSellValue(gem.tier);
   c.gems.splice(gemIdx, 1);
-  c.stardust += v;
-  return ok(`Sold for ${v} Stardust.`);
+  c.glowen += v;
+  return ok(`Sold for ${v} Glowen.`);
 }
 
 export function sellConsumable(c: Character, id: ConsumableId): OpResult {
@@ -163,16 +163,16 @@ export function sellConsumable(c: Character, id: ConsumableId): OpResult {
   if (n <= 0) return no('None left.');
   const v = Math.floor((def.price ?? 20) / 2);
   c.consumables[id] = n - 1;
-  c.stardust += v;
-  return ok(`Sold for ${v} Stardust.`);
+  c.glowen += v;
+  return ok(`Sold for ${v} Glowen.`);
 }
 
 export function buyConsumable(c: Character, id: ConsumableId): OpResult {
   const def = CONSUMABLES[id];
   if (def.price === null) return no('Not for sale.');
   if ((c.consumables[id] ?? 0) >= MAX_CONSUMABLE) return no(`You can carry ${MAX_CONSUMABLE}.`);
-  if (c.stardust < def.price) return no(`Needs ${def.price} Stardust.`);
-  c.stardust -= def.price;
+  if (c.glowen < def.price) return no(`Needs ${def.price} Glowen.`);
+  c.glowen -= def.price;
   c.consumables[id] = (c.consumables[id] ?? 0) + 1;
   if (!c.quickSlot) c.quickSlot = id;
   return ok(`Bought a ${def.name}.`);
@@ -180,15 +180,15 @@ export function buyConsumable(c: Character, id: ConsumableId): OpResult {
 
 export function buyItem(c: Character, item: Item, price: number): OpResult {
   if (c.bag.length >= BAG_SIZE) return no('Your bag is full.');
-  if (c.stardust < price) return no(`Needs ${price} Stardust.`);
-  c.stardust -= price;
+  if (c.glowen < price) return no(`Needs ${price} Glowen.`);
+  c.glowen -= price;
   c.bag.push(item);
   return ok(`Bought ${item.name}.`);
 }
 
 export function buyGem(c: Character, gem: Gem, price: number): OpResult {
-  if (c.stardust < price) return no(`Needs ${price} Stardust.`);
-  c.stardust -= price;
+  if (c.glowen < price) return no(`Needs ${price} Glowen.`);
+  c.glowen -= price;
   c.gems.push({ ...gem });
   return ok(`Bought ${GEMS[gem.family].name} (T${gem.tier}).`);
 }

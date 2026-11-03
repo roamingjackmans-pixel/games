@@ -40,7 +40,7 @@ export interface DebugApi {
   setCycle(n: number): string;
   setFlask(cur: number, max: number): string;
   addShards(n: number): string;
-  addStardust(n: number): string;
+  addGlowen(n: number): string;
   addTear(): string;
   testArena(): string;
   revealMap(): string;

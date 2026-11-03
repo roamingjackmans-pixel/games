@@ -76,8 +76,12 @@ describe('save schema (DATA_MODEL §1)', () => {
   });
   it('migrates a version-0 fixture', () => {
     const m = migrate(JSON.parse(JSON.stringify(V0_FIXTURE))) as Record<string, unknown>;
-    expect(m.version).toBe(1);
+    expect(m.version).toBe(SAVE_VERSION);
     expect(validateSave(m)).toEqual([]);
+    const mc = m.character as { glowen: number; stats: Record<string, number> };
+    expect(mc.glowen).toBe(3);
+    expect(mc.stats.endurance).toBe(8);
+    expect(mc.stats.stamina).toBeUndefined();
     const s = parseImport(JSON.stringify(V0_FIXTURE), 7);
     if (typeof s === 'string') throw new Error(s);
     expect(s.slot).toBe(7);

@@ -1,4 +1,4 @@
-// Gary, the wandering merchant (GAME_DESIGN §11, CONTENT_ITEMS §3): 3–5 special things for Stardust in a
+// Gary, the wandering merchant (GAME_DESIGN §11, CONTENT_ITEMS §3): 3–5 special things for Glowen in a
 // merchant room. The stock is rolled once per zone and cycle from the world seed and kept in the save, so
 // it is the same every visit; sold entries stay sold. NG+ stock is better (more Legendaries, gems +1 tier).
 import { stream } from '../../engine/rng';
@@ -59,12 +59,12 @@ export function garyEntryName(e: GaryStockEntry): string {
   }
 }
 
-/** Buy one entry: Stardust out, the thing in, the entry marked sold. */
+/** Buy one entry: Glowen out, the thing in, the entry marked sold. */
 export function buyFromGary(c: Character, e: GaryStockEntry): { ok: boolean; msg: string } {
   if (e.sold) return { ok: false, msg: 'Sold.' };
-  if (c.stardust < e.price) return { ok: false, msg: `Needs ${e.price} Stardust.` };
+  if (c.glowen < e.price) return { ok: false, msg: `Needs ${e.price} Glowen.` };
   if ((e.kind === 'item' || e.kind === 'ring') && c.bag.length >= 60) return { ok: false, msg: 'Your bag is full.' };
-  c.stardust -= e.price;
+  c.glowen -= e.price;
   e.sold = true;
   if ((e.kind === 'item' || e.kind === 'ring') && e.item) c.bag.push(e.item);
   else if (e.kind === 'gem' && e.gem) c.gems.push({ ...e.gem });

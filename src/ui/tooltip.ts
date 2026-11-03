@@ -118,7 +118,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null = nul
       lines.push(h('div', { class: d >= 0 ? 'good small' : 'bad small' }, `${d >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(d))} vs equipped ${compare.name}`));
     }
   }
-  lines.push(h('div', { class: 'small dim-text' }, `Sells for ${itemSellValue(item)} Stardust`));
+  lines.push(h('div', { class: 'small dim-text' }, `Sells for ${itemSellValue(item)} Glowen`));
   const flavor = item.rarity === 'legendary' ? LEGENDARY_FLAVOR[hashStr(item.name) % LEGENDARY_FLAVOR.length]! : (info?.flavor ?? '');
   if (flavor) lines.push(h('div', { class: 'flavor' }, flavor));
   return h('div', { class: 'tooltip' }, ...lines);

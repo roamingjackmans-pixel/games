@@ -6,7 +6,7 @@ import { resolvePattern, type PatternCtx } from '../combat/patterns';
 import { speedMult } from '../combat/state';
 import { runEffects } from '../effects/run';
 import { attackDamage } from './spawn';
-import type { AttackDef, PatternDef } from '../types';
+import { DAMAGE_TYPES, type AttackDef, type DamageType, type PatternDef } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y } from '../combat/patterns';
 import { ROOM_CX, ROOM_CY, escapeReach } from '../combat/patterns';
@@ -429,8 +429,8 @@ export function spawnEnemyProjectile(
   });
 }
 
-function firstType(spec: DamageSpec): 'physical' | 'fire' | 'frost' | 'lightning' | 'holy' | 'void' {
-  for (const k of ['physical', 'fire', 'frost', 'lightning', 'holy', 'void'] as const) if ((spec.dmg[k] ?? 0) > 0) return k;
+function firstType(spec: DamageSpec): DamageType {
+  for (const k of DAMAGE_TYPES) if ((spec.dmg[k] ?? 0) > 0) return k;
   return 'physical';
 }
 

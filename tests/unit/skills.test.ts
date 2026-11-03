@@ -23,7 +23,7 @@ import { validateData } from '../../src/data/validate';
 function world(): { w: World; p: Entity } {
   const w = new World('SKILLS', Room.empty());
   const c = newCharacter('knight', 'Joe', 'p1', new Rng(4));
-  for (const k of ['hp', 'stamina', 'bonk', 'slicey', 'brain', 'prayer'] as const) c.stats[k] = 60;
+  for (const k of ['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'] as const) c.stats[k] = 60;
   const p = spawnPlayer(w, c, 0, true, 500, 368);
   installRules(w, { onPlayerDown: (_w, e) => (e.hp!.hp = e.hp!.max) });
   for (let i = 0; i < 4; i++) spawnEnemy(w, ENEMIES.shambler!, 650 + i * 40, 300 + i * 40, { tellS: 0 });
@@ -52,7 +52,7 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
     for (const id of CLASS_IDS) {
       const cls = CLASSES[id];
       const st = cls.stats;
-      expect(st.hp + st.stamina + st.bonk + st.slicey + st.brain + st.prayer, id).toBe(48);
+      expect(st.hp + st.endurance + st.bonk + st.slicey + st.brain + st.prayer, id).toBe(48);
       const c = newCharacter(id, 'Joe', 'p', new Rng(1));
       const d = computeDerived(c);
       expect(d.weaponMeetsReq, `${id} weapon`).toBe(true);

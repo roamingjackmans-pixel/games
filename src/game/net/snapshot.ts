@@ -284,7 +284,7 @@ export function publicChar(c: Entity['pl'] extends infer P ? (P extends { char: 
     consumables: {},
     quickSlot: null,
     shards: 0,
-    stardust: 0,
+    glowen: 0,
     flaskMax: c.flaskMax,
     flaskCur: c.flaskCur,
     bossesBeaten: c.bossesBeaten,

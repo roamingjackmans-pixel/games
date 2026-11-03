@@ -11,7 +11,7 @@ export interface ClassDef {
   look: { skin: string; hair: string; shirt: string; legs: string; head: string; trim: string };
 }
 
-const S = (hp: number, stamina: number, bonk: number, slicey: number, brain: number, prayer: number): Stats => ({ hp, stamina, bonk, slicey, brain, prayer });
+const S = (hp: number, endurance: number, bonk: number, slicey: number, brain: number, prayer: number): Stats => ({ hp, endurance, bonk, slicey, brain, prayer });
 
 export const CLASSES: Record<ClassId, ClassDef> = {
   knight: {

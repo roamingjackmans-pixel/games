@@ -261,7 +261,7 @@ export class RunScene extends WorldScene {
       changed();
       return o.msg;
     };
-    const rng = stream(ws.seed, `reroll:${c.stardust}:${c.gems.length}:${s.w.tick}`);
+    const rng = stream(ws.seed, `reroll:${c.glowen}:${c.gems.length}:${s.w.tick}`);
     const open = (): void => {
       this.overlay?.remove();
       this.overlay = openBonfire({
@@ -319,7 +319,7 @@ export class RunScene extends WorldScene {
     open();
   }
 
-  /** Gary's cart: 3–5 special things for Stardust (GAME_DESIGN §11). */
+  /** Gary's cart: 3–5 special things for Glowen (GAME_DESIGN §11). */
   showGary(): void {
     this.closeOverlay();
     const p = this.local;
@@ -349,7 +349,7 @@ export class RunScene extends WorldScene {
           'div',
           { class: 'panel col', style: 'width:460px' },
           h('h2', null, 'Gary'),
-          h('div', { class: 'small dim-text' }, '"Don’t ask where I got it." · You have ' + c.stardust + ' Stardust.'),
+          h('div', { class: 'small dim-text' }, '"Don’t ask where I got it." · You have ' + c.glowen + ' Glowen.'),
           ...rows,
           msg ? h('div', { class: 'small' }, msg) : null,
           btn('Leave', () => this.closeOverlay(), 'big'),
