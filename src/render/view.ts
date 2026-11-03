@@ -9,7 +9,7 @@ import { drawText } from '../engine/text';
 import { overlays } from '../game/debug/menu';
 import { HAZARDS } from '../game/systems/hazards';
 import { typeColor } from '../game/combat/damage';
-import { drawRoomFloor, DEFAULT_PALETTE } from './room';
+import { drawRoomFloor, DEFAULT_PALETTE, drawRoomObstacles } from './room';
 import { drawAmbience } from './ambience';
 import { drawMovingFloors } from './movingFloor';
 import { drawAttackIcon, drawTelegraph } from './telegraphs';
@@ -243,6 +243,8 @@ export class WorldView {
     }
     for (const e of w.entities.values()) if (e.type === 'telegraph' && !e.removed) drawTelegraph(ctx, w, e, st.video.highContrastTelegraphs, now);
     drawTelegraphEchoes(ctx, now, st.video.highContrastTelegraphs);
+    // pillars, props, trees and inner walls sit above the attack markers, so they never vanish under one (D129)
+    drawRoomObstacles(ctx);
     // walls (Guardian Wall)
     for (const e of w.entities.values()) {
       if (e.type !== 'wall' || e.removed || !e.wl) continue;

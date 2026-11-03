@@ -91,7 +91,15 @@ export function tryUseSkill(w: World, e: Entity, i: number): boolean {
   const d = pl.derived;
   const s = skillOf(e, i);
   const now = w.time;
-  if (!s) return false;
+  if (!s) {
+    // a staff or talisman in the weapon hand has no weapon skills (D117): say so instead of doing nothing (D129)
+    if (d.mainTool && now - pl.lastBowHintAt > 1.5) {
+      pl.lastBowHintAt = now;
+      const what = d.mainTool.def.school === 'brain' ? 'staff' : 'talisman';
+      msg(w, e, `A ${what} in your weapon hand has no weapon skills (its spells are on {spell1} {spell2} {spell3}). Swap to a weapon ({swapWeapon}) or hold the ${what} in your off hand.`);
+    }
+    return false;
+  }
   if (i >= d.skillsUnlocked) {
     msg(w, e, d.weaponMeetsReq ? `${s.name} is locked (better item tier needed).` : 'Skills are locked: weapon below requirement.');
     return false;

@@ -7,7 +7,7 @@
 import { OUTLINE, getGlow, offscreen, withAlpha } from '../engine/draw/parts';
 import { drawRoomProp, type PropFx } from '../engine/draw/props';
 import { Rng, hashString } from '../engine/rng';
-import { OVERLAY, ROOM_W, ROOM_Y0, T, TILE, type Room, type Side } from '../game/room';
+import { OVERLAY, ROOM_H, ROOM_W, ROOM_Y0, T, TILE, type Room, type Side } from '../game/room';
 import type { Palette } from '../game/types';
 import { drawAmbienceUnder } from './ambience';
 import { floorEdgeShade, paintFloor } from './floors';
@@ -37,6 +37,8 @@ interface Base {
   sky: CanvasImageSource | null;
   /** hazardous terrain patches (terrain.ts), null when the room has none */
   terrain: TerrainArt | null;
+  /** the lit walls, pillars, props and trees alone, drawn again over the attack markers (D129) */
+  obstacles: Canvas | null;
 }
 
 let base: Base | null = null;
@@ -79,6 +81,35 @@ export function drawRoomFloor(ctx: CanvasRenderingContext2D, room: Room, pal: Pa
     ctx.fillStyle = `rgba(0,0,0,${darkness})`;
     ctx.fillRect(0, ROOM_Y0, RW, RH);
   }
+}
+
+/**
+ * The obstacles (walls, pillars, props, trees; not doors, pits or the room's outer border) cut out of the finished,
+ * lit base, so they can be drawn again on top of the attack markers: a Red, Blue or yellow area never hides a
+ * pillar you are about to run into (D129). A few pixels above each tile are kept for the wall and prop tops.
+ */
+function cutObstacles(src: Canvas, tiles: Tiles): Canvas | null {
+  const { canvas, ctx } = offscreen(RW, RH);
+  ctx.beginPath();
+  let any = false;
+  for (let i = 0; i < tiles.e.length; i++) {
+    const v = tiles.e[i];
+    if (v !== E.Wall && v !== E.Pillar && v !== E.Prop && v !== E.Tree) continue;
+    const tx = i % ROOM_W;
+    const ty = Math.floor(i / ROOM_W);
+    if (v === E.Wall && (tx === 0 || ty === 0 || tx === ROOM_W - 1 || ty === ROOM_H - 1)) continue;
+    ctx.rect(tx * TILE - 2, ty * TILE - 6, TILE + 4, TILE + 8);
+    any = true;
+  }
+  if (!any) return null;
+  ctx.clip();
+  ctx.drawImage(src as CanvasImageSource, 0, 0);
+  return canvas;
+}
+
+/** Draw the obstacles again over whatever was drawn since the floor (call after the telegraphs, D129). */
+export function drawRoomObstacles(ctx: CanvasRenderingContext2D): void {
+  if (base?.obstacles) ctx.drawImage(base.obstacles as CanvasImageSource, 0, ROOM_Y0);
 }
 
 export function invalidateRoomCache(): void {
@@ -148,8 +179,10 @@ function renderBase(room: Room, pal: Palette, propStyle: string, key: string): B
   // (they sit on open floor a tile clear of walls and props, so nothing drawn earlier overlaps them)
   const terrain = drawTerrainBase(ctx, room, style.id, seed);
   mark('terrain');
+  const obstacles = cutObstacles(canvas, tiles);
+  mark('obstacles');
   roomPerf.marks = marks.join(' ');
-  return { key, canvas, art, style, seed, sky, terrain };
+  return { key, canvas, art, style, seed, sky, terrain, obstacles };
 }
 
 /** Ambient darkness with light pools punched out, then a soft colored wash from each light. */

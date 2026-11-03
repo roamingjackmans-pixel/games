@@ -18,12 +18,43 @@ import { shapeHit } from '../game/combat/patterns';
 import { drawAttackIcon } from './telegraphs';
 import { ELEMENTS, enemyElement } from '../game/elements';
 import { drawElementOver, drawElementUnder, drawGolden, isImmuneNow } from './elementFx';
-import type { Character } from '../game/types';
+import type { Character, DamageType } from '../game/types';
 import type { Entity, World } from '../game/world';
 
 const RARITY_COLOR: Record<string, string> = { common: '#e8e8e8', uncommon: '#58d66a', rare: '#4aa3ff', epic: '#b06bff', legendary: '#ff9b2e' };
 export function rarityColor(r: string): string {
   return RARITY_COLOR[r] ?? '#e8e8e8';
+}
+
+/** Buff stats that load a weapon with an element (D129); add a line here for any new elemental weapon buff. */
+const ELEMENT_BUFFS: Partial<Record<string, DamageType>> = { holyConvertPct: 'holy', holyDamagePct: 'holy' };
+
+/** The element a player's weapon is buffed with right now, or null. */
+function weaponBuffElement(e: Entity, now: number): DamageType | null {
+  for (const b of e.buffs ?? []) {
+    if (b.until <= now) continue;
+    const el = ELEMENT_BUFFS[b.stat];
+    if (el) return el;
+  }
+  return null;
+}
+
+/** A shimmering glow along the weapon (drawn in its local space, blade along +x). */
+function drawBuffGlow(c: CanvasRenderingContext2D, el: DamageType, now: number, seed: number): void {
+  const col = ELEMENTS[el].glow;
+  const pulse = 0.55 + 0.25 * Math.sin(now * 6 + seed);
+  for (let x = 8; x <= 62; x += 9) glow(c, x, 0, 13, col, pulse * (0.5 + 0.5 * (x / 62)));
+  // a few motes drifting off the edge
+  c.save();
+  c.fillStyle = col;
+  for (let i = 0; i < 4; i++) {
+    const k = (now * 0.9 + i / 4 + seed * 0.13) % 1;
+    c.globalAlpha = (1 - k) * 0.8;
+    c.beginPath();
+    c.arc(20 + i * 12, -4 - k * 14, 1.6, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.restore();
 }
 
 export function lookFor(c: Character): JoeLook {
@@ -134,6 +165,8 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   const look = lookFor(pl.char);
   const wDraw = pl.derived.weapon.draw;
   const wItem = pl.derived.weaponItem;
+  // a weapon buffed with an element (Bless Weapon, Consecrate…) glows that element's colour (D129)
+  const buffEl = weaponBuffElement(e, now);
   const legendName = wItem?.rarity === 'legendary' ? wItem.name : undefined;
   const offItem = pl.char.equipment.off;
   const shield = offItem ? SHIELDS[offItem.baseId] : undefined;
@@ -190,6 +223,7 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
           // edge leads the swing (D104)
           if (edgeFlip) c.scale(1, -1);
           drawWeapon(c, wDraw, now, legendName, charging);
+          if (buffEl) drawBuffGlow(c, buffEl, now, e.id);
         },
       };
   let off: HandPose | undefined;
@@ -201,6 +235,7 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     off = { x: Math.cos(f - 0.9) * 10, y: Math.sin(f - 0.9) * 10 + 2, a: f - pose.rot * 0.8, draw: (c) => {
         if (pl.combo && pl.combo.swing.hitbox.shape === 'arc' && !edgeFlip) c.scale(1, -1);
         drawWeapon(c, wDraw, now, legendName);
+        if (buffEl) drawBuffGlow(c, buffEl, now, e.id + 7);
       } };
   } else if (!ghost && !two) {
     const blockLayer: 'front' | 'back' = Math.sin(f) < -0.35 ? 'back' : 'front';
