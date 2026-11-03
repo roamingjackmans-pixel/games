@@ -58,7 +58,8 @@ export function scalingCurve(s: number): number {
   return 1 - Math.pow(0.982, Math.max(0, s));
 }
 
-export const GRADE_MULT: Record<Grade, number> = { S: 1.2, A: 1.0, B: 0.75, C: 0.5, D: 0.25, E: 0.1, '-': 0 };
+/** Grade weights (D88: raised so stats matter more; were S 1.2, A 1.0, B 0.75, C 0.5, D 0.25, E 0.1). */
+export const GRADE_MULT: Record<Grade, number> = { S: 1.9, A: 1.55, B: 1.15, C: 0.8, D: 0.45, E: 0.2, '-': 0 };
 
 /** Two-handing counts Bonk ×1.5 (capped at 99) for scaling and requirements; Slicey is unchanged (D72). */
 export function effBonk(bonk: number, twoHanded: boolean): number {
@@ -121,10 +122,10 @@ export function toolMult(grade: number, ilvl: number): number {
   return grade * (1 + 0.35 * (ilvl - 1));
 }
 export function spellPower(spellBase: number, brain: number, tMult: number): number {
-  return spellBase * (1 + 1.2 * scalingCurve(brain)) * tMult;
+  return spellBase * (1 + 1.8 * scalingCurve(brain)) * tMult;
 }
 export function healPower(spellBase: number, prayer: number, tMult: number): number {
-  return spellBase * (1 + 1.0 * scalingCurve(prayer)) * tMult;
+  return spellBase * (1 + 1.5 * scalingCurve(prayer)) * tMult;
 }
 
 /** flaskHeal = 40% maxHP × (1 + 0.003 × Prayer) */
@@ -175,6 +176,34 @@ export function skillsUnlocked(ilvl: number, legendary: boolean): number {
   const tier = ilvl >= 7 ? 3 : ilvl >= 5 ? 2 : ilvl >= 3 ? 1 : 0;
   return Math.min(3, tier + (legendary ? 1 : 0));
 }
+/**
+ * How many skills a weapon dropped in this zone and cycle comes with (D89): before zone 4 none; from zone 4 some
+ * have Q; from NG+ (cycle 1) some also have E; from NG+2 (cycle 2) some have all three. Never E before NG+, never R
+ * before NG+2. Legendaries roll a little better within the same caps. `roll` returns 0..1 (a seeded stream).
+ */
+export function rollSkillCount(roll: () => number, zone: number, cycle: number, legendary: boolean): number {
+  const bonus = legendary ? 0.2 : 0;
+  const z = Math.max(1, Math.min(8, zone));
+  let n = 0;
+  const q = cycle <= 0 ? (z < 4 ? 0 : 0.2 + 0.1 * (z - 4) + bonus) : cycle === 1 ? Math.min(0.95, 0.6 + 0.04 * z + bonus) : 1;
+  if (roll() < q) n = 1;
+  if (n === 1 && cycle >= 1) {
+    const e = cycle === 1 ? 0.1 + 0.05 * (z - 1) + bonus : Math.min(0.95, 0.6 + 0.04 * z + bonus);
+    if (roll() < e) n = 2;
+  }
+  if (n === 2 && cycle >= 2) {
+    const r = Math.min(0.9, 0.1 + 0.06 * (z - 1) + 0.1 * (cycle - 2) + bonus);
+    if (roll() < r) n = 3;
+  }
+  return n;
+}
+
+/** Skills a weapon item has unlocked: its rolled count (D89), or the old ilvl tiers for items from older saves. */
+export function itemSkillCount(item: { ilvl: number; rarity: string; skills?: number; bonusSkills?: number }): number {
+  const base = item.skills ?? skillsUnlocked(item.ilvl, item.rarity === 'legendary');
+  return Math.min(3, base + (item.bonusSkills ?? 0));
+}
+
 export function tierName(ilvl: number): string {
   return ilvl >= 7 ? 'Mythic' : ilvl >= 5 ? 'Masterwork' : ilvl >= 3 ? 'Fine' : 'Worn';
 }

@@ -509,6 +509,8 @@ export interface WeaponDef {
   /** hybrid weapons (D80) also scale with Brain or Prayer and need it */
   grades: { bonk: Grade; slicey: Grade; brain?: Grade; prayer?: Grade };
   req: { bonk: number; slicey: number; brain?: number; prayer?: number };
+  /** can only be used two-handed (bows: D88) */
+  twoHandOnly?: boolean;
   /** the weapon's own damage type (hybrids: Bonk+Brain Void, Slicey+Brain Magic, Bonk+Prayer Fire, Slicey+Prayer Holy) */
   element?: DamageType;
   speedClass: SpeedClass;
@@ -640,8 +642,10 @@ export interface Item {
   affixes: { id: string; value: number }[];
   sockets: (Gem | null)[];
   legendaryPower?: string;
-  /** extra unlocked skills (The Instructor's drop has all 3) */
+  /** extra unlocked skills on top of `skills` (The Instructor's drop: +1) */
   bonusSkills?: number;
+  /** weapons: skills unlocked, rolled at drop time by zone and cycle (D89); absent on items from older saves */
+  skills?: number;
 }
 
 export type ConsumableId =

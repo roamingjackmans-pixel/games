@@ -121,6 +121,8 @@ export interface ChargeRun {
 }
 
 export interface PlayerC {
+  /** last "a bow needs both hands" hint (D88) */
+  lastBowHintAt: number;
   slot: number;
   playerId: string;
   name: string;
@@ -319,6 +321,8 @@ export interface ProjC {
   isSpell: boolean;
   isSkill: boolean;
   sourceTag: string;
+  /** bow and crossbow shots lose damage past 250 px from where they were loosed (D88) */
+  falloffFrom?: { x: number; y: number };
 }
 
 export interface DamageSpec {

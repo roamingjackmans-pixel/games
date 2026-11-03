@@ -8,6 +8,12 @@ function specOf(e: Entity): DamageSpec {
   const pr = e.pr!;
   const s = emptySpec(pr.kind === 'player' ? 'player' : pr.kind === 'utility' ? 'normal' : pr.kind);
   s.dmg = pr.dmg;
+  if (pr.falloffFrom) {
+    // full damage to 250 px, then down to 70% at 750 px and beyond (D88)
+    const d = Math.hypot(e.x - pr.falloffFrom.x, e.y - pr.falloffFrom.y);
+    const k = d <= 250 ? 1 : Math.max(0.7, 1 - ((d - 250) / 500) * 0.3);
+    if (k < 1) s.dmg = Object.fromEntries(Object.entries(pr.dmg).map(([t, v]) => [t, (v ?? 0) * k]));
+  }
   s.status = pr.status;
   s.control = pr.control;
   s.poiseDmg = pr.poiseDmg;

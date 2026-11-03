@@ -607,7 +607,8 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
       crit = true;
     }
     if (o.light && hp.riposteUntil > now && pl.riposteBuffUntil > now) {
-      mult *= pl.derived.powers.has('riposte_master') ? 4 : 3;
+      // D88: a riposte doubles (was ×3); Riposte Master triples
+      mult *= pl.derived.powers.has('riposte_master') ? 3 : 2;
       if (wpn.ripostedCritMult) mult *= wpn.ripostedCritMult;
       crit = true;
       pl.riposteBuffUntil = 0;

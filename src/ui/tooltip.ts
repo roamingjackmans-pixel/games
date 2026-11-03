@@ -13,7 +13,7 @@ import { armorPieceDefense, parseArmorBase } from '../data/armor';
 import { ELEMENTS } from '../game/elements';
 import { baseInfo, itemRequirements, meetsRequirements, type Requirements } from '../game/items/bases';
 import { defaultSlotFor, itemSellValue, type EquipSlot } from '../game/items/inventory';
-import { poiseForSize, reqAtIlvl, scalingMult, skillsUnlocked, tierName, toolMult, weaponBase } from '../game/combat/formulas';
+import { itemSkillCount, poiseForSize, reqAtIlvl, scalingMult, tierName, toolMult, weaponBase } from '../game/combat/formulas';
 import { computeDerived } from '../game/player/derived';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, equipLoadWith, itemWeight, type EquipLoadInfo } from '../game/player/equipLoad';
 import { drawShield, drawTool, drawWeapon } from '../engine/draw/weapons';
@@ -305,7 +305,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
       ),
     );
 
-    const n = Math.min(3, skillsUnlocked(item.ilvl, item.rarity === 'legendary') + (item.bonusSkills ?? 0));
+    const n = itemSkillCount(item);
     const skills = h('div', { class: 'tt-rows' });
     w.skills.forEach((sid, i) => {
       const locked = i >= n || !meets;

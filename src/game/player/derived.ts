@@ -7,7 +7,7 @@ import { armorPieceDefense } from '../../data/armor';
 import { AFFIXES, affixBuildup } from '../../data/affixes';
 import { GEMS, gemBuildup, gemValue } from '../../data/gems';
 import { RINGS, bandAmount, bandStat } from '../../data/rings';
-import { dodgeRecharge, maxHP, maxStamina, scalingMult, skillsUnlocked, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
+import { dodgeRecharge, itemSkillCount, maxHP, maxStamina, scalingMult, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
 import { itemRequirements, meetsRequirements } from '../items/bases';
 import { equipLoadOf, type EquipLoadInfo } from './equipLoad';
 import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatusId, Stats, WeaponDef } from '../types';
@@ -93,7 +93,10 @@ function itemsOf(c: Character): Item[] {
 }
 
 export function computeDerived(c: Character): Derived {
-  const items = itemsOf(c);
+  // gear you lack the stats for still works at reduced efficacy, but none of its buffs apply (D88): affixes,
+  // gems, bands, ring effects and legendary powers come only from items whose requirements you meet
+  // (checked against your own stats, so a stat affix cannot lift you over its own requirement)
+  const items = itemsOf(c).filter((it) => meetsRequirements(itemRequirements(it), c.stats, it.kind === 'weapon' ? c.twoHanded : false));
   // ---- stat bonuses (affixes "of the X", bands) ----
   const stats: Stats = { ...c.stats };
   for (const it of items) {
@@ -289,7 +292,6 @@ export function computeDerived(c: Character): Derived {
 
   const hp = maxHP(stats.hp) + hpFlat;
   const stam = maxStamina(stats.endurance) + stamFlat;
-  const legendaryWeapon = main?.rarity === 'legendary';
   const shieldIlvl = off?.ilvl ?? 1;
   const toolIlvl = off?.ilvl ?? 1;
   const sv = shield ? shieldValues(shield, shieldIlvl) : { physical: 0, elemental: 0, holyVoid: 0 };
@@ -308,7 +310,7 @@ export function computeDerived(c: Character): Derived {
     weaponItem: main,
     weaponIlvl,
     weaponMeetsReq,
-    skillsUnlocked: main && weaponMeetsReq ? Math.min(3, skillsUnlocked(weaponIlvl, legendaryWeapon) + (main.bonusSkills ?? 0)) : 0,
+    skillsUnlocked: main && weaponMeetsReq ? itemSkillCount(main) : 0,
     weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded) * (weaponMeetsReq ? 1 : 0.4),
     dmgPct,
     flat,

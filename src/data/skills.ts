@@ -47,7 +47,7 @@ const LIST: SkillDef[] = [
   S('daggers_flurry', 'twin_daggers', 2, 'Flurry', 16, 24, [{ op: 'channel', durationS: 1.2, tickS: 0.15, moveSpeedPct: 0, hyperArmor: true, followAim: true, tick: [hit(arc(100, 80), 0.6)] }], '8 hits in 1.2 s ×0.6, rooted, hyper armor.'),
   // Rapier
   S('rapier_lunge', 'rapier', 0, 'Lunge', 7, 16, [hit(thrust(30, 260), 1.8), { op: 'dash', distance: 160, durationS: 0.18, toward: 'aim', iframes: 'none' }], 'Dash-thrust(30,260) ×1.8.', { castMs: 120 }),
-  S('rapier_riposte_stance', 'rapier', 1, 'Riposte Stance', 14, 12, [{ op: 'stance', durationS: 1.0, onHitTaken: 'parry', riposteMult: 3 }], '1 s stance: any non-Red hit is parried and riposted ×3 (no shield needed).'),
+  S('rapier_riposte_stance', 'rapier', 1, 'Riposte Stance', 14, 12, [{ op: 'stance', durationS: 1.0, onHitTaken: 'parry', riposteMult: 2 }], '1 s stance: any non-Red hit is parried and riposted ×2 (no shield needed).'),
   S('rapier_thousand_cuts', 'rapier', 2, 'Thousand Cuts', 18, 26, [{ op: 'channel', durationS: 0.9, tickS: 0.18, moveSpeedPct: 0.3, followAim: true, tick: [hit(thrust(28, 130), 1.0, { status: { id: 'bleed', buildup: 20 } })] }], '5 thrusts in 0.9 s ×1.0, Bleed 20 each.'),
   // Katana
   S('katana_iai_slash', 'katana', 0, 'Iai Slash', 10, 20, [hit(thrust(60, 260), 2.4)], '0.5 s sheath (hyper armor), then thrust(60,260) ×2.4.', { castMs: 500, castHyperArmor: true }),

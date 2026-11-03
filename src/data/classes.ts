@@ -83,6 +83,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     name: 'Hunter',
     stats: S(8, 12, 5, 12, 6, 5),
     start: { main: 'bow', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [], bag: ['whip'] },
+    twoHanded: true,
     blurb: 'Can track anything. Mostly tracks in mud.',
     look: { skin: '#e0b890', hair: '#6a3a1a', shirt: '#3a5a2a', legs: '#3a3020', head: 'hood', trim: '#a0803a', hairStyle: 'short', beard: 'stubble', hat: '#3a5a2a', belt: '#3a2a1a', emblem: 'leaf' },
   },

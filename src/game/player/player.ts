@@ -12,6 +12,8 @@ import type { Character, DamageType, SwingDef } from '../types';
 import { DAMAGE_TYPES } from '../types';
 import { newStatus, type DamageSpec, type Entity, type PlayerC, type World } from '../world';
 
+/** walking speed while swinging, by weapon speed class (D88) */
+const ATTACK_MOVE: Record<string, number> = { veryfast: 0.6, fast: 0.52, medium: 0.42, mediumslow: 0.33, slow: 0.25, veryslow: 0.18 };
 export const DODGE_S = 0.45;
 export const DODGE_DIST = 220;
 export const DODGE_IFRAME_FROM = 0.05;
@@ -45,6 +47,7 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     parryReadyAt: 0,
     guardBrokenUntil: 0,
     dodgeReadyAt: 0,
+    lastBowHintAt: -9,
     dodgeRechargeTotal: derived.dodgeRecharge,
     dodgeUntil: 0,
     dodgeDir: [1, 0],
@@ -276,7 +279,8 @@ function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number
   const spec = weaponSpec(w, e, swing.mult * mult);
   const wpn = pl.derived.weapon;
   const bonkPierce = wpn.ranged?.pierceBonk && pl.derived.stats.bonk >= wpn.ranged.pierceBonk ? 1 : 0;
-  spawnPlayerProjectile(w, e, a, swing.hitbox.speed, swing.hitbox.r, spec, pierce + bonkPierce, wpn.id === 'bow' ? 'p_arrow' : 'p_bolt');
+  const shot = spawnPlayerProjectile(w, e, a, swing.hitbox.speed, swing.hitbox.r, spec, pierce + bonkPierce, wpn.id === 'bow' ? 'p_arrow' : 'p_bolt');
+  shot.pr!.falloffFrom = { x: e.x, y: e.y };
   w.sfx(wpn.id === 'bow' ? 'shootArrow' : 'shootBolt', e.x);
 }
 
@@ -646,7 +650,13 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
 
   // actions from idle
   if (pl.state === 'idle' && !pl.channel && !pl.charge) {
-    if ((pressed(inp, 'attack') || (held(inp, 'attack') && !pl.derived.weapon.ranged)) && e.stam!.cur > 0) {
+    if (pressed(inp, 'attack') && pl.derived.weapon.twoHandOnly && !pl.derived.twoHanded) {
+      // a bow needs both hands to draw (D88)
+      if (now - pl.lastBowHintAt > 1.5) {
+        pl.lastBowHintAt = now;
+        w.emit({ t: 'msg', text: 'A bow needs both hands. Two-hand it ({twoHand}) to shoot.', forPlayer: pl.playerId, color: '#ffb35a' });
+      }
+    } else if ((pressed(inp, 'attack') || (held(inp, 'attack') && !pl.derived.weapon.ranged)) && e.stam!.cur > 0) {
       const idx = now <= pl.comboResetAt ? pl.nextComboIdx : 0;
       startSwing(w, e, idx);
     } else if (pressed(inp, 'flask')) startFlask(w, e);
@@ -671,7 +681,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
 
   // movement
   let mv = 0;
-  const canMove = (pl.state === 'idle' || pl.state === 'flask' || pl.state === 'cast' || pl.state === 'channel' || pl.state === 'charge') && !e.forced;
+  const canMove = (pl.state === 'idle' || pl.state === 'flask' || pl.state === 'cast' || pl.state === 'channel' || pl.state === 'charge' || pl.state === 'attack') && !e.forced;
   if (pl.state === 'dodge') {
     const t = 1 - (pl.dodgeUntil - now) / DODGE_S;
     const sp = (DODGE_DIST / DODGE_S) * 1.6 * Math.max(0.1, 1 - t) * pl.derived.load.effects.dodge;
@@ -684,6 +694,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     if (pl.state === 'cast') speed *= 0.5;
     if (pl.channel) speed *= pl.channel.moveMult;
     if (pl.charge) speed *= 0.35;
+    // swinging slows you down instead of rooting you; heavier weapon classes slow you more (D88)
+    if (pl.state === 'attack') speed *= ATTACK_MOVE[pl.derived.weapon.speedClass] ?? 0.4;
     if (pl.blocking) speed *= 0.75;
     const ix = inp.moveX;
     const iy = inp.moveY;

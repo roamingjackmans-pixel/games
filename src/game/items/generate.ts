@@ -11,6 +11,7 @@ import { LEGENDARY_NAMES, powersFor, type PowerSlot } from '../../data/legendari
 import { RARITY_ORDER, RARITY_WEIGHTS, SLOT_WEIGHTS, type LootSource } from '../../data/lootTables';
 import { GEM_FAMILIES } from '../../data/gems';
 import { baseInfo } from './bases';
+import { rollSkillCount } from '../combat/formulas';
 import { makeItem, newId, socketCount } from './make';
 import type { Gem, Item, Rarity } from '../types';
 
@@ -122,6 +123,8 @@ export interface GenOpts {
   baseId?: string;
   /** minimum rarity (bosses drop Rare+) */
   minRarity?: Rarity;
+  /** NG+ cycle (skill unlocks, D89); defaults to ilvl − zone */
+  cycle?: number;
 }
 
 export function generateItem(rng: Rng, o: GenOpts): Item {
@@ -139,6 +142,7 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
   item.id = newId(rng);
   item.sockets = new Array(socketCount(item.kind, rarity, rng)).fill(null);
   item.affixes = rollAffixes(rng, item, AFFIX_COUNT[rarity]);
+  if (item.kind === 'weapon') item.skills = rollSkillCount(() => rng.next(), o.zone, o.cycle ?? Math.max(0, o.ilvl - o.zone), rarity === 'legendary');
   if (rarity === 'legendary') {
     const ps = powerSlotOf(item);
     if (ps) {

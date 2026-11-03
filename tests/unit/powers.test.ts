@@ -14,6 +14,8 @@ import type { Item } from '../../src/game/types';
 function session(): GameSession {
   const c = newCharacter('knight', 'Joe', 'p1', new Rng('pw'));
   c.tutorialDone = true;
+  // ilvl 5 legendaries: meet their requirements so their powers apply (D88)
+  c.stats.bonk = c.stats.slicey = 30;
   const s = new GameSession(newSave(1, c, 'POWERS'));
   s.start();
   return s;

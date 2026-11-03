@@ -74,13 +74,11 @@ export class WorldView {
           break;
         case 'dmg':
           if (!st.video.damageNumbers) break;
-          p.spawn(ev.x + (Math.random() - 0.5) * 14, ev.y, (Math.random() - 0.5) * 30, -70, 0.9, ev.crit ? 22 : 15, ev.heal ? '#58d66a' : ev.toPlayer ? '#ff6a5a' : typeColor(ev.type), 'text', {
+          p.spawn(ev.x + (Math.random() - 0.5) * 14, ev.y, (Math.random() - 0.5) * 30, -70, 0.9, ev.crit ? 22 : 15, ev.heal ? '#58d66a' : ev.toPlayer ? '#ff6a5a' : ev.affinity === 'weak' ? '#ffe14a' : ev.affinity === 'resist' ? '#8e8e96' : typeColor(ev.type), 'text', {
             drag: 3,
             grav: 60,
             text: `${ev.heal ? '+' : ''}${Math.max(1, Math.round(ev.amount))}${ev.crit ? '!' : ''}`,
           });
-          // the weakness chart (D81) says so out loud: a hit on a weakness or a resisted hit
-          if (ev.affinity) p.spawn(ev.x, ev.y - 16, 0, -55, 0.8, 12, ev.affinity === 'weak' ? '#ffe14a' : '#9a9aa6', 'text', { drag: 3, grav: 30, text: ev.affinity === 'weak' ? 'Weak!' : 'Resist' });
           break;
         case 'shake':
           this.shake = Math.min(18, Math.max(this.shake, ev.amount * st.video.shake));
