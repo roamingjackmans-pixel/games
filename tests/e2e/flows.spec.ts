@@ -35,6 +35,16 @@ test('create a character, play the tutorial hall, pause, save and continue after
   await page.keyboard.down('KeyD');
   // the hall's east door opens on The Instructor's room (D90); his east door leads down to the first bonfire
   await expect.poll(where, { timeout: 8000 }).toBe('trial');
+  // his door down stays shut until he falls (D127): fell him, then walk out
+  await page.evaluate(async () => {
+    const s = (window as unknown as { __dj: DJ }).__dj.scenes.current!.session!;
+    const world = (s as unknown as { w: { entities: Map<number, { en?: { def: { id: string } } }> } }).w;
+    const inst = [...world.entities.values()].find((x) => x.en?.def.id === 'the_instructor');
+    const path = '/games/dungeonjoe/src/game/combat/damage.ts';
+    const dmg = (await import(/* @vite-ignore */ path)) as { rawDamage: (w: unknown, e: unknown, n: number, t: string, src: number) => void };
+    if (inst) dmg.rawDamage(world, inst, 1e9, 'physical', 0);
+  });
+  await page.waitForTimeout(300);
   await page.evaluate(() => {
     const p = (window as unknown as { __dj: DJ }).__dj.scenes.current!.session!.localPlayer;
     p.x = 1180;

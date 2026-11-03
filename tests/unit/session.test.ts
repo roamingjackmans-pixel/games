@@ -251,18 +251,33 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     expect(s.tutorialDone('parry')).toBe(true);
   });
 
-  it('walking past him and out his east door reaches the start room', () => {
+  it('his east door stays shut until he falls, then opens to the start room (D127)', () => {
     const s = session(true);
-    expect([...s.w.entities.values()].some((e) => e.en?.def.id === 'the_instructor')).toBe(false);
     s.enterRoom(s.layout.trialId!, 'w');
+    expect(s.w.room.doors.e.locked).toBe(true);
     const p = s.localPlayer!;
+    s.w.god = true;
     p.x = 1262;
     p.y = 372;
     p.pl!.input = { ...p.pl!.input, moveX: 1, moveY: 0 };
     run(s, 0.3);
+    expect(s.node.kind).toBe('trial');
+    const inst = [...s.w.entities.values()].find((e) => e.en?.def.id === 'the_instructor')!;
+    p.pl!.input = { ...p.pl!.input, moveX: 0, moveY: 0 };
+    p.x = 640;
+    p.y = 372;
+    rawDamage(s.w, inst, 1e9, 'physical', p.id);
+    run(s, 0.1);
+    expect(s.save.world.instructorKilled).toBe(true);
+    expect(s.w.room.doors.e.locked).toBe(false);
+    p.x = 1262;
+    p.y = 372;
+    p.pl!.input = { ...p.pl!.input, moveX: 1, moveY: 0 };
+    run(s, 0.15);
     expect(s.node.kind).toBe('start');
     expect(s.save.character.tutorialDone).toBe(true);
   });
+
 
 });
 

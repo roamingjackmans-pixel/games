@@ -144,6 +144,15 @@ export class GameSession {
         if (e.en?.def.id === INSTRUCTOR.id) {
           this.save.world.instructorKilled = true;
           lootHooks.instructor(this, e.x, e.y);
+          // his door down to the first bonfire opens (D127)
+          const door = this.w.room.doors.e;
+          if (this.node.kind === 'trial' && door.exists) {
+            door.locked = false;
+            door.open = true;
+            this.w.room.version++;
+            this.w.emit({ t: 'msg', text: 'The way down is open.', color: '#ffd27a' });
+            this.w.sfx('doorOpen', e.x);
+          }
         }
       },
       zoneFodder: () => {
@@ -350,6 +359,8 @@ export class GameSession {
       if (n && this.layout.byId[n.id]?.kind === 'boss' && !this.bossDoorOpen()) d.locked = true;
       // the start room's south door is the tutorial hall: shut behind you
       if (node.kind === 'start' && s === 's' && this.layout.tutorialId) d.locked = true;
+      // the Instructor's way down stays shut while he stands: beat him, or die and wake at the bonfire (D127)
+      if (node.kind === 'trial' && s === 'e' && !this.save.world.instructorKilled) d.locked = true;
       if (!n && !this.layout.links[`${node.id}|${s}`]) d.locked = true;
       // the boss room shuts behind the party until the boss is dead
       if (this.roomPhase === 'boss') d.locked = true;
