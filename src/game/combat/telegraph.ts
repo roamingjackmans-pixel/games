@@ -1,7 +1,7 @@
 // Telegraph entities: spawn from a PatternDef, then the telegraph system (systems/telegraphs.ts) resolves
 // impacts, continuous areas (sweeps, rings, waves, beams) and pulses.
 import { resolvePattern, type PatternCtx } from './patterns';
-import type { HazardId, PatternDef, Team } from '../types';
+import type { DamageType, HazardId, PatternDef, Team } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
 import type { EffectDef } from '../types';
 
@@ -19,12 +19,30 @@ export interface TeleOpts {
   trackTargetId?: number;
   /** a telegraph's active duration override */
   minActiveS?: number;
+  /** the attack's damage type (an accent colour in the telegraph's sparks); defaults to the spec's main type */
+  dmgType?: DamageType;
+}
+
+/** The damage type carrying most of a spec's damage (the telegraph's accent colour), if any. */
+export function mainDamageType(spec: DamageSpec | null): DamageType | undefined {
+  if (!spec) return undefined;
+  let best: DamageType | undefined;
+  let bestN = 0;
+  for (const k of Object.keys(spec.dmg) as DamageType[]) {
+    const n = spec.dmg[k] ?? 0;
+    if (n > bestN) {
+      bestN = n;
+      best = k;
+    }
+  }
+  return best;
 }
 
 export function spawnTelegraphs(w: World, pattern: PatternDef, o: TeleOpts): Entity[] {
   const specs = resolvePattern(pattern, o.ctx);
   const out: Entity[] = [];
   const now = w.time;
+  const dmgType = o.dmgType ?? mainDamageType(o.spec);
   for (const s of specs) {
     const impact = now + o.windupS + s.delay;
     const end = impact + Math.max(s.mode === 'instant' ? 0.12 : s.activeS, o.minActiveS ?? 0) + (s.pulses - 1) * s.pulseGap;
@@ -58,6 +76,7 @@ export function spawnTelegraphs(w: World, pattern: PatternDef, o: TeleOpts): Ent
         hidden: !!o.hidden,
         sourceTag: o.sourceTag ?? '',
         slowable: 1,
+        ...(dmgType ? { dmgType } : {}),
       },
     });
     out.push(e);
@@ -69,6 +88,7 @@ export function spawnTelegraphs(w: World, pattern: PatternDef, o: TeleOpts): Ent
 /** A telegraph over shapes that already exist (existing tendril lines pulsing: the Weaver's Lash). */
 export function spawnShapeTelegraph(w: World, shapes: import('./patterns').Shape[], o: Omit<TeleOpts, 'ctx'> & { x: number; y: number }): Entity {
   const now = w.time;
+  const dmgType = o.dmgType ?? mainDamageType(o.spec);
   const e = w.spawn('telegraph', o.x, o.y, {
     team: o.team,
     tg: {
@@ -98,6 +118,7 @@ export function spawnShapeTelegraph(w: World, shapes: import('./patterns').Shape
       hidden: false,
       sourceTag: o.sourceTag ?? '',
       slowable: 1,
+      ...(dmgType ? { dmgType } : {}),
     },
   });
   w.emit({ t: 'telegraph', id: e.id });

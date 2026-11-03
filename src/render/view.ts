@@ -10,6 +10,7 @@ import { HAZARDS } from '../game/systems/hazards';
 import { typeColor } from '../game/combat/damage';
 import { drawRoomFloor, DEFAULT_PALETTE } from './room';
 import { drawAttackIcon, drawTelegraph } from './telegraphs';
+import { drawTelegraphEchoes } from './telegraphFx';
 import { debugHitboxes, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
 import type { Entity, GameEvent, World } from '../game/world';
@@ -246,6 +247,7 @@ export class WorldView {
     }
     // telegraphs
     for (const e of w.entities.values()) if (e.type === 'telegraph' && !e.removed) drawTelegraph(ctx, w, e, st.video.highContrastTelegraphs, now);
+    drawTelegraphEchoes(ctx, now, st.video.highContrastTelegraphs);
     // walls (Guardian Wall)
     for (const e of w.entities.values()) {
       if (e.type !== 'wall' || e.removed || !e.wl) continue;

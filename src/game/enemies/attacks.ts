@@ -162,6 +162,7 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
       onImpact: atk.effects && atk.kind !== 'utility' ? atk.effects : [],
       trackTargetId: target?.id ?? 0,
       minActiveS: mv?.kind === 'charge' ? 1.2 : 0,
+      dmgType: atk.type,
     });
     en.attack.teleIds.push(...teles.map((t) => t.id));
     // single-shape melee/anchor-self shapes follow the enemy until 60% of the windup, then lock;
@@ -289,7 +290,7 @@ function reaimCharge(w: World, e: Entity, gapS: number): void {
   e.anim.tint = a.def.kind === 'red' ? 'red' : a.def.kind === 'pierce' ? 'blue' : null;
   if (a.def.kind === 'red') w.sfx('redWarning', e.x);
   if (a.def.pattern) {
-    const teles = spawnTelegraphs(w, a.def.pattern, { ownerId: e.id, team: 1, kind: a.def.kind, windupS: gapS, spec: null, ctx: patternCtx(w, e, a.aimX, a.aimY, gapS), trackTargetId: a.targetId, minActiveS: 1.2 });
+    const teles = spawnTelegraphs(w, a.def.pattern, { ownerId: e.id, team: 1, kind: a.def.kind, windupS: gapS, spec: null, ctx: patternCtx(w, e, a.aimX, a.aimY, gapS), trackTargetId: a.targetId, minActiveS: 1.2, dmgType: a.def.type });
     a.teleIds.push(...teles.map((x) => x.id));
   }
 }
