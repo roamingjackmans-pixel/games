@@ -41,6 +41,8 @@ export class GuestRunScene extends WorldScene {
   readonly name = 'guestRun';
   private overlay: HTMLElement | null = null;
   private overlayKind = '';
+  /** where backing out of the inventory goes (the bonfire or pause menu that opened it) */
+  private overlayBack: (() => void) | null = null;
   private banner: { text: string; until: number } | null = null;
   private pingAt = 0;
   private saveAt = 0;
@@ -111,7 +113,12 @@ export class GuestRunScene extends WorldScene {
       if (a.input.consumeLocal('pause')) this.showPause();
       else if (a.input.consumeLocal('map')) this.showMap();
       else if (a.input.consumeLocal('inventory')) this.showInventory();
-    } else if (this.overlayKind !== 'bonfire' && (a.input.consumeLocal('pause') || a.input.consumeLocal('map') || a.input.consumeLocal('inventory'))) this.closeOverlay();
+    } else if (this.overlayKind !== 'bonfire' && (a.input.consumeLocal('pause') || a.input.consumeLocal('map') || a.input.consumeLocal('inventory'))) {
+      // back from an inventory opened at the bonfire (or the pause menu) returns there (D124)
+      const back = this.overlayKind === 'inventory' ? this.overlayBack : null;
+      this.closeOverlay();
+      back?.();
+    }
     else if (this.overlayKind === 'bonfire' && a.input.consumeLocal('pause')) this.closeOverlay();
     n.frame(this.local?.pl?.input ?? { moveX: 0, moveY: 0, aimX: 640, aimY: 360, aimNeutral: false, aimAssist: 0, buttons: 0, pressed: 0 }, dt);
     this.w = n.cw;
@@ -258,6 +265,7 @@ export class GuestRunScene extends WorldScene {
   closeOverlay(): void {
     this.overlay?.remove();
     this.overlay = null;
+    this.overlayBack = null;
     this.overlayKind = '';
     this.menuOpen = false;
   }
@@ -335,6 +343,7 @@ export class GuestRunScene extends WorldScene {
       },
     });
     this.overlayKind = 'inventory';
+    this.overlayBack = onClose ?? null;
     this.menuOpen = true;
   }
 
@@ -352,7 +361,7 @@ export class GuestRunScene extends WorldScene {
         h('div', { class: 'small dim-text' }, `${c.name} · level ${c.level} · in ${this.net.lobby?.players.find((p) => p.host)?.name ?? 'the host'}'s world · ${Math.round(this.net.rtt * 1000)} ms`),
         h('div', { class: 'small dim-text' }, 'The game keeps running while this menu is open.'),
         btn('Resume', () => this.closeOverlay(), 'primary big'),
-        btn('Inventory', () => this.showInventory(), 'big'),
+        btn('Inventory', () => this.showInventory(() => this.showPause()), 'big'),
         btn('Map', () => this.showMap(), 'big'),
         btn(
           'Settings',

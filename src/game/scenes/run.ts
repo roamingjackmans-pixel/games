@@ -56,6 +56,8 @@ export class RunScene extends WorldScene {
   private signText: string | null = null;
   private overlay: HTMLElement | null = null;
   private overlayKind: '' | 'death' | 'bonfire' | 'map' | 'inventory' | 'pause' | 'settings' = '';
+  /** where backing out of the current overlay goes (the bonfire or pause menu that opened the inventory) */
+  private overlayBack: (() => void) | null = null;
   private pendingSave = false;
   private revealMap = false;
   private saveDebounce = 0;
@@ -208,7 +210,12 @@ export class RunScene extends WorldScene {
         toast(q ? `Quick-use: ${q.replace('_', ' ')}` : 'No consumables.', 1200);
       }
     } else if (this.overlayKind === 'map' && (a.input.consumeLocal('map') || a.input.consumeLocal('pause'))) this.closeOverlay();
-    else if (this.overlayKind === 'inventory' && (a.input.consumeLocal('inventory') || a.input.consumeLocal('pause'))) this.closeOverlay();
+    else if (this.overlayKind === 'inventory' && (a.input.consumeLocal('inventory') || a.input.consumeLocal('pause'))) {
+      // back from an inventory opened at the bonfire (or the pause menu) returns there, not to the game (D124)
+      const back = this.overlayBack;
+      this.closeOverlay();
+      back?.();
+    }
     else if (this.overlayKind === 'bonfire' && a.input.consumeLocal('pause')) this.closeOverlay();
     else if (this.overlayKind === 'pause' && a.input.consumeLocal('pause')) this.closeOverlay();
     this.saveDebounce -= dt;
@@ -322,6 +329,7 @@ export class RunScene extends WorldScene {
   closeOverlay(): void {
     this.overlay?.remove();
     this.overlay = null;
+    this.overlayBack = null;
     this.overlayKind = '';
     this.menuOpen = false;
   }
@@ -478,6 +486,7 @@ export class RunScene extends WorldScene {
       },
     });
     this.overlayKind = 'inventory';
+    this.overlayBack = onClose ?? null;
     this.menuOpen = true;
   }
 
@@ -495,7 +504,7 @@ export class RunScene extends WorldScene {
         h('h2', null, 'Paused'),
         h('div', { class: 'small dim-text' }, where),
         btn('Resume', () => this.closeOverlay(), 'primary big'),
-        btn('Inventory', () => this.showInventory(), 'big'),
+        btn('Inventory', () => this.showInventory(() => this.showPause()), 'big'),
         btn('Map', () => this.showMap(), 'big'),
         btn(
           'Settings',
