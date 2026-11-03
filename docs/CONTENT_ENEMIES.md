@@ -212,7 +212,7 @@ Phase 1:
 - **Gas Vent [AREA]**: cone(90°, 400) poison cloud 5 s (Poison 30/s inside), rotates 90° each use.
 
 Phase 2 (cap splits open, the arena dims, spores fall):
-- New **Rain of Caps [PIERCE][AREA]**: lanes(6, 80) horizontal, telegraph 1.2 s, ×1.2, alternating sets.
+- New **Rain of Caps [PIERCE][AREA]**: lanes(5, 64) horizontal, telegraph 1.2 s, ×1.2, two alternating sets 1.0 s apart (D94; was lanes(6, 80), which left no gap a body fits in).
 - New **Uproot [RED][AREA]**: she lifts and slams down at the target: circle(200) ×2.0, tint 1.0 s; then she is **staggered 3 s** (punish window).
 - Spore Bloom grid is tighter (120). Sporeling Birth spawns 5.
 
@@ -229,7 +229,7 @@ Phase 1:
 - **Belch [AREA]**: cone(70°, 350) Poison cloud 4 s.
 
 Phase 2 (throne sinks, he swims; grates become the only ground, waves come from two sides):
-- New **Crosswave [PIERCE][AREA]**: two waves from perpendicular walls 0.8 s apart.
+- New **Crosswave [PIERCE][AREA]**: two waves from perpendicular walls 0.8 s apart, from the sides every player can still reach a grate from (D94).
 - New **Drowning Grasp [RED]**: tint 0.7 s, surfaces under the target circle(80), holds 1.5 s ×2.0 + Poison 50.
 - Belch now leaves puddles. Summon Court adds a Rat Physician.
 
@@ -263,7 +263,7 @@ Phase 1:
 - **Stoke**: bellows fire: two line(60, room) jets from the walls for 3 s, ×0.5/0.25 s + Burn.
 
 Phase 2 (Ignatius is knocked off; the Golem goes molten and Ignatius fights on foot too: two targets, one bar):
-- New **Molten Shockwave [PIERCE][AREA]**: expandingRing(300 px/s) from the Golem, gap behind it, ×1.3.
+- New **Molten Shockwave [PIERCE][AREA]**: expandingRing(300 px/s) from the Golem, gap behind it (or the nearest open side when his back is to a wall, pillar or lava), ×1.3, telegraph 1.2 s, only within 200 px (D94).
 - New **Immolation [RED][AREA]**: Ignatius: tint 1.0 s, room-wide burst ×2.5 Fire except within 140 px of **him** (run to the priest rule); unblockable, so being in the pocket is the only answer.
 - Flame Pillars sets come 0.5 s apart. Lava channel widens (one bridge left).
 
@@ -346,7 +346,11 @@ r 120, Chill 20/s) · Shielded (cyan bubble) · Summoner (green rune circle).
 3. Every zone has ≥ 2 Red users and ≥ 2 Piercing users among its 8, so any 4-mix can satisfy the mix rule;
    the generator's mix-picker is tested to always produce a valid mix.
 4. Every Piercing pattern passes the escapability rule of GAME_DESIGN §5.6 (telegraph, pull, gaps,
-   lane width, pocket reach or an attack `condition`). Every Piercing `expandingRing` declares ≥ 1 gap.
+   lane width, pocket reach or an attack `condition`). Every Piercing `expandingRing` declares ≥ 1 gap. Lanes
+   and grids leave a gap of ≥ 32 px (a body). **Every boss attack is walked (D94)**: `tests/unit/bossEscape.test.ts`
+   resolves each boss's Piercing and ticking patterns in its real arena, every phase (moving floors, flood, pull,
+   lava and the shrunk platform included), from starts around two boss spots, and steps the set of cells a
+   walking player could stand on through time; it must never empty.
 5. Every boss has ≥ 1 Red, ≥ 1 Piercing, ≥ 2 [AREA] attacks, a phase-2 table (phase 3 for The Landlord).
 6. Shard tuning target from GAME_DESIGN §2.3 holds for every zone within ±20%.
 7. Every status or control effect named in a table exists in `StatusId` / `ControlId`; every zone's

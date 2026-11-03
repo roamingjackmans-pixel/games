@@ -81,16 +81,21 @@ divided only by the party size.
 (a rising circle) and is invulnerable until it appears. **Elite** roll 8% per non-swarm spawn solo, 12% / 16% /
 20% with 2 / 3 / 4 players (D79), at most 2 Elites per player per room. Ambush rooms spawn all waves at once with a 1.5 s tell.
 
-**Room clear**: no live enemies and no pending waves → doors unlock, a small chest spawns at a C spot
-with 25% chance, Shards and loot already dropped stay for 60 s then are auto-collected to the nearest
+**Room clear**: no live enemies and no pending waves → doors unlock (no chest appears: a room's chest, if it
+has one, was standing there from the start, §5), Shards and loot already dropped stay for 60 s then are auto-collected to the nearest
 player's bag (Shards) or stay on the floor until the room is left (items are listed in the map's room
 tooltip as "left behind: 2").
 
 ## 5. Chests and mimics
 
-- Treasure-room chest: always. Small chest: 25% after a clear. Reliquary: the room's purpose.
-- **Mimic**: when a chest is spawned (not reliquary, not tutorial, not Gary's), roll 5% from the room
-  stream. A mimic uses the same entity id scheme so the host and guests agree. Visual tells in
+- Treasure-room chest: always. Reliquary: the room's purpose.
+- **Small chest (D93)**: rolled per combat/ambush room from the room's stream with the zone (25%; the dead ends
+  left over after the special rooms always get one). A room with a chest has it standing on its C spot (the
+  room's centre if the template has none) from the moment you walk in, fight or not, and it can be opened at
+  any time; a room without one never gets one. Clearing a room spawns nothing. Opened chests and killed
+  mimics stay done (`chestsOpened`, `mimicsKilled`).
+- **Mimic**: every chest (not reliquary, not tutorial, not Gary's) rolls 5% from the room stream; a mimic
+  chest sits dormant in its room from entry like any chest and does not count toward the room clear. A mimic uses the same entity id scheme so the host and guests agree. Visual tells in
   GAME_DESIGN §6.5.
 - Opening: hold Interact 0.6 s; loot bursts out (instanced per player, D33).
 

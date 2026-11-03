@@ -1,8 +1,8 @@
 // Forced motion (dodges handled by the player controller; knockbacks, pulls, dashes, slides), body
-// separation, pits/void falls, the rotating floor ring, and the time-slow reset.
-import { dist } from '../../engine/math';
+// separation, pits/void falls, moving floors (rings and belts), and the time-slow reset.
 import { rawDamage } from '../combat/damage';
 import { HAZARDS } from './hazards';
+import { carryOnMovingFloors } from './movingFloor';
 import { T } from '../room';
 import type { Entity, World } from '../world';
 
@@ -38,17 +38,8 @@ export function updateMovement(w: World, dt: number): void {
         if (hit && e.forced.kind === 'knock') e.forced = null;
       }
     }
-    // the rotating floor ring carries everyone standing on it (speed is px/s along the ring)
-    const rf = w.room.rotFloor;
-    if (rf && !e.flying) {
-      const d = dist(rf.x, rf.y, e.x, e.y);
-      if (d >= rf.rIn && d <= rf.rOut) {
-        const a = Math.atan2(e.y - rf.y, e.x - rf.x) + (rf.speed / Math.max(40, d)) * dt;
-        const nx = rf.x + Math.cos(a) * d;
-        const ny = rf.y + Math.sin(a) * d;
-        w.room.moveCircle(e, nx - e.x, ny - e.y, false);
-      }
-    }
+    // moving floors (Tock's ring, phase-2 rings and belts) carry everyone standing on them
+    carryOnMovingFloors(w, e, dt);
     // falling only when the centre is over the hole: a dodge rolls over a pit, but the void edge cannot be
     // dodged (50% max HP, 1.5 s to climb back at the nearest edge point)
     if (e.pl && !e.pl.falling && !e.pl.downed && !e.pl.deadUntilRest && !e.forced) {
@@ -67,7 +58,8 @@ export function updateMovement(w: World, dt: number): void {
       }
     }
   }
-  // solid hazards (root walls) block everyone; Guardian Walls block non-boss enemies
+  // solid hazards (root walls) block everyone, except a player mid-dodge who rolls over them (so a pocket walled in
+  // by roots is never a trap under the next Piercing area, D94); Guardian Walls block non-boss enemies
   for (const h of w.entities.values()) {
     if (h.removed) continue;
     if (h.type === 'hazard' && h.hz && HAZARDS[h.hz.hazard].blocksMove) {
@@ -75,7 +67,7 @@ export function updateMovement(w: World, dt: number): void {
         if (s.k !== 'line') continue;
         const x2 = s.x + Math.cos(s.a) * s.l;
         const y2 = s.y + Math.sin(s.a) * s.l;
-        for (const b of [...w.players, ...w.enemies]) if (!b.hp?.dead && !b.flying && !b.en?.isBoss) pushOut(w, b, s.x, s.y, x2, y2, s.w / 2);
+        for (const b of [...w.players, ...w.enemies]) if (!b.hp?.dead && !b.flying && !b.en?.isBoss && b.pl?.state !== 'dodge') pushOut(w, b, s.x, s.y, x2, y2, s.w / 2);
       }
     } else if (h.type === 'wall' && h.wl?.blocksEnemies) {
       for (const b of w.enemies) if (!b.hp?.dead && !b.en?.isBoss) pushOut(w, b, h.wl.x1, h.wl.y1, h.wl.x2, h.wl.y2, h.wl.w / 2);

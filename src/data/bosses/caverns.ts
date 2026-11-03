@@ -82,7 +82,10 @@ const rainOfCaps: AttackDef = {
   id: 'spore_rain_of_caps',
   name: 'Rain of Caps',
   kind: 'pierce',
-  pattern: { kind: 'lanes', n: 6, w: 80, orientation: 'horizontal', alternate: true, setGapS: 1.0 },
+  // two sets of 5 lanes, 1.0 s apart (D94): the gaps between one set's lanes are the other set's lanes, so you
+  // stand in a B lane while A falls and step 64 px into a spent A lane before B does. (It was 6 lanes of 80 px:
+  // a set left only 27 px gaps, narrower than Joe, so the whole hall was hit with no way out.)
+  pattern: { kind: 'lanes', n: 5, w: 64, orientation: 'horizontal', alternate: true, setGapS: 1.0 },
   windupMs: 1200,
   recoverMs: 900,
   dmgMult: 1.2,

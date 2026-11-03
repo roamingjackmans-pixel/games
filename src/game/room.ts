@@ -1,4 +1,6 @@
 // Room tile grid (PROCGEN §2–3): 40 × 22 tiles of 32 px, origin (0, 16) in logical px.
+import type { MovingFloorDef } from './types';
+
 export const TILE = 32;
 export const ROOM_W = 40;
 export const ROOM_H = 22;
@@ -96,6 +98,8 @@ export class Room {
   overlay: Uint8Array;
   /** rotating floor ring (Tock): center, inner/outer radius, speed in px/s along the ring (sign = direction) */
   rotFloor: { x: number; y: number; rIn: number; rOut: number; speed: number } | null = null;
+  /** moving floors a boss phase started (ArenaChange 'movingFloor', D95): rings and conveyor belts */
+  movers: MovingFloorDef[] = [];
   /** destructible tree props (Vexthorn): tile index → hits left */
   trees: Map<number, number> = new Map();
   id = 'arena';

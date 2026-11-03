@@ -13,7 +13,7 @@ import {
   enemyHpMult,
 } from '../../src/game/combat/formulas';
 import { World, type Entity } from '../../src/game/world';
-import { Room } from '../../src/game/room';
+import { Room, T } from '../../src/game/room';
 import { newCharacter } from '../../src/game/player/character';
 import { spawnPlayer } from '../../src/game/player/player';
 import { spawnEnemy } from '../../src/game/enemies/spawn';
@@ -298,5 +298,27 @@ describe('pattern hit tests (GAME_DESIGN §5.7)', () => {
     expect(checkEscapable({ kind: 'circle', r: 300, anchor: 'target' }, 0.8).ok).toBe(false);
     expect(checkEscapable({ kind: 'expandingRing', speed: 300, gaps: 0, anchor: 'self' }, 1.0).ok).toBe(false);
     expect(checkEscapable({ kind: 'circle', r: 150, anchor: 'self', pullSpeed: 60 }, 1.0).ok).toBe(true);
+    // lanes and grids must leave a gap a body fits in (D94): Mother Spore's old Rain of Caps left 27 px
+    expect(checkEscapable({ kind: 'lanes', n: 6, w: 80, orientation: 'horizontal', alternate: true, setGapS: 1.0 }, 1.2).ok).toBe(false);
+    expect(checkEscapable({ kind: 'lanes', n: 5, w: 64, orientation: 'horizontal', alternate: true, setGapS: 1.0 }, 1.2).ok).toBe(true);
+    expect(checkEscapable({ kind: 'grid', spacing: 100, r: 55 }, 1.2).ok).toBe(false);
+    expect(checkEscapable({ kind: 'grid', spacing: 150, r: 55 }, 1.2).ok).toBe(true);
+  });
+  it('a grate wave comes from a side every player can still reach a grate from (D94)', () => {
+    const room = Room.empty();
+    // one raised grate in the bottom middle; a player at the top middle
+    for (let y = 16; y <= 18; y++) for (let x = 18; x <= 20; x++) room.set(x, y, T.Grate);
+    const players = [{ x: 640, y: 120 }];
+    for (let i = 0; i < 20; i++) {
+      const c: PatternCtx = { ...ctx(), players, tx: 640, ty: 120, room, telegraphS: 1.2, rng: new Rng(`w${i}`) };
+      const s = resolvePattern({ kind: 'wave', w: 140, speed: 340, from: 'random', safeTiles: 'G' }, c)[0]!.shapes[0]!;
+      // never from the north, where the band would land on the player at once
+      expect(s.k === 'wave' && s.dir).not.toBe('north');
+      const x = resolvePattern({ kind: 'sequence', steps: [{ pattern: { kind: 'wave', w: 140, speed: 340, from: 'random', safeTiles: 'G' }, delayS: 0 }, { pattern: { kind: 'wave', w: 140, speed: 340, from: 'cross', safeTiles: 'G' }, delayS: 0.8 }] }, c);
+      const [a, b] = x.map((t) => t.shapes[0]!);
+      if (a?.k !== 'wave' || b?.k !== 'wave') throw new Error('waves');
+      // the second wave crosses the first
+      expect(['north', 'south'].includes(a.dir)).not.toBe(['north', 'south'].includes(b.dir));
+    }
   });
 });

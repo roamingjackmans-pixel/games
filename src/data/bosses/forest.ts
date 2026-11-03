@@ -148,7 +148,8 @@ export const VEXTHORN: BossDef = {
       speedMult: 1.2,
       dmgMult: 1.25,
       // the clearing's edges grow thorn walls that deal ×0.5 on touch
-      arena: [{ op: 'thornWalls', value: 48, mult: 0.5 }],
+      // ...and a ring of roots turns round the clearing's heart, carrying everyone 45 px/s clockwise (D95)
+      arena: [{ op: 'thornWalls', value: 48, mult: 0.5 }, { op: 'movingFloor', floor: { kind: 'ring', x: 640, y: 368, rIn: 170, rOut: 250, speed: 45, look: 'roots' } }],
       attacks: [antlerGore, charge, thornBurst(220, 1100), feyLights(5), hexGale, rootLines, tripleCharge],
     },
   ],

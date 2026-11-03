@@ -129,6 +129,11 @@ function applyArenaChange(w: World, c: ArenaChange, boss: Entity | null): void {
       break;
     case 'reverseFloor':
       if (w.room.rotFloor) w.room.rotFloor.speed = -w.room.rotFloor.speed * (c.value ?? 1);
+      for (const m of w.room.movers) m.speed = -m.speed * (c.value ?? 1);
+      break;
+    case 'movingFloor':
+      // a ring or a conveyor belt that carries every walking body on it (D95); it stops with the boss
+      if (c.floor) w.room.movers.push({ ...c.floor });
       break;
     case 'setTiles':
     case 'spawnProps':

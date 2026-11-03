@@ -227,6 +227,7 @@ export class NetGuest {
     room.id = r.key;
     room.hazardKind = r.hazardKind;
     room.rotFloor = r.rotFloor;
+    room.movers = r.movers ?? [];
     for (const s of ['n', 's', 'e', 'w'] as const) {
       const d = r.doors[s];
       if (d) Object.assign(room.doors[s], d);

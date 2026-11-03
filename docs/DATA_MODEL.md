@@ -203,7 +203,8 @@ in CONTENT_ENEMIES §13 and CONTENT_SPELLS_CLASSES §4.
   `invulnerable`.
 - **BossPhase:** `summons` (with `everyS` and `at: 'boss' | 'corners'`), `passive { pull, splitBody, stationaryAt,
   scale, projectileSpeedMult }`, `arena` ops `hazardFloor, hazardTiles, iceFloor, darken, floodAll, thornWalls (mult),
-  widenLava, shrinkPlatform, reverseFloor, setTiles, spawnProps, removeProps`.
+  widenLava, shrinkPlatform, reverseFloor, setTiles, spawnProps, removeProps, movingFloor (floor: MovingFloorDef — a ring
+  `{x, y, rIn, rOut, speed}` or a belt `{x, y, w, h, dir, speed}` plus a `look`; kept in `Room.movers`, synced in RoomSync, D95)`.
 - **Hazards:** `curePool`, `emberMoss`, `wind`.
 - **Room templates:** boss arenas add `K` (boss), `H` (stairs), `g` (grave), `w` (pool), `t` (breakable tree) and an
   optional `rotFloor`; `room.overlay` marks void (1), collapsed (2) and crumbling (3) tiles.

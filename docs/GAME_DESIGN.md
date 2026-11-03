@@ -525,7 +525,7 @@ built for it.
 
 ## 11. Chests, reliquaries, the merchant
 
-- **Chest**: 1–2 per zone in treasure rooms, plus 25% of combat rooms have a small chest after the clear.
+- **Chest**: 1–2 per zone in treasure rooms, plus 25% of combat rooms have a small chest standing in them from the moment you enter (rolled with the zone, D93; clearing a room never spawns one).
   Loot roll from the matching chest row of CONTENT_ITEMS §3, 12% a gem, 8% consumables bundle. 5% are
   mimics.
 - **Spell reliquary**: ornate, glowing. Chance per zone 35% to generate one; also 25% after a boss. Holds

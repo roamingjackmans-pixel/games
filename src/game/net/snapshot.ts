@@ -4,6 +4,7 @@
 // rebuilds real Entity objects from these so the normal renderer and HUD draw them unchanged.
 import { speedMult } from '../combat/state';
 import type { Entity, EType, World, GameEvent } from '../world';
+import type { MovingFloorDef } from '../types';
 
 export const ETYPES: EType[] = ['player', 'enemy', 'projectile', 'telegraph', 'hazard', 'pickup', 'interact', 'decoy', 'wall', 'corpse'];
 export const POSES = ['idle', 'windup', 'attack', 'recover', 'swing', 'cast', 'open', 'parry', 'stagger', 'hurt'];
@@ -331,6 +332,8 @@ export interface RoomSync {
   doors: Record<string, { exists: boolean; open: boolean; locked: boolean }>;
   hazardKind: string;
   rotFloor: { x: number; y: number; rIn: number; rOut: number; speed: number } | null;
+  /** phase moving floors (D95); absent from older hosts */
+  movers?: MovingFloorDef[];
   /** what the minimap needs */
   visited: string[];
   cleared: string[];
@@ -353,7 +356,7 @@ export function roomSync(w: World, nodeId: string, kind: string, zone: number, v
   const r = w.room;
   const doors: RoomSync['doors'] = {};
   for (const s of ['n', 's', 'e', 'w'] as const) doors[s] = { exists: r.doors[s].exists, open: r.doors[s].open, locked: r.doors[s].locked };
-  return { key: `${r.id}`, version: r.version, kind, nodeId, zone, tiles: toB64(r.tiles), overlay: toB64(r.overlay), doors, hazardKind: r.hazardKind, rotFloor: r.rotFloor ? { ...r.rotFloor } : null, visited: [...visited], cleared: [...cleared] };
+  return { key: `${r.id}`, version: r.version, kind, nodeId, zone, tiles: toB64(r.tiles), overlay: toB64(r.overlay), doors, hazardKind: r.hazardKind, rotFloor: r.rotFloor ? { ...r.rotFloor } : null, movers: r.movers.map((m) => ({ ...m })), visited: [...visited], cleared: [...cleared] };
 }
 
 // ---------------------------------------------------------------- the guest's own HUD state
