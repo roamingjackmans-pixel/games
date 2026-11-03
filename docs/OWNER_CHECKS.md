@@ -12,7 +12,7 @@ Each line is one thing to do and what you should see. Tick them off as you play.
 8. [ ] Die on purpose, then walk back to the blue Shardpile where you fell and take your Shards back.
 9. [ ] Level up at a bonfire with your Shards and feel the difference in your main stat's damage.
 10. [ ] Pick up a Rare or better item, compare it in the inventory (Tab), equip it and check the tooltip and your stats change.
-11. [ ] Socket a gem at the bonfire's gem bench and see its effect in the item tooltip.
+11. [ ] At the bonfire's gem bench, read what each gem does (and what upgrading it gives), socket one and see it listed under the item.
 12. [ ] Open a chest that might be a mimic (hold F): sometimes it bites; attack the next suspicious chest first instead.
 13. [ ] Use each of your weapon's three skills (Q, E, R) and watch the cooldown rings on the HUD.
 14. [ ] As a Scholar or Cleric, swap spells in the bonfire's Spells tab and cast all three slots.

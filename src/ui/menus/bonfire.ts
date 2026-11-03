@@ -1,6 +1,6 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
-import { GEMS, gemName } from '../../data/gems';
+import { GEMS, gemName, gemText } from '../../data/gems';
 import { levelCost, gemRerollCost, gemSellValue, gemUpgradeCost } from '../../game/combat/formulas';
 import { canSocket, itemSellValue } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
@@ -80,6 +80,14 @@ export function openBonfire(v: BonfireView): HTMLElement {
     el.appendChild(h('div', { class: 'row' }, btn(`Respec with a Tear of Undoing (${c.tears})`, () => say(v.ops.respec()), 'danger', c.tears <= 0), h('div', { class: 'small dim-text' }, 'Stats return to your class base; every point comes back to place freely.')));
   }
 
+  /** What a gem does, where it fits, and what upgrading it would give (shown at the bench and the shop). */
+  function gemInfo(g: Gem, extra = true): HTMLElement {
+    const def = GEMS[g.family];
+    const parts = [gemText(g.family, g.tier), def.armorOnly ? 'armor sockets only' : 'weapon sockets'];
+    if (extra && g.tier < 5) parts.push(`T${g.tier + 1}: ${gemText(g.family, g.tier + 1)}`);
+    return h('div', { class: 'small', style: 'color:#cfc6b4;padding-left:30px' }, parts.join(' · '));
+  }
+
   function gemsTab(el: HTMLElement): void {
     const c = v.char;
     const items = [c.equipment.main, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0);
@@ -90,7 +98,11 @@ export function openBonfire(v: BonfireView): HTMLElement {
       row.appendChild(h('div', { class: `r-${it.rarity}` }, it.name));
       const sockets = h('div', { class: 'row' });
       it.sockets.forEach((g, i) => {
-        if (g) sockets.appendChild(btn([gemIcon(g, 20), ` ${gemName(g.family, g.tier)} (remove)`], () => say(v.ops.unsocket(it.id, i)), 'tiny'));
+        if (g) {
+          const b = btn([gemIcon(g, 20), ` ${gemName(g.family, g.tier)} (remove)`], () => say(v.ops.unsocket(it.id, i)), 'tiny');
+          b.title = gemText(g.family, g.tier);
+          sockets.appendChild(b);
+        }
         else
           sockets.appendChild(
             btn(`◇ empty — ${selItem === it.id ? 'pick a gem →' : 'select'}`, () => {
@@ -100,22 +112,34 @@ export function openBonfire(v: BonfireView): HTMLElement {
           );
       });
       row.appendChild(sockets);
+      // what the socketed gems are doing on this piece
+      const active = it.sockets.filter((x): x is Gem => !!x);
+      if (active.length) row.appendChild(h('div', { class: 'small', style: 'color:#cfc6b4' }, active.map((x) => `${GEMS[x.family].name}: ${gemText(x.family, x.tier)}`).join(' · ')));
       list.appendChild(row);
     }
     const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;max-height:500px;overflow:auto' }, h('h3', null, `Loose gems · ✦ ${fmt(c.stardust)} Stardust`));
     c.gems.forEach((g, gi) => {
       const sel = selItem ? items.find((i) => i.id === selItem) : null;
       const free = sel ? sel.sockets.findIndex((x) => !x) : -1;
+      const up = btn(`Upgrade (${fmt(gemUpgradeCost(g.tier))})`, () => say(v.ops.upgradeGem(gi)), 'tiny', g.tier >= 5 || c.stardust < gemUpgradeCost(g.tier));
+      up.title = g.tier >= 5 ? 'Already T5.' : `T${g.tier + 1}: ${gemText(g.family, g.tier + 1)}`;
+      const rr = btn(`Re-roll (${fmt(gemRerollCost(g.tier))})`, () => say(v.ops.rerollGem(gi)), 'tiny', c.stardust < gemRerollCost(g.tier));
+      rr.title = GEMS[g.family].armorOnly ? 'Becomes a random gem of the same tier.' : 'Becomes a different random weapon gem of the same tier.';
       gems.appendChild(
         h(
           'div',
-          { class: 'row wrap' },
-          gemIcon(g, 24),
-          h('span', { style: `color:${GEMS[g.family].color};width:150px` }, gemName(g.family, g.tier)),
-          sel && free >= 0 ? btn('Socket', () => say(v.ops.socket(sel.id, free, gi)), 'tiny', !canSocket(sel, g)) : null,
-          btn(`Upgrade (${fmt(gemUpgradeCost(g.tier))})`, () => say(v.ops.upgradeGem(gi)), 'tiny', g.tier >= 5 || c.stardust < gemUpgradeCost(g.tier)),
-          btn(`Re-roll (${fmt(gemRerollCost(g.tier))})`, () => say(v.ops.rerollGem(gi)), 'tiny', c.stardust < gemRerollCost(g.tier)),
-          btn(`Sell (+${fmt(gemSellValue(g.tier))})`, () => say(v.ops.sellGem(gi)), 'tiny'),
+          { class: 'card', 'data-testid': `loose-gem-${gi}` },
+          h(
+            'div',
+            { class: 'row wrap' },
+            gemIcon(g, 24),
+            h('span', { style: `color:${GEMS[g.family].color};width:150px` }, gemName(g.family, g.tier)),
+            sel && free >= 0 ? btn('Socket', () => say(v.ops.socket(sel.id, free, gi)), 'tiny', !canSocket(sel, g)) : null,
+            up,
+            rr,
+            btn(`Sell (+${fmt(gemSellValue(g.tier))})`, () => say(v.ops.sellGem(gi)), 'tiny'),
+          ),
+          gemInfo(g),
         ),
       );
     });
@@ -130,6 +154,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       buy.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:150px' }, CONSUMABLES[s.id].name), h('div', { class: 'mono', style: 'width:60px' }, `✦${s.price}`), h('div', { class: 'small dim-text', style: 'width:60px' }, `have ${c.consumables[s.id] ?? 0}`), btn('Buy', () => say(v.ops.buyConsumable(s.id)), 'tiny', c.stardust < s.price)));
     }
     buy.appendChild(h('div', { class: 'row' }, gemIcon(v.shopGem, 22), h('div', { style: 'width:128px' }, gemName(v.shopGem.family, 1)), h('div', { class: 'mono', style: 'width:60px' }, `✦${shopGemPrice()}`), btn('Buy', () => say(v.ops.buyGem()), 'tiny', c.stardust < shopGemPrice())));
+    buy.appendChild(gemInfo(v.shopGem, false));
     if (v.shopPiece) {
       const p = v.shopPiece;
       const price = shopItemPrice(p);
