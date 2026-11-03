@@ -124,6 +124,8 @@ export class GameSession {
   lastAutosave = 0;
   /** treasure room guard / ambush bookkeeping */
   private guardSpawned = false;
+  /** when each player may next hear "Revive X first!" (entity id → world time) */
+  private reviveNagAt = new Map<number, number>();
 
   constructor(save: SaveFile, listener: SessionListener = {}) {
     this.save = save;
@@ -747,12 +749,36 @@ export class GameSession {
       if (!d.exists || !d.open) continue;
       const n = neighbourId(this.layout, this.node.id, side);
       if (!n) continue;
+      // nobody leaves while a ghost waits for its revive (D114)
+      const ghost = this.waitingGhost();
+      if (ghost) {
+        this.reviveFirst(p, ghost);
+        continue;
+      }
       // the hall is done when you leave it for the first bonfire (not when you visit the Instructor)
       if ((this.node.kind === 'tutorial' || this.node.kind === 'trial') && n.id === this.layout.startId) this.finishTutorial();
       this.pendingTransition = { roomId: n.id, entry: n.entry };
       return;
     }
     void OPPOSITE;
+  }
+
+  /**
+   * A co-op ghost still waiting for a revive (downed, not bled out yet). While there is one, the room's doors and
+   * stairs let nobody through (D114). A player who bled out (out until the next bonfire) does not hold the party up,
+   * and a party that is all ghosts is wiped at once, so this never traps anyone.
+   */
+  waitingGhost(): Entity | null {
+    return this.w.players.find((p) => !p.removed && p.pl!.downed && !p.pl!.deadUntilRest) ?? null;
+  }
+
+  /** "Revive Ann first!" to a player at a door or the stairs, at most every 2 s. */
+  private reviveFirst(p: Entity, ghost: Entity): void {
+    const now = this.w.time;
+    if (now < (this.reviveNagAt.get(p.id) ?? -1)) return;
+    this.reviveNagAt.set(p.id, now + 2);
+    this.w.emit({ t: 'msg', text: `Revive ${ghost.pl!.name} first!`, forPlayer: p.pl!.playerId, color: '#ffd27a' });
+    this.w.sfx('uiError', p.x, 0.5);
   }
 
   // ------------------------------------------------------------------ interaction
@@ -846,10 +872,16 @@ export class GameSession {
         lootHooks.reliquary(this, p, target.x, target.y);
         break;
       }
-      case 'stairs':
+      case 'stairs': {
+        const ghost = this.waitingGhost();
+        if (ghost) {
+          this.reviveFirst(p, ghost);
+          break;
+        }
         if (it.data?.up) this.listener.credits?.();
         else this.descend();
         break;
+      }
       case 'ngplus':
         this.listener.newCycle?.();
         break;
@@ -1002,7 +1034,14 @@ export class GameSession {
     pl.state = 'idle';
     pl.combo = null;
     p.hp!.hp = 0;
+    // friendly fire (D114): note which ally's attack (or the burn, bleed… it left, within 10 s) put this player down
+    const by = this.w.get(p.hp!.lastHitBy);
+    pl.downedBy = by && by !== p && by.pl && this.w.time - p.hp!.lastHitAt <= 10 ? by.pl.playerId : '';
     this.w.emit({ t: 'downed', playerId: pl.playerId });
+    if (by?.pl && pl.downedBy) {
+      this.w.emit({ t: 'feat', kind: 'downAlly', playerId: pl.downedBy, targetId: p.id });
+      this.w.emit({ t: 'msg', text: `${by.pl.name} downed ${pl.name}. Hit their ghost to bring them back.`, color: '#ff9b6a' });
+    }
     this.w.sfx('downed', p.x);
     if (this.w.players.every((x) => x.pl!.downed || x.pl!.deadUntilRest)) this.wipe();
   }
@@ -1012,6 +1051,7 @@ export class GameSession {
     const pl = ghost.pl!;
     if (!pl.downed) return;
     pl.downed = false;
+    pl.downedBy = '';
     pl.reviveProgress = 0;
     pl.state = 'idle';
     ghost.hp!.dead = false;
@@ -1026,7 +1066,11 @@ export class GameSession {
 
   /** A ghost's 30 s ran out: dead until the party rests or wipes. */
   private bledOut(p: Entity): void {
-    this.w.emit({ t: 'msg', text: `${p.pl!.name} is out until the next bonfire.`, color: '#ff6a5a' });
+    const pl = p.pl!;
+    this.w.emit({ t: 'msg', text: `${pl.name} is out until the next bonfire.`, color: '#ff6a5a' });
+    // the ally who downed them let them bleed out: nobody revived them in 30 s (D114)
+    if (pl.downedBy) this.w.emit({ t: 'feat', kind: 'abandonAlly', playerId: pl.downedBy, targetId: p.id });
+    pl.downedBy = '';
     if (this.w.players.every((x) => x.pl!.downed || x.pl!.deadUntilRest)) this.wipe();
   }
 
@@ -1086,6 +1130,7 @@ export class GameSession {
         e.stam!.cur = e.stam!.max;
         e.pl!.downed = false;
         e.pl!.deadUntilRest = false;
+        e.pl!.downedBy = '';
         e.pl!.state = 'idle';
         e.pl!.combo = null;
         e.pl!.falling = null;

@@ -75,6 +75,8 @@ export interface LobbyState {
   players: PublicPlayer[];
   /** the host's zone, so guests can see where they are going */
   zone: number;
+  /** the host's friendly-fire percent (0–200), which the whole party plays by (D114; absent from older hosts: 100) */
+  ff?: number;
 }
 
 /** Everything a guest needs to enter the host's world. */

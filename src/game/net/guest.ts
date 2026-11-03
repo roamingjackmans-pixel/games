@@ -40,6 +40,8 @@ export class NetGuest {
   nodeId = '';
   nodeKind = '';
   rtt = 0;
+  /** the host's friendly-fire percent (D114): from the lobby, then from every snapshot; null until heard */
+  hostFriendlyFire: number | null = null;
   // callbacks for the scene
   onLobby: () => void = () => undefined;
   onWelcome: () => void = () => undefined;
@@ -76,6 +78,7 @@ export class NetGuest {
     t.channel<LobbyState & Record<string, unknown>>(CH.lobby).onMessage((l, from) => {
       this.hostId = from;
       this.lobby = l;
+      this.setFriendlyFire(l.ff);
       if (this.state === 'connecting') this.state = 'lobby';
       this.onLobby();
     });
@@ -149,6 +152,7 @@ export class NetGuest {
 
   private resetWorld(): void {
     this.cw = new World('mirror');
+    if (this.hostFriendlyFire !== null) this.cw.friendlyFire = this.hostFriendlyFire / 100;
     this.me = null;
     this.samples.clear();
     this.meta.clear();
@@ -217,8 +221,16 @@ export class NetGuest {
       this.cw.roomMods.dark = j.roomMods.dark;
       this.cw.roomMods.floodUntil = j.roomMods.floodUntil;
     }
+    this.setFriendlyFire(j.ff);
     if (j.ev) this.cw.events.push(...j.ev);
     if (j.self) this.applySelf(j.self);
+  }
+
+  /** The host's friendly fire, as sent (a missing or broken value leaves the last one). */
+  private setFriendlyFire(v: unknown): void {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return;
+    this.hostFriendlyFire = Math.max(0, Math.min(200, Math.round(v)));
+    this.cw.friendlyFire = this.hostFriendlyFire / 100;
   }
 
   private applyRoom(r: RoomSync): void {

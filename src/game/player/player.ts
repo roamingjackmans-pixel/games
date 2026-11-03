@@ -4,7 +4,7 @@ import { emptyInput, held, pressed } from '../../engine/input/actions';
 import { T } from '../room';
 import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
 import { flaskHeal, STAMINA_COST_MULT } from '../combat/formulas';
-import { addRevive, applyControl, cleanse, emptySpec, heal, hitEnemy, rawDamage, typeColor } from '../combat/damage';
+import { addRevive, applyControl, cleanse, emptySpec, ffVictims, heal, hitAlly, hitEnemy, rawDamage, typeColor } from '../combat/damage';
 import { buffSum, hasControl, speedMult } from '../combat/state';
 import { computeDerived } from './derived';
 import { tryCastSpell, tryUseConsumable, tryUseSkill, updatePlayerAction } from '../skills/use';
@@ -70,6 +70,7 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     reviveProgress: 0,
     reviveNeed: 10,
     downs: 0,
+    downedBy: '',
     deadUntilRest: false,
     lastLightAttackAt: -10,
     momentum: 0,
@@ -353,6 +354,13 @@ function swingHits(w: World, e: Entity): void {
     if (!test(g)) continue;
     c.hit.add(g.id);
     addRevive(w, g, e, pl.derived.weapon.reviveValue + pl.derived.reviveBonus);
+  }
+  // friendly fire (D114): standing allies in the arc take the hit too
+  for (const a of ffVictims(w, e)) {
+    if (c.hit.has(a.id) || !test(a)) continue;
+    c.hit.add(a.id);
+    const r = hitAlly(w, e, a, spec, e.x, e.y);
+    if (r === 'hit' || r === 'blocked') any = true;
   }
   // destructible things (tendril lines, mirrors) are enemies too; props are not
   if (any) {

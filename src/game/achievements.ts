@@ -306,6 +306,8 @@ export class AchievementTracker {
           if (this.ripostes.size > 32) this.ripostes.clear();
           this.ripostes.set(ev.targetId, this.frames + 30);
         } else if (ev.kind === 'revive') this.flag('revive');
+        else if (ev.kind === 'downAlly') this.flag('ffDown');
+        else if (ev.kind === 'abandonAlly') this.flag('ffAbandon');
         return;
       case 'loot':
         if (ev.rarity === 'legendary' && (ev.playerId === pid || ev.playerId === '')) this.flag('legendary');

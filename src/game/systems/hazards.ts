@@ -1,6 +1,6 @@
 // Floor hazards (fire puddles, poison clouds, thorns, ice, oil, slag, roots, time bubbles…) and their ticks.
 import { shapeHit, type Shape } from '../combat/patterns';
-import { applyControl, applyStatusBuild, emptySpec, hitEnemy, hitPlayer, rawDamage } from '../combat/damage';
+import { applyControl, applyStatusBuild, emptySpec, hitAlly, hitEnemy, hitPlayer, rawDamage } from '../combat/damage';
 import { runEffects } from '../effects/run';
 import type { HazardId, Team } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
@@ -223,6 +223,12 @@ export function updateHazards(w: World, _dt: number): void {
           windupS: 0,
           tag: `hz:${hz.hazard}:${friendly ? 'ally' : 'foe'}`,
         });
+      }
+      // friendly fire (D114): a player's harmful ground (fire puddles, fire walls) burns allies too; zones that do
+      // something for allies (allyEffects, alliesOnly) never hurt them
+      if (friendly && v.pl && hz.team === 0 && hz.spec && def.dmg > 0 && !hz.alliesOnly && !hz.allyEffects.length) {
+        hitAlly(w, w.get(hz.ownerId), v, hz.spec, h.x, h.y);
+        continue;
       }
       if (!hz.spec || friendly) continue;
       if (v.pl) {

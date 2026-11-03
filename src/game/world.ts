@@ -165,6 +165,8 @@ export interface PlayerC {
   reviveProgress: number;
   reviveNeed: number;
   downs: number;
+  /** the co-op ally whose attack downed this ghost (playerId; '' when an enemy or nobody did), for achievements */
+  downedBy: string;
   deadUntilRest: boolean;
   lastLightAttackAt: number;
   momentum: number;
@@ -506,8 +508,11 @@ export type GameEvent =
   | { t: 'bossPhase'; phase: number; name?: string }
   | { t: 'shardGain'; playerId: string; amount: number; x: number; y: number }
   | { t: 'loot'; playerId: string; rarity: string; x: number; y: number }
-  /** a player landed a riposte on targetId, or finished reviving the ghost targetId (achievements read these) */
-  | { t: 'feat'; kind: 'riposte' | 'revive'; playerId: string; targetId: number }
+  /**
+   * a player landed a riposte on targetId, finished reviving the ghost targetId, downed the co-op ally targetId
+   * with friendly fire ('downAlly'), or left an ally they downed to bleed out ('abandonAlly') (achievements read these)
+   */
+  | { t: 'feat'; kind: 'riposte' | 'revive' | 'downAlly' | 'abandonAlly'; playerId: string; targetId: number }
   /** a statistic for one player ('' = the whole party), counted by src/game/stats.ts */
   | { t: 'stat'; key: string; playerId: string; n?: number };
 
@@ -580,6 +585,11 @@ export class World {
   god = false;
   /** hitstop freeze frames (Settings → Video) */
   hitstopEnabled = true;
+  /**
+   * Friendly fire (D114): how hard a player's attacks hit standing co-op allies, as a multiplier (0 = off,
+   * 1 = 100%, 2 = 200%). The host's Settings → Game value; guests get it with each snapshot. Solo has no allies.
+   */
+  friendlyFire = 1;
   /** host simulates; guests only mirror */
   authoritative = true;
   /** special budget per room (GAME_DESIGN §6.2) */

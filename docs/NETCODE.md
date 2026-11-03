@@ -90,6 +90,12 @@ that player; other players never see it. Shards: each player gets the full per-k
   Rooms scale by **count** instead (D79): a room planned for p players holds 1.5 × p times the original enemies.
 - Downed/revive (D12) is simulated on the host: hits on a ghost add the attacker's weapon revive value;
   `reviveProgress` events drive the ring UI.
+- Friendly fire (D114) is simulated on the host with the **host's** percent (`World.friendlyFire`, from its
+  Settings → Game). The value reaches guests as the optional `ff` field (0–200) of the `lobby` message and of
+  every snapshot's JSON, so a change mid-run applies at once; guests show it read-only and never simulate
+  hits. Both fields are optional: a missing value leaves the guest's last one (100 by default). Who downed whom
+  travels as `feat` world events (`downAlly`, `abandonAlly`) for each player's achievements. While a ghost
+  waits for its revive, the host refuses door and stairs transitions ("Revive *name* first!" to that player).
 - Zone-progress credit (D31): on boss death the host emits `progress { zone }` to each guest; the guest
   applies the `highestZoneBeaten + 1` rule itself and stores a pending "advance to zone z+1" in its save.
 - Cutscenes (GAME_DESIGN §19) need no message: the sim never pauses for them. Each client plays them as a

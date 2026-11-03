@@ -358,7 +358,7 @@ export class GuestRunScene extends WorldScene {
           'Settings',
           () => {
             this.overlay?.remove();
-            this.overlay = openSettings(() => this.showPause());
+            this.overlay = openSettings(() => this.showPause(), { hostFriendlyFire: () => this.net.hostFriendlyFire });
             this.overlayKind = 'settings';
           },
           'big',

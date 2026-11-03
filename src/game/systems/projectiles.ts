@@ -1,6 +1,6 @@
 // Projectiles: movement, homing, lobs, walls, hits, parry reflection, pierce, returning axes, impact effects.
 import { DEG, circleHit, dist, turnToward } from '../../engine/math';
-import { addRevive, emptySpec, hitEnemy, hitPlayer } from '../combat/damage';
+import { addRevive, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer } from '../combat/damage';
 import { runEffects } from '../effects/run';
 import type { DamageSpec, Entity, World } from '../world';
 
@@ -97,6 +97,7 @@ export function updateProjectiles(w: World, dt: number): void {
         } else {
           const owner = w.get(pr.ownerId) ?? null;
           for (const en of w.livingEnemies()) if (circleHit(e.x, e.y, e.radius + 14, en.x, en.y, en.radius)) hitEnemy(w, owner, en, specOf(e), e.x, e.y);
+          for (const a of ffVictims(w, owner)) if (circleHit(e.x, e.y, e.radius + 14, a.x, a.y, a.radius)) hitAlly(w, owner, a, specOf(e), e.x, e.y);
         }
         impact(w, e);
       }
@@ -216,6 +217,28 @@ export function updateProjectiles(w: World, dt: number): void {
         if (!pr.returns) {
           impact(w, e);
           break;
+        }
+      }
+      // friendly fire (D114): a player's shot hits standing allies in its path like it hits enemies
+      if (!e.removed && owner) {
+        for (const a of ffVictims(w, owner)) {
+          if (pr.hit.has(a.id)) continue;
+          if (!circleHit(e.x, e.y, e.radius, a.x, a.y, a.radius)) continue;
+          pr.hit.add(a.id);
+          if (pr.onImpact) {
+            impact(w, e);
+            break;
+          }
+          const res = hitAlly(w, owner, a, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e);
+          if (res === 'dodged' || res === 'none') continue;
+          if (pr.pierce > 0) {
+            pr.pierce--;
+            continue;
+          }
+          if (!pr.returns) {
+            impact(w, e);
+            break;
+          }
         }
       }
       if (!e.removed && owner) {

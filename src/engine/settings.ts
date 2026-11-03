@@ -38,6 +38,22 @@ export interface Settings {
     prompts: PromptSetting;
   };
   net: { name: string };
+  /** co-op rules the host sets for the whole party (D114) */
+  game: {
+    /** friendly fire: how hard your attacks hit co-op allies, in percent (0 = off … 200), steps of 10 */
+    friendlyFire: number;
+  };
+}
+
+/** Friendly fire range and default (D114). */
+export const FRIENDLY_FIRE_MAX = 200;
+export const FRIENDLY_FIRE_STEP = 10;
+export const FRIENDLY_FIRE_DEFAULT = 100;
+
+/** Clamp a friendly-fire percent to 0–200 in steps of 10 (anything unreadable is the default, 100). */
+export function normalizeFriendlyFire(v: unknown): number {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return FRIENDLY_FIRE_DEFAULT;
+  return Math.min(FRIENDLY_FIRE_MAX, Math.max(0, Math.round(v / FRIENDLY_FIRE_STEP) * FRIENDLY_FIRE_STEP));
 }
 
 export const SETTINGS_KEY = 'dj.settings';
@@ -58,6 +74,7 @@ export function defaultSettings(): Settings {
     audio: { master: 0.8, sfx: 0.9, music: 0.6 },
     controls: { keyboard: defaultKeyboard(), gamepad: defaultGamepad(), menuPad: defaultMenuPad(), aimAssist: 0.6, holdToBlock: true, prompts: 'auto' },
     net: { name: 'Joe' },
+    game: { friendlyFire: FRIENDLY_FIRE_DEFAULT },
   };
 }
 
@@ -76,6 +93,7 @@ export function normalizeSettings(raw: unknown): Settings {
   const a = o.audio ?? {};
   const c = o.controls ?? {};
   const n = o.net ?? {};
+  const g = o.game ?? {};
   const cap = v.frameCap;
   return {
     video: {
@@ -103,6 +121,7 @@ export function normalizeSettings(raw: unknown): Settings {
       prompts: PROMPT_SETTINGS.includes(c.prompts as PromptSetting) ? (c.prompts as PromptSetting) : d.controls.prompts,
     },
     net: { name: typeof n.name === 'string' && n.name.trim() ? n.name.trim().slice(0, 16) : d.net.name },
+    game: { friendlyFire: normalizeFriendlyFire(g.friendlyFire) },
   };
 }
 

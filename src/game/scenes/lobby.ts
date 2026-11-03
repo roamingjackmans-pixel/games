@@ -21,6 +21,7 @@ import { joinTrystero } from '../net/trystero';
 import type { Transport } from '../net/transport';
 import type { SaveFile } from '../types';
 import { sanitizeAppearance } from '../../data/appearance';
+import { friendlyFireRow } from '../../ui/menus/settings';
 
 /** Scene factories set by main.ts (keeps the lobby free of run-scene imports). */
 export const lobbyHooks: {
@@ -145,6 +146,8 @@ export class LobbyScene implements Scene {
   }
 
   private wireHost(n: NetHost): void {
+    // the host's friendly fire is the party's (D114)
+    n.friendlyFire = () => app().settings.game.friendlyFire;
     n.onLobbyChange = () => {
       this.draw();
       if (this.o.auto && n.guests.size > 0) setTimeout(() => this.start(), 800);
@@ -232,6 +235,7 @@ export class LobbyScene implements Scene {
         h('div', { class: 'small dim-text' }, 'Give your friends this code. Up to 3 can join.'),
         h('div', { class: 'room-code', 'data-testid': 'room-code', style: 'font-size:44px;letter-spacing:10px;font-weight:bold;text-align:center;padding:10px 0;color:#e6b84a' }, code),
         h('div', { class: 'small dim-text' }, `Your world: ${ZONES[this.save.world.zone - 1]?.name ?? ''}. Everyone starts at your bonfire.`),
+        friendlyFireRow({ changed: () => this.host?.sendLobby(false) }),
         btn('Start', () => this.start(), 'primary big'),
       );
     } else {
@@ -243,6 +247,7 @@ export class LobbyScene implements Scene {
       });
       kids.push(h('h2', null, 'Join a game'), h('div', { class: 'small dim-text' }, `Joining as ${c.name}, level ${c.level}. You keep everything you earn.`));
       if (!this.guest || this.guest.state === 'rejected' || this.guest.state === 'closed') kids.push(input, btn(this.guest ? 'Retry' : 'Join', go, 'primary big'));
+      else if (this.guest.state === 'lobby') kids.push(friendlyFireRow({ hostValue: this.guest.hostFriendlyFire }));
       else if (this.guest.state === 'connecting') kids.push(h('div', { class: 'dim-text' }, 'Looking for the host… public relays can take a few seconds.'), btn('Retry', () => this.retry(), 'big'));
     }
     kids.push(btn('Back', () => this.cancel(), 'big'));
