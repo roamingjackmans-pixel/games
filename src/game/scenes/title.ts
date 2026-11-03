@@ -96,7 +96,11 @@ export class TitleScene implements Scene {
   update(dt: number): void {
     this.t += dt;
     const a = app();
-    if (a.input.consumeLocal('pause') && this.root && !this.root.querySelector('[data-view=main]')) this.main();
+    if (a.input.consumeLocal('pause') && this.root && !this.root.querySelector('[data-view=main]')) {
+      // back from a co-op character picker goes to the Co-op menu, everything else to the main menu (D134)
+      if (this.root.querySelector('[data-view=coop]')) this.coopMenu();
+      else this.main();
+    }
   }
 
   render(ctx: CanvasRenderingContext2D): void {
@@ -141,9 +145,8 @@ export class TitleScene implements Scene {
       'main',
       h('h2', null, 'Main menu'),
       last ? btn(`Continue — ${last.character.name} (Lv ${last.character.level}${last.character.cycle ? `, Cycle ${last.character.cycle + 1}` : ''})`, () => titleHooks.start?.(last, 'solo'), 'primary big') : null,
-      btn('Host a game', () => this.coop('host'), 'big'),
-      btn('Join a game', () => this.coop('join'), 'big'),
-      btn('Characters (10 slots)', () => this.slots(), 'big'),
+      btn('Co-op play', () => this.coopMenu(), 'big'),
+      btn('Load Character', () => this.slots(), 'big'),
       btn('New character', () => this.pickEmpty(), 'big'),
       btn('Settings', () => {
         this.root!.style.display = 'none';
@@ -167,7 +170,18 @@ export class TitleScene implements Scene {
         }, { saves: listSaves(store).filter((x): x is SaveFile => !!x), slot: meta.lastSlot });
       }, 'big'),
       btn('Credits', () => titleHooks.credits?.(), 'big'),
-      h('div', { class: 'small dim-text', style: 'max-width:360px' }, 'Co-op: up to 4 players, each with their own character.'),
+    );
+  }
+
+  /** Co-op play (D134): Host a game and Join a game live here, one step in from the main menu. */
+  coopMenu(): void {
+    this.view(
+      'coopMenu',
+      h('h2', null, 'Co-op play'),
+      h('div', { class: 'small dim-text', style: 'max-width:360px' }, 'Up to 4 players, each with their own character. Host to open your world and get a room code; Join to enter a friend’s world with theirs.'),
+      btn('Host a game', () => this.coop('host'), 'big'),
+      btn('Join a game', () => this.coop('join'), 'big'),
+      btn('Back', () => this.main(), 'big'),
     );
   }
 
@@ -203,7 +217,7 @@ export class TitleScene implements Scene {
       'coop',
       h('h2', null, mode === 'host' ? 'Host a game — with which character?' : 'Join a game — with which character?'),
       list,
-      h('div', { class: 'row' }, btn('New character', () => this.pickEmpty(mode)), btn('Back', () => this.main())),
+      h('div', { class: 'row' }, btn('New character', () => this.pickEmpty(mode)), btn('Back', () => this.coopMenu())),
     );
   }
 
@@ -255,7 +269,7 @@ export class TitleScene implements Scene {
     });
     this.view(
       'slots',
-      h('h2', null, 'Characters'),
+      h('h2', null, 'Load Character'),
       list,
       h('div', { class: 'row' }, btn('Import a .dungeonjoe.json', () => file.click()), btn('Back', () => this.main()), file),
     );

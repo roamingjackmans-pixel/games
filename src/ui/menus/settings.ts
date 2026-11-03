@@ -545,7 +545,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
           h('span', { class: 'mono' }, 'DungeonJoe.ico'),
           ' from the same folder.',
         ),
-        h('li', null, h('b', null, 'Saves. '), 'The downloaded copy keeps its own saves, separate from the website. To move a character, use Characters → Export on one and Import a .dungeonjoe.json on the other. Online co-op still needs the internet.'),
+        h('li', null, h('b', null, 'Saves. '), 'The downloaded copy keeps its own saves, separate from the website. To move a character, use Load Character → Export on one and Import a .dungeonjoe.json on the other. Online co-op still needs the internet.'),
       ),
     );
     el.appendChild(h('div', { class: 'small dim-text' }, 'The same steps are in README.txt inside the zip.'));

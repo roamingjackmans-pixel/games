@@ -89,6 +89,8 @@ test('Host a game and Join a game from the main menu, with no characters yet (D7
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto('./?net=bc');
+  // Host and Join sit in the Co-op play menu (D134)
+  await page.getByRole('button', { name: 'Co-op play' }).click();
   await page.getByRole('button', { name: 'Host a game' }).click();
   await page.getByTestId('create-name').fill('Hosty');
   await page.getByRole('button', { name: 'Create and host' }).click();
@@ -97,6 +99,7 @@ test('Host a game and Join a game from the main menu, with no characters yet (D7
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByTestId('title')).toBeVisible();
   // one character now: Join goes straight to the join screen with it
+  await page.getByRole('button', { name: 'Co-op play' }).click();
   await page.getByRole('button', { name: 'Join a game' }).click();
   await expect.poll(() => scene(page), { timeout: 10000 }).toBe('lobby');
   await expect(page.getByTestId('code-input')).toBeVisible();

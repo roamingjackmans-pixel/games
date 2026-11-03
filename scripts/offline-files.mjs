@@ -137,7 +137,7 @@ SAVES
 -----
 - The launcher keeps this copy's saves in the "profile" folder next to it. They are separate from the
   website's saves.
-- To move a character between the website and this copy: on the title screen open Characters and
+- To move a character between the website and this copy: on the title screen open Load Character and
   press Export (it saves a .dungeonjoe.json file); on the other side choose "Import a .dungeonjoe.json".
 - To update, unzip a newer download into the same folder. The "profile" folder (your saves) stays.
 
