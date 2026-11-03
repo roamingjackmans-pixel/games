@@ -61,41 +61,9 @@ export function drawElementOver(ctx: CanvasRenderingContext2D, e: Entity, x: num
       ctx.fill();
     }
     ctx.restore();
-  } else if (a.phase === 'active' && a.def.pattern?.kind === 'melee') {
-    const p = a.def.pattern;
-    const reach = p.shape === 'arc' ? (p.r ?? r * 2.5) : (p.l ?? r * 3);
-    const k = Math.min(1, a.t / Math.max(0.05, a.active));
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.globalAlpha = 0.7 * (1 - k * 0.6);
-    if (p.shape === 'arc') {
-      const half = ((p.angleDeg ?? 90) * Math.PI) / 360;
-      const a0 = a.angle - half;
-      const a1 = a.angle - half + 2 * half * Math.min(1, k * 1.4);
-      ctx.strokeStyle = withAlpha(el.glow, 0.85);
-      ctx.lineWidth = 8;
-      ctx.beginPath();
-      ctx.arc(x, y, reach * 0.8, a0, a1);
-      ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(x, y, reach * 0.8, a0, a1);
-      ctx.stroke();
-    } else {
-      const l = reach * Math.min(1, 0.4 + k);
-      ctx.strokeStyle = withAlpha(el.glow, 0.85);
-      ctx.lineWidth = Math.max(6, (p.w ?? 20) * 0.4);
-      ctx.beginPath();
-      ctx.moveTo(x + Math.cos(a.angle) * r * 0.6, y + Math.sin(a.angle) * r * 0.6);
-      ctx.lineTo(x + Math.cos(a.angle) * l, y + Math.sin(a.angle) * l);
-      ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    ctx.restore();
   }
+  // no swing trail on the hit itself (D130): the telegraph already shows where it lands, and a trail drawn at the
+  // attack's opening angle hung white half-circles beside combo and spin hits that had turned elsewhere
 }
 
 const GOLD = '#ffd24a';

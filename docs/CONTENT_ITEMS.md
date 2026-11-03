@@ -105,8 +105,8 @@ base so they stay useful early and fall off late; weapons with S scaling start w
 | Buckler | Small | 0 / 8 | 60% | 20% | 45 | 0.18 s | Best parry. |
 | Targe | Small | 6 / 6 | 70% | 30% | 40 | 0.16 s | — |
 | Round Shield | Medium | 8 / 0 | 80% | 35% | 30 | 0.12 s | — |
-| Kite Shield | Medium | 10 / 0 | 88% | 45% | 28 | 0.12 s | Knight's. |
-| Heater Shield | Medium | 12 / 0 | 90% | 50% | 26 | 0.10 s | — |
+| Kite Shield | Medium | 10 / 0 | 88% | 45% | 28 | 0.10 s | Knight's. |
+| Heater Shield | Medium | 12 / 0 | 90% | 50% | 26 | — | Best medium block, no parry (D130). |
 | Tower Greatshield | Great | 18 / 0 | 100% | 55% | 18 | — | Walk speed −10% while raised. |
 | Spiked Greatshield | Great | 20 / 0 | 100% | 65% | 20 | — | Blocking a melee hit deals ×0.5 back. |
 | Holy Bulwark (Legendary only) | Great | 22 / 0 | 100% | 80% Holy/Void, 60% other | 16 | — | Blocking heals 1%. Appears only when a Legendary shield rolls at ilvl ≥ 5 (25% of such rolls). |

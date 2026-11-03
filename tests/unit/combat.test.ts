@@ -172,7 +172,7 @@ describe('dodge, Red and Piercing (GAME_DESIGN §5.3–5.6)', () => {
     expect(d.hp!.riposteUntil).toBeGreaterThan(w.time);
     expect(p.pl!.riposteBuffUntil).toBeGreaterThan(w.time);
   });
-  it('parry window closes after the shield window (kite 0.12 s)', () => {
+  it('parry window closes after the shield window (kite 0.10 s)', () => {
     const { w, p, d } = setup();
     press(p, 'block');
     stepWorld(w);
