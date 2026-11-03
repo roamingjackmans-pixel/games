@@ -17,7 +17,8 @@ import { itemSkillCount, poiseForSize, reqAtIlvl, scalingMult, tierName, toolMul
 import { computeDerived } from '../game/player/derived';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, equipLoadWith, itemWeight, type EquipLoadInfo } from '../game/player/equipLoad';
 import { drawShield, drawTool, drawWeapon } from '../engine/draw/weapons';
-import { OUTLINE, blob, poly } from '../engine/draw/parts';
+import { OUTLINE, poly } from '../engine/draw/parts';
+import { drawArmorIcon } from './armorIcons';
 import { DAMAGE_TYPES, type Character, type DamageType, type Gem, type Grade, type Item, type StatId, type Stats, type WeaponDef } from '../game/types';
 import { fmt, h } from './dom';
 
@@ -512,17 +513,7 @@ export function itemIcon(item: Item | null, size = 40): HTMLCanvasElement {
     poly(ctx, [0, -14, 5, -8, 0, -4, -5, -8], '#9ad0ff', OUTLINE, 1.5);
   } else {
     const p = parseArmorBase(item.baseId);
-    const col = p?.set?.look.color ?? '#8a6a3a';
-    if (item.slot === 'head') blob(ctx, 0, 0, 13, 11, { fill: col });
-    else if (item.slot === 'body') poly(ctx, [-14, -12, 14, -12, 12, 14, -12, 14], col);
-    else {
-      poly(ctx, [-12, -12, 12, -12, 12, -2, 4, 14, -4, 14, -12, -2], col);
-      ctx.strokeStyle = OUTLINE;
-      ctx.beginPath();
-      ctx.moveTo(0, -6);
-      ctx.lineTo(0, 14);
-      ctx.stroke();
-    }
+    drawArmorIcon(ctx, item.slot === 'head' || item.slot === 'body' ? item.slot : 'legs', p?.set ?? null);
   }
   ctx.restore();
   return c;
