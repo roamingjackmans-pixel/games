@@ -1,9 +1,11 @@
 // In-game HUD drawn on the canvas (GAME_DESIGN §16): HP/stamina, status meters, control icons, flask,
-// Shards/Glowen, Q/E/R skills with radial cooldowns, 1/2/3 spells, quick-use item.
-import { drawText, FONT } from '../engine/text';
+// Shards/Glowen, the three weapon skills with radial cooldowns, three spells, quick-use item. Every key hint is
+// a button glyph for the chosen prompt style and the current bindings (glyphs.ts).
+import { drawText, FONT, MONO } from '../engine/text';
 import { glow, withAlpha } from '../engine/draw/parts';
-import { keyName } from '../engine/input/bindings';
+import type { Action } from '../engine/input/actions';
 import type { Settings } from '../engine/settings';
+import { drawGlyph, drawPromptText } from './glyphs';
 import { SKILLS } from '../data/skills';
 import { SPELLS } from '../data/spells';
 import { CONSUMABLES } from '../data/consumables';
@@ -30,7 +32,8 @@ function bar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: 
   ctx.fillRect(x, y, w * Math.max(0, Math.min(1, frac)), h * 0.35);
 }
 
-function cdIcon(ctx: CanvasRenderingContext2D, x: number, y: number, label: string, key: string, frac: number, locked: boolean, color: string, sub = ''): void {
+/** A cooldown slot; its button glyph pokes out of the top-left corner. */
+function cdIcon(ctx: CanvasRenderingContext2D, x: number, y: number, label: string, action: Action, frac: number, locked: boolean, color: string, sub = ''): void {
   const s = 40;
   ctx.save();
   ctx.fillStyle = locked ? '#1a1820' : '#2a2433';
@@ -63,9 +66,12 @@ function cdIcon(ctx: CanvasRenderingContext2D, x: number, y: number, label: stri
     ctx.restore();
   }
   ctx.restore();
-  drawText(ctx, key, x + 3, y + 12, { size: 10, color: '#efe6d2', weight: 'bold' });
+  drawGlyph(ctx, action, x - 6, y - 8, GLYPH, { align: 'left', valign: 'top', alpha: locked ? 0.6 : 1 });
   if (sub) drawText(ctx, sub, x + s - 3, y + s - 3, { size: 10, color: '#efe6d2', align: 'right' });
 }
+
+/** HUD glyph height in logical px */
+const GLYPH = 19;
 
 export interface HudExtras {
   ghostHp: number;
@@ -121,15 +127,18 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   ctx.fillStyle = '#8a8f98';
   ctx.fillRect(fx + 3, fy - 5, 12, 6);
   ctx.restore();
-  drawText(ctx, `${ch.flaskCur}/${flaskCap(ch)}`, fx + 24, fy + 20, { size: 15, weight: 'bold', mono: true });
-  // currencies
-  drawText(ctx, `◆ ${Math.floor(ch.shards).toLocaleString('en-US')}`, 110, fy + 20, { size: 15, color: '#9ad0ff', mono: true });
-  drawText(ctx, `✦ ${Math.floor(ch.glowen).toLocaleString('en-US')}`, 230, fy + 20, { size: 15, color: '#fff3b0', mono: true });
-  if (ch.twoHanded) drawText(ctx, 'TWO-HANDED', 340, fy + 20, { size: 12, color: '#ffd27a', weight: 'bold' });
+  const fw = drawGlyph(ctx, 'flask', fx + 23, fy + 15, 15, { align: 'left', alpha: ch.flaskCur > 0 ? 1 : 0.55 });
+  const flaskText = `${ch.flaskCur}/${flaskCap(ch)}`;
+  drawText(ctx, flaskText, fx + 28 + fw, fy + 20, { size: 15, weight: 'bold', mono: true });
+  // currencies (pushed right when a wide flask button, e.g. a Hold binding, needs the room)
+  ctx.font = `bold 15px ${MONO}`;
+  const cx = Math.max(110, fx + 28 + fw + ctx.measureText(flaskText).width + 14);
+  drawText(ctx, `◆ ${Math.floor(ch.shards).toLocaleString('en-US')}`, cx, fy + 20, { size: 15, color: '#9ad0ff', mono: true });
+  drawText(ctx, `✦ ${Math.floor(ch.glowen).toLocaleString('en-US')}`, cx + 120, fy + 20, { size: 15, color: '#fff3b0', mono: true });
+  if (ch.twoHanded) drawText(ctx, 'TWO-HANDED', cx + 230, fy + 20, { size: 12, color: '#ffd27a', weight: 'bold' });
   if (!d.weaponMeetsReq) drawText(ctx, '! weapon below requirement (40% damage)', 20, fy + 44, { size: 12, color: '#ff6a5a' });
 
-  // skills (bottom-left) Q/E/R
-  const kb = settings.controls.keyboard;
+  // skills (bottom-left): Q/E/R on a keyboard, LB/RB/Y on an Xbox pad… whatever is bound
   const pad = 20;
   const by = 720 - 60;
   const skillIds = d.weapon.skills;
@@ -140,10 +149,10 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
     const ready = pl.skillReadyAt[i]!;
     const total = def ? def.cooldownS * (1 - d.cdr) : 1;
     const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-    const key = keyName(kb[(['skill1', 'skill2', 'skill3'] as const)[i]!][0] ?? '?');
-    cdIcon(ctx, pad + i * 46, by, def?.name ?? '—', key, frac, locked, '#ffd27a', ready > now ? `${Math.ceil(ready - now)}` : '');
+    const action = (['skill1', 'skill2', 'skill3'] as const)[i]!;
+    cdIcon(ctx, pad + i * 46, by, def?.name ?? '—', action, frac, locked, '#ffd27a', ready > now ? `${Math.ceil(ready - now)}` : '');
   }
-  // spells 1/2/3
+  // spells (1/2/3, or the D-pad)
   const school = d.offKind === 'staff' ? 'brain' : d.offKind === 'talisman' ? 'prayer' : null;
   const loadout = school ? ch.spellLoadout[school] : [null, null, null];
   for (let i = 0; i < 3; i++) {
@@ -153,18 +162,21 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
     const ready = pl.spellReadyAt[i]!;
     const total = def ? def.cooldownS : 1;
     const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-    const key = keyName(kb[(['spell1', 'spell2', 'spell3'] as const)[i]!][0] ?? '?');
-    cdIcon(ctx, pad + 160 + i * 46, by, def?.name ?? '—', key, frac, locked, school === 'brain' ? '#8fd3ff' : '#fff3b0', ready > now ? `${Math.ceil(ready - now)}` : '');
+    const action = (['spell1', 'spell2', 'spell3'] as const)[i]!;
+    cdIcon(ctx, pad + 160 + i * 46, by, def?.name ?? '—', action, frac, locked, school === 'brain' ? '#8fd3ff' : '#fff3b0', ready > now ? `${Math.ceil(ready - now)}` : '');
   }
-  // quick-use
+  // quick-use, and the "next item" button when there is more than one kind to cycle through
   const q = ch.quickSlot;
   const qn = q ? (ch.consumables[q] ?? 0) : 0;
-  cdIcon(ctx, pad + 320, by, q ? (CONSUMABLES[q]?.short ?? q) : '—', keyName(kb.quick[0] ?? 'G'), 0, !q || qn <= 0, '#c9b98a', qn ? `${qn}` : '');
+  cdIcon(ctx, pad + 320, by, q ? (CONSUMABLES[q]?.short ?? q) : '—', 'quick', 0, !q || qn <= 0, '#c9b98a', qn ? `${qn}` : '');
+  if (Object.values(ch.consumables).filter((n) => (n ?? 0) > 0).length > 1) {
+    drawPromptText(ctx, '{cycleQuick} next', pad + 320 + 46, by + 20, { size: 11, align: 'left', weight: 'normal', color: '#a59c8a' });
+  }
 
   // parry/riposte hint
   if (pl.riposteBuffUntil > now) {
     glow(ctx, 640, 690, 60, '#ffffff', 0.25);
-    drawText(ctx, 'RIPOSTE READY', 640, 696, { size: 14, align: 'center', weight: 'bold', color: '#ffffff' });
+    drawPromptText(ctx, 'RIPOSTE READY  {attack}', 640, 691, { size: 14, color: '#ffffff' });
   }
   if (pl.guardBrokenUntil > now) drawText(ctx, 'GUARD BROKEN', p.x, p.y - 40, { size: 13, align: 'center', weight: 'bold', color: '#ff6a5a' });
 }

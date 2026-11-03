@@ -7,7 +7,7 @@ import { MemoryStore } from '../../src/engine/settings';
 import { newCharacter } from '../../src/game/player/character';
 import { CLASS_IDS, CLASSES } from '../../src/data/classes';
 import { Rng } from '../../src/engine/rng';
-import { defaultGamepad, defaultKeyboard, deserializeBindings, findConflicts, rebind, serializeBindings } from '../../src/engine/input/bindings';
+import { HOLD, defaultGamepad, defaultKeyboard, deserializeBindings, findConflicts, rebind, rebindSwap, serializeBindings, unboundActions } from '../../src/engine/input/bindings';
 
 /** A version-0 save from before leftBehind / altMain / freePoints existed. */
 const V0_FIXTURE = {
@@ -130,5 +130,26 @@ describe('bindings round-trip and conflicts (D34)', () => {
     expect(back.gamepad.dodge).toEqual([2]);
     expect(findConflicts(back.keyboard)).toEqual([]);
     expect(findConflicts(back.gamepad)).toEqual([]);
+  });
+
+  it('the settings screen swaps instead of unbinding, and Hold variants are separate inputs', () => {
+    const pad = defaultGamepad();
+    const r = rebindSwap(pad, 'dodge', 2); // X was the flask: the flask takes A
+    expect(pad.dodge).toEqual([2]);
+    expect(pad.flask).toEqual([0]);
+    expect(r.swapped).toEqual({ action: 'flask', input: 0 });
+    // Hold RT and tap RT live side by side on different actions
+    rebindSwap(pad, 'quick', HOLD + 7);
+    expect(pad.attack).toEqual([7]);
+    expect(pad.quick).toEqual([HOLD + 7]);
+    expect(findConflicts(pad)).toEqual([]);
+    // taking an input into an empty second slot leaves the old owner unbound, and says so
+    const kb = defaultKeyboard();
+    const r2 = rebindSwap(kb, 'spell3', 'Mouse2', 1);
+    expect(kb.spell3).toEqual(['Digit3', 'Mouse2']);
+    expect(r2.displaced).toEqual(['block']);
+    expect(r2.swapped).toBeNull();
+    expect(unboundActions(kb)).toEqual(['block']);
+    expect(unboundActions(defaultGamepad(), (a) => a.startsWith('move'))).toEqual([]);
   });
 });
