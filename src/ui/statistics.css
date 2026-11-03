@@ -1,5 +1,5 @@
 /* Statistics screen (src/ui/statistics.ts): the achievements screen's look, in tables. */
-.stat-panel { width: 1180px; display: flex; flex-direction: column; gap: 8px; }
+.stat-panel { width: 1180px; max-height: 700px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 .stat-panel > * { flex: none; }
 .stat-header h2 { margin: 0; }
 .stat-tab, .stat-slot { font-size: 13px; padding: 5px 12px; }
@@ -25,3 +25,4 @@
 .stat-row.r-rare .stat-label { color: var(--rare); padding-left: 10px; }
 .stat-row.r-epic .stat-label { color: var(--epic); padding-left: 10px; }
 .stat-row.r-legendary .stat-label { color: var(--legendary); padding-left: 10px; }
+.stat-note { min-height: 2.6em; } /* both tabs' notes take the same room, so the tables line up */

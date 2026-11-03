@@ -249,29 +249,38 @@ export function openStatistics(onClose: () => void, opts: StatisticsOpts = {}): 
     const back = btn('Back', close, 'primary');
     back.setAttribute('data-key', 'back');
     panel.appendChild(h('div', { class: 'row stat-header' }, h('h2', { class: 'grow' }, 'Statistics'), tabBtn('char', 'This character', !pick), tabBtn('all', 'All characters', false), back));
+    // the slot picker's row is always there (hidden on All characters), so the tables never move between tabs
+    if (!opts.save && saves.length > 1) {
+      const hidden = !(tab === 'char' && pick);
+      const row = h(
+        'div',
+        { class: 'row wrap stat-slots', style: hidden ? 'visibility:hidden' : '' },
+        ...saves.map((s) => {
+          const b = btn(
+            `${s.character.name} · Lv ${s.character.level}`,
+            () => {
+              pick = s;
+              render(`slot-${s.slot}`);
+            },
+            `tiny stat-slot${s === pick ? ' on' : ''}`,
+            hidden,
+          );
+          if (hidden) b.tabIndex = -1;
+          else {
+            b.setAttribute('data-key', `slot-${s.slot}`);
+            b.setAttribute('data-testid', `stat-slot-${s.slot}`);
+          }
+          return b;
+        }),
+      );
+      panel.appendChild(row);
+    }
     if (tab === 'char' && pick) {
-      if (!opts.save && saves.length > 1) {
-        panel.appendChild(
-          h(
-            'div',
-            { class: 'row wrap stat-slots' },
-            ...saves.map((s) => {
-              const b = btn(`${s.character.name} · Lv ${s.character.level}`, () => {
-                pick = s;
-                render(`slot-${s.slot}`);
-              }, `tiny stat-slot${s === pick ? ' on' : ''}`);
-              b.setAttribute('data-key', `slot-${s.slot}`);
-              b.setAttribute('data-testid', `stat-slot-${s.slot}`);
-              return b;
-            }),
-          ),
-        );
-      }
       const c = pick.character;
-      panel.appendChild(h('div', { class: 'small dim-text' }, `${c.name}, ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}. Numbers from before this screen existed start at what the save already knew.`));
+      panel.appendChild(h('div', { class: 'small dim-text stat-note' }, `${c.name}, ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}. Numbers from before this screen existed start at what the save already knew.`));
       panel.appendChild(statsBody(peekSaveCounters(pick)));
     } else {
-      panel.appendChild(h('div', { class: 'small dim-text' }, 'Every character this browser has ever played, deleted ones included. Co-op counts what you did, not what your friends did.'));
+      panel.appendChild(h('div', { class: 'small dim-text stat-note' }, 'Every character this browser has ever played, deleted ones included. Co-op counts what you did, not what your friends did.'));
       panel.appendChild(statsBody(t.rec.c));
     }
     setTimeout(() => (panel.querySelector<HTMLElement>(`[data-key="${focusKey ?? 'back'}"]`) ?? back).focus(), 0);
