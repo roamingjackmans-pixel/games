@@ -1,12 +1,20 @@
 // Keyboard, mouse and Gamepad API input merged into one InputFrame per simulation tick.
 import { ACTION_BIT, GAME_ACTIONS, type Action, type GameAction, type InputFrame, type LocalAction } from './actions';
-import { HOLD, defaultGamepad, defaultKeyboard, type GamepadBindings, type KeyboardBindings } from './bindings';
+import { HOLD, PAD_BUTTON_COUNT, defaultGamepad, defaultKeyboard, type GamepadBindings, type KeyboardBindings } from './bindings';
 
 export type Device = 'kbm' | 'pad';
+/** Which button pictures a connected pad wants (Sony pads get PlayStation symbols, everything else Xbox). */
+export type PadKind = 'xbox' | 'playstation';
 
 const STICK_DEADZONE = 0.22;
 const TRIGGER_THRESHOLD = 0.3;
-const HOLD_S = 0.5;
+export const HOLD_S = 0.5;
+
+/** Gamepad.id → brand. Chrome/Edge report "… (STANDARD GAMEPAD Vendor: 054c Product: 0ce6)" for a DualSense. */
+export function padKindFromId(id: string): PadKind {
+  if (/xbox|xinput|045e/i.test(id)) return 'xbox'; // "Xbox Wireless Controller" must not read as Sony's "Wireless Controller"
+  return /054c|playstation|dualsense|dualshock|wireless controller|\bps[345]\b/i.test(id) ? 'playstation' : 'xbox';
+}
 
 function radialDeadzone(x: number, y: number, dz: number): [number, number] {
   const m = Math.hypot(x, y);
@@ -44,19 +52,113 @@ export class InputManager {
   private prevButtons = 0;
   private padAim: [number, number] = [0, 0];
   private padMove: [number, number] = [0, 0];
-  /** listeners for raw key/pad presses (rebinding UI captures the next input) */
+  /** the Gamepad.id of the pad read last (brand detection for "auto" button prompts) */
+  padId = '';
+  /**
+   * Rebinding UI: the next key / mouse button / wheel notch goes to captureKey instead of the game. Clicks on
+   * elements marked `data-capture-ignore` (the capture bar's Cancel / Hold controls) are not captured.
+   */
   captureKey: ((code: string) => void) | null = null;
-  capturePad: ((button: number) => void) | null = null;
+  /**
+   * Rebinding UI: the next gamepad button goes to capturePad, on release (held = false) or once it has been
+   * held for HOLD_S (held = true, a "Hold" binding). The captured press never reaches the game or the menus.
+   */
+  capturePad: ((button: number, held: boolean) => void) | null = null;
+  private padCapture: { button: number; start: number } | null = null;
+  /** raw pad buttons down this poll and last poll (before swallowing) */
+  private padRaw = new Set<number>();
+  /** buttons eaten by a capture: invisible to the game and menus until released */
+  private padSwallow = new Set<number>();
+  private lastPoll = 0;
+  /** after a key / mouse capture, its keyup / click is swallowed so it cannot press the focused button */
+  private swallowKeyUp: string | null = null;
+  private swallowButton = -1;
+  private swallowUntil = 0;
 
   constructor(private toLogical: (clientX: number, clientY: number) => [number, number]) {}
 
+  /** true while the rebinding UI waits for an input (menus ignore the pad meanwhile) */
+  get capturing(): boolean {
+    return this.captureKey !== null || this.capturePad !== null || this.padCapture !== null;
+  }
+
+  /** 0..1 while a captured pad button is being held toward a Hold binding, -1 otherwise */
+  padCaptureProgress(): number {
+    if (!this.padCapture) return -1;
+    return Math.min(1, (this.lastPoll - this.padCapture.start) / HOLD_S);
+  }
+
+  cancelCapture(): void {
+    this.captureKey = null;
+    this.capturePad = null;
+    this.padCapture = null;
+  }
+
+  private captureMouse(e: MouseEvent | WheelEvent, code: string): boolean {
+    if (!this.captureKey) return false;
+    const t = e.target as Element | null;
+    if (t && typeof t.closest === 'function' && t.closest('[data-capture-ignore]')) return false;
+    const cb = this.captureKey;
+    this.captureKey = null;
+    cb(code);
+    return true;
+  }
+
   attach(target: HTMLElement): void {
+    // capture phase on window: the rebinding UI sits on a DOM layer above the canvas, so mouse buttons are
+    // caught here before any button under the pointer sees them
+    window.addEventListener(
+      'mousedown',
+      (e) => {
+        if (!this.captureMouse(e, `Mouse${e.button}`)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.swallowButton = e.button;
+        this.swallowUntil = performance.now() + 3000;
+      },
+      true,
+    );
+    const swallow = (e: MouseEvent, last: boolean): void => {
+      if (this.swallowButton !== e.button || performance.now() > this.swallowUntil) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (last) this.swallowButton = -1;
+    };
+    window.addEventListener('click', (e) => swallow(e, true), true);
+    window.addEventListener('auxclick', (e) => swallow(e, e.button !== 2), true);
+    window.addEventListener('contextmenu', (e) => swallow(e, true), true);
+    window.addEventListener(
+      'wheel',
+      (e) => {
+        if (this.captureKey && e.deltaY !== 0) this.captureMouse(e, e.deltaY < 0 ? 'WheelUp' : 'WheelDown');
+      },
+      { capture: true, passive: true },
+    );
+    // the side buttons (Mouse 4 / 5) would otherwise navigate the page back / forward
+    window.addEventListener('mouseup', (e) => {
+      if (e.button === 3 || e.button === 4) e.preventDefault();
+    });
+    window.addEventListener(
+      'keyup',
+      (e) => {
+        if (this.swallowKeyUp !== e.code) return;
+        this.swallowKeyUp = null;
+        e.preventDefault(); // Space / Enter on a focused button would press it again
+        e.stopPropagation();
+      },
+      true,
+    );
     window.addEventListener('keydown', (e) => {
       if (this.captureKey) {
         e.preventDefault();
         const cb = this.captureKey;
         this.captureKey = null;
+        this.swallowKeyUp = e.code;
         cb(e.code);
+        return;
+      }
+      if (e.repeat && this.swallowKeyUp === e.code) {
+        e.preventDefault();
         return;
       }
       const tag = (e.target as HTMLElement | null)?.tagName;
@@ -83,13 +185,7 @@ export class InputManager {
     });
     target.addEventListener('mousedown', (e) => {
       const code = `Mouse${e.button}`;
-      if (this.captureKey) {
-        e.preventDefault();
-        const cb = this.captureKey;
-        this.captureKey = null;
-        cb(code);
-        return;
-      }
+      if (e.button === 1) e.preventDefault(); // no autoscroll when the wheel button is bound
       [this.mouseX, this.mouseY] = this.toLogical(e.clientX, e.clientY);
       this.lastDevice = 'kbm';
       if (!this.down.has(code)) {
@@ -128,25 +224,30 @@ export class InputManager {
     }
     this.padPrev = new Set(this.padDown);
     this.padDown.clear();
+    this.lastPoll = now;
+    const raw = new Set<number>();
+    if (gp) {
+      this.padId = gp.id;
+      gp.buttons.forEach((b, i) => {
+        // analog triggers (LT/RT, L2/R2) count as down past a threshold, whatever `pressed` says
+        const isTrigger = i === 6 || i === 7;
+        if (b.pressed || (isTrigger && b.value > TRIGGER_THRESHOLD)) raw.add(i);
+      });
+    }
+    for (const i of this.padSwallow) if (!raw.has(i)) this.padSwallow.delete(i);
+    if (this.capturePad) this.runPadCapture(raw, now);
+    else this.padCapture = null;
+    this.padRaw = raw;
     if (!gp) {
       this.padMove = [0, 0];
       this.padAim = [0, 0];
       return;
     }
-    gp.buttons.forEach((b, i) => {
-      const isTrigger = i === 6 || i === 7;
-      if (b.pressed || (isTrigger && b.value > TRIGGER_THRESHOLD)) this.padDown.add(i);
-    });
+    for (const i of raw) if (!this.padSwallow.has(i)) this.padDown.add(i);
     this.padMove = radialDeadzone(gp.axes[0] ?? 0, gp.axes[1] ?? 0, STICK_DEADZONE);
     this.padAim = radialDeadzone(gp.axes[2] ?? 0, gp.axes[3] ?? 0, STICK_DEADZONE);
     for (const i of this.padDown) {
       if (!this.padPrev.has(i)) {
-        if (this.capturePad) {
-          const cb = this.capturePad;
-          this.capturePad = null;
-          cb(i);
-          continue;
-        }
         this.padEdge.add(i);
         this.padLocalEdge.add(i);
         this.padHoldStart.set(i, now);
@@ -165,7 +266,41 @@ export class InputManager {
       this.padTaps.add(i);
       this.padLocalTaps.add(i);
     }
-    if (this.padDown.size > 0 || Math.hypot(...this.padMove) > 0 || Math.hypot(...this.padAim) > 0) this.lastDevice = 'pad';
+    if (raw.size > 0 || Math.hypot(...this.padMove) > 0 || Math.hypot(...this.padAim) > 0) this.lastDevice = 'pad';
+  }
+
+  /** "auto" button prompts: the brand of the pad in use */
+  padKind(): PadKind {
+    return padKindFromId(this.padId);
+  }
+
+  /**
+   * Capture for the rebinding UI. Only a press that starts after the capture began counts (the button that
+   * opened the capture is still held), and only standard buttons 0..15. Tap = fires on release; held for
+   * HOLD_S = fires as a Hold. The button stays swallowed until it is released.
+   */
+  private runPadCapture(raw: Set<number>, now: number): void {
+    const c = this.padCapture;
+    if (!c) {
+      for (const i of raw) {
+        if (this.padRaw.has(i) || i >= PAD_BUTTON_COUNT) continue;
+        this.padCapture = { button: i, start: now };
+        this.padSwallow.add(i);
+        this.padHoldStart.delete(i);
+        this.padHoldFired.delete(i);
+        return;
+      }
+      return;
+    }
+    const held = now - c.start >= HOLD_S;
+    if (raw.has(c.button) && !held) {
+      this.padSwallow.add(c.button);
+      return;
+    }
+    const cb = this.capturePad!;
+    this.capturePad = null;
+    this.padCapture = null;
+    cb(c.button, held);
   }
 
   /** A button bound with a hold variant only fires its tap action on release before the hold time. */

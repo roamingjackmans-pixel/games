@@ -1,10 +1,29 @@
-// Gamepad navigation for the DOM menus: D-pad / left stick moves focus, A clicks, B backs out (Escape).
+// Gamepad navigation for the DOM menus: D-pad / left stick moves focus, the confirm button (A / ✕) clicks, the back
+// button (B / ○) backs out (Escape). Confirm and back are remappable (settings.controls.menuPad); focus movement is
+// fixed. Also keeps the live button prompts in the menus current (refreshGlyphs).
+import { app } from '../app';
+import { defaultMenuPad, type MenuPadBindings } from '../engine/input/bindings';
 import type { InputManager } from '../engine/input/input';
 import { moveFocus } from './dom';
+import { refreshGlyphs } from './glyphs';
 
 let repeatAt = 0;
 
+function menuButtons(): MenuPadBindings {
+  try {
+    return app().settings.controls.menuPad;
+  } catch {
+    return defaultMenuPad();
+  }
+}
+
 export function pollMenuPad(input: InputManager, now: number): void {
+  refreshGlyphs(now);
+  // while the rebinding screen waits for a button, every press belongs to it
+  if (input.capturing) {
+    repeatAt = now + 0.25;
+    return;
+  }
   const layers = [...document.querySelectorAll<HTMLElement>('#overlay .layer')].filter((l) => !l.classList.contains('clear') || l.querySelector('.panel'));
   const scope = layers[layers.length - 1];
   if (!scope || input.lastDevice !== 'pad') return;
@@ -19,9 +38,10 @@ export function pollMenuPad(input: InputManager, now: number): void {
     moveFocus(scope, dx, dy);
     repeatAt = now + 0.18;
   } else if (!dx && !dy) repeatAt = 0;
-  if (input.padButtonEdge(0)) {
+  const mp = menuButtons();
+  if (input.padButtonEdge(mp.confirm)) {
     const el = document.activeElement as HTMLElement | null;
     if (el && scope.contains(el)) el.click();
   }
-  if (input.padButtonEdge(1)) window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' }));
+  if (input.padButtonEdge(mp.back)) window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' }));
 }

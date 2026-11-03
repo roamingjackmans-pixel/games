@@ -1,15 +1,47 @@
 // Key bindings table (GAME_DESIGN §4 defaults, D34 rebinding) with serialisation and conflict detection.
 import { ALL_ACTIONS, type Action } from './actions';
 
-/** Keyboard codes are KeyboardEvent.code values plus 'Mouse0' / 'Mouse1' / 'Mouse2' / 'WheelUp' / 'WheelDown'. */
+/** Keyboard codes are KeyboardEvent.code values plus 'Mouse0'..'Mouse4' / 'WheelUp' / 'WheelDown'. */
 export type KeyboardBindings = Record<Action, string[]>;
 /**
- * Gamepad values are standard-mapping button indices (0 A, 1 B, 2 X, 3 Y, 4 LB, 5 RB, 6 LT, 7 RT, 8 Back,
- * 9 Start, 10 LS, 11 RS, 12 Up, 13 Down, 14 Left, 15 Right). 100 + n means "hold button n for 0.5 s".
+ * Gamepad values are standard-mapping button indices (0 A, 1 B, 2 X, 3 Y, 4 LB, 5 RB, 6 LT, 7 RT, 8 View,
+ * 9 Menu, 10 LS, 11 RS, 12 Up, 13 Down, 14 Left, 15 Right). 100 + n means "hold button n for 0.5 s".
  */
 export type GamepadBindings = Record<Action, number[]>;
 
 export const HOLD = 100;
+/** Standard-mapping buttons 0..15 can be captured by the rebinding UI (16+ are Guide / touchpad, left alone). */
+export const PAD_BUTTON_COUNT = 16;
+
+/**
+ * Gamepad buttons for the DOM menus (confirm = click the focused control, back = Escape). They live apart from
+ * the gameplay table because they overlap it on purpose (A both dodges and confirms). D-pad / left-stick
+ * focus movement stays fixed.
+ */
+export interface MenuPadBindings {
+  confirm: number;
+  back: number;
+}
+
+export function defaultMenuPad(): MenuPadBindings {
+  return { confirm: 0, back: 1 };
+}
+
+/** Menu confirm / back can be any button except the D-pad (12..15), which moves the menu focus. */
+export function menuPadAllowed(v: number): boolean {
+  return Number.isInteger(v) && v >= 0 && v < 12;
+}
+
+export function normalizeMenuPad(b: Partial<Record<string, unknown>> | undefined): MenuPadBindings {
+  const d = defaultMenuPad();
+  const ok = (v: unknown): v is number => typeof v === 'number' && menuPadAllowed(v);
+  const c = b?.confirm;
+  const k = b?.back;
+  const confirm = ok(c) ? c : d.confirm;
+  let back = ok(k) ? k : d.back;
+  if (back === confirm) back = confirm === d.back ? d.confirm : d.back;
+  return { confirm, back };
+}
 
 export function defaultKeyboard(): KeyboardBindings {
   return {
@@ -74,8 +106,8 @@ export const PAD_NAMES: Record<number, string> = {
   5: 'RB',
   6: 'LT',
   7: 'RT',
-  8: 'Back',
-  9: 'Start',
+  8: 'View',
+  9: 'Menu',
   10: 'LS click',
   11: 'RS click',
   12: 'D-pad up',
@@ -93,6 +125,8 @@ export function keyName(code: string): string {
   if (code === 'Mouse0') return 'Left click';
   if (code === 'Mouse1') return 'Middle click';
   if (code === 'Mouse2') return 'Right click';
+  if (code === 'Mouse3') return 'Mouse 4';
+  if (code === 'Mouse4') return 'Mouse 5';
   if (code === 'WheelUp') return 'Wheel up';
   if (code === 'WheelDown') return 'Wheel down';
   if (code.startsWith('Key')) return code.slice(3);
@@ -162,4 +196,35 @@ export function rebind<T extends string | number>(b: Record<Action, T[]>, action
   list[slot] = input;
   b[action] = list.filter((x) => x !== undefined);
   return displaced;
+}
+
+export interface RebindResult<T> {
+  /** actions that lost `input` */
+  displaced: Action[];
+  /** set when a displaced action was left with nothing and took over the slot's previous input instead */
+  swapped: { action: Action; input: T } | null;
+}
+
+/**
+ * The rebinding UI's rule: assign `input` to `action` (at `slot`), taking it away from any other action. If that
+ * leaves the other action with no input at all, it gets the input this slot held before (a swap), so remapping
+ * one button never silently unbinds another action.
+ */
+export function rebindSwap<T extends string | number>(b: Record<Action, T[]>, action: Action, input: T, slot = 0): RebindResult<T> {
+  const prev = b[action][slot];
+  const displaced = rebind(b, action, input, slot);
+  let swapped: RebindResult<T>['swapped'] = null;
+  if (prev !== undefined && prev !== input && !ALL_ACTIONS.some((a) => b[a].includes(prev))) {
+    const orphan = displaced.find((a) => b[a].length === 0);
+    if (orphan) {
+      b[orphan] = [prev];
+      swapped = { action: orphan, input: prev };
+    }
+  }
+  return { displaced, swapped };
+}
+
+/** Actions with no input at all in this table (the settings screen warns about them). */
+export function unboundActions<T extends string | number>(b: Record<Action, T[]>, skip: (a: Action) => boolean = () => false): Action[] {
+  return ALL_ACTIONS.filter((a) => !skip(a) && b[a].length === 0);
 }

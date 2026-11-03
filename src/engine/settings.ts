@@ -2,11 +2,18 @@
 import {
   defaultGamepad,
   defaultKeyboard,
+  defaultMenuPad,
   normalizeGamepad,
   normalizeKeyboard,
+  normalizeMenuPad,
   type GamepadBindings,
   type KeyboardBindings,
+  type MenuPadBindings,
 } from './input/bindings';
+
+/** Which button pictures prompts show: 'auto' follows the last device used (keyboard/mouse, or the pad's brand). */
+export type PromptSetting = 'auto' | 'keyboard' | 'xbox' | 'playstation';
+export const PROMPT_SETTINGS: readonly PromptSetting[] = ['auto', 'keyboard', 'xbox', 'playstation'];
 
 export interface Settings {
   video: {
@@ -21,7 +28,15 @@ export interface Settings {
     showFps: boolean;
   };
   audio: { master: number; sfx: number; music: number };
-  controls: { keyboard: KeyboardBindings; gamepad: GamepadBindings; aimAssist: number; holdToBlock: boolean };
+  controls: {
+    keyboard: KeyboardBindings;
+    gamepad: GamepadBindings;
+    /** gamepad confirm / back inside the DOM menus */
+    menuPad: MenuPadBindings;
+    aimAssist: number;
+    holdToBlock: boolean;
+    prompts: PromptSetting;
+  };
   net: { name: string };
 }
 
@@ -41,7 +56,7 @@ export function defaultSettings(): Settings {
       showFps: false,
     },
     audio: { master: 0.8, sfx: 0.9, music: 0.6 },
-    controls: { keyboard: defaultKeyboard(), gamepad: defaultGamepad(), aimAssist: 0.6, holdToBlock: true },
+    controls: { keyboard: defaultKeyboard(), gamepad: defaultGamepad(), menuPad: defaultMenuPad(), aimAssist: 0.6, holdToBlock: true, prompts: 'auto' },
     net: { name: 'Joe' },
   };
 }
@@ -82,8 +97,10 @@ export function normalizeSettings(raw: unknown): Settings {
     controls: {
       keyboard: normalizeKeyboard(c.keyboard as Record<string, unknown> | undefined),
       gamepad: normalizeGamepad(c.gamepad as Record<string, unknown> | undefined),
+      menuPad: normalizeMenuPad(c.menuPad as Record<string, unknown> | undefined),
       aimAssist: num(c.aimAssist, d.controls.aimAssist, 0, 1),
       holdToBlock: bool(c.holdToBlock, d.controls.holdToBlock),
+      prompts: PROMPT_SETTINGS.includes(c.prompts as PromptSetting) ? (c.prompts as PromptSetting) : d.controls.prompts,
     },
     net: { name: typeof n.name === 'string' && n.name.trim() ? n.name.trim().slice(0, 16) : d.net.name },
   };
