@@ -309,5 +309,10 @@ describe('The Instructor walks the whole room (D110)', () => {
     }
     expect(inst.en!.phase).toBe(0);
     expect(Math.hypot(inst.x - x0, inst.y - y0)).toBeGreaterThan(260);
+    // and he never heals (D111)
+    inst.hp!.hp = inst.hp!.max * 0.8;
+    inst.hp!.lastHitAt = -99;
+    for (let i = 0; i < 60 * 8; i++) stepWorld(s.w);
+    expect(inst.hp!.hp).toBeLessThanOrEqual(inst.hp!.max * 0.8);
   });
 });
