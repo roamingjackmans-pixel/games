@@ -198,7 +198,8 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     const blockLayer: 'front' | 'back' = Math.sin(f) < -0.35 ? 'back' : 'front';
     if (shield) {
       const side = pl.blocking ? 0.15 : -1.1;
-      off = { x: Math.cos(f + side) * 13, y: Math.sin(f + side) * 13 + 2, a: f, hold: 'shield', draw: (c) => drawShield(c, shield.draw), ...(pl.blocking ? { layer: blockLayer } : {}) };
+      // the shield stays upright whichever way Joe faces, leaning a touch toward his facing (D113); it used to spin with him
+      off = { x: Math.cos(f + side) * 13, y: Math.sin(f + side) * 13 + 2, a: Math.cos(f) * 0.18, hold: 'shield', draw: (c) => drawShield(c, shield.draw), ...(pl.blocking ? { layer: blockLayer } : {}) };
     } else if (tool) {
       const cast = pl.state === 'cast' && pl.action ? Math.min(1, pl.action.t / Math.max(0.05, pl.action.castS) + 0.4) : 0;
       const side = -1.1 + 0.7 * cast;
