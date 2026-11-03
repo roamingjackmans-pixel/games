@@ -102,10 +102,19 @@ export abstract class Cutscene {
     listen();
   }
 
+  private handledPressAt = -1;
+
+  /** A qualifying press arrived: return true to use it up without closing (e.g. finish the typing first). */
+  protected interceptPress(): boolean {
+    return false;
+  }
+
   tick(dt: number): void {
     pollPads();
     this.t += Math.min(0.1, Math.max(0, dt));
-    if (this.outAt < 0 && (this.t >= this.length || lastPressAt >= this.startedAt + this.minSkip)) this.outAt = this.t;
+    const pressed = lastPressAt >= this.startedAt + this.minSkip && lastPressAt > this.handledPressAt;
+    if (this.outAt < 0 && pressed && this.interceptPress()) this.handledPressAt = lastPressAt;
+    else if (this.outAt < 0 && (this.t >= this.length || pressed)) this.outAt = this.t;
     if (this.outAt >= 0 && this.t - this.outAt >= this.fade) this.done = true;
   }
 
@@ -142,15 +151,17 @@ function bars(ctx: CanvasRenderingContext2D, k: number): void {
 interface TypedLine {
   text: string;
   start: number;
+  /** characters per second for this line (zone intros type faster, D112) */
+  cps?: number;
 }
 
 /** When each line starts typing, from t0. */
-function schedule(lines: readonly string[], t0: number): { lines: TypedLine[]; end: number } {
+function schedule(lines: readonly string[], t0: number, cps = CPS, gap = GAP): { lines: TypedLine[]; end: number } {
   let t = t0;
   const out: TypedLine[] = [];
   for (const l of lines) {
-    out.push({ text: l, start: t });
-    t += l.length / CPS + GAP;
+    out.push({ text: l, start: t, cps });
+    t += l.length / cps + gap;
   }
   return { lines: out, end: t };
 }
@@ -161,7 +172,7 @@ function drawTyped(ctx: CanvasRenderingContext2D, lines: TypedLine[], t: number,
   ctx.font = `normal ${size}px ${FONT}`;
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i]!;
-    const n = Math.floor((t - l.start) * CPS);
+    const n = Math.floor((t - l.start) * (l.cps ?? CPS));
     if (n <= 0) continue;
     const full = ctx.measureText(l.text).width;
     const shown = l.text.slice(0, Math.min(l.text.length, n));
@@ -792,9 +803,20 @@ export class ZoneCutscene extends Cutscene {
   constructor(private s: ZoneCutSpec) {
     super();
     this.minSkip = 0.25;
-    const sch = schedule(s.lines, 1.1);
+    // D112: the lines type out twice as fast, then the card stays up until you press something
+    const sch = schedule(s.lines, 0.9, CPS * 2, GAP * 0.6);
     this.typed = sch.lines;
-    this.length = sch.end + 2.4;
+    this.typedEnd = sch.end;
+    this.length = Infinity;
+  }
+
+  private typedEnd = 0;
+
+  /** the first press while the lines are still typing shows them all; the next one closes the card */
+  protected override interceptPress(): boolean {
+    if (this.t >= this.typedEnd) return false;
+    this.t = this.typedEnd;
+    return true;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -832,7 +854,11 @@ export class ZoneCutscene extends Cutscene {
     bars(ctx, Math.min(t / 0.35, a));
     const ba = a * easeOut((t - 0.8) / 0.5);
     if (s.guests.length) drawText(ctx, `Tonight’s guests: ${s.guests.join(' · ')}`, W / 2, H - BAR / 2 + 5, { size: 15, align: 'center', color: INK, alpha: ba * 0.85, outline: null, maxWidth: 900 });
-    skipHint(ctx, ba);
+    // once the lines are done, a pulsing prompt: the card waits for you
+    if (t >= this.typedEnd) {
+      const pulse = 0.6 + 0.4 * Math.sin((t - this.typedEnd) * 4);
+      drawText(ctx, 'Press any button to continue', W / 2, 330 + this.typed.length * 46 + 24, { size: 16, align: 'center', weight: 'bold', color: s.palette.accent, alpha: a * pulse, outline: 'rgba(0,0,0,0.85)' });
+    } else skipHint(ctx, ba);
   }
 }
 
