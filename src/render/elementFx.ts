@@ -100,34 +100,53 @@ export function drawElementOver(ctx: CanvasRenderingContext2D, e: Entity, x: num
 
 const GOLD = '#ffd24a';
 
-/**
- * Immune right now (faded, a boss's phase change, a moment of invulnerability): a pulsing gold border around the
- * body, so it reads at a glance that hits will not land (D108). Spawning and decorative parts are left alone.
- */
-export function drawImmuneBorder(ctx: CanvasRenderingContext2D, e: Entity, x: number, y: number, now: number): void {
+/** Immune right now: faded, briefly invulnerable, or a boss changing phase (D108). Spawning and scenery excluded. */
+export function isImmuneNow(e: Entity, now: number): boolean {
   const en = e.en;
-  if (!en || !e.hp || e.hp.dead || HIDDEN.has(en.state) || en.def.traits?.invulnerable) return;
-  const immune = en.fadeUntil > now || e.hp.invulnUntil > now || en.phaseTransitionUntil > now;
-  if (!immune) return;
-  const r = e.radius * (e.anim.scale || 1) + 6;
-  const pulse = 0.5 + 0.5 * Math.sin(now * 7 + e.id);
-  glow(ctx, x, y, r * 1.7, GOLD, 0.35 + pulse * 0.2);
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = 'rgba(20,14,4,0.75)';
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  // a bright glint travelling round the border
-  const a = now * 3 + e.id;
-  ctx.strokeStyle = '#fff6cf';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(x, y, r, a, a + 0.7);
-  ctx.stroke();
-  ctx.restore();
+  if (!en || !e.hp || e.hp.dead || HIDDEN.has(en.state) || en.def.traits?.invulnerable) return false;
+  return en.fadeUntil > now || e.hp.invulnUntil > now || en.phaseTransitionUntil > now;
+}
+
+let goldCanvas: HTMLCanvasElement | OffscreenCanvas | null = null;
+
+/**
+ * Draw a body turned to gold (D108): the sprite is drawn into a scratch canvas, washed with gold over its own
+ * pixels (so the outline and shading still show through a little), then stamped back in place. Only immune
+ * enemies pay for this, and the scratch canvas is reused.
+ */
+export function drawGolden(ctx: CanvasRenderingContext2D, e: Entity, x: number, y: number, now: number, draw: (c: CanvasRenderingContext2D, cx: number, cy: number) => void): void {
+  const half = Math.min(512, Math.ceil(e.radius * (e.anim.scale || 1) * 4 + 40));
+  const size = half * 2;
+  if (!goldCanvas || goldCanvas.width < size || goldCanvas.height < size) {
+    const n = Math.max(size, goldCanvas?.width ?? 0);
+    goldCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(n, n) : Object.assign(document.createElement('canvas'), { width: n, height: n });
+  }
+  const g = goldCanvas.getContext('2d') as CanvasRenderingContext2D;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = 'source-over';
+  g.globalAlpha = 1;
+  g.clearRect(0, 0, size, size);
+  draw(g, half, half);
+  // wash the drawn pixels gold; a slow shimmer keeps it alive
+  const shimmer = 0.5 + 0.5 * Math.sin(now * 6 + e.id);
+  g.globalCompositeOperation = 'source-atop';
+  const grad = g.createLinearGradient(0, half - half * 0.6, 0, half + half * 0.6);
+  grad.addColorStop(0, '#fff3b0');
+  grad.addColorStop(0.5, GOLD);
+  grad.addColorStop(1, '#b07a12');
+  g.globalAlpha = 0.68 + shimmer * 0.12;
+  g.fillStyle = grad;
+  g.fillRect(0, 0, size, size);
+  // a glint band sweeping across the body
+  const band = ((now * 0.9 + e.id * 0.37) % 1) * size * 1.6 - size * 0.3;
+  const gl = g.createLinearGradient(band - 18, 0, band + 18, size);
+  gl.addColorStop(0, 'rgba(255,255,255,0)');
+  gl.addColorStop(0.5, 'rgba(255,255,240,0.55)');
+  gl.addColorStop(1, 'rgba(255,255,255,0)');
+  g.globalAlpha = 1;
+  g.fillStyle = gl;
+  g.fillRect(0, 0, size, size);
+  g.globalCompositeOperation = 'source-over';
+  glow(ctx, x, y, e.radius * 2, GOLD, 0.3 + shimmer * 0.15);
+  ctx.drawImage(goldCanvas as CanvasImageSource, 0, 0, size, size, x - half, y - half, size, size);
 }
