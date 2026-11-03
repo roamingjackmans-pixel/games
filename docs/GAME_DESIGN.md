@@ -641,3 +641,29 @@ button. Solo pauses the simulation under a cutscene; co-op cannot pause, so each
 overlay (zone cutscenes end if the party leaves the room) and the host holds the boss and every player's input
 for the whole boss intro. Seen cutscenes are stored in `world.cutscenesSeen` (optional, so no migration).
 Automated test panes (`?auto=…`) and `?nocut` skip cutscenes; `?cutscenes=1` forces them on.
+
+## 20. Achievements
+
+49 achievements, all in `src/data/achievements.ts` (id, name, description, icon, optional `hidden`, a check
+on the tracker's counters, an optional progress bar). They are **account-wide**: one record in
+`localStorage` (`dj.achievements`: unlock dates and counters) shared by all ten save slots, rebuilt empty
+if missing or corrupt, and unknown ids are kept for newer builds.
+
+- **What counts.** Kills (1 / 100 / 1,000 / 5,000; training dummies and Gary do not count), each of the 8
+  bosses, The Instructor, seeing the credits, The Landlord on Cycle 2 (NG+) and Cycle 3 (NG+2), every class
+  finishing a zone (any boss kill as that class), deaths (1 / 25 / 100; a death is a solo death or a party
+  wipe), being killed by a mimic and killing one, a legendary item, a full armor set from zone 2 or deeper
+  (every starting kit is a zone-1 set), a Tier 5 gem, 50 parries, 10 riposte kills, a boss without the
+  Thermos, a boss with nothing in the weapon hand, a zone cleared without dying (from arriving by the stairs
+  to its boss; a character that has never died counts its current zone) and each of the 8 that way, reviving
+  a friend, a four-player party, levels 50 and 100, 10,000 Glowen held, a minute Encumbered, finding Gary and
+  driving him off. Four are hidden ("???") until unlocked.
+- **The Dark Shard** unlocks with the last of the others.
+- **Tracking** (`src/game/achievements.ts`) reads each client's own view: the run scenes pass every frame's
+  world events and the local player, so a co-op guest tracks theirs exactly like a host. Party kills count for
+  everyone in the room; parries, ripostes, revives and loot count only for the player who did them (`feat`
+  events carry the player for ripostes and revives). The session notes deaths (with the killer) and Gary
+  leaving; the scenes note the credits.
+- **UI** (`src/ui/achievements.ts`): an unlock toast top-right (icon, name, description, 4 s, queued, a small
+  bell); the Achievements screen from the title menu and the pause menu, with the total, The Dark Shard on
+  top, unlocked ones first, progress bars on counters. Icons are inline SVG drawn in code.

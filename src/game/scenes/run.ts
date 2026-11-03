@@ -34,6 +34,8 @@ import { refreshDerived, toggleTwoHand } from '../player/player';
 import { stream } from '../../engine/rng';
 import { toast } from '../../ui/dom';
 import { openSettings } from '../../ui/menus/settings';
+import { openAchievements } from '../../ui/achievements';
+import { achievements } from '../achievements';
 import { INSTRUCTOR } from '../../data/enemies/special';
 import { BONFIRE_LINES, DEATH_QUIPS, EMBER_LINES, TIPS, bossIntroId, zoneCutsceneId, zoneLines } from '../../data/story';
 import { ZoneCutscene, bossIntroCut, cutscenesEnabled, defeatCut, drawBossNameCard, drawZoneTitleCard, instructorCut, restLine, type Cutscene } from '../../ui/cutscene';
@@ -102,6 +104,7 @@ export class RunScene extends WorldScene {
         if (cutscenesEnabled()) this.pendingDefeat = { def, zone: this.session.layout.zone, at: performance.now() / 1000 + 1.1 };
       },
       credits: () => {
+        achievements().note({ k: 'credits' });
         // the end of the run: everyone in the party sees the credits, then the host finds the NG+ fire
         this.persist();
         this.closeOverlay();
@@ -143,6 +146,7 @@ export class RunScene extends WorldScene {
     this.view.propStyle = zoneDef(this.session.layout.zone).props;
     this.view.drawInteract = (ctx, e, now, pid) => this.drawInteractable(ctx, e, now, pid);
     super.enter();
+    achievements().begin({ clean: this.save.stats.deaths === 0 });
     window.addEventListener('beforeunload', this.onUnload);
   }
 
@@ -209,6 +213,7 @@ export class RunScene extends WorldScene {
   }
 
   protected override afterStep(dt: number): void {
+    achievements().frame(this.w, this.local, this.save.character, this.w.events);
     this.net?.afterTick(this.w.events, dt);
   }
 
@@ -516,6 +521,11 @@ export class RunScene extends WorldScene {
           },
           'big',
         ),
+        btn('Achievements', () => {
+          this.overlay?.remove();
+          this.overlay = openAchievements(() => this.showPause());
+          this.overlayKind = 'settings';
+        }, 'big'),
         this.net ? btn('Return to lobby (invite more)', () => this.returnToLobby(), 'big') : null,
         btn(this.net ? 'Save, end the session and quit' : 'Save and quit to title', () => this.quitToTitle(), 'big'),
       ),

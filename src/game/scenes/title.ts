@@ -18,6 +18,8 @@ import { ZONES } from '../../data/zones';
 import { lookFor } from '../../render/entities';
 import { btn, clearEl, focusFirst, h, layer, toast } from '../../ui/dom';
 import { openSettings } from '../../ui/menus/settings';
+import { openAchievements } from '../../ui/achievements';
+import { achievements } from '../achievements';
 import { newCharacter } from '../player/character';
 import { newSave, SLOT_COUNT } from '../save/schema';
 import { exportFileName, exportText, parseImport } from '../save/exportImport';
@@ -121,6 +123,13 @@ export class TitleScene implements Scene {
       btn('Settings', () => {
         this.root!.style.display = 'none';
         openSettings(() => {
+          this.root!.style.display = '';
+          this.main();
+        });
+      }, 'big'),
+      btn(`Achievements (${achievements().totals().join(' / ')})`, () => {
+        this.root!.style.display = 'none';
+        openAchievements(() => {
           this.root!.style.display = '';
           this.main();
         });

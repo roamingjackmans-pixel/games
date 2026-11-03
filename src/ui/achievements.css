@@ -1,0 +1,42 @@
+/* Achievements: unlock toasts and the Achievements screen (src/ui/achievements.ts). */
+.ach-toasts { position: absolute; right: 12px; top: 12px; z-index: 70; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.ach-toast {
+  display: flex; gap: 12px; align-items: center; width: 340px; padding: 10px 14px;
+  background: rgba(14, 11, 20, .95); border: 2px solid var(--accent); border-radius: 10px;
+  box-shadow: 0 6px 28px rgba(0,0,0,.6), 0 0 18px rgba(230,184,74,.18);
+  animation: ach-in .35s ease-out;
+}
+.ach-toast.out { animation: ach-out .35s ease-in forwards; }
+.ach-toast.dark { border-color: #b06bff; box-shadow: 0 6px 28px rgba(0,0,0,.6), 0 0 26px rgba(176,107,255,.45); }
+.ach-toast-head { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); }
+.ach-toast.dark .ach-toast-head { color: #c58cff; }
+.ach-toast-name { font-size: 17px; font-weight: 600; }
+.ach-toast-desc { font-size: 12px; color: var(--dim); line-height: 1.3; }
+@keyframes ach-in { from { transform: translateX(120%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ach-out { to { transform: translateX(120%); opacity: 0; } }
+
+.ach-icon { flex: none; display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 10px; background: #2a2236; color: var(--accent); border: 2px solid #4a3f5c; }
+.ach-toast .ach-icon { width: 46px; height: 46px; }
+.ach-icon.locked { color: #5a5468; background: var(--bg2); border-color: var(--line); }
+.ach-icon.secret { font-size: 26px; font-weight: 700; }
+.ach-toast.dark .ach-icon, .ach-card.dark .ach-icon { color: #d9b8ff; background: #1a1024; border-color: #b06bff; }
+
+.ach-panel { width: 1100px; display: flex; flex-direction: column; gap: 10px; }
+.ach-panel > * { flex: none; }
+.ach-header h2 { margin: 0; }
+.ach-total { font-size: 22px; font-weight: 600; color: var(--accent); margin-right: 8px; }
+.ach-total-bar { height: 8px; }
+.ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ach-card { display: flex; gap: 12px; align-items: flex-start; background: var(--bg2); border: 2px solid var(--line); border-radius: 8px; padding: 10px; min-height: 72px; }
+.ach-card.got { border-color: #6b5a2a; background: #221d17; }
+.ach-card:not(.got) .ach-name { color: #bdb4a2; }
+.ach-card.big { padding: 14px; background: linear-gradient(90deg, #1b1226, #14121a); border-color: #6a4a8e; }
+.ach-card.big.got { border-color: #b06bff; box-shadow: 0 0 22px rgba(176,107,255,.3); }
+.ach-card.big .ach-icon { width: 72px; height: 72px; }
+.ach-card.big .ach-name { font-size: 22px; color: #d9b8ff; }
+.ach-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ach-name { font-size: 15px; font-weight: 600; }
+.ach-desc { font-size: 12px; color: var(--dim); line-height: 1.3; }
+.ach-prog { display: flex; gap: 8px; align-items: center; margin-top: 3px; }
+.ach-prog .bar { flex: 1; height: 7px; }
+.ach-date { font-size: 11px; color: #9a8a5a; margin-top: 2px; }

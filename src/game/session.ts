@@ -28,6 +28,7 @@ import { DEATH_TITLES } from '../data/story';
 import { newWorldState } from './save/schema';
 import { flaskCap, flaskMaxFor } from './combat/formulas';
 import { applyArenaChanges } from './boss/arena';
+import { achievements } from './achievements';
 import { startPhaseSummons, tickPhaseSummons } from './boss/summons';
 import { spawnHazard } from './systems/hazards';
 import type { BossDef, Character, EliteAffix, SaveFile } from './types';
@@ -572,6 +573,7 @@ export class GameSession {
       return;
     }
     ws.garyGone = true;
+    achievements().note({ k: 'garyGone' });
     w.emit({ t: 'msg', text: 'Gary: "Alright then."', color: '#e6d08a' });
     w.sfx('teleport', gary.x);
     for (const e of w.entities.values()) if (e.it?.kind === 'gary') w.remove(e);
@@ -1027,6 +1029,7 @@ export class GameSession {
     this.dead = true;
     this.w.paused = true;
     this.save.stats.deaths++;
+    achievements().note({ k: 'death', by: this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id });
     // the Shardpile: at the death spot (in a boss room just inside the door)
     let x = p.x;
     let y = p.y;
