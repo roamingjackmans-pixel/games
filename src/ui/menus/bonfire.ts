@@ -8,7 +8,7 @@ import { ELEMENTS } from '../../game/elements';
 import { canSocket, fusePreview, gemAt, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
-import { btn, clearEl, fmt, h, layer, toast } from '../dom';
+import { btn, clearEl, fmt, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
 export interface BonfireOps {
@@ -78,6 +78,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   let pending: PendingPoints = {};
   /** what to do after the Lock in / Discard question, while it is open */
   let confirmLeave: (() => void) | null = null;
+  /** where the focus last was in the panel (outside any dialog), for the redraw to put it back (D144) */
+  let panelMark: FocusMark | null = null;
   const say = (msg: string): void => {
     if (msg) toast(msg);
     render();
@@ -221,7 +223,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       left.appendChild(
         h(
           'div',
-          { class: 'row', 'data-testid': `lvl-row-${s.id}` },
+          { class: 'row', 'data-testid': `lvl-row-${s.id}`, 'data-focus-group': `lvl-${s.id}` },
           h('div', { style: 'width:100px' }, s.label),
           h('div', { class: 'mono', style: 'width:76px' }, p ? h('span', null, `${c.stats[s.id]} → `, h('b', { class: 'good' }, String(after.stats[s.id]))) : String(c.stats[s.id])),
           minus,
@@ -592,13 +594,15 @@ export function openBonfire(v: BonfireView): HTMLElement {
   }
 
   function render(): void {
-    // keep the pad / keyboard focus on the same control across a redraw (a pressed +1 stays focused, D142)
-    const keep = (document.activeElement as HTMLElement | null)?.getAttribute?.('data-focus') ?? null;
+    // keep the pad / keyboard focus on the same control across a redraw (D142, D144); while a dialog has the focus,
+    // remember the control that opened it so the focus goes back there when it closes
+    const mark = markFocus(panel);
+    if (mark) panelMark = mark;
     clearEl(panel);
     root.querySelectorAll('[data-tt]').forEach((x) => x.remove());
     modal?.remove();
     modal = null;
-    const tabs = h('div', { class: 'tabs' });
+    const tabs = h('div', { class: 'tabs', 'data-focus-group': 'tabs' });
     const defs: { key: string; label: string; fn?: (el: HTMLElement) => void }[] = [
       { key: 'level', label: 'Level up', fn: levelTab },
       { key: 'gems', label: 'Gem bench', fn: gemsTab },
@@ -621,7 +625,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     tabs.appendChild(btn('Leave', () => leave(() => v.close()), 'primary'));
     panel.appendChild(h('div', { class: 'row' }, h('h2', { class: 'grow', style: 'margin:0' }, 'Bonfire'), h('div', { class: v.firstRest ? 'good' : 'dim-text' }, v.firstRest ? 'You rest. HP and Thermos restored.' : 'Embers: resting restores nothing here. Enemies have returned.')));
     panel.appendChild(tabs);
-    const content = h('div', { style: 'flex:1;overflow:auto' });
+    const content = h('div', { style: 'flex:1;overflow:auto', 'data-focus-group': `tab-${tab}` });
     defs.find((d) => d.key === tab)?.fn?.(content);
     panel.appendChild(content);
     const box = confirmLeave ? leaveDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : null;
@@ -633,10 +637,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       setTimeout(() => m.querySelector<HTMLElement>('button:not(:disabled)')?.focus(), 0);
     } else
       setTimeout(() => {
-        const same = keep ? panel.querySelector<HTMLButtonElement>(`[data-focus="${keep}"]`) : null;
-        // the same button, or (when it just turned disabled) its neighbour in the row, or Confirm
-        const near = same && same.disabled ? (same.parentElement?.querySelector<HTMLButtonElement>('button:not(:disabled)') ?? panel.querySelector<HTMLButtonElement>('[data-focus="lvl-confirm"]:not(:disabled)')) : same;
-        (near ?? panel.querySelector<HTMLElement>('.tabs button'))?.focus();
+        if (!restoreFocus(panel, panelMark)) panel.querySelector<HTMLElement>('.tabs button')?.focus();
       }, 0);
   }
   render();

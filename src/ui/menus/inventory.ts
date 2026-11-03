@@ -11,7 +11,7 @@ import { levelCost } from '../../game/combat/formulas';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import type { Derived } from '../../game/player/derived';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Item } from '../../game/types';
-import { btn, clearEl, fmt, h, layer } from '../dom';
+import { btn, clearEl, fmt, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
 import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemTooltip } from '../tooltip';
 
@@ -169,6 +169,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       const item = s.slot === 'altMain' ? c.altMain : c.equipment[s.slot];
       const b = cell(item, () => item && doUnequip(s.slot), undefined, 'equip-slot');
       b.setAttribute('data-testid', `equip-${s.slot}`);
+      b.setAttribute('data-focus', `equip-${s.slot}`);
       b.setAttribute('aria-label', item ? `${s.label}: ${item.name}` : `${s.label} (empty)`);
       if (s.slot === 'main' && item && c.twoHanded) b.appendChild(h('span', { class: 'tag2h' }, '2H'));
       cells[s.slot] = b;
@@ -182,7 +183,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     const bagGrid = h('div', { class: 'grid-bag' });
     for (let i = 0; i < BAG_SIZE; i++) {
       const item = c.bag[i] ?? null;
-      bagGrid.appendChild(
+      const bagCell = bagGrid.appendChild(
         cell(
           item,
           () => item && doEquip(item.id),
@@ -196,6 +197,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
           },
         ),
       );
+      // the same bag slot keeps the focus after equipping from it (D144)
+      bagCell.setAttribute('data-focus', `bag-${i}`);
     }
     bag.appendChild(bagGrid);
     bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it. Right-click a weapon to make it your 2nd weapon (swap with ${glyphText('swapWeapon')}); right-click a ring for the second ring slot. Staffs and talismans go in either hand: click for the off hand, right-click for the weapon hand, Shift+right-click for the 2nd weapon. Click worn gear to take it off.`));
@@ -231,8 +234,10 @@ export function openInventory(host: InventoryHost): HTMLElement {
 
   function render(): void {
     hideTip();
+    // where the focus was, to put it back after the redraw (D144)
+    const mark = markFocus(body);
     clearEl(body);
-    const tabs = h('div', { class: 'tabs' });
+    const tabs = h('div', { class: 'tabs', 'data-focus-group': 'tabs' });
     const all = [{ label: 'Items', key: 'items' }, ...(host.extraTabs ?? []).map((t) => ({ label: t.label, key: t.label }))];
     for (const t of all) {
       const b = btn(t.label, () => {
@@ -247,12 +252,14 @@ export function openInventory(host: InventoryHost): HTMLElement {
     body.appendChild(tabs);
     const content = h('div', { class: 'row', style: 'align-items:flex-start;gap:22px;flex:1;overflow:auto' });
     content.appendChild(statsPanel());
-    const right = h('div', { class: 'grow' });
+    const right = h('div', { class: 'grow', 'data-focus-group': `tab-${tab}` });
     if (tab === 'items') itemsTab(right);
     else host.extraTabs?.find((t) => t.label === tab)?.render(right);
     content.appendChild(right);
     body.appendChild(content);
-    setTimeout(() => body.querySelector<HTMLElement>('.grid-bag button, .tabs button')?.focus(), 0);
+    setTimeout(() => {
+      if (!restoreFocus(body, mark)) body.querySelector<HTMLElement>('.grid-bag button, .tabs button')?.focus();
+    }, 0);
   }
   render();
   (root as HTMLElement & { rerender?: () => void }).rerender = render;

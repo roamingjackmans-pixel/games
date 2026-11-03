@@ -80,6 +80,73 @@ export function toast(msg: string, ms = 2200): void {
 }
 
 /** Focus the first focusable element inside el (keyboard/gamepad navigation). */
+// ---- keeping the focus across a menu redraw (D144) ---------------------------------------------------------------
+// Menus rebuild their DOM after every change; without this the focus (which a gamepad lives on) jumps back to the
+// first button each time. A control is found again by its `data-focus` name, else by its place inside the nearest
+// `data-focus-group`, else by its place in the whole menu; disabled controls count for places so they stay stable.
+
+const ANY_CONTROL = 'button, a[href], input, select, [tabindex="0"]';
+const usable = (e: HTMLElement): boolean => !(e as HTMLButtonElement).disabled && e.offsetParent !== null;
+
+export interface FocusMark {
+  key: string | null;
+  group: string | null;
+  groupIndex: number;
+  index: number;
+}
+
+/** Where the focus is inside `scope` right now (null when it is elsewhere). */
+export function markFocus(scope: HTMLElement): FocusMark | null {
+  const a = document.activeElement as HTMLElement | null;
+  if (!a || !scope.contains(a) || a === scope) return null;
+  const g = a.closest<HTMLElement>('[data-focus-group]');
+  const group = g && scope.contains(g) ? g.getAttribute('data-focus-group') : null;
+  return {
+    key: a.getAttribute('data-focus'),
+    group,
+    groupIndex: g ? [...g.querySelectorAll<HTMLElement>(ANY_CONTROL)].indexOf(a) : -1,
+    index: [...scope.querySelectorAll<HTMLElement>(ANY_CONTROL)].indexOf(a),
+  };
+}
+
+/** The usable control at `i` in `list`, or the nearest usable one to it. */
+function nearestUsable(list: HTMLElement[], i: number): HTMLElement | null {
+  if (i < 0 || list.length === 0) return null;
+  for (let d = 0; d < list.length; d++) {
+    for (const j of [i - d, i + d]) {
+      const e = list[j];
+      if (e && usable(e)) return e;
+    }
+  }
+  return null;
+}
+
+/** Put the focus back where `mark` was after a redraw of `scope`; returns false when nothing matched. */
+export function restoreFocus(scope: HTMLElement, mark: FocusMark | null): boolean {
+  if (!mark) return false;
+  let el: HTMLElement | null = null;
+  if (mark.key) {
+    const k = scope.querySelector<HTMLElement>(`[data-focus="${CSS.escape(mark.key)}"]`);
+    if (k && usable(k)) el = k;
+    else if (k) {
+      // the same control just turned disabled: its nearest neighbour in its group
+      const g = k.closest<HTMLElement>('[data-focus-group]');
+      if (g) {
+        const list = [...g.querySelectorAll<HTMLElement>(ANY_CONTROL)];
+        el = nearestUsable(list, list.indexOf(k));
+      }
+    }
+  }
+  if (!el && mark.group) {
+    const g = scope.querySelector<HTMLElement>(`[data-focus-group="${CSS.escape(mark.group)}"]`);
+    if (g) el = nearestUsable([...g.querySelectorAll<HTMLElement>(ANY_CONTROL)], mark.groupIndex);
+  }
+  if (!el) el = nearestUsable([...scope.querySelectorAll<HTMLElement>(ANY_CONTROL)], mark.index);
+  if (!el) return false;
+  el.focus({ preventScroll: false });
+  return true;
+}
+
 export function focusFirst(el: HTMLElement): void {
   const f = el.querySelector<HTMLElement>('button:not(:disabled), input, select, [tabindex="0"]');
   f?.focus();
