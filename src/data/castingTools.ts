@@ -38,7 +38,8 @@ export function toolBash(t: CastingToolDef): WeaponDef {
           { windupMs: 180, activeMs: 80, recoverMs: 200, mult: 1, hitbox: { shape: 'arc', angleDeg: 70, r: 60 }, step: 8 },
           { windupMs: 180, activeMs: 80, recoverMs: 260, mult: 1.1, hitbox: { shape: 'arc', angleDeg: 70, r: 60 }, step: 8 },
         ],
-    base1: staff ? 20 : 16,
+    // a casting tool is a poor club: 65% less than it used to hit (D128; was 20 / 16)
+    base1: staff ? 7 : 5.6,
     stamina: staff ? 12 : 9,
     poiseDmg: staff ? 16 : 10,
     reviveValue: 1.5,

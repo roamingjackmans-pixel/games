@@ -78,7 +78,8 @@ const BRAIN: SpellDef[] = [
 ];
 
 const PRAYER: SpellDef[] = [
-  P('heal', 'Heal', 8, 1.0, 12, 20, [{ op: 'heal', pct: 0.25, overS: 2, interruptible: true, spell: true }], 'Heal yourself 25% of max HP over 2 s (a stagger interrupts it).'),
+  // D128: healing spells heal 10× slower and come back 2× slower
+  P('heal', 'Heal', 8, 1.0, 50, 20, [{ op: 'heal', pct: 0.25, overS: 20, interruptible: true, spell: true }], 'Heal yourself 25% of max HP over 20 s (a stagger interrupts it).'),
   P(
     'purify',
     'Purify',
@@ -94,7 +95,7 @@ const PRAYER: SpellDef[] = [
     'holy',
   ),
   P('bless_weapon', 'Bless Weapon', 12, 0.6, 25, 14, [{ op: 'buff', stat: 'holyConvertPct', amount: 0.2, durationS: 20, id: 'bless' }], '20 s: your weapon deals +20% as Holy; undead and void take +15% more.', 'holy'),
-  P('regen_aura', 'Regen Aura', 12, 0.8, 18, 18, [{ op: 'zone', pattern: { kind: 'circle', r: 180, anchor: 'self' }, durationS: 5, tickS: 1, hazard: 'regenAura', follow: true, alliesOnly: true, tick: [], allyTick: [{ op: 'heal', pct: 0.03, target: 'target', spell: true }] }], 'circle(180) around you for 5 s: allies inside heal 3% per second.'),
+  P('regen_aura', 'Regen Aura', 12, 0.8, 36, 18, [{ op: 'zone', pattern: { kind: 'circle', r: 180, anchor: 'self' }, durationS: 50, tickS: 1, hazard: 'regenAura', follow: true, alliesOnly: true, tick: [], allyTick: [{ op: 'heal', pct: 0.003, target: 'target', spell: true }] }], 'circle(180) around you for 50 s: allies inside heal 0.3% per second.'),
   P('sunray', 'Sunray', 14, 0.5, 6, 14, [dmg({ kind: 'line', w: 30, l: 450, anchor: 'self' }, 36, 'holy'), { op: 'reveal', r: 450, durationS: 4 }], 'line(30,450) 36 Holy, reveals hidden and invisible enemies for 4 s.', 'holy'),
   P(
     'ward_of_steel',
@@ -133,10 +134,10 @@ const PRAYER: SpellDef[] = [
     'Sanctuary',
     30,
     1.2,
-    40,
+    80,
     36,
-    [{ op: 'zone', pattern: { kind: 'circle', r: 180, anchor: 'aim' }, durationS: 8, tickS: 1, hazard: 'sanctuary', noStatusBuild: true, enemyDamagePct: 0.2, tick: [], allyTick: [{ op: 'heal', pct: 0.05, target: 'target', spell: true }] }],
-    'circle(180) at the cursor for 8 s: statuses cannot build, allies heal 5%/s, enemies deal −20%.',
+    [{ op: 'zone', pattern: { kind: 'circle', r: 180, anchor: 'aim' }, durationS: 8, tickS: 1, hazard: 'sanctuary', noStatusBuild: true, enemyDamagePct: 0.2, tick: [], allyTick: [{ op: 'heal', pct: 0.005, target: 'target', spell: true }] }],
+    'circle(180) at the cursor for 8 s: statuses cannot build, allies heal 0.5%/s, enemies deal −20%.',
   ),
 ];
 
