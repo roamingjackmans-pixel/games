@@ -379,6 +379,8 @@ export interface TeleC {
   hidden: boolean;
   sourceTag: string;
   slowable: number;
+  /** the attack's damage type: its ELEMENTS glow accents the telegraph's sparks and cracks (render only) */
+  dmgType?: DamageType;
 }
 
 export interface HazardC {
