@@ -135,3 +135,14 @@ describe('stagger grace (D103)', () => {
     expect(staggered(a)).toBe(true);
   });
 });
+
+describe('elite poise (D105)', () => {
+  it('an Elite has 50% more poise than its bigger body alone gives', async () => {
+    const { ELITE_POISE_MULT } = await import('../../src/game/combat/formulas');
+    const s = world();
+    const plain = spawnEnemy(s.w, ENEMIES.shambler!, 300, 300, { tellS: 0 });
+    const elite = spawnEnemy(s.w, ENEMIES.shambler!, 500, 300, { tellS: 0, elite: 'armored' });
+    expect(ELITE_POISE_MULT).toBe(1.5);
+    expect(elite.hp!.poiseMax).toBeCloseTo(poiseForSize(plain.radius * 1.3) * 1.5, 5);
+  });
+});

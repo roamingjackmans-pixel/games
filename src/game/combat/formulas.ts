@@ -53,6 +53,11 @@ export function staminaRegen(stamStat: number): number {
 }
 export const STAMINA_REGEN_DELAY = 0.6;
 
+/** Every stamina cost a player pays (swings, dodges, skills, spells, blocking) is ×1.15 (D105). */
+export const STAMINA_COST_MULT = 1.15;
+/** Elites have 50% more poise on top of their bigger body (D105). */
+export const ELITE_POISE_MULT = 1.5;
+
 /** Scaling curve f(s) = 1 − 0.982^s */
 export function scalingCurve(s: number): number {
   return 1 - Math.pow(0.982, Math.max(0, s));

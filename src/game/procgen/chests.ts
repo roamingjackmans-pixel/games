@@ -4,7 +4,8 @@
 import { stream } from '../../engine/rng';
 import type { ZoneLayout, RoomNode } from './zone';
 
-export const MIMIC_RATE = 0.05;
+/** every chest in the game (treasure rooms and room chests alike) is a mimic 8% of the time (D105; was 5%) */
+export const MIMIC_RATE = 0.08;
 /** share of combat and ambush rooms that hold a small chest (the dead ends left over after special rooms always do) */
 export const SMALL_CHEST_RATE = 0.25;
 
@@ -36,7 +37,7 @@ export function smallChest(layout: ZoneLayout, node: RoomNode, noMimics: boolean
   return { id: `${node.id}-c0`, kind: 'small', mimic, guarded: false };
 }
 
-/** Raw mimic roll for the 5% ± 0.5% test. */
+/** Raw mimic roll for the 8% ± 0.6% test. */
 export function rollMimic(seed: string, i: number): boolean {
   return stream(seed, `chest:test:${i}`).chance(MIMIC_RATE);
 }

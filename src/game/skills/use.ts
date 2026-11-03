@@ -3,7 +3,7 @@ import { CONSUMABLES } from '../../data/consumables';
 import { SKILLS } from '../../data/skills';
 import { SPELLS } from '../../data/spells';
 import { runEffects } from '../effects/run';
-import { itemLevelFor, scalingCurve } from '../combat/formulas';
+import { itemLevelFor, scalingCurve, STAMINA_COST_MULT } from '../combat/formulas';
 import { buffSum } from '../combat/state';
 import { dist } from '../../engine/math';
 import type { EffectDef, SkillDef, SpellDef } from '../types';
@@ -68,7 +68,7 @@ function msg(w: World, e: Entity, text: string): void {
 
 function spend(w: World, e: Entity, amount: number): void {
   const pl = e.pl!;
-  e.stam!.cur = Math.max(0, e.stam!.cur - amount * pl.derived.stamCost * Math.max(0.2, 1 + buffSum(e, 'staminaCostPct', w.time)));
+  e.stam!.cur = Math.max(0, e.stam!.cur - amount * STAMINA_COST_MULT * pl.derived.stamCost * Math.max(0.2, 1 + buffSum(e, 'staminaCostPct', w.time)));
   pl.stamDelayUntil = w.time + 0.6;
 }
 

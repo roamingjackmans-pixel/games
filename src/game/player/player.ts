@@ -3,7 +3,7 @@
 import { emptyInput, held, pressed } from '../../engine/input/actions';
 import { T } from '../room';
 import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
-import { flaskHeal } from '../combat/formulas';
+import { flaskHeal, STAMINA_COST_MULT } from '../combat/formulas';
 import { addRevive, applyControl, cleanse, emptySpec, heal, hitEnemy, rawDamage, typeColor } from '../combat/damage';
 import { buffSum, hasControl, speedMult } from '../combat/state';
 import { computeDerived } from './derived';
@@ -158,7 +158,7 @@ export function attackSpeedOf(w: World, e: Entity): number {
 }
 
 function staminaCostMult(w: World, e: Entity): number {
-  return e.pl!.derived.stamCost * Math.max(0.2, 1 + buffSum(e, 'staminaCostPct', w.time));
+  return STAMINA_COST_MULT * e.pl!.derived.stamCost * Math.max(0.2, 1 + buffSum(e, 'staminaCostPct', w.time));
 }
 
 export function spendStamina(w: World, e: Entity, amount: number): boolean {

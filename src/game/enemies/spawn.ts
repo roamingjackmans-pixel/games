@@ -1,6 +1,6 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
 import { ROLE_STATS, SHARD_SCALE, zoneShardFactor } from '../../data/roles';
-import { enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
+import { ELITE_POISE_MULT, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
 
@@ -52,7 +52,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   const shards = rawShards > 0 ? Math.max(1, Math.round(rawShards)) : 0;
   const radius = (def.radius || rs.radius) * (elite ? 1.3 : 1) * (def.traits?.scale ?? 1);
   // bosses keep a large poise pool that hits wear down; everyone else's poise comes from their size (D78)
-  const poise = (isBoss ? rs.poise : poiseForSize(radius)) * (def.mult?.poise ?? 1);
+  const poise = (isBoss ? rs.poise : poiseForSize(radius)) * (def.mult?.poise ?? 1) * (elite && !isBoss ? ELITE_POISE_MULT : 1);
   const resist = { ...(o.zoneResist ?? {}), ...def.resist };
   const immune = [...(o.zoneImmune ?? []), ...(def.statusImmune ?? [])];
   const now = w.time;

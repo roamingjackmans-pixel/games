@@ -1,7 +1,7 @@
 // The damage pipeline (GAME_DESIGN §3.1, §5.2–5.6, §6.3): players hit enemies, enemies hit players.
 // Red: block and parry fail (guard break), i-frames work. Piercing: i-frames fail, block works, parry fails.
 import { affinityMult, elementGlow, enemyElement } from '../elements';
-import { damageAfterDefense, reviveRequirement } from './formulas';
+import { STAMINA_COST_MULT, damageAfterDefense, reviveRequirement } from './formulas';
 import { bossPhaseCheck } from './bossPhase';
 import { addBuff, behind, buffSum, frontOf, hasControl, statusActive } from './state';
 import { DAMAGE_TYPES, type ControlId, type DamageType, type StatusId } from '../types';
@@ -361,7 +361,7 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
     total += damageAfterDefense(amt, def);
   }
   if (blockedAny) {
-    staminaCost *= d.stabilityMult;
+    staminaCost *= d.stabilityMult * STAMINA_COST_MULT;
     const stam = p.stam!;
     pl.stamDelayUntil = now + 0.8;
     if (stam.cur - staminaCost <= 0) {

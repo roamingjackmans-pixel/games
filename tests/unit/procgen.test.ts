@@ -68,11 +68,11 @@ describe('procgen (PROCGEN §9)', () => {
       }
     }
   });
-  it('mimic rate over 10,000 chests is 5% ± 0.5%', () => {
+  it('mimic rate over 10,000 chests is 8% ± 0.6% (D105)', () => {
     let n = 0;
     for (let i = 0; i < 10000; i++) if (rollMimic('mimics', i)) n++;
-    expect(n / 10000).toBeGreaterThan(0.045);
-    expect(n / 10000).toBeLessThan(0.055);
+    expect(n / 10000).toBeGreaterThan(0.074);
+    expect(n / 10000).toBeLessThan(0.086);
   });
   it('Shard tuning: a full zone clear yields 100% ± 20% of the levels for that zone (GAME_DESIGN §2.3)', () => {
     for (let z = 1; z <= 8; z++) {
