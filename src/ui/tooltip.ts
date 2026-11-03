@@ -429,6 +429,9 @@ export function gemTooltip(g: Gem): HTMLElement {
 }
 
 /** Draw a small icon for an item into a canvas. */
+/** Rough drawn length of each weapon (grip at 0 → tip), for fitting icons. */
+const WEAPON_ICON_LEN: Record<string, number> = { w_bow: 60, w_crossbow: 56, w_spear: 120, w_halberd: 118, w_dawn_glaive: 118, w_colossal: 88, w_greathammer: 66, w_hollow_maul: 66, w_whip: 90, w_greataxe: 66, w_longsword: 78, w_spellblade: 78, w_katana: 76, w_rapier: 74 };
+
 export function itemIcon(item: Item | null, size = 40): HTMLCanvasElement {
   const c = h('canvas', { width: size, height: size });
   if (!item) return c;
@@ -439,10 +442,13 @@ export function itemIcon(item: Item | null, size = 40): HTMLCanvasElement {
   ctx.scale(s, s);
   const w = WEAPONS[item.baseId];
   if (w) {
+    // fit the whole weapon diagonally: long ones (bows, spears, halberds) are scaled down to the icon
+    const len = WEAPON_ICON_LEN[w.draw] ?? 70;
+    const k = Math.min(0.62, 52 / len);
     ctx.rotate(-Math.PI / 4);
-    ctx.translate(-28, 0);
-    ctx.scale(0.62, 0.62);
-    drawWeapon(ctx, w.draw, 0);
+    ctx.translate((-len * k) / 2, 0);
+    ctx.scale(k, k);
+    drawWeapon(ctx, w.draw, 0, item.rarity === 'legendary' ? item.name : undefined);
   } else if (SHIELDS[item.baseId]) {
     ctx.scale(0.9, 0.9);
     drawShield(ctx, SHIELDS[item.baseId]!.draw);
