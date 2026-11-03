@@ -152,10 +152,10 @@ describe('bindings round-trip and conflicts (D34)', () => {
 
   it('the settings screen swaps instead of unbinding, and Hold variants are separate inputs', () => {
     const pad = defaultGamepad();
-    const r = rebindSwap(pad, 'dodge', 2); // X was the flask: the flask takes A
+    const r = rebindSwap(pad, 'dodge', 2); // X was the flask: the flask takes B (D122: B is the dodge)
     expect(pad.dodge).toEqual([2]);
-    expect(pad.flask).toEqual([0]);
-    expect(r.swapped).toEqual({ action: 'flask', input: 0 });
+    expect(pad.flask).toEqual([1]);
+    expect(r.swapped).toEqual({ action: 'flask', input: 1 });
     // Hold RT and tap RT live side by side on different actions
     rebindSwap(pad, 'quick', HOLD + 7);
     expect(pad.attack).toEqual([7]);

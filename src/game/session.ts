@@ -22,7 +22,7 @@ import { lootHooks } from './lootHooks';
 import './loot';
 import { rollShopPiece } from './bonfire/shop';
 import { dormantMimicNear, mimicBite } from './interact';
-import { cleanse, rawDamage } from './combat/damage';
+import { cleanse } from './combat/damage';
 import { reviveRequirement } from './combat/formulas';
 import { BOSSES } from '../data/bosses';
 import { DEATH_TITLES } from '../data/story';
@@ -1275,15 +1275,6 @@ export class GameSession {
           if (p.hp!.hp >= hp0) this.goal('escapePierce');
         });
       }
-    }
-    // the flask dummy pokes you once for 10% when you reach station 9
-    const f = w.get(t.dummy.f ?? 0);
-    if (f && !t.poked && dist(p.x, p.y, f.x, f.y) < 160) {
-      t.poked = true;
-      f.anim.pose = 'attack';
-      w.sfx('swingMedium', f.x);
-      rawDamage(w, p, p.hp!.max * 0.1, 'physical', f.id);
-      w.emit({ t: 'msg', text: 'Ow. Drink from the Thermos ({flask}).', forPlayer: p.pl!.playerId });
     }
     // sign text when close
     let sign: string | null = null;

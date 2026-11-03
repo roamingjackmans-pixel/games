@@ -122,7 +122,7 @@ describe('glyph text follows the current bindings', () => {
     device = 'pad';
     expect(formatPrompts('Drink ({flask}), {unknown} stays')).toBe('Drink (X), {unknown} stays');
     padKind = 'playstation';
-    expect(promptLabel('interact', 'Rest')).toBe('○  Rest');
+    expect(promptLabel('interact', 'Rest')).toBe('✕  Rest'); // D122: ✕ (A) interacts
   });
 });
 

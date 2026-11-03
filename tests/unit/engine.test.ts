@@ -89,7 +89,7 @@ describe('bindings', () => {
     const s = serializeBindings(kb, pad);
     const back = deserializeBindings(s);
     expect(back.keyboard.attack).toEqual(['KeyJ']);
-    expect(back.gamepad.dodge).toEqual([0]);
+    expect(back.gamepad.dodge).toEqual([1]); // D122: B dodges, A interacts
   });
   it('fills missing actions from defaults', () => {
     const back = deserializeBindings(JSON.stringify({ keyboard: { attack: ['KeyK'] } }));
@@ -148,5 +148,18 @@ describe('audio synthesis', () => {
       }
       expect(peak, id).toBeGreaterThan(0.001);
     }
+  });
+});
+
+describe('gamepad layout (D122)', () => {
+  it('A interacts and confirms, B dodges and backs out; old saved layouts move over', async () => {
+    const { defaultGamepad: dg, defaultMenuPad, normalizeGamepad } = await import('../../src/engine/input/bindings');
+    expect(dg().interact).toEqual([0]);
+    expect(dg().dodge).toEqual([1]);
+    expect(defaultMenuPad()).toEqual({ confirm: 0, back: 1 });
+    const old = { ...dg(), dodge: [0], interact: [1] };
+    const n = normalizeGamepad(old as unknown as Record<string, unknown>);
+    expect(n.interact).toEqual([0]);
+    expect(n.dodge).toEqual([1]);
   });
 });

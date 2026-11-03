@@ -8,6 +8,13 @@ import { moveFocus } from './dom';
 import { refreshGlyphs } from './glyphs';
 
 let repeatAt = 0;
+let lastPoll = 0;
+
+if (typeof window !== 'undefined') {
+  const off = (): void => document.body?.classList.remove('pad-nav');
+  window.addEventListener('mousemove', off, { passive: true });
+  window.addEventListener('mousedown', off, { passive: true });
+}
 
 function menuButtons(): MenuPadBindings {
   try {
@@ -15,6 +22,28 @@ function menuButtons(): MenuPadBindings {
   } catch {
     return defaultMenuPad();
   }
+}
+
+function canScroll(el: HTMLElement): boolean {
+  if (el.scrollHeight <= el.clientHeight + 2) return false;
+  const oy = getComputedStyle(el).overflowY;
+  return oy === 'auto' || oy === 'scroll';
+}
+
+/** The scroll box for the right stick: the nearest scrolling ancestor of the focus, else the largest in the menu. */
+function scrollBoxFor(scope: HTMLElement, focus: HTMLElement | null): HTMLElement | null {
+  for (let el = focus; el && el !== scope.parentElement; el = el.parentElement) if (canScroll(el)) return el;
+  let best: HTMLElement | null = null;
+  let area = 0;
+  for (const el of scope.querySelectorAll<HTMLElement>('*')) {
+    if (!canScroll(el)) continue;
+    const a = el.clientWidth * el.clientHeight;
+    if (a > area) {
+      area = a;
+      best = el;
+    }
+  }
+  return best ?? (canScroll(scope) ? scope : null);
 }
 
 export function pollMenuPad(input: InputManager, now: number): void {
@@ -27,6 +56,11 @@ export function pollMenuPad(input: InputManager, now: number): void {
   const layers = [...document.querySelectorAll<HTMLElement>('#overlay .layer')].filter((l) => !l.classList.contains('clear') || l.querySelector('.panel'));
   const scope = layers[layers.length - 1];
   if (!scope || input.lastDevice !== 'pad') return;
+  // show where the pad's focus is (browsers only draw focus rings for the keyboard), and put focus somewhere
+  // visible as soon as a menu opens under the pad
+  document.body.classList.add('pad-nav');
+  const active = document.activeElement as HTMLElement | null;
+  if (!active || !scope.contains(active)) moveFocus(scope, 0, 1);
   const [sx, sy] = input.padStick();
   let dx = 0;
   let dy = 0;
@@ -36,12 +70,27 @@ export function pollMenuPad(input: InputManager, now: number): void {
   else if (input.padButtonDown(13) || sy > 0.6) dy = 1;
   if ((dx || dy) && now >= repeatAt) {
     moveFocus(scope, dx, dy);
+    // keep what the pad selects on screen inside scrolling lists
+    (document.activeElement as HTMLElement | null)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     repeatAt = now + 0.18;
   } else if (!dx && !dy) repeatAt = 0;
+  // the right stick scrolls whatever can scroll: the list around the focus, else the menu's biggest scroll box
+  const dt = Math.min(0.1, Math.max(0, now - lastPoll));
+  lastPoll = now;
+  const [, ry] = input.padRightStick();
+  if (Math.abs(ry) > 0.2) {
+    const box = scrollBoxFor(scope, document.activeElement as HTMLElement | null);
+    if (box) box.scrollTop += ry * 1100 * dt;
+  }
   const mp = menuButtons();
   if (input.padButtonEdge(mp.confirm)) {
     const el = document.activeElement as HTMLElement | null;
     if (el && scope.contains(el)) el.click();
   }
-  if (input.padButtonEdge(mp.back)) window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' }));
+  if (input.padButtonEdge(mp.back)) {
+    // a full press (down and up): a lone keydown left Escape "held", so B only ever backed out once
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Escape', key: 'Escape' }));
+    input.lastDevice = 'pad';
+  }
 }

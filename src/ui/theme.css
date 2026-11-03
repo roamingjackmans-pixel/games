@@ -175,3 +175,11 @@ button.perk-up { font-size: 11px; padding: 1px 5px; border-width: 1px; line-heig
 .fuse-perk { display: flex; align-items: center; gap: 8px; width: 100%; font-size: 13px; padding: 4px 8px; }
 .fuse-perk.on { border-color: var(--accent); background: #3a3020; }
 .fuse-perk .tick { width: 16px; text-align: center; color: var(--accent); font-weight: 700; }
+
+/* gamepad menu navigation (D122): the focused control is always visible */
+body.pad-nav button:focus, body.pad-nav .btn:focus, body.pad-nav [tabindex]:focus, body.pad-nav input:focus, body.pad-nav select:focus {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 14px rgba(230, 184, 74, 0.55);
+  background-color: #352f43;
+}

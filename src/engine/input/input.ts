@@ -440,6 +440,11 @@ export class InputManager {
   padButtonEdge(i: number): boolean {
     return this.padDown.has(i) && !this.padPrev.has(i);
   }
+  /** the right stick, dead-zoned (menus scroll with it) */
+  padRightStick(): [number, number] {
+    return [this.padAim[0], this.padAim[1]];
+  }
+
   padStick(): [number, number] {
     return [this.padMove[0], this.padMove[1]];
   }

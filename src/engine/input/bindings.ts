@@ -78,7 +78,7 @@ export function defaultGamepad(): GamepadBindings {
     moveRight: [],
     attack: [7],
     block: [6],
-    dodge: [0],
+    dodge: [1],
     skill1: [4],
     skill2: [5],
     skill3: [3],
@@ -87,7 +87,7 @@ export function defaultGamepad(): GamepadBindings {
     spell3: [15],
     flask: [2],
     quick: [13],
-    interact: [1],
+    interact: [0],
     twoHand: [11],
     swapWeapon: [10],
     inventory: [8],
@@ -153,6 +153,11 @@ export function normalizeGamepad(b: Partial<Record<string, unknown>> | undefined
   for (const a of ALL_ACTIONS) {
     const v = b?.[a];
     out[a] = Array.isArray(v) && v.every((x) => typeof x === 'number') ? [...(v as number[])] : d[a];
+  }
+  // settings saved with the old layout (dodge on A, interact on B, untouched) move to A = interact, B = dodge (D122)
+  if (out.dodge.length === 1 && out.dodge[0] === 0 && out.interact.length === 1 && out.interact[0] === 1) {
+    out.dodge = [1];
+    out.interact = [0];
   }
   return out;
 }
