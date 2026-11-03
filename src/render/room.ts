@@ -13,6 +13,7 @@ import { drawAmbienceUnder } from './ambience';
 import { floorEdgeShade, paintFloor } from './floors';
 import { drawCrumbling, drawFallenTile, drawGrates, drawHazards, drawHoles, isFallenOverlay, makeVoidSky } from './holes';
 import { E, RH, RW, Tiles, emptyArt, scratch, styleFor, type RoomArt, type RoomStyle } from './roomStyle';
+import { drawTerrainAnim, drawTerrainBase, terrainKey, type TerrainArt } from './terrain';
 import { drawClosedDoor, drawDoorways, drawPillars, drawWallDecor, drawWalls } from './walls';
 
 export const DEFAULT_PALETTE: Palette = {
@@ -34,6 +35,8 @@ interface Base {
   style: RoomStyle;
   seed: number;
   sky: CanvasImageSource | null;
+  /** hazardous terrain patches (terrain.ts), null when the room has none */
+  terrain: TerrainArt | null;
 }
 
 let base: Base | null = null;
@@ -49,7 +52,7 @@ function baseKey(room: Room, pal: Palette, propStyle: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < room.tiles.length; i++) h = Math.imul(h ^ room.tiles[i]!, 16777619);
   for (const i of room.trees.keys()) h = Math.imul(h ^ (i + 7), 16777619);
-  return `${room.id}|${h >>> 0}|${SIDES.map((s) => (room.doors[s].exists ? 1 : 0)).join('')}|${room.hazardKind}|${pal.floor}|${propStyle}`;
+  return `${room.id}|${h >>> 0}|${SIDES.map((s) => (room.doors[s].exists ? 1 : 0)).join('')}|${room.hazardKind}|${pal.floor}|${propStyle}|${terrainKey(room)}`;
 }
 
 /** Last build/compose time in ms (dev diagnostics). */
@@ -71,6 +74,7 @@ export function drawRoomFloor(ctx: CanvasRenderingContext2D, room: Room, pal: Pa
   }
   ctx.drawImage(layer!.canvas, 0, ROOM_Y0);
   drawAmbienceUnder(ctx, room, base.art, performance.now() / 1000);
+  if (base.terrain) drawTerrainAnim(ctx, base.terrain, performance.now() / 1000);
   if (darkness > 0) {
     ctx.fillStyle = `rgba(0,0,0,${darkness})`;
     ctx.fillRect(0, ROOM_Y0, RW, RH);
@@ -140,8 +144,12 @@ function renderBase(room: Room, pal: Palette, propStyle: string, key: string): B
   mark('props');
   bakeLighting(ctx, art, style);
   mark('light');
+  // hazardous terrain patches over the light map, like the entities: gameplay ground must read in any corner
+  // (they sit on open floor a tile clear of walls and props, so nothing drawn earlier overlaps them)
+  const terrain = drawTerrainBase(ctx, room, style.id, seed);
+  mark('terrain');
   roomPerf.marks = marks.join(' ');
-  return { key, canvas, art, style, seed, sky };
+  return { key, canvas, art, style, seed, sky, terrain };
 }
 
 /** Ambient darkness with light pools punched out, then a soft colored wash from each light. */

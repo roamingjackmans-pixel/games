@@ -7,6 +7,7 @@ import { zoneDef } from '../../data/zones';
 import { Room, T, tileCenter, ROOM_H, ROOM_W, type Side } from '../room';
 import { mirrorTemplate } from './templates';
 import { shapeRoom, thinProps } from './shapes';
+import { placeTerrain, terrainStream } from './terrain';
 import type { RoomNode, ZoneLayout } from './zone';
 
 export interface RoomMarkers {
@@ -116,5 +117,8 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
     ] as const)
       if (!room.blocksMove(tx, ty)) m.spawns.push(tileCenter(tx, ty));
   }
+  // hazardous terrain (PROCGEN §3.2): a seeded share of combat and ambush rooms, clear of spawns, chests and doors
+  const trng = terrainStream(layout, node);
+  if (trng) placeTerrain(room, trng, [...m.spawns, ...m.chests, room.nearestFloor(640, 368, 22)]);
   return { room, markers: m };
 }

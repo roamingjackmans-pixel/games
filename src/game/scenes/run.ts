@@ -25,6 +25,8 @@ import type { DebugApi } from '../debug/menu';
 import type { BossDef, SaveFile } from '../types';
 import type { Entity } from '../world';
 import { neighbourId } from '../procgen/zone';
+import { buildRoom } from '../procgen/rooms';
+import { terrainCounts, terrainStream } from '../procgen/terrain';
 import { openInventory } from '../../ui/menus/inventory';
 import { openBonfire } from '../../ui/menus/bonfire';
 import { renderSpellTab } from '../../ui/menus/spells';
@@ -668,7 +670,13 @@ export class RunScene extends WorldScene {
         this.local = s.localPlayer;
         return `Zone ${zz}: ${zoneDef(zz).name}.`;
       },
-      listRooms: () => s.layout.rooms.map((r) => `${r.id} (${r.kind})`),
+      listRooms: () =>
+        s.layout.rooms.map((r) => {
+          // rooms with hazardous terrain say how much (slow/hurt tiles)
+          if (!terrainStream(s.layout, r)) return `${r.id} (${r.kind})`;
+          const c = terrainCounts(buildRoom(s.layout, r).room);
+          return `${r.id} (${r.kind}) terrain ${c.slow}/${c.hurt}`;
+        }),
       jumpRoom: (id) => {
         const rid = id.split(' ')[0]!;
         if (!s.layout.byId[rid]) return `No room ${rid}`;
