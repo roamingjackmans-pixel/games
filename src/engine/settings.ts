@@ -15,6 +15,10 @@ import {
 export type PromptSetting = 'auto' | 'keyboard' | 'xbox' | 'playstation';
 export const PROMPT_SETTINGS: readonly PromptSetting[] = ['auto', 'keyboard', 'xbox', 'playstation'];
 
+/** When the on-screen touch controller shows (D143). */
+export type TouchMode = 'auto' | 'on' | 'off';
+export const TOUCH_MODES: readonly TouchMode[] = ['auto', 'on', 'off'];
+
 export interface Settings {
   video: {
     scale: number;
@@ -36,6 +40,8 @@ export interface Settings {
     aimAssist: number;
     holdToBlock: boolean;
     prompts: PromptSetting;
+    /** the on-screen touch controller (D143): auto = on phones and tablets */
+    touch: { mode: TouchMode; size: number; opacity: number };
   };
   net: { name: string };
   /** co-op rules the host sets for the whole party (D115) */
@@ -72,7 +78,7 @@ export function defaultSettings(): Settings {
       showFps: false,
     },
     audio: { master: 0.8, sfx: 0.9, music: 0.6 },
-    controls: { keyboard: defaultKeyboard(), gamepad: defaultGamepad(), menuPad: defaultMenuPad(), aimAssist: 0.6, holdToBlock: true, prompts: 'auto' },
+    controls: { keyboard: defaultKeyboard(), gamepad: defaultGamepad(), menuPad: defaultMenuPad(), aimAssist: 0.6, holdToBlock: true, prompts: 'auto', touch: { mode: 'auto', size: 1, opacity: 0.75 } },
     net: { name: 'Joe' },
     game: { friendlyFire: FRIENDLY_FIRE_DEFAULT },
   };
@@ -119,6 +125,14 @@ export function normalizeSettings(raw: unknown): Settings {
       aimAssist: num(c.aimAssist, d.controls.aimAssist, 0, 1),
       holdToBlock: bool(c.holdToBlock, d.controls.holdToBlock),
       prompts: PROMPT_SETTINGS.includes(c.prompts as PromptSetting) ? (c.prompts as PromptSetting) : d.controls.prompts,
+      touch: (() => {
+        const t = (c.touch ?? {}) as Record<string, unknown>;
+        return {
+          mode: TOUCH_MODES.includes(t.mode as TouchMode) ? (t.mode as TouchMode) : d.controls.touch.mode,
+          size: num(t.size, d.controls.touch.size, 0.7, 1.4),
+          opacity: num(t.opacity, d.controls.touch.opacity, 0.25, 1),
+        };
+      })(),
     },
     net: { name: typeof n.name === 'string' && n.name.trim() ? n.name.trim().slice(0, 16) : d.net.name },
     game: { friendlyFire: normalizeFriendlyFire(g.friendlyFire) },

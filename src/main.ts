@@ -11,6 +11,7 @@ import { LobbyScene, lobbyHooks } from './game/scenes/lobby';
 import { GuestRunScene, guestHooks } from './game/scenes/guestRun';
 import { installDebugMenu } from './ui/menus/debug';
 import { installAchievementToasts } from './ui/achievements';
+import { installTouchControls } from './ui/touchControls';
 import { h, uiRoot } from './ui/dom';
 import { newSave } from './game/save/schema';
 import { newCharacter } from './game/player/character';
@@ -37,6 +38,8 @@ function boot(): void {
   a.canvas.applyOverlayScale(uiRoot());
   installDebugMenu();
   installAchievementToasts();
+  // the on-screen controller on phones and tablets (D143)
+  installTouchControls();
 
   const toTitle = (): void => a.scenes.go(new TitleScene());
   titleHooks.start = (save, mode) => {

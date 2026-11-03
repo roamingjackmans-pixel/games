@@ -16,7 +16,8 @@ import {
   type RebindResult,
 } from '../../engine/input/bindings';
 import { HOLD_S } from '../../engine/input/input';
-import { FRIENDLY_FIRE_MAX, FRIENDLY_FIRE_STEP, PROMPT_SETTINGS, normalizeFriendlyFire, type PromptSetting } from '../../engine/settings';
+import { FRIENDLY_FIRE_MAX, FRIENDLY_FIRE_STEP, PROMPT_SETTINGS, normalizeFriendlyFire, type PromptSetting, type TouchMode } from '../../engine/settings';
+import { refreshTouchControls } from '../touchControls';
 import { btn, clearEl, h, layer } from '../dom';
 import { canPromptInstall, installSteps, isInstalledApp, onInstallChange, promptInstall } from '../install';
 import { GLYPH_LABEL, glyphEl, inputGlyphEl, inputText, padStyle, promptStyle, refreshGlyphs, type GlyphAction, type GlyphInput } from '../glyphs';
@@ -409,6 +410,12 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     } else {
       el.appendChild(slider('Aim assist strength', () => s.controls.aimAssist, (v) => (s.controls.aimAssist = v)));
       el.appendChild(padStatus());
+      // the on-screen touch controller (D143): it uses these same bindings
+      el.appendChild(h('h3', null, 'Touch controls'));
+      el.appendChild(select('Show on screen', [['auto', 'Auto (phones and tablets)'], ['on', 'Always'], ['off', 'Off']] as [TouchMode, string][], () => s.controls.touch.mode, (v) => (s.controls.touch.mode = v), refreshTouchControls));
+      el.appendChild(slider('Size', () => s.controls.touch.size, (v) => { s.controls.touch.size = v; refreshTouchControls(); }, 0.7, 1.4, 0.05));
+      el.appendChild(slider('Opacity', () => s.controls.touch.opacity, (v) => { s.controls.touch.opacity = v; refreshTouchControls(); }, 0.25, 1, 0.05));
+      el.appendChild(h('div', { class: 'small dim-text', style: 'max-width:760px' }, 'Two sticks (move and aim) and the 16 buttons of a controller, laid out like an Xbox pad. Each button shows what it does; rebinding a button below changes it on screen too. Touch a stick anywhere in its corner.'));
     }
     const table = tableFor(pad);
     const conflicts = findConflicts(table);

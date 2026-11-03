@@ -1,6 +1,7 @@
 // Keyboard, mouse and Gamepad API input merged into one InputFrame per simulation tick.
 import { ACTION_BIT, GAME_ACTIONS, type Action, type GameAction, type InputFrame, type LocalAction } from './actions';
 import { HOLD, PAD_BUTTON_COUNT, defaultGamepad, defaultKeyboard, type GamepadBindings, type KeyboardBindings } from './bindings';
+import { mergePads, virtualGamepad } from './virtualPad';
 
 export type Device = 'kbm' | 'pad';
 /** Which button pictures a connected pad wants (Sony pads get PlayStation symbols, everything else Xbox). */
@@ -222,12 +223,19 @@ export class InputManager {
 
   /** Poll the Gamepad API; called once per animation frame before sampling. */
   pollGamepad(now: number): void {
-    const pads = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
-    let gp: Gamepad | null = null;
+    let pads: (Gamepad | null)[] = [];
+    try {
+      pads = typeof navigator !== 'undefined' && navigator.getGamepads ? [...navigator.getGamepads()] : [];
+    } catch {
+      // the Gamepad API can be blocked (permissions policy); the touch controls still work
+    }
+    let real: Gamepad | null = null;
     for (const p of pads) if (p && p.connected) {
-      gp = p;
+      real = p;
       break;
     }
+    // the on-screen touch controller counts as a pad too (D143)
+    const gp = mergePads(real, virtualGamepad());
     this.padPrev = new Set(this.padDown);
     this.padDown.clear();
     this.lastPoll = now;
