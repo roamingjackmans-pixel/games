@@ -287,8 +287,8 @@ export class RunScene extends WorldScene {
   }
 
   /**
-   * The boss storms in: the full intro the first time (and always in co-op, where the sim cannot pause and the
-   * session holds the boss for the whole cutscene), the freeze-frame alone on later solo attempts.
+   * The boss storms in, the first time you meet it in this run (D102); later attempts go straight to the fight.
+   * In co-op the session holds the boss for the whole cutscene (the sim cannot pause).
    */
   private bossIntro(def: BossDef, e: Entity): void {
     const zone = this.session.layout.zone;
@@ -298,7 +298,9 @@ export class RunScene extends WorldScene {
     }
     const coop = this.w.playerCount > 1;
     const id = bossIntroId(zone);
-    const full = coop || !this.seen(id);
+    // D102: the intro plays only the first time you meet this boss in this run (a run = this world and cycle)
+    if (this.seen(id)) return;
+    const full = true;
     this.markSeen(id);
     const cut = bossIntroCut(def, zone, zoneDef(zone).name, () => (this.w.bossId === e.id ? e : null), zoneDef(zone).palette.colors, full);
     if (coop) this.session.holdBossIntro(cut.length + 0.3);

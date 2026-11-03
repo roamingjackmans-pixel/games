@@ -440,8 +440,11 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
       const gapW = p.gapW ?? 90;
       const n = p.count ?? 1;
       const out: TeleSpec[] = [];
+      // a gap toward the middle of the room shared by every ring, so standing in it dodges the whole series
+      const centerGap = p.centerGapDeg !== undefined ? Math.atan2(ROOM_CY - y, ROOM_CX - x) + c.rng.spread(p.centerGapDeg * DEG) : null;
       for (let k = 0; k < n; k++) {
         const gaps = placeRingGaps(p, c, x, y, k);
+        if (centerGap !== null) gaps.unshift(centerGap);
         const thick = p.thickness ?? 36;
         out.push(
           spec([{ k: 'expRing', x, y, speed: p.speed, thick, gaps, gapW, maxR: ROOM_DIAG }], {

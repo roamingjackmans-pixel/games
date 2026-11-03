@@ -322,3 +322,24 @@ describe('pattern hit tests (GAME_DESIGN §5.7)', () => {
     }
   });
 });
+
+describe('the Plague Bell toll (D101)', () => {
+  it('has 5 gaps per ring, one facing the room centre within 15° and shared by all three rings', async () => {
+    const { ENEMIES } = await import('../../src/data/enemies');
+    const toll = ENEMIES.plague_bell!.attacks.find((a) => a.id === 'bell_toll')!;
+    for (let seed = 0; seed < 20; seed++) {
+      const ox = 200 + seed * 40;
+      const oy = seed % 2 ? 200 : 560;
+      const rings = resolvePattern(toll.pattern!, { ox, oy, facing: 0, tx: 900, ty: 400, players: [{ x: 900, y: 400 }], rng: new Rng(seed), room: Room.empty(), telegraphS: 1.0 });
+      expect(rings.length).toBe(3);
+      const toCentre = Math.atan2(368 - oy, 640 - ox);
+      const firsts = rings.map((r) => (r.shapes[0] as { gaps: number[] }).gaps);
+      for (const g of firsts) {
+        expect(g.length).toBe(5);
+        const off = Math.abs(Math.atan2(Math.sin(g[0]! - toCentre), Math.cos(g[0]! - toCentre)));
+        expect(off).toBeLessThanOrEqual((15 * Math.PI) / 180 + 1e-9);
+        expect(g[0]).toBeCloseTo(firsts[0]![0]!, 9);
+      }
+    }
+  });
+});

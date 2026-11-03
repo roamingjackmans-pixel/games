@@ -961,7 +961,8 @@ export class BossIntroCutscene extends Cutscene {
   constructor(private s: BossIntroSpec) {
     super();
     this.f0 = s.full ? 1.6 : 0;
-    this.length = s.full ? 3.75 : 2.0;
+    // D102: the name card holds 50% longer than it used to (freeze-frame 2.15 s → 3.25 s; short 2 s → 3 s)
+    this.length = s.full ? 4.85 : 3.0;
     this.minSkip = s.full ? 0.5 : 0.3;
   }
 

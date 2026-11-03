@@ -144,7 +144,19 @@ export type PatternDef = PatternCommon &
         /** with count: every other sweep turns the opposite way */
         opposite?: boolean;
       }
-    | { kind: 'expandingRing'; speed: number; thickness?: number; gaps: number; gapW?: number; anchor: Anchor; gapBehind?: boolean; count?: number; spacingS?: number }
+    | {
+        kind: 'expandingRing';
+        speed: number;
+        thickness?: number;
+        gaps: number;
+        gapW?: number;
+        anchor: Anchor;
+        gapBehind?: boolean;
+        count?: number;
+        spacingS?: number;
+        /** one extra gap faces the room centre (within ± this many degrees), the same in every ring of the series */
+        centerGapDeg?: number;
+      }
     | { kind: 'randomCircles'; n: number; r: number; within?: number; anchor: Anchor; overS?: number }
     | { kind: 'wave'; w: number; speed: number; from: 'north' | 'south' | 'east' | 'west' | 'random' | 'cross'; safeTiles?: 'G' }
     | { kind: 'pockets'; n: number; pocketR: number; anchor?: Anchor }

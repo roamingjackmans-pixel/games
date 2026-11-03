@@ -319,7 +319,8 @@ export const CRYPT: Record<string, EnemyDef> = {
         id: 'bell_toll',
         name: 'Toll',
         kind: 'pierce',
-        pattern: { kind: 'expandingRing', speed: 220, gaps: 2, gapW: 90, anchor: 'self', count: 3, spacingS: 1.2 },
+        // D101: 4 gaps plus one facing the room centre (±15°) that stays put for all three rings (was 2 gaps)
+        pattern: { kind: 'expandingRing', speed: 220, gaps: 4, gapW: 90, anchor: 'self', count: 3, spacingS: 1.2, centerGapDeg: 15 },
         windupMs: 1000,
         recoverMs: 2600,
         dmgMult: 0.8,

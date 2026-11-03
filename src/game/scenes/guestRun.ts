@@ -51,6 +51,8 @@ export class GuestRunScene extends WorldScene {
    * room it started in, the boss intro while the host holds the boss, the defeat lines after the kill.
    */
   private cut: Cutscene | null = null;
+  private bossCut: Cutscene | null = null;
+  private bossCutId = 0;
   private cutRoom = '';
   private zoneKey = '';
   private lastBossId = 0;
@@ -213,8 +215,16 @@ export class GuestRunScene extends WorldScene {
       const def = e?.en ? BOSSES[e.en.def.id] : undefined;
       if (e?.en && def && e.en.state === 'spawning' && cutscenesEnabled()) {
         const zone = lay.zone;
-        this.playCut(bossIntroCut(def, zone, zoneDef(zone).name, () => this.w.get(bid) ?? null, zoneDef(zone).palette.colors, true), false);
+        const cut = bossIntroCut(def, zone, zoneDef(zone).name, () => this.w.get(bid) ?? null, zoneDef(zone).palette.colors, true);
+        this.bossCut = cut;
+        this.bossCutId = bid;
+        this.playCut(cut, false);
       }
+    }
+    // the host decides whether the intro plays (D102): once its boss leaves the spawn tell, the guest's copy ends
+    if (this.bossCut && this.cut === this.bossCut) {
+      const b = this.bossCutId ? this.w.get(this.bossCutId) : undefined;
+      if (!b?.en || b.en.state !== 'spawning') this.bossCut.skip();
     }
     const pd = this.pendingDefeat;
     if (!this.cut && pd && !this.overlay && performance.now() / 1000 >= pd.at) {
