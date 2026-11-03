@@ -10,6 +10,7 @@ import { overlays } from '../game/debug/menu';
 import { HAZARDS } from '../game/systems/hazards';
 import { typeColor } from '../game/combat/damage';
 import { drawRoomFloor, DEFAULT_PALETTE } from './room';
+import { drawAmbience } from './ambience';
 import { drawAttackIcon, drawTelegraph } from './telegraphs';
 import { drawTelegraphEchoes } from './telegraphFx';
 import { debugHitboxes, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerEntity, drawProjectile } from './entities';
@@ -313,6 +314,7 @@ export class WorldView {
       }
     }
     this.particles.draw(ctx);
+    drawAmbience(ctx, realDt); // zone particles + vignette (render/ambience.ts)
     if (overlays.hitbox) debugHitboxes(ctx, w);
     if (overlays.ai) {
       for (const e of w.enemies) {
