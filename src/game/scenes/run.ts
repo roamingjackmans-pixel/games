@@ -389,7 +389,7 @@ export class RunScene extends WorldScene {
       changed();
       return o.msg;
     };
-    const open = (): void => {
+    const open = (startTab?: string): void => {
       this.overlay?.remove();
       this.overlay = openBonfire({
         char: c,
@@ -441,7 +441,9 @@ export class RunScene extends WorldScene {
           },
         },
         extraTabs: [{ label: 'Spells', render: (el, rr) => renderSpellTab(el, c, changed, rr) }],
-        openInventory: () => this.showInventory(() => open()),
+        // the inventory continues the bonfire's LB / RB loop: past its ends it comes back to the bonfire (D169)
+        openInventory: () => this.showInventory(() => open(), (step) => open(step > 0 ? 'first' : 'last')),
+        startTab,
         close: () => this.closeOverlay(),
       });
       this.overlay.appendChild(restLine(this.pickLine(first ? BONFIRE_LINES : EMBER_LINES, `rest:${id}`)));
@@ -471,7 +473,7 @@ export class RunScene extends WorldScene {
     this.menuOpen = true;
   }
 
-  showInventory(onClose?: () => void): void {
+  showInventory(onClose?: () => void, tabEdge?: (step: number) => void): void {
     const p = this.local;
     if (!p) return;
     this.dropCut();
@@ -486,6 +488,14 @@ export class RunScene extends WorldScene {
         this.closeOverlay();
         onClose?.();
       },
+      ...(tabEdge
+        ? {
+            tabEdge: (step: number) => {
+              this.closeOverlay();
+              tabEdge(step);
+            },
+          }
+        : {}),
     });
     this.overlayKind = 'inventory';
     this.overlayBack = onClose ?? null;

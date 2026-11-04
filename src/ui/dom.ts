@@ -217,11 +217,39 @@ export function moveFocus(scope: HTMLElement, dx: number, dy: number): void {
     }
     return best;
   };
-  const best = pick(true) ?? (dy !== 0 ? pick(false) : null);
+  const best = pick(true) ?? (dy !== 0 ? pick(false) : null) ?? wrapTarget(items, cur, cx, cy, dx, dy, here);
   if (best) {
     best.focus();
     playSfx('uiHover', { vol: 0.5 });
   }
+}
+
+/**
+ * Where the focus goes when nothing is further that way (D169): menus loop. Left / right wrap to the other end of
+ * the same row, in the same area. Up / down wrap to the far end of the whole menu: a menu with tabs is one loop
+ * (Up from the content's top row already reaches the tab bar, so Up from the bar goes to the bottom row and Down
+ * from the bottom row comes back up to the bar, onto the open tab).
+ */
+function wrapTarget(items: HTMLElement[], cur: HTMLElement, cx: number, cy: number, dx: number, dy: number, here: Element | null): HTMLElement | null {
+  const others = items.filter((e) => e !== cur).map((e) => {
+    const r = e.getBoundingClientRect();
+    return { e, x: r.left + r.width / 2, y: r.top + r.height / 2, h: r.height };
+  });
+  if (dx !== 0) {
+    // the same row, the same area: the far end
+    const hh = cur.getBoundingClientRect().height;
+    const row = others.filter((o) => o.e.closest('.tabs') === here && Math.abs(o.y - cy) <= Math.max(10, Math.min(hh, o.h) * 0.6));
+    if (!row.length) return null;
+    return row.reduce((a, o) => (-dx * o.x > -dx * a.x ? o : a)).e;
+  }
+  if (!others.length) return null;
+  // the far row: the bottom one for Up, the top one for Down
+  const far = Math.max(...others.map((o) => -dy * o.y));
+  const row = others.filter((o) => -dy * o.y >= far - 12);
+  // on the tab bar, the open tab; otherwise the one nearest across
+  const open = row.find((o) => o.e.closest('.tabs') && o.e.classList.contains('on'));
+  if (open) return open.e;
+  return row.reduce((a, o) => (Math.abs(o.x - cx) < Math.abs(a.x - cx) ? o : a)).e;
 }
 
 export function fmt(n: number): string {

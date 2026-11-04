@@ -54,6 +54,8 @@ function scrollBoxFor(scope: HTMLElement, focus: HTMLElement | null): HTMLElemen
 /** the pad button for a menu control's second action (X on Xbox, □ on PlayStation) and the event it sends (D166) */
 export const PAD_ALT = 2;
 export const PAD_ALT_EVENT = 'pad-alt';
+/** sent to a menu layer when LB / RB would wrap past its first or last tab (detail: -1 or 1); preventDefault takes it (D169) */
+export const TAB_EDGE_EVENT = 'tab-edge';
 
 export function pollMenuPad(input: InputManager, now: number): void {
   refreshGlyphs(now);
@@ -110,7 +112,8 @@ export function pollMenuPad(input: InputManager, now: number): void {
     const box = scrollBoxFor(scope, document.activeElement as HTMLElement | null);
     if (box) box.scrollTop += ry * 1100 * dt;
   }
-  // LB / RB (L1 / R1) step through a menu's tabs (D145), stopping at the ends; the focus goes to the new tab
+  // LB / RB (L1 / R1) step through a menu's tabs (D145) and wrap round the ends (D169); a menu that continues into
+  // another one past its ends (the inventory opened from a bonfire) takes the edge itself (TAB_EDGE_EVENT)
   for (const [btnIdx, step] of [
     [4, -1],
     [5, 1],
@@ -118,10 +121,15 @@ export function pollMenuPad(input: InputManager, now: number): void {
     if (!input.padButtonEdge(btnIdx)) continue;
     const tabs = [...scope.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]')].filter((t) => t.offsetParent !== null && !t.disabled);
     const cur = tabs.findIndex((t) => t.classList.contains('on'));
-    const next = tabs[cur + step];
     input.swallowPadButton(btnIdx);
-    if (cur < 0 || !next) continue;
-    next.click();
+    if (cur < 0) continue;
+    let next = tabs[cur + step];
+    if (!next) {
+      const edge = new CustomEvent(TAB_EDGE_EVENT, { detail: step, cancelable: true });
+      scope.dispatchEvent(edge);
+      if (!edge.defaultPrevented) next = tabs[(cur + step + tabs.length) % tabs.length];
+    }
+    next?.click();
     // after the menu's own redraw: the new tab's first control (D148), or the tab itself when it has none
     setTimeout(() => {
       const layer = [...document.querySelectorAll<HTMLElement>('#overlay .layer')].pop();

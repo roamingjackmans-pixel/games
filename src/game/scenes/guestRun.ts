@@ -287,7 +287,7 @@ export class GuestRunScene extends WorldScene {
       this.changed();
       return o.msg;
     };
-    const open = (): void => {
+    const open = (startTab?: string): void => {
       this.overlay?.remove();
       this.overlay = openBonfire({
         char: c,
@@ -313,7 +313,9 @@ export class GuestRunScene extends WorldScene {
           warp: () => 'Only the host can travel between fires.',
         },
         extraTabs: [{ label: 'Spells', render: (el, rr) => renderSpellTab(el, c, () => this.changed(), rr) }],
-        openInventory: () => this.showInventory(() => open()),
+        // the inventory continues the bonfire's LB / RB loop: past its ends it comes back to the bonfire (D169)
+        openInventory: () => this.showInventory(() => open(), (step) => open(step > 0 ? 'first' : 'last')),
+        startTab,
         close: () => this.closeOverlay(),
       });
       this.overlay.appendChild(restLine(this.pickLine(first ? BONFIRE_LINES : EMBER_LINES, 'rest')));
@@ -323,7 +325,7 @@ export class GuestRunScene extends WorldScene {
     open();
   }
 
-  private showInventory(onClose?: () => void): void {
+  private showInventory(onClose?: () => void, tabEdge?: (step: number) => void): void {
     const p = this.local;
     if (!p) return;
     this.dropCut();
@@ -342,6 +344,14 @@ export class GuestRunScene extends WorldScene {
         this.closeOverlay();
         onClose?.();
       },
+      ...(tabEdge
+        ? {
+            tabEdge: (step: number) => {
+              this.closeOverlay();
+              tabEdge(step);
+            },
+          }
+        : {}),
     });
     this.overlayKind = 'inventory';
     this.overlayBack = onClose ?? null;

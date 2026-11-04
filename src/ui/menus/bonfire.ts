@@ -42,6 +42,8 @@ export interface BonfireView {
   extraTabs?: { label: string; render: (el: HTMLElement, rerender: () => void) => void }[];
   openInventory(): void;
   close(): void;
+  /** open on this tab (its key), or the first / last tab before Inventory (LB / RB coming back from the inventory, D169) */
+  startTab?: string | undefined;
 }
 
 const STATS: { id: StatId; label: string; what: string }[] = [
@@ -66,7 +68,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   root.setAttribute('data-testid', 'bonfire-menu');
   const panel = h('div', { class: 'panel', style: 'width:1200px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(panel);
-  let tab = 'level';
+  const tabKeys = ['level', 'gems', 'shop', 'warp', ...(v.extraTabs ?? []).map((t) => t.label)];
+  let tab = v.startTab === 'last' ? tabKeys[tabKeys.length - 1]! : v.startTab && v.startTab !== 'first' && tabKeys.includes(v.startTab) ? v.startTab : 'level';
   let selItem: string | null = null;
   /** which gem's per-perk upgrade list is open */
   let upOpen: string | null = null;
@@ -653,6 +656,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
       setTimeout(() => m.querySelector<HTMLElement>('button:not(:disabled)')?.focus(), 0);
     } else
       setTimeout(() => {
+        // something chosen since the redraw keeps the focus: a late restore used to pull it back (D169)
+        const a = document.activeElement;
+        if (a && a !== document.body && panel.contains(a)) return;
         // first open: the top-left control of the tab's content (D148)
         if (!restoreFocus(panel, panelMark) && !focusContentStart(panel, content)) panel.querySelector<HTMLElement>('.tabs button')?.focus();
       }, 0);

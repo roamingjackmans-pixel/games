@@ -2,7 +2,7 @@
 // 60-slot bag, gems, consumables, compare tooltips, two-hand toggle, second weapon, quick-use selection.
 // Mouse, keyboard and gamepad (every slot is a focusable button; menuPad moves focus spatially).
 import { glyphText, inputText, padStyle, tabHints } from '../glyphs';
-import { PAD_ALT, PAD_ALT_EVENT, menuConfirmButton } from '../menuPad';
+import { PAD_ALT, PAD_ALT_EVENT, TAB_EDGE_EVENT, menuConfirmButton } from '../menuPad';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
@@ -28,6 +28,8 @@ export interface InventoryHost {
   /** extra tabs (spell loadout) */
   extraTabs?: { label: string; render: (el: HTMLElement) => void }[];
   close(): void;
+  /** LB / RB past the first (-1) or last (1) tab: opened from a bonfire, the bonfire's tabs carry on there (D169) */
+  tabEdge?(step: number): void;
 }
 
 /** Equip load bar scale: 0 to 125% so the 100% mark (Encumbered beyond it) is visible. */
@@ -37,6 +39,11 @@ const LOAD_MARKS = [0.25, 0.7, 1];
 export function openInventory(host: InventoryHost): HTMLElement {
   const root = layer('dim');
   root.setAttribute('data-testid', 'inventory');
+  if (host.tabEdge)
+    root.addEventListener(TAB_EDGE_EVENT, (ev) => {
+      ev.preventDefault();
+      host.tabEdge!((ev as CustomEvent<number>).detail);
+    });
   let tab = 'items';
   let tip: HTMLElement | null = null;
   const showTip = (el: HTMLElement, node: HTMLElement): void => {
