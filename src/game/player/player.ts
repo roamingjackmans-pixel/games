@@ -3,7 +3,7 @@
 import { emptyInput, held, pressed } from '../../engine/input/actions';
 import { T } from '../room';
 import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
-import { flaskHeal, MAX_PROJECTILE_RANGE, STAMINA_COST_MULT } from '../combat/formulas';
+import { attackStaminaCost, flaskHeal, MAX_PROJECTILE_RANGE, STAMINA_COST_MULT } from '../combat/formulas';
 import { addRevive, applyControl, cleanse, emptySpec, ffVictims, heal, hitAlly, hitEnemy, rawDamage, typeColor } from '../combat/damage';
 import { buffSum, hasControl, speedMult } from '../combat/state';
 import { terrainWalkMult } from '../systems/terrain';
@@ -172,6 +172,16 @@ export function spendStamina(w: World, e: Entity, amount: number): boolean {
   return true;
 }
 
+/** An attack's stamina cost for this player now (D193). */
+export function attackCost(w: World, e: Entity, amount: number): number {
+  return attackStaminaCost(amount, e.pl!.derived.stamCost, buffSum(e, 'staminaCostPct', w.time), e.stam!.max);
+}
+
+/** Attacks start only with the stamina to pay for them in full (D193). */
+export function canAffordAttack(w: World, e: Entity, amount: number): boolean {
+  return e.stam!.cur >= attackCost(w, e, amount) - 1e-6;
+}
+
 /** The aim angle, with gamepad melee auto-targeting and projectile aim assist (GAME_DESIGN §4, §5.1). */
 export function aimAngle(w: World, e: Entity, projectile: boolean): number {
   const pl = e.pl!;
@@ -252,7 +262,9 @@ function startSwing(w: World, e: Entity, idx: number): void {
   const wpn = pl.derived.weapon;
   const swing = wpn.combo[idx % wpn.combo.length]!;
   const spd = attackSpeedOf(w, e);
-  if (!spendStamina(w, e, wpn.stamina)) return;
+  if (!canAffordAttack(w, e, wpn.stamina)) return;
+  e.stam!.cur = Math.max(0, e.stam!.cur - attackCost(w, e, wpn.stamina));
+  pl.stamDelayUntil = w.time + 0.6;
   const ranged = swing.hitbox.shape === 'proj';
   e.facing = aimAngle(w, e, ranged);
   pl.combo = {
@@ -428,7 +440,7 @@ function updateCombo(w: World, e: Entity, dt: number): void {
     if (pressed(inp, 'attack') || (held(inp, 'attack') && c.t > c.dur * 0.3)) c.queued = true;
     const last = c.idx === wpn.combo.length - 1;
     // the next swing can start in the back half of the recovery
-    if (c.queued && !last && c.t >= c.dur * 0.45 && e.stam!.cur > 0) {
+    if (c.queued && !last && c.t >= c.dur * 0.45 && canAffordAttack(w, e, wpn.stamina)) {
       startSwing(w, e, c.idx + 1);
       return;
     }
@@ -438,7 +450,7 @@ function updateCombo(w: World, e: Entity, dt: number): void {
       pl.nextComboIdx = last ? 0 : c.idx + 1;
       pl.comboResetAt = w.time + 0.5;
       e.anim.pose = 'idle';
-      if (c.queued && last && e.stam!.cur > 0) startSwing(w, e, 0);
+      if (c.queued && last && canAffordAttack(w, e, wpn.stamina)) startSwing(w, e, 0);
     }
   }
 }
@@ -718,7 +730,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
         pl.lastBowHintAt = now;
         w.emit({ t: 'msg', text: 'A bow needs both hands. Two-hand it ({twoHand}) to shoot.', forPlayer: pl.playerId, color: '#ffb35a' });
       }
-    } else if ((pressed(inp, 'attack') || (held(inp, 'attack') && !pl.derived.weapon.ranged)) && e.stam!.cur > 0) {
+    } else if ((pressed(inp, 'attack') || (held(inp, 'attack') && !pl.derived.weapon.ranged)) && canAffordAttack(w, e, pl.derived.weapon.stamina)) {
       const idx = now <= pl.comboResetAt ? pl.nextComboIdx : 0;
       startSwing(w, e, idx);
     } else if (pressed(inp, 'flask')) startFlask(w, e);

@@ -7,6 +7,7 @@ import { dist } from '../../engine/math';
 import { ACTION_BIT, type InputFrame } from '../../engine/input/actions';
 import { spawnEnemy } from '../enemies/spawn';
 import { ATTACK_MOVE, DODGE_DIST, DODGE_S, refreshDerived, spawnPlayer } from '../player/player';
+import { attackStaminaCost } from '../combat/formulas';
 import { generateZone, type ZoneLayout } from '../procgen/zone';
 import { Room } from '../room';
 import { terrainWalkMult } from '../systems/terrain';
@@ -434,7 +435,8 @@ export class NetGuest {
     if (!combo.length) return false;
     const pressed = (input.pressed & ACTION_BIT.attack) !== 0;
     const held = (input.buttons & ACTION_BIT.attack) !== 0;
-    const stam = (this.self?.stam ?? 0) > 0;
+    // a swing starts only with the stamina for all of it (D193); the host's buffs are not known here, it still decides
+    const stam = !!this.self && this.self.stam >= attackStaminaCost(d.weapon.stamina, d.stamCost, 0, this.self.stamMax) - 1e-6;
     const as = Math.max(0.3, d.attackSpeed);
     const start = (idx: number): void => {
       const sw = combo[idx % combo.length]!;

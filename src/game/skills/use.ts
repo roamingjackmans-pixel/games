@@ -3,7 +3,7 @@ import { CONSUMABLES } from '../../data/consumables';
 import { SKILLS } from '../../data/skills';
 import { SPELLS } from '../../data/spells';
 import { runEffects } from '../effects/run';
-import { GRADE_MULT, itemLevelFor, scalingCurve, STAMINA_COST_MULT, toolMult } from '../combat/formulas';
+import { attackStaminaCost, GRADE_MULT, itemLevelFor, scalingCurve, toolMult } from '../combat/formulas';
 import { CASTING_TOOLS } from '../../data/castingTools';
 import { RARITY_POWER } from '../../data/proficiency';
 import { buffSum } from '../combat/state';
@@ -107,10 +107,16 @@ function msg(w: World, e: Entity, text: string): void {
   w.emit({ t: 'msg', text, forPlayer: e.pl!.playerId, color: '#ff9b6a' });
 }
 
-function spend(w: World, e: Entity, amount: number): void {
-  const pl = e.pl!;
-  e.stam!.cur = Math.max(0, e.stam!.cur - amount * STAMINA_COST_MULT * pl.derived.stamCost * Math.max(0.2, 1 + buffSum(e, 'staminaCostPct', w.time)));
-  pl.stamDelayUntil = w.time + 0.6;
+/** A weapon skill's or spell's stamina (D193: attacks cost 50% more and need the full cost to start). */
+function attackNeed(w: World, e: Entity, amount: number): number {
+  return attackStaminaCost(amount, e.pl!.derived.stamCost, buffSum(e, 'staminaCostPct', w.time), e.stam!.max);
+}
+function spendAttack(w: World, e: Entity, amount: number): boolean {
+  const need = attackNeed(w, e, amount);
+  if (e.stam!.cur < need - 1e-6) return false;
+  e.stam!.cur = Math.max(0, e.stam!.cur - need);
+  e.pl!.stamDelayUntil = w.time + 0.6;
+  return true;
 }
 
 export function tryUseSkill(w: World, e: Entity, i: number): boolean {
@@ -124,8 +130,7 @@ export function tryUseSkill(w: World, e: Entity, i: number): boolean {
     return false;
   }
   if (pl.skillReadyAt[i]! > now) return false;
-  if (e.stam!.cur <= 0) return false;
-  spend(w, e, s.stamina);
+  if (!spendAttack(w, e, s.stamina)) return false;
   pl.skillReadyAt[i] = now + s.cooldownS * (1 - cooldownReduction(w, e));
   let ax = pl.aimX;
   let ay = pl.aimY;
@@ -191,8 +196,7 @@ export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = '
   const boost = pl.nextSpellFree && pl.nextSpellFree.until > now && pl.nextSpellFree.count > 0 ? pl.nextSpellFree : null;
   const free = !!boost?.noStamina || (d.powers.has('font') && e.hp!.hp > e.hp!.max * 0.8) || (d.powers.has('spellsword') && now - pl.lastLightAttackAt < 2);
   if (!free) {
-    if (e.stam!.cur <= 0) return false;
-    spend(w, e, sp.stamina);
+    if (!spendAttack(w, e, sp.stamina)) return false;
   }
   let power = spellPowerMult(e, sp);
   // proficiency with the casting tools shortens spell cooldowns (D178)

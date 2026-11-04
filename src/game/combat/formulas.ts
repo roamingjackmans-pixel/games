@@ -65,6 +65,15 @@ export const ENEMY_PROJECTILE_RANGE = 425;
 
 /** Every stamina cost a player pays (swings, dodges, skills, spells, blocking) is ×1.15 (D105). */
 export const STAMINA_COST_MULT = 1.15;
+/** Attacks (weapon swings, weapon skills, spells) cost 50% more on top of that, and only start with the stamina to pay
+ *  for them in full (D193); a dodge, a block or a sprint still goes with any stamina left. */
+export const ATTACK_STAMINA_MULT = 1.5;
+
+/** What an attack costs: its listed stamina × every multiplier, never more than a full bar (so none is ever out of reach). */
+export function attackStaminaCost(amount: number, stamCost: number, buffPct: number, maxStam: number): number {
+  return Math.min(maxStam, amount * STAMINA_COST_MULT * ATTACK_STAMINA_MULT * stamCost * Math.max(0.2, 1 + buffPct));
+}
+
 /** Elites have 50% more poise on top of their bigger body (D105). */
 export const ELITE_POISE_MULT = 1.5;
 
@@ -203,6 +212,10 @@ export function armorDef(def1: number, slotMult: number, ilvl: number): number {
  */
 export function coopHpMult(players: number, strong = true): number {
   return 1 + (strong ? 1.25 : 0.75) * (Math.max(1, Math.min(4, players)) - 1);
+}
+/** Co-op boss poise (D194): +150% for each extra player, so a party staggers a boss about as often as one player does. */
+export function coopPoiseMult(players: number): number {
+  return 1 + 1.5 * (Math.max(1, Math.min(4, players)) - 1);
 }
 export function enemyHpMult(zone: number, cycle: number, players: number): number {
   return (1 + 0.55 * (zone - 1)) * Math.pow(1.6, cycle) * coopHpMult(players);
