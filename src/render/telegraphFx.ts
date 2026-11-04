@@ -887,6 +887,8 @@ function drawEcho(ctx: CanvasRenderingContext2D, e: Echo, age: number, hc: boole
   const l = e.look;
   const n = e.shapes.length;
   const lim = Math.min(n, 64);
+  // many small areas (a grid, a scatter) flash lighter (D162): one soft glow each, no texture burst or wide band
+  const many = lim > 8;
   // 1. flash: white-hot, then the kind colour, then the cracks blazing and cooling
   const kFlash = Math.max(0, 1 - age / 0.2);
   const kCool = Math.max(0, 1 - age / 0.45);
@@ -908,7 +910,7 @@ function drawEcho(ctx: CanvasRenderingContext2D, e: Echo, age: number, hc: boole
       ctx.fillStyle = l.hot;
       ctx.fill();
     }
-    const pat = texture(ctx, l);
+    const pat = many ? null : texture(ctx, l);
     if (pat) {
       ctx.globalCompositeOperation = 'lighter';
       ctx.globalAlpha = kCool;
@@ -923,6 +925,10 @@ function drawEcho(ctx: CanvasRenderingContext2D, e: Echo, age: number, hc: boole
       for (let i = 0; i < lim; i++) {
         const s = e.shapes[i]!;
         if (s.k === 'circle') {
+          if (many) {
+            glowAt(ctx, s.x, s.y, s.r * 1.1, l.hot, 0.7 * kFlash * bl);
+            continue;
+          }
           glowAt(ctx, s.x, s.y, s.r * 1.45, l.main, 0.75 * kFlash * bl);
           glowAt(ctx, s.x, s.y, s.r * 0.8, l.hot, 0.8 * kFlash * kFlash * bl);
         } else if (s.k === 'cone' && s.r < 1000) {
@@ -940,12 +946,14 @@ function drawEcho(ctx: CanvasRenderingContext2D, e: Echo, age: number, hc: boole
     ctx.beginPath();
     for (let i = 0; i < lim; i++) shockPath(ctx, e.shapes[i]!, ease);
     ctx.lineJoin = 'round';
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = 0.32 * fade;
-    ctx.strokeStyle = l.main;
-    ctx.lineWidth = (hc ? 20 : 16) * (1 - ease) + 4;
-    ctx.stroke();
-    ctx.globalCompositeOperation = 'source-over';
+    if (!many) {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.32 * fade;
+      ctx.strokeStyle = l.main;
+      ctx.lineWidth = (hc ? 20 : 16) * (1 - ease) + 4;
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+    }
     ctx.globalAlpha = 0.95 * fade * fade;
     ctx.strokeStyle = l.hot;
     ctx.lineWidth = (hc ? 5 : 3.5) * (1 - ease) + 0.8;
@@ -953,7 +961,8 @@ function drawEcho(ctx: CanvasRenderingContext2D, e: Echo, age: number, hc: boole
   }
   // 3. debris: embers (red), dust (normal), frost shards (blue), sparkles (gold)
   const dens = lim <= 4 ? 1 : Math.max(0.2, 4 / lim);
-  for (let i = 0; i < lim; i++) debris(e.shapes[i]!, l, age, e.seed * 7 + i * 131, dens);
+  const step = many ? Math.ceil(lim / 12) : 1;
+  for (let i = 0; i < lim; i += step) debris(e.shapes[i]!, l, age, e.seed * 7 + i * 131, dens);
   sparkFlush(ctx, l, Math.max(0, 1 - age / ECHO_S), hc);
 }
 

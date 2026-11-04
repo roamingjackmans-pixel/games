@@ -120,6 +120,48 @@ export function drawTelegraph(ctx: CanvasRenderingContext2D, w: World, t: Entity
  * charged texture, core glows, wispy edge, sparks. Instant shapes draw nothing after impact (their echo does);
  * 'once' / 'tick' shapes burn at full charge while active.
  */
+/** more areas than this in one telegraph draw lighter (D162) */
+const MANY_AREAS = 8;
+
+/** a telegraph's textured footprint, painted once (keyed by its shapes list, which never changes) */
+const footprints = new WeakMap<Shape[], { canvas: HTMLCanvasElement | OffscreenCanvas; x: number; y: number; w: number; h: number; k: number; pat: CanvasPattern }>();
+
+/** The textured footprint of many areas as one picture, at the canvas's current scale (or null if it has no size). */
+function footprintLayer(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean, pat: CanvasPattern): { canvas: HTMLCanvasElement | OffscreenCanvas; x: number; y: number; w: number; h: number } | null {
+  const t = ctx.getTransform();
+  const k = Math.max(0.25, Math.min(3, Math.hypot(t.a, t.b)));
+  const hit = footprints.get(shapes);
+  if (hit && Math.abs(hit.k - k) < 0.01 && hit.pat === pat) return hit;
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const s of shapes) {
+    if (!areaShape(s, all) || s.k !== 'circle') continue;
+    x0 = Math.min(x0, s.x - s.r);
+    y0 = Math.min(y0, s.y - s.r);
+    x1 = Math.max(x1, s.x + s.r);
+    y1 = Math.max(y1, s.y + s.r);
+  }
+  if (!(x1 > x0 && y1 > y0)) return null;
+  const x = Math.floor(x0) - 2;
+  const y = Math.floor(y0) - 2;
+  const w = Math.ceil(x1 - x) + 4;
+  const h = Math.ceil(y1 - y) + 4;
+  const pw = Math.min(4096, Math.ceil(w * k));
+  const ph = Math.min(4096, Math.ceil(h * k));
+  const canvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(pw, ph) : Object.assign(document.createElement('canvas'), { width: pw, height: ph });
+  const g = canvas.getContext('2d') as CanvasRenderingContext2D;
+  g.setTransform(pw / w, 0, 0, ph / h, -x * (pw / w), -y * (ph / h));
+  g.beginPath();
+  for (const s of shapes) if (areaShape(s, all)) shapePath(g, s, 1);
+  g.fillStyle = pat;
+  g.fill();
+  const out = { canvas, x, y, w, h, k, pat };
+  footprints.set(shapes, out);
+  return out;
+}
+
 function drawAreas(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean, l: Look, c: Charge, hc: boolean, pre: boolean, tau: number, mode: string, id: number, k = 1): void {
   if (!pre && mode === 'instant') return;
   const active = !pre;
@@ -128,6 +170,11 @@ function drawAreas(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean,
   const pulse = c.pulse;
   const flick = active ? 0.85 + 0.15 * Math.sin(c.t * 37 + id) : 1;
   const pat = texture(ctx, l);
+  // many small areas at once (a grid, a scatter) draw lighter (D162): one core glow, plain round edges, sparks from
+  // a dozen of them; a single big area keeps the full look
+  let count = 0;
+  for (const s of shapes) if (areaShape(s, all)) count++;
+  const plain = count > MANY_AREAS;
   ctx.save();
   // 1. the exact footprint: a faint tint (plus the frost stripes for Piercing: the colorblind motif covers
   // the whole area; other kinds keep their texture for the charged part, which keeps software raster cheap)
@@ -137,10 +184,16 @@ function drawAreas(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean,
   ctx.globalAlpha = active ? (hc ? 0.42 : 0.3) * flick : baseA(l, hc) * (0.8 + 0.45 * pulse * p);
   ctx.fill();
   if (pat && (active || l.kind === 'pierce' || hc)) {
-    ctx.fillStyle = pat;
     if (active) ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = active ? 0.8 * flick : dimA(l, hc);
-    ctx.fill();
+    if (plain) {
+      // many areas: their textured footprint is painted once and stamped each frame (D162)
+      const f = footprintLayer(ctx, shapes, all, pat);
+      if (f) ctx.drawImage(f.canvas as CanvasImageSource, f.x, f.y, f.w, f.h);
+    } else {
+      ctx.fillStyle = pat;
+      ctx.fill();
+    }
     ctx.globalCompositeOperation = 'source-over';
   }
   // 2. the charge: the texture lights up from the centre and meets the edge at impact
@@ -151,7 +204,8 @@ function drawAreas(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean,
     ctx.globalAlpha = (0.12 + 0.1 * pulse) * (hc ? 1.6 : 1) * k;
     ctx.fill();
     ctx.globalCompositeOperation = 'lighter';
-    if (pat) {
+    // (many areas: the charge fill and its front line show the build-up without a second texture pass, D162)
+    if (pat && !plain) {
       // heat shimmer: red cracks waver
       const wx = l.kind === 'red' ? Math.round(Math.sin(c.t * 9.1) * 1.6) : 0;
       const wy = l.kind === 'red' ? Math.round(Math.cos(c.t * 7.3) * 1.6) : 0;
@@ -175,7 +229,7 @@ function drawAreas(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean,
     if (!areaShape(s, all)) continue;
     if (s.k === 'circle') {
       glowAt(ctx, s.x, s.y, s.r * (0.3 + 0.45 * p), l.main, (0.14 + 0.42 * p) * (0.7 + 0.3 * pulse) * (active ? 0.7 : 1));
-      if (dens >= 0.5) glowAt(ctx, s.x, s.y, s.r * (0.12 + 0.2 * p), l.accent, 0.5 * p * (0.6 + 0.4 * pulse));
+      if (dens >= 0.5 && !plain) glowAt(ctx, s.x, s.y, s.r * (0.12 + 0.2 * p), l.accent, 0.5 * p * (0.6 + 0.4 * pulse));
     } else if (s.k === 'cone') {
       const r = Math.min(s.r, 320);
       glowAt(ctx, s.x, s.y, r * (0.25 + 0.35 * p), l.main, (0.15 + 0.45 * p) * (0.7 + 0.3 * pulse));
@@ -186,7 +240,14 @@ function drawAreas(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean,
   // 4. the boundary: a soft throbbing glow band on the true line, then the kind's wisps on top
   ctx.beginPath();
   const eseed = c.step * 13 + id;
-  for (const s of shapes) if (areaShape(s, all)) edgePath(ctx, s, l.kind, eseed);
+  // (the wispy edge is hundreds of jittered points per circle, stroked twice: plain arcs when there are many, D162)
+  for (const s of shapes) {
+    if (!areaShape(s, all)) continue;
+    if (plain && s.k === 'circle') {
+      ctx.moveTo(s.x + s.r, s.y);
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    } else edgePath(ctx, s, l.kind, eseed);
+  }
   ctx.lineJoin = 'bevel';
   if (hc) {
     ctx.globalAlpha = 0.8;
@@ -197,7 +258,7 @@ function drawAreas(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean,
     ctx.strokeStyle = l.main;
     ctx.lineWidth = 4;
     ctx.stroke();
-  } else {
+  } else if (!plain) {
     ctx.globalAlpha = (0.16 + 0.14 * pulse) * (active ? 1.4 : 0.6 + 0.6 * p);
     ctx.strokeStyle = l.main;
     ctx.lineWidth = 9;
@@ -207,7 +268,9 @@ function drawAreas(ctx: CanvasRenderingContext2D, shapes: Shape[], all: boolean,
   // 5. sparks streaming in
   sparkReset();
   let i = 0;
-  for (const s of shapes) if (areaShape(s, all)) emitCharge(s, l, c, i++);
+  const every = plain ? Math.ceil(count / 12) : 1;
+  let j = 0;
+  for (const s of shapes) if (areaShape(s, all) && j++ % every === 0) emitCharge(s, l, c, i++);
   sparkFlush(ctx, l, (active ? 0.9 : 0.55 + 0.45 * p) * k, hc);
 }
 
