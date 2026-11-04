@@ -381,3 +381,16 @@ describe('co-op: a guest walking in first starts the room (D151)', () => {
     expect(s.w.enemies.filter((e) => !e.hp!.dead && !e.en!.def.traits?.mimic).length).toBeGreaterThan(0);
   });
 });
+
+describe('co-op: one rest rests the party (D152)', () => {
+  it('the host rests and the guest is healed and refilled too', () => {
+    const s = session();
+    const gsp = s.joinPlayer(newCharacter('duelist', 'Guest', 'p2', new Rng('g')));
+    const guest = gsp.entity!;
+    guest.hp!.hp = 5;
+    gsp.char.flaskCur = 0;
+    s.interact(s.localPlayer!, bonfireOf(s));
+    expect(guest.hp!.hp).toBe(guest.hp!.max);
+    expect(gsp.char.flaskCur).toBe(gsp.char.flaskMax);
+  });
+});

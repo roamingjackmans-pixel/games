@@ -7,6 +7,7 @@ import type { Beard, Emblem, HairStyle, HandPose } from '../engine/draw/players'
 import { ARMOR_LOOKS, HEAD_OVERRIDE } from '../data/armorLooks';
 import { FLASK_DRINK_S } from '../game/player/player';
 import { drawShield, drawTool, drawWeapon, isPairedWeapon } from '../engine/draw/weapons';
+import { cacheable, drawCachedEnemy } from './spriteCache';
 import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/parts';
 import { CLASSES } from '../data/classes';
 import { parseArmorBase } from '../data/armor';
@@ -413,7 +414,11 @@ export function drawEnemyEntity(ctx: CanvasRenderingContext2D, e: Entity, x: num
   drawElementUnder(ctx, e, x, y, now);
   // an immune enemy turns to gold while it cannot be hurt (D108)
   if (isImmuneNow(e, now)) drawGolden(ctx, e, x, y, now, (c, cx, cy) => drawById(c, e.drawId, enemyDrawState(e, cx, cy, now, pal)));
-  else drawById(ctx, e.drawId, enemyDrawState(e, x, y, now, pal));
+  else if (cacheable(e)) {
+    // the body through its own cached picture, redrawn at most 24 times a second (D152)
+    const st = enemyDrawState(e, x, y, now, pal);
+    drawCachedEnemy(ctx, e, x, y, now, e.drawId, st, (c, cx, cy) => drawById(c, e.drawId, { ...st, x: cx, y: cy }));
+  } else drawById(ctx, e.drawId, enemyDrawState(e, x, y, now, pal));
   drawElementOver(ctx, e, x, y, now);
   if (en.elite === 'arcane') {
     for (let i = 0; i < 3; i++) {

@@ -16,6 +16,13 @@ export interface MusicSeed {
 
 const midi = (n: number): number => 440 * Math.pow(2, (n - 69) / 12);
 
+/** Two seeds describe the same music (D152): callers often build a fresh seed object each frame. */
+function sameSeed(a: MusicSeed | null, b: MusicSeed | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.root === b.root && a.tempo === b.tempo && a.bright === b.bright && a.wave === b.wave && a.scale.length === b.scale.length && a.scale.every((v, i) => v === b.scale[i]);
+}
+
 type Mode = 'off' | 'ambient' | 'boss' | 'title' | 'credits';
 
 class Music {
@@ -37,8 +44,11 @@ class Music {
   }
 
   play(mode: Mode, seed: MusicSeed | null, phase = 1): void {
-    if (mode === this.mode && seed === this.seed && phase === this.phase) return;
-    const sameBase = mode === this.mode && seed === this.seed;
+    // compared by value: a fresh but equal seed each frame used to tear the music down and rebuild it 60 times a
+    // second on co-op guests (noise buffer and all), which cost real CPU in busy fights (D152)
+    const same = sameSeed(seed, this.seed);
+    if (mode === this.mode && same && phase === this.phase) return;
+    const sameBase = mode === this.mode && same;
     this.phase = phase;
     if (sameBase && mode === 'boss') return; // phase change only alters scheduling
     this.stop();
@@ -46,7 +56,7 @@ class Music {
     this.seed = seed;
     if (mode === 'off' || !seed) return;
     mixer.whenUnlocked(() => {
-      if (this.mode === mode && this.seed === seed) this.start();
+      if (this.mode === mode && sameSeed(this.seed, seed)) this.start();
     });
   }
 

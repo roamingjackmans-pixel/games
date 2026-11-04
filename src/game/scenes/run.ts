@@ -190,7 +190,7 @@ export class RunScene extends WorldScene {
     const z = zoneDef(this.session.layout.zone);
     const node = this.session.node;
     if (node.kind === 'boss') return; // the boss module switches to boss music
-    music.play('ambient', { root: z.music.root, tempo: z.music.tempo, bright: z.music.bright, scale: z.music.scale, wave: z.music.wave });
+    music.play('ambient', z.music);
   }
 
   protected override beforeStep(dt: number): void {

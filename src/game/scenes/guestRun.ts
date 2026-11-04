@@ -140,7 +140,8 @@ export class GuestRunScene extends WorldScene {
     }
     const z = zoneDef(n.cw.zone).music;
     if (n.cw.bossId) music.play('boss', this.bossMusic, 1);
-    else music.play('ambient', { root: z.root, tempo: z.tempo, bright: z.bright, scale: z.scale, wave: z.wave });
+    // the zone's own music settings (one stable object), not a new copy every frame (D152)
+    else music.play('ambient', z);
   }
 
   private bossMusic = { root: 45, tempo: 112, bright: 0.35, scale: [0, 3, 5, 7, 10], wave: 'sawtooth' as OscillatorType };
