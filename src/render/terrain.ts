@@ -1,14 +1,14 @@
 // Hazardous terrain art (PROCGEN §3.2, ART_AUDIO §1): Slow and Hurt patches themed per zone. Cosmetic only.
 //  · baked into the room's base layer: a dark outline ring (a crisp edge), the themed surface clipped to a
 //    rounded, wobbly mask, and a rim. Slow patches read heavy and gooey (mud, sludge, snow drifts, oil, tar), with a
-//    thick dark lip and a glossy rim; Hurt patches read dangerous (fire, acid, thorns, embers, spikes, sparks) with
-//    a bright warning rim;
-//  · per frame (drawTerrainAnim): Hurt patches throb with a glow and flicker (flames, bubbles, sparks, glints);
+//    thick dark lip and a glossy rim; Hurt patches are the same spike field in every zone (D167), only recoloured
+//    (ground, spikes, tips, a bright warning rim);
+//  · per frame (drawTerrainAnim): Hurt patches throb with a glow, glints flash on their spike tips and hot specks rise;
 //    Slow patches bubble and ripple lazily (snow twinkles, oil sheens). A few dozen small shapes at most.
-import { OUTLINE, getGlow, offscreen, withAlpha } from '../engine/draw/parts';
+import { OUTLINE, offscreen, withAlpha } from '../engine/draw/parts';
 import { Rng } from '../engine/rng';
 import { ROOM_W, ROOM_Y0, TERRAIN, TILE, type Room } from '../game/room';
-import { blit, clipTo, crack, edgeBand, jitterPoly, scratch, scratchRegion, silhouette, soft, tileBounds, type StyleId } from './roomStyle';
+import { blit, clipTo, edgeBand, jitterPoly, scratch, scratchRegion, silhouette, soft, tileBounds, type StyleId } from './roomStyle';
 
 type Theme = 'crypt' | 'caverns' | 'sewers' | 'forest' | 'forge' | 'reliquary' | 'citadel' | 'abyss';
 
@@ -23,6 +23,9 @@ interface Look {
   /** particle colors */
   p1: string;
   p2: string;
+  /** Hurt only: the spikes' body and their bright tips (D167) */
+  spike?: string;
+  tip?: string;
 }
 
 const SLOW: Record<Theme, Look> = {
@@ -37,14 +40,14 @@ const SLOW: Record<Theme, Look> = {
 };
 
 const HURT: Record<Theme, Look> = {
-  crypt: { deep: '#0a1612', mid: '#163a2c', hi: '#c8ffe8', rim: '#5affb0', glow: '#3aff9a', p1: '#5affb0', p2: '#e0fff4' },
-  caverns: { deep: '#2a4a06', mid: '#6aa014', hi: '#eaff90', rim: '#d8ff60', glow: '#a6e040', p1: '#d8ff70', p2: '#ffffff' },
-  sewers: { deep: '#0a3008', mid: '#228418', hi: '#b8ff60', rim: '#80ff40', glow: '#50ff20', p1: '#a0ff50', p2: '#e8ffb0' },
-  forest: { deep: '#2a0c06', mid: '#4a160c', hi: '#ff6a3a', rim: '#ff5a2a', glow: '#ff3a1a', p1: '#ffffff', p2: '#ff6a3a' },
-  forge: { deep: '#160a06', mid: '#2e140a', hi: '#ffd060', rim: '#ff8a20', glow: '#ff6a10', p1: '#ffb040', p2: '#fff0a0' },
-  reliquary: { deep: '#1e3a5a', mid: '#3a6a94', hi: '#f4fcff', rim: '#bfe8ff', glow: '#7ac8ff', p1: '#ffffff', p2: '#bfe8ff' },
-  citadel: { deep: '#1a2028', mid: '#2e3844', hi: '#c0f4ff', rim: '#ffd23a', glow: '#40c8ff', p1: '#c0f4ff', p2: '#ffffff' },
-  abyss: { deep: '#0e0418', mid: '#2a0a3e', hi: '#ffd0ff', rim: '#e060ff', glow: '#c040ff', p1: '#f0a0ff', p2: '#ffffff' },
+  crypt: { deep: '#0a1612', mid: '#163a2c', hi: '#c8ffe8', rim: '#5affb0', glow: '#3aff9a', p1: '#5affb0', p2: '#e0fff4', spike: '#8fd0b4', tip: '#e0fff4' },
+  caverns: { deep: '#2a4a06', mid: '#6aa014', hi: '#eaff90', rim: '#d8ff60', glow: '#a6e040', p1: '#d8ff70', p2: '#ffffff', spike: '#b8d860', tip: '#f4ffc0' },
+  sewers: { deep: '#0a3008', mid: '#228418', hi: '#b8ff60', rim: '#80ff40', glow: '#50ff20', p1: '#a0ff50', p2: '#e8ffb0', spike: '#7ccf50', tip: '#e8ffb0' },
+  forest: { deep: '#2a0c06', mid: '#4a160c', hi: '#ff6a3a', rim: '#ff5a2a', glow: '#ff3a1a', p1: '#ffffff', p2: '#ff6a3a', spike: '#e0d0a8', tip: '#ff6a3a' },
+  forge: { deep: '#160a06', mid: '#2e140a', hi: '#ffd060', rim: '#ff8a20', glow: '#ff6a10', p1: '#ffb040', p2: '#fff0a0', spike: '#e09048', tip: '#fff0a0' },
+  reliquary: { deep: '#1e3a5a', mid: '#3a6a94', hi: '#f4fcff', rim: '#bfe8ff', glow: '#7ac8ff', p1: '#ffffff', p2: '#bfe8ff', spike: '#a8dcf8', tip: '#ffffff' },
+  citadel: { deep: '#1a2028', mid: '#2e3844', hi: '#c0f4ff', rim: '#ffd23a', glow: '#40c8ff', p1: '#c0f4ff', p2: '#ffffff', spike: '#9ab8d0', tip: '#c0f4ff' },
+  abyss: { deep: '#0e0418', mid: '#2a0a3e', hi: '#ffd0ff', rim: '#e060ff', glow: '#c040ff', p1: '#f0a0ff', p2: '#ffffff', spike: '#c890f0', tip: '#ffd0ff' },
 };
 
 interface Mote {
@@ -424,106 +427,17 @@ function spike(c: CanvasRenderingContext2D, x: number, y: number, h: number, wd:
   c.fill();
 }
 
-function paintHurtTile(c: CanvasRenderingContext2D, r: Rng, L: Look, theme: Theme, x: number, y: number): void {
-  switch (theme) {
-    case 'crypt': {
-      // ghostly grave-fire: scorched ground and cold green tongues of flame
-      blobs(c, r, x, y, 2, L.mid, 6, 10);
-      for (let k = 0; k < 2; k++) {
-        const fx = x + r.range(8, 24);
-        const fy = y + r.range(14, 28);
-        const h = r.range(9, 14);
-        c.fillStyle = withAlpha(L.rim, 0.75);
-        c.beginPath();
-        c.moveTo(fx - 4, fy);
-        c.quadraticCurveTo(fx - 4, fy - h * 0.6, fx, fy - h);
-        c.quadraticCurveTo(fx + 4, fy - h * 0.6, fx + 4, fy);
-        c.closePath();
-        c.fill();
-        c.fillStyle = L.hi;
-        c.beginPath();
-        c.ellipse(fx, fy - 3, 1.6, 3, 0, 0, Math.PI * 2);
-        c.fill();
-      }
-      break;
-    }
-    case 'caverns':
-    case 'sewers':
-      // acid / toxic pools: bright, with foam and bubbles
-      blobs(c, r, x, y, 3, L.mid, 7, 12);
-      blobs(c, r, x, y, 1, L.hi, 2, 4);
-      c.strokeStyle = withAlpha(L.hi, 0.8);
-      c.lineWidth = 1.2;
-      for (let k = 0; k < 3; k++) {
-        c.beginPath();
-        c.arc(x + r.range(5, 27), y + r.range(5, 27), r.range(1.5, 3.5), 0, Math.PI * 2);
-        c.stroke();
-      }
-      break;
-    case 'forest':
-      // thorn patch: dark ground bristling with pale thorns
-      blobs(c, r, x, y, 2, L.mid, 5, 9);
-      for (let k = 0; k < 4; k++) spike(c, x + r.range(5, 27), y + r.range(13, 31), r.range(11, 17), 3.6, r.range(-3, 3), '#e0d0a8', L.hi);
-      dots(c, r, x, y, 1, '#c02018', 1.4, 2);
-      break;
-    case 'forge':
-      // glowing ember cracks are spanned (spanDetail); black crust with hot specks here
-      blobs(c, r, x, y, 3, L.mid, 6, 10);
-      dots(c, r, x, y, 3, L.rim, 0.8, 1.6);
-      break;
-    case 'reliquary':
-      // frost spikes: blue ice ground with crystal spikes
-      blobs(c, r, x, y, 2, L.mid, 6, 10);
-      for (let k = 0; k < 3; k++) spike(c, x + r.range(6, 26), y + r.range(14, 30), r.range(10, 15), 3.2, r.range(-2, 2), '#a8dcf8', '#ffffff');
-      break;
-    case 'citadel': {
-      // electrified plates: a riveted steel plate per tile
-      c.fillStyle = L.mid;
-      c.fillRect(x + 2, y + 2, TILE - 4, TILE - 4);
-      c.strokeStyle = '#4a5868';
-      c.lineWidth = 1.5;
-      c.strokeRect(x + 3, y + 3, TILE - 6, TILE - 6);
-      c.fillStyle = '#6a7888';
-      for (const [rx, ry] of [
-        [6, 6],
-        [26, 6],
-        [6, 26],
-        [26, 26],
-      ] as const)
-        c.fillRect(x + rx - 1, y + ry - 1, 2.5, 2.5);
-      // a coil in the middle
-      c.strokeStyle = withAlpha(L.glow!, 0.8);
-      c.lineWidth = 1.5;
-      c.beginPath();
-      c.arc(x + 16, y + 16, 4, 0, Math.PI * 2);
-      c.stroke();
-      c.fillStyle = L.hi;
-      c.beginPath();
-      c.arc(x + 16, y + 16, 1.5, 0, Math.PI * 2);
-      c.fill();
-      break;
-    }
-    case 'abyss':
-      blobs(c, r, x, y, 3, L.mid, 6, 10);
-      dots(c, r, x, y, 2, L.p1, 0.8, 1.5);
-      break;
-  }
+/** Hurt ground (D167): the same spike field in every zone, only its colours change: dark ground, a cluster of spikes, a few hot specks. */
+function paintHurtTile(c: CanvasRenderingContext2D, r: Rng, L: Look, _theme: Theme, x: number, y: number): void {
+  blobs(c, r, x, y, 2, L.mid, 5, 9);
+  for (let k = 0; k < 4; k++) spike(c, x + r.range(5, 27), y + r.range(13, 31), r.range(11, 17), 3.6, r.range(-3, 3), L.spike ?? L.hi, L.tip ?? '#ffffff');
+  dots(c, r, x, y, 1, L.rim, 1.2, 1.8);
 }
 
-/** Detail that runs across tiles: forge ember cracks, abyss void cracks, forest bramble roots, citadel hazard stripes. */
-function spanDetail(c: CanvasRenderingContext2D, list: number[], kind: number, L: Look, theme: Theme, r: Rng): void {
+/** Detail that runs across tiles: forest bramble roots under Slow patches (Hurt patches are one spike field everywhere, D167). */
+function spanDetail(c: CanvasRenderingContext2D, list: number[], kind: number, _L: Look, theme: Theme, r: Rng): void {
   const hurt = kind === TERRAIN.Hurt;
-  if (hurt && (theme === 'forge' || theme === 'abyss')) {
-    for (const i of list) {
-      const x = (i % ROOM_W) * TILE + r.range(4, 28);
-      const y = Math.floor(i / ROOM_W) * TILE + r.range(4, 28);
-      const a = r.range(0, Math.PI * 2);
-      const len = r.range(16, 30);
-      const sub = r.clone();
-      crack(c, sub, x, y, len, a, L.rim, 4);
-      crack(c, r, x, y, len, a, L.hi, 1.4);
-    }
-  } else if (!hurt && theme === 'forest') {
+  if (!hurt && theme === 'forest') {
     // tangled bramble roots: thick knotted curves over the soil
     c.lineCap = 'round';
     for (const i of list) {
@@ -578,7 +492,7 @@ export function drawTerrainAnim(ctx: CanvasRenderingContext2D, art: TerrainArt, 
   const H = HURT[art.theme];
   // throbbing danger glow (fast flicker on fire/sparks, slower on pools)
   if (art.hurtGlow) {
-    const flick = art.theme === 'citadel' ? (hash01(Math.floor(t * 14)) > 0.7 ? 0.35 : 0) : 0.08 * Math.sin(t * 11.3);
+    const flick = 0.08 * Math.sin(t * 11.3);
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = Math.max(0, Math.min(1, 0.32 + 0.2 * Math.sin(t * 3.4) + flick));
     ctx.drawImage(art.hurtGlow.canvas, art.hurtGlow.x, art.hurtGlow.y);
@@ -649,107 +563,17 @@ function slowMote(ctx: CanvasRenderingContext2D, m: Mote, L: Look, theme: Theme,
   }
 }
 
-function hurtMote(ctx: CanvasRenderingContext2D, m: Mote, L: Look, theme: Theme, t: number): void {
+/** Hurt patches' life (D167): the same everywhere: glints flash on the spike tips and a hot speck drifts up. */
+function hurtMote(ctx: CanvasRenderingContext2D, m: Mote, L: Look, _theme: Theme, t: number): void {
   const p = ((t + m.phase) % m.period) / m.period;
-  switch (theme) {
-    case 'crypt':
-    case 'forge': {
-      // flickering flame tongues (grave-fire) / embers rising off the cracks
-      if (theme === 'crypt') {
-        const h = 8 + 5 * Math.sin(t * 9 + m.phase * 3) + 3 * Math.sin(t * 23 + m.phase);
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 0.75;
-        ctx.fillStyle = L.p1;
-        ctx.beginPath();
-        ctx.moveTo(m.x - 3.5, m.y + 3);
-        ctx.quadraticCurveTo(m.x - 3, m.y - h * 0.5, m.x + Math.sin(t * 7 + m.phase) * 2, m.y - h);
-        ctx.quadraticCurveTo(m.x + 3, m.y - h * 0.5, m.x + 3.5, m.y + 3);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = L.p2;
-        ctx.beginPath();
-        ctx.ellipse(m.x, m.y, 1.5, 3, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalCompositeOperation = 'source-over';
-      } else {
-        const y = m.y - p * 22;
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = (1 - p) * 0.95;
-        ctx.fillStyle = p < 0.4 ? L.p2 : L.p1;
-        ctx.fillRect(m.x + Math.sin(t * 3 + m.phase) * 3 - 1.2, y - 1.2, 2.4, 2.4);
-        ctx.globalCompositeOperation = 'source-over';
-      }
-      return;
-    }
-    case 'caverns':
-    case 'sewers': {
-      // fast bubbles that pop, and a wisp of fumes
-      if (p < 0.75) {
-        const q = p / 0.75;
-        ctx.globalAlpha = 0.9;
-        ctx.strokeStyle = L.p2;
-        ctx.lineWidth = 1;
-        ctx.fillStyle = L.p1;
-        ctx.beginPath();
-        ctx.arc(m.x, m.y, 1 + q * 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      } else {
-        const q = (p - 0.75) / 0.25;
-        ctx.globalAlpha = 1 - q;
-        ctx.fillStyle = L.p2;
-        for (let k = 0; k < 4; k++) {
-          const a = (k / 4) * Math.PI * 2 + m.phase;
-          ctx.fillRect(m.x + Math.cos(a) * (3 + q * 5) - 0.8, m.y + Math.sin(a) * (3 + q * 5) - 0.8, 1.6, 1.6);
-        }
-      }
-      ctx.globalAlpha = Math.sin(p * Math.PI) * 0.22;
-      ctx.drawImage(getGlow(L.glow!), m.x - 8, m.y - 14 - p * 10, 16, 16);
-      return;
-    }
-    case 'forest':
-    case 'reliquary': {
-      // glints on the thorn/spike tips, and a frost mote
-      const k = Math.max(0, Math.sin(p * Math.PI * 2)) ** 8;
-      if (k > 0.05) {
-        ctx.globalAlpha = k;
-        ctx.fillStyle = L.p1;
-        ctx.fillRect(m.x - 3 * k, m.y - 6 - 0.5, 6 * k, 1);
-        ctx.fillRect(m.x - 0.5, m.y - 6 - 3 * k, 1, 6 * k);
-      }
-      if (theme === 'reliquary') {
-        ctx.globalAlpha = Math.sin(p * Math.PI) * 0.7;
-        ctx.fillStyle = L.p2;
-        ctx.fillRect(m.x + Math.sin(t + m.phase) * 4, m.y - p * 14, 1.6, 1.6);
-      }
-      return;
-    }
-    case 'citadel':
-    case 'abyss': {
-      // crackling arcs: a jagged bolt flickers on for a moment
-      const slot = Math.floor((t + m.phase) * 8);
-      if (hash01(slot + m.phase * 13) > 0.22) return;
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = 0.95;
-      ctx.strokeStyle = L.p1;
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      let x = m.x - 8;
-      let y = m.y;
-      ctx.moveTo(x, y);
-      for (let k = 1; k <= 4; k++) {
-        x = m.x - 8 + k * 4;
-        y = m.y + (hash01(slot * 7 + k + m.phase) - 0.5) * 10;
-        ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-      ctx.strokeStyle = L.p2;
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-      ctx.globalAlpha = 0.5;
-      ctx.drawImage(getGlow(L.glow!), m.x - 12, m.y - 12, 24, 24);
-      ctx.globalCompositeOperation = 'source-over';
-      return;
-    }
+  const k = Math.max(0, Math.sin(p * Math.PI * 2)) ** 8;
+  if (k > 0.05) {
+    ctx.globalAlpha = k;
+    ctx.fillStyle = L.tip ?? L.p1;
+    ctx.fillRect(m.x - 3 * k, m.y - 6 - 0.5, 6 * k, 1);
+    ctx.fillRect(m.x - 0.5, m.y - 6 - 3 * k, 1, 6 * k);
   }
+  ctx.globalAlpha = Math.sin(p * Math.PI) * 0.7;
+  ctx.fillStyle = L.p2;
+  ctx.fillRect(m.x + Math.sin(t + m.phase) * 4, m.y - p * 14, 1.6, 1.6);
 }
