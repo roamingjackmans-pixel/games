@@ -27,7 +27,36 @@ export function installDebugMenu(): void {
 
 function openPrompt(): void {
   if (prompt) return;
-  const input = h('input', { type: 'password', placeholder: 'code', autocomplete: 'off', style: 'width:200px', 'data-testid': 'debug-code' });
+  // the box always opens empty (D190): browsers' password managers ignore autocomplete="off" on a password box and
+  // fill in a code they saved, so it is a plain text box with masked letters where the browser can mask them (no
+  // password manager looks at it), marked for the common managers to skip, and anything filled in before the first
+  // key press is wiped
+  const masked = typeof CSS !== 'undefined' && CSS.supports('-webkit-text-security', 'disc');
+  const input = h('input', {
+    type: masked ? 'text' : 'password',
+    name: `dj-${Date.now().toString(36)}`,
+    placeholder: 'code',
+    autocomplete: masked ? 'off' : 'new-password',
+    autocapitalize: 'off',
+    spellcheck: 'false',
+    'data-lpignore': 'true',
+    'data-1p-ignore': 'true',
+    'data-bwignore': 'true',
+    'data-form-type': 'other',
+    style: `width:200px${masked ? ';-webkit-text-security:disc' : ''}`,
+    'data-testid': 'debug-code',
+  });
+  input.value = '';
+  let typed = false;
+  // typing, deleting and pasting carry an inputType; a password manager's fill does not (or calls it a replacement)
+  input.addEventListener('input', (e) => {
+    const kind = (e as InputEvent).inputType;
+    if (kind && kind !== 'insertReplacementText') typed = true;
+    else if (!typed) input.value = '';
+  });
+  for (const ms of [0, 60, 250, 600, 1200]) setTimeout(() => {
+    if (!typed) input.value = '';
+  }, ms);
   const msg = h('div', { class: 'small dim-text' }, 'Owner code');
   const close = (): void => {
     prompt?.remove();
