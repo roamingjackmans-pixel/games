@@ -42,3 +42,51 @@ test('host and guest join by room code and see each other move', async ({ contex
   expect(Math.abs((await guestX()) - (await hostX()))).toBeLessThan(6);
   expect(errors).toEqual([]);
 });
+
+test('with 60 ± 30 ms of network delay, a guest walking and swinging is never snapped back (D154)', async ({ context }) => {
+  const host = await context.newPage();
+  const guest = await context.newPage();
+  const errors: string[] = [];
+  for (const p of [host, guest]) p.on('pageerror', (e) => errors.push(String(e)));
+  await host.goto('./?net=bc&auto=host&code=525252&lag=60&jitter=30');
+  await guest.goto('./?net=bc&auto=guest&code=525252&lag=60&jitter=30');
+  await expect.poll(() => sceneName(guest), { timeout: 20000 }).toBe('guestRun');
+  await guest.waitForTimeout(2500);
+  await guest.bringToFront();
+  await guest.evaluate(() => {
+    const w = window as unknown as { __xs: number[][]; __dj: { scenes: { current: { net: { me: { x: number; y: number } } } } } };
+    w.__xs = [];
+    const tick = (): void => {
+      const m = w.__dj.scenes.current.net.me;
+      const n = w.__dj.scenes.current.net as unknown as { self?: { speed: number }; zeroSince: number; me: { pl: { state: string } } };
+      w.__xs.push([m.x, m.y, performance.now(), n.self?.speed ?? -1, n.zeroSince ? 1 : 0, n.me.pl.state === 'attack' ? 1 : n.me.pl.state === 'dodge' ? 2 : 0]);
+      if (w.__xs.length < 4000) requestAnimationFrame(tick);
+    };
+    tick();
+  });
+  await guest.keyboard.down('KeyD');
+  await guest.waitForTimeout(700);
+  for (let i = 0; i < 4; i++) {
+    await guest.mouse.click(1200, 400);
+    await guest.waitForTimeout(220);
+  }
+  await guest.keyboard.up('KeyD');
+  await guest.keyboard.down('KeyS');
+  await guest.waitForTimeout(500);
+  await guest.keyboard.up('KeyS');
+  await guest.waitForTimeout(400);
+  const xs = await guest.evaluate(() => (window as unknown as { __xs: number[][] }).__xs);
+  // the guest only ever walks right and down here: a jump back left or up of more than 10 px in one frame is a
+  // snap-back (gentle corrections a few px a frame are allowed)
+  let snaps = 0;
+  for (let i = 1; i < xs.length; i++) {
+    const dx = xs[i]![0]! - xs[i - 1]![0]!;
+    const dy = xs[i]![1]! - xs[i - 1]![1]!;
+    if (dx < -10 || dy < -10) {
+      snaps++;
+      console.log('snap back', dx.toFixed(1), dy.toFixed(1), JSON.stringify(xs.slice(Math.max(0, i - 3), i + 2).map((r) => r.map((v) => Math.round(v)))));
+    }
+  }
+  expect(snaps).toBe(0);
+  expect(errors).toEqual([]);
+});

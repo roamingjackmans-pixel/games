@@ -3,6 +3,7 @@
 // is: enemy type, player gear, telegraph shapes, pickup contents). Room tiles travel the same way. The guest
 // rebuilds real Entity objects from these so the normal renderer and HUD draw them unchanged.
 import { walkSpeedFor } from '../player/player';
+import { speedMult } from '../combat/state';
 import type { Entity, EType, World, GameEvent } from '../world';
 import type { MovingFloorDef } from '../types';
 
@@ -394,6 +395,8 @@ export interface SelfState {
   x: number;
   y: number;
   speed: number;
+  /** walking speed with no swing, cast or block slowing it (the guest predicts its own swings from here, D154) */
+  base?: number;
 }
 
 /** The speed the guest's own prediction should walk at right now (0 when the player cannot walk). */
@@ -427,5 +430,6 @@ export function selfStateOf(w: World, e: Entity, lastSeq: number): SelfState {
     x: e.x,
     y: e.y,
     speed: walkSpeedOf(w, e),
+    base: e.pl!.downed ? 90 : e.pl!.derived.walk * speedMult(e, w),
   };
 }

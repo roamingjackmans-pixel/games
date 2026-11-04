@@ -63,7 +63,7 @@ so guests draw them locally from the shared clock. Projectiles are entities. Par
   code) and reconcile against the host's authoritative position every snapshot: if the error is < 24 px
   smooth over 100 ms, otherwise snap. **Dodges start locally** the moment they are pressed (D149): the guest runs
   the host's dodge path on its own screen and holds off reconciling until the host has run its dodge and reported
-  back (dodge length + one round trip + 120 ms); walking resumes at once. Hit results come only from the host.
+  back (dodge length + one round trip + 120 ms); walking resumes at once. **Swings are predicted for movement too** (D154): the guest starts its own swing the moment attack is pressed, on the host's combo rules (presses queue in the recovery, a queued swing starts at 45% of it, the last waits for the end, a swing within 0.5 s continues the combo), slows its walking by the weapon's swing factor and takes the windup's step toward its aim. Every unacknowledged input keeps the speed and forced step it was predicted with, so a reconcile replays what really happened; errors under 64 px ease over ~0.1 s, knockbacks and staggers glide to the host's newest position, and only a real teleport (160 px or more while stopped) snaps. Hit results come only from the host.
 - Everything else renders a little behind the newest snapshot, interpolated between the two surrounding
   snapshots; extrapolate at most 100 ms more on packet loss. **How far behind adapts to the connection** (D149):
   the guest keeps a smoothed estimate of the host's clock (`net/clock.ts`: it follows the fastest-arriving

@@ -6,7 +6,7 @@ import { ENEMIES } from '../../data/enemies';
 import { dist } from '../../engine/math';
 import { ACTION_BIT, type InputFrame } from '../../engine/input/actions';
 import { spawnEnemy } from '../enemies/spawn';
-import { DODGE_DIST, DODGE_S, refreshDerived, spawnPlayer } from '../player/player';
+import { ATTACK_MOVE, DODGE_DIST, DODGE_S, refreshDerived, spawnPlayer } from '../player/player';
 import { generateZone, type ZoneLayout } from '../procgen/zone';
 import { Room } from '../room';
 import { terrainWalkMult } from '../systems/terrain';
@@ -81,7 +81,13 @@ export class NetGuest {
   private rev = 0;
   private seq = 0;
   private tick = 0;
-  private pending: { seq: number; dt: number; mx: number; my: number }[] = [];
+  /** inputs the host has not acknowledged yet, each with the speed this screen walked it at (D154) */
+  private pending: { seq: number; dt: number; mx: number; my: number; sp: number; fx: number; fy: number }[] = [];
+  /** this guest's own swing, started locally the moment attack is pressed (D154): its end, combo step, start,
+   *  windup length, forward step (px) and the direction of that step */
+  private atk: { until: number; idx: number; start: number; windup: number; active: number; recover: number; step: number; dir: [number, number]; queued: boolean; last: boolean } | null = null;
+  /** the combo step the next swing continues with, until when (as the host's nextComboIdx / comboResetAt) */
+  private nextSwing: { idx: number; until: number } | null = null;
   private samples = new Map<number, Sample[]>();
   private meta = new Map<number, EntityMeta>();
   /** the host's clock, smoothed against network jitter (D149) */
@@ -408,6 +414,71 @@ export class NetGuest {
   }
 
   /**
+   * This guest's own swing, predicted (D154): it starts when attack is pressed (or held, for melee) while free, and
+   * lasts as long as that combo step does at the current attack speed, chaining into the next step while held.
+   * Only movement uses it; the host still decides every hit.
+   */
+  private predictSwing(me: Entity, input: InputFrame, speed: number): boolean {
+    const d = me.pl!.derived;
+    const combo = d.weapon.combo;
+    const now = this.clock();
+    if (!combo.length) return false;
+    const pressed = (input.pressed & ACTION_BIT.attack) !== 0;
+    const held = (input.buttons & ACTION_BIT.attack) !== 0;
+    const stam = (this.self?.stam ?? 0) > 0;
+    const as = Math.max(0.3, d.attackSpeed);
+    const start = (idx: number): void => {
+      const sw = combo[idx % combo.length]!;
+      const last = idx % combo.length === combo.length - 1;
+      // the host turns to the aim at the swing's start; a neutral pad stick keeps the current facing
+      const ax = input.aimX - me.x;
+      const ay = input.aimY - me.y;
+      const a = input.aimNeutral || Math.hypot(ax, ay) < 1 ? me.facing : Math.atan2(ay, ax);
+      const windup = sw.windupMs / 1000 / as;
+      const active = sw.activeMs / 1000 / as;
+      const recover = (sw.recoverMs / 1000 / as) * (last ? 1.15 : 1);
+      this.atk = { idx: idx % combo.length, start: now, windup, active, recover, step: sw.step ?? 0, dir: [Math.cos(a), Math.sin(a)], until: now + windup + active + recover, queued: false, last };
+    };
+    // the same rules as the host's combo (player.ts updateCombo): presses queue in the recovery, a queued swing
+    // starts at 45% of it (the last swing waits for the end), and a new swing within 0.5 s continues the combo
+    const a = this.atk;
+    if (a && now < a.until) {
+      const tr = now - a.start - a.windup - a.active;
+      if (tr >= 0) {
+        if (pressed || (held && tr > a.recover * 0.3)) a.queued = true;
+        if (a.queued && !a.last && tr >= a.recover * 0.45 && stam) start(a.idx + 1);
+      }
+      return true;
+    }
+    if (a && now >= a.until) {
+      this.nextSwing = { idx: a.last ? 0 : a.idx + 1, until: a.until + 0.5 };
+      const chain = a.queued && a.last && stam;
+      this.atk = null;
+      if (chain) {
+        start(0);
+        return true;
+      }
+    }
+    const bowLocked = d.weapon.twoHandOnly && !d.twoHanded;
+    const free = speed > 0 && !this.dodgePred && stam && !bowLocked;
+    if (free && (pressed || (held && !d.weapon.ranged))) {
+      start(this.nextSwing && now <= this.nextSwing.until ? this.nextSwing.idx : 0);
+      return true;
+    }
+    return false;
+  }
+
+  /** The predicted swing's step velocity right now (the last 40% of its windup), or null. */
+  private swingStep(): [number, number] | null {
+    const a = this.atk;
+    if (!a || !a.step) return null;
+    const t = this.clock() - a.start;
+    if (t < a.windup * 0.6 || t >= a.windup) return null;
+    const sp = a.step / Math.max(0.05, a.windup * 0.4);
+    return [a.dir[0] * sp, a.dir[1] * sp];
+  }
+
+  /**
    * Start the dodge on this screen the moment it is pressed (D149), on the same rules the host checks (free to act,
    * recharged, stamina left); the host runs the real one and the two meet when it confirms. A refused dodge is put
    * right by the next reconcile.
@@ -489,9 +560,9 @@ export class NetGuest {
     if (s.speed > 0) {
       const probe = { ...e, x: px, y: py };
       for (const p of this.pending) {
-        // Slow terrain is applied where each step starts, as the host does (the host's speed leaves it out)
-        const sp = s.speed * terrainWalkMult(this.cw.room, probe.x, probe.y);
-        this.cw.room.moveCircle(probe, p.mx * sp * p.dt, p.my * sp * p.dt);
+        // each input at the speed it was walked at here (D154); Slow terrain where each step starts, as the host does
+        const sp = p.sp * terrainWalkMult(this.cw.room, probe.x, probe.y);
+        this.cw.room.moveCircle(probe, p.mx * sp * p.dt + p.fx, p.my * sp * p.dt + p.fy);
       }
       px = probe.x;
       py = probe.y;
@@ -501,9 +572,13 @@ export class NetGuest {
       // a brief stop (a swing's step forward, a flinch): hold where we are and settle once walking resumes, rather
       // than snapping back to the host's older position on every swing (D150)
       if (this.zeroSince === 0) this.zeroSince = this.clock();
-      if (this.clock() - this.zeroSince < 0.3 && err < 64) return;
+      if (e.pl?.state === 'attack' && this.clock() - this.zeroSince < 0.3 && err < 64) return;
+      // knocked back, staggered, grabbed: the frame glides to the host's newest position (D154: this used to snap,
+      // so every knockback on a guest was a teleport); only a real teleport (a room change, a warp) snaps
+      if (err < 160) return;
     } else this.zeroSince = 0;
-    if (err >= 24 || s.speed <= 0) {
+    // ease anything short of a real teleport (D154: it used to snap at 24 px, which read as blinking back)
+    if (err >= 64 || s.speed <= 0) {
       e.x = e.px = px;
       e.y = e.py = py;
       this.correction = { x: 0, y: 0 };
@@ -565,7 +640,15 @@ export class NetGuest {
       const dp = this.dodgePred;
       // right after a predicted dodge the host may still report 0 (it is finishing its own): keep walking at the last speed
       if (speed > 0) this.lastWalkSpeed = speed;
-      const walk = speed > 0 ? speed : dp ? this.lastWalkSpeed : 0;
+      let walk = speed > 0 ? speed : dp ? this.lastWalkSpeed : 0;
+      // swings slow walking from the moment they start (D88): predict that here instead of waiting for the host's
+      // word, which arrives a round trip late and used to snap the guest back at every swing's start and end (D154)
+      const base = this.self?.base ?? 0;
+      const swinging = this.predictSwing(me, input, speed);
+      if (base > 0 && walk > 0) {
+        if (swinging) walk = base * (ATTACK_MOVE[me.pl!.derived.weapon.speedClass] ?? 0.4) * (me.pl!.blocking ? 0.75 : 1);
+        else if (me.pl!.state === 'attack') walk = base;
+      }
       if (dp && dp.t < DODGE_S) {
         // the same path the host's dodge takes (player.ts): fast at first, easing out
         const step = Math.min(dt, DODGE_S - dp.t);
@@ -575,8 +658,16 @@ export class NetGuest {
         dp.t += step;
         this.pending = [];
         this.correction = { x: 0, y: 0 };
+      } else if (this.swingStep()) {
+        // the swing's step forward, as the host takes it (player.ts): a short slide toward the aim, no walking (D154)
+        const v = this.swingStep()!;
+        const fx = v[0] * dt;
+        const fy = v[1] * dt;
+        this.pending.push({ seq: this.seq, dt, mx: 0, my: 0, sp: 0, fx, fy });
+        if (this.pending.length > 120) this.pending.shift();
+        this.cw.room.moveCircle(me, fx, fy);
       } else if (walk > 0) {
-        this.pending.push({ seq: this.seq, dt, mx: input.moveX, my: input.moveY });
+        this.pending.push({ seq: this.seq, dt, mx: input.moveX, my: input.moveY, sp: walk, fx: 0, fy: 0 });
         if (this.pending.length > 120) this.pending.shift();
         const sp = walk * terrainWalkMult(this.cw.room, me.x, me.y);
         this.cw.room.moveCircle(me, input.moveX * sp * dt, input.moveY * sp * dt);
@@ -585,8 +676,8 @@ export class NetGuest {
         me.y += this.correction.y * k;
         this.correction.x *= 1 - k;
         this.correction.y *= 1 - k;
-      } else if (this.zeroSince !== 0 && this.clock() - this.zeroSince < 0.3) {
-        // a brief stop: stand still until walking resumes (D150)
+      } else if (this.zeroSince !== 0 && this.clock() - this.zeroSince < 0.3 && me.pl?.state === 'attack') {
+        // a swing's step forward: stand still until walking resumes (D150)
       } else {
         // staggered, held, knocked back: follow the host's newest position
         const list = this.samples.get(me.id);

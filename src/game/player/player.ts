@@ -14,7 +14,7 @@ import { DAMAGE_TYPES } from '../types';
 import { newStatus, type DamageSpec, type Entity, type PlayerC, type World } from '../world';
 
 /** walking speed while swinging, by weapon speed class (D88) */
-const ATTACK_MOVE: Record<string, number> = { veryfast: 0.6, fast: 0.52, medium: 0.42, mediumslow: 0.33, slow: 0.25, veryslow: 0.18 };
+export const ATTACK_MOVE: Record<string, number> = { veryfast: 0.6, fast: 0.52, medium: 0.42, mediumslow: 0.33, slow: 0.25, veryslow: 0.18 };
 export const DODGE_S = 0.45;
 export const DODGE_DIST = 220;
 export const DODGE_IFRAME_FROM = 0.05;
