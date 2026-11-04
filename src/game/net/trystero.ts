@@ -38,6 +38,8 @@ export class TrysteroTransport extends BaseTransport {
   selfId = '';
   private rooms: { name: string; room: TrysteroRoom; actions: Map<string, TrysteroAction>; peers: Set<string> }[] = [];
   private names = new Set<string>();
+  /** a guest uses one relay network: the first one on which any peer turned up (D158) */
+  private chosen: (typeof this.rooms)[number] | null = null;
   status = 'connecting';
 
   constructor(
@@ -77,8 +79,13 @@ export class TrysteroTransport extends BaseTransport {
     this.rooms.push(entry);
     for (const n of this.names) this.wire(entry, n);
     room.onPeerJoin = (id) => {
-      // a guest keeps whichever relay network connected first
-      if (this.role === 'guest' && this.peerSet.size > 0 && !this.peerSet.has(id)) return;
+      // a guest keeps whichever relay NETWORK connected first, and every peer on it (D158): it used to keep only the
+      // first PEER, and in a party of 3+ that is often another guest (the mesh links guests too), so the host was
+      // ignored: the guest heard the lobby but its hello never left, so it never joined
+      if (this.role === 'guest') {
+        if (this.chosen && this.chosen !== entry) return;
+        this.chosen = entry;
+      }
       entry.peers.add(id);
       this.setStatus('connected');
       this.peerJoined(id);
@@ -92,7 +99,11 @@ export class TrysteroTransport extends BaseTransport {
   private wire(entry: (typeof this.rooms)[number], name: string): void {
     if (entry.actions.has(name)) return;
     const a = entry.room.makeAction(name);
-    a.onMessage = (data, ctx) => this.deliver(name, toBuffer(data), ctx.peerId);
+    a.onMessage = (data, ctx) => {
+      // a guest listens on its chosen network only (the host would otherwise reach it twice)
+      if (this.role === 'guest' && this.chosen && this.chosen !== entry) return;
+      this.deliver(name, toBuffer(data), ctx.peerId);
+    };
     entry.actions.set(name, a);
   }
 
@@ -105,11 +116,14 @@ export class TrysteroTransport extends BaseTransport {
   }
 
   protected rawSend(name: string, data: NetPayload, to: string[] | null): void {
+    // each peer once, through the first network that has it
+    const sent = new Set<string>();
     for (const r of this.rooms) {
       const a = r.actions.get(name);
       if (!a) continue;
-      const targets = to ? to.filter((id) => r.peers.has(id)) : [...r.peers];
+      const targets = (to ?? [...r.peers]).filter((id) => r.peers.has(id) && !sent.has(id));
       if (!targets.length) continue;
+      for (const id of targets) sent.add(id);
       void a.send(data, { target: targets }).catch(() => undefined);
     }
   }
