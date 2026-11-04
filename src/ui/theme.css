@@ -129,6 +129,9 @@ input[type=range] { padding: 0; }
 .cc-rows .sep { color: var(--dim); }
 .cc-rows .val { text-align: right; }
 .cc-rows .wide { grid-column: 3 / -1; text-align: left; }
+.cc-rows .cc-one { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.3em; }
+.cc-fix2 { line-height: 1.35; height: 2.7em; overflow: hidden; }
+.cc-fix3 { line-height: 1.35; height: 4.05em; overflow: hidden; }
 .cc-rows .hint { color: var(--dim); font-size: 11px; }
 .cc-bar { height: 6px; border-radius: 3px; background: var(--bg3); overflow: hidden; min-width: 60px; }
 .cc-bar > i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }

@@ -38,6 +38,10 @@ import {
   BODY_TYPES, defaultAppearance, hairStylesFor, randomAppearance, withBodyType, type Choice, type Swatch,
 } from '../../data/appearance';
 
+/** The class card always lists this many spell and bag rows (the most any class starts with), so it never changes height. */
+const KIT_SPELL_ROWS = Math.max(1, ...CLASS_IDS.map((c) => CLASSES[c].start.spells.length));
+const KIT_BAG_ROWS = Math.max(1, ...CLASS_IDS.map((c) => CLASSES[c].start.bag?.length ?? 0));
+
 const STAT_HINT: Record<StatId, string> = {
   hp: 'Max health',
   endurance: 'Max stamina, stamina regen and equip load',
@@ -347,7 +351,8 @@ export class TitleScene implements Scene {
       const cls = CLASSES[classId];
       clearEl(card);
       card.appendChild(h('div', { class: 'cc-name' }, cls.name));
-      card.appendChild(h('div', { class: 'dim-text small' }, `“${cls.blurb}”`));
+      // every block keeps the same height for every class, so switching classes moves nothing (D188)
+      card.appendChild(h('div', { class: 'dim-text small cc-fix3' }, `“${cls.blurb}”`));
       const stats = h('div', { class: 'cc-rows' });
       for (const k of STAT_IDS) {
         const v = cls.stats[k];
@@ -360,23 +365,26 @@ export class TitleScene implements Scene {
           h('div', { class: 'cc-bar', title: STAT_HINT[k] }, h('i', { style: `width:${Math.round((v / 16) * 100)}%` })),
         );
       }
-      card.append(h('div', { class: 'cc-sec' }, 'Stats'), stats, h('div', { class: 'small dim-text', 'data-testid': 'class-primary' }, `Primary ${STAT_LABEL[cls.primary]} (+25% from every point) · Secondary ${STAT_LABEL[cls.secondary]} (+15%)`));
+      card.append(h('div', { class: 'cc-sec' }, 'Stats'), stats, h('div', { class: 'small dim-text cc-fix2', 'data-testid': 'class-primary' }, `Primary ${STAT_LABEL[cls.primary]} (+25% from every point) · Secondary ${STAT_LABEL[cls.secondary]} (+15%)`));
       const kit = h('div', { class: 'cc-rows' });
       const kitRow = (label: string, value: string, dim = false): void => {
-        kit.append(h('div', { class: 'lbl' }, label), h('div', { class: 'sep' }, '-'), h('div', { class: `wide${dim ? ' dim-text' : ''}` }, value));
+        kit.append(h('div', { class: 'lbl' }, label), h('div', { class: 'sep' }, label ? '-' : ''), h('div', { class: `wide cc-one${dim ? ' dim-text' : ''}`, title: value }, value));
       };
       const eq = ch.equipment;
       const paired = isPairedWeapon(WEAPONS[cls.start.main]?.draw ?? '');
       kitRow('Weapon', `${eq.main?.name ?? 'Fists'}${cls.twoHanded ? (paired ? ' (dual-wielding)' : ' (two-handed)') : ''}`);
       kitRow('Off hand', eq.off?.name ?? '—', !eq.off);
-      if (ch.altMain) kitRow('2nd weapon', `${ch.altMain.name} (swap: ${glyphText('swapWeapon')})`);
+      kitRow('2nd weapon', ch.altMain ? `${ch.altMain.name} (swap: ${glyphText('swapWeapon')})` : '—', !ch.altMain);
       kitRow('Head', eq.head?.name ?? '—', !eq.head);
       kitRow('Body', eq.body?.name ?? '—', !eq.body);
       kitRow('Legs', eq.legs?.name ?? '—', !eq.legs);
-      if (cls.start.spells.length) cls.start.spells.forEach((s, i) => kitRow(i === 0 ? 'Spells' : '', SPELLS[s]?.name ?? s));
-      else kitRow('Spells', '—', true);
-      for (const it of ch.bag) kitRow('Bag', it.name);
-      if (ch.gems.length) kitRow('Gems', `${ch.gems.length} random gem`);
+      // as many spell and bag rows as the class that starts with the most, blank ones filled with a dash
+      for (let i = 0; i < Math.max(KIT_SPELL_ROWS, cls.start.spells.length); i++) {
+        const s = cls.start.spells[i];
+        kitRow(i === 0 ? 'Spells' : '', s ? (SPELLS[s]?.name ?? s) : i === 0 ? '—' : '', !s);
+      }
+      for (let i = 0; i < Math.max(KIT_BAG_ROWS, ch.bag.length); i++) kitRow(i === 0 ? 'Bag' : '', ch.bag[i]?.name ?? (i === 0 ? '—' : ''), !ch.bag[i]);
+      kitRow('Gems', ch.gems.length ? `${ch.gems.length} random gem${ch.gems.length > 1 ? 's' : ''}` : '—', !ch.gems.length);
       card.append(h('div', { class: 'cc-sec' }, 'Starting kit'), kit);
       const d = computeDerived(ch);
       const lv = h('div', { class: 'cc-rows' });
