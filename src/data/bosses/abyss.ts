@@ -42,13 +42,14 @@ const voidCleave = (cross: boolean): AttackDef => ({
   name: 'Void Cleave',
   kind: 'red',
   // phase 2: a cross — two full lines through him (four spokes, one along the target)
-  pattern: cross ? { kind: 'line', w: 120, l: 'room', anchor: 'self', count: 4, spokes: true } : { kind: 'line', w: 120, l: 'room', anchor: 'self' },
+  // D172: 70% of the way to the wall (was all the way)
+  pattern: cross ? { kind: 'line', w: 120, l: 'room', anchor: 'self', count: 4, spokes: true, lMult: 0.7 } : { kind: 'line', w: 120, l: 'room', anchor: 'self', lMult: 0.7 },
   windupMs: 800,
   recoverMs: 1000,
   dmgMult: 2.0,
   type: 'void',
   cooldownS: 8,
-  range: [0, 1000],
+  range: [0, 700],
   weight: 3,
   area: true,
   hyperArmor: true,
@@ -109,14 +110,14 @@ const gazeBeams: AttackDef = {
   name: 'Gaze Beams',
   kind: 'pierce',
   // two beams from him, rotating opposite ways for 4 s (the half-plane behind both is always clear)
-  pattern: { kind: 'beam', w: 30, l: 'room', turnRateDeg: 35, durationS: 4, tickS: 0.25, anchor: 'self', count: 2, opposite: true },
+  pattern: { kind: 'beam', w: 30, l: 600, turnRateDeg: 35, durationS: 4, tickS: 0.25, anchor: 'self', count: 2, opposite: true }, // D172: 600 px (was the whole room)
   windupMs: 1000,
   activeMs: 4000,
   recoverMs: 800,
   dmgMult: 0.8,
   type: 'void',
   cooldownS: 14,
-  range: [0, 1200],
+  range: [0, 580],
   weight: 2,
   area: true,
 };
@@ -161,14 +162,14 @@ const foreclosure: AttackDef = {
   name: 'Foreclosure',
   kind: 'red',
   // everything within the face's gaze; the gaze turns 120° after each use (the arrow shows where next)
-  pattern: { kind: 'cone', angleDeg: 60, r: 'room', anchor: 'self' },
+  pattern: { kind: 'cone', angleDeg: 60, r: 520, anchor: 'self' }, // D172: 520 px (was the whole room)
   gazeTurnDeg: 120,
   windupMs: 1200,
   recoverMs: 1000,
   dmgMult: 3.0,
   type: 'void',
   cooldownS: 9,
-  range: [0, 2000],
+  range: [0, 500],
   weight: 3,
   area: true,
 };
@@ -211,7 +212,7 @@ export const THE_LANDLORD: BossDef | null = {
       name: 'The Interview',
       speedMult: 1,
       dmgMult: 1,
-      attacks: [briefcaseSwing, evictionNotices(6, 80), voidCleave(false), audit(3), lateFee],
+      attacks: [briefcaseSwing, evictionNotices(6, 80), voidCleave(false), audit(5), lateFee],
     },
     {
       untilHpPct: 33,
@@ -220,7 +221,7 @@ export const THE_LANDLORD: BossDef | null = {
       dmgMult: 1.25,
       arena: [{ op: 'shrinkPlatform', value: 0.25 }],
       passive: { scale: 1.3 },
-      attacks: [briefcaseSwing, evictionNotices(6, 80), voidCleave(true), audit(2), lateFee, fourArmFlurry, gazeBeams, supernova(2, 0)],
+      attacks: [briefcaseSwing, evictionNotices(6, 80), voidCleave(true), audit(4), lateFee, fourArmFlurry, gazeBeams, supernova(4, 0)],
     },
     {
       untilHpPct: 0,
@@ -230,7 +231,7 @@ export const THE_LANDLORD: BossDef | null = {
       arena: [{ op: 'shrinkPlatform', value: 0.25 }],
       passive: { pull: { speed: DEEP_PULL, r: 2000 }, stationaryAt: 'farThird', scale: 1.9, projectileSpeedMult: 1.4 },
       summons: [{ enemyId: 'hollow_joe', count: 2, max: 2, everyS: 10 }],
-      attacks: [evictionNotices(10, 140), gazeBeams, supernova(1, DEEP_PULL), maw, foreclosure, collapse],
+      attacks: [evictionNotices(10, 140), gazeBeams, supernova(3, DEEP_PULL), maw, foreclosure, collapse],
     },
   ],
   arenaId: 'abyss_arena',

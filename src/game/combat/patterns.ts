@@ -369,10 +369,10 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
             // anchor → aim point exactly (a returning hammer's path)
             shapes.push({ k: 'line', x, y, a: Math.atan2(c.ty - y, c.tx - x), w: p.w, l: Math.max(1, Math.hypot(c.tx - x, c.ty - y)) });
           } else if (p.through) {
-            const l = lenTo(c, x, y, a, 'room');
+            const l = lenTo(c, x, y, a, 'room') * (p.lMult ?? 1);
             shapes.push({ k: 'line', x, y, a, w: p.w, l });
           } else {
-            const l = lenTo(c, x, y, a, p.l);
+            const l = lenTo(c, x, y, a, p.l) * (p.lMult ?? 1);
             shapes.push({ k: 'line', x, y, a, w: p.w, l });
           }
         }
@@ -703,8 +703,20 @@ export function placePockets(n: number, r: number, c: PatternCtx, anchor?: Ancho
     }
     pockets.push({ x: px, y: py, r });
   }
+  // the rest spread out (D172): the best of a few random spots, the one farthest from the pockets placed so far
   while (pockets.length < n) {
-    pockets.push({ x: c.rng.range(ROOM_MIN_X + r, ROOM_MAX_X - r), y: c.rng.range(ROOM_MIN_Y + r, ROOM_MAX_Y - r), r });
+    let best = { x: c.rng.range(ROOM_MIN_X + r, ROOM_MAX_X - r), y: c.rng.range(ROOM_MIN_Y + r, ROOM_MAX_Y - r) };
+    let bestD = -1;
+    for (let k = 0; k < 8; k++) {
+      const q = k === 0 ? best : { x: c.rng.range(ROOM_MIN_X + r, ROOM_MAX_X - r), y: c.rng.range(ROOM_MIN_Y + r, ROOM_MAX_Y - r) };
+      if (c.room?.isFallAt(q.x, q.y)) continue;
+      const d = pockets.length ? Math.min(...pockets.map((o) => dist(o.x, o.y, q.x, q.y))) : 0;
+      if (d > bestD) {
+        bestD = d;
+        best = q;
+      }
+    }
+    pockets.push({ ...best, r });
   }
   return pockets;
 }

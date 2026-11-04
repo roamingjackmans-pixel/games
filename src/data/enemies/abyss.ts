@@ -132,24 +132,24 @@ export const ABYSS: Record<string, EnemyDef> = {
     attacks: [
       { id: 'gaze_bolt', name: 'Gaze Bolt', kind: 'normal', pattern: { kind: 'projectile', speed: 380, r: 7, range: 1000 }, windupMs: 500, recoverMs: 400, dmgMult: 1.0, type: 'void', cooldownS: 1.8, range: [100, 900], weight: 3 },
       {
-        // tracks the target at 40°/s for 3 s: outpace it by running around the Eye
+        // tracks the target slowly out to 450 px: outpace it by running around the Eye, or step out of its reach
         id: 'gaze_beam',
         name: 'Gaze Beam',
         kind: 'pierce',
-        pattern: { kind: 'beam', w: 26, l: 'room', turnRateDeg: 14, durationS: 2.2, tickS: 0.4, anchor: 'self' }, // D88: tracks slowly (was 40°/s for 3 s)
+        pattern: { kind: 'beam', w: 26, l: 450, turnRateDeg: 14, durationS: 2.2, tickS: 0.4, anchor: 'self' }, // D88: tracks slowly (was 40°/s for 3 s); D172: 450 px (was the whole room)
         windupMs: 1000,
         activeMs: 3000,
         recoverMs: 700,
         dmgMult: 0.8,
         type: 'void',
         cooldownS: 12,
-        range: [0, 900],
+        range: [0, 430],
         weight: 2,
         area: true,
       },
     ],
-    traits: { blinkWhenApproached: { r: 150, distance: 280, cooldownS: 3 } },
-    flavor: 'Never blinks. Unless you get close; then it blinks somewhere else.',
+    // D172: it no longer blinks away when approached
+    flavor: 'Never blinks. Not even when you get close.',
     draw: 'abyss_eye',
     palette: VOID_PAL,
     hitSound: 'hitSlime',
@@ -181,17 +181,17 @@ export const ABYSS: Record<string, EnemyDef> = {
         weight: 3,
       },
       {
-        // from him, through the target, to the wall
+        // from him, through the target, 70% of the way to the wall (D172: was all the way)
         id: 'void_cleave',
         name: 'Void Cleave',
         kind: 'red',
-        pattern: { kind: 'line', w: 100, l: 'room', anchor: 'self', through: true },
+        pattern: { kind: 'line', w: 100, l: 'room', anchor: 'self', through: true, lMult: 0.7 },
         windupMs: 800,
         recoverMs: 1100,
         dmgMult: 2.0,
         type: 'void',
         cooldownS: 10,
-        range: [40, 700],
+        range: [40, 490],
         weight: 2,
         area: true,
       },
@@ -352,7 +352,7 @@ export const ABYSS: Record<string, EnemyDef> = {
         id: 'audit',
         name: 'Audit',
         kind: 'pierce',
-        pattern: { kind: 'pockets', n: 2, pocketR: 90 },
+        pattern: { kind: 'pockets', n: 4, pocketR: 90 }, // D172: 4 safe spots (was 2)
         windupMs: 1500,
         recoverMs: 900,
         dmgMult: 1.5,
@@ -400,7 +400,7 @@ export const ABYSS: Record<string, EnemyDef> = {
         id: 'supernova',
         name: 'Supernova',
         kind: 'pierce',
-        pattern: { kind: 'pockets', n: 3, pocketR: 100 },
+        pattern: { kind: 'pockets', n: 5, pocketR: 100 }, // D172: 5 safe spots (was 3)
         windupMs: 1800,
         recoverMs: 1100,
         dmgMult: 2.8,

@@ -106,6 +106,8 @@ export type PatternDef = PatternCommon &
         l: number | 'room';
         anchor: Anchor;
         through?: boolean;
+        /** the length it reaches is scaled by this (a room-length line stopping short of the wall: D172) */
+        lMult?: number;
         count?: number;
         randomAngles?: boolean;
         angleOffsetDeg?: number;
