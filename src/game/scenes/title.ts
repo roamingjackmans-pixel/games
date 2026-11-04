@@ -28,8 +28,6 @@ import { deleteSave, listSaves, readMeta, writeSave } from '../save/storage';
 import type { ClassId, SaveFile } from '../types';
 // the character creator's class card and appearance pickers
 import { STAT_IDS, type Appearance, type Character, type StatId } from '../types';
-import { computeDerived } from '../player/derived';
-import { LOAD_TIERS } from '../player/equipLoad';
 import { SPELLS } from '../../data/spells';
 import { STAT_LABEL } from '../../ui/tooltip';
 import { glyphText } from '../../ui/glyphs';
@@ -346,13 +344,13 @@ export class TitleScene implements Scene {
     const classes = h('div', { class: 'cc-classes' });
     const card = h('div', { class: 'cc-col', 'data-testid': 'create-class-card' });
 
-    // ---- the class card: name and blurb, then stats, starting kit and what that makes at level 1
+    // ---- the class card: name and blurb, then stats and starting kit
     const refreshCard = (ch: Character): void => {
       const cls = CLASSES[classId];
       clearEl(card);
       card.appendChild(h('div', { class: 'cc-name' }, cls.name));
       // every block keeps the same height for every class, so switching classes moves nothing (D188)
-      card.appendChild(h('div', { class: 'dim-text small cc-fix3' }, `“${cls.blurb}”`));
+      card.appendChild(h('div', { class: 'dim-text small cc-fix2' }, `“${cls.blurb}”`));
       const stats = h('div', { class: 'cc-rows' });
       for (const k of STAT_IDS) {
         const v = cls.stats[k];
@@ -381,20 +379,11 @@ export class TitleScene implements Scene {
       // as many spell and bag rows as the class that starts with the most, blank ones filled with a dash
       for (let i = 0; i < Math.max(KIT_SPELL_ROWS, cls.start.spells.length); i++) {
         const s = cls.start.spells[i];
-        kitRow(i === 0 ? 'Spells' : '', s ? (SPELLS[s]?.name ?? s) : i === 0 ? '—' : '', !s);
+        kitRow(i === 0 ? 'Spells' : '', s ? (SPELLS[s]?.name ?? s) : i === 0 ? '—' : '\u00a0', !s);
       }
-      for (let i = 0; i < Math.max(KIT_BAG_ROWS, ch.bag.length); i++) kitRow(i === 0 ? 'Bag' : '', ch.bag[i]?.name ?? (i === 0 ? '—' : ''), !ch.bag[i]);
+      for (let i = 0; i < Math.max(KIT_BAG_ROWS, ch.bag.length); i++) kitRow(i === 0 ? 'Bag' : '', ch.bag[i]?.name ?? (i === 0 ? '—' : '\u00a0'), !ch.bag[i]);
       kitRow('Gems', ch.gems.length ? `${ch.gems.length} random gem${ch.gems.length > 1 ? 's' : ''}` : '—', !ch.gems.length);
       card.append(h('div', { class: 'cc-sec' }, 'Starting kit'), kit);
-      const d = computeDerived(ch);
-      const lv = h('div', { class: 'cc-rows' });
-      const lvRow = (label: string, ...value: (HTMLElement | string)[]): void => {
-        lv.append(h('div', { class: 'lbl' }, label), h('div', { class: 'sep' }, '-'), h('div', { class: 'wide' }, ...value));
-      };
-      lvRow('Max HP', String(Math.round(d.maxHp)));
-      lvRow('Max stamina', String(Math.round(d.maxStam)));
-      lvRow('Equip load', h('span', { style: `color:${d.load.effects.color}` }, LOAD_TIERS[d.load.tier].label), h('span', { class: 'dim-text' }, ` ${Math.round(d.load.frac * 100)}%`));
-      card.append(h('div', { class: 'cc-sec' }, 'At level 1'), lv);
     };
 
     // ---- appearance: cyclers for shapes, swatches for colours; every control re-syncs from `ap`
