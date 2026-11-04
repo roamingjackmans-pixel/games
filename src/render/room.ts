@@ -88,10 +88,74 @@ export function drawRoomFloor(ctx: CanvasRenderingContext2D, room: Room, pal: Pa
  * lit base, so they can be drawn again on top of the attack markers: a Red, Blue or yellow area never hides a
  * pillar you are about to run into (D129). A few pixels above each tile are kept for the wall and prop tops.
  */
+/** An inner obstacle tile (walls, pillars, props, trees; not the room's outer border). */
+function isObstacle(tiles: Tiles, tx: number, ty: number): boolean {
+  if (tx < 0 || ty < 0 || tx >= ROOM_W || ty >= ROOM_H) return false;
+  const v = tiles.e[ty * ROOM_W + tx];
+  if (v !== E.Wall && v !== E.Pillar && v !== E.Prop && v !== E.Tree) return false;
+  return !(v === E.Wall && (tx === 0 || ty === 0 || tx === ROOM_W - 1 || ty === ROOM_H - 1));
+}
+
+/**
+ * Make every obstacle stand out from the floor (D153): its blocked tiles get a brighter, warmer wash (so it no
+ * longer shares the floor's colour), a dark outline wherever it meets walkable ground and a light rim along its top
+ * edge. Drawn on the finished, lit room, so it reads in any corner and follows exactly what you would bump into.
+ */
+function accentObstacles(ctx: CanvasRenderingContext2D, tiles: Tiles, style: RoomStyle): void {
+  ctx.save();
+  // the wash: lighten, then lean toward the room's warm light colour
+  for (let ty = 0; ty < ROOM_H; ty++)
+    for (let tx = 0; tx < ROOM_W; tx++) {
+      if (!isObstacle(tiles, tx, ty)) continue;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = 'rgba(255,255,255,0.16)';
+      ctx.fillRect(tx * TILE, ty * TILE, TILE, TILE);
+      ctx.globalCompositeOperation = 'overlay';
+      ctx.fillStyle = style.lightColor;
+      ctx.globalAlpha = 0.35;
+      ctx.fillRect(tx * TILE, ty * TILE, TILE, TILE);
+      ctx.globalAlpha = 1;
+    }
+  ctx.globalCompositeOperation = 'source-over';
+  // outlines on edges that face open ground, and a light rim on top edges
+  ctx.lineCap = 'round';
+  for (let ty = 0; ty < ROOM_H; ty++)
+    for (let tx = 0; tx < ROOM_W; tx++) {
+      if (!isObstacle(tiles, tx, ty)) continue;
+      const x = tx * TILE;
+      const y = ty * TILE;
+      const edges: [boolean, number, number, number, number][] = [
+        [!isObstacle(tiles, tx, ty - 1), x, y, x + TILE, y],
+        [!isObstacle(tiles, tx, ty + 1), x, y + TILE, x + TILE, y + TILE],
+        [!isObstacle(tiles, tx - 1, ty), x, y, x, y + TILE],
+        [!isObstacle(tiles, tx + 1, ty), x + TILE, y, x + TILE, y + TILE],
+      ];
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (const [open, x0, y0, x1, y1] of edges) {
+        if (!open) continue;
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+      }
+      ctx.stroke();
+      if (edges[0]![0]) {
+        ctx.strokeStyle = 'rgba(255,240,205,0.75)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x + 2, y + 2.5);
+        ctx.lineTo(x + TILE - 2, y + 2.5);
+        ctx.stroke();
+      }
+    }
+  ctx.restore();
+}
+
 function cutObstacles(src: Canvas, tiles: Tiles): Canvas | null {
   const { canvas, ctx } = offscreen(RW, RH);
   ctx.beginPath();
   let any = false;
+  obstacleRects = [];
   for (let i = 0; i < tiles.e.length; i++) {
     const v = tiles.e[i];
     if (v !== E.Wall && v !== E.Pillar && v !== E.Prop && v !== E.Tree) continue;
@@ -99,6 +163,12 @@ function cutObstacles(src: Canvas, tiles: Tiles): Canvas | null {
     const ty = Math.floor(i / ROOM_W);
     if (v === E.Wall && (tx === 0 || ty === 0 || tx === ROOM_W - 1 || ty === ROOM_H - 1)) continue;
     ctx.rect(tx * TILE - 2, ty * TILE - 6, TILE + 4, TILE + 8);
+    // runs of obstacle tiles along a row become one rectangle to redraw (D153)
+    const last = obstacleRects[obstacleRects.length - 1];
+    const x = tx * TILE - 2;
+    const y = ty * TILE - 6;
+    if (last && last[1] === y && last[0] + last[2] >= x - 4) last[2] = x + TILE + 4 - last[0];
+    else obstacleRects.push([x, y, TILE + 4, TILE + 8]);
     any = true;
   }
   if (!any) return null;
@@ -107,9 +177,23 @@ function cutObstacles(src: Canvas, tiles: Tiles): Canvas | null {
   return canvas;
 }
 
-/** Draw the obstacles again over whatever was drawn since the floor (call after the telegraphs, D129). */
+/** where the current room's obstacles are, in room pixels, merged into row runs (D153) */
+let obstacleRects: [number, number, number, number][] = [];
+
+/**
+ * Draw the obstacles again over whatever was drawn since the floor (call after the telegraphs, D129): only their
+ * own rectangles, not a full-room copy of mostly empty pixels (D153).
+ */
 export function drawRoomObstacles(ctx: CanvasRenderingContext2D): void {
-  if (base?.obstacles) ctx.drawImage(base.obstacles as CanvasImageSource, 0, ROOM_Y0);
+  const src = base?.obstacles as CanvasImageSource | null | undefined;
+  if (!src) return;
+  for (const [x, y, w, h] of obstacleRects) {
+    const sx = Math.max(0, x);
+    const sy = Math.max(0, y);
+    const sw = Math.min(RW, x + w) - sx;
+    const sh = Math.min(RH, y + h) - sy;
+    if (sw > 0 && sh > 0) ctx.drawImage(src, sx, sy, sw, sh, sx, sy + ROOM_Y0, sw, sh);
+  }
 }
 
 export function invalidateRoomCache(): void {
@@ -179,6 +263,8 @@ function renderBase(room: Room, pal: Palette, propStyle: string, key: string): B
   // (they sit on open floor a tile clear of walls and props, so nothing drawn earlier overlaps them)
   const terrain = drawTerrainBase(ctx, room, style.id, seed);
   mark('terrain');
+  accentObstacles(ctx, tiles, style);
+  mark('accent');
   const obstacles = cutObstacles(canvas, tiles);
   mark('obstacles');
   roomPerf.marks = marks.join(' ');

@@ -76,6 +76,7 @@ export function createApp(canvasEl: HTMLCanvasElement, overlay: HTMLElement): Ap
       mixer.setVolumes(s.audio.master, s.audio.sfx, s.audio.music);
       loop.frameCap = s.video.frameCap;
       if (Math.abs(canvas.resolutionScale - s.video.scale) > 0.01) canvas.setResolutionScale(s.video.scale);
+      canvas.setMaxPixelScale(s.video.fullSharpness ? Infinity : 1.5);
     },
     saveSettings() {
       saveSettings(a.settings);

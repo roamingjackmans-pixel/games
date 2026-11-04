@@ -13,7 +13,8 @@ import { drawRoomFloor, DEFAULT_PALETTE, drawRoomObstacles } from './room';
 import { drawAmbience } from './ambience';
 import { drawMovingFloors } from './movingFloor';
 import { drawAttackIcon, drawTelegraph } from './telegraphs';
-import { clearTelegraphEchoes, drawTelegraphEchoes } from './telegraphFx';
+import { clearTelegraphEchoes, drawTelegraphEchoes, hasTelegraphEchoes } from './telegraphFx';
+import { ROOM_Y0 } from '../game/room';
 import { debugHitboxes, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
 import type { Entity, GameEvent, World } from '../game/world';
@@ -218,7 +219,18 @@ export class WorldView {
     this.shakeX = (Math.random() - 0.5) * this.shake;
     this.shakeY = (Math.random() - 0.5) * this.shake;
     ctx.fillStyle = '#0b0a0f';
-    ctx.fillRect(0, 0, 1280, 720);
+    if (this.camera) ctx.fillRect(0, 0, 1280, 720);
+    else {
+      // the room covers everything below the top strip: clear only the strip and what the shake uncovers (D153; a
+      // full-screen clear under a full-screen room was a whole extra screen of pixels every frame)
+      const m = Math.ceil(Math.abs(this.shakeX) + Math.abs(this.shakeY)) + 1;
+      ctx.fillRect(0, 0, 1280, ROOM_Y0 + m);
+      if (m > 1) {
+        ctx.fillRect(0, 720 - m, 1280, m);
+        ctx.fillRect(0, 0, m, 720);
+        ctx.fillRect(1280 - m, 0, m, 720);
+      }
+    }
     ctx.save();
     ctx.translate(this.shakeX, this.shakeY);
     if (this.camera) {
@@ -241,10 +253,15 @@ export class WorldView {
       this.echoRoom = w.room;
       clearTelegraphEchoes();
     }
-    for (const e of w.entities.values()) if (e.type === 'telegraph' && !e.removed) drawTelegraph(ctx, w, e, st.video.highContrastTelegraphs, now);
+    let markers = false;
+    for (const e of w.entities.values()) if (e.type === 'telegraph' && !e.removed) {
+      drawTelegraph(ctx, w, e, st.video.highContrastTelegraphs, now);
+      markers = true;
+    }
     drawTelegraphEchoes(ctx, now, st.video.highContrastTelegraphs);
     // pillars, props, trees and inner walls sit above the attack markers, so they never vanish under one (D129)
-    drawRoomObstacles(ctx);
+    // only needed while an attack marker (or its fading echo) could be under them (D153)
+    if (markers || hasTelegraphEchoes()) drawRoomObstacles(ctx);
     // walls (Guardian Wall)
     for (const e of w.entities.values()) {
       if (e.type !== 'wall' || e.removed || !e.wl) continue;

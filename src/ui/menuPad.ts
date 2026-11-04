@@ -53,7 +53,9 @@ export function pollMenuPad(input: InputManager, now: number): void {
     repeatAt = now + 0.25;
     return;
   }
-  const layers = [...document.querySelectorAll<HTMLElement>('#overlay .layer')].filter((l) => !l.classList.contains('clear') || l.querySelector('.panel'));
+  const layers = [...document.querySelectorAll<HTMLElement>('#overlay .layer')].filter(
+    (l) => !l.classList.contains('clear') || l.querySelector('.panel'),
+  );
   const scope = layers[layers.length - 1];
   if (!scope || input.lastDevice !== 'pad') return;
   // show where the pad's focus is (browsers only draw focus rings for the keyboard), and put focus somewhere
@@ -69,10 +71,27 @@ export function pollMenuPad(input: InputManager, now: number): void {
   else if (input.padButtonDown(12) || sy < -0.6) dy = -1;
   else if (input.padButtonDown(13) || sy > 0.6) dy = 1;
   if ((dx || dy) && now >= repeatAt) {
-    moveFocus(scope, dx, dy);
-    // keep what the pad selects on screen inside scrolling lists
-    (document.activeElement as HTMLElement | null)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
-    repeatAt = now + 0.18;
+    // a focused slider or dropdown takes left / right as its own value (D153): the pad could not change either
+    const el = document.activeElement as HTMLElement | null;
+    if (dx && el instanceof HTMLInputElement && el.type === 'range' && scope.contains(el)) {
+      if (dx > 0) el.stepUp();
+      else el.stepDown();
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      repeatAt = now + 0.09;
+    } else if (dx && el instanceof HTMLSelectElement && scope.contains(el)) {
+      const i = Math.max(0, Math.min(el.options.length - 1, el.selectedIndex + dx));
+      if (i !== el.selectedIndex) {
+        el.selectedIndex = i;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      repeatAt = now + 0.22;
+    } else {
+      moveFocus(scope, dx, dy);
+      // keep what the pad selects on screen inside scrolling lists
+      (document.activeElement as HTMLElement | null)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+      repeatAt = now + 0.18;
+    }
   } else if (!dx && !dy) repeatAt = 0;
   // the right stick scrolls whatever can scroll: the list around the focus, else the menu's biggest scroll box
   const dt = Math.min(0.1, Math.max(0, now - lastPoll));
@@ -83,7 +102,10 @@ export function pollMenuPad(input: InputManager, now: number): void {
     if (box) box.scrollTop += ry * 1100 * dt;
   }
   // LB / RB (L1 / R1) step through a menu's tabs (D145), stopping at the ends; the focus goes to the new tab
-  for (const [btnIdx, step] of [[4, -1], [5, 1]] as const) {
+  for (const [btnIdx, step] of [
+    [4, -1],
+    [5, 1],
+  ] as const) {
     if (!input.padButtonEdge(btnIdx)) continue;
     const tabs = [...scope.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]')].filter((t) => t.offsetParent !== null && !t.disabled);
     const cur = tabs.findIndex((t) => t.classList.contains('on'));

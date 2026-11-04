@@ -122,6 +122,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
 
   function video(el: HTMLElement): void {
     el.appendChild(slider('Resolution scale', () => s.video.scale, (v) => (s.video.scale = v), 0.5, 1, 0.05));
+    el.appendChild(check('Full sharpness on high-DPI screens (slower on laptops)', () => s.video.fullSharpness, (v) => (s.video.fullSharpness = v)));
     el.appendChild(
       h(
         'div',

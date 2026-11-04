@@ -394,3 +394,16 @@ describe('co-op: one rest rests the party (D152)', () => {
     expect(gsp.char.flaskCur).toBe(gsp.char.flaskMax);
   });
 });
+
+describe('co-op: a rest resets everyone\'s revive effort (D153)', () => {
+  it('a guest downed twice is back to the base revive requirement after the host rests', () => {
+    const s = session();
+    const gsp = s.joinPlayer(newCharacter('duelist', 'Guest', 'p2', new Rng('g')));
+    const guest = gsp.entity!;
+    s.downs[gsp.char.playerId] = 2;
+    guest.pl!.downs = 2;
+    s.interact(s.localPlayer!, bonfireOf(s));
+    expect(s.downs[gsp.char.playerId] ?? 0).toBe(0);
+    expect(guest.pl!.downs).toBe(0);
+  });
+});

@@ -22,6 +22,8 @@ export const TOUCH_MODES: readonly TouchMode[] = ['auto', 'on', 'off'];
 export interface Settings {
   video: {
     scale: number;
+    /** draw at the screen's full pixel density instead of capping it at 1.5× (D153; slower on laptops) */
+    fullSharpness: boolean;
     fullscreen: boolean;
     shake: number;
     hitstop: boolean;
@@ -68,6 +70,7 @@ export function defaultSettings(): Settings {
   return {
     video: {
       scale: 1,
+      fullSharpness: false,
       fullscreen: false,
       shake: 0.8,
       hitstop: true,
@@ -104,6 +107,7 @@ export function normalizeSettings(raw: unknown): Settings {
   return {
     video: {
       scale: num(v.scale, d.video.scale, 0.5, 1),
+      fullSharpness: bool(v.fullSharpness, d.video.fullSharpness),
       fullscreen: bool(v.fullscreen, d.video.fullscreen),
       shake: num(v.shake, d.video.shake, 0, 1),
       hitstop: bool(v.hitstop, d.video.hitstop),

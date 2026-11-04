@@ -860,6 +860,12 @@ export function clearTelegraphEchoes(): void {
 }
 
 /** Draw the impact echoes (call once per frame after the telegraphs). */
+/** True while any impact flash is still fading (the obstacles are redrawn over it, D153). */
+export function hasTelegraphEchoes(): boolean {
+  for (const e of echoes) if (e.live) return true;
+  return false;
+}
+
 export function drawTelegraphEchoes(ctx: CanvasRenderingContext2D, now: number, hc: boolean): void {
   let any = false;
   for (const e of echoes) if (e.live) any = true;

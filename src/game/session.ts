@@ -1013,8 +1013,9 @@ export class GameSession {
     rollShopPiece(ws, bonfireId, this.layout.zone, this.save.character.cycle);
     // zone enemies respawn (bosses, opened chests and killed mimics stay done)
     ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss' || id === this.node.id);
-    this.downs[pid] = 0;
-    p.pl!.downs = 0;
+    // a rest wipes everyone's downs, so a friend downed after it is back to the base revive effort (D153)
+    this.downs = {};
+    for (const sp of this.players) if (sp.entity?.pl) sp.entity.pl.downs = 0;
     this.w.sfx('bonfire', p.x);
     this.listener.bonfire?.(p, bonfireId, first);
     this.listener.autosave?.('bonfire');

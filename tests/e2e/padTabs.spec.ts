@@ -124,3 +124,17 @@ test('closing a menu with B does not dodge; the next press of B does (D147)', as
   await setBtn(1, false);
   await expect.poll(dodges, { timeout: 2000 }).toBeGreaterThan(0);
 });
+
+test('a controller changes a settings slider with left / right (D153)', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.getByTestId('title')).toBeVisible();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await press(page, 13); // any pad press: the menus are now driven by the pad
+  const slider = page.locator('input[type=range]').first();
+  await slider.focus();
+  const before = Number(await slider.inputValue());
+  await press(page, 14);
+  await expect.poll(async () => Number(await slider.inputValue())).toBeLessThan(before);
+  await press(page, 15);
+  await expect.poll(async () => Number(await slider.inputValue())).toBeCloseTo(before, 5);
+});
