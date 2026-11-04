@@ -638,6 +638,8 @@ export class NetGuest {
       const speed = this.self?.speed ?? 0;
       this.maybePredictDodge(me, input, speed);
       const dp = this.dodgePred;
+      // asked once a frame: the clock moves between calls, so asking twice could get two answers (D155)
+      const stepV = this.swingStep();
       // right after a predicted dodge the host may still report 0 (it is finishing its own): keep walking at the last speed
       if (speed > 0) this.lastWalkSpeed = speed;
       let walk = speed > 0 ? speed : dp ? this.lastWalkSpeed : 0;
@@ -658,9 +660,9 @@ export class NetGuest {
         dp.t += step;
         this.pending = [];
         this.correction = { x: 0, y: 0 };
-      } else if (this.swingStep()) {
+      } else if (stepV) {
         // the swing's step forward, as the host takes it (player.ts): a short slide toward the aim, no walking (D154)
-        const v = this.swingStep()!;
+        const v = stepV;
         const fx = v[0] * dt;
         const fy = v[1] * dt;
         this.pending.push({ seq: this.seq, dt, mx: 0, my: 0, sp: 0, fx, fy });
