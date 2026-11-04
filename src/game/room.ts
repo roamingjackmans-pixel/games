@@ -182,8 +182,10 @@ export class Room {
     const t = this.get(tx, ty);
     if (t === T.Door) return this.doorBlocks(tx, ty);
     if (t === T.Wall || t === T.Pillar) return true;
+    // holes block every body, fliers too (D173): they go round a pit or the void as a player does; fliers still pass over props
+    if (t === T.Pit || t === T.Void) return true;
     if (flying) return false;
-    return t === T.Prop || t === T.Pit || t === T.Void;
+    return t === T.Prop;
   }
 
   blocksProjectile(tx: number, ty: number): boolean {

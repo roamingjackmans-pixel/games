@@ -47,9 +47,10 @@ export function updateMovement(w: World, dt: number): void {
       const t = w.room.tileAt(e.x, e.y);
       if (t === T.Void) startFall(w, e, FALL_VOID_PCT, FALL_VOID_CLIMB_S);
       else if (t === T.Pit && e.pl.state !== 'dodge') startFall(w, e, FALL_PIT_PCT, 0.6);
-    } else if (e.en && !e.flying && w.room.isFallAt(e.x, e.y) && !e.forced) {
-      // enemies knocked into a pit fall and die (bosses are pushed back out)
-      if (e.en.isBoss) {
+    } else if (e.en && w.room.isFallAt(e.x, e.y) && !e.forced) {
+      // enemies knocked into a pit fall and die; bosses, and fliers (which never hover over a hole, D173), are set
+      // down at the nearest edge
+      if (e.en.isBoss || e.flying) {
         const [fx, fy] = w.room.nearestFloor(e.x, e.y, e.radius);
         e.x = fx;
         e.y = fy;
