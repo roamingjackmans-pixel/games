@@ -589,6 +589,20 @@ export interface PlayerHitOpts {
   noLifesteal?: boolean;
 }
 
+/** How much of a front guard's cut non-physical damage takes (D176): a 70% guard stops 70% of physical, 21% of the rest. */
+export const GUARD_NONPHYS_SHARE = 0.3;
+
+/** A hit's damage after a front guard of `guard` (0–1): physical cut by all of it, every other type by a share of it. */
+export function frontGuardDmg(dmg: Partial<Record<DamageType, number>>, guard: number): Partial<Record<DamageType, number>> {
+  const out: Partial<Record<DamageType, number>> = {};
+  const g = Math.min(1, Math.max(0, guard));
+  for (const t of DAMAGE_TYPES) {
+    const v = dmg[t];
+    if (v) out[t] = v * (1 - (t === 'physical' ? g : g * GUARD_NONPHYS_SHARE));
+  }
+  return out;
+}
+
 /** A player (or player-owned thing) hits an enemy. Returns the damage dealt. */
 export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: DamageSpec, fromX: number, fromY: number, o: PlayerHitOpts = {}): number {
   const en = e.en!;
@@ -628,14 +642,16 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   // front guard (whips and Shield Breaker go over it)
   const guard = traits.frontGuard ?? en.def.frontGuard ?? 0;
   if (guard > 0 && !spec.ignoreFrontGuard && frontOf(e, fromX, fromY, traits.frontGuardArcDeg ?? 120) && hp.staggerUntil < now) {
-    if (guard >= 1) {
+    // a shield stops physical hits hard; fire, frost, magic and the rest mostly get through it (D176)
+    const other = DAMAGE_TYPES.reduce((sum, t) => sum + (t === 'physical' ? 0 : (spec.dmg[t] ?? 0)), 0);
+    if (guard >= 1 && other <= 0) {
       w.sfx('hitMetal', e.x);
       w.fx('block', (e.x + fromX) / 2, (e.y + fromY) / 2);
       // unbreakable guard: poise still chips
       return 0;
     }
-    mult *= 1 - guard;
-    w.sfx('hitMetal', e.x, 0.6);
+    spec = { ...spec, dmg: frontGuardDmg(spec.dmg, guard) };
+    w.sfx('hitMetal', e.x, guard >= 1 ? 1 : 0.6);
   }
   if (traits.shell && en.flippedUntil < now && frontOf(e, fromX, fromY, 160)) mult *= traits.shell.frontMult;
   if (traits.shell && en.flippedUntil > now) mult *= traits.shell.flippedMult;

@@ -97,6 +97,19 @@ export function lookFor(c: Character): JoeLook {
     look.legL = ap.legL;
     look.legR = ap.legR;
   }
+  // an empty armor slot is bare, whatever the class (D176): no hat, a bare chest with a loincloth, bare legs, as the
+  // Nobody wears it; the class's tunic, hood and trousers came off with the armor
+  if (!c.equipment.head) {
+    look.head = 'none';
+    delete look.headStyle;
+    delete look.eyeGlow;
+  }
+  if (!c.equipment.body) {
+    look.body = 'loincloth';
+    delete look.belt;
+    delete look.emblem;
+  }
+  if (!c.equipment.legs) look.legs = 'bare';
   // armor pieces: the set's base look from armor.ts, the fantasy dressing from armorLooks.ts
   const head = c.equipment.head && parseArmorBase(c.equipment.head.baseId);
   if (head?.set) {
@@ -122,9 +135,10 @@ export function lookFor(c: Character): JoeLook {
     look.legs = 'bare';
   } else if (legs?.set) {
     look.legsColor = shade(legs.set.look.color, 0.8);
+    // worn leg armor always shows, even under a bare chest (a loincloth body would otherwise draw bare legs)
+    look.legs = 'trousers';
     Object.assign(look, ARMOR_LOOKS[legs.set.id]?.legs);
   }
-  if (c.classId === 'nobody' && !c.equipment.body) look.body = 'loincloth';
   return look;
 }
 
@@ -278,6 +292,28 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
       const side = -1.1 + 0.7 * cast;
       const rad = 13 + 2 * cast;
       off = { x: Math.cos(f + side) * rad, y: Math.sin(f + side) * rad + 2, a: f - 0.4 + 0.32 * cast, draw: (c) => drawTool(c, tool.draw, now) };
+    }
+  }
+  // walking with something in hand: the arms swing with the stride as free hands do (D176), weapon hand forward as the
+  // off hand goes back; less for two-handed grips and shields; never while attacking, blocking, casting or dodging
+  const moving = (e.anim as { moving?: number }).moving ?? 0;
+  if (moving > 0.05 && pl.state === 'idle' && !pl.combo && !pl.blocking && !ghost) {
+    const ph = (e.anim.t + now) * 12;
+    const k = Math.min(1, moving);
+    const s = Math.sin(ph);
+    if (main) {
+      const g = two && !dual ? 0.5 : 1;
+      const sw = -s * 3.2 * k * g;
+      main.x += Math.cos(f) * sw;
+      main.y += Math.sin(f) * sw * 0.6;
+      main.a += s * 0.16 * k * g;
+    }
+    if (off) {
+      const g = shield ? 0.6 : 1;
+      const sw = s * 3.2 * k * g;
+      off.x += Math.cos(f) * sw;
+      off.y += Math.sin(f) * sw * 0.6;
+      if (!shield) off.a -= s * 0.12 * k;
     }
   }
   const drink = pl.state === 'flask' ? Math.max(0.01, Math.min(1, 1 - (pl.stateUntil - now) / FLASK_DRINK_S)) : 0;
