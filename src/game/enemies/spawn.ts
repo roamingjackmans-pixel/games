@@ -1,6 +1,6 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
 import { ROLE_STATS, SHARD_SCALE, zoneShardFactor } from '../../data/roles';
-import { ELITE_POISE_MULT, coopHpMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
+import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
 
@@ -55,7 +55,9 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   const shards = rawShards > 0 ? Math.max(1, Math.round(rawShards)) : 0;
   const radius = (def.radius || rs.radius) * (elite ? 1.3 : 1) * (def.traits?.scale ?? 1);
   // bosses keep a large poise pool that hits wear down; everyone else's poise comes from their size (D78)
-  const poise = (isBoss ? rs.poise : poiseForSize(radius)) * (def.mult?.poise ?? 1) * (elite && !isBoss ? ELITE_POISE_MULT : 1);
+  const basePoise = (isBoss ? rs.poise : poiseForSize(radius)) * (def.mult?.poise ?? 1) * (elite && !isBoss ? ELITE_POISE_MULT : 1);
+  // a boss's poise grows with the party (D194)
+  const poise = basePoise * (isBoss && !def.special && !o.illusion ? coopPoiseMult(players) : 1);
   const resist = { ...(o.zoneResist ?? {}), ...def.resist };
   const immune = [...(o.zoneImmune ?? []), ...(def.statusImmune ?? [])];
   const now = w.time;
@@ -115,6 +117,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
     regenBlockedUntil: 0,
     attachedTo: 0,
     hpScaleBase: hp / coop,
+    poiseScaleBase: basePoise,
     share,
     splitDone: false,
     phaseAttacks: isBoss ? (def as BossDef).phases[0]!.attacks : (def as EnemyDef).attacks,
@@ -172,7 +175,14 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
 export function rescaleForPlayers(w: World, players: number): void {
   w.playerCount = players;
   for (const e of w.enemies) {
-    if (!e.hp || e.hp.dead || !e.en || e.en.isIllusion || e.en.def.special || e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
+    if (!e.hp || e.hp.dead || !e.en || e.en.isIllusion || e.en.def.special) continue;
+    // a boss's poise follows the party too, keeping how worn down it is (D194)
+    if (e.en.isBoss && e.hp.poiseMax > 0) {
+      const pf = e.hp.poise / e.hp.poiseMax;
+      e.hp.poiseMax = e.en.poiseScaleBase * coopPoiseMult(players);
+      e.hp.poise = pf * e.hp.poiseMax;
+    }
+    if (e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
     const frac = e.hp.hp / e.hp.max;
     // everyone grows (or shrinks) with the party now, keeping their HP fraction (D159)
     e.hp.max = e.en.hpScaleBase * coopHpMult(players, e.en.isBoss || !!e.en.elite);

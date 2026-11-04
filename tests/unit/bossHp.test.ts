@@ -24,3 +24,24 @@ describe('boss HP (D187)', () => {
     expect(ll.hp!.max / other.hp!.max).toBeCloseTo(4500 / 3600, 3);
   });
 });
+
+describe('co-op boss poise (D194)', () => {
+  it('+150% per extra player at spawn, and follows the party when someone joins mid-fight', async () => {
+    const { rescaleForPlayers } = await import('../../src/game/enemies/spawn');
+    const { coopPoiseMult } = await import('../../src/game/combat/formulas');
+    expect([1, 2, 3, 4].map(coopPoiseMult)).toEqual([1, 2.5, 4, 5.5]);
+    const solo = spawnEnemy(new World('BP1', Room.empty()), BOSSES.the_landlord!, 640, 368, { zone: 8, players: 1 });
+    for (const n of [2, 3, 4]) {
+      const b = spawnEnemy(new World(`BP${n}`, Room.empty()), BOSSES.the_landlord!, 640, 368, { zone: 8, players: n });
+      expect(b.hp!.poiseMax / solo.hp!.poiseMax).toBeCloseTo(1 + 1.5 * (n - 1), 5);
+    }
+    // a guest joins mid-fight: the bar grows and stays as worn down as it was
+    const w = new World('BPJ', Room.empty());
+    const b = spawnEnemy(w, BOSSES.the_landlord!, 640, 368, { zone: 8, players: 1 });
+    w.refreshLists();
+    b.hp!.poise = b.hp!.poiseMax * 0.4;
+    rescaleForPlayers(w, 2);
+    expect(b.hp!.poiseMax).toBeCloseTo(solo.hp!.poiseMax * 2.5, 5);
+    expect(b.hp!.poise / b.hp!.poiseMax).toBeCloseTo(0.4, 5);
+  });
+});

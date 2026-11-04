@@ -282,6 +282,8 @@ export interface EnemyC {
   regenBlockedUntil: number;
   attachedTo: number;
   hpScaleBase: number;
+  /** Poise before the co-op boss multiplier (D194). */
+  poiseScaleBase: number;
   /** room-wave enemies: Shards and drop chances divided by this (D79) */
   share: number;
   splitDone: boolean;
