@@ -332,7 +332,10 @@ export class InputManager {
     return false;
   }
   private padHeld(a: Action): boolean {
-    for (const b of this.pad[a]) if (b < HOLD && this.padDown.has(b)) return true;
+    // a button that also has a Hold binding is not "held" for its tap action: that action fires only on a quick
+    // release (D181). Counting it held made the press itself read as a fresh press, so holding down on the D-pad to
+    // switch items used one first.
+    for (const b of this.pad[a]) if (b < HOLD && this.padDown.has(b) && !this.padTapSuppressed(b)) return true;
     return false;
   }
   private padEdgeHit(a: Action, set: Set<number>): boolean {
