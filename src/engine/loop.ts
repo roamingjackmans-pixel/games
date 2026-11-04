@@ -8,6 +8,28 @@ export interface LoopHooks {
   render(alpha: number, realDt: number): void;
 }
 
+/**
+ * Call fn about every 16 ms, from a tiny inline worker when one can be made (its timer keeps running in a hidden tab,
+ * D155), else from setInterval. Returns a stop function.
+ */
+function startTicker(fn: () => void): () => void {
+  try {
+    if (typeof Worker === 'undefined' || typeof Blob === 'undefined' || typeof URL === 'undefined') throw new Error('no worker');
+    const src = 'var t=setInterval(function(){postMessage(0)},16);onmessage=function(){clearInterval(t);close()};';
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    const w = new Worker(url);
+    w.onmessage = () => fn();
+    return () => {
+      w.postMessage('stop');
+      w.terminate();
+      URL.revokeObjectURL(url);
+    };
+  } catch {
+    const id = setInterval(fn, 16);
+    return () => clearInterval(id);
+  }
+}
+
 export class Loop {
   private acc = 0;
   private last = 0;
@@ -17,7 +39,7 @@ export class Loop {
   frameCap = 0;
   private lastRender = 0;
   private lastFrameAt = 0;
-  private watchdog: ReturnType<typeof setInterval> | null = null;
+  private watchdogStop: (() => void) | null = null;
   /** timings for the debug frame graph (ms) */
   simMs = 0;
   renderMs = 0;
@@ -33,11 +55,14 @@ export class Loop {
     if (this.running) return;
     this.running = true;
     this.last = performance.now();
-    // Hidden tabs get no animation frames; a co-op host must keep simulating, so a timer takes over.
-    this.watchdog = setInterval(() => {
+    // Hidden tabs get no animation frames; a co-op host must keep simulating, so a timer takes over. Chrome also
+    // slows a hidden page's own timers (to about once a second, minimised or covered windows too), which made a
+    // hidden host crawl and its guests rubber-band on the spot (D155); a worker's timer is not held back that way,
+    // so it does the waking where workers exist.
+    this.watchdogStop = startTicker(() => {
       const now = performance.now();
       if (this.running && now - this.lastFrameAt > 100) step(now, false);
-    }, 16);
+    });
     const tick = (now: number): void => {
       if (!this.running) return;
       this.raf = requestAnimationFrame(tick);
@@ -92,8 +117,8 @@ export class Loop {
   stop(): void {
     this.running = false;
     cancelAnimationFrame(this.raf);
-    if (this.watchdog) clearInterval(this.watchdog);
-    this.watchdog = null;
+    this.watchdogStop?.();
+    this.watchdogStop = null;
   }
 
   get frameIndex(): number {
