@@ -13,32 +13,37 @@ export interface PlannedUnit {
 export interface RoomPlan {
   waves: PlannedUnit[][];
   ambush: boolean;
+  /** how many of the waves a solo room has (an ambush spawns these at once; the party's extra waves follow, D159) */
+  baseWaves?: number;
+  /** what each enemy's Shards and drop chances are divided by, so a player earns the same per room in any party */
+  share?: number;
 }
 
 /**
- * Room size (D79): every room has 50% more enemies than the original budget, and each extra co-op player adds 20%
- * more (D150; was 100% more each, which flooded guests' screens): ×1, ×1.2, ×1.4, ×1.6 with 1–4 players. Each of
- * those enemies' Shards and drop chances are divided by the same factor, so what each player earns per room stays
- * the same.
+ * Room size (D79): every room has 50% more enemies than the original budget. Co-op adds **one full extra wave per
+ * extra player** (D159; it was 20% bigger waves, D150, and 100% bigger before that): waves stay the solo size, so a
+ * party fights longer rather than more crowded. Each enemy's Shards and drop chances are divided by the room's
+ * total against a solo room (the plan's share), so what each player earns per room stays the same.
  */
 export const ROOM_ENEMY_MULT = 1.5;
-export const PER_EXTRA_PLAYER = 0.2;
-/** the party's share of the room on top of the solo size */
-export function partyCountMult(players: number): number {
-  return 1 + PER_EXTRA_PLAYER * (Math.max(1, Math.min(4, players)) - 1);
+const clampPlayers = (players: number): number => Math.max(1, Math.min(4, players));
+/** the room size against the original budget (solo; co-op adds waves instead) */
+export function roomCountMult(_players = 1): number {
+  return ROOM_ENEMY_MULT;
 }
-export function roomCountMult(players: number): number {
-  return ROOM_ENEMY_MULT * partyCountMult(players);
+/** waves in a room at this depth for this party: the solo count plus one per extra player */
+export function waveCountFor(depth: number, players: number): number {
+  return waveCount(depth) + clampPlayers(players) - 1;
 }
 
 /** caps for one player; they scale with the party */
 export const MAX_LIVE = 18;
 export const MAX_PER_WAVE = 12;
-export function maxPerWave(players: number): number {
-  return Math.round(MAX_PER_WAVE * partyCountMult(players));
+export function maxPerWave(_players = 1): number {
+  return MAX_PER_WAVE;
 }
-export function maxLive(players: number): number {
-  return Math.round(MAX_LIVE * partyCountMult(players));
+export function maxLive(_players = 1): number {
+  return MAX_LIVE;
 }
 
 /** The original budget before the D79 multiplier. */
@@ -67,11 +72,12 @@ export function planRoom(layout: ZoneLayout, node: RoomNode, players = 1): RoomP
   const mix = layout.mix.map((id) => ENEMIES[id]).filter((d): d is EnemyDef => !!d);
   if (mix.length === 0) return { waves: [], ambush };
   const depth = Math.max(1, node.depth);
-  const budget = threatBudget(depth, layout.zone) * roomCountMult(p);
+  // every wave the solo size; the party adds whole waves (D159)
+  const base = waveCount(depth);
+  const per = (threatBudget(depth, layout.zone) * ROOM_ENEMY_MULT) / base;
   const cap = maxPerWave(p);
-  const roleCap = Math.round(2 * partyCountMult(p));
-  const n = waveCount(depth);
-  const per = budget / n;
+  const roleCap = 2;
+  const n = waveCountFor(depth, p);
   const waves: PlannedUnit[][] = [];
   let elites = 0;
   for (let wi = 0; wi < n; wi++) {
@@ -104,12 +110,12 @@ export function planRoom(layout: ZoneLayout, node: RoomNode, players = 1): RoomP
     if (wave.length === 0) wave.push({ defId: mix[0]!.id, elite: null });
     waves.push(wave);
   }
-  return { waves, ambush };
+  return { waves, ambush, baseWaves: base, share: (ROOM_ENEMY_MULT * n) / base };
 }
 
 /** Shards one player gets from a full clear of the room (no elites), for the tuning test. */
 export function planShards(plan: RoomPlan, shardOf: (defId: string) => number, players = 1): number {
   let s = 0;
   for (const w of plan.waves) for (const u of w) s += shardOf(u.defId) * (ENEMIES[u.defId]?.swarm?.pieces ?? 1);
-  return s / roomCountMult(players);
+  return s / (plan.share ?? roomCountMult(players));
 }

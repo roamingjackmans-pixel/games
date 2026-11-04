@@ -1,6 +1,6 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
 import { ROLE_STATS, SHARD_SCALE, zoneShardFactor } from '../../data/roles';
-import { ELITE_POISE_MULT, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
+import { ELITE_POISE_MULT, coopHpMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
 
@@ -41,8 +41,11 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   const elite = o.elite ?? null;
   const baseHp = isBoss ? ((def as BossDef).baseHp ?? rs.hp) : rs.hp;
   // co-op adds bodies to rooms instead of HP to each body (D79); bosses alone still grow with the party
-  let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, isBoss ? players : 1) * (o.hpMult ?? 1);
+  let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, 1) * (o.hpMult ?? 1);
   if (elite) hp *= 3;
+  // co-op: more HP for each extra player, more for bosses and Elites (D159); special NPCs and illusions keep theirs
+  const coop = def.special || o.illusion ? 1 : coopHpMult(players, isBoss || !!elite);
+  hp *= coop;
   if (def.traits?.invincible) hp = def.mult?.hp ? baseHp * def.mult.hp : 120000;
   if (def.traits?.fixedHp) hp = def.traits.fixedHp;
   const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
@@ -110,7 +113,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
     spawnedAt: now,
     regenBlockedUntil: 0,
     attachedTo: 0,
-    hpScaleBase: isBoss ? hp / Math.max(1, 1 + 1.5 * (players - 1)) : hp,
+    hpScaleBase: hp / coop,
     share,
     splitDone: false,
     phaseAttacks: isBoss ? (def as BossDef).phases[0]!.attacks : (def as EnemyDef).attacks,
@@ -168,9 +171,10 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
 export function rescaleForPlayers(w: World, players: number): void {
   w.playerCount = players;
   for (const e of w.enemies) {
-    if (!e.hp || e.hp.dead || !e.en || !e.en.isBoss || e.en.isIllusion || e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
+    if (!e.hp || e.hp.dead || !e.en || e.en.isIllusion || e.en.def.special || e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
     const frac = e.hp.hp / e.hp.max;
-    e.hp.max = e.en.hpScaleBase * (1 + 1.5 * (players - 1));
+    // everyone grows (or shrinks) with the party now, keeping their HP fraction (D159)
+    e.hp.max = e.en.hpScaleBase * coopHpMult(players, e.en.isBoss || !!e.en.elite);
     e.hp.hp = Math.max(1, frac * e.hp.max);
   }
 }

@@ -175,8 +175,12 @@ export function armorDef(def1: number, slotMult: number, ilvl: number): number {
 
 // ---------- enemy scaling (GAME_DESIGN §2.3, D15) ----------
 
-export function coopHpMult(players: number): number {
-  return 1 + 1.5 * (Math.max(1, players) - 1);
+/**
+ * Co-op HP per extra player (D159): +125% each for bosses and Elites, +75% each for every other enemy (bosses were
+ * +150% and room enemies +0%, D15 / D79).
+ */
+export function coopHpMult(players: number, strong = true): number {
+  return 1 + (strong ? 1.25 : 0.75) * (Math.max(1, Math.min(4, players)) - 1);
 }
 export function enemyHpMult(zone: number, cycle: number, players: number): number {
   return (1 + 0.55 * (zone - 1)) * Math.pow(1.6, cycle) * coopHpMult(players);

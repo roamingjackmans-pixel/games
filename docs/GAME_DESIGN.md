@@ -555,7 +555,8 @@ built for it.
 - **Scaling** (D79, replacing D15's per-enemy HP rule): rooms hold **1.5 × players** times the original number of
   enemies (5 solo → 10 → 15 → 20 with 2–4 players) at solo HP, and Elites come more often (8% → 20%). Each room
   enemy's Shards and drop chances are divided by the same factor, so every player earns what they would solo.
-  Bosses: HP × (1 + 1.5 × (players − 1)). Damage unchanged. Shards and loot instanced.
+  HP (D159): bosses and Elites × (1 + 1.25 × (players − 1)), every other enemy × (1 + 0.75 × (players − 1)). Each
+  extra player adds one full wave to every room. Damage unchanged. Shards and loot instanced.
 - **Loot** is instanced per player: each player sees and picks up only their own drops.
 - **Downed and revive**: at 0 HP a player becomes a ghost (crawls at 90 px/s, cannot act) for 30 s.
   Teammates revive by **hitting the ghost**. Each hit adds the weapon's **revive value** (CONTENT_ITEMS

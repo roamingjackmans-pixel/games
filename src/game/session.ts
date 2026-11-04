@@ -653,8 +653,10 @@ export class GameSession {
         w.room.version++;
         w.sfx('doorLock');
         if (this.plan.ambush) {
-          for (let i = 0; i < this.plan.waves.length; i++) this.spawnWave(i, 1.5);
-          this.waveIdx = this.plan.waves.length;
+          // the solo ambush springs at once; a party's extra waves follow one by one like any room's (D159)
+          const burst = Math.min(this.plan.waves.length, this.plan.baseWaves ?? this.plan.waves.length);
+          for (let i = 0; i < burst; i++) this.spawnWave(i, 1.5);
+          this.waveIdx = burst;
         } else {
           this.spawnWave(0, 1.0);
           this.waveIdx = 1;
@@ -726,7 +728,7 @@ export class GameSession {
       const jx = base[0] + rng.spread(30 + 22 * lap);
       const jy = base[1] + rng.spread(30 + 22 * lap);
       const [x, y] = w.room.nearestFloor(jx, jy, def.radius);
-      const ents = spawnUnit(w, def, x, y, { elite: u.elite as EliteAffix | null, tellS, zoneResist: zd.resist, zoneImmune: zd.statusImmune, share: roomCountMult(this.players.length) });
+      const ents = spawnUnit(w, def, x, y, { elite: u.elite as EliteAffix | null, tellS, zoneResist: zd.resist, zoneImmune: zd.statusImmune, share: this.plan?.share ?? roomCountMult(this.players.length) });
       for (const e of ents) this.waveIds.push(e.id);
       this.waveSize += ents.length;
       w.sfx('spawnTell', x, 0.4);

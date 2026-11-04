@@ -162,20 +162,24 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     for (const g of p.guests) expect([...g.cw.entities.values()].some((x) => x.type === 'enemy' && !x.hp?.dead)).toBe(false);
   });
 
-  it('co-op adds bodies, not HP, to room enemies; a boss still grows with the party and back when a guest leaves (D79)', () => {
+  it('co-op HP: +75% per extra player for enemies, +125% for Elites and bosses, and back when a guest leaves (D159)', () => {
     const p = party(3);
     p.host.start(p.s);
     p.step(0.5);
     const solo = spawnEnemy(p.s.w, ENEMIES.shambler!, 600, 300, { tellS: 0, players: 1 });
     const e = spawnEnemy(p.s.w, ENEMIES.shambler!, 640, 300, { tellS: 0 });
-    expect(e.hp!.max).toBeCloseTo(solo.hp!.max, 6);
+    const soloHp = solo.hp!.max;
+    expect(e.hp!.max).toBeCloseTo(soloHp * 3.25, 3);
+    const eliteSolo = spawnEnemy(p.s.w, ENEMIES.shambler!, 600, 340, { tellS: 0, players: 1, elite: 'armored' });
+    const elite = spawnEnemy(p.s.w, ENEMIES.shambler!, 640, 340, { tellS: 0, elite: 'armored' });
+    expect(elite.hp!.max).toBeCloseTo(eliteSolo.hp!.max * 4.75, 3);
     const boss = spawnEnemy(p.s.w, BOSSES.the_caretaker!, 640, 200, { tellS: 0 });
-    expect(boss.hp!.max).toBeCloseTo(boss.en!.hpScaleBase * 5.5, 3);
+    expect(boss.hp!.max).toBeCloseTo(boss.en!.hpScaleBase * 4.75, 3);
     p.guests[2]!.leave();
     p.step(0.5);
     expect(p.s.players.length).toBe(3);
-    expect(boss.hp!.max).toBeCloseTo(boss.en!.hpScaleBase * 4, 3);
-    expect(e.hp!.max).toBeCloseTo(solo.hp!.max, 6);
+    expect(boss.hp!.max).toBeCloseTo(boss.en!.hpScaleBase * 3.5, 3);
+    expect(e.hp!.max).toBeCloseTo(soloHp * 2.5, 3);
   });
 
   it('a silent guest is removed after 10 s', () => {

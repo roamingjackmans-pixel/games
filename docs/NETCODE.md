@@ -93,8 +93,10 @@ that player; other players never see it. Shards: each player gets the full per-k
 
 ## 7. Scaling and rules on the host
 
-- Boss HP multiplier recomputed on join/leave: `1 + 1.5 × (players − 1)`; the boss keeps its HP fraction.
-  Rooms scale by **count** instead (D79): a room planned for p players holds 1.5 × p times the original enemies.
+- Co-op HP (D159), recomputed on join/leave for every enemy (each keeps its HP fraction): bosses and Elites
+  `1 + 1.25 × (players − 1)`, every other enemy `1 + 0.75 × (players − 1)`. Rooms also get **one extra full wave per
+  extra player** (solo-size waves; a 2-wave room has 5 waves with 4 players); an ambush springs its solo waves at once
+  and the party's extra waves follow. Shards and drop chances are divided so each player earns the same per room.
 - Downed/revive (D12) is simulated on the host: hits on a ghost add the attacker's weapon revive value;
   `reviveProgress` events drive the ring UI.
 - Friendly fire (D115) is simulated on the host with the **host's** percent (`World.friendlyFire`, from its

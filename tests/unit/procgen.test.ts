@@ -101,20 +101,27 @@ describe('room size and Elites by party size (D79)', () => {
           for (const w of plan.waves) {
             units += w.length;
             elites += w.filter((u) => u.elite).length;
-            expect(w.length).toBeLessThanOrEqual(12 * players);
+            expect(w.length).toBeLessThanOrEqual(12);
           }
         }
       }
     }
     return { units, elites, rooms };
   };
-  it('each extra player adds about 20% more enemies: ×1.2, ×1.4, ×1.6 (D150)', () => {
-    const one = plans(1);
-    for (const p of [2, 3, 4]) {
-      const more = plans(p);
-      const want = 1 + 0.2 * (p - 1);
-      expect(more.units / one.units, `${p} players`).toBeGreaterThan(want * 0.88);
-      expect(more.units / one.units, `${p} players`).toBeLessThan(want * 1.12);
+  it('each extra player adds one full solo-size wave to every room (D159)', () => {
+    for (let s = 0; s < 10; s++) {
+      const L = generateZone(`waves-${s}`, 3);
+      for (const r of L.rooms) {
+        if (r.kind !== 'combat' && r.kind !== 'ambush') continue;
+        const solo = planRoom(L, r, 1);
+        for (const p of [2, 3, 4]) {
+          const plan = planRoom(L, r, p);
+          expect(plan.waves.length, `${p} players`).toBe(solo.waves.length + p - 1);
+          expect(plan.baseWaves).toBe(solo.waves.length);
+          // each player still earns the same from the room
+          expect(plan.share! / solo.share!).toBeCloseTo(plan.waves.length / solo.waves.length, 6);
+        }
+      }
     }
   });
   it('rooms hold about 50% more enemies than the original budget', () => {
