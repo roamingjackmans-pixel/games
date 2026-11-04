@@ -219,20 +219,20 @@ export const BONFIRE_LINES: readonly string[] = [
   'Joe takes his boots off. The monsters in the next room take a step back.',
 ];
 
-/** Lines shown at a fire that has burnt down to embers (a later rest restores nothing, D38). */
+/** Lines shown at a fire you have rested at before (it still heals and refills, D150; it used to restore nothing, D38). */
 export const EMBER_LINES: readonly string[] = [
   'Embers. Still warm, if you squint.',
-  'The fire has given what it had. It’s not personal.',
-  'Joe pokes the embers. The embers poke back, feebly.',
-  'Embers save, level and warp. They just won’t tuck you in.',
-  'The monsters are back. The fire is not. Typical.',
+  'The fire has burnt low. It still has enough for one more Joe.',
+  'Joe pokes the embers. They flare up, just enough to warm his tea.',
+  'Embers mend you all the same. They are just quieter about it.',
+  'The monsters are back. So is your Thermos. Fair trade.',
 ];
 
 /** Tips shown on the death screen and while a guest joins. Short, true, and only slightly smug. */
 export const TIPS: readonly string[] = [
   'Red attacks can’t be blocked or parried. Roll through them.',
   'Blue attacks ignore rolls. Walk out of the marked area instead.',
-  'Your Thermos refills on the first rest at each fire, and when you die. Nowhere else.',
+  'Your Thermos refills every time you rest at a fire, and when you die. Nowhere else.',
   'Dying drops your Shards, never your Glowen. Spend Shards at a fire before a boss.',
   'Better-made gear holds more Glowen. Sell what you don’t need; the fire pays by quality.',
   'Gems are hardened Glowen. Upgrade them at the gem bench to the next tier.',

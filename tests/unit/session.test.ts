@@ -27,8 +27,8 @@ function run(s: GameSession, sec: number): void {
   for (let i = 0; i < Math.round(sec * 60); i++) stepWorld(s.w);
 }
 
-describe('session: bonfires (D38)', () => {
-  it('heals and refills only on the first rest; dying refills the Thermos', () => {
+describe('session: bonfires (D150; D38 for the Thermos)', () => {
+  it('heals and refills on every rest; dying refills the Thermos', () => {
     const s = session();
     const p = s.localPlayer!;
     const c = s.save.character;
@@ -40,8 +40,8 @@ describe('session: bonfires (D38)', () => {
     p.hp!.hp = 10;
     c.flaskCur = 0;
     s.interact(p, bonfireOf(s));
-    expect(p.hp!.hp).toBe(10);
-    expect(c.flaskCur).toBe(0);
+    expect(p.hp!.hp).toBe(p.hp!.max);
+    expect(c.flaskCur).toBe(c.flaskMax);
     // dying refills (and the respawn heals)
     rawDamage(s.w, p, 9999, 'physical', 0);
     expect(s.dead).toBe(true);

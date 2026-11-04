@@ -366,7 +366,9 @@ function swingHits(w: World, e: Entity): void {
   }
   // destructible things (tendril lines, mirrors) are enemies too; props are not
   if (any) {
-    if (w.hitstopEnabled) e.hitstopUntil = w.time + hitstopMs(e) / 1000;
+    // a co-op guest's own swing never freezes its body on the host: its screen cannot know of the freeze and would
+    // rubber-band (D150); the guest still sees the enemy's hit flash and the shake
+    if (w.hitstopEnabled && pl.local) e.hitstopUntil = w.time + hitstopMs(e) / 1000;
     w.emit({ t: 'hitstop', ms: hitstopMs(e), ids: [e.id] });
     w.emit({ t: 'shake', amount: heavy ? 5 : 2 });
   }
@@ -437,6 +439,26 @@ function updateCombo(w: World, e: Entity, dt: number): void {
       if (c.queued && last && e.stam!.cur > 0) startSwing(w, e, 0);
     }
   }
+}
+
+/**
+ * How fast this player walks right now, before Slow terrain, or 0 when it cannot walk. The host's movement and the
+ * speed a co-op guest predicts its own walking with both come from here, so they cannot drift apart (D150: the
+ * guest's copy still treated a swing as rooting, so every attack made its screen jump back and catch up).
+ */
+export function walkSpeedFor(w: World, e: Entity): number {
+  const pl = e.pl!;
+  const canMove = (pl.state === 'idle' || pl.state === 'flask' || pl.state === 'cast' || pl.state === 'channel' || pl.state === 'charge' || pl.state === 'attack') && !e.forced;
+  if (!canMove || e.st!.controls.root > w.time) return 0;
+  let speed = pl.derived.walk * speedMult(e, w);
+  if (pl.state === 'flask') speed *= 0.4;
+  if (pl.state === 'cast') speed *= pl.derived.castMoveMult;
+  if (pl.channel) speed *= pl.channel.moveMult;
+  if (pl.charge) speed *= 0.35;
+  // swinging slows you down instead of rooting you; heavier weapon classes slow you more (D88)
+  if (pl.state === 'attack') speed *= ATTACK_MOVE[pl.derived.weapon.speedClass] ?? 0.4;
+  if (pl.blocking) speed *= 0.75;
+  return speed;
 }
 
 function startDodge(w: World, e: Entity): void {
@@ -707,14 +729,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     void fall;
     mv = 1;
   } else if (canMove && e.st!.controls.root <= now) {
-    let speed = pl.derived.walk * speedMult(e, w);
-    if (pl.state === 'flask') speed *= 0.4;
-    if (pl.state === 'cast') speed *= pl.derived.castMoveMult;
-    if (pl.channel) speed *= pl.channel.moveMult;
-    if (pl.charge) speed *= 0.35;
-    // swinging slows you down instead of rooting you; heavier weapon classes slow you more (D88)
-    if (pl.state === 'attack') speed *= ATTACK_MOVE[pl.derived.weapon.speedClass] ?? 0.4;
-    if (pl.blocking) speed *= 0.75;
+    let speed = walkSpeedFor(w, e);
     // Slow terrain (PROCGEN §3.2): walking only; the dodge above is untouched
     speed *= terrainWalkMult(w.room, e.x, e.y);
     const ix = inp.moveX;

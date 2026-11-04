@@ -2,7 +2,7 @@
 // permille, combo progress…) plus a JSON "meta" block that is only sent when it changes (what the entity
 // is: enemy type, player gear, telegraph shapes, pickup contents). Room tiles travel the same way. The guest
 // rebuilds real Entity objects from these so the normal renderer and HUD draw them unchanged.
-import { speedMult } from '../combat/state';
+import { walkSpeedFor } from '../player/player';
 import type { Entity, EType, World, GameEvent } from '../world';
 import type { MovingFloorDef } from '../types';
 
@@ -398,18 +398,9 @@ export interface SelfState {
 
 /** The speed the guest's own prediction should walk at right now (0 when the player cannot walk). */
 function walkSpeedOf(w: World, e: Entity): number {
-  const pl = e.pl!;
-  const now = w.time;
-  const canMove = (pl.state === 'idle' || pl.state === 'flask' || pl.state === 'cast' || pl.state === 'channel' || pl.state === 'charge') && !e.forced && e.st!.controls.root <= now && !pl.downed;
-  if (pl.downed) return 90;
-  if (!canMove) return 0;
-  let speed = pl.derived.walk * speedMult(e, w);
-  if (pl.state === 'flask') speed *= 0.4;
-  if (pl.state === 'cast') speed *= 0.5;
-  if (pl.channel) speed *= pl.channel.moveMult;
-  if (pl.charge) speed *= 0.35;
-  if (pl.blocking) speed *= 0.75;
-  return speed;
+  if (e.pl!.downed) return 90;
+  // exactly the host's own walking speed (D150): swinging slows, it does not root
+  return walkSpeedFor(w, e);
 }
 
 export function selfStateOf(w: World, e: Entity, lastSeq: number): SelfState {

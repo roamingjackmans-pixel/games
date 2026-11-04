@@ -973,20 +973,18 @@ export class GameSession {
 
   // ------------------------------------------------------------------ bonfires (D38)
 
-  /** Rest at a bonfire: heals and refills only on the first rest; always respawns enemies, saves, sets respawn. */
+  /** Rest at a bonfire: heals, refills the Thermos and cleanses on every rest (D150; was the first rest only, D38); respawns enemies, saves, sets respawn. */
   rest(p: Entity, bonfireId: string): boolean {
     const ws = this.save.world;
     const pid = p.pl!.playerId;
     const isOwner = pid === this.save.character.playerId;
     const used = isOwner ? ws.bonfiresUsed : (ws.bonfiresUsedByPlayer[pid] ??= []);
     const first = !used.includes(bonfireId);
-    if (first) {
-      used.push(bonfireId);
-      p.hp!.hp = p.hp!.max;
-      p.pl!.char.flaskCur = flaskCap(p.pl!.char);
-      cleanse(p, ['statuses', 'controls']);
-      this.w.fx('levelup', p.x, p.y);
-    }
+    if (first) used.push(bonfireId);
+    p.hp!.hp = p.hp!.max;
+    p.pl!.char.flaskCur = flaskCap(p.pl!.char);
+    cleanse(p, ['statuses', 'controls']);
+    this.w.fx('levelup', p.x, p.y);
     ws.respawnBonfireId = bonfireId;
     // players who bled out come back at the fire with full HP and a full Thermos (death refills, D12)
     for (const sp of this.players) {

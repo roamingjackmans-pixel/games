@@ -16,23 +16,29 @@ export interface RoomPlan {
 }
 
 /**
- * Room size (D79): every room has 50% more enemies than the original budget, and co-op multiplies the count by
- * the number of players (5 → 10 → 15 → 20). Each of those enemies' Shards and drop chances are divided by the
- * same factor, so what each player earns per room stays the same.
+ * Room size (D79): every room has 50% more enemies than the original budget, and each extra co-op player adds 20%
+ * more (D150; was 100% more each, which flooded guests' screens): ×1, ×1.2, ×1.4, ×1.6 with 1–4 players. Each of
+ * those enemies' Shards and drop chances are divided by the same factor, so what each player earns per room stays
+ * the same.
  */
 export const ROOM_ENEMY_MULT = 1.5;
+export const PER_EXTRA_PLAYER = 0.2;
+/** the party's share of the room on top of the solo size */
+export function partyCountMult(players: number): number {
+  return 1 + PER_EXTRA_PLAYER * (Math.max(1, Math.min(4, players)) - 1);
+}
 export function roomCountMult(players: number): number {
-  return ROOM_ENEMY_MULT * Math.max(1, players);
+  return ROOM_ENEMY_MULT * partyCountMult(players);
 }
 
 /** caps for one player; they scale with the party */
 export const MAX_LIVE = 18;
 export const MAX_PER_WAVE = 12;
 export function maxPerWave(players: number): number {
-  return MAX_PER_WAVE * Math.max(1, players);
+  return Math.round(MAX_PER_WAVE * partyCountMult(players));
 }
 export function maxLive(players: number): number {
-  return MAX_LIVE * Math.max(1, players);
+  return Math.round(MAX_LIVE * partyCountMult(players));
 }
 
 /** The original budget before the D79 multiplier. */
@@ -63,6 +69,7 @@ export function planRoom(layout: ZoneLayout, node: RoomNode, players = 1): RoomP
   const depth = Math.max(1, node.depth);
   const budget = threatBudget(depth, layout.zone) * roomCountMult(p);
   const cap = maxPerWave(p);
+  const roleCap = Math.round(2 * partyCountMult(p));
   const n = waveCount(depth);
   const per = budget / n;
   const waves: PlannedUnit[][] = [];
@@ -77,9 +84,9 @@ export function planRoom(layout: ZoneLayout, node: RoomNode, players = 1): RoomP
         const c = unitCost(d);
         if (c > left + 0.5) return false;
         const rc = roleCount[d.role] ?? 0;
-        // a wave's casters and heavies stay readable: at most 2 of each per player
-        if ((d.role === 'caster' || d.role === 'support') && rc >= 2 * p) return false;
-        if ((d.role === 'brute' || d.role === 'tank') && rc >= 2 * p) return false;
+        // a wave's casters and heavies stay readable: 2 of each, growing with the party like the room does (D150)
+        if ((d.role === 'caster' || d.role === 'support') && rc >= roleCap) return false;
+        if ((d.role === 'brute' || d.role === 'tank') && rc >= roleCap) return false;
         return true;
       });
       if (options.length === 0) break;

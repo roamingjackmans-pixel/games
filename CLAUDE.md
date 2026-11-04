@@ -44,7 +44,7 @@ synthesis · Vitest · Playwright · GitHub Actions → GitHub Pages (`base: '/g
 - No external fonts, images, audio or CDN scripts. Everything is drawn or synthesized in code.
 - Content is data (`src/data/*`); systems never special-case an enemy or item by id.
 - No attack is both Red and Piercing. Every Piercing area is escapable (test in CONTENT_ENEMIES §13).
-- Bonfires heal and refill the flask only on the first rest; dying refills it; nothing else ever does (D38).
+- Bonfires heal and refill the flask on every rest (D150; was the first rest only, D38); dying refills it; nothing else ever does.
 - Weapon scaling grades are spread from E to S on purpose (D40); do not flatten them.
 - Guests own their inventory; the host owns the world (NETCODE §6).
 

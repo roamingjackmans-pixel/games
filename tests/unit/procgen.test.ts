@@ -108,12 +108,13 @@ describe('room size and Elites by party size (D79)', () => {
     }
     return { units, elites, rooms };
   };
-  it('two, three and four players face about 2×, 3× and 4× the enemies of one', () => {
+  it('each extra player adds about 20% more enemies: ×1.2, ×1.4, ×1.6 (D150)', () => {
     const one = plans(1);
     for (const p of [2, 3, 4]) {
       const more = plans(p);
-      expect(more.units / one.units, `${p} players`).toBeGreaterThan(p * 0.85);
-      expect(more.units / one.units, `${p} players`).toBeLessThan(p * 1.15);
+      const want = 1 + 0.2 * (p - 1);
+      expect(more.units / one.units, `${p} players`).toBeGreaterThan(want * 0.88);
+      expect(more.units / one.units, `${p} players`).toBeLessThan(want * 1.12);
     }
   });
   it('rooms hold about 50% more enemies than the original budget', () => {

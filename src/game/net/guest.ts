@@ -76,6 +76,8 @@ export class NetGuest {
   private hostClock = new HostClock(1 / SNAP_HZ);
   /** a dodge this guest started locally before the host confirmed it (D149) */
   private lastWalkSpeed = 0;
+  /** when the host last started reporting that this guest cannot walk (0 while it can) */
+  private zeroSince = 0;
   private dodgePred: { until: number; holdUntil: number; dir: [number, number]; mult: number; t: number } | null = null;
   private self: SelfState | null = null;
   private correction = { x: 0, y: 0 };
@@ -483,6 +485,12 @@ export class NetGuest {
       py = probe.y;
     }
     const err = dist(px, py, e.x, e.y);
+    if (s.speed <= 0) {
+      // a brief stop (a swing's step forward, a flinch): hold where we are and settle once walking resumes, rather
+      // than snapping back to the host's older position on every swing (D150)
+      if (this.zeroSince === 0) this.zeroSince = this.clock();
+      if (this.clock() - this.zeroSince < 0.3 && err < 64) return;
+    } else this.zeroSince = 0;
     if (err >= 24 || s.speed <= 0) {
       e.x = e.px = px;
       e.y = e.py = py;
@@ -562,8 +570,10 @@ export class NetGuest {
         me.y += this.correction.y * k;
         this.correction.x *= 1 - k;
         this.correction.y *= 1 - k;
+      } else if (this.zeroSince !== 0 && this.clock() - this.zeroSince < 0.3) {
+        // a brief stop: stand still until walking resumes (D150)
       } else {
-        // dodging, staggered, held: follow the host's newest position
+        // staggered, held, knocked back: follow the host's newest position
         const list = this.samples.get(me.id);
         const last = list?.[list.length - 1];
         if (last) {

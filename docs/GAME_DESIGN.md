@@ -493,20 +493,19 @@ compared with what you wear) · Warp (to any
 **discovered** bonfire in this playthrough, fresh or ember) · Spell loadout (also available anywhere in
 the inventory).
 
-**Resting (D38):** a bonfire **heals you and refills the Thermos only the first time you rest at it.**
-After that first rest the fire burns down to embers: resting again still respawns the zone's enemies,
-autosaves, and sets your respawn point, and the menu (level up, shop, gem bench, warp) always works, but
-HP and flask charges are not restored. The map shows lit bonfires (fresh) and ember bonfires (used).
-Each bonfire is fresh once per playthrough; a new NG+ cycle rolls new bonfires. In co-op the first-rest
-rule is tracked **per player** in the **host's world save**, keyed by the guest's `playerId`
-(`bonfiresUsedByPlayer`), so leaving and rejoining never grants a second first rest.
+**Resting (D150; was D38):** a bonfire **heals you, refills the Thermos and clears statuses every time you rest
+at it.** Resting also respawns the zone's enemies, autosaves and sets your respawn point, and the menu (level up,
+shop, gem bench, warp) always works. After the first rest a fire still burns down to embers on the map (used),
+which is now only a record of where you have been; in co-op that record stays per player in the host's world
+save (`bonfiresUsedByPlayer`). *Changed at the owner's request: it used to heal and refill only on the first
+rest at each fire.*
 
 ### 9.2 The flask: "Joe's Thermos"
 
 Heals 40% maxHP over 1.5 s (drink animation 1.2 s, you can be hit). **Max charges: 1 at the start; +1
 after every 2 bosses beaten** (bosses beaten counter 2, 4, 6, 8 → max 5). Kept in NG+.
 
-Charges come back in exactly **two** ways: the **first rest** at each bonfire (full refill, D38) and
+Charges come back in exactly **two** ways: **resting** at a bonfire (full refill, every rest, D150) and
 **dying** (you respawn with a full Thermos, §9.3). Nothing else restores a charge: no drop, no shop
 item, no spell, no affix (a data test asserts that no `EffectDef` or shop entry adds flask charges;
 *Joe's Lucky Socks* raises the **maximum**, which is allowed, and *Fortify Thermos* / *Thermos Lid*

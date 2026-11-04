@@ -629,7 +629,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     tabHints(tabs);
     tabs.appendChild(h('div', { class: 'grow' }));
     tabs.appendChild(btn('Leave', () => leave(() => v.close()), 'primary'));
-    panel.appendChild(h('div', { class: 'row' }, h('h2', { class: 'grow', style: 'margin:0' }, 'Bonfire'), h('div', { class: v.firstRest ? 'good' : 'dim-text' }, v.firstRest ? 'You rest. HP and Thermos restored.' : 'Embers: resting restores nothing here. Enemies have returned.')));
+    panel.appendChild(h('div', { class: 'row' }, h('h2', { class: 'grow', style: 'margin:0' }, 'Bonfire'), h('div', { class: 'good' }, v.firstRest ? 'You rest. HP and Thermos restored.' : 'You rest. HP and Thermos restored. Enemies have returned.')));
     panel.appendChild(tabs);
     const content = h('div', { style: 'flex:1;overflow:auto', 'data-focus-group': `tab-${tab}` });
     defs.find((d) => d.key === tab)?.fn?.(content);
