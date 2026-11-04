@@ -21,6 +21,7 @@ import { OUTLINE, poly } from '../engine/draw/parts';
 import { drawArmorIcon } from './armorIcons';
 import { DAMAGE_TYPES, type Character, type DamageType, type Gem, type Grade, type Item, type StatId, type Stats, type WeaponDef } from '../game/types';
 import { fmt, h } from './dom';
+import { shieldSpecials, weaponSpecials } from './itemSpecials';
 
 export const RARITY_LABEL: Record<string, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 export const RARITY_BORDER: Record<string, string> = { common: '#6a6a6a', uncommon: '#58d66a', rare: '#4aa3ff', epic: '#b06bff', legendary: '#ff9b2e' };
@@ -160,6 +161,11 @@ function rowsEl(rows: Row[], cmp: boolean, indent = true): HTMLElement {
     if (r.note) g.appendChild(h('div', { class: 'note' }, r.note));
   }
   return g;
+}
+
+/** A weapon's or shield's special perks, each in words with its number (D171); nothing when it has none. */
+function specialSection(out: (HTMLElement | null)[], lines: string[]): void {
+  if (lines.length) out.push(section('Special', ...lines.map((l) => h('div', { class: 'tt-text good' }, l))));
 }
 
 function section(title: string, ...body: (HTMLElement | null)[]): HTMLElement {
@@ -341,6 +347,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
       skills.appendChild(h('div'));
     });
     out.push(section(`Skills · ${tierName(item.ilvl)}`, skills));
+    specialSection(out, weaponSpecials(w));
   }
 
   if (s) {
@@ -369,6 +376,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const reqEl = requirementsEl(req, stats, false, false);
     if (reqEl) out.push(reqEl);
     if (!meets) out.push(h('div', { class: 'small req-bad' }, 'Below requirement: half block, no parry.'));
+    specialSection(out, shieldSpecials(s));
   }
 
   if (t) {
