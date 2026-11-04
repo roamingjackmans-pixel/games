@@ -25,7 +25,8 @@ export interface DebugApi {
   listBases(): string[];
   giveItem(baseId: string, rarity: string, ilvl: number): string;
   /** families joined by '+' or ',' (1–3, same kind: 'brutal+tempo'); every perk at `tier` */
-  giveGem(family: string, tier: number): string;
+  /** level 1–50 and roll −50…+50 (%), D197 */
+  giveGem(family: string, tier: number, level?: number, rollPct?: number): string;
   giveConsumable(id: string, n: number): string;
   learnAllSpells(): string;
   setLevel(n: number): string;

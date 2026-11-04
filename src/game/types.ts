@@ -677,6 +677,10 @@ export type GemTier = 1 | 2 | 3 | 4 | 5;
 export interface GemPerk {
   family: GemFamily;
   tier: GemTier;
+  /** the perk's own level 1–50 (D197): ×0.25 of the tier value at 1, ×3 at 50; perks from before it read as 14 */
+  level?: number;
+  /** its quality roll −0.5 … +0.5 (D197): Green, Blue, Purple or Orange; older perks read as 0 */
+  q?: number;
 }
 /** A gem: 1–3 perks of distinct families, all weapon perks or all armor perks (NG+ gems carry more). */
 export interface Gem {

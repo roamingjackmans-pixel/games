@@ -1,7 +1,7 @@
 // The bonfire shop (GAME_DESIGN §9.1, D20): throwables, one T1 gem per zone, and one rotating gear piece
 // at the zone's item level, re-rolled on every rest. Spells are never sold.
 import { stream } from '../../engine/rng';
-import { GEM_FAMILIES, makeGem } from '../../data/gems';
+import { GEM_FAMILIES, gemDropLevel, makeGem, rollGemQuality } from '../../data/gems';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { itemLevelFor, gemSellTotal, gemSellValue } from '../combat/formulas';
 import { generateItem } from '../items/generate';
@@ -10,7 +10,9 @@ import type { ConsumableId, Gem, Item, WorldState } from '../types';
 
 /** The zone's shop gem: one T1 perk, weapon or armor (multi-perk gems come from drops and Gary only). */
 export function shopGem(seed: string, zone: number, cycle: number): Gem {
-  return makeGem(stream(seed, `shopgem:${zone}:${cycle}`).pick(GEM_FAMILIES), 1);
+  const rng = stream(seed, `shopgem:${zone}:${cycle}`);
+  const family = rng.pick(GEM_FAMILIES);
+  return makeGem(family, 1, gemDropLevel(rng, zone, cycle), rollGemQuality(rng));
 }
 export function shopGemPrice(gem?: Gem): number {
   return (gem ? gemSellTotal(gem) : gemSellValue(1)) * 3;

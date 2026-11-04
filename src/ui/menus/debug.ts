@@ -157,6 +157,8 @@ function buildPanel(): void {
     const gemFam2 = select(['(none)', ...GEM_FAMILIES], 'debug-gem2');
     const gemFam3 = select(['(none)', ...GEM_FAMILIES], 'debug-gem3');
     const gemTier = field({ type: 'number', value: '1', style: 'width:40px' });
+    const gemLv = field({ type: 'number', value: '1', style: 'width:44px', title: 'Gem level 1–50' });
+    const gemRoll = field({ type: 'number', value: '0', style: 'width:44px', title: 'Quality roll −50 … +50 (%)' });
     const cons = select(['throwing_knife', 'firebomb', 'frost_jar', 'holy_water', 'stamina_tonic', 'lure', 'shard_pouch'], 'debug-cons');
     const level = field({ type: 'number', value: '10', style: 'width:60px' });
     const statSel = select(['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'], 'debug-stat');
@@ -187,7 +189,7 @@ function buildPanel(): void {
         h('div', { class: 'row wrap' }, btn('Learn all spells', () => call(() => api.learnAllSpells())))),
       h('fieldset', null, h('legend', null, 'Items'),
         h('div', { class: 'row wrap' }, baseSel, rar, 'ilvl', ilvl, btn('Give', () => call(() => api.giveItem(baseSel.value, rar.value, num(ilvl.value, 1))))),
-        h('div', { class: 'row wrap' }, gemFam, gemFam2, gemFam3, 'T', gemTier, btn('Give gem', () => call(() => api.giveGem([gemFam.value, gemFam2.value, gemFam3.value].filter((f) => f !== '(none)').join('+'), num(gemTier.value, 1))))),
+        h('div', { class: 'row wrap' }, gemFam, gemFam2, gemFam3, 'T', gemTier, 'Lv', gemLv, 'Roll %', gemRoll, btn('Give gem', () => call(() => api.giveGem([gemFam.value, gemFam2.value, gemFam3.value].filter((f) => f !== '(none)').join('+'), num(gemTier.value, 1), num(gemLv.value, 1), num(gemRoll.value, 0))))),
         h('div', { class: 'row wrap' }, cons, btn('Give ×5', () => call(() => api.giveConsumable(cons.value, 5))))),
       h('fieldset', null, h('legend', null, 'Enemies'),
         h('div', { class: 'row wrap' }, enemySel, eliteSel, btn('Spawn', () => call(() => api.spawnEnemy(enemySel.value, eliteSel.value === '(none)' ? null : eliteSel.value)), '', false)),

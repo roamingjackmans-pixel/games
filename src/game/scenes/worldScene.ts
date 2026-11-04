@@ -127,9 +127,11 @@ export abstract class WorldScene implements Scene {
         refreshDerived(p);
         return `Equipped ${it.name} (${it.rarity}, ilvl ${it.ilvl}).`;
       },
-      giveGem(family, tier) {
+      giveGem(family, tier, level = 1, rollPct = 0) {
         const t = Math.max(1, Math.min(5, Math.round(tier))) as GemTier;
-        const gem = { perks: family.split(/[+,\s]+/).filter(Boolean).map((f) => ({ family: f as GemFamily, tier: t })) };
+        const lv = Math.max(1, Math.min(50, Math.round(level)));
+        const q = Math.max(-0.5, Math.min(0.5, rollPct / 100));
+        const gem = { perks: family.split(/[+,\s]+/).filter(Boolean).map((f) => ({ family: f as GemFamily, tier: t, level: lv, q })) };
         if (!isValidGem(gem)) return `Not a gem: 1–3 known families, all weapon or all armor, no repeats (${family}).`;
         pl().pl!.char.gems.push(gem);
         return `${gemKindLabel(gem)} ${gemTitle(gem)} added to the bag.`;

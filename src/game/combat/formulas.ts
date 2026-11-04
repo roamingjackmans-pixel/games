@@ -294,9 +294,15 @@ export function gemSellValue(tier: number): number {
 export function gemUpgradeCost(tier: number): number {
   return 10 * gemSellValue(tier);
 }
+/** One perk's sale price: its tier's value × its level's strength (D197; a perk from before levels sells as it did). */
+export function gemPerkSellValue(p: { tier: number; level?: number }): number {
+  if (p.level === undefined) return gemSellValue(p.tier);
+  const l = Math.max(1, Math.min(50, p.level));
+  return Math.max(5, Math.round(gemSellValue(p.tier) * (0.25 + (2.75 * (l - 1)) / 49)));
+}
 /** A whole gem sells for the sum of its perks. */
-export function gemSellTotal(g: { perks: { tier: number }[] }): number {
-  return g.perks.reduce((s, p) => s + gemSellValue(p.tier), 0);
+export function gemSellTotal(g: { perks: { tier: number; level?: number }[] }): number {
+  return g.perks.reduce((s, p) => s + gemPerkSellValue(p), 0);
 }
 /** Fusing two gems costs the value of the best perk the result keeps (small next to an upgrade). */
 export function gemFuseCost(perks: { tier: number }[]): number {

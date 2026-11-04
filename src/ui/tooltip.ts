@@ -6,7 +6,8 @@ import { SHIELDS, shieldValues } from '../data/shields';
 import { CASTING_TOOLS, toolBash } from '../data/castingTools';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
 import { SKILLS } from '../data/skills';
-import { GEMS, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkText } from '../data/gems';
+import { GEMS, GEM_QUALITIES, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkQuality, perkRollText, perkText } from '../data/gems';
+import type { GemPerk } from '../game/types';
 import { LEGENDARY_POWERS, LEGENDARY_FLAVOR } from '../data/legendaries';
 import { affixText } from '../data/affixes';
 import { armorPieceDefense, parseArmorBase } from '../data/armor';
@@ -435,7 +436,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
         'Sockets',
         ...item.sockets.map((g, i) =>
           g
-            ? h('div', { class: 'tt-text' }, ...g.perks.map((p, j) => h('div', null, h('span', { style: `color:${GEMS[p.family].color}` }, `${j === 0 ? '◆' : '+'} ${perkName(p)}`), `: ${perkText(p)}`)))
+            ? h('div', { class: 'tt-text' }, ...g.perks.map((p, j) => h('div', null, h('span', { style: `color:${GEMS[p.family].color}` }, `${j === 0 ? '◆' : '+'} ${perkName(p)}`), ': ', perkEffectEl(p))))
             : h('div', { class: 'tt-text dim-text' }, `◇ Empty socket ${i + 1} (${item.kind === 'armor' ? 'armor' : 'weapon'} gems)`),
         ),
       ),
@@ -487,9 +488,25 @@ export function gemKindChip(g: Gem): HTMLElement {
   return h('span', { class: `gem-chip ${armor ? 'gem-armor' : 'gem-weapon'}`, 'data-testid': 'gem-kind' }, gemKindLabel(g));
 }
 
-/** One line per perk: name (tier, coloured) and what it does. */
+/** What a perk does, in its quality colour (Green, Blue, Purple, Orange), its roll beside it (D197). */
+export function perkEffectEl(p: GemPerk): HTMLElement {
+  const qd = perkQuality(p);
+  return h('span', { style: `color:${qd.color}`, title: `${perkRollText(p)} of its tier and level value` }, perkText(p), h('span', { class: 'dim-text', style: 'font-size:.85em' }, ` (${perkRollText(p)})`));
+}
+
+/** Perks' effects side by side, " · " between. */
+export function perkEffectsEl(g: Gem): HTMLElement {
+  const el = h('span', null);
+  g.perks.forEach((p, i) => {
+    if (i) el.append(' · ');
+    el.appendChild(perkEffectEl(p));
+  });
+  return el;
+}
+
+/** One line per perk: name (tier and level, family colour) and what it does (quality colour). */
 export function gemPerkLines(g: Gem): HTMLElement[] {
-  return g.perks.map((p) => h('div', { class: 'small' }, h('span', { style: `color:${GEMS[p.family].color}` }, perkName(p)), h('span', { style: 'color:#cfc6b4' }, ` ${perkText(p)}`)));
+  return g.perks.map((p) => h('div', { class: 'small' }, h('span', { style: `color:${GEMS[p.family].color}` }, perkName(p)), ' ', perkEffectEl(p)));
 }
 
 export function gemTooltip(g: Gem): HTMLElement {
@@ -500,6 +517,7 @@ export function gemTooltip(g: Gem): HTMLElement {
     h('div', null, gemKindChip(g)),
     ...gemPerkLines(g),
     h('div', { class: 'small dim-text' }, gemKind(g) === 'armor' ? 'Armor sockets only.' : 'Weapon sockets only.', g.perks.length > 1 ? ' Each perk upgrades on its own.' : ''),
+    h('div', { class: 'small dim-text' }, 'Rolls: ', ...GEM_QUALITIES.flatMap((qd, i) => [i ? ' · ' : '', h('span', { style: `color:${qd.color}` }, qd.label)]), ' (−50% … +50%). Level 1–50: ×0.25 … ×3.'),
   );
 }
 

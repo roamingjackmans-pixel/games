@@ -223,8 +223,11 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   const own: DamageType = d.weapon.element ?? 'physical';
   const dmg: Partial<Record<DamageType, number>> = {};
   let ownLeft = base;
+  // conversions never take more than all of it (D197: high-level gems can add past 100%)
+  const convTotal = d.convert.reduce((t, c) => t + c.pct, 0);
+  const convScale = convTotal > 1 ? 1 / convTotal : 1;
   for (const c of d.convert) {
-    const amt = base * c.pct;
+    const amt = base * c.pct * convScale;
     ownLeft -= amt;
     dmg[c.type] = (dmg[c.type] ?? 0) + amt;
   }

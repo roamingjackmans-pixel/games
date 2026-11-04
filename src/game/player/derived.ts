@@ -5,7 +5,7 @@ import { SHIELDS, shieldValues } from '../../data/shields';
 import { CASTING_TOOLS, toolBash } from '../../data/castingTools';
 import { armorPieceDefense } from '../../data/armor';
 import { AFFIXES, affixBuildup } from '../../data/affixes';
-import { GEMS, gemBuildup, gemValue } from '../../data/gems';
+import { GEMS, gemBuildup, perkValue } from '../../data/gems';
 import { RINGS, bandAmount, bandStat } from '../../data/rings';
 import { castMoveMult, slickCast, dodgeRecharge, itemSkillCount, maxHP, maxStamina, scalingMult, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
 import { itemRequirements, meetsRequirements } from '../items/bases';
@@ -273,7 +273,7 @@ export function computeDerived(c: Character): Derived {
     for (const g of it.sockets) for (const pk of g?.perks ?? []) {
       const gd = GEMS[pk.family];
       if (!gd) continue;
-      const v = gemValue(pk.family, pk.tier);
+      const v = perkValue(pk);
       if (it.kind === 'armor') {
         if (!gd.armorOnly) continue;
         if (pk.family === 'bulwark') defAll += v;

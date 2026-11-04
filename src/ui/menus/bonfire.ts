@@ -1,18 +1,18 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
-import { GEMS, gemColor, gemKind, gemKindLabel, gemText, gemTitle, perkName, perkText } from '../../data/gems';
+import { GEMS, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkText } from '../../data/gems';
 import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
 import { computeDerived } from '../../game/player/derived';
 import { spellSkill } from '../../game/skills/use';
 import { ELEMENTS } from '../../game/elements';
 import { canSocket, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
-import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
+import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type GemTier, type Item, type StatId } from '../../game/types';
 import { profClassOf, upgradeInfo } from '../../game/items/proficiency';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { tabHints } from '../glyphs';
-import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
+import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
 export interface BonfireOps {
   levelUp(stat: StatId): string;
@@ -330,7 +330,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       const p = g.perks[0]!;
       const cost = gemUpgradeCost(p.tier);
       const b = btn(p.tier >= 5 ? 'T5 (max)' : ['Upgrade ', glowenEl(cost)], () => say(v.ops.upgradeGem(loc, 0)), 'tiny', p.tier >= 5 || c.glowen < cost);
-      b.title = p.tier >= 5 ? 'Already T5.' : `T${p.tier + 1}: ${gemText(p.family, p.tier + 1)}`;
+      b.title = p.tier >= 5 ? 'Already T5.' : `T${p.tier + 1}: ${perkText({ ...p, tier: (p.tier + 1) as GemTier })}`;
       b.setAttribute('data-testid', 'gem-upgrade');
       return b;
     }
@@ -358,7 +358,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
         p.tier >= 5 || c.glowen < cost,
       );
       b.setAttribute('data-testid', `perk-up-${i}`);
-      b.title = p.tier >= 5 ? 'Already T5.' : `Now: ${perkText(p)}. T${p.tier + 1}: ${gemText(p.family, p.tier + 1)}`;
+      b.title = p.tier >= 5 ? 'Already T5.' : `Now: ${perkText(p)}. T${p.tier + 1}: ${perkText({ ...p, tier: (p.tier + 1) as GemTier })}`;
       row.appendChild(b);
     });
     return row;
@@ -368,7 +368,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
   function gemRow(g: Gem, loc: GemLoc, acts: (HTMLElement | null)[], testid: string): HTMLElement {
     const icon = h('span', { style: 'display:inline-flex;flex:none' }, gemIcon(g, 26));
     hoverTip(icon, () => gemTooltip(g));
-    const main = h('div', { class: 'gem-main' }, gemNameEl(g), h('div', { class: 'small', style: 'color:#cfc6b4' }, g.perks.map(perkText).join(' · ')));
+    const main = h('div', { class: 'gem-main' }, gemNameEl(g), h('div', { class: 'small' }, perkEffectsEl(g)));
     const row = h('div', { class: 'gem-row', 'data-testid': testid }, icon, main, h('div', { class: 'gem-acts' }, ...acts));
     const sub = perkUpgrades(g, loc);
     return sub ? h('div', null, row, sub) : row;
@@ -494,7 +494,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       const dup = !on && pickedFamilies.includes(p.family);
       const full = !on && f.picks.length >= n;
       const b = btn(
-        [h('span', { class: 'tick' }, on ? '✓' : ''), h('span', { style: `color:${GEMS[p.family].color};width:120px` }, perkName(p)), h('span', { class: 'small', style: 'color:#cfc6b4' }, perkText(p))],
+        [h('span', { class: 'tick' }, on ? '✓' : ''), h('span', { style: `color:${GEMS[p.family].color};width:120px` }, perkName(p)), h('span', { class: 'small' }, perkEffectEl(p))],
         () => {
           if (on) f.picks = f.picks.filter((x) => !(x.from === from && x.idx === idx));
           else f.picks.push({ from, idx });
@@ -595,7 +595,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     hoverTip(gemLine, () => gemTooltip(sg));
     buy.appendChild(h('div', { style: 'border-top:1px solid var(--line);margin:4px 0' }));
     buy.appendChild(gemLine);
-    buy.appendChild(h('div', { class: 'row small', style: 'padding-left:30px;color:#cfc6b4' }, gemKindChip(sg), sg.perks.map(perkText).join(' · ')));
+    buy.appendChild(h('div', { class: 'row small', style: 'padding-left:30px;color:#cfc6b4' }, gemKindChip(sg), perkEffectsEl(sg)));
 
     // the rotating piece: what it is and its full stats, visible without hovering
     const piece = h('div', { class: 'col', style: 'gap:6px;width:340px' }, h('h3', null, 'Rotating piece'));

@@ -3,7 +3,7 @@
 // it is the same every visit; sold entries stay sold. NG+ stock is better (more Legendaries, gems +1 tier).
 import { stream } from '../../engine/rng';
 import { CONSUMABLE_IDS, CONSUMABLES } from '../../data/consumables';
-import { gemKindLabel, gemTitle } from '../../data/gems';
+import { gemDropLevel, gemKindLabel, gemTitle } from '../../data/gems';
 import { itemLevelFor, gemSellTotal } from '../combat/formulas';
 import { generateItem, randomGem } from '../items/generate';
 import { itemSellValue } from '../items/inventory';
@@ -23,7 +23,8 @@ export function garyStock(ws: WorldState, zone: number, cycle: number): GaryStoc
       return { kind: 'item', item, price: Math.max(400, itemSellValue(item) * 5), sold: false };
     },
     () => {
-      const gem = randomGem(rng, Math.min(5, (rng.chance(0.6) ? 2 : 3) + (cycle > 0 ? 1 : 0)) as 2 | 3 | 4, cycle);
+      const tier = Math.min(5, (rng.chance(0.6) ? 2 : 3) + (cycle > 0 ? 1 : 0)) as 2 | 3 | 4;
+      const gem = randomGem(rng, tier, cycle, undefined, gemDropLevel(rng, zone, cycle));
       return { kind: 'gem', gem, price: gemSellTotal(gem) * 3, sold: false };
     },
     () => {
