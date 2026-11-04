@@ -714,6 +714,11 @@ export class World {
     return this.players.filter((p) => !p.pl!.downed && !p.pl!.deadUntilRest && !p.removed);
   }
 
+  /** Is there anything here to fight (D177)? Spell cooldowns only run while there is: not a sleeping mimic, not a merchant. */
+  hostilesPresent(): boolean {
+    return this.enemies.some((e) => !e.hp?.dead && !e.removed && e.en!.state !== 'dormant' && !e.en!.def.traits?.merchant);
+  }
+
   livingEnemies(): Entity[] {
     return this.enemies.filter((e) => !e.hp?.dead && !e.removed && e.en!.state !== 'spawning');
   }

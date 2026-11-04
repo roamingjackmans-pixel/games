@@ -144,6 +144,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   const pad = 20;
   const by = 720 - 60;
   // a spell loadout drawn on three keys (1/2/3, or Q/E/R with a staff and a talisman in both hands: D117)
+  const held = !w.hostilesPresent();
   const spellRow = (school: 'brain' | 'prayer' | null, keys: readonly Action[], readyAt: readonly number[], x0: number): void => {
     const loadout = school ? ch.spellLoadout[school] : [null, null, null];
     const tool = school ? toolForSchool(d, school) : null;
@@ -154,7 +155,8 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       const ready = readyAt[i]!;
       const total = def ? def.cooldownS : 1;
       const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-      cdIcon(ctx, x0 + i * 46, by, def?.name ?? '—', keys[i]!, frac, locked, school === 'brain' ? '#8fd3ff' : '#fff3b0', ready > now ? `${Math.ceil(ready - now)}` : '');
+      // held with nothing to fight (D177): a pause mark before the seconds left
+      cdIcon(ctx, x0 + i * 46, by, def?.name ?? '—', keys[i]!, frac, locked, school === 'brain' ? '#8fd3ff' : '#fff3b0', ready > now ? `${held ? '‖' : ''}${Math.ceil(ready - now)}` : '');
     }
   };
   if (d.skillKeySchool) spellRow(d.skillKeySchool, ['skill1', 'skill2', 'skill3'], pl.skillReadyAt, pad);

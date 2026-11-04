@@ -16,7 +16,7 @@ import { buildRoom, type RoomMarkers } from './procgen/rooms';
 import { planRoom, roomCountMult, type RoomPlan } from './procgen/waves';
 import { smallChest, treasureChest } from './procgen/chests';
 import { spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
-import { spawnPlayer, refreshDerived } from './player/player';
+import { spawnPlayer, refreshDerived, resetSpellCooldowns } from './player/player';
 import { installRules } from './rules';
 import { lootHooks } from './lootHooks';
 import './loot';
@@ -1012,6 +1012,8 @@ export class GameSession {
       e.anim.alpha = 1;
       this.w.emit({ t: 'revived', playerId: e.pl.playerId });
     }
+    // every spell is ready again after a rest (D177)
+    for (const sp of this.players) if (sp.entity) resetSpellCooldowns(sp.entity);
     rollShopPiece(ws, bonfireId, this.layout.zone, this.save.character.cycle);
     // zone enemies respawn (bosses, opened chests and killed mimics stay done)
     ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss' || id === this.node.id);
@@ -1155,6 +1157,8 @@ export class GameSession {
         e.pl!.combo = null;
         e.pl!.falling = null;
         e.pl!.downs = 0;
+        // a real death readies every spell again (D177); being downed in co-op does not
+        resetSpellCooldowns(e);
         e.anim.scale = 1;
         e.anim.alpha = 1;
         e.buffs = [];
