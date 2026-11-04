@@ -105,9 +105,11 @@ describe('hybrid weapons (D80)', () => {
 });
 
 describe('equip load (D82)', () => {
-  it('tiers at 25 / 70 / 100%', () => {
+  it('tiers at 35 / 70 / 100% (D196: Light was under 25%)', () => {
     expect(loadTier(0.1)).toBe('light');
-    expect(loadTier(0.25)).toBe('medium');
+    expect(loadTier(0.25)).toBe('light');
+    expect(loadTier(0.34)).toBe('light');
+    expect(loadTier(0.35)).toBe('medium');
     expect(loadTier(0.7)).toBe('medium');
     expect(loadTier(0.71)).toBe('heavy');
     expect(loadTier(1)).toBe('heavy');

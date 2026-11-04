@@ -11,7 +11,7 @@ import { ELEMENTS } from '../../game/elements';
 import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, unequip, unsocketGem, type EquipSlot } from '../../game/items/inventory';
 import { itemRequirements, meetsRequirements } from '../../game/items/bases';
 import { levelCost } from '../../game/combat/formulas';
-import { LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
+import { LIGHT_LOAD_MAX, LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
 import { spellSkill } from '../../game/skills/use';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
@@ -37,7 +37,7 @@ export interface InventoryHost {
 
 /** Equip load bar scale: 0 to 125% so the 100% mark (Encumbered beyond it) is visible. */
 const LOAD_BAR_MAX = 1.25;
-const LOAD_MARKS = [0.25, 0.7, 1];
+const LOAD_MARKS = [LIGHT_LOAD_MAX, 0.7, 1];
 
 export function openInventory(host: InventoryHost): HTMLElement {
   const root = layer('dim');
@@ -160,7 +160,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     const bar = h('div', { class: 'load-bar' });
     let from = 0;
     for (const tier of LOAD_TIERS_ORDER) {
-      const to = tier === 'light' ? 0.25 : tier === 'medium' ? 0.7 : tier === 'heavy' ? 1 : LOAD_BAR_MAX;
+      const to = tier === 'light' ? LIGHT_LOAD_MAX : tier === 'medium' ? 0.7 : tier === 'heavy' ? 1 : LOAD_BAR_MAX;
       bar.appendChild(h('div', { class: 'load-zone', style: `left:${(from / LOAD_BAR_MAX) * 100}%;width:${((to - from) / LOAD_BAR_MAX) * 100}%;background:${LOAD_TIERS[tier].color}` }));
       from = to;
     }

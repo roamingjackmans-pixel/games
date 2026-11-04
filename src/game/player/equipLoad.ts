@@ -32,9 +32,12 @@ export const LOAD_TIERS: Record<LoadTier, LoadEffects> = {
   encumbered: { label: 'Encumbered', speed: 0.5, dodge: 0.5, iframes: 0.5, text: 'Half move speed, half dodge distance, half dodge invulnerability', color: '#ff5a4a' },
 };
 
-/** Light under 25%, Medium to 70%, Heavy to 100%, Encumbered above. */
+/** Light is anything under this share of max load (D196: was 25%). */
+export const LIGHT_LOAD_MAX = 0.35;
+
+/** Light under 35%, Medium to 70%, Heavy to 100%, Encumbered above. */
 export function loadTier(frac: number): LoadTier {
-  if (frac < 0.25) return 'light';
+  if (frac < LIGHT_LOAD_MAX) return 'light';
   if (frac <= 0.7) return 'medium';
   if (frac <= 1) return 'heavy';
   return 'encumbered';
