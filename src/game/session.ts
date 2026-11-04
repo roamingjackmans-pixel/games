@@ -10,7 +10,7 @@ import { TUTORIAL_STATIONS } from '../data/rooms/special';
 import { zoneDef } from '../data/zones';
 import { gemColor, gemKindLabel, gemTitle } from '../data/gems';
 import { World, type Entity } from './world';
-import { entryPoint, OPPOSITE, ROOM_W, T, TERRAIN, worldToTile, type Side } from './room';
+import { doorTiles, entryPoint, OPPOSITE, ROOM_W, ROOM_Y0, T, TERRAIN, TILE, worldToTile, type Side } from './room';
 import { generateZone, neighbourId, type RoomNode, type ZoneLayout } from './procgen/zone';
 import { buildRoom, type RoomMarkers } from './procgen/rooms';
 import { planRoom, roomCountMult, type RoomPlan } from './procgen/waves';
@@ -368,6 +368,44 @@ export class GameSession {
     }
     void ws;
     room.version++;
+    this.clearDoorways();
+  }
+
+  /**
+   * Nobody is left inside a door that has just shut (D192). In co-op one player can walk in and lock the room while
+   * another is still standing in a doorway (walking back the way the party came), and the shut door held them fast;
+   * anyone whose body touches a closed doorway now steps into the room beside it. The host owns positions, so a guest
+   * is moved by the next snapshot.
+   */
+  private clearDoorways(): void {
+    const w = this.w;
+    for (const s of ['n', 's', 'e', 'w'] as Side[]) {
+      const d = w.room.doors[s];
+      if (!d.exists || d.open) continue;
+      const tiles = doorTiles(s);
+      const x0 = Math.min(...tiles.map((t) => t[0])) * TILE;
+      const x1 = (Math.max(...tiles.map((t) => t[0])) + 1) * TILE;
+      const y0 = ROOM_Y0 + Math.min(...tiles.map((t) => t[1])) * TILE;
+      const y1 = ROOM_Y0 + (Math.max(...tiles.map((t) => t[1])) + 1) * TILE;
+      for (const p of w.players) {
+        if (p.removed || p.pl?.falling) continue;
+        const cx = Math.max(x0, Math.min(x1, p.x));
+        const cy = Math.max(y0, Math.min(y1, p.y));
+        if (dist(p.x, p.y, cx, cy) >= p.radius) continue;
+        // one body's width inside the wall, level with where they stood along it
+        const inset = TILE + p.radius + 4;
+        const along = (lo: number, hi: number, v: number): number => Math.max(lo + p.radius, Math.min(hi - p.radius, v));
+        const [tx, ty]: [number, number] =
+          s === 'w' ? [x0 + inset, along(y0, y1, p.y)]
+          : s === 'e' ? [x1 - inset, along(y0, y1, p.y)]
+          : s === 'n' ? [along(x0, x1, p.x), y0 + inset]
+          : [along(x0, x1, p.x), y1 - inset];
+        const [fx, fy] = w.room.nearestFloor(tx, ty, p.radius);
+        p.x = p.px = fx;
+        p.y = p.py = fy;
+        p.forced = null;
+      }
+    }
   }
 
   /** The anteroom's boss door: always open; the boss room itself locks on entry (GAME_DESIGN §7). */

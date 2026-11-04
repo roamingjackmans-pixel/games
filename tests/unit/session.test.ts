@@ -8,7 +8,7 @@ import { emptySpec, hitPlayer, rawDamage } from '../../src/game/combat/damage';
 import { refreshDerived } from '../../src/game/player/player';
 import { neighbourId } from '../../src/game/procgen/zone';
 import { smallChest } from '../../src/game/procgen/chests';
-import type { Side } from '../../src/game/room';
+import { doorCenter, ROOM_PX_W, ROOM_Y0, ROOM_PX_H, type Side } from '../../src/game/room';
 import type { Entity } from '../../src/game/world';
 
 function session(tutorial = false): GameSession {
@@ -379,6 +379,40 @@ describe('co-op: a guest walking in first starts the room (D151)', () => {
     run(s, 1.5);
     expect(s.roomPhase).toBe('fighting');
     expect(s.w.enemies.filter((e) => !e.hp!.dead && !e.en!.def.traits?.mimic).length).toBeGreaterThan(0);
+  });
+});
+
+describe('co-op: nobody is shut inside a door (D192)', () => {
+  it('a guest standing in a doorway when the host locks the room steps into the room and can walk', () => {
+    const s = session();
+    s.joinPlayer(newCharacter('duelist', 'Guest', 'p2', new Rng('g')));
+    const id = s.layout.rooms.find((r) => r.kind === 'combat')!.id;
+    s.enterRoom(id, 'bonfire');
+    s.w.god = true;
+    const side = (['w', 'e', 'n', 's'] as Side[]).find((d) => s.w.room.doors[d].exists && s.w.room.doors[d].open)!;
+    expect(side).toBeTruthy();
+    const guest = s.players.find((p) => !p.local)!.entity!;
+    // in the gap, 30 px in from the room's edge: over the door's tiles, not far enough out to leave
+    const [dx, dy] = doorCenter(side);
+    const inward: Record<Side, [number, number]> = { w: [1, 0], e: [-1, 0], n: [0, 1], s: [0, -1] };
+    const [ix, iy] = inward[side];
+    guest.x = guest.px = side === 'w' ? 30 : side === 'e' ? ROOM_PX_W - 30 : dx;
+    guest.y = guest.py = side === 'n' ? ROOM_Y0 + 30 : side === 's' ? ROOM_Y0 + ROOM_PX_H - 30 : dy;
+    // the host walks into the middle and the room locks
+    const host = s.localPlayer!;
+    const [hx, hy] = s.w.room.nearestFloor(640, 368, host.radius);
+    host.x = host.px = hx;
+    host.y = host.py = hy;
+    run(s, 0.1);
+    expect(s.roomPhase).toBe('fighting');
+    expect(s.w.room.doors[side].open).toBe(false);
+    // clear of the shut door: more than a wall tile and a body inside the edge
+    const depth = side === 'w' ? guest.x : side === 'e' ? ROOM_PX_W - guest.x : side === 'n' ? guest.y - ROOM_Y0 : ROOM_Y0 + ROOM_PX_H - guest.y;
+    expect(depth).toBeGreaterThanOrEqual(32 + guest.radius);
+    // and free to walk further in
+    const before = [guest.x, guest.y];
+    s.w.room.moveCircle(guest, ix * 20, iy * 20, false);
+    expect(Math.hypot(guest.x - before[0]!, guest.y - before[1]!)).toBeGreaterThan(10);
   });
 });
 
