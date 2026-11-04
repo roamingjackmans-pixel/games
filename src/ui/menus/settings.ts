@@ -18,7 +18,7 @@ import {
 import { HOLD_S } from '../../engine/input/input';
 import { FRIENDLY_FIRE_MAX, FRIENDLY_FIRE_STEP, PROMPT_SETTINGS, normalizeFriendlyFire, type PromptSetting, type TouchMode } from '../../engine/settings';
 import { refreshTouchControls } from '../touchControls';
-import { btn, clearEl, focusContentStart, h, layer } from '../dom';
+import { btn, chosenFocus, clearEl, focusContentStart, h, layer } from '../dom';
 import { canPromptInstall, installSteps, isInstalledApp, onInstallChange, promptInstall } from '../install';
 import { GLYPH_LABEL, glyphEl, inputGlyphEl, inputText, padStyle, promptStyle, refreshGlyphs, type GlyphAction, type GlyphInput } from '../glyphs';
 
@@ -697,8 +697,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     opened = true;
     setTimeout(() => {
       // something chosen since the redraw keeps the focus: a late restore used to pull it away (D169, D174)
-      const a = document.activeElement;
-      if (a && a !== document.body && panel.contains(a)) return;
+      if (chosenFocus(panel)) return;
       // on opening: the first control of the tab's content (D148); after a tab click: stay on that tab
       if (first && !focus && focusContentStart(panel, body)) return;
       const el = (focus && panel.querySelector<HTMLElement>(`[data-focus="${focus}"]`)) || panel.querySelector<HTMLElement>('.tabs button.on');

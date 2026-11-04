@@ -9,7 +9,7 @@ import { canSocket, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, pl
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { profClassOf, upgradeInfo } from '../../game/items/proficiency';
-import { btn, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
+import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { tabHints } from '../glyphs';
 import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
@@ -692,8 +692,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     } else
       setTimeout(() => {
         // something chosen since the redraw keeps the focus: a late restore used to pull it back (D169)
-        const a = document.activeElement;
-        if (a && a !== document.body && panel.contains(a)) return;
+        if (chosenFocus(panel)) return;
         // first open: the top-left control of the tab's content (D148)
         if (!restoreFocus(panel, panelMark) && !focusContentStart(panel, content)) panel.querySelector<HTMLElement>('.tabs button')?.focus();
       }, 0);

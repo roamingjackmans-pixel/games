@@ -178,6 +178,17 @@ export function focusFirst(el: HTMLElement): void {
 }
 
 /** Move focus among focusable elements in `scope` (gamepad D-pad / stick). */
+/** Focus the controller code put somewhere on its own (a menu just opened under the pad): not a choice, so a menu restoring its own focus may take it over (D180). */
+const autoFocused = new WeakSet<Element>();
+export function markAutoFocus(el: Element | null): void {
+  if (el) autoFocused.add(el);
+}
+/** Did someone pick this control since the menu drew (not the pad parking the focus there)? */
+export function chosenFocus(scope: HTMLElement): boolean {
+  const a = document.activeElement;
+  return !!a && a !== document.body && scope.contains(a) && !autoFocused.has(a);
+}
+
 export function moveFocus(scope: HTMLElement, dx: number, dy: number): void {
   const items = [...scope.querySelectorAll<HTMLElement>('button:not(:disabled), input, select, [tabindex="0"]')].filter(
     (e) => e.offsetParent !== null,

@@ -14,7 +14,7 @@ import { levelCost } from '../../game/combat/formulas';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import type { Derived } from '../../game/player/derived';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item } from '../../game/types';
-import { btn, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
+import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
 import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemTooltip } from '../tooltip';
 
@@ -352,8 +352,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     body.appendChild(content);
     setTimeout(() => {
       // something chosen since the redraw keeps the focus (D169)
-      const a = document.activeElement;
-      if (a && a !== document.body && body.contains(a)) return;
+      if (chosenFocus(body)) return;
       if (!restoreFocus(body, mark)) focusContentStart(body, right);
     }, 0);
   }

@@ -4,7 +4,7 @@
 import { app } from '../app';
 import { defaultMenuPad, type MenuPadBindings } from '../engine/input/bindings';
 import type { InputManager } from '../engine/input/input';
-import { focusContentStart, moveFocus } from './dom';
+import { focusContentStart, markAutoFocus, moveFocus } from './dom';
 import { refreshGlyphs } from './glyphs';
 
 let repeatAt = 0;
@@ -73,7 +73,10 @@ export function pollMenuPad(input: InputManager, now: number): void {
   // visible as soon as a menu opens under the pad
   document.body.classList.add('pad-nav');
   const active = document.activeElement as HTMLElement | null;
-  if (!active || !scope.contains(active)) moveFocus(scope, 0, 1);
+  if (!active || !scope.contains(active)) {
+    moveFocus(scope, 0, 1);
+    markAutoFocus(document.activeElement);
+  }
   const [sx, sy] = input.padStick();
   let dx = 0;
   let dy = 0;

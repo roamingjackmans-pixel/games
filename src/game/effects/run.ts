@@ -109,6 +109,9 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
   return spec;
 }
 
+/** How much bigger a player's spell projectiles are than their listed radius (D180). */
+export const SPELL_PROJECTILE_SCALE = 2;
+
 function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: EffectCtx, src: Entity | undefined): void {
   const spec = damageSpec(w, e, ctx, src);
   const p = e.pattern;
@@ -119,7 +122,8 @@ function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effect
     for (let i = 0; i < n; i++) {
       const ang = n > 1 ? a - spread / 2 + (spread * i) / (n - 1) : a;
       if (ctx.team === 0 && src?.pl && effectHooks.spawnPlayerProjectile) {
-        const pr = effectHooks.spawnPlayerProjectile(w, src, ang, p.speed, p.r, spec, p.pierce ?? 0, p.drawId ?? (ctx.isSpell ? 'p_magic' : 'p_knife'), {
+        // a player's spell projectiles fly twice their listed size, to see and to hit with (D180)
+        const pr = effectHooks.spawnPlayerProjectile(w, src, ang, p.speed, ctx.isSpell ? p.r * SPELL_PROJECTILE_SCALE : p.r, spec, p.pierce ?? 0, p.drawId ?? (ctx.isSpell ? 'p_magic' : 'p_knife'), {
           ...(p.range ? { range: p.range } : {}),
           isSpell: ctx.isSpell,
           ...(p.returns ? { returns: true } : {}),

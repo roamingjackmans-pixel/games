@@ -1,4 +1,5 @@
 // Projectiles: movement, homing, lobs, walls, hits, parry reflection, pierce, returning axes, impact effects.
+import { T } from '../room';
 import { DEG, circleHit, dist, turnToward } from '../../engine/math';
 import { addRevive, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer } from '../combat/damage';
 import { runEffects } from '../effects/run';
@@ -149,7 +150,10 @@ export function updateProjectiles(w: World, dt: number): void {
         continue;
       }
     }
-    if (!pr.returning && w.room.blocksProjectile(Math.floor(e.x / 32), Math.floor((e.y - 16) / 32))) {
+    const tx = Math.floor(e.x / 32);
+    const ty = Math.floor((e.y - 16) / 32);
+    // walls and pillars stop every shot; enemy shots also stop at obstacles: props, crates, vases, trees (D180)
+    if (!pr.returning && (w.room.blocksProjectile(tx, ty) || (pr.team === 1 && w.room.get(tx, ty) === T.Prop))) {
       if (pr.returns) {
         pr.returning = true;
         pr.hit.clear();

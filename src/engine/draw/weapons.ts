@@ -726,10 +726,13 @@ function mace(ctx: Ctx): void {
 }
 
 function halberd(ctx: Ctx): void {
+  // held a third of the way up the shaft, not at its foot (D180): the whole weapon sits 30 px back from the hand
+  ctx.save();
+  ctx.translate(-30, 0);
   haft(ctx, -8, 96, 4.2, WOOD);
-  grip(ctx, -6, 10, 4.6, LEATHER);
-  band(ctx, 30, 2, 6);
-  band(ctx, 52, 2, 6);
+  grip(ctx, 25, 11, 4.6, LEATHER);
+  band(ctx, 44, 2, 6);
+  band(ctx, 58, 2, 6);
   plate(ctx, [-11, 0, -7.5, -2.6, -6.5, -2.6, -6.5, 2.6, -7.5, 2.6], IRON, { ow: 1.5 });
   // back hook
   plate(ctx, [73, 2, 70, 7, 63.5, 13.5, 67, 7.5, 70, 2], STEEL, { ow: 2, under: null, edge: [70, 7, 63.5, 13.5], edgeW: 0.8 });
@@ -744,6 +747,7 @@ function halberd(ctx: Ctx): void {
   rivet(ctx, 70, 0, 0.9);
   rivet(ctx, 79, 0, 0.9);
   spec(ctx, 78, -17, 1);
+  ctx.restore();
 }
 
 function twinaxes(ctx: Ctx): void {
