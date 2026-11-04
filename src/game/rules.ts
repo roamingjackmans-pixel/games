@@ -7,6 +7,9 @@ import { spawnEnemy } from './enemies/spawn';
 import { attackDamage } from './enemies/spawn';
 import { ENEMIES } from '../data/enemies';
 import type { EnemyDef } from './types';
+import { PROF_CLASSES, killXp } from '../data/proficiency';
+import { grantKillXp, upgradeInfo } from './items/proficiency';
+import { refreshDerived } from './player/player';
 import type { Entity, World } from './world';
 
 export interface RulesOpts {
@@ -17,6 +20,24 @@ export interface RulesOpts {
   onKillStat?(w: World, e: Entity): void;
   /** the zone's fodder type for the Summoner elite affix */
   zoneFodder?(): EnemyDef | null;
+}
+
+/**
+ * Weapon experience (D178): every standing player, whoever made the kill, gets it on what they have out (the weapon
+ * hand's item and a held staff or talisman) and on those classes' proficiency. A new level refreshes their perks.
+ */
+export function grantWeaponXp(w: World, xp: number): void {
+  for (const p of w.players) {
+    const pl = p.pl!;
+    if (pl.downed || pl.deadUntilRest || p.removed) continue;
+    const res = grantKillXp(pl.char, xp);
+    for (const it of res.filled) {
+      const u = upgradeInfo(it);
+      if (u) w.emit({ t: 'msg', text: `${it.name} is ready to become ${u.to[0]!.toUpperCase()}${u.to.slice(1)} (at a bonfire)`, forPlayer: pl.playerId, color: '#ffd27a' });
+    }
+    for (const l of res.levels) w.emit({ t: 'msg', text: `${PROF_CLASSES[l.cls]?.name ?? l.cls} proficiency ${l.level}`, forPlayer: pl.playerId, color: '#9ad0ff' });
+    if (res.levels.length) refreshDerived(p);
+  }
 }
 
 export function grantShards(w: World, amount: number, x: number, y: number): void {
@@ -58,6 +79,7 @@ export function installRules(w: World, o: RulesOpts = {}): void {
       }
       if (!en.elite && !en.isBoss && !en.summonerId && !def.special && !en.isIllusion) w2.fallen.push({ defId: def.id, x: e.x, y: e.y });
       if (en.shards > 0 && !def.traits?.noShards) grantShards(w2, en.shards, e.x, e.y);
+      if (!def.traits?.scripted && !def.traits?.merchant) grantWeaponXp(w2, killXp({ isBoss: en.isBoss, elite: !!en.elite, role: def.role, mimic: !!def.traits?.mimic }));
       if (!en.noDrop) o.onDrops?.(w2, e, killerId);
       o.onKillStat?.(w2, e);
     }

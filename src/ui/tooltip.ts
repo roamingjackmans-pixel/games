@@ -22,6 +22,8 @@ import { drawArmorIcon } from './armorIcons';
 import { DAMAGE_TYPES, type Character, type DamageType, type Gem, type Grade, type Item, type StatId, type Stats, type WeaponDef } from '../game/types';
 import { fmt, h } from './dom';
 import { shieldSpecials, weaponSpecials } from './itemSpecials';
+import { RARITY_POWER } from '../data/proficiency';
+import { upgradeInfo } from '../game/items/proficiency';
 
 export const RARITY_LABEL: Record<string, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 export const RARITY_BORDER: Record<string, string> = { common: '#6a6a6a', uncommon: '#58d66a', rare: '#4aa3ff', epic: '#b06bff', legendary: '#ff9b2e' };
@@ -85,7 +87,7 @@ function weaponDamageByType(item: Item, stats: Stats, twoH: boolean): Partial<Re
   const w = WEAPONS[item.baseId];
   if (!w) return {};
   const meets = meetsRequirements(reqsFor(item), stats, twoH);
-  const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH) * (meets ? 1 : 0.4);
+  const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity];
   const holy = w.holyPct ?? 0;
   const out: Partial<Record<DamageType, number>> = {};
   const el = weaponElement(w);
@@ -105,7 +107,7 @@ export function itemScore(item: Item | null, stats: Stats, twoHanded: boolean): 
     return v.physical * 100 + v.elemental * 50;
   }
   const t = CASTING_TOOLS[item.baseId];
-  if (t) return toolMult(t.grade, item.ilvl) * 100;
+  if (t) return toolMult(t.grade, item.ilvl) * RARITY_POWER[item.rarity] * 100;
   if (item.kind === 'armor') {
     const d = armorPieceDefense(item.baseId, item.ilvl);
     return DAMAGE_TYPES.reduce((a, k) => a + d[k], 0);
@@ -383,7 +385,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const ot = other ? CASTING_TOOLS[other.baseId] : undefined;
     const statKey = t.school === 'brain' ? 'brain' : 'prayer';
     const rows: Row[] = [
-      { label: 'Power', cur: toolMult(t.grade, item.ilvl), prev: ot && other ? toolMult(ot.grade, other.ilvl) : null, better: 'higher', fmt: (x) => `×${x.toFixed(2)}` },
+      { label: 'Power', cur: toolMult(t.grade, item.ilvl) * RARITY_POWER[item.rarity], prev: ot && other ? toolMult(ot.grade, other.ilvl) * RARITY_POWER[other.rarity] : null, better: 'higher', fmt: (x) => `×${x.toFixed(2)}` },
       { label: 'Cast speed', cur: t.castSpeed, prev: ot ? ot.castSpeed : null, better: 'higher', fmt: (x) => `×${x.toFixed(2)}` },
     ];
     if (t.bonus) {
@@ -440,6 +442,13 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   if (item.legendaryPower) {
     const lp = LEGENDARY_POWERS[item.legendaryPower];
     if (lp) out.push(section('Legendary power', h('div', { class: 'tt-text r-legendary' }, `${lp.name}: ${lp.text}`)));
+  }
+  // the item's own experience bar (D178)
+  const up = upgradeInfo(item);
+  if (up) {
+    const fill = Math.min(1, up.xp / up.need);
+    const bar = h('div', { class: 'xpbar', style: 'height:6px;border-radius:3px;background:#2a2533;overflow:hidden;margin:3px 0' }, h('div', { style: `height:100%;width:${Math.round(fill * 100)}%;background:${up.ready ? '#ffd27a' : '#8fd3ff'}` }));
+    out.push(section('Experience', h('div', { class: 'tt-text' }, up.ready ? `Full: becomes ${up.to[0]!.toUpperCase()}${up.to.slice(1)} at a bonfire for ${up.cost} Glowen (keeps its affixes, sockets and gems; more damage).` : `${up.xp} / ${up.need} toward ${up.to[0]!.toUpperCase()}${up.to.slice(1)}. Earned from every enemy that falls while it is out.`), bar));
   }
 
   // ---- footer: flavour left, sell value right

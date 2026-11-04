@@ -8,6 +8,7 @@ import { ELEMENTS } from '../../game/elements';
 import { canSocket, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
+import { profClassOf, upgradeInfo } from '../../game/items/proficiency';
 import { btn, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { tabHints } from '../glyphs';
 import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
@@ -29,6 +30,8 @@ export interface BonfireOps {
   buyGem(): string;
   buyPiece(): string;
   warp(bonfireId: string): string;
+  /** pay Glowen to raise a weapon or casting tool with a full bar to the next rarity (D178) */
+  raiseRarity(itemId: string): string;
 }
 
 export interface BonfireView {
@@ -68,7 +71,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
   root.setAttribute('data-testid', 'bonfire-menu');
   const panel = h('div', { class: 'panel', style: 'width:1200px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(panel);
-  const tabKeys = ['level', 'gems', 'shop', 'warp', ...(v.extraTabs ?? []).map((t) => t.label)];
+  const tabKeys = ['level', 'gems', 'weapons', 'shop', 'warp', ...(v.extraTabs ?? []).map((t) => t.label)];
   let tab = v.startTab === 'last' ? tabKeys[tabKeys.length - 1]! : v.startTab && v.startTab !== 'first' && tabKeys.includes(v.startTab) ? v.startTab : 'level';
   let selItem: string | null = null;
   /** which gem's per-perk upgrade list is open */
@@ -380,6 +383,37 @@ export function openBonfire(v: BonfireView): HTMLElement {
     return b;
   }
 
+  /** Weapons (D178): each weapon and casting tool you carry, its experience bar, and raising it a rarity. */
+  function weaponsTab(el: HTMLElement): void {
+    const c = v.char;
+    const all = [c.equipment.main, c.equipment.off, c.altMain, ...c.bag].filter((i): i is Item => !!i && !!profClassOf(i));
+    const list = h('div', { class: 'col', style: 'gap:6px;width:640px;max-height:540px;overflow:auto' }, h('h3', null, 'Weapons · ', glowenEl(c.glowen)));
+    if (!all.length) list.appendChild(h('div', { class: 'dim-text' }, 'You carry no weapons or casting tools.'));
+    for (const it of all) {
+      const u = upgradeInfo(it);
+      const worn = itemPlace(c, it.id) !== 'bag';
+      const card = h('div', { class: 'card', style: `padding:6px 8px${worn ? ';border-left:3px solid #e8c25a' : ''}`, 'data-testid': `weapon-card-${it.id}` });
+      const name = h('div', { class: `r-${it.rarity}` }, it.name, h('span', { class: 'small dim-text' }, ` · ${it.rarity[0]!.toUpperCase()}${it.rarity.slice(1)} · ${placeLabel(c, it.id)}`));
+      hoverTip(name, () => itemTooltip(it, c, 'auto'));
+      card.appendChild(name);
+      if (!u) {
+        card.appendChild(h('div', { class: 'small dim-text' }, 'Legendary: as high as it goes.'));
+      } else {
+        const fill = Math.min(1, u.xp / u.need);
+        card.appendChild(h('div', { style: 'height:8px;border-radius:4px;background:#2a2533;overflow:hidden;margin:4px 0' }, h('div', { style: `height:100%;width:${Math.round(fill * 100)}%;background:${u.ready ? '#ffd27a' : '#8fd3ff'}` })));
+        const to = `${u.to[0]!.toUpperCase()}${u.to.slice(1)}`;
+        const b = btn(['Raise to ' + to + ' · ', glowenEl(u.cost)], () => say(v.ops.raiseRarity(it.id)), 'tiny', !u.ready || c.glowen < u.cost);
+        b.setAttribute('data-focus', `raise-${it.id}`);
+        b.setAttribute('data-testid', `raise-${it.id}`);
+        card.appendChild(h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('span', { class: 'small' }, u.ready ? 'Bar full' : `${u.xp} / ${u.need}`), b));
+      }
+      list.appendChild(card);
+    }
+    const help = h('div', { class: 'small dim-text', style: 'max-width:420px' },
+      'Every enemy that falls gives experience to what you have out: the weapon in your hand and a staff or talisman you hold, whoever made the kill. A full bar lets you raise the item a rarity here for Glowen: it keeps its affixes, sockets, gems and skills and moves up to the new rarity’s damage. Epic becomes Legendary with a legendary power of its own. The same experience trains your weapon-class proficiency (inventory → Proficiency).');
+    el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, help));
+  }
+
   function gemsTab(el: HTMLElement): void {
     const c = v.char;
     const items = [c.equipment.main, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0);
@@ -620,6 +654,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const defs: { key: string; label: string; fn?: (el: HTMLElement) => void }[] = [
       { key: 'level', label: 'Level up', fn: levelTab },
       { key: 'gems', label: 'Gem bench', fn: gemsTab },
+      { key: 'weapons', label: 'Weapons', fn: weaponsTab },
       { key: 'shop', label: 'Shop', fn: shopTab },
       { key: 'warp', label: 'Warp', fn: warpTab },
       ...(v.extraTabs ?? []).map((t) => ({ key: t.label, label: t.label, fn: (el: HTMLElement) => t.render(el, render) })),

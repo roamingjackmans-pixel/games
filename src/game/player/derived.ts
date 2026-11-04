@@ -12,6 +12,8 @@ import { itemRequirements, meetsRequirements } from '../items/bases';
 import { equipLoadOf, type EquipLoadInfo } from './equipLoad';
 import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatusId, Stats, WeaponDef } from '../types';
 import { DAMAGE_TYPES } from '../types';
+import { RARITY_POWER } from '../../data/proficiency';
+import { profBonuses } from '../items/proficiency';
 
 export interface Derived {
   stats: Stats;
@@ -40,6 +42,11 @@ export interface Derived {
   stamCost: number;
   lifesteal: number;
   poiseDmgMult: number;
+  /** weapon reach (swing range and the drawn blade), from proficiency (D178) */
+  reachMult: number;
+  /** spell cooldown reduction and spell power, from proficiency (D178) */
+  spellCdr: number;
+  spellPowerPct: number;
   defense: Record<DamageType, number>;
   defensePct: Partial<Record<DamageType, number>>;
   offKind: 'shield' | 'staff' | 'talisman' | null;
@@ -155,7 +162,7 @@ export function computeDerived(c: Character): Derived {
   const twoHanded = c.twoHanded;
   const weaponMeetsReq = main ? meetsRequirements(itemRequirements(main), stats, twoHanded) : true;
   const held = (def: CastingToolDef | null, item: Item | null, hand: 'main' | 'off'): HeldTool | null =>
-    def && item ? { def, item, hand, ilvl: item.ilvl, meetsReq: meetsRequirements(itemRequirements(item), stats, false), mult: toolMult(def.grade, item.ilvl) } : null;
+    def && item ? { def, item, hand, ilvl: item.ilvl, meetsReq: meetsRequirements(itemRequirements(item), stats, false), mult: toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] } : null;
   // two-handing sets the off hand aside but a tool in the weapon hand still casts (held in both hands)
   const mainTool = held(mainToolDef, main, 'main');
   const offTool = twoHanded ? null : held(tool, off, 'off');
@@ -321,6 +328,17 @@ export function computeDerived(c: Character): Derived {
     maxHpMult *= 0.9;
   }
   if (powers.has('timekeeper')) dodgeRed += 1.0;
+  // weapon-class proficiency (D178): the perks of the classes out right now
+  const prof = profBonuses(c);
+  dmgPct += prof.damage;
+  poisePct += prof.poise;
+  attackSpeedPct += prof.attackSpeed;
+  castSpeedPct += prof.castSpeed;
+  cdrPct += prof.skillCooldown;
+  dodgeRed += prof.dodge;
+  stamCostPct += prof.stamina;
+  lifesteal += prof.lifesteal;
+  if (prof.bleed) for (const sb of statusBuild) if (sb.id === 'bleed') sb.buildup *= 1 + prof.bleed;
   if (powers.has('unyielding')) stabilityRed += 0.4;
 
   // ---- defense ----
@@ -354,7 +372,8 @@ export function computeDerived(c: Character): Derived {
     weaponIlvl,
     weaponMeetsReq,
     skillsUnlocked: main && weaponMeetsReq ? itemSkillCount(main) : 0,
-    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded) * (weaponMeetsReq ? 1 : 0.4),
+    // rarity sets the damage tier (D178)
+    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'],
     dmgPct,
     flat,
     convert,
@@ -368,6 +387,9 @@ export function computeDerived(c: Character): Derived {
     stamCost: Math.max(0.3, 1 - stamCostPct),
     lifesteal,
     poiseDmgMult: 1 + poisePct,
+    reachMult: 1 + prof.reach,
+    spellCdr: Math.min(0.5, prof.spellCooldown),
+    spellPowerPct: prof.spellPower,
     defense,
     defensePct: defPct,
     offKind: twoHanded ? null : shield ? 'shield' : tool ? (tool.school === 'brain' ? 'staff' : 'talisman') : null,

@@ -710,6 +710,8 @@ export interface Item {
   bonusSkills?: number;
   /** weapons: skills unlocked, rolled at drop time by zone and cycle (D89); absent on items from older saves */
   skills?: number;
+  /** weapons and casting tools: experience toward the next rarity (D178) */
+  xp?: number;
 }
 
 export type ConsumableId =
@@ -754,6 +756,8 @@ export interface Character {
   tutorialDone: boolean;
   /** the creator's look; absent on old saves (the class look is used) */
   appearance?: Appearance;
+  /** weapon-class proficiency experience by class (D178); absent on old saves (all zero) */
+  proficiency?: Record<string, number>;
 }
 
 export interface WorldState {

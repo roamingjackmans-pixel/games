@@ -237,7 +237,7 @@ export class NetGuest {
     if (c.highestZoneBeaten > before && c.highestZoneBeaten + 1 > this.save.world.zone) {
       this.save.pending = { ...(this.save.pending ?? {}), advanceToZone: Math.min(9, c.highestZoneBeaten + 1) };
     }
-    if (this.me?.pl && ops.some((o) => o.op === 'gear' || o.op === 'set')) refreshDerived(this.me);
+    if (this.me?.pl && ops.some((o) => o.op === 'gear' || o.op === 'set' || o.op === 'prof')) refreshDerived(this.me);
     this.onCharChanged();
   }
 

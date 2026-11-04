@@ -12,7 +12,9 @@ export type CharOp =
   | { op: 'gem'; gem: Gem }
   | { op: 'consumable'; id: ConsumableId; n: number }
   | { op: 'spell'; id: string }
-  | { op: 'gear'; equipment: Character['equipment']; altMain: Item | null };
+  | { op: 'gear'; equipment: Character['equipment']; altMain: Item | null }
+  /** weapon-class proficiency experience gained (D178) */
+  | { op: 'prof'; cls: string; n: number };
 
 export function cloneChar(c: Character): Character {
   return JSON.parse(JSON.stringify(c)) as Character;
@@ -29,6 +31,10 @@ export function diffChar(base: Character, cur: Character): CharOp[] {
   const ids = new Set([...Object.keys(base.consumables), ...Object.keys(cur.consumables)]) as Set<ConsumableId>;
   for (const id of ids) if ((cur.consumables[id] ?? 0) !== (base.consumables[id] ?? 0)) ops.push({ op: 'consumable', id, n: cur.consumables[id] ?? 0 });
   for (const s of cur.knownSpells) if (!base.knownSpells.includes(s)) ops.push({ op: 'spell', id: s });
+  for (const [cls, v] of Object.entries(cur.proficiency ?? {})) {
+    const d = v - (base.proficiency?.[cls] ?? 0);
+    if (d > 0) ops.push({ op: 'prof', cls, n: d });
+  }
   if (JSON.stringify(cur.equipment) !== JSON.stringify(base.equipment) || JSON.stringify(cur.altMain) !== JSON.stringify(base.altMain)) {
     ops.push({ op: 'gear', equipment: JSON.parse(JSON.stringify(cur.equipment)) as Character['equipment'], altMain: cur.altMain ? (JSON.parse(JSON.stringify(cur.altMain)) as Item) : null });
   }
@@ -59,6 +65,10 @@ export function applyCharOp(c: Character, o: CharOp): void {
     case 'gear':
       c.equipment = o.equipment;
       c.altMain = o.altMain;
+      break;
+    case 'prof':
+      c.proficiency ??= {};
+      c.proficiency[o.cls] = (c.proficiency[o.cls] ?? 0) + o.n;
       break;
   }
 }

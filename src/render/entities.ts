@@ -264,6 +264,8 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
           // the cutting edge is drawn on the weapon's −y side: on swings that turn the other way, mirror it so the
           // edge leads the swing (D104)
           if (edgeFlip) c.scale(1, -1);
+          // proficiency reach (D178): the weapon itself grows a little longer (a whip slowly gets bigger)
+          if (pl.derived.reachMult > 1) c.scale(pl.derived.reachMult, 1);
           drawWeapon(c, wDraw, now, legendName, charging);
           if (buffEl) drawBuffGlow(c, buffEl, now, e.id);
         },
@@ -350,7 +352,7 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     ctx.lineWidth = 9;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(x, y, Math.min(hb.r, 110) * 0.85, Math.min(a0, a1), Math.max(a0, a1));
+    ctx.arc(x, y, Math.min(hb.r * pl.derived.reachMult, 130) * 0.85, Math.min(a0, a1), Math.max(a0, a1));
     ctx.stroke();
     ctx.restore();
   }

@@ -88,7 +88,7 @@ export function rollAffixes(rng: Rng, item: Item, count: number): { id: string; 
   return out;
 }
 
-function powerSlotOf(item: Item): PowerSlot | null {
+export function powerSlotOf(item: Item): PowerSlot | null {
   if (item.kind === 'weapon') return 'weapon';
   if (item.kind === 'shield') return 'shield';
   if (item.kind === 'staff') return 'staff';

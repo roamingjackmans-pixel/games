@@ -3,6 +3,8 @@
 // Mouse, keyboard and gamepad (every slot is a focusable button; menuPad moves focus spatially).
 import { glyphText, inputText, padStyle, tabHints } from '../glyphs';
 import { PAD_ALT, PAD_ALT_EVENT, TAB_EDGE_EVENT, menuConfirmButton } from '../menuPad';
+import { PROF_CLASSES, PROF_MAX_LEVEL, perkPoints, profLevel } from '../../data/proficiency';
+import { activeClasses, profXp } from '../../game/items/proficiency';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
@@ -275,13 +277,58 @@ export function openInventory(host: InventoryHost): HTMLElement {
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:22px' }, dollCol, bag));
   }
 
+  /** Proficiency (D178): every weapon class's level, experience and two perks; the help pops out only when asked. */
+  let profHelp = false;
+  function profTab(el: HTMLElement): void {
+    const c = host.char;
+    const out = new Set(activeClasses(c));
+    const pct = (x: number, stat: string): string => (stat === 'dodge' ? `−${x.toFixed(2)} s` : `${stat === 'stamina' || stat.endsWith('Cooldown') ? '−' : '+'}${(x * 100).toFixed(x * 100 < 1 ? 2 : 1).replace(/\.0+$/, '')}%`);
+    const head = h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('h3', { style: 'margin:0' }, 'Weapon proficiency'));
+    const q = btn(profHelp ? '✕' : '?', () => {
+      profHelp = !profHelp;
+      render();
+    }, 'tiny');
+    q.setAttribute('aria-label', profHelp ? 'Hide how proficiency works' : 'How proficiency works');
+    q.setAttribute('data-focus', 'prof-help');
+    q.setAttribute('data-testid', 'prof-help');
+    head.appendChild(q);
+    el.appendChild(head);
+    if (profHelp)
+      el.appendChild(
+        h('div', { class: 'card', 'data-testid': 'prof-help-text', style: 'padding:8px 10px;margin:6px 0;max-width:640px;border-left:3px solid #9ad0ff' },
+          h('div', { class: 'small' }, 'Every enemy that falls while you stand gives experience to what you have out (the weapon in your hand, and a staff or talisman you hold), whoever made the kill. It fills that item’s own bar (raise it a rarity at a bonfire) and trains its class here.'),
+          h('div', { class: 'small', style: 'margin-top:4px' }, `Each class levels up to ${PROF_MAX_LEVEL}. Odd levels add to its first perk, even levels to its second. Perks only work while an item of that class is out: switch weapons and the other class’s perks take over. Reaching ${PROF_MAX_LEVEL} with one class takes about three playthroughs.`),
+        ),
+      );
+    const ids = Object.keys(PROF_CLASSES).sort((a, b) => Number(out.has(b)) - Number(out.has(a)) || profXp(c, b) - profXp(c, a) || PROF_CLASSES[a]!.name.localeCompare(PROF_CLASSES[b]!.name));
+    const grid = h('div', { style: 'display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:6px;max-width:760px;margin-top:6px' });
+    for (const id of ids) {
+      const def = PROF_CLASSES[id]!;
+      const lv = profLevel(profXp(c, id));
+      const pts = perkPoints(lv.level);
+      const nextIdx = lv.level % 2 === 0 ? 0 : 1;
+      const card = h('div', { class: 'card', tabindex: '0', 'data-focus': `prof-${id}`, 'data-testid': `prof-${id}`, style: `padding:6px 8px${out.has(id) ? ';border-left:3px solid #e8c25a' : ''}${lv.level === 0 && !out.has(id) ? ';opacity:0.6' : ''}` });
+      card.appendChild(h('div', { class: 'row', style: 'justify-content:space-between;align-items:baseline' }, h('b', null, def.name, out.has(id) ? h('span', { style: 'margin-left:6px;padding:0 5px;border-radius:4px;background:#e8c25a;color:#1a1408;font-size:10px' }, 'OUT') : null), h('span', { class: 'small' }, `Lv ${lv.level} / ${PROF_MAX_LEVEL}`)));
+      const fill = lv.next > 0 ? lv.into / lv.next : 1;
+      card.appendChild(h('div', { style: 'height:5px;border-radius:3px;background:#2a2533;overflow:hidden;margin:3px 0' }, h('div', { style: `height:100%;width:${Math.round(fill * 100)}%;background:${lv.next > 0 ? '#9ad0ff' : '#ffd27a'}` })));
+      def.perks.forEach((pk, i) => {
+        const now = pk.per * pts[i]!;
+        const more = lv.level < PROF_MAX_LEVEL && i === nextIdx ? ` (next level ${pct(pk.per, pk.stat)})` : '';
+        card.appendChild(h('div', { class: `small ${now > 0 ? 'good' : 'dim-text'}` }, `${pk.label} ${pct(now, pk.stat)}${more}`));
+      });
+      card.appendChild(h('div', { class: 'small dim-text', style: 'font-style:italic' }, def.blurb));
+      grid.appendChild(card);
+    }
+    el.appendChild(grid);
+  }
+
   function render(): void {
     hideTip();
     // where the focus was, to put it back after the redraw (D144)
     const mark = markFocus(body);
     clearEl(body);
     const tabs = h('div', { class: 'tabs', 'data-focus-group': 'tabs' });
-    const all = [{ label: 'Items', key: 'items' }, ...(host.extraTabs ?? []).map((t) => ({ label: t.label, key: t.label }))];
+    const all = [{ label: 'Items', key: 'items' }, ...(host.extraTabs ?? []).map((t) => ({ label: t.label, key: t.label })), { label: 'Proficiency', key: 'proficiency' }];
     for (const t of all) {
       const b = btn(t.label, () => {
         tab = t.key;
@@ -299,10 +346,14 @@ export function openInventory(host: InventoryHost): HTMLElement {
     content.appendChild(statsPanel());
     const right = h('div', { class: 'grow', 'data-focus-group': `tab-${tab}` });
     if (tab === 'items') itemsTab(right);
+    else if (tab === 'proficiency') profTab(right);
     else host.extraTabs?.find((t) => t.label === tab)?.render(right);
     content.appendChild(right);
     body.appendChild(content);
     setTimeout(() => {
+      // something chosen since the redraw keeps the focus (D169)
+      const a = document.activeElement;
+      if (a && a !== document.body && body.contains(a)) return;
       if (!restoreFocus(body, mark)) focusContentStart(body, right);
     }, 0);
   }

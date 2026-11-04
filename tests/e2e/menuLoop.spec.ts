@@ -73,6 +73,8 @@ test('LB / RB wrap round the bonfire and its inventory; Up / Down wrap round a m
   await press(page, RB);
   expect(await activeTab(page)).toBe('Spells');
   await press(page, RB);
+  expect(await activeTab(page)).toBe('proficiency');
+  await press(page, RB);
   await expect(page.getByTestId('bonfire-menu')).toBeVisible();
   await expect(page.getByTestId('inventory')).toHaveCount(0);
   expect(await activeTab(page)).toBe('level');

@@ -63,7 +63,7 @@ export function schoolPower(d: Pick<Derived, 'stats' | 'mainTool' | 'offTool'>, 
 export function spellPowerMult(e: Entity, sp: SpellDef): number {
   const d = e.pl!.derived;
   const tool = toolForSchool(d, sp.school);
-  let m = schoolPower(d, sp.school);
+  let m = schoolPower(d, sp.school) * (1 + d.spellPowerPct);
   if (tool?.def.bonus?.heals && sp.effect.some((x) => x.op === 'heal')) m *= 1 + tool.def.bonus.pct;
   return m;
 }
@@ -173,7 +173,8 @@ export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = '
     spend(w, e, sp.stamina);
   }
   let power = spellPowerMult(e, sp);
-  let cooldown = sp.cooldownS;
+  // proficiency with the casting tools shortens spell cooldowns (D178)
+  let cooldown = sp.cooldownS * (1 - d.spellCdr);
   if (boost) {
     power *= 1 + boost.powerPct;
     if (boost.noCooldown) cooldown = 0.2;

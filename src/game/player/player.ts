@@ -338,8 +338,10 @@ function swingHits(w: World, e: Entity): void {
   const spec = weaponSpec(w, e, c.swing.mult);
   const heavy = ['veryslow', 'slow'].includes(pl.derived.weapon.speedClass);
   let any = false;
+  // proficiency reach (D178) lengthens every swing
+  const reach = pl.derived.reachMult;
   const test = (t: Entity): boolean =>
-    hb.shape === 'arc' ? coneHit(e.x, e.y, e.facing, (hb.angleDeg * DEG) / 2, hb.r, t.x, t.y, t.radius) : lineHit(e.x, e.y, e.facing, hb.w, hb.l, t.x, t.y, t.radius);
+    hb.shape === 'arc' ? coneHit(e.x, e.y, e.facing, (hb.angleDeg * DEG) / 2, hb.r * reach, t.x, t.y, t.radius) : lineHit(e.x, e.y, e.facing, hb.w, hb.l * reach, t.x, t.y, t.radius);
   for (const en of w.enemies) {
     if (en.hp?.dead || c.hit.has(en.id)) continue;
     if (en.en?.state === 'ceiling') continue;
