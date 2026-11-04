@@ -227,6 +227,10 @@ export class Room {
   moveCircle(e: { x: number; y: number; radius: number }, dx: number, dy: number, flying = false, ignoreFall: boolean | 'void' = false): boolean {
     let hit = false;
     const r = Math.max(4, e.radius * 0.8);
+    // a body left half over a hole (a dodge or a knockback ending on the rim) steps off it first: every move would
+    // otherwise be refused and it stuck on the edge until a dodge or a lunge freed it (D175)
+    if (ignoreFall !== true) this.pushOutOfHoles(e, r, ignoreFall === 'void');
+
     const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 12));
     const sx = dx / steps;
     const sy = dy / steps;
@@ -243,6 +247,45 @@ export class Room {
       }
     }
     return hit;
+  }
+
+  /**
+   * A body partly over a hole with its centre on the floor is slid straight out onto the floor (D175): you either
+   * fall in (centre over the hole) or stand clear of it, never stuck on the rim. Never into a wall or a prop.
+   * `r` is the collision radius; `skipVoid` leaves the void alone (walking off an open platform edge is allowed).
+   * Returns whether it moved.
+   */
+  pushOutOfHoles(e: { x: number; y: number; radius: number }, r = Math.max(4, e.radius * 0.8), skipVoid = false): boolean {
+    const hole = (t: number): boolean => t === T.Pit || (!skipVoid && t === T.Void);
+    if (hole(this.tileAt(e.x, e.y))) return false;
+    let moved = false;
+    for (let pass = 0; pass < 3; pass++) {
+      let pushed = false;
+      const x0 = Math.floor((e.x - r) / TILE);
+      const x1 = Math.floor((e.x + r) / TILE);
+      const y0 = Math.floor((e.y - r - ROOM_Y0) / TILE);
+      const y1 = Math.floor((e.y + r - ROOM_Y0) / TILE);
+      for (let ty = y0; ty <= y1; ty++)
+        for (let tx = x0; tx <= x1; tx++) {
+          if (!hole(this.get(tx, ty))) continue;
+          const rx0 = tx * TILE;
+          const ry0 = ROOM_Y0 + ty * TILE;
+          const cx = Math.max(rx0, Math.min(e.x, rx0 + TILE));
+          const cy = Math.max(ry0, Math.min(e.y, ry0 + TILE));
+          const d = Math.hypot(e.x - cx, e.y - cy);
+          if (d >= r || d < 1e-6) continue;
+          const k = (r - d + 0.05) / d;
+          const nx = e.x + (e.x - cx) * k;
+          const ny = e.y + (e.y - cy) * k;
+          // only onto open ground: walls and props still stop it (holes are what it is leaving)
+          if (this.circleBlocked(nx, ny, r, false, true)) continue;
+          e.x = nx;
+          e.y = ny;
+          pushed = moved = true;
+        }
+      if (!pushed) break;
+    }
+    return moved;
   }
 
   circleBlocked(x: number, y: number, r: number, flying = false, ignoreFall: boolean | 'void' = false): boolean {

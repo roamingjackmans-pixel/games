@@ -47,6 +47,9 @@ export function updateMovement(w: World, dt: number): void {
       const t = w.room.tileAt(e.x, e.y);
       if (t === T.Void) startFall(w, e, FALL_VOID_PCT, FALL_VOID_CLIMB_S);
       else if (t === T.Pit && e.pl.state !== 'dodge') startFall(w, e, FALL_PIT_PCT, 0.6);
+      // a dodge that ends with the centre on the floor but the body over a pit's rim: step clear of it now, so you
+      // either fell in or stand on the floor (D175); a void edge may be overlapped (walking off it is allowed)
+      else if (e.pl.state !== 'dodge') w.room.pushOutOfHoles(e, undefined, true);
     } else if (e.en && w.room.isFallAt(e.x, e.y) && !e.forced) {
       // enemies knocked into a pit fall and die; bosses, and fliers (which never hover over a hole, D173), are set
       // down at the nearest edge
@@ -58,7 +61,7 @@ export function updateMovement(w: World, dt: number): void {
         rawDamage(w, e, e.hp!.max * 10, 'physical', e.hp!.lastHitBy);
         w.sfx('fall', e.x);
       }
-    }
+    } else if (e.en && !e.forced) w.room.pushOutOfHoles(e); // nor does an enemy stay half over a hole (D175)
   }
   // solid hazards (root walls) block everyone, except a player mid-dodge who rolls over them (so a pocket walled in
   // by roots is never a trap under the next Piercing area, D94); Guardian Walls block non-boss enemies
