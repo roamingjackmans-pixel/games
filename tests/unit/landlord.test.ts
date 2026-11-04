@@ -227,7 +227,7 @@ describe('The Landlord: the fight', () => {
     expect([b.x, b.y]).toEqual(at);
   });
 
-  it('walking off the edge costs 50% max HP and returns you to the nearest edge after 1.5 s; a dodge does not save you', () => {
+  it('walking or dodging stops at the edge; knocked off it costs 50% max HP and returns you to the nearest edge after 1.5 s (D185)', () => {
     const s = session();
     const b = enterArena(s);
     s.w.remove(b);
@@ -241,27 +241,34 @@ describe('The Landlord: the fight', () => {
     p.y = ey;
     const max = p.hp!.max;
     p.hp!.hp = max;
+    // walking west: you stop at the edge
     pl.input.moveX = -1;
     pl.input.moveY = 0;
-    for (let i = 0; i < 60 && !pl.falling; i++) stepWorld(s.w);
+    for (let i = 0; i < 60; i++) stepWorld(s.w);
     pl.input.moveX = 0;
+    expect(pl.falling).toBeNull();
+    expect(p.hp!.hp).toBe(max);
+    // rolling west: you stop at the edge too
+    pl.state = 'dodge';
+    pl.stateUntil = pl.dodgeUntil = s.w.time + 0.45;
+    pl.iframesFrom = s.w.time;
+    pl.iframesUntil = s.w.time + 0.45;
+    pl.dodgeDir = [-1, 0];
+    for (let i = 0; i < 30; i++) stepWorld(s.w);
+    expect(pl.falling).toBeNull();
+    expect(p.hp!.hp).toBe(max);
+    // knocked west: over the edge you go
+    p.x = ex;
+    p.y = ey;
+    pl.state = 'idle';
+    p.forced = { vx: -600, vy: 0, until: s.w.time + 0.3, kind: 'knock' };
+    for (let i = 0; i < 60 && !pl.falling; i++) stepWorld(s.w);
     expect(pl.falling).not.toBeNull();
     expect(p.hp!.hp).toBeCloseTo(max * 0.5, 6);
     const fellAt = s.w.time;
     while (pl.falling && s.w.time - fellAt < 3) stepWorld(s.w);
     expect(s.w.time - fellAt).toBeGreaterThan(1.5 - 1 / 30);
     expect(s.w.time - fellAt).toBeLessThan(1.5 + 1 / 30);
-    expect([p.x, p.y]).toEqual([ex, ey]);
-    expect(p.hp!.hp).toBeCloseTo(max * 0.5, 6);
-    // rolling over the edge: still a fall
-    p.hp!.hp = max;
-    pl.state = 'dodge';
-    pl.stateUntil = pl.dodgeUntil = s.w.time + 0.45;
-    pl.iframesFrom = s.w.time;
-    pl.iframesUntil = s.w.time + 0.45;
-    pl.dodgeDir = [-1, 0];
-    for (let i = 0; i < 30 && !pl.falling; i++) stepWorld(s.w);
-    expect(pl.falling).not.toBeNull();
     expect(p.hp!.hp).toBeCloseTo(max * 0.5, 6);
   });
 

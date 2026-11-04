@@ -665,7 +665,7 @@ export class NetGuest {
         const step = Math.min(dt, DODGE_S - dp.t);
         const k = dp.t / DODGE_S;
         const sp = (DODGE_DIST / DODGE_S) * 1.6 * Math.max(0.1, 1 - k) * dp.mult;
-        this.cw.room.moveCircle(me, dp.dir[0] * sp * step, dp.dir[1] * sp * step, false, true);
+        this.cw.room.moveCircle(me, dp.dir[0] * sp * step, dp.dir[1] * sp * step, false);
         dp.t += step;
         this.pending = [];
         this.correction = { x: 0, y: 0 };

@@ -34,7 +34,9 @@ export function updateMovement(w: World, dt: number): void {
     if (e.forced) {
       if (now >= e.forced.until) e.forced = null;
       else {
-        const ignoreFall = e.forced.kind === 'leap' || e.forced.kind === 'dash' || e.type === 'player';
+        // a player falls into a hole only when an attack puts them there (a knockback, a pull, D185); their own dashes,
+        // leaps and swing steps stop at the edge. Enemies' leaps and dashes still cross holes (and drop them in).
+        const ignoreFall = e.type === 'player' ? e.forced.kind === 'knock' || e.forced.kind === 'pull' : e.forced.kind === 'leap' || e.forced.kind === 'dash';
         const hit = w.room.moveCircle(e, e.forced.vx * dt, e.forced.vy * dt, e.flying, ignoreFall);
         if (hit && e.forced.kind === 'knock') e.forced = null;
       }

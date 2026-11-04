@@ -3,6 +3,7 @@
 // swarms, stealth, teleports, passive pulls, elite affixes. Nothing here is specific to an enemy id.
 import { DEG, angleDiff, circleHit, clamp, dist, turnToward } from '../../engine/math';
 import { applyStatusBuild, emptySpec, grantBarrier, heal, hitPlayer, interrupt } from '../combat/damage';
+import { MAX_PROJECTILE_RANGE } from '../combat/formulas';
 import { hasControl, speedMult } from '../combat/state';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, ROOM_CX, ROOM_CY } from '../combat/patterns';
 import { runEffects } from '../effects/run';
@@ -111,7 +112,9 @@ function chooseAttack(w: World, e: Entity, target: Entity): AttackDef | null {
     // illusions only mimic the normal attack (no specials, no utilities, no real damage)
     if (en.isIllusion && atk.kind !== 'normal') continue;
     if ((en.cooldowns[atk.id] ?? 0) > now) continue;
-    if (d < atk.range[0] || d > atk.range[1]) continue;
+    // a shot only from within its reach (D185: projectiles fly at most MAX_PROJECTILE_RANGE)
+    const reach = atk.pattern?.kind === 'projectile' ? Math.min(atk.range[1], MAX_PROJECTILE_RANGE) : atk.range[1];
+    if (d < atk.range[0] || d > reach) continue;
     if (en.isBoss && atk.id === en.lastAttackId && list.filter((a) => !a.trigger).length > 1) continue;
     // two targets, one bar: the split body performs these, the boss never does
     if (en.isBoss && atk.body === 'split') continue;

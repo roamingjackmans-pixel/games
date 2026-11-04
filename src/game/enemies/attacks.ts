@@ -1,6 +1,7 @@
 // Enemy attack execution: windup (tint + telegraph) → active (impact, projectiles, lunges, combos) → recover.
 import { DEG, angleDiff, circleHit, clamp, dist, turnToward } from '../../engine/math';
 import { emptySpec, hitPlayer } from '../combat/damage';
+import { MAX_PROJECTILE_RANGE } from '../combat/formulas';
 import { spawnShapeTelegraph, spawnTelegraphs } from '../combat/telegraph';
 import { behindGap, resolvePattern, waveFair, type PatternCtx } from '../combat/patterns';
 import { speedMult } from '../combat/state';
@@ -391,6 +392,12 @@ export function spawnEnemyProjectile(
   tx: number,
   ty: number,
 ): Entity {
+  // a lob lands no further than a projectile can fly (D185)
+  const ld = dist(e.x, e.y, tx, ty);
+  if (p.lob && ld > MAX_PROJECTILE_RANGE) {
+    tx = e.x + ((tx - e.x) * MAX_PROJECTILE_RANGE) / ld;
+    ty = e.y + ((ty - e.y) * MAX_PROJECTILE_RANGE) / ld;
+  }
   const lob = p.lob ? { fromX: e.x, fromY: e.y, toX: tx, toY: ty, t: 0, dur: Math.max(0.35, dist(e.x, e.y, tx, ty) / speed) } : null;
   return w.spawn('projectile', e.x + Math.cos(ang) * e.radius, e.y + Math.sin(ang) * e.radius, {
     radius: p.r,
@@ -409,7 +416,7 @@ export function spawnEnemyProjectile(
       speed,
       homing: (p.homing ?? 0) * DEG,
       targetId,
-      until: w.time + (p.range ?? 1600) / speed,
+      until: w.time + Math.min(p.range ?? 1600, MAX_PROJECTILE_RANGE) / speed,
       pierce: 0,
       hit: new Set(),
       poiseDmg: 0,

@@ -3,7 +3,7 @@
 import { emptyInput, held, pressed } from '../../engine/input/actions';
 import { T } from '../room';
 import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
-import { flaskHeal, STAMINA_COST_MULT } from '../combat/formulas';
+import { flaskHeal, MAX_PROJECTILE_RANGE, STAMINA_COST_MULT } from '../combat/formulas';
 import { addRevive, applyControl, cleanse, emptySpec, ffVictims, heal, hitAlly, hitEnemy, rawDamage, typeColor } from '../combat/damage';
 import { buffSum, hasControl, speedMult } from '../combat/state';
 import { terrainWalkMult } from '../systems/terrain';
@@ -289,7 +289,7 @@ function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number
 }
 
 export function spawnPlayerProjectile(w: World, e: Entity, a: number, speed: number, r: number, spec: DamageSpec, pierce: number, drawId: string, opts: { range?: number; isSpell?: boolean; returns?: boolean; color?: string; homing?: number } = {}): Entity {
-  const range = opts.range ?? 900;
+  const range = Math.min(opts.range ?? 900, MAX_PROJECTILE_RANGE);
   return w.spawn('projectile', e.x + Math.cos(a) * 18, e.y + Math.sin(a) * 18, {
     radius: r,
     team: 0,
@@ -748,8 +748,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   if (pl.state === 'dodge') {
     const t = 1 - (pl.dodgeUntil - now) / DODGE_S;
     const sp = (DODGE_DIST / DODGE_S) * 1.6 * Math.max(0.1, 1 - t) * pl.derived.load.effects.dodge;
-    const fall = w.room.moveCircle(e, pl.dodgeDir[0] * sp * dt, pl.dodgeDir[1] * sp * dt, false, true);
-    void fall;
+    // a dodge stops at a hole's edge (D185): only an attack (a knockback, a pull) can put you in one
+    w.room.moveCircle(e, pl.dodgeDir[0] * sp * dt, pl.dodgeDir[1] * sp * dt, false);
     mv = 1;
   } else if (canMove && e.st!.controls.root <= now) {
     let speed = walkSpeedFor(w, e);
@@ -759,7 +759,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     const iy = inp.moveY;
     mv = Math.min(1, Math.hypot(ix, iy));
     // a platform's void edge has no wall: you can walk off it (pits keep their rim)
-    if (mv > 0.05) w.room.moveCircle(e, ix * speed * dt, iy * speed * dt, false, 'void');
+    // walking never steps off into a pit or the void (D185; a platform edge used to let you walk off)
+    if (mv > 0.05) w.room.moveCircle(e, ix * speed * dt, iy * speed * dt, false);
     // the rotating floor ring (Tock) carries you along
   }
   if (pl.state !== 'attack' && pl.state !== 'dodge') {

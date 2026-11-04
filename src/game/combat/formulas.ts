@@ -58,6 +58,9 @@ export function staminaRegen(stamStat: number, m = 1): number {
 }
 export const STAMINA_REGEN_DELAY = 0.6;
 
+/** No projectile flies further than this (D185): about two-thirds of the 1,280 px screen, enemies' and players' alike. */
+export const MAX_PROJECTILE_RANGE = 850;
+
 /** Every stamina cost a player pays (swings, dodges, skills, spells, blocking) is ×1.15 (D105). */
 export const STAMINA_COST_MULT = 1.15;
 /** Elites have 50% more poise on top of their bigger body (D105). */
