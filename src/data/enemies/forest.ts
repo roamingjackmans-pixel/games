@@ -123,7 +123,7 @@ export const FOREST: Record<string, EnemyDef> = {
         id: 'fey_arrow',
         name: 'Curving Arrow',
         kind: 'normal',
-        pattern: { kind: 'projectile', speed: 380, r: 5, curve: 45, homing: 70, range: 1000, drawId: 'e_arrow' },
+        pattern: { kind: 'projectile', speed: 380, r: 5, curve: 45, homing: 55, range: 1000, drawId: 'e_arrow' }, // homing 70 → 55 (D165): it bends after you less
         windupMs: 500,
         recoverMs: 350,
         dmgMult: 1.0,

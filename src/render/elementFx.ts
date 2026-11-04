@@ -98,6 +98,9 @@ export function drawGolden(ctx: CanvasRenderingContext2D, e: Entity, x: number, 
   g.globalAlpha = 1;
   g.clearRect(0, 0, size, size);
   draw(g, half, half);
+  // thicken see-through bodies (ghosts, wisps) so the gold reads as solid (D164): each self-stamp takes a pixel's
+  // opacity a to 1 − (1 − a)², so three take 30% to about 94%; solid pixels stay as they were
+  for (let i = 0; i < 3; i++) g.drawImage(goldCanvas as CanvasImageSource, 0, 0, size, size, 0, 0, size, size);
   // wash the drawn pixels gold; a slow shimmer keeps it alive
   const shimmer = 0.5 + 0.5 * Math.sin(now * 6 + e.id);
   g.globalCompositeOperation = 'source-atop';

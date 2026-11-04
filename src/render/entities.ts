@@ -412,8 +412,9 @@ export function drawEnemyEntity(ctx: CanvasRenderingContext2D, e: Entity, x: num
     }
   }
   drawElementUnder(ctx, e, x, y, now);
-  // an immune enemy turns to gold while it cannot be hurt (D108)
-  if (isImmuneNow(e, now)) drawGolden(ctx, e, x, y, now, (c, cx, cy) => drawById(c, e.drawId, enemyDrawState(e, cx, cy, now, pal)));
+  // an immune enemy turns to gold while it cannot be hurt (D108), fully solid even if it is otherwise see-through
+  // (an invisible Ash Wraith fading after an attack was a ghost of gold at 8%, D164)
+  if (isImmuneNow(e, now)) drawGolden(ctx, e, x, y, now, (c, cx, cy) => drawById(c, e.drawId, { ...enemyDrawState(e, cx, cy, now, pal), alpha: 1 }));
   else if (cacheable(e)) {
     // the body through its own cached picture, redrawn at most 24 times a second (D152)
     const st = enemyDrawState(e, x, y, now, pal);
