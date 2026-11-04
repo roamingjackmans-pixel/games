@@ -77,6 +77,22 @@ export function allItems(c: Character): Item[] {
   return [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, c.altMain, ...c.bag].filter((x): x is Item => !!x);
 }
 
+/** Where an item is (D168): the slot it is worn in, or the bag. */
+export function itemPlace(c: Character, itemId: string): EquipSlot | 'bag' | null {
+  const e = c.equipment;
+  for (const s of ['main', 'off', 'head', 'body', 'legs', 'ring1', 'ring2'] as const) if (e[s]?.id === itemId) return s;
+  if (c.altMain?.id === itemId) return 'altMain';
+  return c.bag.some((i) => i.id === itemId) ? 'bag' : null;
+}
+
+const PLACE_LABEL: Record<EquipSlot | 'bag', string> = { main: 'Weapon', altMain: '2nd weapon', off: 'Off hand', head: 'Head', body: 'Body', legs: 'Legs', ring1: 'Ring 1', ring2: 'Ring 2', bag: 'Bag' };
+
+/** "Weapon", "2nd weapon", "Head", ... or "Bag" (D168). */
+export function placeLabel(c: Character, itemId: string): string {
+  const p = itemPlace(c, itemId);
+  return p ? PLACE_LABEL[p] : '';
+}
+
 export function findItem(c: Character, itemId: string): Item | null {
   return allItems(c).find((i) => i.id === itemId) ?? null;
 }
@@ -111,7 +127,7 @@ export function socketGem(c: Character, itemId: string, socketIdx: number, gemId
   return ok(`Socketed ${gemTitle(gem)}.`);
 }
 
-/** Unsocketing is free at a bonfire (GAME_DESIGN §8.5). */
+/** Unsocketing is free, from any item, worn or in the bag, anywhere (D168; was at a bonfire only, GAME_DESIGN §8.5). */
 export function unsocketGem(c: Character, itemId: string, socketIdx: number): OpResult {
   const item = findItem(c, itemId);
   const gem = item?.sockets[socketIdx];

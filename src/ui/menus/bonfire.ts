@@ -5,7 +5,7 @@ import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/c
 import { computeDerived } from '../../game/player/derived';
 import { schoolPower } from '../../game/skills/use';
 import { ELEMENTS } from '../../game/elements';
-import { canSocket, fusePreview, gemAt, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
+import { canSocket, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { btn, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
@@ -382,9 +382,19 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const items = [c.equipment.main, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0);
     const list = h('div', { class: 'col', style: 'gap:6px;width:500px;max-height:540px;overflow:auto' }, h('h3', null, 'Socketed gear'));
     if (items.length === 0) list.appendChild(h('div', { class: 'dim-text' }, 'Nothing you carry has sockets. Rare and better gear does.'));
+    // worn gear first, under its own heading and tagged with its slot, then the bag (D168)
+    let heading = '';
     for (const it of items) {
-      const card = h('div', { class: `card ${selItem === it.id ? 'on' : ''}`, style: 'padding:6px 8px' });
-      const nameEl = h('div', { class: `r-${it.rarity}` }, it.name, h('span', { class: 'small dim-text' }, ` · ${it.kind === 'armor' ? 'armor gems' : 'weapon gems'}`));
+      const worn = itemPlace(c, it.id) !== 'bag';
+      const want = worn ? 'Equipped' : 'In your bag';
+      if (want !== heading) {
+        heading = want;
+        list.appendChild(h('div', { class: 'small', style: 'margin-top:4px;color:#cfc6b4;letter-spacing:0.08em;text-transform:uppercase' }, want));
+      }
+      const card = h('div', { class: `card ${selItem === it.id ? 'on' : ''}`, style: `padding:6px 8px${worn ? ';border-left:3px solid #e8c25a' : ''}` });
+      card.setAttribute('data-testid', `gem-card-${it.id}`);
+      const tag = worn ? h('span', { class: 'tag-equipped', style: 'margin-left:6px;padding:0 6px;border-radius:4px;background:#e8c25a;color:#1a1408;font-size:11px;font-weight:bold' }, `Equipped · ${placeLabel(c, it.id)}`) : null;
+      const nameEl = h('div', { class: `r-${it.rarity}` }, it.name, tag, h('span', { class: 'small dim-text' }, ` · ${it.kind === 'armor' ? 'armor gems' : 'weapon gems'}`));
       hoverTip(nameEl, () => itemTooltip(it, c, 'auto'));
       card.appendChild(nameEl);
       it.sockets.forEach((g, i) => {
@@ -420,7 +430,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, upgradeCtl(g, loc), sell, fuseBtn(g, loc)], `loose-gem-${gi}`)));
     });
     if (c.gems.length === 0) gems.appendChild(h('div', { class: 'dim-text' }, 'No loose gems.'));
-    gems.appendChild(h('div', { class: 'small dim-text', style: 'margin-top:6px' }, 'Weapon gems fit weapon sockets, armor gems armor sockets. Upgrade any perk without unsocketing. NG+ gems carry two or three perks; Fuse swaps perks between two gems of the same kind.'));
+    gems.appendChild(h('div', { class: 'small dim-text', style: 'margin-top:6px' }, 'Weapon gems fit weapon sockets, armor gems armor sockets. Upgrade any perk without unsocketing. Gems can also be removed from the inventory, anywhere. NG+ gems carry two or three perks; Fuse swaps perks between two gems of the same kind.'));
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, gems));
   }
 

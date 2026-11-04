@@ -6,12 +6,12 @@ import { PAD_ALT, PAD_ALT_EVENT, menuConfirmButton } from '../menuPad';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
-import { BAG_SIZE, equip, isToolItem, unequip, type EquipSlot } from '../../game/items/inventory';
+import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, unequip, unsocketGem, type EquipSlot } from '../../game/items/inventory';
 import { itemRequirements, meetsRequirements } from '../../game/items/bases';
 import { levelCost } from '../../game/combat/formulas';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import type { Derived } from '../../game/player/derived';
-import { DAMAGE_TYPES, type Character, type ConsumableId, type Item } from '../../game/types';
+import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item } from '../../game/types';
 import { btn, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
 import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemTooltip } from '../tooltip';
@@ -181,7 +181,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
     const dollCol = h('div', { class: 'col', style: 'gap:6px;width:300px' }, h('h3', { style: 'margin:0' }, 'Equipment'), doll, loadPanel(host.derived().load));
 
     // ---- bag
-    const bag = h('div', { class: 'col', style: 'gap:6px' }, h('h3', { style: 'margin:0' }, `Bag ${c.bag.length}/${BAG_SIZE}`));
+    // scrolls when a long gem list (D168) would run past the panel
+    const bag = h('div', { class: 'col', style: 'gap:6px;max-height:566px;overflow-y:auto;padding-right:6px' }, h('h3', { style: 'margin:0' }, `Bag ${c.bag.length}/${BAG_SIZE}`));
     const bagGrid = h('div', { class: 'grid-bag' });
     for (let i = 0; i < BAG_SIZE; i++) {
       const item = c.bag[i] ?? null;
@@ -240,6 +241,30 @@ export function openInventory(host: InventoryHost): HTMLElement {
     if (!cons.childElementCount) cons.appendChild(h('div', { class: 'small dim-text' }, 'Nothing to quick-use.'));
     bag.appendChild(h('h3', { style: 'margin:4px 0 0' }, `Quick-use (${glyphText('quick')})`));
     bag.appendChild(cons);
+    // ---- gems in gear: take any of them out here, worn or in the bag, any time (D168)
+    const socketed: { it: Item; g: Gem; si: number }[] = [];
+    for (const it of allItems(c)) it.sockets.forEach((g, si) => g && socketed.push({ it, g, si }));
+    if (socketed.length) {
+      const row = h('div', { class: 'row wrap', style: 'gap:4px;max-width:476px' });
+      for (const { it, g, si } of socketed) {
+        const b = btn('', () => {
+          unsocketGem(c, it.id, si);
+          host.changed();
+          render();
+        }, 'tiny');
+        b.append('✕ ', h('span', { style: 'display:inline-flex;vertical-align:middle;margin-right:4px' }, gemIcon(g, 16)), `${it.name} · ${placeLabel(c, it.id)}`);
+        b.setAttribute('aria-label', `Remove the gem from ${it.name} (${placeLabel(c, it.id)})`);
+        b.setAttribute('data-focus', `unsocket-${it.id}-${si}`);
+        b.setAttribute('data-testid', `inv-unsocket-${it.id}-${si}`);
+        b.addEventListener('mouseenter', () => showTip(b, gemTooltip(g)));
+        b.addEventListener('focus', () => showTip(b, gemTooltip(g)));
+        b.addEventListener('mouseleave', hideTip);
+        b.addEventListener('blur', hideTip);
+        row.appendChild(b);
+      }
+      bag.appendChild(h('h3', { style: 'margin:4px 0 0' }, `Gems in your gear (${socketed.length}) — ✕ takes one out`));
+      bag.appendChild(row);
+    }
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:22px' }, dollCol, bag));
   }
 
