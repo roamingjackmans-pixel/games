@@ -1,5 +1,7 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
+import { ESSENCES, MAX_REINFORCE, essenceCounts, essenceDef, plusName } from '../../data/essence';
+import { canReinforce, reinforceInfo } from '../../game/items/reinforce';
 import { CLASSES } from '../../data/classes';
 import { GEMS, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkText } from '../../data/gems';
 import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
@@ -33,6 +35,8 @@ export interface BonfireOps {
   warp(bonfireId: string): string;
   /** pay Glowen to raise a weapon or casting tool with a full bar to the next rarity (D178) */
   raiseRarity(itemId: string): string;
+  /** spend Soul Essence and Glowen to reinforce a weapon, shield or armour piece +1 (D198) */
+  reinforce(itemId: string): string;
 }
 
 export interface BonfireView {
@@ -72,7 +76,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
   root.setAttribute('data-testid', 'bonfire-menu');
   const panel = h('div', { class: 'panel', style: 'width:1200px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(panel);
-  const tabKeys = ['level', 'gems', 'weapons', 'shop', 'warp', ...(v.extraTabs ?? []).map((t) => t.label)];
+  const tabKeys = ['level', 'gems', 'weapons', 'reinforce', 'shop', 'warp', ...(v.extraTabs ?? []).map((t) => t.label)];
   let tab = v.startTab === 'last' ? tabKeys[tabKeys.length - 1]! : v.startTab && v.startTab !== 'first' && tabKeys.includes(v.startTab) ? v.startTab : 'level';
   let selItem: string | null = null;
   /** which gem's per-perk upgrade list is open */
@@ -416,6 +420,50 @@ export function openBonfire(v: BonfireView): HTMLElement {
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, help));
   }
 
+  /** Reinforce (D198): Soul Essence held, and every weapon, shield and armour piece you carry with its next +1. */
+  function reinforceTab(el: HTMLElement): void {
+    const c = v.char;
+    const have = essenceCounts(c);
+    const purse = h('div', { class: 'row wrap', style: 'gap:10px;align-items:center', 'data-testid': 'essence-purse' });
+    ESSENCES.forEach((d, i) => {
+      const chip = h('span', { class: 'small', style: `color:${d.color};${have[i] ? '' : 'opacity:.45'}`, 'data-testid': `essence-${d.tier}` }, `◆ ${d.name} × ${have[i]}`);
+      chip.title = `Tier ${d.tier}. ${d.blurb}`;
+      purse.appendChild(chip);
+    });
+    const all = [c.equipment.main, c.equipment.off, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && canReinforce(i));
+    const list = h('div', { class: 'col', style: 'gap:6px;width:640px;max-height:500px;overflow:auto' }, h('h3', null, 'Reinforce · ', glowenEl(c.glowen)), purse);
+    if (!all.length) list.appendChild(h('div', { class: 'dim-text' }, 'You carry no weapons, shields or armour.'));
+    for (const it of all) {
+      const info = reinforceInfo(c, it);
+      const worn = itemPlace(c, it.id) !== 'bag';
+      const card = h('div', { class: 'card', style: `padding:6px 8px${worn ? ';border-left:3px solid #e8c25a' : ''}`, 'data-testid': `reinforce-card-${it.id}` });
+      const name = h('div', { class: `r-${it.rarity}` }, plusName(it), h('span', { class: 'small dim-text' }, ` · ${placeLabel(c, it.id)} · ×${info.mult.toFixed(1)} strength`));
+      hoverTip(name, () => itemTooltip(it, c, 'auto'));
+      card.appendChild(name);
+      // fifteen pips, a tier's colour every three
+      const pips = h('div', { class: 'row', style: 'gap:2px;margin:4px 0' });
+      for (let k = 0; k < MAX_REINFORCE; k++) pips.appendChild(h('span', { style: `width:14px;height:6px;border-radius:2px;background:${k < info.plus ? essenceDef(Math.floor(k / 3) + 1).color : '#2a2533'}` }));
+      card.appendChild(pips);
+      if (!info.next) card.appendChild(h('div', { class: 'small dim-text' }, `+${MAX_REINFORCE}: as strong as it gets.`));
+      else {
+        const nd = essenceDef(info.next.tier);
+        const b = btn([`+${info.plus + 1} · `, h('span', { style: `color:${nd.color}` }, `${info.next.count} × ${nd.name}`), ' + ', glowenEl(info.next.glowen)], () => say(v.ops.reinforce(it.id)), 'tiny', !info.affordable);
+        b.setAttribute('data-focus', `reinforce-${it.id}`);
+        b.setAttribute('data-testid', `reinforce-${it.id}`);
+        b.title = `×${info.mult.toFixed(1)} → ×${info.nextMult.toFixed(1)}. Higher-tier Essence pays 3:1 for this one.`;
+        card.appendChild(h('div', { class: 'row', style: 'gap:8px;align-items:center' }, b));
+      }
+      list.appendChild(card);
+    }
+    const help = h('div', { class: 'small dim-text', style: 'max-width:420px' },
+      'Soul Essence is what is left of somebody once the Landlord’s staff have taken all their Glowen: the stubborn part that never paid rent. The fires take it; nobody else will, so it cannot be sold.',
+      h('br'), h('br'),
+      'Each +1 makes a weapon hit, a shield block or a piece of armour defend 20% better: +15 is four times the item. A step costs 1, then 2, then 3 Essence of one tier (6 a tier), a new tier every three levels, plus Glowen. One Essence of a higher tier pays for three of the tier below.',
+      h('br'), h('br'),
+      'None below zone 4 of the first descent; Tier 1 from zone 4, then one tier more each New Game+ (Tier 5 from New Game+4).');
+    el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, help));
+  }
+
   function gemsTab(el: HTMLElement): void {
     const c = v.char;
     const items = [c.equipment.main, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0);
@@ -657,6 +705,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       { key: 'level', label: 'Level up', fn: levelTab },
       { key: 'gems', label: 'Gem bench', fn: gemsTab },
       { key: 'weapons', label: 'Weapons', fn: weaponsTab },
+      { key: 'reinforce', label: 'Reinforce', fn: reinforceTab },
       { key: 'shop', label: 'Shop', fn: shopTab },
       { key: 'warp', label: 'Warp', fn: warpTab },
       ...(v.extraTabs ?? []).map((t) => ({ key: t.label, label: t.label, fn: (el: HTMLElement) => t.render(el, render) })),

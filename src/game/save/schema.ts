@@ -102,6 +102,18 @@ export function normalizeSave(s: SaveFile): SaveFile {
   if (c.quickSlot === undefined) c.quickSlot = null;
   if (!c.consumables) c.consumables = {};
   if (!c.gems) c.gems = [];
+  // Soul Essence (D198): five whole, non-negative counts; reinforcement levels 0–15 on every item
+  if (c.essence !== undefined) {
+    const e = Array.isArray(c.essence) ? c.essence : [];
+    c.essence = [0, 1, 2, 3, 4].map((i) => (typeof e[i] === 'number' && Number.isFinite(e[i]) ? Math.max(0, Math.floor(e[i])) : 0));
+  }
+  const clampPlus = (it: { plus?: unknown } | null): void => {
+    if (!it || it.plus === undefined) return;
+    const n = typeof it.plus === 'number' && Number.isFinite(it.plus) ? Math.max(0, Math.min(15, Math.floor(it.plus))) : 0;
+    if (n) it.plus = n;
+    else delete it.plus;
+  };
+  for (const it of [...Object.values(c.equipment), c.altMain, ...c.bag]) clampPlus(it as { plus?: unknown } | null);
   // statistics: numbers only (a hand-edited or newer file may carry anything)
   const ex = s.stats.extra as unknown;
   if (ex !== undefined) {

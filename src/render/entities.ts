@@ -21,6 +21,7 @@ import { drawAttackIcon } from './telegraphs';
 import { ELEMENTS, enemyElement } from '../game/elements';
 import { drawElementOver, drawElementUnder, drawGolden, isImmuneNow } from './elementFx';
 import type { Character, DamageType } from '../game/types';
+import { essenceDef } from '../data/essence';
 import type { Entity, World } from '../game/world';
 
 const RARITY_COLOR: Record<string, string> = { common: '#e8e8e8', uncommon: '#58d66a', rare: '#4aa3ff', epic: '#b06bff', legendary: '#ff9b2e' };
@@ -727,6 +728,57 @@ export function drawHazardEntity(ctx: CanvasRenderingContext2D, e: Entity, now: 
 
 /** Glowen (D83): a ghostly green blob of ectoplasm with a wobbling skin and a wisp of tail; bigger for more. */
 export const GLOWEN_COLOR = '#9dffcf';
+/** Soul Essence (D198): a small soul-flame with a face, its tier's colour, a beam, and one orbiting spark per tier. */
+export function drawEssence(ctx: CanvasRenderingContext2D, x: number, y: number, now: number, color: string, tier: number): void {
+  ctx.save();
+  const grad = ctx.createLinearGradient(x, y - 130, x, y);
+  grad.addColorStop(0, withAlpha(color, 0));
+  grad.addColorStop(1, withAlpha(color, 0.45));
+  ctx.fillStyle = grad;
+  ctx.fillRect(x - 5, y - 130, 10, 130);
+  ctx.restore();
+  const bob = Math.sin(now * 2.4) * 2;
+  glow(ctx, x, y + bob, 24 + tier * 2, color, 0.6);
+  ctx.save();
+  ctx.translate(x, y + bob);
+  // the flame: a teardrop whose tip flickers
+  const tip = Math.sin(now * 7) * 2.2;
+  ctx.beginPath();
+  ctx.moveTo(tip, -15);
+  ctx.bezierCurveTo(7 + tip * 0.3, -8, 9, -1, 7, 4);
+  ctx.bezierCurveTo(5, 9, -5, 9, -7, 4);
+  ctx.bezierCurveTo(-9, -1, -7 + tip * 0.3, -8, tip, -15);
+  ctx.closePath();
+  ctx.fillStyle = withAlpha(color, 0.9);
+  ctx.fill();
+  ctx.strokeStyle = OUTLINE;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // a paler core
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 3.6, 4.6, 0, 0, Math.PI * 2);
+  ctx.fillStyle = withAlpha('#ffffff', 0.55);
+  ctx.fill();
+  // whoever it was, still a little surprised
+  ctx.fillStyle = OUTLINE;
+  ctx.beginPath();
+  ctx.arc(-2.2, -0.5, 1.1, 0, Math.PI * 2);
+  ctx.arc(2.2, -0.5, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, 3.2, 1, 0, Math.PI * 2);
+  ctx.fill();
+  // one spark per tier
+  for (let i = 0; i < tier; i++) {
+    const a = now * 1.8 + (i / tier) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(Math.cos(a) * 13, Math.sin(a) * 5 - 2, 1.6, 0, Math.PI * 2);
+    ctx.fillStyle = withAlpha(color, 0.95);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawGlowenWisp(ctx: CanvasRenderingContext2D, x: number, y: number, now: number, id: number, amount: number): void {
   const s = Math.min(1.8, 0.75 + Math.log10(Math.max(1, amount)) * 0.35);
   glow(ctx, x, y, 22 * s, GLOWEN_COLOR, 0.55 + Math.sin(now * 4 + id) * 0.1);
@@ -785,6 +837,10 @@ export function drawPickup(ctx: CanvasRenderingContext2D, e: Entity, now: number
   }
   if (pk.kind === 'glowen') {
     drawGlowenWisp(ctx, x, y, now, e.id, pk.amount);
+    return;
+  }
+  if (pk.kind === 'essence') {
+    drawEssence(ctx, x, y, now, essenceDef(pk.essenceTier ?? 1).color, pk.essenceTier ?? 1);
     return;
   }
   const color = rarityColor(pk.rarity);

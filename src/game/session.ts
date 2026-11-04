@@ -28,6 +28,7 @@ import { BOSSES } from '../data/bosses';
 import { DEATH_TITLES } from '../data/story';
 import { newWorldState } from './save/schema';
 import { applyCoopProgress } from './save/coopProgress';
+import { essenceCounts, essenceDef } from '../data/essence';
 import { flaskCap, flaskMaxFor } from './combat/formulas';
 import { applyArenaChanges } from './boss/arena';
 import { achievements } from './achievements';
@@ -992,6 +993,16 @@ export class GameSession {
       if (!c.knownSpells.includes(pk.spellId)) c.knownSpells.push(pk.spellId);
       this.w.sfx('reliquary', e.x);
       this.w.emit({ t: 'msg', text: 'You learned a spell.', forPlayer: p.pl!.playerId, color: '#c58cff' });
+      return true;
+    }
+    if (pk.kind === 'essence' && pk.essenceTier) {
+      const t = Math.max(1, Math.min(5, pk.essenceTier));
+      const e = essenceCounts(c);
+      e[t - 1]! += pk.amount;
+      c.essence = e;
+      const def = essenceDef(t);
+      this.w.sfx('reliquary', p.x);
+      this.w.emit({ t: 'msg', text: `${pk.amount > 1 ? `${pk.amount} × ` : ''}${def.name} (Soul Essence, Tier ${t})`, forPlayer: p.pl!.playerId, color: def.color });
       return true;
     }
     if (pk.kind === 'tear') {

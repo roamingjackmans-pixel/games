@@ -1,7 +1,7 @@
 // Derived player numbers from stats + equipment + affixes + gems + rings + legendary powers.
 // Recomputed on every equipment, stat or two-hand change. Never stored.
 import { WEAPONS } from '../../data/weapons';
-import { SHIELDS, shieldValues } from '../../data/shields';
+import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { CASTING_TOOLS, toolBash } from '../../data/castingTools';
 import { armorPieceDefense } from '../../data/armor';
 import { AFFIXES, affixBuildup } from '../../data/affixes';
@@ -14,6 +14,7 @@ import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatId, St
 import { statBoosts } from '../../data/classes';
 import { DAMAGE_TYPES } from '../types';
 import { RARITY_POWER } from '../../data/proficiency';
+import { reinforceMult } from '../../data/essence';
 import { profBonuses } from '../items/proficiency';
 
 export interface Derived {
@@ -56,6 +57,8 @@ export interface Derived {
   shield: ShieldDef | null;
   shieldIlvl: number;
   shieldVals: { physical: number; elemental: number; holyVoid: number };
+  /** stamina per 100 blocked: the shield's stability, less for a reinforced shield (D198) */
+  shieldStability: number;
   shieldMeetsReq: boolean;
   stabilityMult: number;
   /** the casting tool keys 1–3 cast with: the one in the weapon hand if it holds one, else the off hand's (D117) */
@@ -349,7 +352,7 @@ export function computeDerived(c: Character): Derived {
   for (const slot of ['head', 'body', 'legs'] as const) {
     const it = c.equipment[slot];
     if (!it) continue;
-    const d = armorPieceDefense(it.baseId, it.ilvl);
+    const d = armorPieceDefense(it.baseId, it.ilvl, it.plus);
     for (const t of DAMAGE_TYPES) defense[t] += d[t];
   }
   for (const t of DAMAGE_TYPES) defense[t] = (defense[t] + defAll) * (1 + (defPct[t] ?? 0));
@@ -359,7 +362,8 @@ export function computeDerived(c: Character): Derived {
   const stam = maxStamina(stats.endurance, boost.endurance) + stamFlat;
   const shieldIlvl = off?.ilvl ?? 1;
   const toolIlvl = off?.ilvl ?? 1;
-  const sv = shield ? shieldValues(shield, shieldIlvl) : { physical: 0, elemental: 0, holyVoid: 0 };
+  // a reinforced shield leaks less and costs less stamina a block (D198)
+  const sv = shield ? shieldValues(shield, shieldIlvl, off?.plus) : { physical: 0, elemental: 0, holyVoid: 0 };
   sv.elemental = Math.min(0.85, sv.elemental + elemBlockBonus);
   sv.holyVoid = Math.min(0.85, sv.holyVoid + elemBlockBonus);
 
@@ -377,7 +381,7 @@ export function computeDerived(c: Character): Derived {
     weaponMeetsReq,
     skillsUnlocked: main && weaponMeetsReq ? itemSkillCount(main) : 0,
     // rarity sets the damage tier (D178)
-    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'],
+    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceMult(main?.plus),
     dmgPct,
     flat,
     convert,
@@ -401,6 +405,7 @@ export function computeDerived(c: Character): Derived {
     shield: twoHanded ? null : shield,
     shieldIlvl,
     shieldVals: sv,
+    shieldStability: shield ? shieldStability(shield, off?.plus) : 0,
     shieldMeetsReq: off && shield ? meetsRequirements(itemRequirements(off), stats, false) : false,
     stabilityMult: Math.max(0.2, 1 - stabilityRed),
     tool: castTool?.def ?? null,

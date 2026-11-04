@@ -720,6 +720,8 @@ export interface Item {
   skills?: number;
   /** weapons and casting tools: experience toward the next rarity (D178) */
   xp?: number;
+  /** weapons, shields and armour: reinforced with Soul Essence, +0 … +15 (D198) */
+  plus?: number;
 }
 
 export type ConsumableId =
@@ -759,6 +761,8 @@ export interface Character {
   knownSpells: string[];
   spellLoadout: { brain: Loadout3; prayer: Loadout3 };
   tears: number;
+  /** Soul Essence held, Tier 1 … 5 (D198); absent on older saves */
+  essence?: number[];
   /** stat points refunded by a Tear of Undoing, spent for free at a bonfire */
   freePoints: number;
   tutorialDone: boolean;

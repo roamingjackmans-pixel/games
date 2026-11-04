@@ -426,8 +426,10 @@ export interface HazardC {
 }
 
 export interface PickupC {
-  kind: 'item' | 'shards' | 'gem' | 'consumable' | 'shardpile' | 'glowen' | 'spell' | 'tear';
+  kind: 'item' | 'shards' | 'gem' | 'consumable' | 'shardpile' | 'glowen' | 'spell' | 'tear' | 'essence';
   forPlayer: string | null;
+  /** Soul Essence tier (D198) */
+  essenceTier?: number;
   item?: Item;
   gem?: Gem;
   amount: number;

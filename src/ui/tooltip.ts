@@ -2,7 +2,7 @@
 // against what is worn in that slot (green better, white same, red worse), and small item icons.
 import { glyphEl, glyphText } from './glyphs';
 import { WEAPONS } from '../data/weapons';
-import { SHIELDS, shieldValues } from '../data/shields';
+import { SHIELDS, shieldStability, shieldValues } from '../data/shields';
 import { CASTING_TOOLS, toolBash } from '../data/castingTools';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
 import { SKILLS } from '../data/skills';
@@ -25,6 +25,7 @@ import { DAMAGE_TYPES, type Character, type DamageType, type Gem, type Grade, ty
 import { fmt, h } from './dom';
 import { shieldSpecials, weaponSpecials } from './itemSpecials';
 import { RARITY_POWER } from '../data/proficiency';
+import { plusName, reinforceMult } from '../data/essence';
 import { upgradeInfo } from '../game/items/proficiency';
 
 export const RARITY_LABEL: Record<string, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
@@ -89,7 +90,7 @@ function weaponDamageByType(item: Item, stats: Stats, twoH: boolean, boost: Part
   const w = WEAPONS[item.baseId];
   if (!w) return {};
   const meets = meetsRequirements(reqsFor(item), stats, twoH);
-  const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH, boost) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity];
+  const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH, boost) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity] * reinforceMult(item.plus);
   const holy = w.holyPct ?? 0;
   const out: Partial<Record<DamageType, number>> = {};
   const el = weaponElement(w);
@@ -105,13 +106,13 @@ export function itemScore(item: Item | null, stats: Stats, twoHanded: boolean): 
   if (w) return Object.values(weaponDamageByType(item, stats, twoHanded)).reduce((a, b) => a + (b ?? 0), 0);
   const s = SHIELDS[item.baseId];
   if (s) {
-    const v = shieldValues(s, item.ilvl);
+    const v = shieldValues(s, item.ilvl, item.plus);
     return v.physical * 100 + v.elemental * 50;
   }
   const t = CASTING_TOOLS[item.baseId];
   if (t) return toolMult(t.grade, item.ilvl) * RARITY_POWER[item.rarity] * 100;
   if (item.kind === 'armor') {
-    const d = armorPieceDefense(item.baseId, item.ilvl);
+    const d = armorPieceDefense(item.baseId, item.ilvl, item.plus);
     return DAMAGE_TYPES.reduce((a, k) => a + d[k], 0);
   }
   return 0;
@@ -267,7 +268,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   const out: (HTMLElement | null)[] = [];
 
   // ---- name and title line
-  out.push(h('div', { class: `name r-${item.rarity}` }, item.name));
+  out.push(h('div', { class: `name r-${item.rarity}` }, plusName(item)));
   const w = WEAPONS[item.baseId];
   const s = SHIELDS[item.baseId];
   const t = CASTING_TOOLS[item.baseId];
@@ -356,8 +357,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
 
   if (s) {
     const os = other ? SHIELDS[other.baseId] : undefined;
-    const v = shieldValues(s, item.ilvl);
-    const ov = os && other ? shieldValues(os, other.ilvl) : null;
+    const v = shieldValues(s, item.ilvl, item.plus);
+    const ov = os && other ? shieldValues(os, other.ilvl, other.plus) : null;
     const pick = (x: { physical: number; elemental: number; holyVoid: number }, k: DamageType): number => (k === 'physical' ? x.physical : k === 'holy' || k === 'void' ? x.holyVoid : x.elemental);
     const half = meets ? 1 : 0.5;
     const otherMeets = !!(os && other && meetsRequirements(reqsFor(other), stats, false));
@@ -369,7 +370,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
         { class: 'tt-section' },
         rowsEl(
           [
-            { label: 'Stability', cur: s.stability, prev: os ? os.stability : null, better: 'lower', fmt: int0, note: 'stamina lost per 100 damage blocked (lower is better)' },
+            { label: 'Stability', cur: shieldStability(s, item.plus), prev: os ? shieldStability(os, other?.plus) : null, better: 'lower', fmt: int0, note: 'stamina lost per 100 damage blocked (lower is better)' },
             { label: 'Parry', cur: meets ? (s.parryS ?? 0) : 0, prev: os ? (otherMeets ? (os.parryS ?? 0) : 0) : null, better: 'higher', fmt: (x) => (x > 0 ? `${x.toFixed(2)} s` : 'none') },
           ],
           cmp,
@@ -418,8 +419,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   }
 
   if (armor) {
-    const def = armorPieceDefense(item.baseId, item.ilvl);
-    const odef = other && other.kind === 'armor' ? armorPieceDefense(other.baseId, other.ilvl) : null;
+    const def = armorPieceDefense(item.baseId, item.ilvl, item.plus);
+    const odef = other && other.kind === 'armor' ? armorPieceDefense(other.baseId, other.ilvl, other.plus) : null;
     out.push(section('Defense', rowsEl(DAMAGE_TYPES.map((k) => ({ label: ELEMENTS[k].short, cur: def[k], prev: odef ? odef[k] : null, better: 'higher', fmt: int0 })), cmp)));
   }
 

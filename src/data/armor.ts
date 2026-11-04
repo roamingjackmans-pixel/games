@@ -1,6 +1,7 @@
 // CONTENT_ITEMS §7: 24 armor sets (3 weights × 8 zones). The weight class sets the defense split and the
 // pieces' equip load weight (D82; D35 is superseded).
 import type { ArmorSetDef, ArmorWeight, DamageType } from '../game/types';
+import { reinforceMult } from './essence';
 
 export const WEIGHT_DEF: Record<ArmorWeight, Record<DamageType, number>> = {
   light: { physical: 4, magic: 7, void: 6, fire: 7, holy: 6 },
@@ -81,12 +82,13 @@ export function armorPieceName(baseId: string): string {
 }
 
 /** Defense per type for one piece at an item level. */
-export function armorPieceDefense(baseId: string, ilvl: number): Record<DamageType, number> {
+/** A piece's defense at an item level, and its reinforcement (D198: +20% a level, ×4 at +15). */
+export function armorPieceDefense(baseId: string, ilvl: number, plus = 0): Record<DamageType, number> {
   const out: Record<DamageType, number> = { physical: 0, magic: 0, void: 0, fire: 0, holy: 0 };
   const p = parseArmorBase(baseId);
   if (!p || !p.set) return out;
   const base = WEIGHT_DEF[p.set.weight];
-  const k = SLOT_MULT[p.slot] * (1 + 0.6 * (ilvl - 1));
+  const k = SLOT_MULT[p.slot] * (1 + 0.6 * (ilvl - 1)) * reinforceMult(plus);
   for (const t of Object.keys(out) as DamageType[]) out[t] = base[t] * k;
   return out;
 }

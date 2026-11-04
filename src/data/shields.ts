@@ -1,5 +1,6 @@
 // CONTENT_ITEMS §5: shields. Block values improve +1% physical / +1.5% elemental per ilvl above 1 (caps 100% / 85%).
 import type { ShieldDef } from '../game/types';
+import { reinforceMult } from './essence';
 
 export const SHIELDS: Record<string, ShieldDef> = {
   buckler: { id: 'buckler', name: 'Buckler', weight: 1.5, size: 'small', req: { bonk: 0, slicey: 8 }, physical: 0.6, elemental: 0.2, stability: 45, parryS: 0.18, flavor: 'Best parry. Worst everything else.', draw: 's_buckler' },
@@ -29,12 +30,22 @@ export const SHIELDS: Record<string, ShieldDef> = {
 
 export const SHIELD_IDS = Object.keys(SHIELDS);
 
-/** Block values at an item level (+1% physical, +1.5% elemental per ilvl above 1; caps 100% / 85%). */
-export function shieldValues(s: ShieldDef, ilvl: number): { physical: number; elemental: number; holyVoid: number } {
+/**
+ * Block values at an item level (+1% physical, +1.5% elemental per ilvl above 1; caps 100% / 85%). Reinforcement
+ * (D198) lets through 1/×(1 + 0.2 a level) of what got past, so a +15 shield leaks a quarter as much.
+ */
+export function shieldValues(s: ShieldDef, ilvl: number, plus = 0): { physical: number; elemental: number; holyVoid: number } {
   const up = Math.max(0, ilvl - 1);
+  const m = reinforceMult(plus);
+  const tight = (v: number): number => 1 - (1 - v) / m;
   return {
-    physical: Math.min(1, s.physical + 0.01 * up),
-    elemental: Math.min(0.85, s.elemental + 0.015 * up),
-    holyVoid: Math.min(0.85, (s.holyVoidBlock ?? s.elemental) + 0.015 * up),
+    physical: Math.min(1, tight(Math.min(1, s.physical + 0.01 * up))),
+    elemental: Math.min(0.85, tight(Math.min(0.85, s.elemental + 0.015 * up))),
+    holyVoid: Math.min(0.85, tight(Math.min(0.85, (s.holyVoidBlock ?? s.elemental) + 0.015 * up))),
   };
+}
+
+/** Stamina lost per 100 blocked; a reinforced shield loses that much less (D198). */
+export function shieldStability(s: ShieldDef, plus = 0): number {
+  return s.stability / reinforceMult(plus);
 }

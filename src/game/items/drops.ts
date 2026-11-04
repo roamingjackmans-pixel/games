@@ -1,6 +1,7 @@
 // Drops (GAME_DESIGN §8.2, §11; CONTENT_ITEMS §3, §12): rolled per player from that player's own stream
 // `loot:<playerId>:<n>` and visible only to them (D33).
 import { stream, type Rng } from '../../engine/rng';
+import { essenceTierFor } from '../../data/essence';
 import { gemDropLevel } from '../../data/gems';
 import { CONSUMABLE_CHANCE, DROP_CHANCE, GEM_CHANCE, GLOWEN_PUFF, GLOWEN_WISP_CHANCE, TEAR_CHANCE, type LootSource } from '../../data/lootTables';
 import { SPELLS } from '../../data/spells';
@@ -82,7 +83,22 @@ export function enemyDrops(c: DropContext, e: Entity): void {
       const [x, y] = scatter(rng, e.x, e.y);
       spawnPickup(w, x, y, { kind: 'glowen', forPlayer: pid, amount: Math.round(60 * c.zone * (1 + pl.derived.glowenFind)), rarity: 'uncommon' });
     }
+    // Soul Essence (D198), rolled last so the older drops keep their rolls
+    const et = essenceTierFor(c.zone, c.cycle);
+    if (et && rng.chance((en.elite ? ESSENCE_DROP.elite : ESSENCE_DROP.enemy) / divide)) {
+      const [x, y] = scatter(rng, e.x, e.y);
+      dropEssence(w, pid, et, 1, x, y);
+    }
   }
+}
+
+/** Soul Essence (D198): rare from enemies, likelier from Elites and chests, three from every boss. */
+export const ESSENCE_DROP = { enemy: 0.02, elite: 0.35, smallChest: 0.25, mimic: 0.5, treasure: 1, boss: 3 } as const;
+const ESSENCE_RARITY = ['uncommon', 'rare', 'epic', 'legendary', 'legendary'] as const;
+
+function dropEssence(w: World, pid: string, tier: number, n: number, x: number, y: number): void {
+  if (tier <= 0 || n <= 0) return;
+  spawnPickup(w, x, y, { kind: 'essence', forPlayer: pid, essenceTier: tier, amount: n, rarity: ESSENCE_RARITY[tier - 1]! });
 }
 
 const BUNDLE: ConsumableId[] = ['throwing_knife', 'firebomb', 'frost_jar', 'holy_water', 'stamina_tonic', 'lure', 'shard_pouch'];
@@ -113,6 +129,12 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
     // a little Glowen always
     const [sx, sy] = scatter(rng, x, y + 20);
     spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round((kind === 'treasure' ? 60 : 25) * c.zone * (1 + pl.derived.glowenFind)), rarity: 'common' });
+    const et = essenceTierFor(c.zone, c.cycle);
+    if (et) {
+      const n = kind === 'treasure' ? 1 + (rng.chance(0.5) ? 1 : 0) : kind === 'mimic' ? (rng.chance(ESSENCE_DROP.mimic) ? 1 : 0) : kind === 'small' ? (rng.chance(ESSENCE_DROP.smallChest) ? 1 : 0) : 0;
+      const [ex, ey] = scatter(rng, x, y + 20);
+      dropEssence(w, pid, et, n, ex, ey);
+    }
   }
 }
 
@@ -176,5 +198,7 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
     }
     const [sx, sy] = scatter(rng, x, y, 60);
     spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round(150 * c.zone * (1 + pl.derived.glowenFind)), rarity: 'uncommon' });
+    const [ex, ey] = scatter(rng, x, y, 60);
+    dropEssence(w, pid, essenceTierFor(c.zone, c.cycle), ESSENCE_DROP.boss, ex, ey);
   }
 }

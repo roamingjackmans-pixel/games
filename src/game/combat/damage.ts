@@ -251,7 +251,7 @@ function blockReduction(p: Entity, type: DamageType): { pct: number; stability: 
   const v = d.shieldVals;
   let pct = type === 'physical' ? v.physical : type === 'holy' || type === 'void' ? v.holyVoid : v.elemental;
   if (!d.shieldMeetsReq) pct *= 0.5;
-  return { pct, stability: d.shield.stability };
+  return { pct, stability: d.shieldStability || d.shield.stability };
 }
 
 /** A player's guard: shield, or two-handed weapon guard (Phalanx improves it). */

@@ -52,6 +52,8 @@ test('LB / RB switch tabs; left / right stay inside the tab content (D145)', asy
   await press(page, 5);
   expect(await activeTab(page)).toBe('weapons'); // D178: the Weapons tab sits between the Gem bench and the Shop
   await press(page, 5);
+  expect(await activeTab(page)).toBe('reinforce'); // D198: then Reinforce
+  await press(page, 5);
   expect(await activeTab(page)).toBe('shop');
   // D148: a bumper switch lands on the new tab's first control
   expect(await inTabs(page)).toBe(false);
