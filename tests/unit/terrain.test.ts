@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateZone } from '../../src/game/procgen/zone';
 import { buildRoom } from '../../src/game/procgen/rooms';
-import { TERRAIN_MAX_COVER, TERRAIN_ROOM_RATE, terrainStream } from '../../src/game/procgen/terrain';
+import { TERRAIN_HEAVY_COVER, TERRAIN_MAX_COVER, TERRAIN_ROOM_RATE, terrainStream } from '../../src/game/procgen/terrain';
 import { TERRAIN_HURT_PCT, TERRAIN_HURT_TICK_S } from '../../src/game/systems/terrain';
 import { Room, ROOM_H, ROOM_W, T, TERRAIN, doorTiles, worldToTile, type Side } from '../../src/game/room';
 import { World, type Entity } from '../../src/game/world';
@@ -50,6 +50,8 @@ describe('hazardous terrain generation (PROCGEN §3.2)', () => {
     let withTerrain = 0;
     let slowTiles = 0;
     let hurtTiles = 0;
+    let heavyRooms = 0;
+    const heavyKinds = new Set<string>();
     for (let s = 0; s < 14; s++)
       for (let z = 1; z <= 8; z++) {
         const L = generateZone(`terrain-${s}`, z, { tutorial: s === 0 && z === 1 });
@@ -67,7 +69,14 @@ describe('hazardous terrain generation (PROCGEN §3.2)', () => {
           withTerrain++;
           let floor = 0;
           for (let i = 0; i < room.tiles.length; i++) if (room.tiles[i] === T.Floor) floor++;
-          expect(tiles.length, tag).toBeLessThanOrEqual(Math.floor(floor * TERRAIN_MAX_COVER));
+          // a heavy room (D160) may cover far more than an ordinary one
+          expect(tiles.length, tag).toBeLessThanOrEqual(Math.floor(floor * TERRAIN_HEAVY_COVER));
+          const heavy = tiles.length > Math.floor(floor * TERRAIN_MAX_COVER);
+          if (heavy) {
+            heavyRooms++;
+            const k = new Set(tiles.map((i) => room.terrain[i]));
+            heavyKinds.add(k.size === 2 ? 'mixed' : k.has(TERRAIN.Slow) ? 'slow' : 'hurt');
+          }
           const doors: [number, number][] = [];
           for (const sd of ['n', 's', 'e', 'w'] as Side[]) doors.push(...doorTiles(sd));
           const keep = [...markers.spawns, ...markers.chests, room.nearestFloor(640, 368, 22)].map(([x, y]) => worldToTile(x, y));
@@ -112,7 +121,7 @@ describe('hazardous terrain generation (PROCGEN §3.2)', () => {
             }
           }
           expect(patches, tag).toBeGreaterThanOrEqual(1);
-          expect(patches, tag).toBeLessThanOrEqual(3);
+          expect(patches, tag).toBeLessThanOrEqual(8); // 1–3, or 4–8 in a heavy room (D160)
         }
       }
     const share = withTerrain / eligible;
@@ -121,6 +130,9 @@ describe('hazardous terrain generation (PROCGEN §3.2)', () => {
     // both kinds turn up
     expect(slowTiles).toBeGreaterThan(200);
     expect(hurtTiles).toBeGreaterThan(200);
+    // heavy rooms turn up, in all three themes
+    expect(heavyRooms / eligible).toBeGreaterThan(0.06);
+    expect([...heavyKinds].sort()).toEqual(['hurt', 'mixed', 'slow']);
   });
 
   it('is deterministic per room', () => {

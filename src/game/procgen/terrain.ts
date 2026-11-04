@@ -1,21 +1,30 @@
 // Hazardous terrain patches (PROCGEN §3.2): a seeded share of combat and ambush rooms get 1–3 organic patches of
-// Slow or Hurt terrain on plain floor. Deterministic from (seed, zone, cycle, room), so the host and every guest
+// Slow or Hurt terrain on plain floor, and some of those are heavy: a field of 4–8 big patches (D160). Deterministic from (seed, zone, cycle, room), so the host and every guest
 // agree (the layer also travels in the room sync). Rules:
 //  · only plain floor ('.'), and every tile of a patch has 8 floor (or grate) neighbours: never on or touching
 //    walls, pillars, props, pits, void, '~' hazard tiles or doors, so a patch never narrows a passage;
 //  · never within 3 tiles of a door (the door tiles and where you step in), never on or next to a spawn point
 //    or a chest spot (nor the room's centre, where a chest without a C spot stands);
-//  · patches keep a 1-tile gap from each other; total coverage ≤ TERRAIN_MAX_COVER of the room's floor;
+//  · patches keep a 1-tile gap from each other; total coverage ≤ TERRAIN_MAX_COVER of the room's floor
+//    (TERRAIN_HEAVY_COVER in a heavy room);
 //  · after each patch, a terrain-free walkable route must still join every door, chest spot and spawn point that
 //    was reachable before (flood fill); a patch that breaks one is dropped and another tried.
 import { stream, type Rng } from '../../engine/rng';
 import { ROOM_H, ROOM_W, T, TERRAIN, doorTiles, worldToTile, type Room, type Side } from '../room';
 import type { RoomNode, ZoneLayout } from './zone';
 
-/** share of combat and ambush rooms with hazardous terrain */
-export const TERRAIN_ROOM_RATE = 0.35;
+/** share of combat and ambush rooms with hazardous terrain (D160; was 0.35) */
+export const TERRAIN_ROOM_RATE = 0.5;
 /** most of a room's floor the patches may cover */
 export const TERRAIN_MAX_COVER = 0.08;
+/**
+ * Heavy terrain rooms (D160): this share of the terrain rooms is a whole field of it instead: 4–8 big patches covering
+ * up to TERRAIN_HEAVY_COVER of the floor, all Slow, all Hurt, or both mixed. The usual rules still hold (plain floor,
+ * clear of doors, spawns and chests, and a clean route between them all).
+ */
+export const TERRAIN_HEAVY_RATE = 0.3;
+export const TERRAIN_HEAVY_COVER = 0.3;
+type HeavyTheme = 'slow' | 'hurt' | 'mixed';
 /** door tiles keep this many tiles (Chebyshev) of clean floor around them */
 const DOOR_CLEAR = 3;
 const N4 = [
@@ -88,7 +97,9 @@ export function placeTerrain(room: Room, rng: Rng, keep: [number, number][]): nu
       for (const [kx, ky] of keepTiles) if (Math.max(Math.abs(kx - x), Math.abs(ky - y)) <= 1) good = false;
       if (good) ok[y * ROOM_W + x] = 1;
     }
-  const cap = Math.floor(floorCount * TERRAIN_MAX_COVER);
+  const heavy = rng.chance(TERRAIN_HEAVY_RATE);
+  const theme: HeavyTheme | null = heavy ? rng.pick<HeavyTheme>(['slow', 'hurt', 'mixed']) : null;
+  const cap = Math.floor(floorCount * (heavy ? TERRAIN_HEAVY_COVER : TERRAIN_MAX_COVER));
   // what must stay joined by clean floor: the open doors' tiles, the kept points
   const starts: number[] = [];
   for (const s of ['n', 's', 'e', 'w'] as Side[]) if (room.doors[s].exists) for (const [dx, dy] of doorTiles(s)) starts.push(dy * ROOM_W + dx);
@@ -103,13 +114,13 @@ export function placeTerrain(room: Room, rng: Rng, keep: [number, number][]): nu
   const candidates: number[] = [];
   for (let i = 0; i < n; i++) if (ok[i]) candidates.push(i);
   if (!candidates.length || cap < 6) return 0;
-  const patches = rng.int(1, 3);
+  const patches = heavy ? rng.int(4, 8) : rng.int(1, 3);
   let used = 0;
   for (let p = 0; p < patches; p++) {
-    const want = Math.min(rng.int(9, 20), cap - used);
+    const want = Math.min(heavy ? rng.int(16, 45) : rng.int(9, 20), cap - used);
     if (want < 5) break;
-    const kind = rng.chance(0.5) ? TERRAIN.Slow : TERRAIN.Hurt;
-    for (let attempt = 0; attempt < 10; attempt++) {
+    const kind = theme === 'slow' ? TERRAIN.Slow : theme === 'hurt' ? TERRAIN.Hurt : rng.chance(0.5) ? TERRAIN.Slow : TERRAIN.Hurt;
+    for (let attempt = 0; attempt < (heavy ? 16 : 10); attempt++) {
       const free = candidates.filter((i) => ok[i] && !nearTerrain(room, i));
       if (!free.length) return used;
       const patch = growPatch(room, ok, rng, free[rng.int(0, free.length - 1)]!, want);
