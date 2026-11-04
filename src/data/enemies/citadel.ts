@@ -148,7 +148,7 @@ export const CITADEL: Record<string, EnemyDef> = {
         id: 'turret_laser_sweep',
         name: 'Laser Sweep',
         kind: 'pierce',
-        pattern: { kind: 'sweep', angleDeg: 360, r: 'room', durationS: 3.0, anchor: 'self', tickS: 0.25, w: 30, beamLine: true },
+        pattern: { kind: 'sweep', angleDeg: 360, r: 'room', durationS: 3.0, anchor: 'self', tickS: 0.25, w: 30, beamLine: true, gaps: 2 },
         windupMs: 1000,
         recoverMs: 800,
         dmgMult: 1.0,

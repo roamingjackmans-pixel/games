@@ -143,6 +143,9 @@ export type PatternDef = PatternCommon &
         count?: number;
         /** with count: every other sweep turns the opposite way */
         opposite?: boolean;
+        /** breaks along the sweep at set distances from its pivot, to stand in as it passes (D163) */
+        gaps?: number;
+        gapW?: number;
       }
     | {
         kind: 'expandingRing';
@@ -158,7 +161,7 @@ export type PatternDef = PatternCommon &
         centerGapDeg?: number;
       }
     | { kind: 'randomCircles'; n: number; r: number; within?: number; anchor: Anchor; overS?: number }
-    | { kind: 'wave'; w: number; speed: number; from: 'north' | 'south' | 'east' | 'west' | 'random' | 'cross'; safeTiles?: 'G' }
+    | { kind: 'wave'; w: number; speed: number; from: 'north' | 'south' | 'east' | 'west' | 'random' | 'cross'; safeTiles?: 'G'; /** breaks in the wall to slip through (D163) */ gaps?: number; gapW?: number }
     | { kind: 'pockets'; n: number; pocketR: number; anchor?: Anchor }
     | { kind: 'trail'; durationS: number; r: number; hazard: HazardId }
     | { kind: 'beam'; w: number; l: number | 'room'; turnRateDeg: number; durationS: number; tickS: number; anchor: Anchor; count?: number; opposite?: boolean }

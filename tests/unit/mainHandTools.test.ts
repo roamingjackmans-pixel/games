@@ -149,7 +149,7 @@ describe('staffs and talismans in either hand (D117)', () => {
     c.altMain = c.equipment.main;
     c.equipment.main = staff;
     const b = computeDerived(c).load.load;
-    expect(a - b).toBeCloseTo(16 - 2.5, 1);
+    expect(a - b).toBeCloseTo((16 - 2.5) * 1.2, 1); // items weigh 20% more (D163)
   });
 });
 

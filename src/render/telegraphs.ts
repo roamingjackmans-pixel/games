@@ -310,7 +310,49 @@ function sweepShape(s: Sweep, a: number): Shape {
 }
 
 /** A rotating cone / beam: the start wedge charges, a dotted ember arc shows the way it will turn. */
+/** A sweep, with its gaps (D163) cut out and their safe rings marked. */
 function drawSweep(ctx: CanvasRenderingContext2D, s: Sweep, l: Look, c: Charge, hc: boolean, pre: boolean, tau: number, id: number): void {
+  if (!s.gaps?.length) {
+    drawSweepBody(ctx, s, l, c, hc, pre, tau, id);
+    return;
+  }
+  const hw = (s.gapW ?? 130) / 2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(-4000, -4000, 9000, 9000);
+  for (const g of s.gaps) {
+    ctx.moveTo(s.x + g + hw, s.y);
+    ctx.arc(s.x, s.y, g + hw, 0, Math.PI * 2);
+    if (g - hw > 0) {
+      ctx.moveTo(s.x + g - hw, s.y);
+      ctx.arc(s.x, s.y, g - hw, 0, Math.PI * 2);
+    }
+  }
+  ctx.clip('evenodd');
+  drawSweepBody(ctx, s, l, c, hc, pre, tau, id);
+  ctx.restore();
+  // the safe rings: a calm white band at each gap's distance
+  ctx.beginPath();
+  for (const g of s.gaps) {
+    ctx.moveTo(s.x + g + hw, s.y);
+    ctx.arc(s.x, s.y, g + hw, 0, Math.PI * 2);
+    if (g - hw > 0) {
+      ctx.moveTo(s.x + g - hw, s.y);
+      ctx.arc(s.x, s.y, g - hw, 0, Math.PI * 2);
+    }
+  }
+  ctx.setLineDash(DOTS);
+  ctx.lineDashOffset = -c.t * 30;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = hc ? 3.5 : 2.5;
+  ctx.globalAlpha = pre ? 0.55 + 0.25 * c.pulse : 0.45;
+  ctx.stroke();
+  ctx.setLineDash(NO_DASH);
+  ctx.lineCap = 'butt';
+}
+
+function drawSweepBody(ctx: CanvasRenderingContext2D, s: Sweep, l: Look, c: Charge, hc: boolean, pre: boolean, tau: number, id: number): void {
   const dir = Math.sign(s.arc) || 1;
   if (pre) {
     ONE[0] = sweepShape(s, s.a0);
@@ -593,6 +635,19 @@ function drawWave(ctx: CanvasRenderingContext2D, s: Wave, l: Look, c: Charge, hc
   const y0 = horiz ? ROOM_MIN_Y - 32 : pos - s.w / 2;
   const bw = horiz ? s.w : ROOM_MAX_X - ROOM_MIN_X + 64;
   const bh = horiz ? ROOM_MAX_Y - ROOM_MIN_Y + 64 : s.w;
+  // gaps (D163): the wall is drawn with clean breaks, capped by bright posts
+  const gw = (s.gapW ?? 130) / 2;
+  const gaps = s.gaps ?? [];
+  if (gaps.length) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(-4000, -4000, 9000, 9000);
+    for (const g of gaps) {
+      if (horiz) ctx.rect(-4000, g - gw, 9000, gw * 2);
+      else ctx.rect(g - gw, -4000, gw * 2, 9000);
+    }
+    ctx.clip('evenodd');
+  }
   ctx.beginPath();
   ctx.rect(x0, y0, bw, bh);
   ctx.fillStyle = l.main;
@@ -680,6 +735,40 @@ function drawWave(ctx: CanvasRenderingContext2D, s: Wave, l: Look, c: Charge, hc
     ctx.globalAlpha = 0.5 * (1 - tau / 0.15);
     ctx.fill();
   }
+  if (!gaps.length) return;
+  ctx.restore();
+  // posts at each break's edges, and a calm white line down the middle of the opening
+  ctx.beginPath();
+  for (const g of gaps)
+    for (const e of [g - gw, g + gw]) {
+      if (horiz) {
+        ctx.moveTo(x0, e);
+        ctx.lineTo(x0 + bw, e);
+      } else {
+        ctx.moveTo(e, y0);
+        ctx.lineTo(e, y0 + bh);
+      }
+    }
+  ctx.strokeStyle = l.hot;
+  ctx.lineWidth = hc ? 5 : 3.5;
+  ctx.globalAlpha = 0.95;
+  ctx.stroke();
+  ctx.beginPath();
+  for (const g of gaps) {
+    if (horiz) {
+      ctx.moveTo(x0 + 6, g);
+      ctx.lineTo(x0 + bw - 6, g);
+    } else {
+      ctx.moveTo(g, y0 + 6);
+      ctx.lineTo(g, y0 + bh - 6);
+    }
+  }
+  ctx.setLineDash(DOTS);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = hc ? 3 : 2;
+  ctx.globalAlpha = pre ? 0.5 + 0.3 * c.pulse : 0.6;
+  ctx.stroke();
+  ctx.setLineDash(NO_DASH);
 }
 
 // ---------------------------------------------------------------- pockets

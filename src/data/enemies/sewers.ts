@@ -376,7 +376,7 @@ export const SEWERS: Record<string, EnemyDef> = {
         name: 'Wave',
         kind: 'pierce',
         // raised grates are safe; the attack is refused if any player is too far from one
-        pattern: { kind: 'wave', w: 120, speed: 320, from: 'random', safeTiles: 'G' },
+        pattern: { kind: 'wave', w: 120, speed: 320, from: 'random', safeTiles: 'G', gaps: 2 },
         windupMs: 1200,
         recoverMs: 1200,
         dmgMult: 1.3,

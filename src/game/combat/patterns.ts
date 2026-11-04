@@ -21,9 +21,11 @@ export type Shape =
   | { k: 'ring'; x: number; y: number; rIn: number; rOut: number }
   | { k: 'line'; x: number; y: number; a: number; w: number; l: number }
   | { k: 'cone'; x: number; y: number; a: number; half: number; r: number }
-  | { k: 'sweep'; x: number; y: number; a0: number; arc: number; half: number; r: number; dur: number; line: boolean; w: number }
+  /** gaps: distances from (x, y) where the sweep is broken, each gapW wide (D163) */
+  | { k: 'sweep'; x: number; y: number; a0: number; arc: number; half: number; r: number; dur: number; line: boolean; w: number; gaps?: number[]; gapW?: number }
   | { k: 'expRing'; x: number; y: number; speed: number; thick: number; gaps: number[]; gapW: number; maxR: number }
-  | { k: 'wave'; dir: 'north' | 'south' | 'east' | 'west'; w: number; speed: number; safeGrates: boolean }
+  /** gaps: centres of breaks in the wall along its length (x for a north/south wave, y for east/west), each gapW wide */
+  | { k: 'wave'; dir: 'north' | 'south' | 'east' | 'west'; w: number; speed: number; safeGrates: boolean; gaps?: number[]; gapW?: number }
   | { k: 'pockets'; pockets: { x: number; y: number; r: number }[] }
   | { k: 'beam'; x: number; y: number; a: number; w: number; l: number; turn: number }
   /** a boulder of diameter 0.9 w rolling from (x, y) along angle a for l px at speed px/s after impact */
@@ -270,6 +272,36 @@ export function waveFair(p: PatternDef, c: PatternCtx): boolean {
   return bestWaveSlack(wave, c, pool, delay, crossAfter).some((x) => x.s >= 0);
 }
 
+/** default width of a gap in a wave (D163): a body fits with room to spare */
+export const WAVE_GAP_W = 130;
+
+/**
+ * Where a wave's gaps go (D163): the wall's length is cut into n equal stretches and each gets one gap somewhere
+ * inside it (clear of the room's edge), so the gaps are always well apart.
+ */
+function placeWaveGaps(dir: WaveDir, n: number, gapW: number, rng: Rng): number[] {
+  const horiz = dir === 'east' || dir === 'west';
+  const lo = horiz ? ROOM_MIN_Y : ROOM_MIN_X;
+  const hi = horiz ? ROOM_MAX_Y : ROOM_MAX_X;
+  const part = (hi - lo) / n;
+  const pad = gapW / 2 + 8;
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = lo + part * i + pad;
+    const b = lo + part * (i + 1) - pad;
+    out.push(Math.round(b > a ? rng.range(a, b) : (a + b) / 2));
+  }
+  return out;
+}
+
+/** Is a body at (x, y) with radius r inside one of a wave's gaps (at least half of it within the break)? */
+export function inWaveGap(s: Extract<Shape, { k: 'wave' }>, x: number, y: number, r: number): boolean {
+  if (!s.gaps?.length) return false;
+  const v = s.dir === 'east' || s.dir === 'west' ? y : x;
+  const half = (s.gapW ?? WAVE_GAP_W) / 2;
+  return s.gaps.some((g) => Math.abs(v - g) + r * 0.5 <= half);
+}
+
 const PERP: Record<WaveDir, WaveDir[]> = { north: ['east', 'west'], south: ['east', 'west'], east: ['north', 'south'], west: ['north', 'south'] };
 
 /**
@@ -426,7 +458,7 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
       const a0 = Math.abs(p.angleDeg) >= 360 ? c.facing : c.facing - arc / 2;
       const r = p.r === 'room' ? ROOM_DIAG : p.r;
       return [
-        spec([{ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }], {
+        spec([withSweepGaps({ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }, p, c.rng)], {
           mode: p.tickS ? 'tick' : 'once',
           activeS: p.durationS,
           tickS: p.tickS ?? 0,
@@ -487,7 +519,12 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
     case 'wave': {
       const dir = pickWaveDir(p, c, o);
       const across = dir === 'east' || dir === 'west' ? ROOM_PX_W : ROOM_PX_H;
-      return [spec([{ k: 'wave', dir, w: p.w, speed: p.speed, safeGrates: p.safeTiles === 'G' }], { mode: 'once', activeS: across / p.speed, area: true })];
+      const shape: Extract<Shape, { k: 'wave' }> = { k: 'wave', dir, w: p.w, speed: p.speed, safeGrates: p.safeTiles === 'G' };
+      if (p.gaps) {
+        shape.gapW = p.gapW ?? WAVE_GAP_W;
+        shape.gaps = placeWaveGaps(dir, p.gaps, shape.gapW, c.rng);
+      }
+      return [spec([shape], { mode: 'once', activeS: across / p.speed, area: true })];
     }
     case 'pockets': {
       return [spec([{ k: 'pockets', pockets: placePockets(p.n, p.pocketR, c, p.anchor) }], { area: true })];
@@ -539,6 +576,36 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
  * at the target from its own anchor; with anchor 'corner' every sweep gets its own corner (the second one
  * diagonally opposite the first); `opposite` turns every other sweep the other way.
  */
+/**
+ * A sweep's gaps (D163): breaks at set distances from its pivot, so standing that far away lets it pass over you.
+ * The reach that lies inside the room is cut into equal stretches and each gets one gap.
+ */
+function withSweepGaps(s: Extract<Shape, { k: 'sweep' }>, p: Extract<PatternDef, { kind: 'sweep' }>, rng: Rng): Extract<Shape, { k: 'sweep' }> {
+  if (!p.gaps) return s;
+  const gapW = p.gapW ?? WAVE_GAP_W;
+  let far = 0;
+  for (const [cx, cy] of [[ROOM_MIN_X, ROOM_MIN_Y], [ROOM_MAX_X, ROOM_MIN_Y], [ROOM_MIN_X, ROOM_MAX_Y], [ROOM_MAX_X, ROOM_MAX_Y]] as const) far = Math.max(far, Math.hypot(cx - s.x, cy - s.y));
+  const lo = 100;
+  const hi = Math.max(lo + gapW * p.gaps, Math.min(s.r, far * 0.8));
+  const part = (hi - lo) / p.gaps;
+  const pad = gapW / 2 + 8;
+  const gaps: number[] = [];
+  for (let i = 0; i < p.gaps; i++) {
+    const a = lo + part * i + pad;
+    const b = lo + part * (i + 1) - pad;
+    gaps.push(Math.round(b > a ? rng.range(a, b) : (a + b) / 2));
+  }
+  return { ...s, gaps, gapW };
+}
+
+/** Is a body at (x, y) with radius r inside one of a sweep's gaps (at least half of it within the break)? */
+export function inSweepGap(s: Extract<Shape, { k: 'sweep' }>, x: number, y: number, r: number): boolean {
+  if (!s.gaps?.length) return false;
+  const d = Math.hypot(x - s.x, y - s.y);
+  const half = (s.gapW ?? WAVE_GAP_W) / 2;
+  return s.gaps.some((g) => Math.abs(d - g) + r * 0.5 <= half);
+}
+
 function remoteSweeps(p: Extract<PatternDef, { kind: 'sweep' }>, c: PatternCtx): TeleSpec[] {
   const n = Math.max(1, p.count ?? 1);
   const pts: [number, number][] = [];
@@ -554,7 +621,7 @@ function remoteSweeps(p: Extract<PatternDef, { kind: 'sweep' }>, c: PatternCtx):
     const self = p.anchor === 'self';
     const aim = self ? c.facing + (i * Math.PI * 2) / n : Math.atan2(c.ty - y, c.tx - x);
     const a0 = Math.abs(p.angleDeg) >= 360 ? aim : aim - arc / 2;
-    return spec([{ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }], {
+    return spec([withSweepGaps({ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }, p, c.rng)], {
       mode: p.tickS ? 'tick' : 'once',
       activeS: p.durationS,
       tickS: p.tickS ?? 0,
@@ -685,6 +752,7 @@ export function shapeHit(s: Shape, tau: number, x: number, y: number, r: number,
       return coneHit(s.x, s.y, s.a, s.half, s.r, x, y, r);
     case 'sweep': {
       const a = sweepAngle(s, tau);
+      if (inSweepGap(s, x, y, r)) return false;
       if (s.line) return lineHit(s.x, s.y, a, s.w, s.r, x, y, r);
       return coneHit(s.x, s.y, a, s.half, s.r, x, y, r);
     }
@@ -706,6 +774,7 @@ export function shapeHit(s: Shape, tau: number, x: number, y: number, r: number,
       const v = s.dir === 'east' || s.dir === 'west' ? x : y;
       if (Math.abs(v - pos) > s.w / 2 + r * 0.5) return false;
       if (s.safeGrates && room && room.isGrateAt(x, y)) return false;
+      if (inWaveGap(s, x, y, r)) return false;
       return true;
     }
     case 'pockets': {

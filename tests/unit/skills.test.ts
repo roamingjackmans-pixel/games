@@ -83,7 +83,8 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
     expect([bm.start.main, bm.start.alt]).toEqual(['colossal_sword', 'apprentice_staff']);
     expect(bm.stats.bonk).toBeGreaterThanOrEqual(13);
     expect(bm.stats.brain).toBeGreaterThanOrEqual(10);
-    expect(computeDerived(newCharacter('spearman', 'J', 'p', new Rng(1))).load.tier).toBe('medium');
+    // started Medium (D121); every item weighing 20% more (D163) puts the colossal sword's wielder in Heavy
+    expect(computeDerived(newCharacter('spearman', 'J', 'p', new Rng(1))).load.tier).toBe('heavy');
     const bz = CLASSES.berserker;
     expect(bz.start.main).toBe('twin_axes');
     expect(bz.twoHanded).toBe(true);

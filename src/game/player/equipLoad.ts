@@ -41,9 +41,11 @@ export function loadTier(frac: number): LoadTier {
 
 export const RING_WEIGHT = 0.2;
 
-/** One item's weight (one decimal). */
-export function itemWeight(item: Item | null | undefined): number {
-  if (!item) return 0;
+/** Every item weighs this much more than its table says (D163, owner's request: everything 20% heavier). */
+export const ITEM_WEIGHT_MULT = 1.2;
+
+/** One item's weight (one decimal), as listed in its table, before ITEM_WEIGHT_MULT. */
+function baseWeight(item: Item): number {
   const w = WEAPONS[item.baseId];
   if (w) return w.weight;
   const s = SHIELDS[item.baseId];
@@ -53,6 +55,12 @@ export function itemWeight(item: Item | null | undefined): number {
   if (item.kind === 'armor') return armorPieceWeight(item.baseId);
   if (item.kind === 'ring') return RING_WEIGHT;
   return 0;
+}
+
+/** One item's weight (one decimal). */
+export function itemWeight(item: Item | null | undefined): number {
+  if (!item) return 0;
+  return Math.round(baseWeight(item) * ITEM_WEIGHT_MULT * 10) / 10;
 }
 
 export interface EquipLoadInfo {

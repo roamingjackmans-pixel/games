@@ -21,7 +21,7 @@ const wave: AttackDef = {
   id: 'bloat_wave',
   name: 'Wave',
   kind: 'pierce',
-  pattern: { kind: 'wave', w: 140, speed: 340, from: 'random', safeTiles: 'G' },
+  pattern: { kind: 'wave', w: 140, speed: 340, from: 'random', safeTiles: 'G', gaps: 2 },
   windupMs: 1200,
   recoverMs: 800,
   dmgMult: 1.4,
@@ -90,8 +90,8 @@ const crosswave: AttackDef = {
   pattern: {
     kind: 'sequence',
     steps: [
-      { pattern: { kind: 'wave', w: 140, speed: 340, from: 'random', safeTiles: 'G' }, delayS: 0 },
-      { pattern: { kind: 'wave', w: 140, speed: 340, from: 'cross', safeTiles: 'G' }, delayS: 0.8 },
+      { pattern: { kind: 'wave', w: 140, speed: 340, from: 'random', safeTiles: 'G', gaps: 2 }, delayS: 0 },
+      { pattern: { kind: 'wave', w: 140, speed: 340, from: 'cross', safeTiles: 'G', gaps: 2 }, delayS: 0.8 },
     ],
   },
   windupMs: 1200,
