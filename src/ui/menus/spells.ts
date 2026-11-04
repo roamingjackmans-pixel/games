@@ -20,8 +20,16 @@ export function setLoadout(c: Character, school: 'brain' | 'prayer', slot: numbe
   return '';
 }
 
+/**
+ * The slot picked in the loadout, per character (D157). It used to live on the tab's element, but the inventory and
+ * bonfire rebuild that element on every redraw, so picking slot 2 or 3 (or any Prayer slot) snapped straight back
+ * to Brain slot 1.
+ */
+const picked = new WeakMap<Character, { school: 'brain' | 'prayer'; slot: number }>();
+
 export function renderSpellTab(el: HTMLElement, c: Character, onChange: () => void, rerender: () => void): void {
-  let sel: { school: 'brain' | 'prayer'; slot: number } = (el as HTMLElement & { _sel?: { school: 'brain' | 'prayer'; slot: number } })._sel ?? { school: 'brain', slot: 0 };
+  // first visit: the school of the first spell this character knows
+  let sel = picked.get(c) ?? { school: SPELLS[c.knownSpells[0] ?? '']?.school ?? 'brain', slot: 0 };
   const status = h('div', { class: 'small bad', style: 'min-height:18px' });
   const col = (school: 'brain' | 'prayer'): HTMLElement => {
     const lo = c.spellLoadout[school];
@@ -31,7 +39,7 @@ export function renderSpellTab(el: HTMLElement, c: Character, onChange: () => vo
       const isSel = sel.school === school && sel.slot === i;
       const b = btn(`${i + 1}. ${id ? (SPELLS[id]?.name ?? id) : '— empty —'}${isSel ? '  ◀' : ''}`, () => {
         sel = { school, slot: i };
-        (el as HTMLElement & { _sel?: unknown })._sel = sel;
+        picked.set(c, sel);
         rerender();
       });
       if (isSel) b.classList.add('primary');
