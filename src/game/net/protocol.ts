@@ -4,7 +4,8 @@ import type { InputFrame } from '../../engine/input/actions';
 import type { Appearance, Character, ClassId } from '../types';
 
 export const MAX_GUESTS = 3;
-export const SNAP_HZ = 20;
+// 30 snapshots a second (D149; was 20): more samples to interpolate between, so less to guess on a jittery link
+export const SNAP_HZ = 30;
 export const FULL_EVERY_S = 2;
 export const GUEST_TIMEOUT_S = 10;
 export const INTERP_DELAY_S = 0.1;

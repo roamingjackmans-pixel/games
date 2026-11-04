@@ -31,5 +31,14 @@ test('host and guest join by room code and see each other move', async ({ contex
   await guest.waitForTimeout(800);
   await guest.keyboard.up('KeyD');
   await expect.poll(async () => (await hostX()) - x0, { timeout: 5000 }).toBeGreaterThan(60);
+  // D149: the guest's dodge starts on its own screen at once, and both end in the same place
+  const guestX = (): Promise<number> => guest.evaluate(() => (window as unknown as { __dj: { scenes: { current: { net: { me: { x: number } } } } } }).__dj.scenes.current.net.me.x);
+  await guest.waitForTimeout(1500);
+  const g0 = await guestX();
+  await guest.keyboard.press('Space');
+  await guest.waitForTimeout(60);
+  expect((await guestX()) - g0).not.toBe(0);
+  await guest.waitForTimeout(1200);
+  expect(Math.abs((await guestX()) - (await hostX()))).toBeLessThan(6);
   expect(errors).toEqual([]);
 });

@@ -37,7 +37,7 @@ Reliable (ordered) actions carry JSON; the high-rate ones carry `ArrayBuffer`s.
 | `hello` | guest → host | once | `{ version, playerId, name, classId, level, stats, equipment (full items), spellLoadout, knownSpells, flaskMax, flaskCur, highestZoneBeaten }` |
 | `welcome` / `reject` | host → guest | once | world seed, cycle, zone, room id, room state (cleared rooms, chests, mimics, bonfires used per player), all players' public state, the current `full` snapshot; or `{ reason }` |
 | `input` | guest → host | 60 Hz, unreliable | `ArrayBuffer`: `seq u16, moveX i8, moveY i8, aimX i16, aimY i16, buttons u16 (bit per action), tick u32` |
-| `snap` | host → all | 20 Hz, unreliable | `ArrayBuffer` delta snapshot (see §4) |
+| `snap` | host → all | 30 Hz (D149; was 20) | `ArrayBuffer` delta snapshot (see §4) |
 | `full` | host → all | every 2 s and on request | `ArrayBuffer` keyframe snapshot |
 | `event` | host → all or one | reliable | JSON: `telegraph` (§4), `hit`, `death`, `downed`, `reviveProgress`, `revived`, `loot` (to one player), `shards` (to one), `chestOpened`, `roomCleared`, `waveSpawn`, `bossPhase`, `zoneChange`, `bonfireRest`, `levelUp` (echo), `progress` (zone beaten credit), `chat`, `gary`, `wipe` |
 | `cmd` | guest → host | reliable | JSON: `equip`, `unequip`, `spellLoadout`, `useConsumable`, `interact { targetId }`, `rest`, `levelUp { stat }`, `shopBuy`, `shopSell`, `gem { op }`, `warp`, `chat` |
@@ -61,10 +61,17 @@ so guests draw them locally from the shared clock. Projectiles are entities. Par
 
 - Guests **predict their own movement** (position/velocity from local input using the shared movement
   code) and reconcile against the host's authoritative position every snapshot: if the error is < 24 px
-  smooth over 100 ms, otherwise snap. Attacks, dodges and skills **start locally** (animation and sound)
-  but hit results come only from the host.
-- Everything else renders **100 ms behind** the newest snapshot, interpolated between the two surrounding
-  snapshots; extrapolate at most 100 ms more on packet loss.
+  smooth over 100 ms, otherwise snap. **Dodges start locally** the moment they are pressed (D149): the guest runs
+  the host's dodge path on its own screen and holds off reconciling until the host has run its dodge and reported
+  back (dodge length + one round trip + 120 ms); walking resumes at once. Hit results come only from the host.
+- Everything else renders a little behind the newest snapshot, interpolated between the two surrounding
+  snapshots; extrapolate at most 100 ms more on packet loss. **How far behind adapts to the connection** (D149):
+  the guest keeps a smoothed estimate of the host's clock (`net/clock.ts`: it follows the fastest-arriving
+  snapshots, eases at most 2 ms per snapshot, and measures the jitter) and draws 1.5 snapshot intervals plus 2.5×
+  the jitter behind it, 60–250 ms. It used to reset its clock to every snapshot's arrival, which made everything
+  judder with the network's jitter.
+- Enemy attacks are mirrored with their real definition (the host sends the attack id with the enemy's meta), so
+  guests draw the same windup glow, motes and Red / Blue icons as the host (D149).
 - The host applies guest inputs on arrival (no artificial delay); it keeps the last input if one is late.
   Guests mark inputs with `tick` so the host can place dodges/parries precisely; parry windows use the
   guest's reported tick when it arrived within 120 ms.

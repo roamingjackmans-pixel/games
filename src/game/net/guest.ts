@@ -4,18 +4,33 @@
 import { BOSSES } from '../../data/bosses';
 import { ENEMIES } from '../../data/enemies';
 import { dist } from '../../engine/math';
-import type { InputFrame } from '../../engine/input/actions';
+import { ACTION_BIT, type InputFrame } from '../../engine/input/actions';
 import { spawnEnemy } from '../enemies/spawn';
-import { refreshDerived, spawnPlayer } from '../player/player';
+import { DODGE_DIST, DODGE_S, refreshDerived, spawnPlayer } from '../player/player';
 import { generateZone, type ZoneLayout } from '../procgen/zone';
 import { Room } from '../room';
 import { terrainWalkMult } from '../systems/terrain';
 import { World, type Entity, type EType } from '../world';
 import { applyCharOp, cloneChar, type CharOp } from './charSync';
-import { CH, INTERP_DELAY_S, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
+import { CH, SNAP_HZ, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
+import { HostClock } from './clock';
 import { CONTROL_BITS, ENEMY_STATES, F, PLAYER_STATES, POSES, STATUS_BITS, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
 import type { NetChannel, Transport } from './transport';
-import type { Character, EliteAffix, SaveFile } from '../types';
+import type { AttackDef, BossDef, Character, EliteAffix, EnemyDef, SaveFile } from '../types';
+
+/** An enemy's or boss's attack by id: its own (a boss's in every phase), its phase two, and any attack they chain into (D149). */
+export function findAttack(def: EnemyDef | BossDef, id: string): AttackDef | null {
+  const seen = new Set<AttackDef>();
+  const stack: AttackDef[] = 'phases' in def ? def.phases.flatMap((p) => p.attacks) : [...def.attacks, ...(def.phase2?.attacks ?? [])];
+  while (stack.length) {
+    const a = stack.pop()!;
+    if (seen.has(a)) continue;
+    seen.add(a);
+    if (a.id === id) return a;
+    if (a.chain) stack.push(a.chain);
+  }
+  return null;
+}
 
 const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
 
@@ -57,8 +72,11 @@ export class NetGuest {
   private pending: { seq: number; dt: number; mx: number; my: number }[] = [];
   private samples = new Map<number, Sample[]>();
   private meta = new Map<number, EntityMeta>();
-  private hostTime = 0;
-  private hostTimeAt = 0;
+  /** the host's clock, smoothed against network jitter (D149) */
+  private hostClock = new HostClock(1 / SNAP_HZ);
+  /** a dodge this guest started locally before the host confirmed it (D149) */
+  private lastWalkSpeed = 0;
+  private dodgePred: { until: number; holdUntil: number; dir: [number, number]; mult: number; t: number } | null = null;
   private self: SelfState | null = null;
   private correction = { x: 0, y: 0 };
   private roomKey = '';
@@ -145,8 +163,7 @@ export class NetGuest {
     this.welcome = wm;
     this.state = 'game';
     this.resetWorld();
-    this.hostTime = wm.time;
-    this.hostTimeAt = this.clock();
+    this.hostClock.reset(wm.time, this.clock());
     this.buildLayout(wm.seed, wm.zone, wm.cycle, wm.layoutOpts);
     this.onWelcome();
   }
@@ -200,8 +217,7 @@ export class NetGuest {
   private applySnap(b: ArrayBuffer): void {
     const s = decodeSnap(b);
     const now = this.clock();
-    this.hostTime = s.time;
-    this.hostTimeAt = now;
+    this.hostClock.sample(s.time, now);
     const j = s.json;
     if (j.room) this.applyRoom(j.room);
     if (j.meta) for (const [id, m] of Object.entries(j.meta)) this.meta.set(Number(id), m);
@@ -318,7 +334,7 @@ export class NetGuest {
     const y = r.y / 2;
     const list = this.samples.get(r.id) ?? [];
     list.push({ t, x, y });
-    if (list.length > 4) list.shift();
+    if (list.length > 12) list.shift();
     this.samples.set(r.id, list);
     e.facing = (r.facing / 256) * Math.PI * 2;
     const a = e.anim;
@@ -353,12 +369,13 @@ export class NetGuest {
       const k = r.extra2 / 1000;
       en.spawnedAt = t - k;
       en.spawnUntil = t + (1 - k);
-      const kind = r.flags & F.windRed ? 'red' : r.flags & F.windPierce ? 'pierce' : null;
-      en.attack = kind ? ({ phase: 'windup', def: { kind } } as unknown as NonNullable<typeof en.attack>) : null;
+      en.attack = this.mirrorAttack(e, m, r);
     }
     if (e.pl) {
       const pl = e.pl;
-      pl.state = PLAYER_STATES[r.state] ?? 'idle';
+      // the guest's own locally started dodge keeps its look until it has played out (D149)
+      const predicting = e === this.me && this.dodgePred !== null && this.dodgePred.t < DODGE_S;
+      if (!predicting) pl.state = PLAYER_STATES[r.state] ?? 'idle';
       pl.downed = (r.flags & F.downed) !== 0;
       pl.deadUntilRest = (r.flags & F.deadUntilRest) !== 0;
       pl.blocking = (r.flags & F.blocking) !== 0;
@@ -374,6 +391,52 @@ export class NetGuest {
     }
     if (e.pr?.lob) e.pr.lob.t = (r.extra / 1000) * e.pr.lob.dur;
     if (e.it) e.it.used = (r.flags & F.used) !== 0;
+  }
+
+  /**
+   * Start the dodge on this screen the moment it is pressed (D149), on the same rules the host checks (free to act,
+   * recharged, stamina left); the host runs the real one and the two meet when it confirms. A refused dodge is put
+   * right by the next reconcile.
+   */
+  private maybePredictDodge(me: Entity, input: InputFrame, speed: number): void {
+    if (this.dodgePred || !(input.pressed & ACTION_BIT.dodge) || !me.pl || !this.self) return;
+    const free = speed > 0 && this.self.stam > 0 && this.hostNow() >= this.self.dodgeReadyAt;
+    if (!free) return;
+    let dx = input.moveX;
+    let dy = input.moveY;
+    const m = Math.hypot(dx, dy);
+    if (m < 0.2) {
+      dx = Math.cos(me.facing);
+      dy = Math.sin(me.facing);
+    } else {
+      dx /= m;
+      dy /= m;
+    }
+    const now = this.clock();
+    // hold off reconciling until the host has run its own dodge and reported back: the dodge, a round trip and a margin
+    this.dodgePred = { until: now + DODGE_S, holdUntil: now + DODGE_S + this.rtt + 0.12, dir: [dx, dy], mult: me.pl.derived.load.effects.dodge, t: 0 };
+    me.pl.state = 'dodge';
+    me.pl.dodgeUntil = this.cw.time + DODGE_S;
+  }
+
+  /**
+   * The enemy's attack as the host runs it (D149): the real attack, found by the id the host sends, in the phase its
+   * state shows, timed from when this guest first saw that phase. It used to be a stand-in with no element, which made
+   * the renderer throw on every Red or Blue windup and drop every enemy from that frame.
+   */
+  private mirrorAttack(e: Entity, m: EntityMeta, r: Rec): NonNullable<NonNullable<Entity['en']>['attack']> | null {
+    const en = e.en!;
+    const phase = en.state === 'windup' ? 'windup' : en.state === 'attack' ? 'active' : en.state === 'recover' ? 'recover' : null;
+    const id = m.t === 'enemy' ? m.atk : undefined;
+    const def = id ? findAttack(en.def, id) : null;
+    if (!phase || !def) {
+      // no attack id (an old host): keep the Red / Blue windup icon with a plain element
+      const kind = r.flags & F.windRed ? 'red' : r.flags & F.windPierce ? 'pierce' : null;
+      return kind ? ({ phase: 'windup', t: 0, windup: 1, active: 0.1, recover: 0.3, def: { id: '', kind, type: 'physical', windupMs: 1000, recoverMs: 300 } } as unknown as NonNullable<typeof en.attack>) : null;
+    }
+    const cur = en.attack;
+    if (cur && cur.def === def && cur.phase === phase) return cur;
+    return { def, phase, t: 0, windup: def.windupMs / 1000, active: (def.activeMs ?? 100) / 1000, recover: def.recoverMs / 1000, angle: e.facing } as unknown as NonNullable<typeof en.attack>;
   }
 
   private applySelf(s: SelfState): void {
@@ -404,6 +467,9 @@ export class NetGuest {
     pl.stateUntil = s.stateUntil;
     // reconcile the prediction (NETCODE §5): replay unacknowledged inputs from the host's position
     this.pending = this.pending.filter((p) => seqNewer(p.seq, s.lastSeq));
+    // a locally started dodge runs on its own until the host has caught up with it (D149)
+    if (this.dodgePred && this.clock() < this.dodgePred.holdUntil) return;
+    this.dodgePred = null;
     let px = s.x;
     let py = s.y;
     if (s.speed > 0) {
@@ -431,7 +497,7 @@ export class NetGuest {
 
   /** Host time estimate for "now" and the time the mirror is drawn at (100 ms behind). */
   hostNow(): number {
-    return this.hostTime + (this.clock() - this.hostTimeAt);
+    return this.hostClock.now(this.clock());
   }
 
   /** Send this frame's input and move the mirror: interpolate others, predict self. */
@@ -440,8 +506,11 @@ export class NetGuest {
     this.seq = (this.seq + 1) & 0xffff;
     this.tick++;
     this.ch.input.send(encodeInput({ seq: this.seq, tick: this.tick, frame: input }), this.hostId);
-    const renderT = this.hostNow() - INTERP_DELAY_S;
+    // draw a little behind the newest snapshot: how far depends on how jittery this connection is (D149)
+    const renderT = this.hostNow() - this.hostClock.delay(dt);
     this.cw.time = renderT;
+    // mirrored enemy attacks run their own clock between snapshots (windup glow and motes)
+    for (const e of this.cw.entities.values()) if (e.en?.attack) e.en.attack.t += dt;
     // others: interpolate between the two samples around renderT (extrapolate at most 100 ms)
     for (const [id, list] of this.samples) {
       const e = this.cw.entities.get(id);
@@ -465,14 +534,28 @@ export class NetGuest {
       e.px = e.x = x;
       e.py = e.y = y;
     }
-    // self: predict walking with the host's current walk speed
+    // self: predict walking with the host's current walk speed, and start a dodge at once (D149)
     const me = this.me;
     if (me) {
       const speed = this.self?.speed ?? 0;
-      if (speed > 0) {
+      this.maybePredictDodge(me, input, speed);
+      const dp = this.dodgePred;
+      // right after a predicted dodge the host may still report 0 (it is finishing its own): keep walking at the last speed
+      if (speed > 0) this.lastWalkSpeed = speed;
+      const walk = speed > 0 ? speed : dp ? this.lastWalkSpeed : 0;
+      if (dp && dp.t < DODGE_S) {
+        // the same path the host's dodge takes (player.ts): fast at first, easing out
+        const step = Math.min(dt, DODGE_S - dp.t);
+        const k = dp.t / DODGE_S;
+        const sp = (DODGE_DIST / DODGE_S) * 1.6 * Math.max(0.1, 1 - k) * dp.mult;
+        this.cw.room.moveCircle(me, dp.dir[0] * sp * step, dp.dir[1] * sp * step, false, true);
+        dp.t += step;
+        this.pending = [];
+        this.correction = { x: 0, y: 0 };
+      } else if (walk > 0) {
         this.pending.push({ seq: this.seq, dt, mx: input.moveX, my: input.moveY });
         if (this.pending.length > 120) this.pending.shift();
-        const sp = speed * terrainWalkMult(this.cw.room, me.x, me.y);
+        const sp = walk * terrainWalkMult(this.cw.room, me.x, me.y);
         this.cw.room.moveCircle(me, input.moveX * sp * dt, input.moveY * sp * dt);
         const k = Math.min(1, dt / 0.1);
         me.x += this.correction.x * k;

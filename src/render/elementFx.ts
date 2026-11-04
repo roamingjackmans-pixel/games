@@ -29,7 +29,9 @@ export function drawElementUnder(ctx: CanvasRenderingContext2D, e: Entity, x: nu
   }
   const a = en.attack;
   if (!a || a.def.kind === 'utility') return;
+  // an attack without a known element (never expected) draws nothing rather than throwing mid-frame (D149)
   const el = ELEMENTS[a.def.type];
+  if (!el) return;
   if (a.phase === 'windup') {
     const k = Math.min(1, a.t / Math.max(0.05, a.windup));
     glow(ctx, x, y, r * (1.6 + k * 1.2), el.glow, 0.15 + k * 0.45);
@@ -44,6 +46,7 @@ export function drawElementOver(ctx: CanvasRenderingContext2D, e: Entity, x: num
   if (!a || a.def.kind === 'utility') return;
   if (en.def.swarm && en.pieceIndex > 0) return;
   const el = ELEMENTS[a.def.type];
+  if (!el) return;
   const r = e.radius * (e.anim.scale || 1);
   if (a.phase === 'windup') {
     const k = Math.min(1, a.t / Math.max(0.05, a.windup));

@@ -264,7 +264,7 @@ export function decodeSnap(b: ArrayBuffer): Snap {
 
 export type EntityMeta =
   | { t: 'player'; pid: string; slot: number; name: string; char: unknown; r: number }
-  | { t: 'enemy'; def: string; elite: string | null; piece: number; boss: boolean; drawId: string; r: number; illusion: boolean; gaze?: number; linkedTo: number }
+  | { t: 'enemy'; def: string; elite: string | null; piece: number; boss: boolean; drawId: string; r: number; illusion: boolean; gaze?: number; linkedTo: number; atk?: string }
   | { t: 'other'; type: EType; drawId: string; r: number; team: number; c: Record<string, unknown> };
 
 const DROP_KEYS = new Set(['spec', 'onImpact', 'effects', 'allyEffects', 'nextTick', 'hit']);
@@ -310,6 +310,8 @@ export function metaOf(e: Entity, forPlayerId: string): EntityMeta | null {
     // radius changes with boss phases (The Landlord grows); gaze is the direction arrow of a turning attack
     const m: EntityMeta = { t: 'enemy', def: e.en.def.id, elite: e.en.elite, piece: e.en.pieceIndex, boss: e.en.isBoss, drawId: e.drawId, r: Math.round(e.radius * 10) / 10, illusion: e.en.isIllusion, linkedTo: e.en.linkedTo };
     if (e.en.gaze !== undefined) m.gaze = Math.round(e.en.gaze * 100) / 100;
+    // the attack under way, so guests draw its real windup and element (D149)
+    if (e.en.attack) m.atk = e.en.attack.def.id;
     return m;
   }
   if (e.pk && e.pk.forPlayer && e.pk.forPlayer !== forPlayerId) return null; // instanced loot (D33)
