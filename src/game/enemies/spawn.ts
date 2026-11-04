@@ -107,6 +107,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
     frozenUntil: 0,
     rootUntil: 0,
     holdingId: 0,
+    devour: null,
     pieceIndex: o.pieceIndex ?? 0,
     isIllusion: !!o.illusion,
     lifeUntil: o.lifeS ? now + o.lifeS : 0,

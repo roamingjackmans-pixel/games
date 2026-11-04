@@ -194,6 +194,8 @@ export function rawDamage(w: World, e: Entity, amount: number, type: DamageType,
   if (e.en?.gary) return;
   if (e.en?.isBoss && e.en.phaseTransitionUntil > w.time) return;
   if (e.en?.def.traits?.invulnerable) return;
+  // a mimic eating the last player standing cannot be hurt: solo, opening one is always fatal (D179)
+  if (e.en?.devour && w.livingPlayers().length <= 1) return;
   // two targets, one bar: a split body's damage (burn, bleed…) lands on the boss it is linked to
   const host = barHost(w, e);
   if (host) {
@@ -609,7 +611,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   const hp = e.hp!;
   const now = w.time;
   if (hp.dead) return 0;
-  if (en.state === 'spawning' || en.state === 'ceiling' || en.phaseTransitionUntil > now || hp.invulnUntil > now || en.fadeUntil > now) {
+  if (en.state === 'spawning' || en.state === 'ceiling' || en.phaseTransitionUntil > now || hp.invulnUntil > now || en.fadeUntil > now || (en.devour && w.livingPlayers().length <= 1)) {
     w.fx('immune', e.x, e.y - e.radius);
     return 0;
   }

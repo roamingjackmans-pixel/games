@@ -9,6 +9,7 @@ import { runEffects } from '../effects/run';
 import { spawnHazard } from '../systems/hazards';
 import { terrainWalkMult } from '../systems/terrain';
 import { patternAllowed, ringReachable, startEnemyAttack, teleportAway, updateEnemyAttack } from './attacks';
+import { updateDevour } from '../interact';
 import { phasePassive, tickBossPassive } from '../boss/passive';
 import { stepToward } from './pathing';
 import { attackDamage } from './spawn';
@@ -370,6 +371,11 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
       else en.state = 'alert';
       en.thinkAt = now + 0.2 + w.combat.next() * 0.4;
     }
+    return;
+  }
+  // a mimic eating whoever opened it does nothing else (D179)
+  if (en.devour) {
+    updateDevour(w, e);
     return;
   }
   if (en.state === 'dormant') return;

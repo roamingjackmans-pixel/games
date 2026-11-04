@@ -840,7 +840,72 @@ function mimicLeg(ctx: CanvasRenderingContext2D, s: DrawState, u: number, hx: nu
   claws(ctx, s, J[2]!, J[3]!, Math.PI / 2 + side * 0.3, 0.16 * u, 1, 0, '#ece2c8', 1.5);
 }
 
+/**
+ * A mimic eating whoever opened it (D179). The victim is drawn first, standing in the open chest; over them come the
+ * box (lower jaw, teeth up) hiding their legs, two long jointed arms out of its sides clamped around their body, and
+ * the lid (upper jaw, fangs and yellow eyes) that gapes above their head and slams down over it on every bite. The
+ * bite cycle is the pose time: it restarts at each bite (the lid shut), gapes, then slams again.
+ */
+function mimicDevour(ctx: CanvasRenderingContext2D, s: DrawState): void {
+  const u = s.r * s.scale;
+  const t = s.poseT;
+  // 0 shut (a bite) … 1 wide open
+  const gape = t < 0.15 ? t / 0.15 : t < 0.5 ? 1 : Math.max(0, 1 - (t - 0.5) / 0.2);
+  const squeeze = 1 - gape;
+  const shake = squeeze > 0.8 ? Math.sin(s.t * 70) * 0.03 * u : 0;
+  shadow(ctx, s.x, s.y + 4, u * 1.15);
+  ctx.save();
+  ctx.translate(s.x + shake, s.y);
+  // far spider legs splayed under the box
+  for (const side of [-1, 1]) {
+    arm(ctx, s, side * 0.5 * u, 0.3 * u, side * 1.05 * u, 0.62 * u, 0.42 * u, 0.42 * u, side > 0 ? -1 : 1, 0.09 * u, 0.07 * u, 0.05 * u, shade(MI_LEG, 0.8), 2);
+    claws(ctx, s, J[2]!, J[3]!, Math.PI / 2 + side * 0.3, 0.15 * u, 1, 0, '#ece2c8', 1.5);
+  }
+  // the box: the lower jaw, its teeth pointing up at the victim
+  const top = -0.45;
+  shape(ctx, s, [-0.8, top, 0.8, top, 0.8, 0.56, -0.8, 0.56], u, MI_WOOD, shade(MI_WOOD, 0.7), 0.1, 3, true);
+  if (!s.flash) {
+    ctx.fillStyle = '#9aa0a8';
+    ctx.fillRect(-0.8 * u, (top + 0.06) * u, 1.6 * u, 0.08 * u);
+    ctx.fillRect(-0.6 * u, top * u, 0.1 * u, (0.56 - top) * u);
+    ctx.fillRect(0.5 * u, top * u, 0.1 * u, (0.56 - top) * u);
+  }
+  teeth(ctx, s, 0.72 * u, (top + 0.01) * u, -0.72 * u, (top + 0.01) * u, 8, -0.18 * u, heat(s, '#f4f0e0'), 1);
+  // the arms, out of the box's sides and clamped round the victim's body; they squeeze on the bite
+  for (const side of [-1, 1]) {
+    const hx = side * (0.36 - 0.1 * squeeze) * u;
+    const hy = (-0.95 + 0.05 * squeeze) * u;
+    arm(ctx, s, side * 0.8 * u, -0.12 * u, hx, hy, 0.62 * u, 0.55 * u, side > 0 ? 1 : -1, 0.13 * u, 0.11 * u, 0.08 * u, MI_LEG, 2);
+    oval(ctx, s, J[0]!, J[1]!, 0.1 * u, 0.1 * u, '#6e4434', 1.5);
+    claws(ctx, s, J[2]!, J[3]!, side > 0 ? Math.PI + 0.2 : -0.2, 0.2 * u, 3, 0.5, '#ece2c8', 1.5);
+  }
+  // the lid: the upper jaw, high over the head when it gapes, down over it on the bite
+  const jaw = top - 0.02 - gape * 1.5;
+  flat(ctx, s, [-0.82, jaw, 0.82, jaw, 0.78, jaw - 0.42, 0.45, jaw - 0.6, -0.45, jaw - 0.6, -0.78, jaw - 0.42], u, MI_LID, 3);
+  if (!s.flash) {
+    ctx.fillStyle = '#9aa0a8';
+    ctx.fillRect(-0.6 * u, (jaw - 0.58) * u, 0.1 * u, 0.58 * u);
+    ctx.fillRect(0.5 * u, (jaw - 0.58) * u, 0.1 * u, 0.58 * u);
+  }
+  teeth(ctx, s, -0.74 * u, jaw * u, 0.74 * u, jaw * u, 8, -0.22 * u, heat(s, '#f4f0e0'), 1);
+  for (const [ex, ey, er] of [
+    [0, -0.32, 0.17],
+    [-0.4, -0.3, 0.1],
+    [0.38, -0.36, 0.09],
+  ] as const) {
+    const cx = ex * u;
+    const cy = (jaw + ey) * u;
+    oval(ctx, s, cx, cy, er * u, er * u * (1 - 0.6 * squeeze * squeeze), '#ffd040', 2);
+    if (!s.flash) oval(ctx, null, cx, cy + 0.02 * u, er * 0.35 * u, er * 0.7 * u * (1 - 0.6 * squeeze * squeeze), '#1a1008', 0);
+  }
+  ctx.restore();
+}
+
 registerDraw('mimic', (ctx, s) => {
+  if (s.pose === 'devour') {
+    mimicDevour(ctx, s);
+    return;
+  }
   if (!s.awake) {
     drawChest(ctx, s.x, s.y, 0, true, Math.sin(s.t * 2.2) * 0.012, s.flash);
     return;

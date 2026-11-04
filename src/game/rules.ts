@@ -10,6 +10,7 @@ import type { EnemyDef } from './types';
 import { PROF_CLASSES, killXp } from '../data/proficiency';
 import { grantKillXp, upgradeInfo } from './items/proficiency';
 import { refreshDerived } from './player/player';
+import { endDevour } from './interact';
 import type { Entity, World } from './world';
 
 export interface RulesOpts {
@@ -56,6 +57,8 @@ export function installRules(w: World, o: RulesOpts = {}): void {
   w.hooks.onEnemyKilled = (w2, e, killerId) => {
     const en = e.en!;
     const def = en.def as EnemyDef;
+    // a mimic killed while it eats someone lets them go (D179)
+    if (en.devour) endDevour(w2, e, false);
     const ctx = {
       sourceId: e.id,
       team: 1 as const,

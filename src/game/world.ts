@@ -273,6 +273,8 @@ export interface EnemyC {
   frozenUntil: number;
   rootUntil: number;
   holdingId: number;
+  /** a mimic eating whoever opened it (D179): its victim and when the next bite lands */
+  devour: { targetId: number; nextBite: number; bites: number } | null;
   pieceIndex: number;
   isIllusion: boolean;
   lifeUntil: number;

@@ -144,7 +144,7 @@ describe('mimic (GAME_DESIGN §6.5)', () => {
     }
     expect(attacked).toBe(true);
   });
-  it('bites the player who opens it (solo: lethal)', () => {
+  it('eats the player who opens it (solo: lethal, bite after bite, D179)', () => {
     const w = new World('MIMIC', Room.empty());
     const p = spawnPlayer(w, newCharacter('knight', 'Joe', 'p1', new Rng(2)), 0, true, 640, 368);
     let died = false;
@@ -152,7 +152,9 @@ describe('mimic (GAME_DESIGN §6.5)', () => {
     const m = spawnEnemy(w, ENEMIES.mimic!, 680, 368, { tellS: 0.1 });
     for (let i = 0; i < 20; i++) stepWorld(w);
     mimicBite(w, p, m);
-    expect(died).toBe(true);
     expect(m.en!.state).not.toBe('dormant');
+    expect(died).toBe(false);
+    for (let i = 0; i < 60 * 8; i++) stepWorld(w);
+    expect(died).toBe(true);
   });
 });

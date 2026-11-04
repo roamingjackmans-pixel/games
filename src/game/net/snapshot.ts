@@ -8,7 +8,7 @@ import type { Entity, EType, World, GameEvent } from '../world';
 import type { MovingFloorDef } from '../types';
 
 export const ETYPES: EType[] = ['player', 'enemy', 'projectile', 'telegraph', 'hazard', 'pickup', 'interact', 'decoy', 'wall', 'corpse'];
-export const POSES = ['idle', 'windup', 'attack', 'recover', 'swing', 'cast', 'open', 'parry', 'stagger', 'hurt'];
+export const POSES = ['idle', 'windup', 'attack', 'recover', 'swing', 'cast', 'open', 'parry', 'stagger', 'hurt', 'devour'];
 export const ENEMY_STATES = ['spawning', 'idle', 'alert', 'approach', 'kite', 'windup', 'attack', 'recover', 'stagger', 'reposition', 'held', 'channel', 'dormant', 'ceiling', 'submerged', 'stealth', 'invisible', 'dead'] as const;
 export const PLAYER_STATES = ['idle', 'attack', 'dodge', 'skill', 'cast', 'flask', 'stagger', 'held', 'falling', 'consumable', 'channel', 'charge', 'dashing'] as const;
 const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
