@@ -527,7 +527,7 @@ function startFlask(w: World, e: Entity): void {
     if (pl.flaskBoost.cleanse) cleanse(e, ['statuses']);
     pl.flaskBoost = null;
   }
-  const amount = flaskHeal(e.hp!.max, pl.derived.stats.prayer, pl.derived.flaskBonus + boost);
+  const amount = flaskHeal(e.hp!.max, pl.derived.stats.prayer, pl.derived.flaskBonus + boost, pl.derived.statBoost.prayer);
   pl.healOver.push({ perS: amount / FLASK_HEAL_S, until: now + FLASK_HEAL_S, interruptible: false });
   w.sfx('flask', e.x);
   w.fx('flask', e.x, e.y);

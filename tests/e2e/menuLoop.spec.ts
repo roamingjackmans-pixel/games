@@ -18,6 +18,8 @@ async function press(page: Page, i: number): Promise<void> {
       [i, down],
     );
     await page.waitForTimeout(down ? 90 : 260);
+    // keep it down until two frames have read it (a slow frame must not swallow the press)
+    if (down) await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
   }
 }
 const LB = 4;

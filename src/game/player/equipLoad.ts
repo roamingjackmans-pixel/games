@@ -6,6 +6,7 @@ import { SHIELDS } from '../../data/shields';
 import { CASTING_TOOLS } from '../../data/castingTools';
 import { armorPieceWeight } from '../../data/armor';
 import { maxEquipLoad } from '../combat/formulas';
+import { statBoosts } from '../../data/classes';
 import type { Character, Item } from '../types';
 
 export type LoadTier = 'light' | 'medium' | 'heavy' | 'encumbered';
@@ -74,11 +75,11 @@ export interface EquipLoadInfo {
 type Equipped = Pick<Character['equipment'], 'main' | 'off' | 'head' | 'body' | 'legs' | 'ring1' | 'ring2'>;
 
 /** Equip load of the worn set: the weapon in hand, off hand, armor and rings (never the quick-swap weapon). */
-export function equipLoadOf(eq: Equipped, endurance: number): EquipLoadInfo {
+export function equipLoadOf(eq: Equipped, endurance: number, m = 1): EquipLoadInfo {
   let load = 0;
   for (const it of [eq.main, eq.off, eq.head, eq.body, eq.legs, eq.ring1, eq.ring2]) load += itemWeight(it);
   load = Math.round(load * 10) / 10;
-  const max = Math.round(maxEquipLoad(endurance) * 10) / 10;
+  const max = Math.round(maxEquipLoad(endurance, m) * 10) / 10;
   const frac = max > 0 ? load / max : 2;
   const tier = loadTier(frac);
   return { load, max, frac, tier, effects: LOAD_TIERS[tier] };
@@ -86,7 +87,7 @@ export function equipLoadOf(eq: Equipped, endurance: number): EquipLoadInfo {
 
 /** The same, if `item` were worn in `slot` instead of what is there (tooltip previews). */
 export function equipLoadWith(c: Character, endurance: number, slot: keyof Equipped, item: Item | null): EquipLoadInfo {
-  return equipLoadOf({ ...c.equipment, [slot]: item }, endurance);
+  return equipLoadOf({ ...c.equipment, [slot]: item }, endurance, statBoosts(c.classId).endurance);
 }
 
 /** "12.4 / 38.0" */

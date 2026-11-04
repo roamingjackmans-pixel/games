@@ -10,7 +10,8 @@ import { RINGS, bandAmount, bandStat } from '../../data/rings';
 import { castMoveMult, slickCast, dodgeRecharge, itemSkillCount, maxHP, maxStamina, scalingMult, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
 import { itemRequirements, meetsRequirements } from '../items/bases';
 import { equipLoadOf, type EquipLoadInfo } from './equipLoad';
-import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatusId, Stats, WeaponDef } from '../types';
+import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatId, StatusId, Stats, WeaponDef } from '../types';
+import { statBoosts } from '../../data/classes';
 import { DAMAGE_TYPES } from '../types';
 import { RARITY_POWER } from '../../data/proficiency';
 import { profBonuses } from '../items/proficiency';
@@ -42,6 +43,8 @@ export interface Derived {
   stamCost: number;
   lifesteal: number;
   poiseDmgMult: number;
+  /** the class's boost to each stat's benefit (D184): primary 1.25, secondary 1.15 */
+  statBoost: Record<StatId, number>;
   /** weapon reach (swing range and the drawn blade), from proficiency (D178) */
   reachMult: number;
   /** spell cooldown reduction and spell power, from proficiency (D178) */
@@ -351,20 +354,21 @@ export function computeDerived(c: Character): Derived {
   }
   for (const t of DAMAGE_TYPES) defense[t] = (defense[t] + defAll) * (1 + (defPct[t] ?? 0));
 
-  const hp = maxHP(stats.hp) + hpFlat;
-  const stam = maxStamina(stats.endurance) + stamFlat;
+  const boost = statBoosts(c.classId);
+  const hp = maxHP(stats.hp, boost.hp) + hpFlat;
+  const stam = maxStamina(stats.endurance, boost.endurance) + stamFlat;
   const shieldIlvl = off?.ilvl ?? 1;
   const toolIlvl = off?.ilvl ?? 1;
   const sv = shield ? shieldValues(shield, shieldIlvl) : { physical: 0, elemental: 0, holyVoid: 0 };
   sv.elemental = Math.min(0.85, sv.elemental + elemBlockBonus);
   sv.holyVoid = Math.min(0.85, sv.holyVoid + elemBlockBonus);
 
-  const load = equipLoadOf(c.equipment, stats.endurance);
+  const load = equipLoadOf(c.equipment, stats.endurance, boost.endurance);
   return {
     stats,
     maxHp: Math.max(1, Math.round(hp * maxHpMult)),
     maxStam: stam,
-    regen: staminaRegen(stats.endurance) * regenMult,
+    regen: staminaRegen(stats.endurance, boost.endurance) * regenMult,
     walk: 260 * (shield?.walkMult ?? 1) * load.effects.speed,
     twoHanded,
     weapon,
@@ -373,20 +377,21 @@ export function computeDerived(c: Character): Derived {
     weaponMeetsReq,
     skillsUnlocked: main && weaponMeetsReq ? itemSkillCount(main) : 0,
     // rarity sets the damage tier (D178)
-    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'],
+    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'],
     dmgPct,
     flat,
     convert,
     statusBuild,
     attackSpeed: Math.min(1.6, 1 + attackSpeedPct),
     // Slicey quickens your casting hands a little: up to about +21% at 99 (D106)
-    castSpeed: Math.min(1.6, (castTool?.def.castSpeed ?? 1) * (1 + castSpeedPct) * slickCast(stats.slicey)),
-    castMoveMult: castMoveMult(stats.bonk),
+    castSpeed: Math.min(1.6, (castTool?.def.castSpeed ?? 1) * (1 + castSpeedPct) * slickCast(stats.slicey, boost.slicey)),
+    castMoveMult: castMoveMult(stats.bonk, boost.bonk),
     cdr: Math.min(0.5, cdrPct),
     dodgeRecharge: dodgeRecharge(dodgeRed),
     stamCost: Math.max(0.3, 1 - stamCostPct),
     lifesteal,
     poiseDmgMult: 1 + poisePct,
+    statBoost: boost,
     reachMult: 1 + prof.reach,
     spellCdr: Math.min(0.5, prof.spellCooldown),
     spellPowerPct: prof.spellPower,

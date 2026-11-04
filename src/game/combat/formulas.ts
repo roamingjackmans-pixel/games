@@ -14,20 +14,24 @@ function piecewise(points: number, table: [number, number][]): number {
   return total;
 }
 
-export function maxHP(hpStat: number): number {
+// `m` on each stat formula below is the class's boost for that stat (D184): primary 1.25, secondary 1.15, else 1. It
+// multiplies what the points give, never the base.
+export function maxHP(hpStat: number, m = 1): number {
   return Math.round(
     100 +
-      piecewise(hpStat, [
-        [30, 14],
-        [60, 8],
-        [99, 3],
-      ]),
+      m *
+        piecewise(hpStat, [
+          [30, 14],
+          [60, 8],
+          [99, 3],
+        ]),
   );
 }
 
-export function maxStamina(stamStat: number): number {
+export function maxStamina(stamStat: number, m = 1): number {
   return Math.round(
     70 +
+      m *
       piecewise(stamStat, [
         [30, 3.5],
         [60, 2],
@@ -37,9 +41,10 @@ export function maxStamina(stamStat: number): number {
 }
 
 /** Max equip load (D82): 26 + 1.5 per Endurance point to 30, 1.0 to 60, 0.5 to 99. */
-export function maxEquipLoad(endurance: number): number {
+export function maxEquipLoad(endurance: number, m = 1): number {
   return (
     26 +
+    m *
     piecewise(endurance, [
       [30, 1.5],
       [60, 1.0],
@@ -48,8 +53,8 @@ export function maxEquipLoad(endurance: number): number {
   );
 }
 
-export function staminaRegen(stamStat: number): number {
-  return 22 + 0.25 * stamStat;
+export function staminaRegen(stamStat: number, m = 1): number {
+  return 22 + 0.25 * stamStat * m;
 }
 export const STAMINA_REGEN_DELAY = 0.6;
 
@@ -59,12 +64,12 @@ export const STAMINA_COST_MULT = 1.15;
 export const ELITE_POISE_MULT = 1.5;
 
 /** Spell cast speed from Slicey (D106): ×(1 + 0.25 f(Slicey)), ≈ +13% at 40, +21% at 99. */
-export function slickCast(slicey: number): number {
-  return 1 + 0.25 * scalingCurve(slicey);
+export function slickCast(slicey: number, m = 1): number {
+  return 1 + 0.25 * scalingCurve(slicey) * m;
 }
 /** Walking speed while casting (D106): 50% of normal, + 0.25 f(Bonk), ≈ 63% at 40, 70% at 99. */
-export function castMoveMult(bonk: number): number {
-  return 0.5 + 0.25 * scalingCurve(bonk);
+export function castMoveMult(bonk: number, m = 1): number {
+  return 0.5 + 0.25 * scalingCurve(bonk) * m;
 }
 
 /** Scaling curve f(s) = 1 − 0.982^s */
@@ -102,13 +107,14 @@ export function scalingMult(
   grades: { bonk: Grade; slicey: Grade; brain?: Grade; prayer?: Grade },
   stats: Pick<Stats, 'bonk' | 'slicey'> & Partial<Pick<Stats, 'brain' | 'prayer'>>,
   twoHanded: boolean,
+  boost: Partial<Record<'bonk' | 'slicey' | 'brain' | 'prayer', number>> = {},
 ): number {
   return (
     1 +
-    GRADE_MULT[grades.bonk] * scalingCurve(effBonk(stats.bonk, twoHanded)) +
-    GRADE_MULT[grades.slicey] * scalingCurve(stats.slicey) +
-    (grades.brain ? GRADE_MULT[grades.brain] * scalingCurve(stats.brain ?? 0) : 0) +
-    (grades.prayer ? GRADE_MULT[grades.prayer] * scalingCurve(stats.prayer ?? 0) : 0)
+    GRADE_MULT[grades.bonk] * scalingCurve(effBonk(stats.bonk, twoHanded)) * (boost.bonk ?? 1) +
+    GRADE_MULT[grades.slicey] * scalingCurve(stats.slicey) * (boost.slicey ?? 1) +
+    (grades.brain ? GRADE_MULT[grades.brain] * scalingCurve(stats.brain ?? 0) * (boost.brain ?? 1) : 0) +
+    (grades.prayer ? GRADE_MULT[grades.prayer] * scalingCurve(stats.prayer ?? 0) * (boost.prayer ?? 1) : 0)
   );
 }
 
@@ -154,8 +160,8 @@ export function healPower(spellBase: number, prayer: number, tMult: number): num
 }
 
 /** flaskHeal = 40% maxHP × (1 + 0.003 × Prayer) */
-export function flaskHeal(maxHp: number, prayer: number, bonusPct = 0): number {
-  return 0.4 * maxHp * (1 + 0.003 * prayer) * (1 + bonusPct);
+export function flaskHeal(maxHp: number, prayer: number, bonusPct = 0, m = 1): number {
+  return 0.4 * maxHp * (1 + 0.003 * prayer * m) * (1 + bonusPct);
 }
 
 /** damageTaken = incoming × 100 / (100 + Def[type]) (negative defense is treated as 0) */

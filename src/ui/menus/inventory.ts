@@ -14,7 +14,7 @@ import { levelCost } from '../../game/combat/formulas';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
 import { spellSkill } from '../../game/skills/use';
-import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item } from '../../game/types';
+import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
 import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemTooltip } from '../tooltip';
@@ -114,6 +114,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     const d = host.derived();
     const kv = (k: string, v: string | number | Node, cls = ''): HTMLElement[] => [h('div', { class: 'k' }, k), h('div', { class: `mono ${cls}` }, v instanceof Node ? v : String(v))];
     const head = (t: string): HTMLElement => h('div', { class: 'kv-head' }, t);
+    const pTag = (k: StatId): string => (CLASSES[c.classId]?.primary === k ? ' (P)' : CLASSES[c.classId]?.secondary === k ? ' (S)' : '');
     return h(
       'div',
       { class: 'col', style: 'width:250px;gap:6px' },
@@ -123,12 +124,13 @@ export function openInventory(host: InventoryHost): HTMLElement {
         'div',
         { class: 'kv stats-kv' },
         head('Stats'),
-        ...kv('HP', d.stats.hp),
-        ...kv('Endurance', d.stats.endurance),
-        ...kv('Bonk', `${d.stats.bonk}${c.twoHanded ? ` (2H ${Math.min(99, Math.floor(d.stats.bonk * 1.5))})` : ''}`),
-        ...kv('Slicey', d.stats.slicey),
-        ...kv('Brain', d.stats.brain),
-        ...kv('Prayer', d.stats.prayer),
+        // the class's primary (+25%) and secondary (+15%) stats are marked (D184)
+        ...kv('HP' + pTag('hp'), d.stats.hp),
+        ...kv('Endurance' + pTag('endurance'), d.stats.endurance),
+        ...kv('Bonk' + pTag('bonk'), `${d.stats.bonk}${c.twoHanded ? ` (2H ${Math.min(99, Math.floor(d.stats.bonk * 1.5))})` : ''}`),
+        ...kv('Slicey' + pTag('slicey'), d.stats.slicey),
+        ...kv('Brain' + pTag('brain'), d.stats.brain),
+        ...kv('Prayer' + pTag('prayer'), d.stats.prayer),
         head('Combat'),
         ...kv('Max HP', d.maxHp),
         ...kv('Max stamina', d.maxStam),

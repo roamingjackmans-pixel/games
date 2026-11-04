@@ -18,6 +18,9 @@ async function press(page: Page, i: number): Promise<void> {
     vp.setVirtualButton(b, true);
   }, i);
   await page.waitForTimeout(90);
+  // the pad is read once a frame: keep the button down until at least two frames have seen it (a slow frame, such as
+  // a canvas resize after a resolution change, used to swallow the whole press and fail the slider test now and then)
+  await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
   await page.evaluate(async (b) => {
     const path = '/games/dungeonjoe/src/engine/input/virtualPad.ts';
     const vp = (await import(/* @vite-ignore */ path)) as VPad;

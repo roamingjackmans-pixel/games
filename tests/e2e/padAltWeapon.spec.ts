@@ -15,6 +15,8 @@ async function press(page: Page, i: number): Promise<void> {
     vp.setVirtualButton(b, true);
   }, i);
   await page.waitForTimeout(90);
+  // keep it down until two frames have read it (a slow frame must not swallow the press)
+  await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
   await page.evaluate(async (b) => {
     const path = '/games/dungeonjoe/src/engine/input/virtualPad.ts';
     const vp = (await import(/* @vite-ignore */ path)) as VPad;

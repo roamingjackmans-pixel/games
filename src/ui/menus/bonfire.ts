@@ -1,5 +1,6 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
+import { CLASSES } from '../../data/classes';
 import { GEMS, gemColor, gemKind, gemKindLabel, gemText, gemTitle, perkName, perkText } from '../../data/gems';
 import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
 import { computeDerived } from '../../game/player/derived';
@@ -169,7 +170,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     rows.push({ label: 'Stamina regen /s', value: d.regen, fmt: n1 });
     rows.push({ label: 'Equip load max', value: d.load.max, fmt: n1 });
     rows.push({ label: `Equip load (${d.load.tier})`, value: d.load.frac, fmt: pct, lowerIsBetter: true });
-    rows.push({ label: 'Thermos heal', value: flaskHeal(d.maxHp, d.stats.prayer, d.flaskBonus), fmt: n0 });
+    rows.push({ label: 'Thermos heal', value: flaskHeal(d.maxHp, d.stats.prayer, d.flaskBonus, d.statBoost.prayer), fmt: n0 });
     rows.push({ head: 'Attack', label: `${ch.equipment.main?.name ?? 'Fists'} power`, value: d.weaponPower, fmt: n0 });
     if (ch.altMain) {
       const alt = structuredClone(ch);
@@ -231,7 +232,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
         h(
           'div',
           { class: 'row', 'data-testid': `lvl-row-${s.id}`, 'data-focus-group': `lvl-${s.id}` },
-          h('div', { style: 'width:100px' }, s.label),
+          // the class's primary (+25%) and secondary (+15%) stats are marked (D184)
+          h('div', { style: 'width:100px', title: CLASSES[c.classId]?.primary === s.id ? 'Primary: every point gives 25% more' : CLASSES[c.classId]?.secondary === s.id ? 'Secondary: every point gives 15% more' : '' }, s.label, CLASSES[c.classId]?.primary === s.id ? ' (P)' : CLASSES[c.classId]?.secondary === s.id ? ' (S)' : ''),
           h('div', { class: 'mono', style: 'width:76px' }, p ? h('span', null, `${c.stats[s.id]} → `, h('b', { class: 'good' }, String(after.stats[s.id]))) : String(c.stats[s.id])),
           minus,
           plus,

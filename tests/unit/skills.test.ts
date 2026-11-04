@@ -48,12 +48,12 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
       expect(s.effect.length, s.id).toBeGreaterThan(0);
     }
   });
-  it('every class sums to 48, meets its own requirements, and its spells meet its Brain/Prayer', () => {
+  it('every class sums to 48 (the Hunter 46, D184), meets its own requirements, and its first spell of each school is castable', () => {
     expect(CLASS_IDS.length).toBe(10);
     for (const id of CLASS_IDS) {
       const cls = CLASSES[id];
       const st = cls.stats;
-      expect(st.hp + st.endurance + st.bonk + st.slicey + st.brain + st.prayer, id).toBe(48);
+      expect(st.hp + st.endurance + st.bonk + st.slicey + st.brain + st.prayer, id).toBe(id === 'hunter' ? 46 : 48);
       const c = newCharacter(id, 'Joe', 'p', new Rng(1));
       const d = computeDerived(c);
       expect(d.weaponMeetsReq, `${id} weapon`).toBe(true);
@@ -67,9 +67,13 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
         expect(tools.length, `${id} has a tool for ${sid}`).toBeGreaterThan(0);
         expect(c.spellLoadout[sp.school], `${id} loadout`).toContain(sid);
       }
+      // the first spell of each school is castable at the start; later ones may be learnt ahead (the Hunter, D184)
+      const firstOf = new Set<string>();
       for (const sid of cls.start.spells) {
         const sp = SPELLS[sid]!;
         expect(sp, sid).toBeDefined();
+        if (firstOf.has(sp.school)) continue;
+        firstOf.add(sp.school);
         expect((sp.school === 'brain' ? st.brain : st.prayer) >= sp.req, `${id} ${sid}`).toBe(true);
       }
     }

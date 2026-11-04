@@ -30,7 +30,8 @@ describe('Spell Skill (D182)', () => {
     expect(at(30, 'apprentice_staff', 5)).toBeGreaterThan(at(30, 'apprentice_staff', 1));
     // the tooltip's number agrees with the character's
     const c = scholar(40, 'arcane_staff', 3);
-    expect(toolSpellSkill(c.equipment.off!, c.stats)).toBe(spellSkill(computeDerived(c), 'brain'));
+    const d = computeDerived(c);
+    expect(toolSpellSkill(c.equipment.off!, c.stats, d.statBoost)).toBe(spellSkill(d, 'brain'));
   });
 
   it('other effects grow gently and never run away', () => {

@@ -351,14 +351,16 @@ export class TitleScene implements Scene {
       const stats = h('div', { class: 'cc-rows' });
       for (const k of STAT_IDS) {
         const v = cls.stats[k];
+        // primary and secondary stats (D184): every point counts 25% / 15% more
+        const tag = k === cls.primary ? h('span', { class: 'cc-tag', title: 'Primary: every point gives 25% more', style: 'margin-left:4px;padding:0 4px;border-radius:3px;background:#e8c25a;color:#1a1408;font-size:10px;font-weight:bold' }, 'P') : k === cls.secondary ? h('span', { class: 'cc-tag', title: 'Secondary: every point gives 15% more', style: 'margin-left:4px;padding:0 4px;border-radius:3px;background:#9ad0ff;color:#0a1a28;font-size:10px;font-weight:bold' }, 'S') : null;
         stats.append(
-          h('div', { class: 'lbl', title: STAT_HINT[k] }, STAT_LABEL[k]),
+          h('div', { class: 'lbl', title: STAT_HINT[k] }, STAT_LABEL[k], tag),
           h('div', { class: 'sep' }, '-'),
           h('div', { class: 'val' }, String(v)),
           h('div', { class: 'cc-bar', title: STAT_HINT[k] }, h('i', { style: `width:${Math.round((v / 16) * 100)}%` })),
         );
       }
-      card.append(h('div', { class: 'cc-sec' }, 'Stats'), stats);
+      card.append(h('div', { class: 'cc-sec' }, 'Stats'), stats, h('div', { class: 'small dim-text', 'data-testid': 'class-primary' }, `Primary ${STAT_LABEL[cls.primary]} (+25% from every point) · Secondary ${STAT_LABEL[cls.secondary]} (+15%)`));
       const kit = h('div', { class: 'cc-rows' });
       const kitRow = (label: string, value: string, dim = false): void => {
         kit.append(h('div', { class: 'lbl' }, label), h('div', { class: 'sep' }, '-'), h('div', { class: `wide${dim ? ' dim-text' : ''}` }, value));

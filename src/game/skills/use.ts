@@ -55,11 +55,12 @@ export function spellOf(e: Entity, i: number, keys: SpellKeys = 'spell'): SpellD
 }
 
 /** A school's spell power for these derived stats: the Brain / Prayer curve × the casting tool (the bonfire's before / after uses it too, D142). */
-export function schoolPower(d: Pick<Derived, 'stats' | 'mainTool' | 'offTool'>, school: SpellSchool): number {
+export function schoolPower(d: Pick<Derived, 'stats' | 'mainTool' | 'offTool'> & Partial<Pick<Derived, 'statBoost'>>, school: SpellSchool): number {
   const stat = school === 'brain' ? d.stats.brain : d.stats.prayer;
   const tool = toolForSchool(d, school);
   // the tool's own scaling letter decides how much Brain or Prayer it draws out (D182): C 0.8 … S 1.9, as weapons
-  const curve = 1 + GRADE_MULT[tool?.def.gradeLetter ?? 'E'] * scalingCurve(stat);
+  // a class's primary or secondary Brain / Prayer counts 25% / 15% more (D184)
+  const curve = 1 + GRADE_MULT[tool?.def.gradeLetter ?? 'E'] * scalingCurve(stat) * (d.statBoost?.[school] ?? 1);
   return curve * Math.max(0.5, tool?.mult ?? 0);
 }
 
@@ -68,16 +69,16 @@ export function schoolPower(d: Pick<Derived, 'stats' | 'mainTool' | 'offTool'>, 
  * no stat). Spells deal and heal Spell Skill / 100 times their listed amounts; their other effects grow more gently
  * (spellUtility). It grows with the stat, the tool's scaling letter, its item level, its rarity and proficiency.
  */
-export function spellSkill(d: Pick<Derived, 'stats' | 'mainTool' | 'offTool' | 'spellPowerPct'>, school: SpellSchool): number {
+export function spellSkill(d: Pick<Derived, 'stats' | 'mainTool' | 'offTool' | 'spellPowerPct'> & Partial<Pick<Derived, 'statBoost'>>, school: SpellSchool): number {
   return Math.round(100 * schoolPower(d, school) * (1 + d.spellPowerPct));
 }
 
 /** A staff's or talisman's Spell Skill for these stats, held on its own (tooltips, D182). */
-export function toolSpellSkill(item: Item, stats: Pick<Stats, 'brain' | 'prayer'>): number {
+export function toolSpellSkill(item: Item, stats: Pick<Stats, 'brain' | 'prayer'>, boost: Partial<Record<'brain' | 'prayer', number>> = {}): number {
   const def = CASTING_TOOLS[item.baseId];
   if (!def) return 0;
   const stat = def.school === 'brain' ? stats.brain : stats.prayer;
-  return Math.round(100 * toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * (1 + GRADE_MULT[def.gradeLetter] * scalingCurve(stat)));
+  return Math.round(100 * toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * (1 + GRADE_MULT[def.gradeLetter] * scalingCurve(stat) * (boost[def.school] ?? 1)));
 }
 
 /** The power multiplier of a spell for this caster: Brain/Prayer curve × casting tool (GAME_DESIGN §3.1). */

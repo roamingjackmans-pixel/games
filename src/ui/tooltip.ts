@@ -84,11 +84,11 @@ function reqsFor(item: Item): Requirements {
 }
 
 /** Damage of one hit at ×1, split by damage type (holyPct converts part of it, as in combat). */
-function weaponDamageByType(item: Item, stats: Stats, twoH: boolean): Partial<Record<DamageType, number>> {
+function weaponDamageByType(item: Item, stats: Stats, twoH: boolean, boost: Partial<Record<StatId, number>> = {}): Partial<Record<DamageType, number>> {
   const w = WEAPONS[item.baseId];
   if (!w) return {};
   const meets = meetsRequirements(reqsFor(item), stats, twoH);
-  const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity];
+  const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH, boost) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity];
   const holy = w.holyPct ?? 0;
   const out: Partial<Record<DamageType, number>> = {};
   const el = weaponElement(w);
@@ -299,8 +299,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   // ---- per kind
   if (w) {
     const ow = other ? WEAPONS[other.baseId] : undefined;
-    const mine = weaponDamageByType(item, stats, twoH);
-    const theirs = ow && other ? weaponDamageByType(other, stats, twoH) : {};
+    const mine = weaponDamageByType(item, stats, twoH, d0.statBoost);
+    const theirs = ow && other ? weaponDamageByType(other, stats, twoH, d0.statBoost) : {};
     const types = DAMAGE_TYPES.filter((k) => (mine[k] ?? 0) > 0 || (cmp && (theirs[k] ?? 0) > 0));
     const dmgRows: Row[] = types.map((k) => ({ label: ELEMENTS[k].name, color: ELEMENTS[k].glow, cur: mine[k] ?? 0, prev: ow ? (theirs[k] ?? 0) : null, better: 'higher', fmt: int0 }));
     if (types.length > 1) {
@@ -387,7 +387,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const statKey = t.school === 'brain' ? 'brain' : 'prayer';
     const rows: Row[] = [
       // Spell Skill (D182): what this tool makes of your Brain or Prayer; spells deal and heal Spell Skill / 100 times their listed amounts
-      { label: 'Spell Skill', cur: toolSpellSkill(item, stats), prev: ot && other ? toolSpellSkill(other, stats) : null, better: 'higher', fmt: int0, note: `${STAT_LABEL[statKey]} ${t.gradeLetter} scaling · spells do ×${(toolSpellSkill(item, stats) / 100).toFixed(2)}` },
+      { label: 'Spell Skill', cur: toolSpellSkill(item, stats, d0.statBoost), prev: ot && other ? toolSpellSkill(other, stats, d0.statBoost) : null, better: 'higher', fmt: int0, note: `${STAT_LABEL[statKey]} ${t.gradeLetter} scaling · spells do ×${(toolSpellSkill(item, stats, d0.statBoost) / 100).toFixed(2)}` },
       { label: 'Cast speed', cur: t.castSpeed, prev: ot ? ot.castSpeed : null, better: 'higher', fmt: (x) => `×${x.toFixed(2)}` },
     ];
     if (t.bonus) {
