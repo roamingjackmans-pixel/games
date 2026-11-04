@@ -1,7 +1,8 @@
 // Inventory / character screen (GAME_DESIGN §16): stats, a paper doll of the equipment, equip load, the
 // 60-slot bag, gems, consumables, compare tooltips, two-hand toggle, second weapon, quick-use selection.
 // Mouse, keyboard and gamepad (every slot is a focusable button; menuPad moves focus spatially).
-import { glyphText, tabHints } from '../glyphs';
+import { glyphText, inputText, padStyle, tabHints } from '../glyphs';
+import { PAD_ALT, PAD_ALT_EVENT, menuConfirmButton } from '../menuPad';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
@@ -74,7 +75,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
   const body = h('div', { class: 'panel', style: 'width:1180px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(body);
 
-  function cell(item: Item | null, onClick: () => void, onAlt?: (ev: MouseEvent) => void, extra = ''): HTMLButtonElement {
+  function cell(item: Item | null, onClick: () => void, onAlt?: (ev: MouseEvent) => void, extra = '', onPadAlt?: () => void): HTMLButtonElement {
     const b = h('button', { class: `cell ${extra}`, style: item ? `border-color:${RARITY_BORDER[item.rarity] ?? '#3a3447'}` : '' }) as HTMLButtonElement;
     if (item) {
       b.appendChild(itemIcon(item, 40));
@@ -94,6 +95,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
         e.preventDefault();
         onAlt(e);
       });
+    if (onPadAlt) b.addEventListener(PAD_ALT_EVENT, onPadAlt);
     return b;
   }
 
@@ -195,6 +197,13 @@ export function openInventory(host: InventoryHost): HTMLElement {
             else if (item.slot === 'ring') doEquip(item.id, 'ring2');
             else doEquip(item.id);
           },
+          '',
+          // X / □ (D166): a weapon, staff or talisman becomes the 2nd weapon; a ring goes in the second ring slot
+          () => {
+            if (!item) return;
+            if (isToolItem(item) || item.slot === 'main') doEquip(item.id, 'altMain');
+            else if (item.slot === 'ring') doEquip(item.id, 'ring2');
+          },
         ),
       );
       // the same bag slot keeps the focus after equipping from it (D144)
@@ -203,7 +212,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       if (i === 0) bagCell.setAttribute('data-autofocus', '');
     }
     bag.appendChild(bagGrid);
-    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it. Right-click a weapon to make it your 2nd weapon (swap with ${glyphText('swapWeapon')}); right-click a ring for the second ring slot. Staffs and talismans go in either hand: click for the off hand, right-click for the weapon hand, Shift+right-click for the 2nd weapon. Click worn gear to take it off.`));
+    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it. Right-click a weapon to make it your 2nd weapon (swap with ${glyphText('swapWeapon')}); right-click a ring for the second ring slot. Staffs and talismans go in either hand: click for the off hand, right-click for the weapon hand, Shift+right-click for the 2nd weapon. Click worn gear to take it off. With a controller: ${inputText(menuConfirmButton(), padStyle())} equips, ${inputText(PAD_ALT, padStyle())} makes a weapon your 2nd weapon (or a ring your second ring).`));
     const gems = h('div', { class: 'row wrap', style: 'gap:4px;max-width:476px' });
     c.gems.forEach((g) => {
       const b = h('span', { tabindex: '0', style: 'display:inline-flex' }, gemIcon(g, 28));

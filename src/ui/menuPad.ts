@@ -24,6 +24,11 @@ function menuButtons(): MenuPadBindings {
   }
 }
 
+/** the pad button that confirms in menus (A / ✕ unless remapped) */
+export function menuConfirmButton(): number {
+  return menuButtons().confirm;
+}
+
 function canScroll(el: HTMLElement): boolean {
   if (el.scrollHeight <= el.clientHeight + 2) return false;
   const oy = getComputedStyle(el).overflowY;
@@ -45,6 +50,10 @@ function scrollBoxFor(scope: HTMLElement, focus: HTMLElement | null): HTMLElemen
   }
   return best ?? (canScroll(scope) ? scope : null);
 }
+
+/** the pad button for a menu control's second action (X on Xbox, □ on PlayStation) and the event it sends (D166) */
+export const PAD_ALT = 2;
+export const PAD_ALT_EVENT = 'pad-alt';
 
 export function pollMenuPad(input: InputManager, now: number): void {
   refreshGlyphs(now);
@@ -121,6 +130,13 @@ export function pollMenuPad(input: InputManager, now: number): void {
     }, 0);
   }
   const mp = menuButtons();
+  // X / □: the focused control's second action (D166), like a right-click: in the inventory it makes a bag weapon
+  // the 2nd weapon (there was no other way to fill that slot with a pad) and a ring the second ring
+  if (mp.confirm !== PAD_ALT && mp.back !== PAD_ALT && input.padButtonEdge(PAD_ALT)) {
+    const el = document.activeElement as HTMLElement | null;
+    input.swallowPadButton(PAD_ALT);
+    if (el && scope.contains(el)) el.dispatchEvent(new CustomEvent(PAD_ALT_EVENT));
+  }
   if (input.padButtonEdge(mp.confirm)) {
     const el = document.activeElement as HTMLElement | null;
     // the game must not also take this press (A is Interact) when the menu closes under it (D147)
