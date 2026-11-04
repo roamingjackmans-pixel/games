@@ -115,13 +115,18 @@ export class NetGuest {
   ) {
     this.ch = { hello: t.channel(CH.hello), input: t.channel(CH.input), cmd: t.channel(CH.cmd), char: t.channel(CH.char), ping: t.channel(CH.ping) };
     t.channel<LobbyState & Record<string, unknown>>(CH.lobby).onMessage((l, from) => {
+      // the host's lobby goes to everyone on the channel: a turned-away guest is not in it (D156: it used to wipe the
+      // rejection off the screen and look like a normal lobby, just without them)
+      if (this.state === 'rejected') return;
       this.hostId = from;
       this.lobby = l;
       this.setFriendlyFire(l.ff);
       if (this.state === 'connecting') this.state = 'lobby';
       this.onLobby();
     });
-    t.channel<{ reason: string }>(CH.reject).onMessage((r) => {
+    t.channel<{ reason: string }>(CH.reject).onMessage((r, from) => {
+      // a guest already playing never gives up its seat over a stray rejection (D156)
+      if (this.state === 'game' || (this.hostId && from !== this.hostId)) return;
       this.state = 'rejected';
       this.rejectReason = r.reason;
       this.onReject(r.reason);
@@ -139,7 +144,11 @@ export class NetGuest {
     t.channel<{ t: number }>(CH.pong).onMessage((p) => {
       this.rtt = Math.max(0, this.clock() - p.t);
     });
-    t.onPeerJoin(() => this.sayHello());
+    // someone new on the channel: greet again only while still looking for the host (D156: guests already in the
+    // lobby or the game used to greet on every newcomer, and a host mid-game rejected them, freezing their game)
+    t.onPeerJoin(() => {
+      if (this.state === 'connecting') this.sayHello();
+    });
     t.onPeerLeave((id) => {
       if (id === this.hostId) {
         this.state = 'closed';

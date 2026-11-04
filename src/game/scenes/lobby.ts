@@ -150,7 +150,9 @@ export class LobbyScene implements Scene {
     n.friendlyFire = () => app().settings.game.friendlyFire;
     n.onLobbyChange = () => {
       this.draw();
-      if (this.o.auto && n.guests.size > 0) setTimeout(() => this.start(), 800);
+      // tests: '&players=N' in the address waits for a party of N before starting (D156; 2 by default)
+      const want = Math.max(2, Math.min(4, Number(new URLSearchParams(location.search).get('players')) || 2));
+      if (this.o.auto && n.guests.size >= want - 1) setTimeout(() => this.start(), 800);
     };
     n.onGuestLeft = (name) => toast(`${name} left.`);
     n.sendLobby();
@@ -197,6 +199,7 @@ export class LobbyScene implements Scene {
     };
     g.onReject = (reason) => {
       this.status = reason;
+      toast(reason);
       playSfx('uiError');
       this.draw();
     };

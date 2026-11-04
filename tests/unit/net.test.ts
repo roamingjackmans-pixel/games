@@ -272,6 +272,34 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     expect(g1.character.bossesBeaten).toBe(1);
   });
 
+  it('a player arriving after the start is turned away without knocking anyone out of the game (D156)', () => {
+    const p = party(2);
+    p.host.start(p.s);
+    p.step(1);
+    const late = new NetGuest(p.hub.join('ROOM22', 'late-peer'), saveOf('cleric', 'Late', 'late', 'OWN-L'), () => p.hub.now / 1000);
+    p.hub.pump(200);
+    p.step(0.5);
+    expect(late.state).toBe('rejected');
+    for (const g of p.guests) expect(g.state).toBe('game');
+    // and they still move
+    const g0 = guestEntity(p, 0);
+    const x0 = g0.x;
+    p.inputs[0] = { ...emptyInput(), moveX: 1, aimX: 1200, aimY: g0.y };
+    p.step(0.5);
+    expect(g0.x).toBeGreaterThan(x0 + 40);
+  });
+
+  it("a second copy of a guest's character stays turned away while the lobby keeps updating (D156)", () => {
+    const p = party(1);
+    const dup = new NetGuest(p.hub.join('ROOM22', 'dup-peer'), saveOf('brute', 'Copy', 'g0', 'OWN-D'), () => p.hub.now / 1000);
+    p.hub.pump(200);
+    p.host.sendLobby();
+    p.hub.pump(200);
+    expect(dup.state).toBe('rejected');
+    expect(dup.rejectReason).toContain('Pick another character');
+    expect(p.host.lobbyState().players.length).toBe(2);
+  });
+
   it('rejects a newer version, a full party and the same character twice', () => {
     const hub = new LoopbackHub();
     const clock = (): number => hub.now / 1000;

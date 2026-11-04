@@ -121,10 +121,12 @@ export class NetHost {
     const reject = (reason: string): void => this.ch.reject.send({ reason }, from);
     const mism = versionMismatch(gameVersion(), h.version);
     if (mism) return reject(mism);
+    // a guest already in the party saying hello again is not a new join (D156)
+    if (this.inGame && this.guests.has(from)) return;
     if (this.inGame) return reject('The game has started. Ask the host to return to the lobby.');
     if (!this.guests.has(from) && this.guests.size >= MAX_GUESTS) return reject('The party is full (4 players).');
     const same = h.char.playerId === this.save.character.playerId || [...this.guests.values()].some((g) => g.peerId !== from && g.char.playerId === h.char.playerId);
-    if (same) return reject('That character is already in this party.');
+    if (same) return reject('That character is already in this party. Pick another character (incognito windows share their characters with each other).');
     this.guests.set(from, {
       peerId: from,
       hello: h,
