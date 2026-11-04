@@ -19,7 +19,8 @@ describe('boss HP (D187)', () => {
   it('a spawned Landlord has 1.25× the HP of a spawned zone-8 boss on the shared base', () => {
     const w = new World('BHP', Room.empty());
     const ll = spawnEnemy(w, BOSSES.the_landlord!, 640, 368, { zone: 8 });
-    const other = spawnEnemy(w, { ...BOSSES.the_landlord!, baseHp: undefined }, 640, 368, { zone: 8 });
+    const { baseHp: _own, ...shared } = BOSSES.the_landlord!;
+    const other = spawnEnemy(w, shared, 640, 368, { zone: 8 });
     expect(ll.hp!.max / other.hp!.max).toBeCloseTo(4500 / 3600, 3);
   });
 });
