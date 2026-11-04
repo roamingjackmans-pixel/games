@@ -25,7 +25,8 @@ export const ROLE_STATS: Record<Role | 'mimic' | 'boss', RoleStats> = {
   tank: { hp: 150, dmg: 26, speed: 120, poise: 80, shards: 60, drop: 0.3, radius: 24, cost: 5, dropRow: 'brute' },
   hazard: { hp: 80, dmg: 20, speed: 90, poise: 20, shards: 40, drop: 0.3, radius: 20, cost: 4, dropRow: 'fodder' },
   mimic: { hp: 220, dmg: 45, speed: 200, poise: 70, shards: 100, drop: 1, radius: 22, cost: 6, dropRow: 'brute' },
-  boss: { hp: 1800, dmg: 45, speed: 140, poise: 200, shards: 1200, drop: 1, radius: 56, cost: 0, dropRow: 'brute' },
+  // D187: base HP doubled (was 1800); The Landlord sets his own (baseHp)
+  boss: { hp: 3600, dmg: 45, speed: 140, poise: 200, shards: 1200, drop: 1, radius: 56, cost: 0, dropRow: 'brute' },
 };
 
 /** Shard multiplier applied to every role value (D39 "Shard values ×5"; tuned to the §2.3 target). */

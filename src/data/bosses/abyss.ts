@@ -201,6 +201,8 @@ export const THE_LANDLORD: BossDef | null = {
   zone: 8,
   name: 'The Landlord',
   role: 'boss',
+  // D187: 2.5× the old boss base of 1800 (the other bosses got 2×)
+  baseHp: 4500,
   radius: 46,
   speed: 80,
   resist: {},
