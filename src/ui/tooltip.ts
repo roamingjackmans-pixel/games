@@ -17,7 +17,7 @@ import { itemSkillCount, poiseForSize, reqAtIlvl, scalingMult, tierName, toolMul
 import { computeDerived } from '../game/player/derived';
 import { toolSpellSkill } from '../game/skills/use';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, equipLoadWith, itemWeight, type EquipLoadInfo } from '../game/player/equipLoad';
-import { drawShield, drawTool, drawWeapon } from '../engine/draw/weapons';
+import { drawShield, drawTool, drawWeapon, weaponGripBack } from '../engine/draw/weapons';
 import { OUTLINE, poly } from '../engine/draw/parts';
 import { drawArmorIcon } from './armorIcons';
 import { DAMAGE_TYPES, type Character, type DamageType, type Gem, type Grade, type Item, type StatId, type Stats, type WeaponDef } from '../game/types';
@@ -523,6 +523,7 @@ export function itemIcon(item: Item | null, size = 40): HTMLCanvasElement {
     ctx.rotate(-Math.PI / 4);
     ctx.translate((-len * k) / 2, 0);
     ctx.scale(k, k);
+    ctx.translate(weaponGripBack(w.draw), 0); // a polearm held up its shaft is drawn back from the hand
     drawWeapon(ctx, w.draw, 0, item.rarity === 'legendary' ? item.name : undefined);
   } else if (SHIELDS[item.baseId]) {
     ctx.scale(0.9, 0.9);

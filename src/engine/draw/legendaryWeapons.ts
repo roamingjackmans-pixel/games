@@ -1904,7 +1904,7 @@ function committeeDecision(ctx: Ctx, t: number): void {
     ctx.stroke();
   }
   ctx.restore();
-  grip(ctx, -6, 10, 4.6, LEATHER);
+  grip(ctx, 25, 11, 4.6, LEATHER);
   // a ladle
   cord(ctx, [73, 2, 69, 9], '#9aa0a8', 1.4, 1);
   blob(ctx, 67.5, 12, 4, 3, { fill: '#c9ced6', under: '#9aa0a8', outlineW: 1.6 }, 0.5);
@@ -1932,7 +1932,7 @@ function committeeDecision(ctx: Ctx, t: number): void {
 
 function swissArmyPole(ctx: Ctx, t: number): void {
   haft(ctx, -8, 72, 4.4, '#d42a2a');
-  grip(ctx, -6, 10, 4.8, '#a01818', '#600a0a');
+  grip(ctx, 25, 11, 4.8, '#a01818', '#600a0a');
   plate(ctx, [14, -3.4, 20.8, -3.4, 20.8, 3.4, 14, 3.4], '#d42a2a', { ow: 1.4 });
   plate(ctx, [16.6, -2.4, 18.2, -2.4, 18.2, -0.8, 19.8, -0.8, 19.8, 0.8, 18.2, 0.8, 18.2, 2.4, 16.6, 2.4, 16.6, 0.8, 15, 0.8, 15, -0.8, 16.6, -0.8], '#ffffff', { ow: 0, under: null });
   // the fold-out tools (behind the scales)
@@ -1965,8 +1965,8 @@ function swissArmyPole(ctx: Ctx, t: number): void {
 
 function longArmOfTheLaw(ctx: Ctx, t: number): void {
   haft(ctx, -8, 90, 4.2, '#1a2a5a');
-  grip(ctx, -6, 10, 4.6, '#101830', '#c9ced6');
-  band(ctx, 30, 2, 6, '#c9ced6');
+  grip(ctx, 25, 11, 4.6, '#101830', '#c9ced6');
+  band(ctx, 42, 2, 6, '#c9ced6');
   band(ctx, 52, 2, 6, '#c9ced6');
   // handcuffs dangling off the hook side
   const [hx, hy] = dangle(ctx, 74, 3, 3, t, '#c9ced6', 2.4, 0.4);
@@ -2488,8 +2488,8 @@ function smokeAlarm(ctx: Ctx, t: number): void {
 
 function glaiveShaft(ctx: Ctx, wood: string, wrap: string, trim: string): void {
   haft(ctx, -8, 79, 4.2, wood);
-  grip(ctx, -6, 10, 4.6, wrap, shade(wrap, 0.5));
-  band(ctx, 24, 2, 6, trim);
+  grip(ctx, 25, 11, 4.6, wrap, shade(wrap, 0.5));
+  band(ctx, 40, 2, 6, trim);
   band(ctx, 50, 2, 6, trim);
   plate(ctx, [-11, 0, -7.5, -2.6, -6.5, -2.6, -6.5, 2.6, -7.5, 2.6], trim, { ow: 1.5 });
   plate(ctx, [74, -3, 80, -3.6, 80, 3.6, 74, 3], trim, { ow: 1.8 });

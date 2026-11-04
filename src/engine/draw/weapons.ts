@@ -726,9 +726,6 @@ function mace(ctx: Ctx): void {
 }
 
 function halberd(ctx: Ctx): void {
-  // held a third of the way up the shaft, not at its foot (D180): the whole weapon sits 30 px back from the hand
-  ctx.save();
-  ctx.translate(-30, 0);
   haft(ctx, -8, 96, 4.2, WOOD);
   grip(ctx, 25, 11, 4.6, LEATHER);
   band(ctx, 44, 2, 6);
@@ -747,7 +744,6 @@ function halberd(ctx: Ctx): void {
   rivet(ctx, 70, 0, 0.9);
   rivet(ctx, 79, 0, 0.9);
   spec(ctx, 78, -17, 1);
-  ctx.restore();
 }
 
 function twinaxes(ctx: Ctx): void {
@@ -947,8 +943,8 @@ function dawnGlaive(ctx: Ctx, t: number): void {
   const GO = '#f0c43c';
   const GL = '#ffe98a';
   haft(ctx, -8, 79, 4.2, '#e8dcc0');
-  grip(ctx, -6, 10, 4.6, '#8a6a10', '#4a3808');
-  band(ctx, 24, 2, 6, GO);
+  grip(ctx, 25, 11, 4.6, '#8a6a10', '#4a3808');
+  band(ctx, 40, 2, 6, GO);
   band(ctx, 50, 2, 6, GO);
   plate(ctx, [-11, 0, -7.5, -2.6, -6.5, -2.6, -6.5, 2.6, -7.5, 2.6], GO, { ow: 1.5 });
   const sx = 86;
@@ -1048,9 +1044,23 @@ export function drawBaseWeapon(ctx: Ctx, id: string, t = 0, charge = 0): void {
  * has a design (legendaryWeapons.ts) that is drawn instead of the base weapon. `charge` is how long a bow
  * or crossbow shot has been held (seconds), 0 when not charging.
  */
+/** Polearms held a third of the way up the shaft, not at its foot (D180 halberd, D191 glaive): the whole weapon, plain or
+ *  legendary, is drawn this many px back from the hand, its butt end showing behind it. */
+const GRIP_BACK: Record<string, number> = { w_halberd: 30, w_dawn_glaive: 30 };
+
+/** How far back from the hand a weapon is drawn (icons add it back to stay centred). */
+export function weaponGripBack(id: string): number {
+  return GRIP_BACK[id] ?? 0;
+}
+
 export function drawWeapon(ctx: Ctx, id: string, t = 0, legendaryName?: string, charge = 0): void {
-  if (legendaryName && drawLegendaryWeapon(ctx, legendaryName, t, charge)) return;
-  drawBaseWeapon(ctx, id, t, charge);
+  const back = GRIP_BACK[id] ?? 0;
+  if (back) {
+    ctx.save();
+    ctx.translate(-back, 0);
+  }
+  if (!legendaryName || !drawLegendaryWeapon(ctx, legendaryName, t, charge)) drawBaseWeapon(ctx, id, t, charge);
+  if (back) ctx.restore();
 }
 
 /** True for weapons drawn in both hands (second copy in the off hand). */
