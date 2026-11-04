@@ -50,6 +50,12 @@ export interface RoomStyle {
   particles: [AmbKind, number][];
   /** pits are star-filled void (The Abyss) */
   voidPits: boolean;
+  /** a bright line inside every void hole's edge and a soft glow around it, so the holes read on a dark floor (D174) */
+  voidRim?: string;
+  voidGlow?: string;
+  /** obstacles: a bright band between the shape and its black outline, and a stronger light lift (D174) */
+  obstacleRim?: string;
+  obstacleLift?: number;
 }
 
 const BASE: Omit<RoomStyle, 'id'> = {
@@ -184,6 +190,11 @@ export const STYLES: Record<StyleId, RoomStyle> = {
     lightColor: '#b06bff',
     particles: [[AMB.voidMote, 34], [AMB.pitDust, 10]],
     voidPits: true,
+    // dark purple on dark purple: the holes and obstacles need a clear edge (D174)
+    voidRim: '#d9b8ff',
+    voidGlow: '#9a5cff',
+    obstacleRim: '#c99bff',
+    obstacleLift: 0.26,
   },
 };
 

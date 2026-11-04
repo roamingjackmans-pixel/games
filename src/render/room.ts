@@ -156,7 +156,7 @@ function accentObstacles(ctx: CanvasRenderingContext2D, shape: Canvas, style: Ro
   o.fillStyle = withAlpha(style.lightColor, 0.5);
   o.fillRect(0, 0, RW, RH);
   o.globalCompositeOperation = 'screen';
-  o.fillStyle = 'rgba(255,255,255,0.14)';
+  o.fillStyle = `rgba(255,255,255,${style.obstacleLift ?? 0.14})`;
   o.fillRect(0, 0, RW, RH);
   o.globalCompositeOperation = 'destination-in';
   o.drawImage(shape as CanvasImageSource, 0, 0);
@@ -172,8 +172,19 @@ function accentObstacles(ctx: CanvasRenderingContext2D, shape: Canvas, style: Ro
   const out = offscreen(RW, RH);
   const f = out.ctx as unknown as CanvasRenderingContext2D;
   f.globalAlpha = 0.85;
-  for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2], [1.5, 1.5], [-1.5, 1.5], [1.5, -1.5], [-1.5, -1.5]] as const) f.drawImage(sil.canvas as CanvasImageSource, dx, dy);
+  // with a rim (D174) the black ring sits a little wider and the bright band goes between it and the shape
+  const o2 = style.obstacleRim ? 3 : 2;
+  for (const [dx, dy] of [[o2, 0], [-o2, 0], [0, o2], [0, -o2], [o2 * 0.75, o2 * 0.75], [-o2 * 0.75, o2 * 0.75], [o2 * 0.75, -o2 * 0.75], [-o2 * 0.75, -o2 * 0.75]] as const) f.drawImage(sil.canvas as CanvasImageSource, dx, dy);
   f.globalAlpha = 1;
+  if (style.obstacleRim) {
+    const rim = offscreen(RW, RH);
+    const rc = rim.ctx as unknown as CanvasRenderingContext2D;
+    rc.drawImage(shape as CanvasImageSource, 0, 0);
+    rc.globalCompositeOperation = 'source-in';
+    rc.fillStyle = style.obstacleRim;
+    rc.fillRect(0, 0, RW, RH);
+    for (const [dx, dy] of [[1.5, 0], [-1.5, 0], [0, 1.5], [0, -1.5]] as const) f.drawImage(rim.canvas as CanvasImageSource, dx, dy);
+  }
   f.drawImage(obs.canvas as CanvasImageSource, 0, 0);
   ctx.drawImage(out.canvas as CanvasImageSource, 0, 0);
   return out.canvas;

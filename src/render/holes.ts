@@ -117,6 +117,13 @@ export function drawHoles(h: HoleCtx, kind: HoleKind, sky: CanvasImageSource | n
       pc.fill();
     }
   }
+  // a soft glow just outside the edge, under the dark contact ring (D174)
+  if (isVoid && style.voidGlow) {
+    const g = silhouette(P.canvas, 4, style.voidGlow);
+    ctx.globalAlpha = 0.28;
+    for (const [dx, dy] of [[-4, 0], [4, 0], [0, -4], [0, 4], [-3, -3], [3, -3], [-3, 3], [3, 3]] as const) ctx.drawImage(g, dx, dy);
+    ctx.globalAlpha = 1;
+  }
   // dark contact ring around the rim
   ctx.globalAlpha = 0.75;
   for (const [dx, dy] of [
@@ -200,6 +207,13 @@ export function drawHoles(h: HoleCtx, kind: HoleKind, sky: CanvasImageSource | n
   }
   clipTo(ic, P.canvas);
   blit(ctx, I.canvas);
+  // a bright line just inside the edge, all the way round (D174)
+  if (isVoid && style.voidRim) {
+    const hi = silhouette(P.canvas, 4, style.voidRim);
+    ctx.globalAlpha = 0.9;
+    for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2]] as const) blit(ctx, edgeBand(hi, 1, dx, dy));
+    ctx.globalAlpha = 1;
+  }
   scratchRegion(null);
   // near lip (the floor edge you would fall from), rubble and cracks on the floor around the hole
   for (const i of list) {

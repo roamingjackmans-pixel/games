@@ -696,6 +696,9 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     const first = !opened;
     opened = true;
     setTimeout(() => {
+      // something chosen since the redraw keeps the focus: a late restore used to pull it away (D169, D174)
+      const a = document.activeElement;
+      if (a && a !== document.body && panel.contains(a)) return;
       // on opening: the first control of the tab's content (D148); after a tab click: stay on that tab
       if (first && !focus && focusContentStart(panel, body)) return;
       const el = (focus && panel.querySelector<HTMLElement>(`[data-focus="${focus}"]`)) || panel.querySelector<HTMLElement>('.tabs button.on');
