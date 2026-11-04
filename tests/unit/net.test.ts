@@ -276,6 +276,20 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     expect(g1.character.bossesBeaten).toBe(1);
   });
 
+  it('guests who waited a long time in the lobby still make it into the game (D161)', () => {
+    const p = party(3);
+    // a long wait in the lobby: nobody sends inputs there
+    for (let i = 0; i < 25; i++) p.hub.pump(1000);
+    p.host.start(p.s);
+    p.step(1.5);
+    expect(p.s.players.length).toBe(4);
+    for (const g of p.guests) {
+      expect(g.state).toBe('game');
+      expect(g.me).not.toBeNull();
+      expect(g.cw.players.length).toBe(4);
+    }
+  });
+
   it('a player arriving after the start is turned away without knocking anyone out of the game (D156)', () => {
     const p = party(2);
     p.host.start(p.s);

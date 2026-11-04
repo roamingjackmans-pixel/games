@@ -165,6 +165,9 @@ export class NetHost {
     g.roomSent = '';
     g.zoneSent = `${lay.seed}|${lay.zone}`;
     g.lastFullAt = -99;
+    // a fresh grace period: guests send nothing while waiting in the lobby, so anyone who joined more than 10 s
+    // before Start was dropped as silent the moment the game began (D161: only the last to join got in)
+    g.lastHeard = this.clock();
     const c = this.save.character;
     const welcome: Welcome = {
       you: g.char.playerId,
