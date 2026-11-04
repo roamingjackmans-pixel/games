@@ -60,6 +60,8 @@ export const STAMINA_REGEN_DELAY = 0.6;
 
 /** No projectile flies further than this (D185): about two-thirds of the 1,280 px screen, enemies' and players' alike. */
 export const MAX_PROJECTILE_RANGE = 850;
+/** Enemies' projectiles fly half as far as players' (D186): about a third of the screen. */
+export const ENEMY_PROJECTILE_RANGE = 425;
 
 /** Every stamina cost a player pays (swings, dodges, skills, spells, blocking) is ×1.15 (D105). */
 export const STAMINA_COST_MULT = 1.15;

@@ -6,7 +6,7 @@ import { ENEMIES } from '../../data/enemies';
 import { addBuff, buffSum } from '../combat/state';
 import { addRevive, applyControl, checkDeath, cleanse, emptySpec, ffVictims, grantBarrier, heal, hitAlly, hitEnemy, hitPlayer, interrupt } from '../combat/damage';
 import { spawnTelegraphs } from '../combat/telegraph';
-import { MAX_PROJECTILE_RANGE, spellUtility } from '../combat/formulas';
+import { ENEMY_PROJECTILE_RANGE, spellUtility } from '../combat/formulas';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, resolvePattern, type PatternCtx, type Shape } from '../combat/patterns';
 import { spawnHazard } from '../systems/hazards';
 import { collapseFloor } from '../boss/platform';
@@ -154,7 +154,7 @@ function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effect
             speed: p.speed,
             homing: (p.homing ?? 0) * DEG,
             targetId: ctx.targetId,
-            until: w.time + Math.min(p.range ?? 1600, MAX_PROJECTILE_RANGE) / p.speed,
+            until: w.time + Math.min(p.range ?? 1600, ENEMY_PROJECTILE_RANGE) / p.speed,
             pierce: 0,
             hit: new Set(),
             poiseDmg: 0,

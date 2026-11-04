@@ -3,7 +3,7 @@
 // swarms, stealth, teleports, passive pulls, elite affixes. Nothing here is specific to an enemy id.
 import { DEG, angleDiff, circleHit, clamp, dist, turnToward } from '../../engine/math';
 import { applyStatusBuild, emptySpec, grantBarrier, heal, hitPlayer, interrupt } from '../combat/damage';
-import { MAX_PROJECTILE_RANGE } from '../combat/formulas';
+import { ENEMY_PROJECTILE_RANGE } from '../combat/formulas';
 import { hasControl, speedMult } from '../combat/state';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, ROOM_CX, ROOM_CY } from '../combat/patterns';
 import { runEffects } from '../effects/run';
@@ -112,8 +112,8 @@ function chooseAttack(w: World, e: Entity, target: Entity): AttackDef | null {
     // illusions only mimic the normal attack (no specials, no utilities, no real damage)
     if (en.isIllusion && atk.kind !== 'normal') continue;
     if ((en.cooldowns[atk.id] ?? 0) > now) continue;
-    // a shot only from within its reach (D185: projectiles fly at most MAX_PROJECTILE_RANGE)
-    const reach = atk.pattern?.kind === 'projectile' ? Math.min(atk.range[1], MAX_PROJECTILE_RANGE) : atk.range[1];
+    // a shot only from within its reach (D185, D186: enemy projectiles fly at most ENEMY_PROJECTILE_RANGE)
+    const reach = atk.pattern?.kind === 'projectile' ? Math.min(atk.range[1], ENEMY_PROJECTILE_RANGE) : atk.range[1];
     if (d < atk.range[0] || d > reach) continue;
     if (en.isBoss && atk.id === en.lastAttackId && list.filter((a) => !a.trigger).length > 1) continue;
     // two targets, one bar: the split body performs these, the boss never does
@@ -165,7 +165,9 @@ function moveByStyle(w: World, e: Entity, target: Entity, dt: number): void {
   const now = w.time;
   const sp = moveSpeed(w, e);
   const d = dist(e.x, e.y, target.x, target.y);
-  const pref = def.preferredRange;
+  // a shooter keeps to 80% of its shots' reach so it stays in range to use them (D186)
+  const shoots = en.phaseAttacks.some((a) => a.pattern?.kind === 'projectile');
+  const pref = shoots ? Math.min(def.preferredRange, ENEMY_PROJECTILE_RANGE * 0.8) : def.preferredRange;
   const face = (): void => {
     const rate = (def.traits?.turnRate ?? 540) * DEG;
     e.facing = turnToward(e.facing, Math.atan2(target.y - e.y, target.x - e.x), rate * dt);

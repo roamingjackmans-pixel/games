@@ -46,7 +46,8 @@ describe('projectiles and obstacles (D180)', () => {
 
 describe('projectile range (D185)', () => {
   it('no projectile flies further than about two-thirds of the screen', async () => {
-    const { MAX_PROJECTILE_RANGE } = await import('../../src/game/combat/formulas');
+    const { MAX_PROJECTILE_RANGE, ENEMY_PROJECTILE_RANGE } = await import('../../src/game/combat/formulas');
+    expect(ENEMY_PROJECTILE_RANGE).toBe(MAX_PROJECTILE_RANGE / 2);
     expect(MAX_PROJECTILE_RANGE).toBeLessThanOrEqual(Math.round((1280 * 2) / 3));
     const w = new World('RANGE', Room.empty());
     const p = spawnPlayer(w, newCharacter('knight', 'J', 'p', new Rng(1)), 0, true, 100, midY);
@@ -58,7 +59,8 @@ describe('projectile range (D185)', () => {
     expect(enemyShot.removed).toBe(true);
     expect(playerShot.removed).toBe(true);
     // they never got past the cap (the last position before removal)
-    expect(enemyShot.x - x0[0]!).toBeLessThanOrEqual(MAX_PROJECTILE_RANGE + 20);
+    expect(enemyShot.x - x0[0]!).toBeLessThanOrEqual(ENEMY_PROJECTILE_RANGE + 20);
     expect(playerShot.x - x0[1]!).toBeLessThanOrEqual(MAX_PROJECTILE_RANGE + 20);
+    expect(playerShot.x - x0[1]!).toBeGreaterThan(ENEMY_PROJECTILE_RANGE + 100);
   });
 });
