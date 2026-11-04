@@ -6,6 +6,7 @@ import { ENEMIES } from '../../data/enemies';
 import { addBuff, buffSum } from '../combat/state';
 import { addRevive, applyControl, checkDeath, cleanse, emptySpec, ffVictims, grantBarrier, heal, hitAlly, hitEnemy, hitPlayer, interrupt } from '../combat/damage';
 import { spawnTelegraphs } from '../combat/telegraph';
+import { spellUtility } from '../combat/formulas';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, resolvePattern, type PatternCtx, type Shape } from '../combat/patterns';
 import { spawnHazard } from '../systems/hazards';
 import { collapseFloor } from '../boss/platform';
@@ -286,9 +287,22 @@ export function runEffects(w: World, effects: EffectDef[], ctx: EffectCtx): void
   }
 }
 
+/** A spell buff's size after Spell Skill (D182), held inside sane limits for stats that run away. */
+function spellBuffAmount(stat: string, amount: number): number {
+  if (stat === 'holyConvertPct') return Math.min(0.8, amount);
+  if (stat === 'physicalTakenPct' || stat.endsWith('TakenPct')) return Math.max(-0.6, amount);
+  if (stat === 'speedMult') return Math.max(-0.8, amount);
+  if (stat === 'attackSpeedPct' || stat === 'castSpeedPct') return Math.min(0.6, amount);
+  return amount;
+}
+
 function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
   const src = w.get(ctx.sourceId);
   const now = w.time;
+  // a player's spell grows with its caster's Spell Skill (D182): damage and healing by ctx.powerMult, everything
+  // else (buff sizes, barriers, revive strength, how long utility lasts) by the gentler spellUtility
+  const spell = ctx.isSpell && ctx.team === 0;
+  const u = spell ? spellUtility(ctx.powerMult) : 1;
   switch (e.op) {
     case 'damage':
       doDamage(w, e, ctx, src);
@@ -366,7 +380,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         addBuff(t, w, {
           id,
           stat: e.stat as BuffStat,
-          amount: e.amount,
+          amount: spell ? spellBuffAmount(e.stat, e.amount * u) : e.amount,
           durationS: e.durationS,
           maxStacks: e.op === 'buff' ? (e.maxStacks ?? 1) : 1,
           sourceId: ctx.sourceId,
@@ -387,7 +401,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
     case 'heal': {
       for (const t of targets(w, e, ctx, src)) {
         if (!t.hp) continue;
-        const amount = (e.flat ?? 0) + t.hp.max * e.pct * (e.spell ? ctx.powerMult : 1);
+        const amount = (e.flat ?? 0) + t.hp.max * e.pct * (e.spell || spell ? ctx.powerMult : 1);
         if (e.overS && e.overS > 0) {
           if (t.pl) t.pl.healOver.push({ perS: amount / e.overS, until: now + e.overS, interruptible: !!e.interruptible });
           else {
@@ -402,7 +416,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       break;
     }
     case 'barrier':
-      for (const t of targets(w, e, ctx, src)) if (t.hp) grantBarrier(w, t, t.hp.max * e.pctMaxHp, e.durationS);
+      for (const t of targets(w, e, ctx, src)) if (t.hp) grantBarrier(w, t, t.hp.max * Math.min(0.75, e.pctMaxHp * u), e.durationS);
       break;
     case 'summon': {
       const def = ENEMIES[e.enemyId];
@@ -427,7 +441,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         w.spawn('decoy', clamp(x + i * 30, ROOM_MIN_X, ROOM_MAX_X), clamp(y, ROOM_MIN_Y, ROOM_MAX_Y), {
           radius: 14,
           team: ctx.team,
-          dc: { until: now + e.durationS, tauntR: e.tauntR, ownerId: ctx.sourceId, illusion: !!e.illusion },
+          dc: { until: now + e.durationS * u, tauntR: e.tauntR, ownerId: ctx.sourceId, illusion: !!e.illusion },
         });
       }
       break;
@@ -483,7 +497,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       w.spawn('wall', ctx.aimX, ctx.aimY, {
         team: ctx.team,
         wl: {
-          until: now + e.durationS,
+          until: now + e.durationS * u,
           blocksProjectiles: e.blocks.includes('projectiles'),
           blocksEnemies: e.blocks.includes('enemies'),
           x1: ctx.aimX - (Math.cos(a) * len) / 2,
@@ -578,8 +592,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         }
       }
       if (best) {
-        src.pl.link = { otherId: best.id, until: now + e.durationS, split: e.splitPct };
-        best.pl!.link = { otherId: src.id, until: now + e.durationS, split: e.splitPct };
+        src.pl.link = { otherId: best.id, until: now + e.durationS * u, split: e.splitPct };
+        best.pl!.link = { otherId: src.id, until: now + e.durationS * u, split: e.splitPct };
       } else w.emit({ t: 'msg', text: 'No ally under the cursor.', forPlayer: src.pl.playerId });
       break;
     }
@@ -595,13 +609,13 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         if (dist(g.x, g.y, ctx.aimX, ctx.aimY) > 140 && dist(g.x, g.y, src.x, src.y) > 120) continue;
         const lantern = src.pl?.derived.rings.has('ghost_lantern');
         // Last Rites: 3.0, or 6.0 with a Ghost Lantern (addRevive doubles with the lantern)
-        addRevive(w, g, src, lantern && e.lanternAmount ? e.lanternAmount / 2 : e.amount);
+        addRevive(w, g, src, (lantern && e.lanternAmount ? e.lanternAmount / 2 : e.amount) * u);
         did = true;
         break;
       }
       if (!did && e.livingHealPct) {
         const ally = targets(w, { op: 'heal', pct: 0, target: 'ally' }, ctx, src)[0];
-        if (ally?.hp) heal(w, ally, ally.hp.max * e.livingHealPct);
+        if (ally?.hp) heal(w, ally, ally.hp.max * e.livingHealPct * (spell ? ctx.powerMult : 1));
       }
       break;
     }
@@ -642,10 +656,10 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       }
       break;
     case 'hyperArmor':
-      if (src) addBuff(src, w, { id: `hyper:${ctx.tag}`, stat: 'poiseThreshold', amount: 0, durationS: e.durationS, maxStacks: 1, sourceId: src.id });
+      if (src) addBuff(src, w, { id: `hyper:${ctx.tag}`, stat: 'poiseThreshold', amount: 0, durationS: e.durationS * u, maxStacks: 1, sourceId: src.id });
       break;
     case 'reveal':
-      for (const t of enemiesOf(w, ctx.team)) if (t.en && dist(t.x, t.y, ctx.x, ctx.y) <= e.r + 300) t.en.revealedUntil = now + e.durationS;
+      for (const t of enemiesOf(w, ctx.team)) if (t.en && dist(t.x, t.y, ctx.x, ctx.y) <= e.r + 300) t.en.revealedUntil = now + e.durationS * u;
       break;
     case 'hazard': {
       const specs = resolvePattern(e.pattern, patternCtxFor(w, ctx, src));

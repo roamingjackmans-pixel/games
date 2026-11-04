@@ -3,7 +3,7 @@ import { CONSUMABLES } from '../../data/consumables';
 import { GEMS, gemColor, gemKind, gemKindLabel, gemText, gemTitle, perkName, perkText } from '../../data/gems';
 import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
 import { computeDerived } from '../../game/player/derived';
-import { schoolPower } from '../../game/skills/use';
+import { spellSkill } from '../../game/skills/use';
 import { ELEMENTS } from '../../game/elements';
 import { canSocket, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
@@ -179,7 +179,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     rows.push({ label: 'Attack speed', value: d.attackSpeed, fmt: times });
     for (const school of ['brain', 'prayer'] as const) {
       const tool = d.mainTool?.def.school === school ? d.mainTool : d.offTool?.def.school === school ? d.offTool : null;
-      if (tool) rows.push({ label: `${school === 'brain' ? 'Brain' : 'Prayer'} spell power`, value: schoolPower(d, school), fmt: times });
+      if (tool) rows.push({ label: `${school === 'brain' ? 'Brain' : 'Prayer'} Spell Skill`, value: spellSkill(d, school), fmt: (x: number) => String(Math.round(x)) });
     }
     rows.push({ label: 'Cast speed', value: d.castSpeed, fmt: times });
     rows.push({ label: 'Walk while casting', value: d.castMoveMult, fmt: pct });

@@ -15,6 +15,7 @@ import { baseInfo, itemRequirements, meetsRequirements, type Requirements } from
 import { defaultSlotFor, itemSellValue, type EquipSlot } from '../game/items/inventory';
 import { itemSkillCount, poiseForSize, reqAtIlvl, scalingMult, tierName, toolMult, weaponBase } from '../game/combat/formulas';
 import { computeDerived } from '../game/player/derived';
+import { toolSpellSkill } from '../game/skills/use';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, equipLoadWith, itemWeight, type EquipLoadInfo } from '../game/player/equipLoad';
 import { drawShield, drawTool, drawWeapon } from '../engine/draw/weapons';
 import { OUTLINE, poly } from '../engine/draw/parts';
@@ -385,7 +386,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const ot = other ? CASTING_TOOLS[other.baseId] : undefined;
     const statKey = t.school === 'brain' ? 'brain' : 'prayer';
     const rows: Row[] = [
-      { label: 'Power', cur: toolMult(t.grade, item.ilvl) * RARITY_POWER[item.rarity], prev: ot && other ? toolMult(ot.grade, other.ilvl) * RARITY_POWER[other.rarity] : null, better: 'higher', fmt: (x) => `×${x.toFixed(2)}` },
+      // Spell Skill (D182): what this tool makes of your Brain or Prayer; spells deal and heal Spell Skill / 100 times their listed amounts
+      { label: 'Spell Skill', cur: toolSpellSkill(item, stats), prev: ot && other ? toolSpellSkill(other, stats) : null, better: 'higher', fmt: int0, note: `${STAT_LABEL[statKey]} ${t.gradeLetter} scaling · spells do ×${(toolSpellSkill(item, stats) / 100).toFixed(2)}` },
       { label: 'Cast speed', cur: t.castSpeed, prev: ot ? ot.castSpeed : null, better: 'higher', fmt: (x) => `×${x.toFixed(2)}` },
     ];
     if (t.bonus) {

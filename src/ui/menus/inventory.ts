@@ -12,7 +12,8 @@ import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, unequip, unsocketGem
 import { itemRequirements, meetsRequirements } from '../../game/items/bases';
 import { levelCost } from '../../game/combat/formulas';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
-import type { Derived } from '../../game/player/derived';
+import { toolForSchool, type Derived } from '../../game/player/derived';
+import { spellSkill } from '../../game/skills/use';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item } from '../../game/types';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
@@ -132,6 +133,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
         ...kv('Max HP', d.maxHp),
         ...kv('Max stamina', d.maxStam),
         ...kv('Weapon power', Math.round(d.weaponPower), d.weaponMeetsReq ? '' : 'bad'),
+        // Spell Skill per school you can cast (D182)
+        ...(['brain', 'prayer'] as const).filter((sc) => toolForSchool(d, sc)).flatMap((sc) => kv(`${sc === 'brain' ? 'Brain' : 'Prayer'} Spell Skill`, spellSkill(d, sc), toolForSchool(d, sc)?.meetsReq ? '' : 'bad')),
         ...kv('Attack speed', `×${d.attackSpeed.toFixed(2)}`),
         ...kv('Dodge recharge', `${d.dodgeRecharge.toFixed(1)} s`),
         head('Defense'),

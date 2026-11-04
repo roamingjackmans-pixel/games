@@ -131,6 +131,17 @@ export function reqAtIlvl(req1: number, ilvl: number, primary: boolean): number 
   return primary ? req1 + 2 * (ilvl - 1) : req1;
 }
 
+/**
+ * How much a spell's non-damage effects grow at a power of p = Spell Skill / 100 (D182): buffs, barriers, revive
+ * strength and how long utility lasts. Damage and healing take p itself; these take a gentler curve so a strong
+ * caster's ward is bigger, not absurd: 1 at 100, about 1.5 at 270, 2.2 at 1,080, at most 3.
+ */
+export function spellUtility(p: number): number {
+  if (p <= 0) return 0;
+  if (p < 1) return Math.sqrt(p);
+  return Math.min(3, 1 + 0.5 * Math.log(p));
+}
+
 /** toolMult = toolGrade × (1 + 0.35 × (toolIlvl − 1)) */
 export function toolMult(grade: number, ilvl: number): number {
   return grade * (1 + 0.35 * (ilvl - 1));
