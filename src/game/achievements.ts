@@ -4,11 +4,13 @@
 // `frame()`; the session adds the few things events do not carry (`note()`: deaths, Gary leaving, the credits).
 // Headless: no DOM. The UI listens with `onUnlock()` (src/ui/achievements.ts).
 import { ACHIEVEMENTS, ACHIEVEMENT_BY_ID, type AchievementDef, type AchView } from '../data/achievements';
+import { GEM_MAX_LEVEL, perkLevel, perkQuality } from '../data/gems';
+import { MAX_REINFORCE } from '../data/essence';
 import { BOSSES } from '../data/bosses';
 import { GARY, INSTRUCTOR, MIMIC, SPECIAL_ENEMIES } from '../data/enemies/special';
 import { parseArmorBase } from '../data/armor';
 import { getStore, type KeyValueStore } from '../engine/settings';
-import type { Character, Item } from './types';
+import type { Character, Gem, Item } from './types';
 import type { Entity, GameEvent, World } from './world';
 
 export const ACH_KEY = 'dj.achievements';
@@ -84,6 +86,17 @@ export function hasMaxGem(c: Character): boolean {
   const maxed = (g: { perks: { tier: number }[] } | null): boolean => !!g && g.perks.some((p) => p.tier >= 5);
   if (c.gems.some(maxed)) return true;
   return itemsOf(c).some((it) => it.sockets.some(maxed));
+}
+
+/** A level 50 gem with three perks, all Orange rolls (D199); loose or socketed. */
+export function hasPerfectGem(c: Character): boolean {
+  const perfect = (g: Gem | null): boolean => !!g && g.perks.length === 3 && g.perks.every((p) => perkLevel(p) >= GEM_MAX_LEVEL && perkQuality(p).id === 'orange');
+  return c.gems.some(perfect) || itemsOf(c).some((it) => it.sockets.some(perfect));
+}
+
+/** Any weapon, shield or armour piece at +15 (D199). */
+export function hasMaxReinforce(c: Character): boolean {
+  return itemsOf(c).some((it) => (it.plus ?? 0) >= MAX_REINFORCE);
 }
 
 /** The boss fight in progress, from the local player's side. */
@@ -337,6 +350,8 @@ export class AchievementTracker {
     if (!this.view.count('legendary') && itemsOf(c).some((it) => it.rarity === 'legendary')) this.flag('legendary');
     if (!this.view.count('fullSet') && wearsFullSet(c)) this.flag('fullSet');
     if (!this.view.count('gemMax') && hasMaxGem(c)) this.flag('gemMax');
+    if (!this.view.count('gemPerfect') && hasPerfectGem(c)) this.flag('gemPerfect');
+    if (!this.view.count('plusMax') && hasMaxReinforce(c)) this.flag('plusMax');
     if (!this.view.count('gary') && w.enemies.some((e) => e.en?.def.id === GARY.id && !e.removed)) this.flag('gary');
   }
 }

@@ -170,7 +170,7 @@ describe('The Dark Shard', () => {
     // every counter the table reads, maxed, except the last one's
     const keys = [
       'kills', 'deaths', 'parries', 'riposteKills', 'level', 'glowen', 'party', 'encumberedS', 'credits', 'instructor', 'mimicKill',
-      'mimicDeath', 'legendary', 'fullSet', 'gemMax', 'flaskless', 'fists', 'revive', 'ffDown', 'ffAbandon', 'gary', 'ng1', 'ng2',
+      'mimicDeath', 'legendary', 'fullSet', 'gemMax', 'gemPerfect', 'plusMax', 'flaskless', 'fists', 'revive', 'ffDown', 'ffAbandon', 'gary', 'ng1', 'ng2',
       ...Object.keys(BOSSES).map((b) => `boss:${b}`),
       ...CLASS_IDS.map((c) => `class:${c}`),
       ...[1, 2, 3, 4, 5, 6, 7, 8].map((z) => `clean:${z}`),
