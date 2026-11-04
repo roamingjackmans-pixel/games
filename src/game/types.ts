@@ -825,7 +825,8 @@ export interface SaveFile {
   character: Character;
   world: WorldState;
   stats: SaveStats;
-  pending?: { advanceToZone?: number };
+  /** co-op progress waiting for this world's next Continue (D195): the next zone to open and the zones beaten away */
+  pending?: { advanceToZone?: number; beatenZones?: number[] };
 }
 
 export type EliteAffix = 'frenzied' | 'armored' | 'vampiric' | 'arcane' | 'molten' | 'frostbound' | 'shielded' | 'summoner';

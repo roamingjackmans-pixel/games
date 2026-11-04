@@ -27,6 +27,7 @@ import { reviveRequirement } from './combat/formulas';
 import { BOSSES } from '../data/bosses';
 import { DEATH_TITLES } from '../data/story';
 import { newWorldState } from './save/schema';
+import { applyCoopProgress } from './save/coopProgress';
 import { flaskCap, flaskMaxFor } from './combat/formulas';
 import { applyArenaChanges } from './boss/arena';
 import { achievements } from './achievements';
@@ -48,6 +49,8 @@ export interface SessionListener {
   bossIntro?(def: BossDef, boss: Entity): void;
   bossPhase?(def: BossDef, phase: number): void;
   bossDefeated?(def: BossDef): void;
+  /** a zone's boss fell (the host tells its guests, D195) */
+  zoneBeaten?(zone: number): void;
   /** the stairs up after The Landlord */
   credits?(): void;
   /** the NG+ bonfire: the scene saves and restarts the run in the next cycle */
@@ -254,23 +257,8 @@ export class GameSession {
   /** Start (or resume) the run: tutorial hall for new characters, else the saved respawn bonfire. */
   start(): void {
     const ws = this.save.world;
-    // D31: a zone beaten as a guest moves this world on to the next zone's start bonfire
-    const adv = this.save.pending?.advanceToZone;
-    if (adv && adv > ws.zone && adv <= 8) {
-      ws.zone = adv;
-      ws.roomsCleared = [];
-      ws.respawnBonfireId = `z${adv}-start`;
-      this.save.character.tutorialDone = true;
-    } else if (adv === 9) {
-      // The Landlord fell in a friend's world: this world opens at his empty arena (stairs up, NG+ fire)
-      ws.zone = 8;
-      ws.roomsCleared = [];
-      ws.respawnBonfireId = 'z8-boss';
-      if (!ws.bonfiresDiscovered.includes('z8-boss')) ws.bonfiresDiscovered.push('z8-boss');
-      if (!ws.bossesBeatenThisCycle.includes(8)) ws.bossesBeatenThisCycle.push(8);
-      this.save.character.tutorialDone = true;
-    }
-    if (this.save.pending) delete this.save.pending.advanceToZone;
+    // zones beaten as a guest in a zone this world had reached open the next ones here (D195)
+    applyCoopProgress(this.save);
     this.layout = this.layoutFor(ws.zone);
     if (this.layout.tutorialId && !this.save.character.tutorialDone) {
       this.enterRoom(this.layout.tutorialId, 'start', true);
@@ -497,6 +485,7 @@ export class GameSession {
     const ws = this.save.world;
     if (!ws.bossesBeatenThisCycle.includes(this.layout.zone)) ws.bossesBeatenThisCycle.push(this.layout.zone);
     const z = this.layout.zone;
+    this.listener.zoneBeaten?.(z);
     for (const sp of this.players) {
       const c = sp.char;
       c.bossesBeaten++;

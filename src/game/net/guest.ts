@@ -8,6 +8,7 @@ import { ACTION_BIT, type InputFrame } from '../../engine/input/actions';
 import { spawnEnemy } from '../enemies/spawn';
 import { ATTACK_MOVE, DODGE_DIST, DODGE_S, refreshDerived, spawnPlayer } from '../player/player';
 import { attackStaminaCost } from '../combat/formulas';
+import { guestZoneBeaten } from '../save/coopProgress';
 import { generateZone, type ZoneLayout } from '../procgen/zone';
 import { Room } from '../room';
 import { terrainWalkMult } from '../systems/terrain';
@@ -226,18 +227,15 @@ export class NetGuest {
       this.onHostLeft();
       return;
     }
+    // what this guest's own world keeps from the zone just beaten (D195); saved with the character
+    if (e.t === 'zoneBeaten' && guestZoneBeaten(this.save, e.zone, e.cycle)) this.onCharChanged();
     this.onEvent(e);
   }
 
   private onOps(rev: number, ops: CharOp[]): void {
     const c = this.save.character;
-    const before = c.highestZoneBeaten;
     for (const o of ops) applyCharOp(c, o);
     this.rev = rev;
-    // D31: a zone beaten here that was this character's next zone moves its own world on
-    if (c.highestZoneBeaten > before && c.highestZoneBeaten + 1 > this.save.world.zone) {
-      this.save.pending = { ...(this.save.pending ?? {}), advanceToZone: Math.min(9, c.highestZoneBeaten + 1) };
-    }
     if (this.me?.pl && ops.some((o) => o.op === 'gear' || o.op === 'set' || o.op === 'prof')) refreshDerived(this.me);
     this.onCharChanged();
   }

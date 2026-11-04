@@ -46,6 +46,9 @@ export interface HostGuest {
   events: GameEvent[];
 }
 
+/** Sessions whose boss kills are already relayed to guests (D195). */
+const HOOKED = new WeakSet<GameSession>();
+
 export class NetHost {
   guests = new Map<string, HostGuest>();
   session: GameSession | null = null;
@@ -152,6 +155,15 @@ export class NetHost {
   start(session: GameSession): void {
     this.session = session;
     this.inGame = true;
+    // every guest hears when a zone's boss falls; each guest's own world decides what it keeps (D195)
+    if (!HOOKED.has(session)) {
+      HOOKED.add(session);
+      const prev = session.listener.zoneBeaten;
+      session.listener.zoneBeaten = (zone) => {
+        prev?.(zone);
+        if (this.session === session) this.broadcastEvent({ t: 'zoneBeaten', zone, cycle: this.save.character.cycle });
+      };
+    }
     const lay = session.layout;
     for (const g of this.guests.values()) this.enter(g, lay);
     this.sendLobby();

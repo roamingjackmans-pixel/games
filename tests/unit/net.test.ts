@@ -248,13 +248,13 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     expect(g.pl!.char.flaskCur).toBe(0);
   });
 
-  it('zone credit goes home only when it is the guest\'s next zone (D31)', () => {
+  it('zone credit goes home when the guest\'s own world had reached that zone (D195; was next-zone-only, D31)', () => {
     const p = party(2);
-    p.guests[1]!.save.character.highestZoneBeaten = 0;
-    p.guests[0]!.save.character.highestZoneBeaten = 0;
-    // the host is in zone 1; guest 1 has already beaten zone 1 in its own world? no: give it 2 so zone 1 is not next
-    p.guests[1]!.save.character.highestZoneBeaten = 2;
-    p.guests[1]!.syncChar();
+    // guest 0's world is in zone 1, like the host's; guest 1's has reached zone 3 already
+    const w1 = p.guests[1]!.save.world;
+    w1.zone = 3;
+    w1.bossesBeatenThisCycle.push(1, 2);
+    w1.bonfiresDiscovered.push('z1-start', 'z2-start', 'z3-start');
     p.hub.pump(100);
     p.host.start(p.s);
     p.step(0.5);
@@ -268,10 +268,10 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     expect(b.hp!.dead).toBe(true);
     const g0 = p.guests[0]!.save;
     const g1 = p.guests[1]!.save;
-    expect(g0.character.highestZoneBeaten).toBe(1);
+    // guest 0 was in zone 1 at home: zone 2 opens; guest 1 already had it: nothing moves
     expect(g0.pending?.advanceToZone).toBe(2);
+    expect(g0.pending?.beatenZones).toEqual([1]);
     expect(g0.character.bossesBeaten).toBe(1);
-    expect(g1.character.highestZoneBeaten).toBe(2);
     expect(g1.pending?.advanceToZone).toBeUndefined();
     expect(g1.character.bossesBeaten).toBe(1);
   });
