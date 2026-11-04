@@ -325,7 +325,8 @@ export const PLAYER_COLORS = ['#e6b84a', '#5fd3c0', '#ff7aa8', '#9ad0ff'];
 
 export function enemyDrawState(e: Entity, x: number, y: number, now: number, pal: string[]): DrawState {
   const en = e.en!;
-  const moving = Math.min(1, Math.hypot(e.x - e.px, e.y - e.py) * 20);
+  // a co-op guest's mirror sets anim.moving from what it saw move (D151); the host measures this tick's step
+  const moving = (e.anim as { moving?: number }).moving ?? Math.min(1, Math.hypot(e.x - e.px, e.y - e.py) * 20);
   return {
     x,
     y,

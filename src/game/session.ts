@@ -642,8 +642,10 @@ export class GameSession {
     }
     // arming: lock the doors once the party is inside, then spawn waves
     if (this.roomPhase === 'armed' && this.plan) {
-      const lead = w.livingPlayers()[0];
-      const inside = lead ? dist(lead.x, lead.y, this.entry[0], this.entry[1]) > 70 || this.plan.ambush : false;
+      // any player stepping in arms it (D151): it used to watch only the first player (the host), so a guest who
+      // walked in first could cross the room, or leave by another door, before a single enemy appeared
+      const players = w.livingPlayers();
+      const inside = players.length > 0 && (this.plan.ambush || players.some((p) => dist(p.x, p.y, this.entry[0], this.entry[1]) > 70));
       if (inside) {
         this.roomPhase = 'fighting';
         this.applyDoorLocks();

@@ -18,6 +18,18 @@ import { CONTROL_BITS, ENEMY_STATES, F, PLAYER_STATES, POSES, STATUS_BITS, decod
 import type { NetChannel, Transport } from './transport';
 import type { AttackDef, BossDef, Character, EliteAffix, EnemyDef, SaveFile } from '../types';
 
+/**
+ * The walking animation on the guest's mirror (D151): the host's simulation sets how much a body is walking, but the
+ * mirror only moves bodies to where the snapshots say, so it measures that step instead (eased so a snapshot's
+ * uneven steps do not make the feet stutter).
+ */
+function walkAnim(e: Entity, moved: number, dt: number): void {
+  const a = e.anim as { moving?: number };
+  const raw = dt > 0 ? Math.min(1, moved / dt / 45) : 0;
+  a.moving = (a.moving ?? 0) + (raw - (a.moving ?? 0)) * Math.min(1, dt * 12);
+  if (a.moving < 0.02) a.moving = 0;
+}
+
 /** An enemy's or boss's attack by id: its own (a boss's in every phase), its phase two, and any attack they chain into (D149). */
 export function findAttack(def: EnemyDef | BossDef, id: string): AttackDef | null {
   const seen = new Set<AttackDef>();
@@ -539,12 +551,15 @@ export class NetGuest {
         x = a.x + (b.x - a.x) * k;
         y = a.y + (b.y - a.y) * k;
       }
+      walkAnim(e, dist(x, y, e.x, e.y), dt);
       e.px = e.x = x;
       e.py = e.y = y;
     }
     // self: predict walking with the host's current walk speed, and start a dodge at once (D149)
     const me = this.me;
     if (me) {
+      const mx0 = me.x;
+      const my0 = me.y;
       const speed = this.self?.speed ?? 0;
       this.maybePredictDodge(me, input, speed);
       const dp = this.dodgePred;
@@ -581,6 +596,7 @@ export class NetGuest {
           me.y += (last.y - me.y) * Math.min(1, dt / 0.08);
         }
       }
+      walkAnim(me, dist(mx0, my0, me.x, me.y), dt);
       me.px = me.x;
       me.py = me.y;
       if (me.pl && me.pl.state !== 'attack' && me.pl.state !== 'dodge') me.facing = Math.atan2(input.aimY - me.y, input.aimX - me.x);

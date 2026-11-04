@@ -360,3 +360,24 @@ describe('Training Hall terrain stations (D126)', () => {
     expect(s.tutorialDone('hurtTerrain')).toBe(true);
   });
 });
+
+describe('co-op: a guest walking in first starts the room (D151)', () => {
+  it('the guest steps in while the host waits at the door: the doors lock and the waves come', () => {
+    const s = session();
+    s.joinPlayer(newCharacter('duelist', 'Guest', 'p2', new Rng('g')));
+    const id = s.layout.rooms.find((r) => r.kind === 'combat')!.id;
+    s.enterRoom(id, 'bonfire');
+    s.w.god = true;
+    // the host stays on the entry spot; the guest walks into the middle
+    const host = s.localPlayer!;
+    host.x = s.entry[0];
+    host.y = s.entry[1];
+    const guest = s.players.find((p) => !p.local)!.entity!;
+    const [gx, gy] = s.w.room.nearestFloor(s.entry[0] + (s.entry[0] < 640 ? 240 : -240), s.entry[1], guest.radius);
+    guest.x = gx;
+    guest.y = gy;
+    run(s, 1.5);
+    expect(s.roomPhase).toBe('fighting');
+    expect(s.w.enemies.filter((e) => !e.hp!.dead && !e.en!.def.traits?.mimic).length).toBeGreaterThan(0);
+  });
+});
