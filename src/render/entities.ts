@@ -83,6 +83,7 @@ export function lookFor(c: Character): JoeLook {
   // the person from the character creator (old saves have none: the class look stands)
   const ap = c.appearance;
   if (ap) {
+    if (ap.sex === 'female') look.female = true;
     look.skin = ap.skin;
     look.hair = ap.hair;
     look.hairStyle = ap.hairStyle;

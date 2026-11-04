@@ -34,8 +34,8 @@ import { SPELLS } from '../../data/spells';
 import { STAT_LABEL } from '../../ui/tooltip';
 import { glyphText } from '../../ui/glyphs';
 import {
-  ARM_FEATURES, BEARDS, BROWS, EYE_COLORS, EYE_SHAPES, HAIR_COLORS, HAIR_STYLES, LEG_FEATURES, MARKS, NOSES, SKIN_TONES,
-  defaultAppearance, randomAppearance, type Choice, type Swatch,
+  ARM_FEATURES, BEARDS, BROWS, EYE_COLORS, EYE_SHAPES, HAIR_COLORS, LEG_FEATURES, MARKS, NOSES, SKIN_TONES,
+  BODY_TYPES, defaultAppearance, hairStylesFor, randomAppearance, withBodyType, type Choice, type Swatch,
 } from '../../data/appearance';
 
 const STAT_HINT: Record<StatId, string> = {
@@ -397,11 +397,15 @@ export class TitleScene implements Scene {
       custom = true;
       sync();
     };
-    const cycler = <T extends string>(key: keyof Appearance, list: Choice<T>[], label: string): HTMLElement => {
+    const cycler = <T extends string>(key: keyof Appearance, opts: Choice<T>[] | (() => Choice<T>[]), label: string, onSet?: (v: T) => void): HTMLElement => {
       const out = h('span');
+      const listNow = (): Choice<T>[] => (typeof opts === 'function' ? opts() : opts);
       const step = (dir: number): void => {
+        const list = listNow();
         const i = list.findIndex((o) => (o.id as string) === ap[key]);
-        (ap as unknown as Record<string, string>)[key] = list[(i + dir + list.length) % list.length]!.id;
+        const v = list[(i + dir + list.length) % list.length]!.id;
+        if (onSet) onSet(v);
+        else (ap as unknown as Record<string, string>)[key] = v;
         touch();
       };
       const prev = btn('◀', () => step(-1));
@@ -409,7 +413,7 @@ export class TitleScene implements Scene {
       prev.setAttribute('aria-label', `Previous ${label}`);
       next.setAttribute('aria-label', `Next ${label}`);
       syncs.push(() => {
-        out.textContent = list.find((o) => (o.id as string) === ap[key])?.label ?? '';
+        out.textContent = listNow().find((o) => (o.id as string) === ap[key])?.label ?? '';
       });
       return h('div', { class: 'cc-cyc', 'data-testid': `ap-${key}` }, prev, out, next);
     };
@@ -434,11 +438,14 @@ export class TitleScene implements Scene {
       });
       return box;
     };
+    // body type first (D183): a woman's build, face and hair list; no beard row for her
+    const beardRow = cycler('beard', BEARDS, 'facial hair');
     const apRows: [string, HTMLElement][] = [
+      ['Body', cycler('sex', BODY_TYPES, 'body type', (v) => (ap = withBodyType(ap, v)))],
       ['Skin', swatches('skin', SKIN_TONES)],
-      ['Hair', cycler('hairStyle', HAIR_STYLES, 'hair style')],
+      ['Hair', cycler('hairStyle', () => hairStylesFor(ap.sex), 'hair style')],
       ['Hair colour', swatches('hair', HAIR_COLORS)],
-      ['Facial hair', cycler('beard', BEARDS, 'facial hair')],
+      ['Facial hair', beardRow],
       ['Eyes', cycler('eyeShape', EYE_SHAPES, 'eyes')],
       ['Eye colour', swatches('eyes', EYE_COLORS, true)],
       ['Nose', cycler('nose', NOSES, 'nose')],
@@ -451,13 +458,19 @@ export class TitleScene implements Scene {
     ];
     const apGrid = h('div', { class: 'cc-ap' });
     for (const [label, el] of apRows) apGrid.append(h('div', { class: 'lbl' }, label), el);
+    const beardLbl = beardRow.previousElementSibling as HTMLElement | null;
+    syncs.push(() => {
+      const show = ap.sex !== 'female';
+      beardRow.style.display = show ? '' : 'none';
+      if (beardLbl) beardLbl.style.display = show ? '' : 'none';
+    });
     const randomize = btn('Randomize', () => {
-      ap = randomAppearance(new Rng(`${Date.now()}|${performance.now()}`));
+      ap = randomAppearance(new Rng(`${Date.now()}|${performance.now()}`), ap.sex ?? 'male');
       touch();
     }, 'tiny');
     randomize.setAttribute('data-testid', 'ap-randomize');
     const reset = btn('Class look', () => {
-      ap = defaultAppearance(classId);
+      ap = defaultAppearance(classId, ap.sex ?? 'male');
       custom = false;
       sync();
     }, 'tiny');
@@ -470,7 +483,7 @@ export class TitleScene implements Scene {
     );
 
     const refresh = (): void => {
-      if (!custom) ap = defaultAppearance(classId);
+      if (!custom) ap = defaultAppearance(classId, ap.sex ?? 'male');
       const ch = newCharacter(classId, 'Joe', 'preview');
       ch.appearance = { ...ap };
       refreshCard(ch);

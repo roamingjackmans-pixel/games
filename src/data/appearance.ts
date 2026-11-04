@@ -3,7 +3,7 @@
 // src/render/entities.ts feeds the result into drawJoe.
 import type { ArmFeature, Beard, Brows, EyeShape, FaceMark, HairStyle, LegFeature, NoseShape } from '../engine/draw/players';
 import type { Rng } from '../engine/rng';
-import type { Appearance, ClassId } from '../game/types';
+import type { Appearance, BodyType, ClassId } from '../game/types';
 import { CLASSES } from './classes';
 
 export interface Swatch {
@@ -68,6 +68,46 @@ export const HAIR_STYLES: Choice<HairStyle>[] = [
   { id: 'afro', label: 'Afro' },
   { id: 'bald', label: 'Bald' },
 ];
+/** The hair styles offered for a female character (D183): longer and tied styles first, the short ones renamed. */
+export const HAIR_STYLES_FEMALE: Choice<HairStyle>[] = [
+  { id: 'long', label: 'Long' },
+  { id: 'ponytail', label: 'Ponytail' },
+  { id: 'braids', label: 'Braids' },
+  { id: 'bob', label: 'Bob' },
+  { id: 'pigtails', label: 'Pigtails' },
+  { id: 'topknot', label: 'Bun' },
+  { id: 'curly', label: 'Curly' },
+  { id: 'afro', label: 'Afro' },
+  { id: 'short', label: 'Pixie' },
+  { id: 'messy', label: 'Tousled' },
+  { id: 'slick', label: 'Slicked back' },
+  { id: 'mohawk', label: 'Mohawk' },
+  { id: 'bald', label: 'Shaved' },
+];
+
+export const BODY_TYPES: Choice<BodyType>[] = [
+  { id: 'male', label: 'Male' },
+  { id: 'female', label: 'Female' },
+];
+
+/** The hair styles that suit a body type. */
+export function hairStylesFor(sex: BodyType | undefined): Choice<HairStyle>[] {
+  return sex === 'female' ? HAIR_STYLES_FEMALE : HAIR_STYLES;
+}
+
+/**
+ * Switch a look to a body type (D183): a woman keeps no beard and gets a hair style from her list (a class's own
+ * style if it is there, else long hair); a man gets a style from his list.
+ */
+export function withBodyType(ap: Appearance, sex: BodyType): Appearance {
+  const list = hairStylesFor(sex);
+  // a class's short or bare styles turn into a fitting longer one for her; anything not on a list falls back
+  const toFemale: Partial<Record<HairStyle, HairStyle>> = { bald: 'ponytail', short: 'bob', messy: 'long', slick: 'ponytail', spiky: 'pigtails', mohawk: 'braids' };
+  const want = sex === 'female' ? (toFemale[ap.hairStyle] ?? ap.hairStyle) : ap.hairStyle;
+  const hairStyle = list.some((o) => o.id === want) ? want : sex === 'female' ? 'long' : 'short';
+  return { ...ap, sex, hairStyle, beard: sex === 'female' ? 'none' : ap.beard };
+}
+
 export const BEARDS: Choice<Beard>[] = [
   { id: 'none', label: 'Clean' },
   { id: 'stubble', label: 'Stubble' },
@@ -127,9 +167,10 @@ export const LEG_FEATURES: Choice<LegFeature>[] = [
 ];
 
 /** The look a class starts with: its own skin, hair and beard; everything else plain. */
-export function defaultAppearance(classId: ClassId): Appearance {
+export function defaultAppearance(classId: ClassId, sex: BodyType = 'male'): Appearance {
   const cl = CLASSES[classId].look;
-  return {
+  const base: Appearance = {
+    sex: 'male',
     skin: cl.skin,
     hair: cl.hair,
     hairStyle: (cl.hairStyle as HairStyle | undefined) ?? 'short',
@@ -144,18 +185,20 @@ export function defaultAppearance(classId: ClassId): Appearance {
     legL: 'none',
     legR: 'none',
   };
+  return sex === 'female' ? withBodyType(base, 'female') : base;
 }
 
 /** A random person (the creator's Randomize). Limb features are rarer so most rolls have all their limbs. */
-export function randomAppearance(rng: Rng): Appearance {
+export function randomAppearance(rng: Rng, sex: BodyType = 'male'): Appearance {
   const pick = <T extends string>(l: Choice<T>[]): T => rng.pick(l).id;
   const limb = <T extends string>(l: Choice<T>[]): T => (rng.next() < 0.2 ? rng.pick(l.slice(1)).id : l[0]!.id);
   const fantasy = rng.next() < 0.15;
   return {
+    sex,
     skin: fantasy ? rng.pick(SKIN_TONES.slice(7)).hex : rng.pick(SKIN_TONES.slice(0, 7)).hex,
     hair: rng.pick(HAIR_COLORS).hex,
-    hairStyle: pick(HAIR_STYLES),
-    beard: pick(BEARDS),
+    hairStyle: pick(hairStylesFor(sex)),
+    beard: sex === 'female' ? 'none' : pick(BEARDS),
     eyes: rng.pick(EYE_COLORS).hex,
     eyeShape: rng.next() < 0.5 ? 'dot' : pick(EYE_SHAPES),
     nose: rng.next() < 0.4 ? 'button' : pick(NOSES),
@@ -177,11 +220,13 @@ export function sanitizeAppearance(raw: unknown, classId: ClassId): Appearance {
   if (!raw || typeof raw !== 'object') return d;
   const a = raw as Record<string, unknown>;
   const hex = (v: unknown, def: string): string => (typeof v === 'string' && HEX.test(v) ? v : def);
+  const sex: BodyType = a.sex === 'female' ? 'female' : 'male';
   return {
+    sex,
     skin: hex(a.skin, d.skin),
     hair: hex(a.hair, d.hair),
-    hairStyle: ok(HAIR_STYLES, a.hairStyle, d.hairStyle),
-    beard: ok(BEARDS, a.beard, d.beard),
+    hairStyle: ok(hairStylesFor(sex), a.hairStyle, sex === 'female' ? 'long' : d.hairStyle),
+    beard: sex === 'female' ? 'none' : ok(BEARDS, a.beard, d.beard),
     eyes: a.eyes === '' ? '' : hex(a.eyes, d.eyes),
     eyeShape: ok(EYE_SHAPES, a.eyeShape, d.eyeShape),
     nose: ok(NOSES, a.nose, d.nose),

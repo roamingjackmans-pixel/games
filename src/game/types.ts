@@ -2,7 +2,11 @@
 import type { ArmFeature, Beard, Brows, EyeShape, FaceMark, HairStyle, LegFeature, NoseShape } from '../engine/draw/players';
 
 /** The person picked in the character creator (src/data/appearance.ts lists the options). */
+export type BodyType = 'male' | 'female';
+
 export interface Appearance {
+  /** body type (D183); absent on old saves and peers: male */
+  sex?: BodyType;
   skin: string;
   hair: string;
   hairStyle: HairStyle;

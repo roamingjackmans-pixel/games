@@ -10,7 +10,7 @@ import { OUTLINE, glow, hexToRgb, mix, shade, shadow } from './parts';
 
 export type HeadGear = 'none' | 'hood' | 'helm' | 'greathelm' | 'cap' | 'wizard' | 'mitre' | 'horned' | 'bandana' | 'crown' | 'bowler';
 export type BodyGear = 'shirt' | 'leather' | 'chain' | 'plate' | 'robe' | 'cloak' | 'bathrobe' | 'loincloth' | 'suit';
-export type HairStyle = 'short' | 'messy' | 'bald' | 'long' | 'topknot' | 'braids' | 'mohawk' | 'slick' | 'curly' | 'spiky' | 'ponytail' | 'afro';
+export type HairStyle = 'short' | 'messy' | 'bald' | 'long' | 'topknot' | 'braids' | 'mohawk' | 'slick' | 'curly' | 'spiky' | 'ponytail' | 'afro' | 'bob' | 'pigtails';
 export type Beard = 'none' | 'stubble' | 'full' | 'goatee' | 'moustache' | 'braided' | 'mutton' | 'long';
 // ---- the character creator's appearance options (Character.appearance, read by lookFor)
 export type EyeShape = 'dot' | 'round' | 'narrow' | 'sleepy' | 'glow';
@@ -79,6 +79,8 @@ export interface JoeLook {
   visor?: Visor;
   /** glowing eyes in a shadowed hood or behind a visor */
   eyeGlow?: string;
+  /** a woman's build and face (D183): narrower shoulders and waist, wider hips, lashes, lips, a chest wrap when bare */
+  female?: boolean;
   // ---- body piece extras
   pauldrons?: Pauldron;
   cape?: string;
@@ -179,6 +181,10 @@ const WW = 7.4;
 const WD = 5.4;
 const HW = 8;
 const HD = 5.6;
+/** a woman's shoulders, waist and hips (D183) */
+const SW_F = 9.4;
+const WW_F = 6.3;
+const HW_F = 8.8;
 const TAU = Math.PI * 2;
 
 /** Default grips (match the long-standing caller convention). */
@@ -204,6 +210,8 @@ interface Rig {
   sw: number;
   ww: number;
   hw: number;
+  /** lateral shoulder half-width before projection (narrower on a woman, D183) */
+  shW: number;
   /** screen x of the torso's front centre, and how flat-on the front is seen (0..1) */
   fcx: number;
   sqz: number;
@@ -367,9 +375,11 @@ export function drawJoe(ctx: CanvasRenderingContext2D, look: JoeLook, p: JoePose
     ph: p.t * 12,
     flash: !!p.flash,
     ghost,
-    sw: proj(SW, SD, fx, fy),
-    ww: proj(WW, WD, fx, fy),
-    hw: proj(HW, HD, fx, fy),
+    // a woman (D183): shoulders and waist a little narrower, hips a little wider
+    sw: proj(look.female ? SW_F : SW, SD, fx, fy),
+    ww: proj(look.female ? WW_F : WW, WD, fx, fy),
+    hw: proj(look.female ? HW_F : HW, HD, fx, fy),
+    shW: look.female ? SW_F : SW,
     fcx: fx * SD * 0.85,
     sqz: Math.max(0.22, Math.abs(fy)),
   };
@@ -438,11 +448,11 @@ interface Group {
 
 function shoulderOf(r: Rig, side: 1 | -1): { x: number; y: number; depth: number } {
   // lateral right axis on the ground is (-fy, fx)
-  return { x: -r.fy * (SW - 1.6) * side, y: SY + 1.2 + r.fx * SW * K * 0.8 * side, depth: r.fx * side };
+  return { x: -r.fy * (r.shW - 1.6) * side, y: SY + 1.2 + r.fx * r.shW * K * 0.8 * side, depth: r.fx * side };
 }
 
 function isFront(r: Rig, hy: number, side: 1 | -1): boolean {
-  return hy - 2 + r.fx * side * SW * K * 0.5 > 0;
+  return hy - 2 + r.fx * side * r.shW * K * 0.5 > 0;
 }
 
 function freeHand(r: Rig, side: 1 | -1): { x: number; y: number } {
@@ -1273,6 +1283,42 @@ function drawLower(r: Rig): void {
 }
 
 // ------------------------------------------------------------------ torso
+/** A cloth band across a bare woman's chest (D183), seen from any side. */
+function chestWrap(r: Rig, front: boolean, fc: number, q: number): void {
+  const c = r.c;
+  const cloth = '#c9b98a';
+  c.fillStyle = C(r, cloth);
+  c.fillRect(-20, SY + 2.2, 40, 5.4);
+  line(c, -20, SY + 2.2, 20, SY + 2.2, C(r, shade(cloth, 0.6)), 1);
+  line(c, -20, SY + 7.6, 20, SY + 7.6, C(r, shade(cloth, 0.6)), 1);
+  if (front && !r.flash) {
+    c.strokeStyle = C(r, shade(cloth, 0.72));
+    c.lineWidth = 0.9;
+    c.beginPath();
+    c.moveTo(fc - 5 * q, SY + 6.4);
+    c.quadraticCurveTo(fc - 2.6 * q, SY + 7.8, fc - 0.3 * q, SY + 6);
+    c.moveTo(fc + 0.3 * q, SY + 6);
+    c.quadraticCurveTo(fc + 2.6 * q, SY + 7.8, fc + 5 * q, SY + 6.4);
+    c.stroke();
+    // a knot at the front
+    dot(c, fc, SY + 4.8, 1.1, C(r, shade(cloth, 0.85)));
+  } else if (!front) line(c, -0.5 * q, SY + 2.4, 0.5 * q, SY + 7.4, C(r, shade(cloth, 0.6)), 1);
+  dot(c, fc + 0.2, WY + 1.6, 0.6, S(r, r.L.skin, 0.6));
+}
+
+/** Two soft curves under a woman's top (D183). */
+function bustLines(r: Rig, fc: number, q: number, base: string): void {
+  const c = r.c;
+  c.strokeStyle = S(r, base, 0.7);
+  c.lineWidth = 0.9;
+  c.beginPath();
+  c.moveTo(fc - 5.2 * q, SY + 5.6);
+  c.quadraticCurveTo(fc - 2.8 * q, SY + 7.6, fc - 0.6 * q, SY + 5.8);
+  c.moveTo(fc + 0.6 * q, SY + 5.8);
+  c.quadraticCurveTo(fc + 2.8 * q, SY + 7.6, fc + 5.2 * q, SY + 5.6);
+  c.stroke();
+}
+
 function mailOf(L: JoeLook): string {
   return mix(L.bodyColor, '#a7adb5', 0.55);
 }
@@ -1294,7 +1340,7 @@ function torsoPath(c: CanvasRenderingContext2D, sw: number, ww: number, hw: numb
 function drawTorso(r: Rig): void {
   const c = r.c;
   const L = r.L;
-  const belly = L.body === 'loincloth' ? 1.6 * Math.max(0.3, Math.abs(r.fx)) + 0.8 : 0;
+  const belly = L.body === 'loincloth' && !L.female ? 1.6 * Math.max(0.3, Math.abs(r.fx)) + 0.8 : 0;
   const base = L.body === 'chain' ? mailOf(L) : L.body === 'loincloth' ? L.skin : L.body === 'cloak' ? shade(L.bodyColor, 0.78) : L.bodyColor;
   torsoPath(c, r.sw, r.ww, r.hw, belly);
   c.fillStyle = C(r, base);
@@ -1328,6 +1374,11 @@ function drawTorso(r: Rig): void {
       suitDetail(r, front, fc, q);
       break;
     case 'loincloth':
+      if (L.female) {
+        // bare, a woman wears a cloth wrap across her chest (D183)
+        chestWrap(r, front, fc, q);
+        break;
+      }
       if (front && !r.flash) {
         // pecs, a belly button and some chest hair: Nobody keeps his dignity elsewhere
         c.strokeStyle = S(r, L.skin, 0.72);
@@ -1352,6 +1403,8 @@ function drawTorso(r: Rig): void {
       shirtDetail(r, front, fc, q);
       break;
   }
+  // a woman's chest under clothing and soft armor: two soft curves (D183); plate and mail keep their own shapes
+  if (L.female && front && !r.flash && L.body !== 'loincloth' && L.body !== 'plate' && L.body !== 'chain') bustLines(r, fc, q, base);
   c.restore();
   torsoPath(c, r.sw, r.ww, r.hw, belly);
   c.lineWidth = 2.2;
@@ -2200,7 +2253,36 @@ function hair(r: Rig, hx: number, hy: number): void {
         line(c, p.x, p.y, p.x + (p.x - hx) * 0.15, p.y + 8, hc, 2.4);
       }
       break;
+    case 'bob':
+      // chin-length sides framing the face (D183)
+      for (const side of [1, -1]) {
+        const p = onHead(r, hx, hy, r.f + 1.45 * side, HR * 0.98, 1.2);
+        if (p.v < -0.65) continue;
+        ell(c, p.x + (p.x - hx) * 0.08, p.y + 1.4, 2.7, 4.6, hc, 1.4);
+      }
+      if (fy <= -0.2) ell(c, hx, hy + 1.5, HR * 0.95, 4.6, hc, 1.6);
+      break;
+    case 'pigtails':
+      // two tails tied at the sides, swinging as she moves (D183)
+      for (const side of [1, -1]) {
+        const b = onHead(r, hx, hy, r.f + 1.95 * side, HR * 0.95, -2);
+        if (b.v < -0.75) continue;
+        const sw = Math.sin(r.t * 5 + side) * 0.7 * (0.3 + r.mv);
+        const ex = b.x + (b.x - hx) * 0.55 + sw;
+        const ey = b.y + 8;
+        c.lineCap = 'round';
+        line(c, b.x, b.y, ex, ey, OUTLINE, 5);
+        line(c, b.x, b.y, ex, ey, hc, 3);
+        dot(c, b.x + (ex - b.x) * 0.15, b.y + (ey - b.y) * 0.15, 1.4, C(r, L.trim));
+      }
+      break;
     case 'long':
+      // locks falling past the jaw on both sides of the face (D183: from the front it read as short hair)
+      for (const side of [1, -1]) {
+        const p = onHead(r, hx, hy, r.f + 1.4 * side, HR * 0.98, 1.6);
+        if (p.v < -0.6 || fy <= -0.2) continue;
+        ell(c, p.x + (p.x - hx) * 0.1, p.y + 3.6, 2.5, 6.2, hc, 1.4);
+      }
       if (fy <= -0.2) longHair(r, hx, hy);
       break;
     case 'ponytail':
@@ -2292,6 +2374,12 @@ function face(r: Rig, hx: number, hy: number, shadowed: boolean): void {
       ell(c, p.x, p.y + 0.1, 2.1, 1.9, C(r, '#2a2430'), 0.9);
     } else {
       eye(r, p.x, p.y, shape);
+      // a woman's lashes, flicked up at the outer corner (D183)
+      if (L.female && !r.flash && shape !== 'glow' && shape !== 'narrow') {
+        const ox = p.x >= hx ? 1 : -1;
+        line(c, p.x + ox * 1.1, p.y - 0.7, p.x + ox * 2.3, p.y - 1.7, OUTLINE, 0.75);
+        line(c, p.x + ox * 0.3, p.y - 1.2, p.x + ox * 0.9, p.y - 2.3, OUTLINE, 0.7);
+      }
       if (L.lids && !r.flash) {
         c.fillStyle = S(r, L.skin, 0.7);
         c.beginPath();
@@ -2374,6 +2462,12 @@ function face(r: Rig, hx: number, hy: number, shadowed: boolean): void {
     c.moveTo(m.x - w, m.y + 0.8);
     c.quadraticCurveTo(m.x, m.y - 0.8, m.x + w, m.y + 0.8);
     c.stroke();
+  } else if (fy > 0.15 && L.female) {
+    // a woman's lips: small and soft (D183)
+    const m = onHead(r, hx, hy, r.f, HR * 0.84, 5.2);
+    const lip = C(r, mix(L.skin, '#c0465e', 0.55));
+    ell(c, m.x, m.y + 0.1, 1.25 * fy + 0.35, 0.62, lip, 0);
+    line(c, m.x - 1.2 * fy, m.y, m.x + 1.2 * fy, m.y, C(r, shade(L.skin, 0.5)), 0.6);
   } else if (fy > 0.15) {
     // mouth: a flat line, Joe is not impressed
     const m = onHead(r, hx, hy, r.f, HR * 0.84, 5.2);

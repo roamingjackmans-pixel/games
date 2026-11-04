@@ -19,6 +19,7 @@ import { publicChar } from '../../src/game/net/snapshot';
 import type { Appearance, Character } from '../../src/game/types';
 
 const PIRATE: Appearance = {
+  sex: 'male',
   skin: '#8ab06a',
   hair: '#c4602a',
   hairStyle: 'afro',
