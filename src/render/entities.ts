@@ -12,6 +12,7 @@ import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/part
 import { CLASSES } from '../data/classes';
 import { parseArmorBase } from '../data/armor';
 import { SHIELDS } from '../data/shields';
+import { WEAPONS } from '../data/weapons';
 import { CASTING_TOOLS } from '../data/castingTools';
 import { SPELLS } from '../data/spells';
 import { toolForSchool } from '../game/player/derived';
@@ -125,6 +126,31 @@ export function lookFor(c: Character): JoeLook {
   }
   if (c.classId === 'nobody' && !c.equipment.body) look.body = 'loincloth';
   return look;
+}
+
+/**
+ * A character standing idle as they are now (D170): their creator look, worn armor, and the weapon, shield or staff
+ * they hold, posed as an idle player is in the game (menus and the co-op lobby; no entity needed).
+ */
+export function drawCharacterPreview(ctx: CanvasRenderingContext2D, c: Character, o: { x: number; y: number; facing: number; t: number; scale: number }): void {
+  const look = lookFor(c);
+  const mainItem = c.equipment.main;
+  const wDraw = (mainItem && (WEAPONS[mainItem.baseId]?.draw ?? CASTING_TOOLS[mainItem.baseId]?.draw)) || 'w_fists';
+  const legendName = mainItem?.rarity === 'legendary' ? mainItem.name : undefined;
+  const offItem = c.equipment.off;
+  const shield = offItem ? SHIELDS[offItem.baseId] : undefined;
+  const tool = offItem ? CASTING_TOOLS[offItem.baseId] : undefined;
+  const two = c.twoHanded;
+  const paired = isPairedWeapon(wDraw);
+  const f = o.facing;
+  const rot = two && !paired ? 1.0 : 0.7 + Math.sin(o.t * 2) * 0.03;
+  const ha = f + 0.9 + (rot - 0.7) * 0.55;
+  const main: HandPose = { x: Math.cos(ha) * 10, y: Math.sin(ha) * 10 + 2, a: f + rot, draw: (g) => drawWeapon(g, wDraw, o.t, legendName) };
+  let off: HandPose | undefined;
+  if (paired && two) off = { x: Math.cos(f - 0.9) * 10, y: Math.sin(f - 0.9) * 10 + 2, a: f - rot * 0.8, draw: (g) => drawWeapon(g, wDraw, o.t, legendName) };
+  else if (!two && shield) off = { x: Math.cos(f - 1.1) * 13, y: Math.sin(f - 1.1) * 13 + 2, a: Math.cos(f) * 0.18, hold: 'shield', draw: (g) => drawShield(g, shield.draw) };
+  else if (!two && tool) off = { x: Math.cos(f - 1.1) * 13, y: Math.sin(f - 1.1) * 13 + 2, a: f - 0.4, draw: (g) => drawTool(g, tool.draw, o.t) };
+  drawJoe(ctx, look, { x: o.x, y: o.y, facing: f, t: o.t, moving: 0, scale: o.scale, twoHanded: two && !paired, main, ...(off ? { off } : {}) });
 }
 
 function lerp(a: number, b: number, t: number): number {

@@ -1,7 +1,7 @@
 // Co-op protocol (NETCODE §3): message names and shapes, room codes, the version check and the 60 Hz input
 // packet. Snapshots live in snapshot.ts, character sync in charSync.ts.
 import type { InputFrame } from '../../engine/input/actions';
-import type { Appearance, Character, ClassId } from '../types';
+import type { Appearance, Character, ClassId, Rarity } from '../types';
 
 export const MAX_GUESTS = 3;
 // 30 snapshots a second (D149; was 20): more samples to interpolate between, so less to guess on a jittery link
@@ -69,7 +69,21 @@ export interface PublicPlayer {
   cycle: number;
   /** the creator look, so the lobby shows each player as they made themselves */
   appearance?: Appearance | undefined;
+  /** what they wear and hold now, so the lobby draws them as they are (D170) */
+  gear?: LobbyGear | undefined;
 }
+
+/** One worn item, as much as a picture needs: base id, rarity, and a legendary's name (its weapon art). */
+export interface LobbyGearItem {
+  b: string;
+  r: Rarity;
+  n?: string;
+}
+
+export const LOBBY_GEAR_SLOTS = ['main', 'off', 'head', 'body', 'legs'] as const;
+
+/** The worn slots (null = empty) and whether the weapon is held in both hands. */
+export type LobbyGear = { [K in (typeof LOBBY_GEAR_SLOTS)[number]]?: LobbyGearItem | null } & { two?: boolean };
 
 export interface LobbyState {
   code: string;

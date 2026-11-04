@@ -4,6 +4,7 @@
 import { emptyInput, type InputFrame } from '../../engine/input/actions';
 import { refreshDerived } from '../player/player';
 import { CharLog } from './charSync';
+import { gearOf } from './lobbyGear';
 import {
   CH,
   FULL_EVERY_S,
@@ -106,8 +107,8 @@ export class NetHost {
 
   lobbyState(): LobbyState {
     const c = this.save.character;
-    const players: PublicPlayer[] = [{ peerId: this.t.selfId, playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: true, cycle: c.cycle, appearance: c.appearance }];
-    for (const g of this.guests.values()) players.push({ peerId: g.peerId, playerId: g.char.playerId, name: g.char.name, classId: g.char.classId, level: g.char.level, host: false, cycle: g.char.cycle, appearance: g.char.appearance });
+    const players: PublicPlayer[] = [{ peerId: this.t.selfId, playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: true, cycle: c.cycle, appearance: c.appearance, gear: gearOf(c) }];
+    for (const g of this.guests.values()) players.push({ peerId: g.peerId, playerId: g.char.playerId, name: g.char.name, classId: g.char.classId, level: g.char.level, host: false, cycle: g.char.cycle, appearance: g.char.appearance, gear: gearOf(g.char) });
     return { code: this.code, players, zone: this.save.world.zone, ff: this.friendlyFire() };
   }
 

@@ -7,12 +7,11 @@ import { playSfx } from '../../engine/audio/sfx';
 import type { Scene } from '../../engine/scene';
 import { drawText } from '../../engine/text';
 import { glow } from '../../engine/draw/parts';
-import { drawJoe } from '../../engine/draw/players';
 import { CLASSES } from '../../data/classes';
 import { ZONES } from '../../data/zones';
-import { lookFor } from '../../render/entities';
+import { drawCharacterPreview } from '../../render/entities';
 import { btn, clearEl, h, layer, toast } from '../../ui/dom';
-import { newCharacter } from '../player/character';
+import { gearOf, previewCharacter } from '../net/lobbyGear';
 import { NetHost } from '../net/host';
 import { NetGuest } from '../net/guest';
 import { newRoomCode, parseRoomCode, type PublicPlayer } from '../net/protocol';
@@ -20,7 +19,6 @@ import { BroadcastTransport } from '../net/broadcast';
 import { joinTrystero } from '../net/trystero';
 import type { Transport } from '../net/transport';
 import type { SaveFile } from '../types';
-import { sanitizeAppearance } from '../../data/appearance';
 import { friendlyFireRow } from '../../ui/menus/settings';
 
 /** Scene factories set by main.ts (keeps the lobby free of run-scene imports). */
@@ -106,11 +104,10 @@ export class LobbyScene implements Scene {
     const n = Math.max(1, players.length);
     players.forEach((p, i) => {
       const x = 380 + (i - (n - 1) / 2) * 150;
-      const c = newCharacter(p.classId, p.name, p.playerId);
-      if (p.appearance) c.appearance = sanitizeAppearance(p.appearance, p.classId);
-      drawJoe(ctx, lookFor(c), { x, y: 380 + Math.sin(this.t * 2 + i) * 3, facing: Math.PI / 2, t: this.t + i, moving: 0, scale: 2 });
-      drawText(ctx, p.name, x, 470, { size: 16, weight: 'bold', align: 'center', color: p.host ? '#e6b84a' : '#efe6d2' });
-      drawText(ctx, `${CLASSES[p.classId].name} · Lv ${p.level}${p.host ? ' · host' : ''}`, x, 490, { size: 12, align: 'center', color: '#a59c8a' });
+      // as they are now: their look, armor and what they hold (D170), not their class's starting kit
+      drawCharacterPreview(ctx, previewCharacter(p), { x, y: 380 + Math.sin(this.t * 2 + i) * 3, facing: Math.PI / 2 - 0.25, t: this.t + i, scale: 2 });
+      drawText(ctx, p.name, x, 496, { size: 16, weight: 'bold', align: 'center', color: p.host ? '#e6b84a' : '#efe6d2' });
+      drawText(ctx, `${CLASSES[p.classId].name} · Lv ${p.level}${p.host ? ' · host' : ''}`, x, 516, { size: 12, align: 'center', color: '#a59c8a' });
     });
     if (this.status) drawText(ctx, this.status, 380, 600, { size: 14, align: 'center', color: '#a59c8a' });
   }
@@ -119,7 +116,7 @@ export class LobbyScene implements Scene {
     if (this.host) return this.host.lobbyState().players;
     if (this.guest?.lobby) return this.guest.lobby.players;
     const c = this.save.character;
-    return [{ peerId: '', playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: this.o.role === 'host', cycle: c.cycle, appearance: c.appearance }];
+    return [{ peerId: '', playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: this.o.role === 'host', cycle: c.cycle, appearance: c.appearance, gear: gearOf(c) }];
   }
 
   // ------------------------------------------------------------------ host
