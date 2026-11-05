@@ -17,6 +17,9 @@ import { attackDamage } from './spawn';
 import type { AttackDef, EnemyDef } from '../types';
 import type { Entity, World } from '../world';
 
+/** A Shielded Elite's barrier returns this long after it breaks (D213). */
+export const SHIELDED_REFILL_S = 5;
+
 const RETARGET_S = 1.5;
 
 /** Specials (Red/Piercing) currently in windup in this room (the group budget). */
@@ -288,9 +291,13 @@ function eliteUpdate(w: World, e: Entity, dt: number): void {
       }
       break;
     case 'shielded':
-      if (now >= en.eliteTimerAt) {
-        en.eliteTimerAt = now + 10;
-        grantBarrier(w, e, e.hp!.max * 0.25, 10);
+      // the barrier (25% of max HP) comes back only 5 s after it is broken (D213); chipping it without breaking it
+      // sticks, so even a light hitter gets through (it used to refill to full every 10 s regardless)
+      if (e.hp!.barrier > 0) en.eliteTimerAt = Infinity;
+      else if (en.eliteTimerAt === Infinity) en.eliteTimerAt = now + SHIELDED_REFILL_S;
+      else if (now >= en.eliteTimerAt) {
+        grantBarrier(w, e, e.hp!.max * 0.25, Infinity);
+        en.eliteTimerAt = Infinity;
       }
       break;
     case 'summoner':
