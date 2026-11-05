@@ -1,6 +1,7 @@
 // Default world rules: what happens when enemies die (on-death effects, splits, Shards, drops),
 // elite summons, on-hit enemy effects, and player down/death routing. Scenes extend these hooks.
 import { runEffects } from './effects/run';
+import { addBestiaryKill } from '../data/bestiary';
 import { emptySpec, hitPlayer } from './combat/damage';
 import { addBuff } from './combat/state';
 import { spawnEnemy } from './enemies/spawn';
@@ -83,6 +84,8 @@ export function installRules(w: World, o: RulesOpts = {}): void {
       if (!en.elite && !en.isBoss && !en.summonerId && !def.special && !en.isIllusion) w2.fallen.push({ defId: def.id, x: e.x, y: e.y });
       if (en.shards > 0 && !def.traits?.noShards) grantShards(w2, en.shards, e.x, e.y);
       if (!def.traits?.scripted && !def.traits?.merchant) grantWeaponXp(w2, killXp({ isBoss: en.isBoss, elite: !!en.elite, role: def.role, mimic: !!def.traits?.mimic }));
+      // the Bestiary (D229): every standing player learns from the kill, whoever made it
+      for (const p of w2.players) if (!p.removed && !p.pl!.downed && !p.pl!.deadUntilRest) addBestiaryKill(p.pl!.char, def.id);
       if (!en.noDrop) o.onDrops?.(w2, e, killerId);
       o.onKillStat?.(w2, e);
     }

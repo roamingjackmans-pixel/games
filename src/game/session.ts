@@ -2,6 +2,7 @@
 // Rooms, doors, waves, clears, chests, bonfires (first-rest rule, D38), death + Shardpile (D3),
 // the tutorial hall (PROCGEN §8). Headless: no DOM, canvas or audio.
 import { dist } from '../engine/math';
+import { addBestiarySeen } from '../data/bestiary';
 import { stream } from '../engine/rng';
 import { ENEMIES } from '../data/enemies';
 import { DUMMY_PIERCE, DUMMY_RED, DUMMY_STILL, DUMMY_SWING, GARY, INSTRUCTOR, MIMIC } from '../data/enemies/special';
@@ -434,6 +435,8 @@ export class GameSession {
     w.inputLock = w.time + BOSS_INTRO_S;
     w.sfx('doorLock');
     w.sfx('bossRoar', bx);
+    // the Bestiary (D229): a boss's page opens the first time it is seen
+    for (const sp of this.players) addBestiarySeen(sp.char, def.id);
     this.listener.bossIntro?.(def, e);
   }
 

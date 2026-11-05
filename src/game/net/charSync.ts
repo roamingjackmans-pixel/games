@@ -4,6 +4,7 @@
 // (equip, level up, gems, spells) it sends the whole character with the last op number it applied, and
 // the host replays any newer ops on top so nothing granted in flight is lost.
 import type { Character, ConsumableId, Gem, Item } from '../types';
+import { addBestiaryKill, addBestiarySeen } from '../../data/bestiary';
 
 export type CharOp =
   | { op: 'add'; key: 'shards' | 'glowen' | 'tears' | 'bossesBeaten'; n: number }
@@ -16,7 +17,10 @@ export type CharOp =
   /** weapon-class proficiency experience gained (D178) */
   | { op: 'prof'; cls: string; n: number }
   /** Soul Essence picked up (D198): n more of tier */
-  | { op: 'essence'; tier: number; n: number };
+  | { op: 'essence'; tier: number; n: number }
+  /** the Bestiary (D229): n more kills of an enemy, or a boss seen */
+  | { op: 'bestiary'; id: string; n: number }
+  | { op: 'seen'; id: string };
 
 export function cloneChar(c: Character): Character {
   return JSON.parse(JSON.stringify(c)) as Character;
@@ -37,6 +41,11 @@ export function diffChar(base: Character, cur: Character): CharOp[] {
     const d = v - (base.proficiency?.[cls] ?? 0);
     if (d > 0) ops.push({ op: 'prof', cls, n: d });
   }
+  for (const [id, n] of Object.entries(cur.bestiary?.kills ?? {})) {
+    const d = n - (base.bestiary?.kills[id] ?? 0);
+    if (d > 0) ops.push({ op: 'bestiary', id, n: d });
+  }
+  for (const id of cur.bestiary?.seen ?? []) if (!base.bestiary?.seen.includes(id)) ops.push({ op: 'seen', id });
   for (let i = 0; i < 5; i++) {
     const d = (cur.essence?.[i] ?? 0) - (base.essence?.[i] ?? 0);
     if (d !== 0) ops.push({ op: 'essence', tier: i + 1, n: d });
@@ -60,6 +69,12 @@ export function applyCharOp(c: Character, o: CharOp): void {
       break;
     case 'gem':
       c.gems.push(o.gem);
+      break;
+    case 'bestiary':
+      addBestiaryKill(c, o.id, o.n);
+      break;
+    case 'seen':
+      addBestiarySeen(c, o.id);
       break;
     case 'essence': {
       const e = [0, 1, 2, 3, 4].map((i) => c.essence?.[i] ?? 0);

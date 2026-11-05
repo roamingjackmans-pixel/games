@@ -1,5 +1,6 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
+import { renderBestiary } from '../bestiary';
 import { CASTING_TOOLS } from '../../data/castingTools';
 import { statBoosts } from '../../data/classes';
 import { ESSENCES, MAX_REINFORCE, essenceCounts, essenceDef, plusName, reinforceMult } from '../../data/essence';
@@ -80,7 +81,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
   root.setAttribute('data-testid', 'bonfire-menu');
   const panel = h('div', { class: 'panel', style: 'width:1200px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(panel);
-  const tabKeys = ['level', 'gems', 'weapons', 'reinforce', 'shop', 'warp', ...(v.extraTabs ?? []).map((t) => t.label)];
+  const tabKeys = ['level', 'gems', 'weapons', 'reinforce', 'shop', 'warp', 'bestiary', ...(v.extraTabs ?? []).map((t) => t.label)];
   let tab = v.startTab === 'last' ? tabKeys[tabKeys.length - 1]! : v.startTab && v.startTab !== 'first' && tabKeys.includes(v.startTab) ? v.startTab : 'level';
   let selItem: string | null = null;
   /** the empty socket picked on the selected item (D227): a gem goes there, not just into the first free one */
@@ -809,6 +810,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
       { key: 'reinforce', label: 'Reinforce', fn: reinforceTab },
       { key: 'shop', label: 'Shop', fn: shopTab },
       { key: 'warp', label: 'Warp', fn: warpTab },
+      // D229
+      { key: 'bestiary', label: 'Bestiary', fn: (el: HTMLElement) => renderBestiary(el, v.char, render) },
       ...(v.extraTabs ?? []).map((t) => ({ key: t.label, label: t.label, fn: (el: HTMLElement) => t.render(el, render) })),
     ];
     for (const d of defs) {

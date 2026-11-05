@@ -1,6 +1,7 @@
 // The damage pipeline (GAME_DESIGN §3.1, §5.2–5.6, §6.3): players hit enemies, enemies hit players.
 // Red: block and parry fail (guard break), i-frames work. Piercing: i-frames fail, block works, parry fails.
 import { affinityMult, elementGlow, enemyElement } from '../elements';
+import { bestiaryDealMult, bestiaryTakenMult } from '../../data/bestiary';
 import { STAMINA_COST_MULT, damageAfterDefense, reviveRequirement } from './formulas';
 import { bossPhaseCheck } from './bossPhase';
 import { addBuff, behind, buffSum, frontOf, hasControl, statusActive } from './state';
@@ -393,6 +394,9 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
     w.emit({ t: 'guardBreak', playerId: pl.playerId });
   }
 
+  // the Bestiary (D229): an enemy you have studied deals 25% less to you
+  if (attacker?.en) total *= bestiaryTakenMult(pl.char, attacker.en.def);
+
   // Martyr's Chain: split with the linked ally
   if (pl.link && pl.link.until > now) {
     const other = w.get(pl.link.otherId);
@@ -693,6 +697,8 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   }
   if (en.elite === 'armored') spec = { ...spec, dmg: { ...spec.dmg, physical: (spec.dmg.physical ?? 0) * 0.6 } };
   if (attacker) mult *= 1 + buffSum(attacker, 'damagePct', now);
+  // the Bestiary (D229): +25% against an enemy you have studied
+  if (pl) mult *= bestiaryDealMult(pl.char, en.def);
 
   let total = 0;
   const resist = en.def.resist;

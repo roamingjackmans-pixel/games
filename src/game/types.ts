@@ -761,6 +761,8 @@ export interface Character {
   altMain: Item | null;
   /** second off-hand slot, swapped in with Interact + swap weapon (D228); neither its weight nor its effects count until it is in hand */
   altOff: Item | null;
+  /** the Bestiary (D229): kills of each enemy and boss, and the bosses seen; absent on older saves */
+  bestiary?: { kills: Record<string, number>; seen: string[] };
   twoHanded: boolean;
   bag: Item[];
   gems: Gem[];
