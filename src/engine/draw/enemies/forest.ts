@@ -812,3 +812,358 @@ registerDraw('forest_huntsman', (ctx, s) => {
   ctx.restore();
 });
 
+
+// ---------------------------------------------------------------- Hollow Scarecrow
+// A scarecrow on a weathered post: a burlap sack head with cut-out eyes and a stitched grin lit pumpkin-orange from
+// inside, a battered straw hat, a ragged coat over a crossbar with straw bursting from the cuffs and hem, and the
+// crows that work for it: one on the near arm, one on the hat. The crows lift off in the windup; the near arm flings
+// forward on the release. It never walks; it sways.
+const SC_SACK = '#c8a870';
+const SC_SACK_U = shade(SC_SACK, 0.66);
+const SC_COAT = '#7a4a34';
+const SC_COAT_U = shade(SC_COAT, 0.62);
+const SC_WOOD = '#6a4a2a';
+const SC_STRAW = '#e0c060';
+const SC_CROW = '#1e1c24';
+const SC_COAT_P = [-0.46, -0.5, 0.46, -0.5, 0.56, 0.0, 0.5, 0.34, 0.5, 0.34, 0.34, 0.24, 0.24, 0.42, 0.24, 0.42, 0.08, 0.26, -0.08, 0.4, -0.08, 0.4, -0.2, 0.24, -0.36, 0.38, -0.36, 0.38, -0.5, 0.3, -0.56, 0.0];
+const SC_HEAD = [-0.44, 0.1, -0.46, -0.32, -0.2, -0.52, 0.22, -0.52, 0.46, -0.3, 0.44, 0.12, 0.2, 0.32, -0.2, 0.32];
+const SC_BRIM = [-0.8, 0.08, -0.56, -0.08, 0.0, -0.12, 0.56, -0.06, 0.82, 0.1, 0.5, 0.16, 0.0, 0.14, -0.5, 0.18];
+const SC_CROWN = [-0.36, 0.0, -0.36, 0.0, -0.3, -0.44, -0.08, -0.36, 0.06, -0.5, 0.3, -0.42, 0.36, 0.0, 0.36, 0.0];
+
+/** A tuft of straw: n short strands fanning out from (x, y) around angle a. */
+function straw(ctx: CanvasRenderingContext2D, s: DrawState, x: number, y: number, a: number, len: number, n: number, t: number): void {
+  if (s.flash) return;
+  for (let i = 0; i < n; i++) {
+    const k = n === 1 ? 0 : i / (n - 1) - 0.5;
+    const aa = a + k * 1.2 + Math.sin(t * 3 + i * 1.7) * 0.08;
+    const l = len * (0.75 + 0.25 * Math.sin(i * 2.3));
+    line(ctx, x, y, x + Math.cos(aa) * l, y + Math.sin(aa) * l, Math.max(1, len * 0.12), i % 2 ? SC_STRAW : shade(SC_STRAW, 0.8));
+  }
+}
+
+/** A crow at (x, y) (k ≈ its length) facing dir (±1); lift 0…1 opens and flaps its wings and raises it. */
+function crow(ctx: CanvasRenderingContext2D, s: DrawState, x: number, y: number, k: number, dir: number, lift: number, t: number): void {
+  ctx.save();
+  ctx.translate(x, y - lift * k * 0.9);
+  ctx.scale(dir, 1);
+  const flap = lift > 0.05 ? Math.sin(t * 28) : 0;
+  // far wing, then body, near wing
+  if (lift > 0.05) flat(ctx, s, [-0.1, -0.15, -0.5, -0.5 - flap * 0.4, 0.1, -0.2], k, shade(SC_CROW, 0.8), 1.5);
+  flat(ctx, s, [-0.42, 0.0, -0.72, 0.08, -0.7, -0.08], k, SC_CROW, 1.5);
+  oval(ctx, s, -0.08 * k, -0.14 * k, 0.36 * k, 0.2 * k, SC_CROW, 1.5, -0.2);
+  oval(ctx, s, 0.26 * k, -0.34 * k, 0.17 * k, 0.15 * k, SC_CROW, 1.5);
+  flat(ctx, s, [0.38, -0.38, 0.62, -0.32, 0.38, -0.28], k, '#d8a040', 1);
+  if (!s.flash) dot(ctx, 0.3 * k, -0.37 * k, Math.max(0.6, 0.04 * k), '#ffd27a');
+  if (lift > 0.05) flat(ctx, s, [0.0, -0.18, -0.3, -0.62 - flap * 0.5, -0.46, -0.5 - flap * 0.5, 0.12, -0.08], k, SC_CROW, 1.5);
+  else flat(ctx, s, [0.08, -0.22, -0.46, -0.06, 0.02, -0.04], k, shade(SC_CROW, 1.3), 1.2);
+  // feet on the perch
+  if (lift < 0.05 && !s.flash) {
+    line(ctx, -0.02 * k, 0.04 * k, -0.04 * k, 0.12 * k, 1, '#a07a40');
+    line(ctx, 0.08 * k, 0.04 * k, 0.08 * k, 0.12 * k, 1, '#a07a40');
+  }
+  ctx.restore();
+}
+
+registerDraw('forest_scarecrow', (ctx, s) => {
+  const u = s.r * s.scale;
+  const f = facing(s);
+  const fw = f.ax;
+  const af = Math.abs(fw);
+  const wind = s.pose === 'windup';
+  const flung = s.pose === 'attack' || s.pose === 'recover';
+  shadow(ctx, s.x, s.y, u * 0.8);
+  ctx.save();
+  upright(ctx, s, f, u, 0);
+  // it sways on its post, pivoting at the ground
+  ctx.translate(0, 0.74 * u);
+  ctx.rotate(Math.sin(s.t * 1.3) * 0.035 + (wind ? -0.05 : flung ? 0.06 : 0));
+  ctx.translate(0, -0.74 * u);
+  // the post and a little mound of earth and straw at its foot
+  oval(ctx, s, 0, 0.74 * u, 0.32 * u, 0.1 * u, '#4a3a22', 2);
+  capsule(ctx, s, 0, 0.76 * u, 0, -0.98 * u, 0.09 * u, 0.08 * u, SC_WOOD, 2);
+  straw(ctx, s, 0, 0.7 * u, -Math.PI / 2, 0.18 * u, 5, s.t);
+  // crossbar: seen side-on its ends come toward and away from the camera
+  const span = lerp(0.98, 0.42, af) * u;
+  const barY = -0.42 * u;
+  const nearX = span;
+  const nearY = barY + 0.24 * af * u;
+  const farX = -span;
+  const farY = barY - 0.14 * af * u;
+  capsule(ctx, s, farX - 0.06 * u, farY, nearX + 0.06 * u, nearY, 0.07 * u, 0.07 * u, shade(SC_WOOD, 0.85), 2);
+  // far sleeve along the bar
+  capsule(ctx, s, -0.38 * u, barY, farX, farY, 0.17 * u, 0.13 * u, SC_COAT_U, 2);
+  straw(ctx, s, farX, farY, Math.PI + 0.1, 0.22 * u, 5, s.t + 1);
+  // the coat, patched, straw out of the hem
+  shape(ctx, s, SC_COAT_P, u, SC_COAT, SC_COAT_U, 0.12, 2.5);
+  if (!s.flash) {
+    inside(ctx, SC_COAT_P, u);
+    flat(ctx, s, [0.12, -0.2, 0.34, -0.22, 0.36, 0.0, 0.14, 0.02], u, '#8a6a3a', 1.2);
+    ctx.setLineDash([2, 2]);
+    line(ctx, 0.12 * u, -0.2 * u, 0.34 * u, -0.22 * u, 1, '#2a2018');
+    ctx.setLineDash([]);
+    line(ctx, -0.04 * u, -0.5 * u, -0.02 * u, 0.36 * u, 1.5, withAlpha(OUTLINE, 0.5));
+    line(ctx, -0.58 * u, 0.02 * u, 0.58 * u, 0.0, Math.max(2, 0.07 * u), '#8a7040');
+    ctx.restore();
+    for (const hx of [-0.36, -0.08, 0.24]) straw(ctx, s, hx * u, 0.3 * u, Math.PI / 2, 0.18 * u, 3, s.t + hx * 5);
+    straw(ctx, s, 0.02 * u, -0.5 * u, -Math.PI / 2, 0.12 * u, 3, s.t);
+  }
+  // the sack head, tied at the neck, lolling to one side; it cocks in the windup
+  ctx.save();
+  ctx.translate(0.06 * fw * u, -0.82 * u);
+  ctx.rotate(wind ? 0.28 : 0.1 + Math.sin(s.t * 0.9) * 0.05);
+  const h = 0.78 * u;
+  const lamp = elemGlow(s, '#ff9a2a');
+  shape(ctx, s, SC_HEAD, h, SC_SACK, SC_SACK_U, 0.1, 2.5);
+  if (!s.flash) {
+    // burlap weave and the twine at the neck
+    ctx.strokeStyle = withAlpha('#8a6a40', 0.45);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      ctx.moveTo(-0.36 * h, (-0.3 + i * 0.14) * h);
+      ctx.lineTo(0.36 * h, (-0.32 + i * 0.14) * h);
+    }
+    ctx.stroke();
+    line(ctx, -0.3 * h, 0.28 * h, 0.3 * h, 0.28 * h, Math.max(2, 0.07 * h), '#6a5030');
+    if (f.back) line(ctx, 0.0, -0.46 * h, 0.04 * h, 0.24 * h, 1.4, withAlpha('#4a3420', 0.8));
+    else {
+      const c = 0.16 * fw * h;
+      const sp = (0.18 - 0.05 * af) * h;
+      const flick = 0.75 + Math.sin(s.t * 9) * 0.1 + (wind || flung ? 0.25 : 0);
+      glow(ctx, c, -0.02 * h, 0.9 * h, lamp, 0.35 * flick);
+      // cut-out triangle eyes and a jagged grin, lit from within
+      for (const side of [-1, 1]) {
+        const ex = c + side * sp;
+        flat(ctx, s, [ex / h - 0.1, -0.06, ex / h + 0.1, -0.06, ex / h + side * 0.02, -0.24], h, heat(s, lamp, 0.3), 1.5);
+      }
+      ctx.beginPath();
+      ctx.moveTo(c - 0.24 * h, 0.06 * h);
+      for (let i = 1; i <= 6; i++) ctx.lineTo(c + (-0.24 + i * 0.08) * h, (i % 2 ? 0.18 : 0.08) * h + (wind ? 0.04 * h : 0));
+      ctx.lineTo(c + 0.22 * h, 0.2 * h);
+      ctx.quadraticCurveTo(c, 0.3 * h, c - 0.22 * h, 0.18 * h);
+      ctx.closePath();
+      ctx.fillStyle = lamp;
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = OUTLINE;
+      ctx.stroke();
+      // the stitches across the grin
+      for (let i = 0; i < 4; i++) {
+        const sx = c + (-0.16 + i * 0.1) * h;
+        line(ctx, sx, 0.06 * h, sx + 0.02 * h, 0.26 * h, 1, '#2a1a10');
+      }
+    }
+  }
+  // battered straw hat with a torn crown
+  ctx.translate(0, -0.42 * h);
+  shape(ctx, s, SC_CROWN, h, '#c8a050', '#8a6a30', 0.08, 2);
+  if (!s.flash) {
+    mark(ctx, s, [-0.34, -0.12, 0.34, -0.1, 0.34, -0.02, -0.34, -0.04], h, '#7a3a22', false);
+    oval(ctx, null, 0.16 * h, -0.28 * h, 0.06 * h, 0.04 * h, '#2a1a10', 0);
+  }
+  shape(ctx, s, SC_BRIM, h, '#d8b060', '#9a7a3a', 0.06, 2);
+  straw(ctx, s, -0.78 * h, 0.08 * h, Math.PI + 0.3, 0.14 * h, 3, s.t);
+  // the hat crow
+  const hatLift = wind ? Math.min(1, 0.3 + s.poseT * 2) : flung ? 0.6 : 0;
+  crow(ctx, s, 0.12 * h, -0.36 * h, 0.5 * u, f.back ? -1 : 1, hatLift, s.t + 0.4);
+  ctx.restore();
+  // near sleeve: along the bar, flung forward off it on release
+  let hx = nearX;
+  let hy = nearY;
+  if (flung) {
+    hx = 0.3 * u + f.ax * 1.0 * u;
+    hy = -0.4 * u + f.ay * 0.7 * u;
+  } else if (wind) {
+    hx = nearX - 0.1 * u;
+    hy = nearY - 0.28 * u;
+  }
+  capsule(ctx, s, 0.36 * u, barY, hx, hy, 0.18 * u, 0.14 * u, SC_COAT, 2);
+  const ha = Math.atan2(hy - barY, hx - 0.36 * u);
+  straw(ctx, s, hx, hy, ha, 0.26 * u, 5, s.t);
+  hot(ctx, s, hx, hy, 0.6 * u);
+  if (flung) swoosh(ctx, s, 0.36 * u, barY, 1.0 * u, -1.6, ha, 0.35 * u);
+  // the arm crow: perched on the cuff, off its perch in the windup, gone (it is the projectile) on release
+  if (!flung) crow(ctx, s, nearX - 0.06 * u, nearY - 0.14 * u, 0.5 * u, 1, wind ? Math.min(1, s.poseT * 2.5) : 0, s.t);
+  ctx.restore();
+});
+
+// ---------------------------------------------------------------- Beekeeper
+// A beekeeper in a pale smock, gloves and a wide hat with a dark mesh veil (two amber eyes glint behind it), a tin
+// smoker puffing in the near hand and a straw skep hive under the other arm, with a few bees on patrol. The hive is
+// hoisted overhead in the windup and thrust out on the release in a burst of angry bees.
+const BK_SMOCK = '#e6dfc6';
+const BK_SMOCK_U = shade(BK_SMOCK, 0.72);
+const BK_GLOVE = '#c8a868';
+const BK_BODY = [-0.42, -0.44, 0.4, -0.44, 0.5, 0.0, 0.52, 0.42, 0.0, 0.5, -0.52, 0.42, -0.5, 0.0];
+const BK_SKEP = [-0.42, 0.32, -0.46, -0.02, -0.32, -0.32, 0.0, -0.44, 0.32, -0.32, 0.46, -0.02, 0.42, 0.32];
+const BK_BRIM = [-0.82, 0.04, -0.56, -0.1, 0.0, -0.14, 0.56, -0.1, 0.82, 0.04, 0.5, 0.14, 0.0, 0.16, -0.5, 0.14];
+const BK_CROWN = [-0.36, 0.0, -0.36, 0.0, -0.32, -0.34, 0.0, -0.46, 0.32, -0.34, 0.36, 0.0, 0.36, 0.0];
+
+function bee(ctx: CanvasRenderingContext2D, s: DrawState, x: number, y: number, k: number, a: number, t: number): void {
+  if (s.flash) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(a);
+  const flick = Math.sin(t * 60) * 0.3;
+  oval(ctx, null, -0.1 * k, -0.35 * k, 0.26 * k, 0.16 * k, withAlpha('#ffffff', 0.7), 0.8, -0.6 + flick);
+  oval(ctx, null, 0.06 * k, -0.35 * k, 0.24 * k, 0.15 * k, withAlpha('#ffffff', 0.7), 0.8, 0.6 - flick);
+  oval(ctx, null, 0, 0, 0.42 * k, 0.26 * k, '#f0c020', 1.2);
+  line(ctx, -0.08 * k, -0.24 * k, -0.08 * k, 0.24 * k, Math.max(1, 0.12 * k), OUTLINE);
+  line(ctx, -0.26 * k, -0.18 * k, -0.26 * k, 0.18 * k, Math.max(1, 0.1 * k), OUTLINE);
+  ctx.restore();
+}
+
+/** A straw skep hive centred at (x, y), size k; tilt rotates it. */
+function skep(ctx: CanvasRenderingContext2D, s: DrawState, x: number, y: number, k: number, tilt: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(tilt);
+  shape(ctx, s, BK_SKEP, k, heat(s, '#d8a848', 0.25), '#9a7030', 0.08, 2);
+  if (!s.flash) {
+    ctx.strokeStyle = withAlpha('#7a5420', 0.85);
+    ctx.lineWidth = Math.max(1, 0.05 * k);
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const yy = (-0.28 + i * 0.15) * k;
+      const w = Math.sqrt(Math.max(0, 1 - ((yy / k + 0.02) / 0.46) ** 2)) * 0.44 * k;
+      ctx.moveTo(-w, yy);
+      ctx.quadraticCurveTo(0, yy + 0.06 * k, w, yy);
+    }
+    ctx.stroke();
+    // the entrance and a guard bee
+    oval(ctx, null, 0.04 * k, 0.24 * k, 0.1 * k, 0.06 * k, '#2a1a0a', 0);
+  }
+  ctx.restore();
+}
+
+registerDraw('forest_beekeeper', (ctx, s) => {
+  const u = s.r * s.scale;
+  const f = facing(s);
+  const fw = f.ax;
+  const wind = s.pose === 'windup';
+  const thrust = s.pose === 'attack';
+  shadow(ctx, s.x, s.y, u * 0.9);
+  ctx.save();
+  upright(ctx, s, f, u, bob(s, 1.2, 7));
+  // the hive: under the far arm, hoisted overhead, thrust out at the target
+  let kx: number;
+  let ky: number;
+  let tilt: number;
+  if (wind) {
+    kx = -0.05 * u;
+    ky = -1.42 * u;
+    tilt = -0.25 + Math.sin(s.t * 14) * 0.06;
+  } else if (thrust) {
+    kx = 0.3 * u + f.ax * 0.75 * u;
+    ky = -0.5 * u + f.ay * 0.5 * u;
+    tilt = f.aim + 0.9;
+  } else {
+    kx = lerp(-0.62, -0.42, fw) * u;
+    ky = 0.06 * u;
+    tilt = -0.15;
+  }
+  const kk = 0.85 * u;
+  const raised = wind || thrust;
+  const fsx = lerp(-0.4, -0.28, fw) * u;
+  // boots and gaitered legs
+  const step = Math.sin(s.t * 7) * 0.12 * u * s.moving;
+  for (const [hx, fx2, c] of [
+    [-0.14, -0.18 - step / u, shade(BK_SMOCK, 0.82)],
+    [0.14, 0.18 + step / u, BK_SMOCK],
+  ] as const) {
+    arm(ctx, s, hx * u, 0.36 * u, fx2 * u, 0.72 * u, 0.2 * u, 0.2 * u, -1, 0.11 * u, 0.1 * u, 0.09 * u, c, 2);
+    oval(ctx, s, J[2]! + 0.05 * u, J[3]!, 0.14 * u, 0.08 * u, '#4a3a28', 1.5);
+  }
+  if (!raised) skep(ctx, s, kx, ky, kk, tilt);
+  // far arm round the hive
+  const fhx = raised ? kx - 0.1 * u : kx + 0.12 * u;
+  const fhy = raised ? ky + 0.28 * u : ky - 0.12 * u;
+  arm(ctx, s, fsx, -0.32 * u, fhx, fhy, 0.3 * u, 0.3 * u, raised ? 1 : -1, 0.11 * u, 0.1 * u, 0.09 * u, BK_SMOCK_U, 2);
+  oval(ctx, s, J[2]!, J[3]!, 0.09 * u, 0.09 * u, shade(BK_GLOVE, 0.8), 1.5);
+  // the smock, a pocket, a tool belt
+  shape(ctx, s, BK_BODY, u, BK_SMOCK, BK_SMOCK_U, 0.12, 2.5);
+  if (!s.flash) {
+    inside(ctx, BK_BODY, u);
+    line(ctx, 0.02 * u, -0.44 * u, 0.0, 0.5 * u, 1.5, withAlpha(OUTLINE, 0.35));
+    line(ctx, -0.6 * u, 0.08 * u, 0.6 * u, 0.04 * u, Math.max(2, 0.08 * u), '#7a5a34');
+    flat(ctx, s, [0.14, 0.16, 0.38, 0.14, 0.38, 0.34, 0.14, 0.36], u, shade(BK_SMOCK, 0.9), 1.2);
+    mark(ctx, s, [0.16, 0.24, 0.24, 0.2, 0.3, 0.28, 0.22, 0.3], u, withAlpha('#e0a020', 0.7));
+    ctx.restore();
+  }
+  // head: a wide hat with the mesh veil hanging to the shoulders, eyes glinting through it
+  ctx.save();
+  ctx.translate(0.06 * fw * u, -0.7 * u);
+  const h = 0.66 * u;
+  const eye = elemGlow(s, '#ffd27a');
+  const VEIL = [-0.5, -0.08, 0.5, -0.08, 0.56, 0.36, 0.42, 0.56, 0.0, 0.62, -0.42, 0.56, -0.56, 0.36];
+  shape(ctx, s, VEIL, h, '#4a4a42', '#33332e', 0.06, 2);
+  if (!s.flash) {
+    inside(ctx, VEIL, h);
+    ctx.strokeStyle = withAlpha('#9a9a88', 0.45);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = -6; i <= 6; i++) {
+      ctx.moveTo(i * 0.09 * h, -0.1 * h);
+      ctx.lineTo(i * 0.09 * h + 0.3 * h, 0.64 * h);
+      ctx.moveTo(i * 0.09 * h, -0.1 * h);
+      ctx.lineTo(i * 0.09 * h - 0.3 * h, 0.64 * h);
+    }
+    ctx.stroke();
+    ctx.restore();
+    if (!f.back) {
+      const c = 0.16 * fw * h;
+      const sp = (0.15 - 0.04 * Math.abs(fw)) * h;
+      dot(ctx, c - sp, 0.16 * h, Math.max(1, 0.05 * h), eye);
+      dot(ctx, c + sp, 0.16 * h, Math.max(1, 0.05 * h), eye);
+      glow(ctx, c, 0.16 * h, 0.5 * h, eye, 0.3);
+    }
+  }
+  ctx.translate(0, -0.08 * h);
+  shape(ctx, s, BK_CROWN, h, BK_SMOCK, BK_SMOCK_U, 0.08, 2);
+  if (!s.flash) mark(ctx, s, [-0.34, -0.1, 0.34, -0.1, 0.34, -0.02, -0.34, -0.02], h, '#c8a040', false);
+  shape(ctx, s, BK_BRIM, h, mix(BK_SMOCK, '#ffffff', 0.2), BK_SMOCK_U, 0.06, 2);
+  ctx.restore();
+  if (raised) {
+    skep(ctx, s, kx, ky, kk, tilt);
+    hot(ctx, s, kx, ky, 0.7 * u, 0.5);
+  }
+  // near hand: the smoker, puffing; it sweeps forward with a big puff on the release
+  const nsx = lerp(0.4, 0.28, fw) * u;
+  const shx = nsx + 0.22 * u + f.ax * (thrust ? 0.08 : 0.14) * u;
+  const shy = wind || thrust ? -0.22 * u : 0.06 * u + f.ay * 0.12 * u;
+  arm(ctx, s, nsx, -0.32 * u, shx, shy, 0.22 * u, 0.22 * u, -1, 0.11 * u, 0.1 * u, 0.09 * u, BK_SMOCK, 2);
+  const gx = J[2]!;
+  const gy = J[3]!;
+  // smoker: a tin can with a spout, a leather bellows behind it
+  flat(ctx, s, [(gx / u) - 0.22, (gy / u) - 0.04, (gx / u) - 0.08, (gy / u) - 0.16, (gx / u) - 0.06, (gy / u) + 0.12, (gx / u) - 0.2, (gy / u) + 0.12], u, '#7a4a2a', 1.5);
+  capsule(ctx, s, gx, gy - 0.22 * u, gx, gy + 0.14 * u, 0.1 * u, 0.1 * u, '#a8adb4', 2);
+  flat(ctx, s, [(gx / u) - 0.1, (gy / u) - 0.3, (gx / u) + 0.1, (gy / u) - 0.3, (gx / u) + 0.05, (gy / u) - 0.42, (gx / u) - 0.02, (gy / u) - 0.42], u, '#8a9098', 1.5);
+  oval(ctx, s, gx - 0.02 * u, gy + 0.02 * u, 0.09 * u, 0.09 * u, BK_GLOVE, 1.5);
+  if (!s.flash) {
+    const spoutX = gx + 0.02 * u;
+    const spoutY = gy - 0.44 * u;
+    const puff = thrust ? 1.6 : wind ? 1.2 : 1;
+    for (let i = 0; i < 4; i++) {
+      const k = (s.t * 0.7 + i / 4) % 1;
+      const px = spoutX + Math.sin(s.t * 1.5 + i * 2) * 0.12 * u * k + (thrust ? f.ax * k * 0.8 * u : 0);
+      const py = spoutY - k * 0.8 * u * puff;
+      oval(ctx, null, px, py, (0.05 + k * 0.14) * u * puff, (0.05 + k * 0.12) * u * puff, withAlpha('#d8d8cc', 0.55 * (1 - k)), 0);
+    }
+  }
+  // bees on patrol round the keeper; angrier and wider in the windup, streaming out on the release
+  const n = 4;
+  const rr = (wind ? 1.25 : 1.0) * u;
+  const sp2 = wind ? 4 : 2;
+  for (let i = 0; i < n; i++) {
+    const a = s.t * sp2 + (i * Math.PI * 2) / n;
+    let bx = Math.cos(a) * rr;
+    let by = -0.3 * u + Math.sin(a) * rr * 0.45 + Math.sin(s.t * 9 + i) * 0.05 * u;
+    if (thrust) {
+      bx = kx + f.ax * (0.4 + i * 0.3) * u + Math.sin(s.t * 20 + i) * 0.1 * u;
+      by = ky + f.ay * (0.3 + i * 0.25) * u + Math.cos(s.t * 17 + i * 2) * 0.12 * u;
+    }
+    bee(ctx, s, bx, by, 0.24 * u, thrust ? f.aim : a + Math.PI / 2, s.t + i);
+  }
+  if (thrust) streak(ctx, s, kx + f.ax * 0.5 * u, ky + f.ay * 0.4 * u, kx + f.ax * 1.8 * u, ky + f.ay * 1.4 * u, 0.3 * u);
+  ctx.restore();
+});

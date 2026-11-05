@@ -968,3 +968,320 @@ registerDraw('mimic', (ctx, s) => {
   if (s.pose === 'attack') streak(ctx, s, 0, 0, f.ax * 1.6 * u, f.ay * 1.6 * u, 0.5 * u);
   ctx.restore();
 });
+
+// ---------------------------------------------------------------- Weeping Mourner
+// A widow's ghost in deep mourning: a black crepe gown that frays into wisps where her feet should be, a lace veil
+// over a grey, tear-streaked face, a little moss-trimmed pillbox hat and a handkerchief she dabs her eyes with. She
+// throws her head back to wail and flicks her tears; the tears and her glow are her type's colour (Void in the data).
+const WM_GOWN = '#4a4452';
+const WM_GOWN_U = shade(WM_GOWN, 0.6);
+const WM_VEIL = '#28232e';
+const WM_SKIN = '#c4cab8';
+const WM_SKIN_U = shade(WM_SKIN, 0.72);
+const WM_FACE = [-0.36, -0.1, -0.3, -0.46, 0.04, -0.56, 0.34, -0.44, 0.4, -0.08, 0.3, 0.34, 0.04, 0.5, -0.24, 0.36];
+const WM_HAT = [-0.3, -0.42, -0.26, -0.66, 0.26, -0.66, 0.3, -0.42];
+
+function mournerGown(t: number, sway: number): number[] {
+  const p = [-0.22, -0.46, 0.2, -0.46, 0.22, -0.12, 0.44 + sway * 0.2, 0.3];
+  for (let i = 0; i < 5; i++) {
+    // the hem frays into wisps that trail behind her as she drifts
+    const x = 0.48 - i * 0.24 - sway * (0.25 + i * 0.12);
+    const tipY = 0.76 + (i % 2) * 0.12 + Math.sin(t * 4 + i * 1.7) * 0.06;
+    p.push(x, tipY, x, tipY);
+    if (i < 4) p.push(x - 0.1 - sway * 0.1, 0.56 + Math.sin(t * 3 + i) * 0.03);
+  }
+  p.push(-0.6 - sway * 0.5, 0.3, -0.28, -0.12);
+  return p;
+}
+
+registerDraw('crypt_mourner', (ctx, s) => {
+  const u = s.r * s.scale;
+  const f = facing(s);
+  const fw = f.ax;
+  const tear = elemGlow(s, '#b9a6ff');
+  const wail = s.pose === 'windup' ? Math.min(1, 0.35 + s.poseT * 1.8) : s.pose === 'attack' ? 1 : s.pose === 'recover' ? 0.45 : 0;
+  shadow(ctx, s.x, s.y, u * 0.7, 0.24);
+  if (!s.flash) glow(ctx, s.x, s.y - 0.6 * u, u * 2.4, tear, 0.14 + wail * 0.22);
+  ctx.save();
+  upright(ctx, s, f, u, -0.34 * u + Math.sin(s.t * 2.2) * 0.07 * u);
+  const sway = Math.sin(s.t * 2) * 0.05 + s.moving * 0.14;
+  // far arm behind the gown: hangs limp, or flung up beside her head as she wails
+  const shF = lerp(-0.2, -0.08, fw) * u;
+  const fx = wail > 0 ? shF - (0.1 + wail * 0.12) * u : shF - 0.04 * u + Math.sin(s.t * 1.6) * 0.03 * u;
+  const fy = wail > 0 ? (-0.4 - wail * 0.55) * u : 0.02 * u;
+  arm(ctx, s, shF, -0.38 * u, fx, fy, 0.28 * u, 0.28 * u, wail > 0 ? 1 : -1, 0.075 * u, 0.065 * u, 0.055 * u, WM_GOWN_U, 2);
+  oval(ctx, s, J[2]!, J[3]!, 0.07 * u, 0.065 * u, WM_SKIN_U, 1.5);
+  // the gown, pleated crepe with a lace collar and a moss stain at the hem
+  const G = mournerGown(s.t, sway);
+  shape(ctx, s, G, u, WM_GOWN, WM_GOWN_U, 0.12, 2.5);
+  inside(ctx, G, u);
+  if (!s.flash) {
+    ctx.strokeStyle = withAlpha('#0c0a0e', 0.6);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = -2; i <= 2; i++) {
+      ctx.moveTo(i * 0.08 * u, -0.1 * u);
+      ctx.quadraticCurveTo(i * 0.12 * u, 0.3 * u, (i * 0.16 - sway * 0.5) * u, 0.85 * u);
+    }
+    ctx.stroke();
+    mark(ctx, s, [-0.62, 0.42, -0.24, 0.4, 0.12, 0.58, -0.24, 0.84, -0.6, 0.76], u, withAlpha(MOSS, 0.5));
+    mark(ctx, s, [-0.24, -0.48, 0.24, -0.48, 0.18, -0.3, 0.02, -0.22, -0.18, -0.3], u, '#4a4652');
+  }
+  ctx.restore();
+  if (!s.flash && !f.back) {
+    // jet brooch
+    dot(ctx, (0.04 + 0.08 * fw) * u, -0.3 * u, 0.06 * u, '#0a080c');
+    dot(ctx, (0.03 + 0.08 * fw) * u, -0.31 * u, Math.max(0.7, 0.02 * u), tear);
+  }
+  // the head, thrown back as she wails
+  const h = 0.7 * u;
+  ctx.save();
+  ctx.translate((0.03 + 0.12 * fw) * u, -0.76 * u);
+  ctx.rotate(-wail * 0.5 * Math.max(0.3, fw));
+  const billow = wail * 0.35 + Math.sin(s.t * 2.5) * 0.06 + s.moving * 0.15;
+  // the veil's back drape, streaming behind and billowing out when she wails
+  shape(
+    ctx,
+    s,
+    [-0.1, -0.66, 0.32, -0.58, 0.5, -0.18, 0.3, 0.2, -0.14 - billow * 0.5, 0.78 - billow * 0.2, -0.14 - billow * 0.5, 0.78 - billow * 0.2, -0.32 - billow * 0.8, 0.6 - billow * 0.2, -0.46 - billow * 0.9, 0.74 - billow * 0.3, -0.46 - billow * 0.9, 0.74 - billow * 0.3, -0.62 - billow * 0.6, 0.36, -0.56, -0.24],
+    h,
+    WM_VEIL,
+    null,
+    0,
+    2,
+  );
+  if (f.back) {
+    shape(ctx, s, [-0.44, 0.3, -0.48, -0.34, 0, -0.6, 0.44, -0.38, 0.46, 0.3, 0, 0.5], h, WM_VEIL, shade(WM_VEIL, 0.6), 0.1, 2);
+  } else {
+    shape(ctx, s, WM_FACE, h, WM_SKIN, WM_SKIN_U, 0.1, 2);
+    if (!s.flash) {
+      const c = 0.12 * fw * h;
+      const sp = (0.16 - 0.03 * fw) * h;
+      // sunken eyes under sorrowful brows, tear streaks, a mouth that opens into the wail
+      oval(ctx, null, c - sp, -0.1 * h, 0.1 * h, 0.08 * h, '#2a2430', 0);
+      oval(ctx, null, c + sp, -0.1 * h, 0.1 * h, 0.08 * h, '#2a2430', 0);
+      dot(ctx, c - sp, -0.09 * h, Math.max(0.8, 0.035 * h), tear);
+      dot(ctx, c + sp, -0.09 * h, Math.max(0.8, 0.035 * h), tear);
+      line(ctx, c - sp - 0.1 * h, -0.28 * h, c - sp + 0.08 * h, -0.2 * h, 1.4, '#3a3440');
+      line(ctx, c + sp + 0.1 * h, -0.28 * h, c + sp - 0.08 * h, -0.2 * h, 1.4, '#3a3440');
+      line(ctx, c - sp, -0.02 * h, c - sp - 0.02 * h, 0.3 * h, 1.4, withAlpha(tear, 0.75));
+      line(ctx, c + sp, -0.02 * h, c + sp + 0.01 * h, 0.34 * h, 1.4, withAlpha(tear, 0.75));
+      if (wail > 0.05) {
+        oval(ctx, null, c, 0.26 * h, 0.1 * h + wail * 0.04 * h, 0.05 * h + wail * 0.14 * h, heat(s, '#1a1018', 0.5), 1.5);
+        hot(ctx, s, c, 0.26 * h, 0.8 * h, 0.7);
+      } else {
+        ctx.strokeStyle = '#3a3440';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(c - 0.1 * h, 0.3 * h);
+        ctx.quadraticCurveTo(c, 0.22 * h, c + 0.1 * h, 0.3 * h);
+        ctx.stroke();
+      }
+      // a fresh tear rolling down
+      const kk = (s.t * 0.7) % 1;
+      dot(ctx, c + sp, -0.02 * h + kk * 0.62 * h, Math.max(0.6, 0.05 * h * (1 - kk * 0.5)), tear);
+      // the lace front of the veil, lifted by the wail
+      const lift = wail * 0.24;
+      const veil = [-0.44, -0.5 - lift, 0.46, -0.48 - lift, 0.52, -0.02 - lift, 0.3, 0.06 - lift, 0.1, -0.02 - lift, -0.12, 0.06 - lift, -0.34, -0.02 - lift, -0.46, 0.04 - lift];
+      mark(ctx, s, veil, h, withAlpha(WM_VEIL, 0.42 - wail * 0.18));
+      ctx.fillStyle = withAlpha('#5a5464', 0.7);
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const lx = (-0.36 + i * 0.18) * h;
+        ctx.moveTo(lx + 0.025 * h, (-0.02 - lift) * h);
+        ctx.arc(lx, (-0.02 - lift) * h, 0.025 * h, 0, Math.PI * 2);
+      }
+      ctx.fill();
+    }
+  }
+  // the pillbox hat with a sprig of moss and a dead flower
+  ctx.save();
+  ctx.translate(0, -0.06 * h);
+  shape(ctx, s, WM_HAT, h, WM_VEIL, shade(WM_VEIL, 0.5), 0.06, 2);
+  if (!s.flash) {
+    mark(ctx, s, [-0.3, -0.48, -0.06, -0.62, 0.08, -0.5, -0.14, -0.42], h, MOSS);
+    dot(ctx, -0.12 * h, -0.6 * h, Math.max(1, 0.06 * h), '#8a7a90');
+    dot(ctx, -0.12 * h, -0.6 * h, Math.max(0.6, 0.025 * h), BONE);
+  }
+  ctx.restore();
+  ctx.restore();
+  // near arm: dabs her eye with the handkerchief; winds back and flicks a tear at you
+  const shN = lerp(0.22, 0.12, fw) * u;
+  let hx: number;
+  let hy: number;
+  if (s.pose === 'windup') {
+    hx = shN - 0.12 * u;
+    hy = -0.62 * u;
+  } else if (s.pose === 'attack') {
+    hx = shN + f.ax * 0.62 * u;
+    hy = -0.36 * u + f.ay * 0.5 * u;
+  } else if (s.pose === 'recover') {
+    hx = shN + f.ax * 0.4 * u;
+    hy = -0.2 * u + f.ay * 0.3 * u;
+  } else {
+    hx = (0.14 + 0.22 * fw) * u + Math.sin(s.t * 3) * 0.02 * u;
+    hy = -0.7 * u + Math.sin(s.t * 3) * 0.03 * u;
+  }
+  arm(ctx, s, shN, -0.38 * u, hx, hy, 0.28 * u, 0.28 * u, 1, 0.08 * u, 0.07 * u, 0.06 * u, WM_GOWN, 2);
+  const px = J[2]!;
+  const py = J[3]!;
+  // the handkerchief, fluttering
+  const fl = Math.sin(s.t * 5) * 0.05 * u - sway * 0.4 * u;
+  flat(ctx, s, [px - 0.06 * u, py, px + 0.1 * u, py + 0.02 * u, px + 0.08 * u + fl, py + 0.34 * u, px - 0.1 * u + fl, py + 0.28 * u], 1, '#dcd8c8', 1.5);
+  if (!s.flash) mark(ctx, s, [px - 0.08 * u + fl, py + 0.22 * u, px + 0.07 * u + fl, py + 0.27 * u, px + 0.08 * u + fl, py + 0.34 * u, px - 0.1 * u + fl, py + 0.28 * u], 1, withAlpha(MOSS, 0.7), false);
+  oval(ctx, s, px, py, 0.075 * u, 0.07 * u, WM_SKIN, 1.5);
+  if (s.pose === 'windup' || s.pose === 'attack') {
+    // the tear she is about to throw
+    if (!s.flash) glow(ctx, px, py - 0.08 * u, 0.6 * u, tear, 0.4 + striking(s) * 0.4);
+    oval(ctx, s, px, py - 0.1 * u, 0.06 * u, 0.09 * u, mix(tear, '#ffffff', 0.35), 1.2);
+    hot(ctx, s, px, py, 0.7 * u);
+  }
+  if (s.pose === 'attack') streak(ctx, s, shN, -0.4 * u, px + f.ax * 0.5 * u, py + f.ay * 0.4 * u, 0.22 * u);
+  ctx.restore();
+});
+
+// ---------------------------------------------------------------- Pallbearer
+// A tall, gaunt undertaker's man in a frayed tailcoat and a crepe-banded top hat, his skull grinning under the brim,
+// carrying a whole coffin on his shoulder. He heaves it overhead (the lid creaking open on a glow inside) and swings
+// it round in a great arc; it comes down in front of him, lid ajar, on the recovery.
+const PB_COAT = '#3c3a46';
+const PB_COAT_U = shade(PB_COAT, 0.6);
+const PB_TROUSER = '#3a3640';
+const PB_WOOD = '#6e4628';
+const PB_WOOD_U = shade(PB_WOOD, 0.6);
+const PB_BONE = '#cfcbb4';
+const PB_TORSO = [-0.3, -0.64, 0.28, -0.64, 0.34, -0.22, 0.26, 0.26, -0.28, 0.26, -0.36, -0.22];
+const PB_TAILS = [-0.28, -0.16, -0.1, 0.06, -0.18, 0.62, -0.3, 0.68, -0.3, 0.68, -0.38, 0.5, -0.48, 0.62, -0.48, 0.62, -0.46, -0.02];
+const PB_COFFIN = [-0.5, -0.3, 0.14, -0.5, 0.5, -0.36, 0.5, 0.36, 0.14, 0.5, -0.5, 0.3];
+const PB_HAT = [-0.22, -1.22, -0.2, -1.74, 0.2, -1.74, 0.22, -1.22];
+
+function pbCoffin(ctx: CanvasRenderingContext2D, s: DrawState, x: number, y: number, th: number, L: number, W: number, lid: number): void {
+  const pts = (k: number): number[] => PB_COFFIN.map((v, i) => (i % 2 === 0 ? v * L : v * W) * k);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(th);
+  light(th);
+  // brass handles along both long sides
+  for (const hx of [-0.3, 0.05, 0.32]) for (const side of [-1, 1]) oval(ctx, s, hx * L, side * (hx > 0.1 ? 0.46 : 0.42) * W, 0.07 * L, 0.06 * W, '#b0903a', 1.5);
+  shape(ctx, s, pts(1), 1, PB_WOOD, PB_WOOD_U, 0.14 * W, 2.5, true);
+  if (lid > 0.05) {
+    // the dark inside, glowing faintly
+    mark(ctx, s, pts(0.82), 1, '#140a0c', false);
+    if (!s.flash) glow(ctx, 0, 0, W * 1.3, elemGlow(s, '#e0f070'), 0.3 + lid * 0.3);
+    hot(ctx, s, 0, 0, W * 1.6);
+    ctx.translate(0, -lid * W * 0.62);
+    ctx.scale(1, 1 - lid * 0.45);
+  }
+  // the lid: planks, a cross, nail heads
+  shape(ctx, s, pts(0.94), 1, heat(s, mix(PB_WOOD, '#a07850', 0.25), 0.35), PB_WOOD, 0.08 * W, 2, true);
+  if (!s.flash) {
+    line(ctx, -0.46 * L, 0, 0.47 * L, 0, 1, withAlpha('#2a160c', 0.7));
+    line(ctx, -0.02 * L, -0.2 * W, 0.3 * L, -0.2 * W, Math.max(1.5, 0.06 * W), '#c8b070');
+    line(ctx, 0.08 * L, -0.34 * W, 0.08 * L, -0.02 * W, Math.max(1.5, 0.06 * W), '#c8b070');
+    mark(ctx, s, [-0.46 * L, 0.12 * W, -0.2 * L, 0.24 * W, -0.32 * L, 0.3 * W, -0.47 * L, 0.27 * W], 1, withAlpha(MOSS, 0.75));
+    for (const nx of [-0.42, 0.42]) {
+      dot(ctx, nx * L, -0.22 * W, Math.max(0.7, 0.04 * W), '#d8d0b8');
+      dot(ctx, nx * L, 0.22 * W, Math.max(0.7, 0.04 * W), '#d8d0b8');
+    }
+  }
+  ctx.restore();
+  light(0);
+}
+
+registerDraw('crypt_pallbearer', (ctx, s) => {
+  const u = s.r * s.scale;
+  const f = facing(s);
+  const fw = f.ax;
+  shadow(ctx, s.x, s.y, u);
+  ctx.save();
+  upright(ctx, s, f, u, bob(s, 1.4, 3.2));
+  // the coffin: shouldered, heaved overhead (lid opening), swung forward, set down ajar
+  const L = 1.7 * u * (0.55 + 0.45 * fw);
+  const W = 0.52 * u;
+  let cx: number;
+  let cy: number;
+  let th: number;
+  let lid: number;
+  if (s.pose === 'windup') {
+    const k = Math.min(1, 0.3 + s.poseT * 1.6);
+    cx = lerp(0.0, -0.3, k) * u;
+    cy = lerp(-1.0, -1.42, k) * u;
+    th = lerp(-0.08, -1.3, k);
+    lid = 0.75 * k;
+  } else if (s.pose === 'attack') {
+    cx = (0.85 + f.ax * 0.1) * u;
+    cy = (-0.4 + f.ay * 0.35) * u;
+    th = f.aim * 0.6 + 0.3;
+    lid = 0.85;
+  } else if (s.pose === 'recover') {
+    cx = 0.66 * u;
+    cy = -0.06 * u;
+    th = 0.7;
+    lid = 0.35;
+  } else {
+    cx = -0.12 * u;
+    cy = -0.92 * u + Math.sin(s.t * 3.2) * 0.02 * u;
+    th = -0.06 + Math.sin(s.t * 1.6) * 0.03;
+    lid = 0;
+  }
+  const dx = Math.cos(th);
+  const dy = Math.sin(th);
+  const g1x = cx - dx * 0.28 * L - dy * 0.42 * W;
+  const g1y = cy - dy * 0.28 * L + dx * 0.42 * W;
+  const g2x = cx + dx * 0.3 * L - dy * 0.46 * W;
+  const g2y = cy + dy * 0.3 * L + dx * 0.46 * W;
+  const coffin = (): void => pbCoffin(ctx, s, cx, cy, th, L, W, lid);
+  const behind = s.pose === 'windup';
+  const inFront = s.pose === 'attack' || s.pose === 'recover';
+  if (behind) coffin();
+  // long thin legs in striped trousers and pointed boots
+  const step = Math.sin(s.t * 3.2) * 0.14 * u * s.moving;
+  for (const [hx, ff, col] of [
+    [-0.14, -0.2 - step / u, shade(PB_TROUSER, 0.8)],
+    [0.12, 0.18 + step / u, PB_TROUSER],
+  ] as const) {
+    capsule(ctx, s, hx * u, 0.22 * u, ff * u, 0.7 * u, 0.1 * u, 0.08 * u, col, 2);
+    if (!s.flash) line(ctx, hx * u, 0.24 * u, ff * u, 0.68 * u, 1, withAlpha('#5a5664', 0.8));
+    shape(ctx, s, [ff - 0.1, 0.64, ff + 0.24, 0.68, ff + 0.28, 0.76, ff - 0.12, 0.78], u, '#1a181e', null, 0, 2);
+  }
+  // far arm to the back grip
+  arm(ctx, s, lerp(-0.3, -0.18, fw) * u, -0.56 * u, g1x, g1y, 0.44 * u, 0.44 * u, 1, 0.09 * u, 0.075 * u, 0.065 * u, PB_COAT_U, 2);
+  oval(ctx, s, J[2]!, J[3]!, 0.08 * u, 0.07 * u, shade(PB_BONE, 0.8), 1.5);
+  // tailcoat with its tails, shirt front and crepe cravat
+  shape(ctx, s, PB_TAILS, u, PB_COAT, PB_COAT_U, 0.1, 2.5);
+  shape(ctx, s, PB_TORSO, u, PB_COAT, PB_COAT_U, 0.12, 2.5);
+  inside(ctx, PB_TORSO, u);
+  if (!s.flash && !f.back) {
+    const sx = 0.1 * fw * u;
+    mark(ctx, s, [sx - 0.1 * u, -0.66 * u, sx + 0.12 * u, -0.66 * u, sx + 0.04 * u, -0.14 * u], 1, '#d8d4c4', false);
+    mark(ctx, s, [sx - 0.06 * u, -0.62 * u, sx + 0.08 * u, -0.62 * u, sx + 0.04 * u, -0.44 * u, sx - 0.02 * u, -0.44 * u], 1, '#0e0c10', false);
+    for (let i = 0; i < 3; i++) dot(ctx, sx + 0.12 * u, (-0.34 + i * 0.12) * u, Math.max(0.8, 0.03 * u), '#8a8270');
+  }
+  if (!s.flash) mark(ctx, s, [-0.36, -0.66, -0.1, -0.7, 0.0, -0.58, -0.3, -0.5], u, withAlpha(MOSS, 0.8));
+  ctx.restore();
+  if (!behind && !inFront) coffin();
+  // neck and skull under the top hat
+  const hx = (0.04 + 0.14 * fw) * u;
+  capsule(ctx, s, 0.02 * u, -0.62 * u, hx, -0.8 * u, 0.06 * u, 0.05 * u, shade(PB_BONE, 0.85), 2);
+  const jaw = s.pose === 'windup' ? 0.5 : s.pose === 'attack' ? 0.35 : 0.06 + Math.max(0, Math.sin(s.t * 2)) * 0.06;
+  skull(ctx, s, hx, -0.96 * u, 0.5 * u, fw, f.back, PB_BONE, elemGlow(s, '#e0f070'), jaw);
+  ctx.save();
+  ctx.translate(hx - 0.02 * u, 0.02 * u);
+  // a mourning streamer off the hat band, fluttering behind
+  const fl = Math.sin(s.t * 4) * 0.06 + s.moving * 0.12;
+  shape(ctx, s, [-0.16, -1.36, -0.5 - fl, -1.18, -0.68 - fl * 1.5, -1.0, -0.62 - fl, -0.92, -0.62 - fl, -0.92, -0.42 - fl, -1.08, -0.14, -1.26], u, '#141218', null, 0, 1.5);
+  shape(ctx, s, PB_HAT, u, '#1e1c22', '#121014', 0.06, 2.5, true);
+  if (!s.flash) {
+    mark(ctx, s, [-0.21, -1.34, 0.21, -1.34, 0.21, -1.24, -0.21, -1.24], u, '#0a080c', false);
+    line(ctx, 0.12 * u, -1.7 * u, 0.13 * u, -1.38 * u, 1.2, withAlpha('#5a5666', 0.8));
+  }
+  shape(ctx, s, [-0.38, -1.2, -0.34, -1.27, 0.34, -1.27, 0.38, -1.2, 0.3, -1.16, -0.3, -1.16], u, '#1e1c22', null, 0, 2.5);
+  ctx.restore();
+  if (inFront) coffin();
+  // near arm to the front grip
+  arm(ctx, s, lerp(0.3, 0.2, fw) * u, -0.56 * u, g2x, g2y, 0.44 * u, 0.44 * u, 1, 0.1 * u, 0.08 * u, 0.07 * u, PB_COAT, 2);
+  oval(ctx, s, J[2]!, J[3]!, 0.085 * u, 0.075 * u, PB_BONE, 1.5);
+  claws(ctx, s, J[2]!, J[3]!, Math.atan2(J[3]! - J[1]!, J[2]! - J[0]!), 0.12 * u, 3, 1.0, PB_BONE, 1);
+  swoosh(ctx, s, 0.1 * u, -0.7 * u, 1.5 * u, -2.2, th, 0.5 * u);
+  ctx.restore();
+});

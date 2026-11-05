@@ -738,3 +738,344 @@ registerDraw('forge_priest', (ctx, s) => {
   glow(ctx, hx + r * 0.02, my - r * 0.95 - sm * r * 0.6, r * 0.25, '#8a8a90', 0.5 * (1 - sm));
 });
 
+// ------------------------------------------------------------------ Rivet Gunner: stocky riveter, hose-fed rivet gun
+// A short, broad forge hand in a leather apron with welding goggles on his cap and a glowing pressure tank strapped
+// to his back; a hose feeds the big rivet gun he holds at the hip. The gun climbs skyward through a long windup
+// (Riveting fires up into the air) and kicks back on every shot.
+registerDraw('forge_rivet_gunner', (ctx, s) => {
+  const r = s.r * s.scale;
+  const f = frame(s);
+  const E = el(s);
+  const H = hot(s);
+  const b = bob(s, 1.3, 8);
+  shadow(ctx, s.x, s.y, r);
+  const x = s.x;
+  const gy = s.y + r * 0.72;
+  const wf = 0.82 + 0.18 * Math.abs(f.fy);
+  const kick = s.pose === 'attack' ? Math.max(0, 1 - s.poseT / 0.18) : 0;
+  const cx = x - f.fx * r * 0.18 * kick;
+  const top = s.y - r * 0.42 * (1 - s.squash * 0.1) + b;
+  const w = r * wf;
+  // gun aim: along the facing, lifted toward the ceiling through the windup (a long windup points it straight up)
+  const lift = s.pose === 'windup' ? Math.min(1, s.poseT / 0.8) * 1.6 : s.pose === 'stagger' ? -0.4 : 0;
+  let gdx = f.fx;
+  let gdy = f.fy * 0.55 - lift + (s.pose === 'idle' ? 0.12 : 0);
+  const gl = Math.hypot(gdx, gdy) || 1;
+  gdx /= gl;
+  gdy /= gl;
+  const ga = Math.atan2(gdy, gdx);
+  // grip by the near hip, the barrel reaching forward
+  const [gx0, gy0] = sideP(f, cx - gdx * r * 0.15 * kick, s.y + r * 0.08 + b, r * (0.32 + Math.max(0, lift) * 0.15), 1);
+  const L = r * 1.35;
+  const mx = gx0 + gdx * L;
+  const my = gy0 + gdy * L;
+
+  const tank = (): void => {
+    const [tx, ty] = fwdP(f, cx, top + r * 0.12, -r * 0.42);
+    poly2(ctx, s, [tx - r * 0.28, ty - r * 0.42, tx + r * 0.28, ty - r * 0.42, tx + r * 0.3, ty + r * 0.44, tx - r * 0.3, ty + r * 0.44], '#b0643a', 0.55, 2.5);
+    ell(ctx, s, tx, ty - r * 0.42, r * 0.28, r * 0.1, '#c8804e', 0.6, 2);
+    stick(ctx, s, tx, ty - r * 0.5, tx, ty - r * 0.64, 3, IRON, 2);
+    ell(ctx, s, tx, ty - r * 0.66, r * 0.09, r * 0.05, '#b08d3c', 0.6, 1.5);
+    // the glowing pressure window
+    const pulse = 0.5 + Math.sin(s.t * 5) * 0.2 + (striking(s) ? 0.3 : 0);
+    glow(ctx, tx, ty + r * 0.05, r * 0.6, H ?? E.glow, pulse);
+    poly2(ctx, s, [tx - r * 0.1, ty - r * 0.15, tx + r * 0.1, ty - r * 0.15, tx + r * 0.1, ty + r * 0.25, tx - r * 0.1, ty + r * 0.25], s.flash ? '#ffffff' : (H ?? EMBER), 2, 1.5);
+    sheen(ctx, [tx - r * 0.2, ty - r * 0.3, tx - r * 0.2, ty + r * 0.35], '#8a7868', 1.5, 0.8);
+  };
+  const hose = (): void => {
+    const [tx, ty] = fwdP(f, cx, top + r * 0.4, -r * 0.42);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.quadraticCurveTo(x + f.px * w * 0.9, s.y + r * 0.6, gx0 - gdx * r * 0.1, gy0 + r * 0.05);
+    ctx.stroke();
+    ctx.strokeStyle = fc(s, '#3a2a22');
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  };
+  const gun = (): void => {
+    if (H && s.pose === 'attack') streak(ctx, mx, my, mx + gdx * r * 1.3, my + gdy * r * 1.3, 5, H, 0.8 * (0.3 + kick));
+    ctx.save();
+    ctx.translate(gx0, gy0);
+    ctx.rotate(ga);
+    // pistol grip, barrel, drum of rivets, flared muzzle
+    poly2(ctx, s, [-r * 0.05, r * 0.05, r * 0.12, r * 0.05, r * 0.06, r * 0.32, -r * 0.1, r * 0.3], '#3a2418', 2, 2);
+    poly2(ctx, s, [-r * 0.18, -r * 0.18, L * 0.8, -r * 0.14, L * 0.8, r * 0.14, -r * 0.18, r * 0.18], '#6a6470', 0.6, 2.5);
+    poly2(ctx, s, [L * 0.78, -r * 0.18, L, -r * 0.25, L, r * 0.25, L * 0.78, r * 0.18], IRON, 0.6, 2.5);
+    ell(ctx, s, L * 0.3, -r * 0.26, r * 0.24, r * 0.17, '#b08d3c', 0.6, 2);
+    if (!s.flash) {
+      ctx.fillStyle = H ?? EMBER;
+      for (let i = -1; i <= 1; i++) {
+        ctx.beginPath();
+        ctx.arc(L * 0.3 + i * r * 0.09, -r * 0.3, r * 0.045, 0, TAU);
+        ctx.fill();
+      }
+    }
+    sheen(ctx, [-r * 0.08, -r * 0.08, L * 0.75, -r * 0.06], '#9a96a4', 1.5, 0.8);
+    ctx.restore();
+    // a red-hot rivet in the muzzle
+    const heatK = striking(s) ? 0.9 : 0.4;
+    glow(ctx, mx, my, r * (0.4 + heatK * 0.5), H ?? E.glow, heatK);
+    if (s.pose === 'attack' && kick > 0) {
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(ga + Math.PI / 2);
+      flame(ctx, 0, 0, -r * 0.8 * (0.4 + kick), s.t, H ?? E.main, GOLD, 0);
+      ctx.restore();
+    }
+    // sparks off the muzzle while it winds up
+    if (s.pose === 'windup' && !s.flash) {
+      for (let i = 0; i < 4; i++) {
+        const k = (s.t * 3 + i * 0.27) % 1;
+        const sa = ga + Math.sin(i * 2.7) * 0.9;
+        ctx.fillStyle = i % 2 ? GOLD : (H ?? EMBER);
+        ctx.beginPath();
+        ctx.arc(mx + Math.cos(sa) * k * r * 0.7, my + Math.sin(sa) * k * r * 0.7 + k * k * r * 0.3, Math.max(0.8, 1.6 * (1 - k)), 0, TAU);
+        ctx.fill();
+      }
+    }
+  };
+  const arm = (side: number): void => {
+    const [sx, sy] = sideP(f, cx, top + r * 0.16, r * 0.5 * wf, side);
+    // near hand on the grip, far hand steadying the barrel
+    const [hx, hy] = side > 0 ? [gx0 + gdx * r * 0.04, gy0 + r * 0.05] : [gx0 + gdx * L * 0.55, gy0 + gdy * L * 0.55 + r * 0.04];
+    const [ex, ey] = bend(sx, sy, hx, hy, r * 0.9, f.px * side, 0.7);
+    limb3(ctx, s, sx, sy, ex, ey, hx, hy, r * 0.28, r * 0.24, '#d49a74');
+    ell(ctx, s, hx, hy, r * 0.12, r * 0.11, '#3a2a20', 0.6, 2);
+  };
+  const gunFirst = f.back || (gdy < -0.6 && f.fy < -0.2);
+  if (!f.back) tank();
+  if (!f.back) hose();
+  if (gunFirst) gun();
+  if (armBehind(f, -1)) arm(-1);
+  if (armBehind(f, 1)) arm(1);
+  legs(ctx, s, f, cx, s.y + r * 0.38 + b, gy, r * 0.3, r * 0.24, '#4a3a32', '#2a1a14', r * 0.28, 10);
+  // broad torso in a sooty shirt, leather apron at the front
+  smooth2(ctx, s, [cx - w * 0.78, top + r * 0.08, cx - w * 0.6, top - r * 0.2, cx, top - r * 0.28, cx + w * 0.6, top - r * 0.2, cx + w * 0.78, top + r * 0.08, cx + w * 0.7, s.y + r * 0.45 + b, cx, s.y + r * 0.55 + b, cx - w * 0.7, s.y + r * 0.45 + b], '#9a3e2c', 0.6);
+  if (!f.back) {
+    const ox = cx + f.fx * w * 0.14;
+    poly2(ctx, s, [ox - w * 0.38, top + r * 0.02, ox + w * 0.38, top + r * 0.02, ox + w * 0.48, s.y + r * 0.62 + b, ox - w * 0.48, s.y + r * 0.62 + b], '#a8703c', 0.7, 2.5);
+    sheen(ctx, [ox - w * 0.3, s.y + r * 0.18 + b, ox + w * 0.3, s.y + r * 0.18 + b], '#4a2a18', 2, 1);
+    // a scorch mark and a pocket of spare rivets
+    ctx.fillStyle = s.flash ? '#ffffff' : 'rgba(20,10,8,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(ox - w * 0.12, s.y + r * 0.36 + b, r * 0.12, r * 0.08, 0.4, 0, TAU);
+    ctx.fill();
+    poly2(ctx, s, [ox + w * 0.06, s.y + r * 0.26 + b, ox + w * 0.3, s.y + r * 0.26 + b, ox + w * 0.28, s.y + r * 0.46 + b, ox + w * 0.08, s.y + r * 0.46 + b], '#5a3420', 2, 1.5);
+  } else {
+    tank();
+    hose();
+  }
+  if (!armBehind(f, -1)) arm(-1);
+  if (!gunFirst) gun();
+  if (!armBehind(f, 1)) arm(1);
+  // round head with a stubble jaw, a flat leather cap and welding goggles (down over the eyes while he shoots)
+  const hx = cx + f.fx * r * 0.1;
+  const hy = top - r * 0.38 + f.fy * r * 0.04;
+  smooth2(ctx, s, [hx - r * 0.3, hy + r * 0.05, hx - r * 0.28, hy - r * 0.2, hx, hy - r * 0.3, hx + r * 0.28, hy - r * 0.2, hx + r * 0.3, hy + r * 0.05, hx + r * 0.2, hy + r * 0.3, hx - r * 0.2, hy + r * 0.3], '#d49a74', 0.62, 2.5);
+  const down = striking(s);
+  if (!f.back) {
+    const fx2 = hx + f.fx * r * 0.12;
+    // soot stubble
+    ctx.fillStyle = s.flash ? '#ffffff' : 'rgba(40,24,18,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(fx2, hy + r * 0.18, r * 0.2, r * 0.11, 0, 0, TAU);
+    ctx.fill();
+    if (down) {
+      sheen(ctx, [hx - r * 0.3, hy - r * 0.04, hx + r * 0.3, hy - r * 0.04], '#2a1a12', 3, 1);
+      for (const side of [-1, 1]) {
+        const [ex2, ey2] = sideP(f, fx2, hy - r * 0.04, r * 0.12, side, 0.3);
+        ell(ctx, s, ex2, ey2, r * 0.09, r * 0.08, '#2a2224', 2, 1.5);
+        eye(ctx, ex2, ey2, Math.max(1.2, r * 0.06), s.flash ? '#ffffff' : (H ?? GOLD), 0.5);
+      }
+    } else eyes2(ctx, f, fx2, hy - r * 0.02, r * 0.11, Math.max(1, r * 0.045), '#1a1010', 0);
+    // a grim moustache
+    poly2(ctx, s, [fx2 - r * 0.15, hy + r * 0.1, fx2 + r * 0.15, hy + r * 0.1, fx2 + r * 0.12, hy + r * 0.16, fx2 - r * 0.12, hy + r * 0.16], '#3a2418', 2, 1.5);
+  }
+  // cap with a short brim toward the facing
+  smooth2(ctx, s, [hx - r * 0.32, hy - r * 0.1, hx - r * 0.26, hy - r * 0.32, hx, hy - r * 0.4, hx + r * 0.26, hy - r * 0.32, hx + r * 0.32, hy - r * 0.1], '#6a5444', 0.7, 2.5);
+  if (!f.back) poly2(ctx, s, [hx - r * 0.26 + f.fx * r * 0.12, hy - r * 0.12, hx + r * 0.26 + f.fx * r * 0.12, hy - r * 0.12, hx + r * 0.22 + f.fx * r * 0.3, hy - r * 0.04, hx - r * 0.22 + f.fx * r * 0.3, hy - r * 0.04], '#4e3e32', 2, 2);
+  if (!down) {
+    // goggles pushed up on the cap
+    const gyy = hy - r * 0.28;
+    sheen(ctx, [hx - r * 0.3, gyy, hx + r * 0.3, gyy], '#2a1a12', 2.5, 1);
+    if (!f.back) {
+      for (const side of [-1, 1]) {
+        const [ex2, ey2] = sideP(f, hx + f.fx * r * 0.1, gyy, r * 0.12, side, 0.3);
+        ell(ctx, s, ex2, ey2, r * 0.085, r * 0.075, '#b08d3c', 2, 1.5);
+        ell(ctx, s, ex2, ey2, r * 0.05, r * 0.045, '#3a6a5a', 2, 1);
+      }
+    }
+  }
+});
+
+// ------------------------------------------------------------------ Crucible Bearer: fire-suited worker, crucible on a fork
+// Hunched under a silvered fire suit and a hood with a smoked visor, he carries a huge crucible of molten metal at the
+// end of a long two-handed fork. It drips as he shuffles; it rises and tilts through the windup (Tip the Crucible
+// spills a glowing stream) and is flicked forward on the release.
+registerDraw('forge_crucible_bearer', (ctx, s) => {
+  const r = s.r * s.scale;
+  const f = frame(s);
+  const E = el(s);
+  const H = hot(s);
+  const b = bob(s, 1.6, 4);
+  shadow(ctx, s.x, s.y, r * 1.05, 0.38);
+  const x = s.x;
+  const gy = s.y + r * 0.72;
+  const wf = 0.82 + 0.18 * Math.abs(f.fy);
+  const top = s.y - r * 0.32 * (1 - s.squash * 0.08) + b;
+  const w = r * wf;
+  const SUIT = '#c4c8cc';
+  const SUIT_U = '#8a9098';
+  const MOLTEN = H ?? '#ffb040';
+  // crucible pose: carried low ahead; raised and tipped through the windup; flicked out on the release
+  const wk = s.pose === 'windup' ? Math.min(1, s.poseT / 0.9) : 0;
+  let reach = r * 1.25;
+  let z = r * (0.55 + Math.sin(s.t * 4) * 0.03);
+  let tilt = 0.08 + Math.sin(s.t * 4) * 0.04;
+  if (s.pose === 'windup') {
+    reach = r * (1.25 - wk * 0.25);
+    z = r * (0.55 + wk * 1.0);
+    tilt = 0.1 + wk * 0.75;
+  } else if (s.pose === 'attack') {
+    reach = r * 1.6;
+    z = r * 0.85;
+    tilt = 1.2;
+  } else if (s.pose === 'recover') {
+    reach = r * 1.45;
+    z = r * 0.65;
+    tilt = 0.6;
+  } else if (s.pose === 'stagger') {
+    z = r * 0.35;
+    tilt = -0.3;
+  }
+  const [cx, cy] = p3(f, x, gy, reach, 0, z);
+  const [px0, py0] = p3(f, x, gy, -r * 0.1, r * 0.25, r * 0.95);
+  const ta = tilt * (Math.abs(f.fx) > 0.3 ? f.dir : 0.4);
+  const crucible = (): void => {
+    // the fork's long handle
+    stick(ctx, s, px0, py0, cx, cy, 4, '#5a5660', 2.5);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ta);
+    const cw = r * 0.52;
+    const ch = r * 0.62;
+    glow(ctx, 0, -ch * 0.5, r * (1.1 + wk * 0.6), H ?? E.glow, 0.45 + wk * 0.35);
+    poly2(ctx, s, [-cw, -ch * 0.5, cw, -ch * 0.5, cw * 0.72, ch * 0.5, -cw * 0.72, ch * 0.5], '#4a3a36', 0.55, 3, '#2e2422');
+    // iron bands and the fork's tines
+    sheen(ctx, [-cw * 0.9, -ch * 0.2, cw * 0.9, -ch * 0.2], '#2a2224', 2.5, 1);
+    sheen(ctx, [-cw * 0.8, ch * 0.2, cw * 0.8, ch * 0.2], '#2a2224', 2.5, 1);
+    for (const side of [-1, 1]) stick(ctx, s, side * cw * 0.96, -ch * 0.1, side * cw * 1.05, ch * 0.25, 3, '#6a6470', 2);
+    // molten surface with a crust and a bright core
+    ell(ctx, s, 0, -ch * 0.5, cw * 0.92, r * 0.16, s.flash ? '#ffffff' : MOLTEN, 1, 2.5);
+    if (!s.flash) {
+      ctx.fillStyle = GOLD;
+      ctx.beginPath();
+      ctx.ellipse(Math.sin(s.t * 3) * cw * 0.2, -ch * 0.52, cw * 0.4, r * 0.06, 0, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(40,16,10,0.55)';
+      ctx.beginPath();
+      ctx.ellipse(-cw * 0.45, -ch * 0.48, cw * 0.18, r * 0.04, 0.2, 0, TAU);
+      ctx.fill();
+    }
+    sheen(ctx, [-cw * 0.85, -ch * 0.3, -cw * 0.62, ch * 0.4], '#7a6660', 1.5, 0.8);
+    ctx.restore();
+    // the lip it pours from: the forward-top corner once tipped
+    const sg = ta >= 0 ? 1 : -1;
+    const lx = cx + Math.cos(ta) * r * 0.5 * sg + Math.sin(ta) * r * 0.3;
+    const ly = cy + Math.sin(ta) * r * 0.5 * sg - Math.cos(ta) * r * 0.3;
+    if (tilt > 0.45 && !s.flash) {
+      // a molten stream spilling from the lip
+      const len = r * (0.4 + (tilt - 0.45) * 1.6);
+      const dx = sg * r * 0.35;
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = r * 0.2 + 2;
+      ctx.beginPath();
+      ctx.moveTo(lx, ly);
+      ctx.quadraticCurveTo(lx + dx, ly + len * 0.2, lx + dx, ly + len);
+      ctx.stroke();
+      ctx.strokeStyle = MOLTEN;
+      ctx.lineWidth = r * 0.2;
+      ctx.stroke();
+      ctx.strokeStyle = GOLD;
+      ctx.lineWidth = r * 0.07;
+      ctx.stroke();
+      ctx.restore();
+      glow(ctx, lx + dx, ly + len, r * 0.9, H ?? E.glow, 0.7);
+    }
+    // drips falling from the bottom, and the glow where they land
+    if (!s.flash) {
+      for (let i = 0; i < 2; i++) {
+        const k = (s.t * 1.3 + i * 0.5 + s.variant * 0.3) % 1;
+        const dx = cx + (i ? 1 : -1) * r * 0.2;
+        const dy = cy + r * 0.3 + k * Math.max(0, z - r * 0.25);
+        ctx.fillStyle = MOLTEN;
+        ctx.beginPath();
+        ctx.ellipse(dx, dy, r * 0.05, r * 0.08 * (1 - k * 0.3), 0, 0, TAU);
+        ctx.fill();
+      }
+      glow(ctx, cx, cy + z, r * 0.4, H ?? E.glow, 0.3);
+    }
+    if (H && s.pose === 'attack') {
+      // a splash of melt flung forward
+      streak(ctx, lx, ly, lx + f.fx * r * 1.3, ly + f.fy * r * 0.7 + r * 0.35, 7, H, 0.75);
+    }
+  };
+  const arm = (side: number): void => {
+    const [sx, sy] = sideP(f, x + f.fx * r * 0.12, top + r * 0.1, r * 0.55 * wf, side);
+    // both hands on the fork's long handle
+    const k = side > 0 ? 0.42 : 0.12;
+    const hx = px0 + (cx - px0) * k;
+    const hy = py0 + (cy - py0) * k;
+    const [ex, ey] = bend(sx, sy, hx, hy, r * 0.95, f.px * side, 0.7);
+    limb3(ctx, s, sx, sy, ex, ey, hx, hy, r * 0.32, r * 0.28, side > 0 ? SUIT : SUIT_U);
+    ell(ctx, s, hx, hy, r * 0.14, r * 0.13, '#7a6a50', 0.6, 2);
+  };
+  const forkBehind = f.fy < -0.2;
+  if (forkBehind) crucible();
+  if (armBehind(f, -1)) arm(-1);
+  if (armBehind(f, 1)) arm(1);
+  legs(ctx, s, f, x, s.y + r * 0.36 + b, gy, r * 0.34, r * 0.28, SUIT_U, '#3a3438', r * 0.16, 5);
+  // hunched suit: a rounded back with a hump
+  smooth2(ctx, s, [x - w * 0.82, top + r * 0.1, x - w * 0.72, top - r * 0.3, x - f.fx * r * 0.15, top - r * 0.42, x + w * 0.72, top - r * 0.3, x + w * 0.82, top + r * 0.1, x + w * 0.76, s.y + r * 0.52 + b, x, s.y + r * 0.62 + b, x - w * 0.76, s.y + r * 0.52 + b], SUIT, 0.58, 3, SUIT_U);
+  // quilted seams, a sheen across the shoulders and a scorched hem
+  if (!s.flash) {
+    ctx.strokeStyle = 'rgba(70,74,84,0.6)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = -1; i <= 1; i++) {
+      ctx.moveTo(x + i * w * 0.35, top - r * 0.2);
+      ctx.lineTo(x + i * w * 0.38, s.y + r * 0.5 + b);
+    }
+    ctx.stroke();
+  }
+  sheen(ctx, [x - w * 0.6, top - r * 0.18, x - w * 0.2, top - r * 0.32], '#ffffff', 2, 0.7);
+  sheen(ctx, [x - w * 0.7, s.y + r * 0.5 + b, x + w * 0.7, s.y + r * 0.5 + b], '#3a2a24', 2.5, 0.8);
+  if (!f.back) {
+    const ox = x + f.fx * w * 0.2;
+    sheen(ctx, [ox, top - r * 0.1, ox, s.y + r * 0.5 + b], '#6a7078', 2, 0.9);
+    glow(ctx, ox, top + r * 0.2, r * 0.6, H ?? E.glow, 0.25);
+  } else {
+    // an air tank between the shoulders
+    poly2(ctx, s, [x - r * 0.18, top - r * 0.3, x + r * 0.18, top - r * 0.3, x + r * 0.18, top + r * 0.3, x - r * 0.18, top + r * 0.3], '#8a3a2a', 0.6, 2.5);
+  }
+  if (!armBehind(f, -1)) arm(-1);
+  if (!forkBehind) crucible();
+  if (!armBehind(f, 1)) arm(1);
+  // the hood, pushed forward by the hunch, with a smoked gold visor that reflects the melt
+  const hx = x + f.fx * r * 0.28;
+  const hy = top - r * 0.32 + f.fy * r * 0.06;
+  smooth2(ctx, s, [hx - r * 0.34, hy + r * 0.3, hx - r * 0.38, hy - r * 0.1, hx - r * 0.2, hy - r * 0.4, hx + r * 0.2, hy - r * 0.4, hx + r * 0.38, hy - r * 0.1, hx + r * 0.34, hy + r * 0.3], SUIT, 0.62, 2.5, SUIT_U);
+  if (!f.back) {
+    const vx = hx + f.fx * r * 0.14;
+    const vw = r * (0.28 - 0.1 * Math.abs(f.fx));
+    smooth2(ctx, s, [vx - vw, hy - r * 0.12, vx, hy - r * 0.2, vx + vw, hy - r * 0.12, vx + vw * 0.9, hy + r * 0.14, vx - vw * 0.9, hy + r * 0.14], s.flash ? '#ffffff' : '#5a4210', 0.5, 2, '#2a1e08');
+    sheen(ctx, [vx - vw * 0.6, hy - r * 0.1, vx + vw * 0.2, hy - r * 0.14], H ?? GOLD, 2, 0.9);
+    glow(ctx, vx, hy, r * 0.35, H ?? E.glow, 0.3 + wk * 0.4);
+  } else sheen(ctx, [hx, hy - r * 0.36, hx, hy + r * 0.24], SUIT_U, 2, 0.9);
+});
+

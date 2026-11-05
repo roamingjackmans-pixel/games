@@ -7,6 +7,9 @@ import { checkEscapable } from '../game/combat/patterns';
 import { CONTROL_IDS, STATUS_IDS, type AttackDef, type BossDef, type EffectDef, type EnemyDef, type PatternDef } from '../game/types';
 import { hasKind } from '../game/procgen/mix';
 
+/** Enemy types in every zone roster (CONTENT_ENEMIES: 10 per zone, 80 in all). */
+export const ROSTER_SIZE = 10;
+
 export interface ValidationIssue {
   where: string;
   msg: string;
@@ -96,7 +99,7 @@ export function validateBoss(d: BossDef, issues: ValidationIssue[]): void {
 }
 
 export interface ValidateOpts {
-  /** require the full 8-enemy rosters (false while content is still being added) */
+  /** require the full rosters (ROSTER_SIZE types per zone; false while content is still being added) */
   requireAllZones?: boolean;
 }
 
@@ -112,7 +115,7 @@ export function validateData(o: ValidateOpts = {}): ValidationIssue[] {
   for (const z of ZONES) {
     const roster = z.enemies.map((id) => ENEMIES[id]).filter((x): x is EnemyDef => !!x);
     if (roster.length === 0 && !o.requireAllZones) continue;
-    if (roster.length !== 8) issues.push({ where: `zone ${z.id}`, msg: `roster has ${roster.length}/8 enemies registered` });
+    if (roster.length !== ROSTER_SIZE) issues.push({ where: `zone ${z.id}`, msg: `roster has ${roster.length}/${ROSTER_SIZE} enemies registered` });
     for (const d of roster) if (d.zone !== z.id) issues.push({ where: `zone ${z.id}`, msg: `${d.id} says zone ${d.zone}` });
     const reds = roster.filter((d) => hasKind(d, 'red')).length;
     const pierces = roster.filter((d) => hasKind(d, 'pierce')).length;

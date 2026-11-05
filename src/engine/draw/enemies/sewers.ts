@@ -759,3 +759,403 @@ registerDraw('sewers_tide_caller', (ctx, s) => {
     glow(ctx, s.x + Math.cos(da) * u * 1.3, s.y + u * 0.6 + Math.sin(da) * u * 0.5, 6, water, 0.6);
   }
 });
+
+// ---------------------------------------------------------------- Sewer Diver
+// An old brass deep-sea diving suit that never came back up: a round brass helmet with a porthole full of murky
+// green water (a small fish still lives in there), a bolted collar, a muck-stained canvas suit, lead boots, an air
+// hose trailing behind, a pipe wrench in the near hand and an anchor on a chain swinging from the far one.
+const DV_BRASS = '#c49440';
+const DV_BRASS_U = shade(DV_BRASS, 0.6);
+const DV_SUIT = '#a89a78';
+const DV_SUIT_U = shade(DV_SUIT, 0.64);
+const DV_LEAD = '#4c4e56';
+const DV_IRON = '#6a6e76';
+const DV_BODY = [-0.52, -0.34, -0.22, -0.5, 0.24, -0.5, 0.54, -0.32, 0.62, 0.1, 0.52, 0.46, 0.0, 0.54, -0.52, 0.46, -0.62, 0.1];
+const DV_MUCK = [-0.66, 0.2, -0.36, 0.08, -0.1, 0.22, 0.2, 0.1, 0.44, 0.2, 0.66, 0.16, 0.6, 0.6, 0.0, 0.62, -0.62, 0.6];
+const DV_COLLAR = [-0.5, -0.34, -0.34, -0.56, 0.34, -0.56, 0.5, -0.34, 0.3, -0.2, 0.0, -0.16, -0.3, -0.2];
+
+/** An anchor centred on its shank (k ≈ its height), ring at the top (−y), flukes at the bottom. */
+function anchor(ctx: CanvasRenderingContext2D, s: DrawState, x: number, y: number, a: number, k: number, iron: string): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(a);
+  const w = Math.max(2, 0.1 * k);
+  cord(ctx, s, -0.46 * k, 0.16 * k, 0, 0.86 * k, 0.46 * k, 0.16 * k, w, iron, 2);
+  for (const side of [-1, 1]) flat(ctx, s, [side * 0.36, 0.12, side * 0.56, 0.02, side * 0.5, 0.3], k, iron, 1.5);
+  capsule(ctx, s, 0, -0.42 * k, 0, 0.46 * k, w * 0.55, w * 0.6, iron, 2);
+  capsule(ctx, s, -0.24 * k, -0.3 * k, 0.24 * k, -0.3 * k, w * 0.45, w * 0.45, iron, 2);
+  ctx.beginPath();
+  ctx.arc(0, -0.54 * k, 0.11 * k, 0, Math.PI * 2);
+  ctx.lineWidth = w * 0.6 + 2;
+  ctx.strokeStyle = OUTLINE;
+  ctx.stroke();
+  ctx.lineWidth = w * 0.6;
+  ctx.strokeStyle = s.flash ? '#ffffff' : iron;
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** A heavy chain between two points (dark links over an outline), sagging by `sag`. */
+function chain(ctx: CanvasRenderingContext2D, s: DrawState, x0: number, y0: number, x1: number, y1: number, sag: number, w: number): void {
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2 + sag;
+  cord(ctx, s, x0, y0, cx, cy, x1, y1, w, '#3a3c42', 1.5);
+  if (s.flash) return;
+  ctx.save();
+  ctx.setLineDash([Math.max(2, w * 0.9), Math.max(2, w * 0.7)]);
+  ctx.lineCap = 'butt';
+  ctx.strokeStyle = '#8a8e96';
+  ctx.lineWidth = w * 0.55;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo(cx, cy, x1, y1);
+  ctx.stroke();
+  ctx.restore();
+}
+
+registerDraw('sewers_diver', (ctx, s) => {
+  const u = s.r * s.scale;
+  const f = facing(s);
+  const fw = f.ax;
+  shadow(ctx, s.x, s.y, u);
+  if (s.moving > 0.2) ripples(ctx, s.x, s.y, u, s.t, 0.3);
+  ctx.save();
+  upright(ctx, s, f, u, bob(s, 1.2, 4));
+  const wind = s.pose === 'windup';
+  const swing = s.pose === 'attack';
+  // the anchor: dangling from the far hand, heaved overhead in the windup, flung forward on release
+  const sway = Math.sin(s.t * 2.2) * 0.12 * u * (1 - s.moving * 0.5) + s.moving * Math.sin(s.t * 8) * 0.06 * u;
+  const fsx = lerp(-0.44, -0.3, fw) * u;
+  const fsy = -0.36 * u;
+  const ak = 0.78 * u;
+  let ahx: number;
+  let ahy: number;
+  let ax: number;
+  let ay: number;
+  let aa: number;
+  if (wind) {
+    ahx = -0.2 * u;
+    ahy = -1.05 * u;
+    ax = -0.7 * u + Math.sin(s.t * 9) * 0.05 * u;
+    ay = -1.45 * u;
+    aa = -2.2;
+  } else if (swing) {
+    ahx = fsx + f.ax * 0.5 * u;
+    ahy = -0.4 * u + f.ay * 0.3 * u;
+    ax = f.ax * 1.5 * u;
+    ay = -0.1 * u + f.ay * 1.1 * u;
+    aa = f.aim - Math.PI / 2;
+  } else {
+    ahx = fsx - 0.3 * u;
+    ahy = 0.08 * u;
+    ax = fsx - 0.42 * u + sway;
+    ay = 0.42 * u;
+    aa = -sway / u;
+  }
+  // the ring sits 0.54 k up the shank
+  const ringX = ax + Math.sin(aa) * 0.54 * ak;
+  const ringY = ay - Math.cos(aa) * 0.54 * ak;
+  const drawAnchor = (): void => {
+    chain(ctx, s, ahx, ahy, ringX, ringY, wind ? -0.1 * u : 0.08 * u, Math.max(2, 0.1 * u));
+    anchor(ctx, s, ax, ay, aa, ak, heat(s, DV_IRON));
+    hot(ctx, s, ax, ay, 0.8 * u);
+  };
+  // air hose trailing from the back of the helmet down to the floor
+  cord(ctx, s, -0.3 * u, -0.8 * u, -1.0 * u, -0.5 * u + sway, -0.9 * u, 0.7 * u, Math.max(2.5, 0.12 * u), '#5a4a3a', 2);
+  if (!wind && !swing) drawAnchor();
+  // canvas legs and lead boots
+  const step = Math.sin(s.t * 4) * 0.12 * u * s.moving;
+  capsule(ctx, s, -0.22 * u, 0.3 * u, -0.26 * u - step, 0.62 * u, 0.17 * u, 0.15 * u, DV_SUIT_U, 2.5);
+  flat(ctx, s, [-0.46 - step / u, 0.58, -0.08 - step / u, 0.58, 0.0 - step / u, 0.8, -0.5 - step / u, 0.8], u, shade(DV_LEAD, 0.85), 2);
+  capsule(ctx, s, 0.2 * u, 0.3 * u, 0.26 * u + step, 0.62 * u, 0.17 * u, 0.15 * u, DV_SUIT, 2.5);
+  flat(ctx, s, [0.02 + step / u, 0.58, 0.42 + step / u, 0.58, 0.52 + step / u, 0.8, -0.02 + step / u, 0.8], u, DV_LEAD, 2);
+  // far arm on the chain
+  arm(ctx, s, fsx, fsy, ahx, ahy, 0.26 * u, 0.26 * u, -1, 0.15 * u, 0.13 * u, 0.12 * u, DV_SUIT_U, 2.5);
+  oval(ctx, s, J[2]!, J[3]!, 0.13 * u, 0.12 * u, '#5a4a3a', 2);
+  // the suit: canvas stained dark up to the knees, a lead weight belt
+  shape(ctx, s, DV_BODY, u, DV_SUIT, DV_SUIT_U, 0.14, 2.5);
+  if (!s.flash) {
+    inside(ctx, DV_BODY, u);
+    mark(ctx, s, DV_MUCK, u, withAlpha('#3e4a2c', 0.75));
+    mark(ctx, s, [-0.3, -0.1, -0.18, -0.2, -0.06, -0.08, -0.16, 0.02], u, withAlpha('#3e4a2c', 0.5));
+    line(ctx, -0.7 * u, 0.12 * u, 0.7 * u, 0.06 * u, Math.max(3, 0.14 * u), '#3a3028');
+    for (let i = -2; i <= 2; i++) flat(ctx, s, [i * 0.22 - 0.07, 0.02, i * 0.22 + 0.07, 0.01, i * 0.22 + 0.07, 0.17, i * 0.22 - 0.07, 0.18], u, DV_LEAD, 1.2);
+    ctx.restore();
+  }
+  // the bolted brass collar
+  shape(ctx, s, DV_COLLAR, u, DV_BRASS, DV_BRASS_U, 0.08, 2.5);
+  if (!s.flash) for (let i = 0; i < 5; i++) dot(ctx, (-0.36 + i * 0.18) * u, (-0.27 - Math.abs(i - 2) * 0.03) * u, Math.max(1, 0.035 * u), '#5a4020');
+  // the helmet
+  ctx.save();
+  ctx.translate(0.06 * fw * u, (wind ? -0.86 : -0.8) * u);
+  ctx.rotate(wind ? -0.1 : swing ? 0.12 * fw : Math.sin(s.t * 1.6) * 0.03);
+  const h = 0.86 * u;
+  oval(ctx, s, 0, 0, 0.5 * h, 0.48 * h, DV_BRASS, 2.5);
+  if (!s.flash) {
+    // underside shading, sheen, a dent and the valve on top
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 0.5 * h, 0.48 * h, 0, 0, Math.PI * 2);
+    ctx.clip();
+    oval(ctx, null, 0.04 * h, 0.2 * h, 0.56 * h, 0.4 * h, DV_BRASS_U, 0);
+    oval(ctx, null, -0.02 * h, -0.08 * h, 0.5 * h, 0.4 * h, DV_BRASS, 0);
+    ctx.restore();
+    oval(ctx, null, -0.2 * h, -0.28 * h, 0.1 * h, 0.05 * h, withAlpha('#fff2c0', 0.7), 0, -0.5);
+    line(ctx, -0.36 * h, -0.02 * h, -0.28 * h, 0.08 * h, 1.2, withAlpha(OUTLINE, 0.45));
+    flat(ctx, s, [-0.08, -0.47, 0.08, -0.47, 0.06, -0.58, -0.06, -0.58], h, DV_BRASS_U, 1.5);
+  }
+  if (!f.back) {
+    const c = 0.24 * fw * h;
+    const pr = lerp(0.3, 0.24, Math.abs(fw)) * h;
+    const sq = 1 - Math.abs(fw) * 0.25;
+    // a small side port toward the back when seen side-on
+    if (Math.abs(fw) > 0.45) {
+      oval(ctx, s, c - 0.48 * h * fw, 0.0, 0.1 * h * (1 - Math.abs(fw) * 0.4), 0.12 * h, DV_BRASS_U, 2);
+      if (!s.flash) oval(ctx, null, c - 0.48 * h * fw, 0.0, 0.06 * h * (1 - Math.abs(fw) * 0.4), 0.08 * h, '#24341e', 0);
+    }
+    // the porthole: thick brass ring, murky water, a fish, a grille
+    oval(ctx, s, c, 0.02 * h, pr * sq + 0.07 * h, pr + 0.07 * h, mix(DV_BRASS, '#fff0c0', 0.15), 2.5);
+    const water = elemGlow(s, '#8fc060');
+    oval(ctx, s, c, 0.02 * h, pr * sq, pr, heat(s, '#2c4426', 0.5), 2);
+    if (!s.flash) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(c, 0.02 * h, pr * sq, pr, 0, 0, Math.PI * 2);
+      ctx.clip();
+      glow(ctx, c, 0.06 * h, pr * 1.6, water, 0.55);
+      // the fish swims back and forth behind the glass
+      const fx = c + Math.sin(s.t * 1.3) * pr * 0.45;
+      const dir = Math.cos(s.t * 1.3) >= 0 ? 1 : -1;
+      const fy = 0.06 * h + Math.sin(s.t * 3.1) * 0.04 * h;
+      oval(ctx, null, fx, fy, 0.1 * h, 0.055 * h, '#d89a40', 0);
+      flat(ctx, s, [fx / h - dir * 0.08, fy / h, fx / h - dir * 0.17, fy / h - 0.06, fx / h - dir * 0.17, fy / h + 0.06], h, '#d89a40', 0);
+      dot(ctx, fx + dir * 0.05 * h, fy - 0.01 * h, Math.max(0.6, 0.015 * h), OUTLINE);
+      for (let i = 0; i < 3; i++) {
+        const k = (s.t * 0.5 + i / 3) % 1;
+        dot(ctx, c + (i - 1) * 0.08 * h, 0.02 * h + pr - k * pr * 1.8, Math.max(0.6, 0.025 * h), withAlpha('#d8f0c0', 0.7 * (1 - k)));
+      }
+      oval(ctx, null, c - pr * 0.4, -pr * 0.4, pr * 0.22, pr * 0.1, withAlpha('#ffffff', 0.35), 0, -0.6);
+      ctx.restore();
+      ctx.strokeStyle = DV_BRASS_U;
+      ctx.lineWidth = Math.max(1.5, 0.05 * h);
+      ctx.beginPath();
+      ctx.moveTo(c, 0.02 * h - pr);
+      ctx.lineTo(c, 0.02 * h + pr);
+      ctx.moveTo(c - pr * sq, 0.02 * h);
+      ctx.lineTo(c + pr * sq, 0.02 * h);
+      ctx.stroke();
+    }
+  } else if (!s.flash) {
+    // the back: an air-hose coupling and a row of rivets
+    oval(ctx, null, 0, 0.12 * h, 0.12 * h, 0.1 * h, DV_BRASS_U, 2);
+    for (let i = 0; i < 5; i++) dot(ctx, (-0.3 + i * 0.15) * h, 0.3 * h, Math.max(0.8, 0.025 * h), '#5a4020');
+  }
+  ctx.restore();
+  if (wind || swing) drawAnchor();
+  // the pipe wrench in the near hand: hanging, cocked back over the shoulder, swung down through the front
+  let th: number;
+  let px: number;
+  let py: number;
+  if (wind) {
+    th = -1.35;
+    px = 0.5 * u;
+    py = -0.6 * u;
+  } else if (swing) {
+    th = f.aim * 0.8 + 0.25;
+    px = 0.46 * u + f.ax * 0.12 * u;
+    py = -0.12 * u + f.ay * 0.22 * u;
+  } else {
+    th = f.aim * 0.4 + (s.pose === 'recover' ? 0.9 : 1.25);
+    px = 0.56 * u;
+    py = 0.0;
+  }
+  const dx = Math.cos(th);
+  const dy = Math.sin(th);
+  const ex = px + dx * 0.95 * u;
+  const ey = py + dy * 0.95 * u;
+  capsule(ctx, s, px - dx * 0.12 * u, py - dy * 0.12 * u, ex, ey, 0.07 * u, 0.08 * u, '#a83a2a', 2);
+  ctx.save();
+  ctx.translate(ex, ey);
+  ctx.rotate(th);
+  const jaw = heat(s, '#9aa0a8');
+  flat(ctx, s, [-0.06, -0.12, 0.3, -0.12, 0.3, 0.02, 0.18, 0.02, 0.18, 0.08, -0.06, 0.08], u, jaw, 2);
+  flat(ctx, s, [-0.02, -0.12, 0.08, -0.12, 0.08, -0.36, 0.3, -0.36, 0.3, -0.24, -0.02, -0.24], u, jaw, 2);
+  if (!s.flash) for (let i = 0; i < 3; i++) line(ctx, (0.12 + i * 0.06) * u, -0.24 * u, (0.12 + i * 0.06) * u, -0.18 * u, 1, withAlpha(OUTLINE, 0.6));
+  ctx.restore();
+  hot(ctx, s, ex + dx * 0.1 * u, ey + dy * 0.1 * u, 0.8 * u);
+  arm(ctx, s, lerp(0.44, 0.32, fw) * u, -0.32 * u, px, py, 0.26 * u, 0.26 * u, 1, 0.16 * u, 0.14 * u, 0.12 * u, DV_SUIT, 2.5);
+  oval(ctx, s, J[2]!, J[3]!, 0.14 * u, 0.13 * u, '#5a4a3a', 2);
+  swoosh(ctx, s, 0.1 * u, -0.4 * u, 1.3 * u, -2.0, th, 0.4 * u);
+  ctx.restore();
+});
+
+// ---------------------------------------------------------------- Fuse Eel
+// A long sewer eel seen from above, rotated to its facing: near-black with hazard-yellow bands, a blunt head with
+// glowing eyes and frayed copper cables for whiskers that spit sparks. It coils up crackling before it strikes and
+// snaps out straight as a live wire. Magic (lightning), so its eyes, sparks and arcs are Magic blue.
+const EE_SKIN = '#2c2a34';
+const EE_SKIN_U = shade(EE_SKIN, 0.55);
+const EE_STRIPE = '#e8c020';
+const EE_HEAD = [-0.34, -0.34, 0.16, -0.38, 0.52, -0.24, 0.7, 0, 0.52, 0.24, 0.16, 0.38, -0.34, 0.34];
+
+/** A jagged electric arc from (x0, y0) to (x1, y1), additive. `seed` changes the zigzag. */
+function zap(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, seed: number, color: string, w: number, alpha: number): void {
+  const prev = ctx.globalCompositeOperation;
+  ctx.globalCompositeOperation = 'lighter';
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  for (let i = 1; i < 5; i++) {
+    const k = i / 5;
+    const j = Math.sin(seed * 7.3 + i * 12.9) * len * 0.18;
+    ctx.lineTo(x0 + dx * k + nx * j, y0 + dy * k + ny * j);
+  }
+  ctx.lineTo(x1, y1);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = withAlpha(color, 0.35 * alpha);
+  ctx.lineWidth = w * 2.5;
+  ctx.stroke();
+  ctx.strokeStyle = withAlpha('#ffffff', 0.85 * alpha);
+  ctx.lineWidth = w;
+  ctx.stroke();
+  ctx.globalCompositeOperation = prev;
+}
+
+registerDraw('sewers_eel', (ctx, s) => {
+  const u = s.r * s.scale;
+  const spark = elemGlow(s, '#ffe060');
+  const coil = s.pose === 'windup' ? Math.min(1, 0.35 + s.poseT * 2.2) : s.pose === 'stagger' ? 0.25 : 0;
+  const stretch = s.pose === 'attack' ? 1 : s.pose === 'recover' ? Math.max(0, 1 - s.poseT * 2.5) : 0;
+  shadow(ctx, s.x, s.y, u * 1.2, 0.22);
+  if (s.moving > 0.2 && s.pose === 'idle') ripples(ctx, s.x, s.y, u * 1.1, s.t, 0.5);
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  ctx.rotate(s.facing);
+  light(s.facing);
+  // the spine: a swimming S-wave, a tight coil, or snapped out straight
+  const N = 8;
+  const sp: number[] = [];
+  const freq = 5 + s.moving * 4;
+  for (let i = 0; i < N; i++) {
+    const k = i / (N - 1);
+    let x = 0.9 * u - i * 0.42 * u;
+    let y = Math.sin(s.t * freq - i * 0.95) * 0.4 * u * (0.25 + k * 0.75);
+    if (coil > 0) {
+      const a = -i * 0.92 + Math.sin(s.t * 20) * 0.03;
+      const rr = (0.82 - i * 0.075) * u;
+      x = lerp(x, -0.15 * u + Math.cos(a) * rr, coil);
+      y = lerp(y, Math.sin(a) * rr, coil);
+    }
+    if (stretch > 0) {
+      x = lerp(x, 1.25 * u - i * 0.5 * u, stretch);
+      y = lerp(y, Math.sin(s.t * 30 - i) * 0.05 * u, stretch);
+    }
+    sp.push(x, y);
+  }
+  // back fin ridge first, so the body covers its root
+  if (!s.flash) {
+    ctx.strokeStyle = withAlpha('#5a5468', 0.9);
+    ctx.lineWidth = Math.max(2, 0.18 * u);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sp[2]!, sp[3]!);
+    for (let i = 2; i < N; i++) ctx.lineTo(sp[i * 2]!, sp[i * 2 + 1]!);
+    ctx.stroke();
+  }
+  taper(ctx, s, sp, 0.8 * u, 0, EE_SKIN, EE_SKIN_U, 2);
+  if (!s.flash) {
+    // hazard bands across the back
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = EE_STRIPE;
+    ctx.lineWidth = Math.max(1.5, 0.17 * u);
+    ctx.beginPath();
+    for (let i = 1; i < N - 1; i += 2) {
+      const x0 = sp[i * 2]!;
+      const y0 = sp[i * 2 + 1]!;
+      const x1 = sp[i * 2 + 2]!;
+      const y1 = sp[i * 2 + 3]!;
+      const mx = (x0 + x1) / 2;
+      const my = (y0 + y1) / 2;
+      const l = Math.hypot(x1 - x0, y1 - y0) || 1;
+      const nx = -(y1 - y0) / l;
+      const ny = (x1 - x0) / l;
+      const hw = ((0.8 * u * (1 - (i + 0.5) / (N - 1))) / 2) * 0.72;
+      if (hw < 1) continue;
+      ctx.moveTo(mx + nx * hw, my + ny * hw);
+      ctx.lineTo(mx - nx * hw, my - ny * hw);
+    }
+    ctx.stroke();
+    // a pale belly line along the middle
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = withAlpha('#8a8494', 0.5);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(sp[0]!, sp[1]!);
+    for (let i = 1; i < N - 1; i++) ctx.lineTo(sp[i * 2]!, sp[i * 2 + 1]!);
+    ctx.stroke();
+  }
+  // head, turned along the front of the spine (toward the facing while coiled or striking)
+  const hx = sp[0]!;
+  const hy = sp[1]!;
+  const ha = lerp(Math.atan2(sp[1]! - sp[3]!, sp[0]! - sp[2]!), 0, Math.max(coil, stretch));
+  ctx.save();
+  ctx.translate(hx, hy);
+  ctx.rotate(ha);
+  const h = 0.8 * u;
+  const gape = s.pose === 'attack' ? 0.28 : s.pose === 'windup' ? 0.12 : 0.03;
+  // frayed copper whiskers: insulated cable, bare copper ends, a spark at each tip
+  for (const side of [-1, 1]) {
+    const wv = Math.sin(s.t * 6 + side) * 0.12;
+    const tx = 1.05 * h;
+    const ty = side * (0.48 + wv) * h;
+    cord(ctx, s, 0.5 * h, side * 0.16 * h, 0.85 * h, side * 0.1 * h, tx, ty, Math.max(1.5, 0.07 * h), '#c8402a', 1.5);
+    if (!s.flash) {
+      for (let k = -1; k <= 1; k++) line(ctx, tx, ty, tx + 0.12 * h, ty + side * 0.06 * h + k * 0.05 * h, 1, '#e89a4a');
+      const fl = 0.5 + 0.5 * Math.sin(s.t * 23 + side * 2);
+      glow(ctx, tx + 0.1 * h, ty, (0.2 + coil * 0.3) * h, spark, Math.min(1, 0.4 + fl * 0.4 + coil * 0.3));
+      dot(ctx, tx + 0.1 * h, ty, Math.max(0.8, 0.04 * h), '#ffffff');
+    }
+  }
+  if (gape > 0.05) {
+    flat(ctx, s, [0.2, -0.04 - gape * 0.4, 0.78, -gape * 0.9, 0.78, gape * 0.9, 0.2, 0.04 + gape * 0.4], h, heat(s, '#5a1a2a', 0.5), 1.5);
+    teeth(ctx, s, 0.3 * h, -gape * 0.5 * h, 0.74 * h, -gape * 0.85 * h, 4, -0.06 * h, '#f4f0e0', 0.8);
+    teeth(ctx, s, 0.3 * h, gape * 0.5 * h, 0.74 * h, gape * 0.85 * h, 4, 0.06 * h, '#f4f0e0', 0.8);
+  }
+  shape(ctx, s, EE_HEAD, h, mix(EE_SKIN, '#ffffff', 0.06), EE_SKIN_U, 0.1, 2.5);
+  if (!s.flash) {
+    mark(ctx, s, [-0.3, -0.12, -0.1, -0.3, 0.0, -0.1, -0.1, 0.1], h, withAlpha(EE_STRIPE, 0.85));
+    const eye = elemGlow(s, '#9ae8ff');
+    for (const side of [-1, 1]) {
+      oval(ctx, null, 0.3 * h, side * 0.22 * h, 0.1 * h, 0.08 * h, eye, 1.5);
+      dot(ctx, 0.33 * h, side * 0.22 * h, Math.max(0.6, 0.035 * h), OUTLINE);
+    }
+    glow(ctx, 0.3 * h, 0, 0.6 * h, eye, 0.35);
+  }
+  ctx.restore();
+  // crackling arcs along the body while it charges, along the line while it strikes
+  const live = Math.max(coil, stretch);
+  if (!s.flash && live > 0.3) {
+    const n = stretch > 0.3 ? 3 : 4;
+    for (let j = 0; j < n; j++) {
+      const seed = Math.floor(s.t * 18) + j * 3.1;
+      const i0 = 1 + ((j * 2 + Math.floor(s.t * 12)) % (N - 2));
+      const a = Math.sin(seed) * Math.PI;
+      const x0 = sp[i0 * 2]!;
+      const y0 = sp[i0 * 2 + 1]!;
+      zap(ctx, x0, y0, x0 + Math.cos(a) * 0.9 * u, y0 + Math.sin(a) * 0.9 * u, seed, spark, Math.max(1, 0.06 * u), live);
+    }
+    glow(ctx, -0.1 * u, 0, u * 2.2, spark, 0.25 * live);
+  }
+  ctx.restore();
+  light(0);
+  const fx = Math.cos(s.facing);
+  const fy = Math.sin(s.facing);
+  hot(ctx, s, s.x + fx * u * 1.2, s.y + fy * u * 1.2, u * 1.3);
+  if (s.pose === 'attack') streak(ctx, s, s.x - fx * u * 2.5, s.y - fy * u * 2.5, s.x + fx * u * 2.2, s.y + fy * u * 2.2, u * 0.5);
+  spec(ctx, s.x + fx * u * 0.6 - u * 0.15, s.y + fy * u * 0.6 - u * 0.2, 2);
+});

@@ -707,3 +707,253 @@ registerDraw('reliquary_relic_guardian', (ctx, s) => {
   sheen(ctx, [hx - r * 0.3, hy - r * 0.22, hx - r * 0.3, hy + r * 0.2], '#c8d0dc', 1.5, 0.7);
   if (!f.back) shield();
 });
+
+// ------------------------------------------------------------------ Rime Moths: one frost moth per swarm piece
+// A pale, fuzzy moth seen from above: frosted fore- and hindwings beating fast with a magic-blue eye-spot, a white
+// furry body and feathery antennae, trailing a little frost glitter. Frost Dust: the wings freeze wide open and
+// sparkle, then the dust puffs off.
+const RM_WING = '#e2eefc';
+const RM_WING_U = '#9ab8dc';
+const RM_FUR = '#f6f9ff';
+
+registerDraw('reliquary_rime_moth', (ctx, s) => {
+  const u = s.r * s.scale;
+  const E = el(s);
+  const H = hot(s);
+  const ph = s.variant * 1.9;
+  const y = s.y - u * 0.9 + Math.sin(s.t * 5 + ph) * 2.5;
+  floorShadow(ctx, s.x, s.y + u * 0.4, u * 1.1, u * 0.35, 0.22);
+  const windup = s.pose === 'windup';
+  const attack = s.pose === 'attack';
+  glow(ctx, s.x, y, u * (windup || attack ? 3.2 : 2.2), H ?? E.glow, windup || attack ? 0.55 : 0.28);
+  // wing beat: fast and fluttery; held wide open through the windup
+  const beat = Math.abs(Math.sin(s.t * 24 + ph));
+  const span = windup ? 1.2 : attack ? 1.1 : s.pose === 'stagger' ? 0.4 : 0.45 + beat * 0.6;
+  ctx.save();
+  ctx.translate(s.x, y);
+  ctx.rotate(s.facing + (s.pose === 'stagger' ? Math.sin(s.t * 20) * 0.5 : 0));
+  ctx.scale(u * 1.2, u * 1.2);
+  const lw = 1.5 / (u * 1.2);
+  for (const side of [-1, 1]) {
+    const k = side * span;
+    // hindwing, then forewing over it
+    smooth2(ctx, s, [-0.1, 0.1 * side, -0.4, 0.85 * k, -0.95, 0.75 * k, -0.95, 0.3 * k, -0.5, 0.12 * side], RM_WING_U, 2, lw);
+    smooth2(ctx, s, [0.15, 0.08 * side, 0.15, 0.85 * k, -0.2, 1.2 * k, -0.65, 1.0 * k, -0.55, 0.45 * k, -0.15, 0.12 * side], RM_WING, 0.7, lw, RM_WING_U);
+    if (!s.flash) {
+      // veins and the frost eye-spot
+      ctx.strokeStyle = 'rgba(90,120,170,0.6)';
+      ctx.lineWidth = 0.8 / u;
+      ctx.beginPath();
+      ctx.moveTo(0.05, 0.12 * side);
+      ctx.lineTo(-0.2, 1.05 * k);
+      ctx.moveTo(-0.05, 0.12 * side);
+      ctx.lineTo(-0.45, 0.85 * k);
+      ctx.stroke();
+      ctx.fillStyle = H ?? E.main;
+      ctx.beginPath();
+      ctx.ellipse(-0.22, 0.72 * k, 0.12, Math.max(0.03, 0.14 * span), 0, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(-0.2, 0.7 * k, 0.04, Math.max(0.01, 0.05 * span), 0, 0, TAU);
+      ctx.fill();
+    }
+  }
+  // feathery antennae
+  for (const side of [-1, 1]) {
+    ctx.strokeStyle = s.flash ? '#ffffff' : '#c8d8ec';
+    ctx.lineWidth = 1.2 / u;
+    ctx.beginPath();
+    ctx.moveTo(0.55, 0.06 * side);
+    ctx.quadraticCurveTo(0.85, 0.12 * side, 1.0, 0.42 * side);
+    for (let i = 1; i <= 3; i++) {
+      const t = i / 4;
+      const ax = 0.55 + 0.4 * t;
+      const ay = (0.06 + 0.3 * t * t) * side;
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(ax - 0.06, ay + 0.1 * side);
+    }
+    ctx.stroke();
+  }
+  // fuzzy body and head
+  smooth2(ctx, s, [0.35, 0, 0.22, -0.2, -0.15, -0.19, -0.7, 0, -0.15, 0.19, 0.22, 0.2], RM_FUR, 0.6, lw, '#b8cce4');
+  if (!s.flash) {
+    ctx.strokeStyle = 'rgba(150,180,215,0.8)';
+    ctx.lineWidth = 0.8 / u;
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const bx = -0.15 - i * 0.16;
+      ctx.moveTo(bx, -0.15 + i * 0.03);
+      ctx.quadraticCurveTo(bx - 0.04, 0, bx, 0.15 - i * 0.03);
+    }
+    ctx.stroke();
+  }
+  ell(ctx, s, 0.45, 0, 0.16, 0.17, RM_FUR, 0.6, lw);
+  if (!s.flash) {
+    for (const side of [-1, 1]) {
+      ctx.fillStyle = '#16243a';
+      ctx.beginPath();
+      ctx.arc(0.52, 0.1 * side, 0.07, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = H ?? E.glow;
+      ctx.beginPath();
+      ctx.arc(0.54, 0.09 * side, 0.03, 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+  // frost glitter: a little trail in flight, a cloud of sparkles while it winds up, a burst on the release
+  if (!s.flash) {
+    const n = windup ? 5 : attack ? 6 : 2;
+    for (let i = 0; i < n; i++) {
+      const k = (s.t * (windup ? 1.6 : 0.9) + i / n + ph) % 1;
+      const a = i * 2.4 + ph + s.t * (windup ? 2 : 0.5);
+      const d = windup ? u * (1.6 - k * 0.8) : attack ? u * (0.6 + k * 2.4) : u * 0.5;
+      const sx = s.x + Math.cos(a) * d - (windup || attack ? 0 : Math.cos(s.facing) * k * u * 1.6);
+      const sy = y + Math.sin(a) * d * 0.6 + (windup || attack ? 0 : k * u * 0.8);
+      sparkle(ctx, sx, sy, u * (windup || attack ? 0.32 : 0.2) * (1 - k * 0.5), i % 2 ? '#ffffff' : (H ?? E.glow), s.t * 3 + i);
+    }
+  }
+});
+
+// ------------------------------------------------------------------ Frozen Censer: a gold thurible on an endless chain
+// An ornate, frosted gold censer hanging from a chain that rises out of sight. Cold blue incense curls out of its
+// pierced lid (two of the piercings glow like eyes). Idle: a gentle swing. Thurible Swing: hauled back on its chain
+// through the windup, then whirled round in a full circle with a trail in the attack's colour.
+const CN_GOLD = '#d4af37';
+const CN_GOLD_U = '#8a6a1a';
+
+registerDraw('reliquary_censer', (ctx, s) => {
+  const r = s.r * s.scale;
+  const f = frame(s);
+  const E = el(s);
+  const H = hot(s);
+  const smokeC = H ?? E.glow;
+  const L = r * 2.6;
+  const restY = s.y - r * 0.55;
+  // where the body hangs: a pendulum from a pivot far overhead, or whirled round on the chain
+  let bx: number;
+  let by: number;
+  let sw = Math.sin(s.t * 1.5) * 0.16;
+  if (s.pose === 'windup') sw = -f.dir * 0.75 * Math.min(1, s.poseT / 0.6) + Math.sin(s.t * 18) * 0.03;
+  else if (s.pose === 'stagger') sw = Math.sin(s.t * 14) * 0.45;
+  else if (s.pose === 'recover') sw = Math.sin(s.t * 4) * 0.35 * Math.max(0, 1 - s.poseT / 0.9);
+  const whirl = s.pose === 'attack';
+  const wa = s.t * 7 * f.dir;
+  if (whirl) {
+    bx = s.x + Math.cos(wa) * r * 1.3;
+    by = restY - r * 0.35 + Math.sin(wa) * r * 0.5;
+  } else {
+    bx = s.x + Math.sin(sw) * L;
+    by = restY - L + Math.cos(sw) * L;
+  }
+  floorShadow(ctx, bx, s.y + r * 0.7, r * 0.75, r * 0.26, 0.25);
+  glow(ctx, bx, by, r * 2, smokeC, striking(s) ? 0.55 : 0.32);
+  // the whirl's trail (an ellipse on the floor plane)
+  if (whirl && H) {
+    ctx.save();
+    ctx.translate(s.x, restY - r * 0.35);
+    ctx.scale(1, 0.38);
+    swingTrail(ctx, 0, 0, r * 1.3, wa - f.dir * 2.4, wa, r * 0.7, H, 0.85);
+    ctx.restore();
+  }
+  // the chain: links up to a pivot far above, fading out of sight
+  const topX = whirl ? s.x : s.x;
+  const topY = restY - L - r * 0.4;
+  const linkN = 9;
+  for (let i = 0; i < linkN; i++) {
+    const k0 = i / linkN;
+    const k1 = (i + 0.7) / linkN;
+    const ax = bx + (topX - bx) * k0;
+    const ay = by - r * 0.62 + (topY - (by - r * 0.62)) * k0;
+    const cx = bx + (topX - bx) * k1;
+    const cy = by - r * 0.62 + (topY - (by - r * 0.62)) * k1;
+    ctx.save();
+    ctx.globalAlpha *= Math.max(0, 1 - k0 * 1.05);
+    stick(ctx, s, ax, ay, cx, cy, 1.8, i % 2 ? CN_GOLD : CN_GOLD_U, 1.6);
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.translate(bx, by);
+  // tilt along the chain
+  const tilt = whirl ? Math.cos(wa) * 0.3 : -sw * 0.6;
+  ctx.rotate(tilt);
+  // the three side chains from the rim up to the finial ring
+  for (const k of [-1, 0, 1]) {
+    ctx.strokeStyle = s.flash ? '#ffffff' : CN_GOLD_U;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(k * r * 0.5, -r * 0.05);
+    ctx.lineTo(0, -r * 0.62);
+    ctx.stroke();
+  }
+  // bowl, then the pierced dome lid, the finial and its ring
+  smooth2(ctx, s, [-r * 0.58, -r * 0.08, r * 0.58, -r * 0.08, r * 0.5, r * 0.22, r * 0.22, r * 0.44, -r * 0.22, r * 0.44, -r * 0.5, r * 0.22], CN_GOLD, 0.45, 3, CN_GOLD_U);
+  poly2(ctx, s, [-r * 0.16, r * 0.42, r * 0.16, r * 0.42, r * 0.22, r * 0.56, -r * 0.22, r * 0.56], CN_GOLD_U, 2, 2);
+  poly2(ctx, s, [-r * 0.64, -r * 0.14, r * 0.64, -r * 0.14, r * 0.62, -r * 0.02, -r * 0.62, -r * 0.02], '#e8c860', 0.6, 2);
+  smooth2(ctx, s, [-r * 0.5, -r * 0.12, -r * 0.44, -r * 0.42, 0, -r * 0.62, r * 0.44, -r * 0.42, r * 0.5, -r * 0.12], CN_GOLD, 0.7, 2.5, CN_GOLD_U);
+  ell(ctx, s, 0, -r * 0.66, r * 0.09, r * 0.08, CN_GOLD, 0.6, 2);
+  ctx.strokeStyle = OUTLINE;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.78, r * 0.07, 0, TAU);
+  ctx.stroke();
+  if (!s.flash) {
+    // the piercings: a row of small holes and two glowing ones like eyes
+    ctx.fillStyle = '#1a1e2c';
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.arc(i * r * 0.17, -r * 0.24 - Math.abs(i) * r * 0.02, r * 0.035, 0, TAU);
+      ctx.fill();
+    }
+    if (!f.back) {
+      for (const side of [-1, 1]) {
+        const ex = f.fx * r * 0.12 + side * r * 0.16;
+        ctx.fillStyle = '#1a1e2c';
+        ctx.beginPath();
+        ctx.ellipse(ex, -r * 0.38, r * 0.07, r * 0.05, side * 0.4, 0, TAU);
+        ctx.fill();
+        eye(ctx, ex, -r * 0.38, Math.max(1, r * 0.04), smokeC, 0.5);
+      }
+    }
+    // gold banding, a rim highlight and rime frost on the shoulders of the lid
+    sheen(ctx, [-r * 0.46, r * 0.14, r * 0.46, r * 0.14], CN_GOLD_U, 1.5, 0.9);
+    sheen(ctx, [-r * 0.38, -r * 0.32, -r * 0.18, -r * 0.5], '#fff4c8', 1.5, 0.9);
+    ctx.fillStyle = 'rgba(240,248,255,0.85)';
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.46, -r * 0.18);
+    ctx.quadraticCurveTo(-r * 0.36, -r * 0.4, -r * 0.08, -r * 0.5);
+    ctx.quadraticCurveTo(-r * 0.2, -r * 0.34, -r * 0.3, -r * 0.18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(r * 0.5, -r * 0.1);
+    ctx.quadraticCurveTo(r * 0.3, -r * 0.03, r * 0.14, -r * 0.05);
+    ctx.quadraticCurveTo(r * 0.3, r * 0.04, r * 0.48, r * 0.02);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // icicles hanging off the bowl
+  for (const k of [-0.32, 0.02, 0.3]) shard(ctx, s, k * r, r * 0.4 - Math.abs(k) * r * 0.3, Math.PI / 2 + k * 0.3, r * (0.32 - Math.abs(k) * 0.25), r * 0.06, ICE, 1.5);
+  ctx.restore();
+  // cold incense: puffs curling up out of the lid and drifting
+  if (!s.flash) {
+    const n = striking(s) ? 6 : 4;
+    for (let i = 0; i < n; i++) {
+      const k = (s.t * 0.45 + i / n) % 1;
+      const px = bx + Math.sin(s.t * 1.8 + i * 1.7 + k * 4) * r * (0.2 + k * 0.6) - Math.sin(sw) * k * r;
+      const py = by - r * 0.4 - k * r * 2.2;
+      const pr = r * (0.1 + k * 0.26);
+      ctx.save();
+      ctx.globalAlpha *= (1 - k) * 0.4;
+      ctx.fillStyle = k < 0.25 ? smokeC : '#cfe4f8';
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+    if (s.pose === 'windup') {
+      for (let i = 0; i < 3; i++) sparkle(ctx, bx + Math.cos(s.t * 4 + i * 2.1) * r * 0.9, by + Math.sin(s.t * 4 + i * 2.1) * r * 0.5, r * 0.18, '#ffffff', s.t * 4 + i);
+    }
+  }
+});

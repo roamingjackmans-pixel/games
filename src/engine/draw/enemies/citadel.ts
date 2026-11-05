@@ -1,7 +1,7 @@
 // Clockwork Citadel roster (brass, teal, violet, near-black steel — ART_AUDIO §2). The constructs are Physical,
 // so they stay brass and steel with warm lamp-lit eyes; the Repair Drone's sparks are Magic blue (lightning is
 // Magic now, D80) and the Magister is Void. Whatever strikes glows in the colour of the attack's type.
-import { OUTLINE, glow, shade, shadow, spec, withAlpha } from '../parts';
+import { OUTLINE, glow, mix, shade, shadow, spec, withAlpha } from '../parts';
 import { fc, registerDraw, type DrawState } from '../registry';
 import {
   TAU,
@@ -756,3 +756,413 @@ registerDraw('citadel_chronomancers_hand', (ctx, s) => {
     slits(ctx, f, mx + f.fx * 1.5, my - r * 0.04, r * 0.1, r * 0.09, r * 0.06, s.flash ? '#ffffff' : (H ?? LAMP), 0.4);
   }
 });
+
+/** A plain filled dot (no outline). */
+function dot(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string): void {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(0.3, r), 0, TAU);
+  ctx.fill();
+}
+
+// ------------------------------------------------------------------ Cuckoo Clock: a carved clock on a cog stand
+// A walnut case under a gabled roof of carved leaves, a ticking face, two lamp-lit gable windows for eyes and a
+// little door: shut while idle, opening through the windup as the cuckoo leans out, the bird popping right out on
+// its spring on the release. A long windup (Tick-Tock) lights the face up in the attack colour. Pine-cone weights
+// bob on their chains and the pendulum swings under the case. A wall clock has no back worth showing, so it
+// always shows its front; the bird pops out toward its target.
+const WOOD = '#a06a3c';
+const WOOD_D = '#6a4222';
+const LEAF = '#7a9c48';
+const CUCKOO = '#c8a050';
+
+function pineCone(ctx: CanvasRenderingContext2D, s: DrawState, x: number, y: number, r: number): void {
+  smooth2(ctx, s, [x - r * 0.5, y - r, x + r * 0.5, y - r, x + r * 0.6, y - r * 0.2, x + r * 0.3, y + r * 0.8, x, y + r * 1.1, x - r * 0.3, y + r * 0.8, x - r * 0.6, y - r * 0.2], '#6a4424', 0.6, 2);
+  if (s.flash) return;
+  ctx.strokeStyle = withAlpha('#2a1808', 0.8);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const yy = y - r * 0.55 + i * r * 0.45;
+    ctx.moveTo(x - r * 0.45, yy);
+    ctx.lineTo(x, yy + r * 0.25);
+    ctx.lineTo(x + r * 0.45, yy);
+  }
+  ctx.stroke();
+}
+
+registerDraw('citadel_cuckoo_clock', (ctx, s) => {
+  const r = s.r * s.scale;
+  const f = frame(s);
+  const H = hot(s);
+  const x = s.x;
+  const gy = s.y + r * 0.72;
+  const stag = s.pose === 'stagger';
+  shadow(ctx, x, s.y + r * 0.1, r);
+  // how open the door is and how far the bird is out (0…1)
+  let door = 0;
+  let pop = 0;
+  if (s.pose === 'windup') {
+    door = Math.min(1, s.poseT / 0.25);
+    pop = Math.min(0.45, s.poseT * 1.2);
+  } else if (s.pose === 'attack') {
+    door = 1;
+    pop = 1;
+  } else if (s.pose === 'recover') {
+    door = Math.max(0, 1 - s.poseT / 0.4);
+    pop = Math.max(0, 1 - s.poseT / 0.25) * 0.8;
+  } else if (stag) {
+    door = 0.8;
+    pop = 0.55;
+  }
+  // only a long windup (Tick-Tock) gets this far: the face lights up
+  const tickTock = s.pose === 'windup' && s.poseT > 0.5 ? Math.min(1, (s.poseT - 0.5) / 0.3) : 0;
+  // the stand: a cog lying on the floor and a teal post
+  gear(ctx, s, x, gy - r * 0.05, r * 0.72, r * 0.56, 10, s.t * 0.3, BRASS, 0.45, 2.5);
+  ell(ctx, s, x, gy - r * 0.05, r * 0.3, r * 0.14, shade(BRASS, 0.6), 2, 2);
+  poly2(ctx, s, [x - r * 0.12, gy - r * 0.05, x - r * 0.1, s.y + r * 0.1, x + r * 0.1, s.y + r * 0.1, x + r * 0.12, gy - r * 0.05], TEAL, 0.5, 2.5);
+  // the case leans toward its target, rocks while staggered and jolts on the release
+  const lean = f.fx * 0.05 + (stag ? Math.sin(s.t * 26) * 0.08 : 0) + (s.pose === 'attack' ? -f.fx * 0.04 : 0);
+  ctx.save();
+  ctx.translate(x, s.y + r * 0.1);
+  ctx.rotate(lean);
+  ctx.translate(-x, -(s.y + r * 0.1));
+  const cb = s.y + r * 0.12; // case bottom
+  const ct = s.y - r * 0.6; // case top
+  // chains and pine-cone weights (bobbing in turn), then the pendulum, hanging under the case
+  for (const side of [-1, 1]) {
+    const wx = x + side * r * 0.42;
+    const wy = cb + r * (0.36 + Math.sin(s.t * 1.6 + side) * 0.06);
+    ctx.strokeStyle = fc(s, '#c8b070');
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([2, 1.5]);
+    ctx.beginPath();
+    ctx.moveTo(wx, cb - r * 0.02);
+    ctx.lineTo(wx, wy - r * 0.17);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    pineCone(ctx, s, wx, wy, r * 0.17);
+  }
+  const swing = Math.sin(s.t * (stag ? 9 : 3.2)) * (stag ? 0.55 : 0.32);
+  const px = x + Math.sin(swing) * r * 0.48;
+  const py = cb + Math.cos(swing) * r * 0.48;
+  stick(ctx, s, x, cb - r * 0.02, px, py, r * 0.06, BRASS, 2);
+  ell(ctx, s, px, py, r * 0.16, r * 0.16, '#d8b45a', 0.6, 2);
+  if (!s.flash) spec(ctx, px - r * 0.05, py - r * 0.05, 1.5, 0.7);
+  // walnut case with carved leaf scrolls at its foot
+  poly2(ctx, s, [x - r * 0.62, ct, x + r * 0.62, ct, x + r * 0.58, cb, x - r * 0.58, cb], WOOD, 0.7, 3, WOOD_D);
+  for (const side of [-1, 1]) {
+    smooth2(ctx, s, [x + side * r * 0.56, cb - r * 0.02, x + side * r * 0.84, cb + r * 0.02, x + side * r * 0.88, cb - r * 0.2, x + side * r * 0.7, cb - r * 0.3, x + side * r * 0.58, cb - r * 0.22], LEAF, 0.6, 2);
+  }
+  if (!s.flash) sheen(ctx, [x - r * 0.52, ct + r * 0.08, x - r * 0.5, cb - r * 0.08], '#b07a48', 1.5, 0.7);
+  // the face: ticking hands, glowing in the attack colour as Tick-Tock builds
+  const fcx = x;
+  const fcy = s.y - r * 0.24;
+  const fr = r * 0.34;
+  if (tickTock > 0 && H) glow(ctx, fcx, fcy, r * (0.6 + tickTock * 0.6), H, 0.4 + tickTock * 0.35);
+  ell(ctx, s, fcx, fcy, fr * 1.24, fr * 1.24, BRASS, 0.6, 2.5);
+  ell(ctx, s, fcx, fcy, fr, fr, tickTock > 0 && H ? mix('#f2ead2', H, tickTock * 0.6) : '#f2ead2', 2, 1.5);
+  if (!s.flash) {
+    ctx.strokeStyle = withAlpha(OUTLINE, 0.8);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * TAU;
+      const k = i % 3 === 0 ? 0.66 : 0.8;
+      ctx.moveTo(fcx + Math.cos(a) * fr * k, fcy + Math.sin(a) * fr * k);
+      ctx.lineTo(fcx + Math.cos(a) * fr * 0.9, fcy + Math.sin(a) * fr * 0.9);
+    }
+    ctx.stroke();
+    // the minute hand ticks once a second (four times while Tick-Tock builds, spinning while staggered)
+    const tick = stag ? s.t * 9 : Math.floor(s.t * (tickTock > 0 ? 4 : 1));
+    const ma = -Math.PI / 2 + (tick / 12) * TAU;
+    const ha = -Math.PI / 2 + s.t * 0.05 + 1.3;
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(fcx, fcy);
+    ctx.lineTo(fcx + Math.cos(ma) * fr * 0.8, fcy + Math.sin(ma) * fr * 0.8);
+    ctx.moveTo(fcx, fcy);
+    ctx.lineTo(fcx + Math.cos(ha) * fr * 0.5, fcy + Math.sin(ha) * fr * 0.5);
+    ctx.stroke();
+    dot(ctx, fcx, fcy, Math.max(1.2, fr * 0.1), BRASS);
+  }
+  // gabled roof with carved leaves along the eaves and a leaf finial
+  const peak = s.y - r * 1.38;
+  const ey = ct + r * 0.08;
+  poly2(ctx, s, [x - r * 0.62, ct + r * 0.02, x - r * 0.62, ey - r * 0.25, x, peak + r * 0.18, x + r * 0.62, ey - r * 0.25, x + r * 0.62, ct + r * 0.02], WOOD, 0.75, 2.5, WOOD_D);
+  for (const side of [-1, 1]) {
+    poly2(ctx, s, [x, peak - r * 0.02, x + side * r * 0.9, ey, x + side * r * 0.84, ey + r * 0.12, x, peak + r * 0.12], '#8a5630', 1, 2.2);
+    for (let i = 0; i < 4; i++) {
+      const k = (i + 0.6) / 4.4;
+      const lx = x + side * r * 0.9 * k;
+      const ly = peak + (ey - peak) * k + r * 0.12;
+      smooth2(ctx, s, [lx - r * 0.1, ly, lx, ly - r * 0.04, lx + side * r * 0.08, ly + r * 0.1, lx, ly + r * 0.2], LEAF, 0.6, 1.5);
+    }
+  }
+  smooth2(ctx, s, [x, peak - r * 0.36, x + r * 0.13, peak - r * 0.14, x, peak + r * 0.02, x - r * 0.13, peak - r * 0.14], LEAF, 0.6, 2);
+  // two lamp-lit gable windows for eyes (in the attack colour while it winds up)
+  const eyeC = s.flash ? '#ffffff' : s.pose === 'windup' || s.pose === 'attack' ? (H ?? LAMP) : LAMP;
+  const dy = s.y - r * 0.82;
+  for (const side of [-1, 1]) {
+    const wx = x + side * r * 0.36 + f.fx * r * 0.03;
+    ell(ctx, s, wx, dy + r * 0.04, r * 0.09, r * 0.1, DARK, 2, 1.5);
+    eye(ctx, wx, dy + r * 0.05, Math.max(1.2, r * 0.05), eyeC, 0.5);
+  }
+  // the little door: a dark arch, the bird on its spring, then the door panel swinging open
+  const dw = r * 0.2;
+  const dh = r * 0.34;
+  const dyT = dy - dh * 0.55;
+  const arch = (w: number): number[] => [x - w, dy + dh * 0.45, x - w, dyT + w * 0.6, x - w * 0.5, dyT, x + w * 0.5, dyT, x + w, dyT + w * 0.6, x + w, dy + dh * 0.45];
+  poly2(ctx, s, arch(dw), '#1a1008', 2, 2);
+  if (pop > 0.02) {
+    const ox = x;
+    const oy = dy + dh * 0.1;
+    const L = r * (0.15 + pop * 0.85);
+    // out and up toward its target (it grows a little when it pops toward the camera)
+    const dirx = f.back ? 0.25 * f.dir : f.fx * 0.9;
+    const diry = f.back ? -1 : -0.45 + f.fy * 0.15;
+    const dl = Math.hypot(dirx, diry) || 1;
+    const ux = dirx / dl;
+    const uy = diry / dl;
+    const bx = ox + ux * L;
+    const by = oy + uy * L;
+    if (pop > 0.3) {
+      // the spring: a zigzag from the door to the bird
+      ctx.strokeStyle = fc(s, '#c8ccd4');
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      for (let i = 1; i <= 6; i++) {
+        const k = i / 6;
+        const zz = (i % 2 ? 1 : -1) * r * 0.07 * (i < 6 ? 1 : 0);
+        ctx.lineTo(ox + (bx - ox) * k - uy * zz, oy + (by - oy) * k + ux * zz);
+      }
+      ctx.stroke();
+    }
+    if (H && s.pose === 'attack') streak(ctx, ox, oy, bx + ux * r * 0.45, by + uy * r * 0.45, 4, H, 0.6);
+    const dir = f.dir;
+    const q = r * 1.7 * (1 + 0.3 * Math.max(0, f.fy) * pop);
+    // tail, body and wing
+    poly2(ctx, s, [bx - dir * q * 0.16, by - q * 0.02, bx - dir * q * 0.38, by - q * 0.14, bx - dir * q * 0.34, by + q * 0.04], '#7a5a2a', 2, 1.5);
+    smooth2(ctx, s, [bx - dir * q * 0.22, by, bx - dir * q * 0.1, by - q * 0.14, bx + dir * q * 0.1, by - q * 0.12, bx + dir * q * 0.16, by + q * 0.04, bx, by + q * 0.12, bx - dir * q * 0.18, by + q * 0.08], CUCKOO, 0.6, 2);
+    smooth2(ctx, s, [bx - dir * q * 0.16, by - q * 0.03, bx, by - q * 0.06, bx + dir * q * 0.04, by + q * 0.04, bx - dir * q * 0.1, by + q * 0.06], '#8a6a34', 1, 1.2);
+    // head, with the beak wide open on the release
+    const hx = bx + dir * q * 0.14;
+    const hy = by - q * 0.12;
+    ell(ctx, s, hx, hy, q * 0.11, q * 0.1, CUCKOO, 0.6, 2);
+    const gape = s.pose === 'attack' ? 1 : 0.15;
+    poly2(ctx, s, [hx + dir * q * 0.08, hy - q * 0.03, hx + dir * q * 0.26, hy - q * 0.02 - gape * q * 0.08, hx + dir * q * 0.08, hy + q * 0.01], '#e8a030', 2, 1.2);
+    poly2(ctx, s, [hx + dir * q * 0.08, hy + q * 0.01, hx + dir * q * 0.22, hy + q * 0.02 + gape * q * 0.08, hx + dir * q * 0.08, hy + q * 0.04], '#e8a030', 2, 1.2);
+    if (!s.flash) dot(ctx, hx + dir * q * 0.03, hy - q * 0.025, Math.max(0.9, q * 0.028), OUTLINE);
+    if (H && striking(s)) glow(ctx, hx + dir * q * 0.22, hy, q * 0.5, H, 0.5);
+  }
+  // the door panel, hinged on the left, foreshortening as it swings open
+  const dk = Math.cos(door * Math.PI * 0.48);
+  const hingeX = x - dw;
+  const dp = arch(dw).map((v, i) => (i % 2 === 0 ? hingeX + (v - hingeX) * dk - door * r * 0.05 : v));
+  poly2(ctx, s, dp, door > 0.05 ? WOOD_D : WOOD, 0.7, 2);
+  if (!s.flash && door < 0.6) dot(ctx, hingeX + dw * 1.6 * dk, dy + r * 0.02, 1.2, BRASS);
+  ctx.restore();
+});
+
+// ------------------------------------------------------------------ Clockwork Butler: brass automaton in tails
+// A slim brass automaton in a black tailcoat, white shirt front and bow tie, white gloves; a polished domed head
+// with painted hair, a painted moustache and one monocle lens for an eye; a wind-up key turning in its back. It
+// carries a silver tray with a cloche at shoulder height, the other hand behind its back. When it serves, the off
+// hand lifts the cloche (the dish is you) and the tray is swung or thrust edge-first like a blade.
+const TAILS = '#30303e';
+const SHIRT = '#f0ece4';
+const GLOVE = '#f6f4ee';
+const SILVER = '#cdd2da';
+
+registerDraw('citadel_butler', (ctx, s) => {
+  const r = s.r * s.scale;
+  const f = frame(s);
+  const H = hot(s);
+  shadow(ctx, s.x, s.y, r * 0.8);
+  // it glides rather than bobs
+  const b = bob(s, 0.6, 9);
+  const x = s.x;
+  const gy = s.y + r * 0.72;
+  const wf = 0.72 + 0.2 * Math.abs(f.fy);
+  const w = r * wf;
+  const top = s.y - r * 0.42 + b;
+  const waist = s.y + r * 0.2 + b;
+  const stag = s.pose === 'stagger';
+  const serving = s.pose === 'windup' || s.pose === 'attack' || s.pose === 'recover';
+  const a = Math.atan2(f.fy * 0.55, f.fx);
+  const ca = Math.cos(a);
+  const sa = Math.sin(a);
+  const key = (): void => {
+    const [kx, ky] = fwdP(f, x, top + r * 0.3, -r * 0.5);
+    const ka = s.t * 2.2;
+    stick(ctx, s, x - f.fx * r * 0.15, top + r * 0.3, kx, ky, r * 0.09, BRASS, 2);
+    for (const side of [-1, 1]) {
+      const wx = kx + Math.cos(ka) * r * 0.22 * side;
+      ell(ctx, s, wx, ky - r * 0.02, r * (0.12 + Math.abs(Math.cos(ka)) * 0.09), r * 0.17, BRASS, 0.6, 2);
+    }
+  };
+  const tails = (): void => {
+    const sw = Math.sin(s.t * 9) * r * 0.06 * s.moving;
+    for (const side of [-1, 1]) {
+      const [tx, ty] = fwdP(f, ...sideP(f, x, waist - r * 0.04, r * 0.16 * wf, side, 0.4), -r * 0.16);
+      const [bx, by] = fwdP(f, tx + side * r * 0.04, gy - r * 0.26, -r * 0.18 - s.moving * r * 0.1);
+      poly2(ctx, s, [tx - r * 0.15, ty, tx + r * 0.15, ty, bx + sw + side * r * 0.04, by, bx + sw - side * r * 0.04, by + r * 0.06], TAILS, 0.7, 2.5);
+    }
+  };
+  // the tray hand: carried at the shoulder, pulled back on the windup, swung or thrust out on the release
+  const trayArm = (): void => {
+    const [sx, sy] = sideP(f, x, top + r * 0.12, r * 0.44 * wf, 1);
+    let hx: number;
+    let hy: number;
+    if (s.pose === 'windup') [hx, hy] = fwdP(f, ...sideP(f, sx, sy - r * 0.12, r * 0.2, 1), -r * 0.45);
+    else if (s.pose === 'attack') [hx, hy] = fwdP(f, sx, sy + r * 0.12, r * 0.95);
+    else if (s.pose === 'recover') [hx, hy] = fwdP(f, sx, sy + r * 0.1, r * 0.55);
+    // carried out front and to the side, so the tray shows whichever way it faces
+    else [hx, hy] = fwdP(f, ...sideP(f, sx, sy - r * 0.08, r * 0.22, 1), r * 0.42);
+    const [ex, ey] = bend(sx, sy, hx, hy, r * 0.78, f.px * 0.4, 1);
+    limb3(ctx, s, sx, sy, ex, ey, hx, hy, r * 0.17, r * 0.15, TAILS);
+    if (H && s.pose === 'attack') {
+      streak(ctx, hx - ca * r * 0.7, hy - sa * r * 0.7, hx + ca * r * 1.1, hy + sa * r * 1.1, 4, H, 0.6);
+      swingTrail(ctx, sx, sy, r * 1.05, a - 1.1 * f.dir, a, 5, H, 0.6);
+    }
+    if (serving) {
+      // the tray edge-first along the facing: a thin silver disc
+      const tx = hx + ca * r * 0.3;
+      const ty = hy + sa * r * 0.3 - r * 0.02;
+      ell(ctx, s, tx, ty, r * 0.5, r * 0.1, SILVER, 0.5, 2.5, a);
+      if (!s.flash) sheen(ctx, [tx - ca * r * 0.4, ty - sa * r * 0.4 - 1.5, tx + ca * r * 0.4, ty + sa * r * 0.4 - 1.5], '#ffffff', 1.4, 0.9);
+      if (H && striking(s)) glow(ctx, tx + ca * r * 0.45, ty + sa * r * 0.45, r * 0.6, H, 0.55);
+    } else {
+      // the tray flat at shoulder height, the cloche on it (tilting off while staggered)
+      const tilt = stag ? Math.sin(s.t * 20) * 0.25 + 0.2 : 0;
+      const tx = hx;
+      const ty = hy - r * 0.06;
+      ell(ctx, s, tx, ty, r * 0.5, r * 0.18, SILVER, 0.55, 2.5, tilt);
+      ell(ctx, s, tx, ty - r * 0.02, r * 0.38, r * 0.12, shade(SILVER, 0.85), 1, 1, tilt);
+      cloche(ctx, s, tx + tilt * r * 0.3, ty - r * 0.04 - Math.abs(tilt) * r * 0.1, r, tilt * 1.5, false);
+    }
+    ell(ctx, s, hx, hy, r * 0.11, r * 0.1, GLOVE, 0.6, 2);
+  };
+  // the off hand: tucked behind the back, or holding the cloche aloft while it serves
+  const offArm = (): void => {
+    const [sx, sy] = sideP(f, x, top + r * 0.12, r * 0.44 * wf, -1);
+    if (serving) {
+      const lift = s.pose === 'windup' ? Math.min(1, s.poseT / 0.3) : 1;
+      const [hx, hy] = sideP(f, sx, sy - r * 0.55 * lift, r * 0.28, -1);
+      const [ex, ey] = bend(sx, sy, hx, hy, r * 0.7, -f.px, 0.3);
+      limb3(ctx, s, sx, sy, ex, ey, hx, hy, r * 0.17, r * 0.15, TAILS);
+      cloche(ctx, s, hx, hy + r * 0.05, r, Math.PI, true);
+      ell(ctx, s, hx, hy, r * 0.11, r * 0.1, GLOVE, 0.6, 2);
+    } else {
+      const [hx, hy] = fwdP(f, ...sideP(f, x, waist - r * 0.05, r * 0.1 * wf, -1), -r * 0.24);
+      const [ex, ey] = bend(sx, sy, hx, hy, r * 0.62, -f.fx, 0.2);
+      limb3(ctx, s, sx, sy, ex, ey, hx, hy, r * 0.17, r * 0.15, TAILS);
+      ell(ctx, s, hx, hy, r * 0.1, r * 0.09, GLOVE, 0.6, 2);
+    }
+  };
+  const offBehind = serving ? armBehind(f, -1) : !f.back;
+  if (!f.back) key();
+  if (!f.back) tails();
+  if (offBehind) offArm();
+  if (armBehind(f, 1)) trayArm();
+  // slim legs: black trousers, glossy shoes
+  legs(ctx, s, f, x, waist + r * 0.08, gy, r * 0.17, r * 0.16, '#3c3c50', '#121218', r * 0.26, 9);
+  if (f.back) tails();
+  // the tailcoat: black, cut away at the front over a white shirt front
+  poly2(ctx, s, [x - w * 0.46, top, x + w * 0.46, top, x + w * 0.4, waist, x + w * 0.36, waist + r * 0.12, x - w * 0.36, waist + r * 0.12, x - w * 0.4, waist], TAILS, 0.65);
+  if (!s.flash) sheen(ctx, [x - w * 0.42, top + r * 0.04, x, top - r * 0.02, x + w * 0.42, top + r * 0.04], '#6a6a86', 1.6, 0.9);
+  if (!f.back) {
+    const cx = x + f.fx * w * 0.12;
+    poly2(ctx, s, [cx - w * 0.24, top, cx + w * 0.24, top, cx + w * 0.06, waist + r * 0.08, cx - w * 0.06, waist + r * 0.08], SHIRT, 0.8, 2);
+    // lapels, studs and the brass buttons
+    sheen(ctx, [cx - w * 0.24, top + 1, cx - w * 0.06, waist + r * 0.05], '#4a4a5a', 2, 1);
+    sheen(ctx, [cx + w * 0.24, top + 1, cx + w * 0.06, waist + r * 0.05], '#4a4a5a', 2, 1);
+    if (!s.flash) {
+      for (let i = 0; i < 3; i++) dot(ctx, cx, top + r * 0.16 + i * r * 0.14, Math.max(0.8, r * 0.035), OUTLINE);
+      for (const side of [-1, 1]) dot(ctx, cx + side * w * 0.17, waist - r * 0.02, Math.max(1, r * 0.045), '#e8c870');
+    }
+  } else {
+    // the coat's back seam
+    sheen(ctx, [x, top + r * 0.05, x, waist + r * 0.1], '#3a3a48', 1.5, 1);
+    key();
+  }
+  if (!armBehind(f, 1)) trayArm();
+  if (!offBehind) offArm();
+  // collar, bow tie and a short steel neck
+  const hx = x + f.fx * r * 0.05;
+  const hy = top - r * 0.36;
+  poly2(ctx, s, [hx - r * 0.1, top + r * 0.02, hx - r * 0.09, hy + r * 0.24, hx + r * 0.09, hy + r * 0.24, hx + r * 0.1, top + r * 0.02], STEEL, 0.6, 2);
+  if (!f.back) {
+    const nx = hx + f.fx * r * 0.1;
+    const ny = top + r * 0.02;
+    for (const side of [-1, 1]) poly2(ctx, s, [nx, ny, nx + side * r * 0.18, ny - r * 0.1, nx + side * r * 0.18, ny + r * 0.08], '#16161c', 2, 1.6);
+    dot(ctx, nx, ny, r * 0.05, fc(s, '#16161c'));
+  }
+  // the polished brass dome of a head
+  const tick = s.pose === 'windup' ? -0.12 * f.dir : stag ? Math.sin(s.t * 30) * 0.15 : 0;
+  ctx.save();
+  ctx.translate(hx, hy + r * 0.2);
+  ctx.rotate(tick);
+  ctx.translate(-hx, -(hy + r * 0.2));
+  const k = r * 1.22;
+  smooth2(ctx, s, [hx - k * 0.28, hy + k * 0.22, hx - k * 0.34, hy - k * 0.08, hx - k * 0.2, hy - k * 0.4, hx + k * 0.2, hy - k * 0.4, hx + k * 0.34, hy - k * 0.08, hx + k * 0.28, hy + k * 0.22], BRASS, 0.66);
+  // painted, centre-parted hair
+  const px = hx - f.fx * k * 0.06;
+  smooth2(ctx, s, [hx - k * 0.27, hy - k * 0.22, hx - k * 0.18, hy - k * 0.41, hx + k * 0.18, hy - k * 0.41, hx + k * 0.27, hy - k * 0.22, px + k * 0.12, hy - k * 0.3, px, hy - k * 0.34, px - k * 0.12, hy - k * 0.3], '#3a2a1c', 1, 1.5);
+  if (!s.flash) {
+    sheen(ctx, [px, hy - k * 0.4, px, hy - k * 0.34], '#7a5a40', 1.2, 0.9);
+    spec(ctx, hx - k * 0.16, hy + k * 0.0, 2, 0.7);
+  }
+  if (!f.back) {
+    const fx2 = hx + f.fx * k * 0.13;
+    const fy2 = hy + k * 0.0;
+    // one plain eye and one monocle lens, lamp-lit (in the attack colour while serving)
+    const lamp = s.flash ? '#ffffff' : serving && H ? H : LAMP;
+    const [mx, my] = sideP(f, fx2, fy2, k * 0.12, 1, 0.3);
+    const [ox, oy] = sideP(f, fx2, fy2, k * 0.12, -1, 0.3);
+    eye(ctx, ox, oy, Math.max(1, k * 0.045), lamp, 0.4);
+    ell(ctx, s, mx, my, k * 0.1 * (0.5 + 0.5 * Math.abs(f.px)), k * 0.1, '#e8c870', 2, 1.6);
+    eye(ctx, mx, my, Math.max(1.2, k * 0.06), lamp, 0.6);
+    // the monocle's chain
+    if (!s.flash) {
+      ctx.strokeStyle = '#e8c870';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(mx, my + k * 0.1);
+      ctx.quadraticCurveTo(mx + k * 0.05, my + k * 0.3, mx + f.px * k * 0.15, top + r * 0.1);
+      ctx.stroke();
+    }
+    // a neat painted moustache, curled at the ends
+    const [cx, cy] = [fx2 + f.fx * k * 0.04, fy2 + k * 0.12];
+    for (const side of [-1, 1]) {
+      const da = Math.atan2(f.py * side * 0.3 + 0.08, f.px * side + f.fx * 0.5);
+      horn(ctx, s, cx, cy, da, k * 0.2, k * 0.05, -0.7 * side * (f.px >= 0 ? 1 : -1), '#3a2a1c', 1);
+    }
+  }
+  ctx.restore();
+});
+
+/** A silver cloche (dome lid) of width ~r: upright on a tray, or held upside down by its knob (flip). */
+function cloche(ctx: CanvasRenderingContext2D, s: DrawState, x: number, y: number, r: number, rot: number, hanging: boolean): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(hanging ? 0 : rot);
+  if (hanging) {
+    // held by the knob, dome hanging open-side down beside the hand
+    smooth2(ctx, s, [-r * 0.3, r * 0.42, -r * 0.3, r * 0.2, -r * 0.16, r * 0.04, r * 0.16, r * 0.04, r * 0.3, r * 0.2, r * 0.3, r * 0.42], SILVER, 0.6, 2.5);
+    ell(ctx, s, 0, r * 0.42, r * 0.3, r * 0.08, shade(SILVER, 0.55), 2, 2);
+    ell(ctx, s, 0, 0, r * 0.06, r * 0.05, SILVER, 0.6, 1.5);
+    if (!s.flash) sheen(ctx, [-r * 0.18, r * 0.12, -r * 0.24, r * 0.32], '#ffffff', 1.4, 0.8);
+  } else {
+    smooth2(ctx, s, [-r * 0.32, 0, -r * 0.32, -r * 0.2, -r * 0.18, -r * 0.34, r * 0.18, -r * 0.34, r * 0.32, -r * 0.2, r * 0.32, 0], SILVER, 0.62, 2.5);
+    ell(ctx, s, 0, -r * 0.36, r * 0.06, r * 0.05, SILVER, 0.6, 1.5);
+    if (!s.flash) {
+      sheen(ctx, [-r * 0.22, -r * 0.08, -r * 0.2, -r * 0.24, -r * 0.08, -r * 0.3], '#ffffff', 1.4, 0.8);
+      spec(ctx, r * 0.12, -r * 0.24, 1.5, 0.6);
+    }
+  }
+  ctx.restore();
+}

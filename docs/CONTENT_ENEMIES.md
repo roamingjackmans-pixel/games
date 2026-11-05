@@ -1,6 +1,6 @@
 # Dungeon Joe — Enemies and Bosses
 
-64 enemies (8 per zone), Elite variants, 8 bosses, the tutorial Instructor, the Mimic, and Gary.
+80 enemies (10 per zone), Elite variants, 8 bosses, the tutorial Instructor, the Mimic, and Gary.
 Mechanics are defined in [GAME_DESIGN.md](GAME_DESIGN.md) §5–7; pattern primitives in §5.7.
 This file is the source for `src/data/enemies.ts` and `src/data/bosses.ts`.
 
@@ -48,6 +48,8 @@ Resist Frost 30%. Weak to Holy 30%, Fire 20%.
 | **Hollow Knight** | Tank | walks, holds shield toward target | Sword 3-hit combo: arcs 90°/90°/thrust, ×0.9/×0.9/×1.3 | **Shield Charge [RED]**: 0.6 s tint, charges 260 px line(60, 260), ×1.5, cd 9 | — | Front guard blocks 80% of player damage; flank, parry the combo, or stagger it with a longsword or anything heavier (poise 24 from its size, D78). |
 | **Ghoul Leaper** | Assassin | circles at 300 px then dashes | Double slash: 2 fast arcs ×0.8 each | **Pounce [RED]**: from up to 450 px, tint 0.6 s, leaps in 0.35 s, circle(60) on landing ×1.6, cd 7 | **Mist Step**: below 30% HP, vanishes 1.5 s and reappears behind the target | Bleed buildup 25 per hit. |
 | **Plague Bell** | Hazard-maker | stationary (floats 1 px) | Chime: ring(0, 90) around it, windup 0.5 s, ×0.6, cd 3 | **Toll [PIERCE][AREA]**: three expandingRing(220 px/s) spaced 1.2 s apart with 2 gaps of 90 px that rotate position; telegraph 1.0 s; ×0.8 each; cd 14 | **Raise Dead** (utility): resurrects one fallen non-elite enemy in the room at 50% HP (max 2 per room), 2 s channel (interruptible by any stagger) | Kill priority. "Rings for thee." |
+| **Weeping Mourner** | Support | hovers, keeps 280 px | Teardrop: slow homing projectile 260 px/s ×0.9 Void, cd 2.2 | **Wail [PIERCE]**: cone(70°, 240) telegraph 1.0 s, ×0.6 Void, **Silence** 2 s, cd 10 (budget 1) | **Lament** (utility): heals one injured ally 25% over 2 s (interruptible) | Undead. "Cried at the reading of the will. Was not in it." |
+| **Pallbearer** | Brute (speed 100) | slow walk, coffin on the shoulder | Coffin swing: arc(120°, 90), windup 0.8 s, ×1.2 | **Committal [RED]**: tint 0.65 s, line(60, 120) grab, shut in the coffin 1.4 s, ×0.6 + ×1.8 when the lid opens, cd 13 | — | Hyper armor. Undead. "Has carried the same coffin for three hundred years. Still looking for a tenant." |
 
 ## 3. Zone 2 — Fungal Caverns
 
@@ -63,6 +65,8 @@ Resist Poison (immune). Weak to Fire 35%.
 | **Fungal Ogre** | Brute | lumbering | Club smash: circle(80) ×1.2, windup 0.9 s | **Ground Pound [PIERCE]**: ring(0, 240) telegraph 1.2 s, ×1.3, knockback 180 px, cd 9 | **Grab [RED]**: tint 0.6 s, line(60, 110), on hit holds the player 1.5 s and slams ×2.0, cd 14 | Hyper armor on everything. |
 | **Spore Bat** | Swarm (4 pieces) | flies in loops, swoops | Swoop ×1.0 on contact | **Screech [PIERCE]**: cone(60°, 140) 0.8 s telegraph, ×0.5, staggers 0.4 s, cd 8 (budget 1) | — | Erratic; aim assist helps gamepad here. |
 | **Mycelium Weaver** | Hazard-maker | stationary at a wall | Tendril whip: line(30, 200) ×0.9 | **Lay Lines [AREA]**: shoots 3 tendril lines to random walls; crossing a line deals ×0.5 and Chill-like slow 1 s; lines last 8 s (max 4 in the room) | **Lash [PIERCE]**: all existing lines pulse at once, telegraph 1.0 s, ×1.0, cd 12 | Lines are destructible (20 HP). |
+| **Lanternjaw** | Assassin | flanks at 140 px; invisible beyond 220 px | Snap: 2 arcs(80°, 60) ×0.7/×0.9, Bleed 20 | **Lure Lunge [RED]**: tint 0.65 s, leaps from up to 420 px, circle(64) on landing ×1.7, cd 8 | — | An eyeless cave angler: only its lure gives it away. "Carries its own lamp. You are not the first moth." |
+| **Lichen Hermit** | Support | slow walk (90), keeps 300 px | Pipe puff: projectile 240 px/s ×0.8, Poison 20 | **Smoke Rings [PIERCE][AREA]**: two expandingRing(240 px/s) 1.2 s apart, 4 gaps of 90 px (one toward the room centre), telegraph 1.0 s, ×0.6 + Poison 30, cd 13 (budget 1) | **Lichen Coat** (utility): barrier on an ally worth 20% of its max HP, 10 s, cd 10 | "Has sublet the same cave for sixty years. Pays the rent in moss." |
 
 ## 4. Zone 3 — Drowned Sewers
 
@@ -78,6 +82,8 @@ Resist Frost 20%, Poison immune. Weak to Lightning 40% (wet).
 | **Leech Swarm** | Swarm (5 pieces) | wriggle, fast | Attach ×0.6 and drains 10 stamina per second while attached (shake off by dodging) | **Leap [RED]**: pieces tint 0.6 s then jump 150 px onto the target, ×0.8 and attach, cd 6 | — | Burn kills attached leeches. |
 | **Bloated Carrier** | Hazard-maker ×1.3 HP | slow walk toward target | Slap: circle(50) ×0.8, windup 0.6 s | **Detonate [PIERCE]**: at 90 px or on death: circle(150) telegraph 1.2 s (swells), ×2.0 + Poison 60, cd — | **Birth** (utility): on death also releases a Leech Swarm (3 pieces) | Kill at range or let it chase into other enemies (friendly fire from its blast ×1.0). |
 | **Tide Caller** | Caster / Hazard | stationary on a grate | Water bolt ×0.9 | **Wave [PIERCE][AREA]**: wave(120, 320 px/s) travels across the room from a wall; raised grates (room template props) are safe; telegraph 1.2 s; ×1.3, knockback; cd 11 | **Flood**: raises water in the room for 10 s: everyone moves −15% (enemies too), Lightning deals +40% | Two Tide Callers alternate wave directions. |
+| **Sewer Diver** | Tank (speed 95) | walks, helmet toward target (turn 160°/s) | Wrench: 2 arcs(90°, 72) ×1.0/×1.2 | **Anchor Drop [RED]**: tint 0.8 s, the anchor lands on circle(80) at the target ×1.6, knockback 120, cd 9 | — | Front guard 60% (the helmet). Undead. "Came down in 1874 to fix a leak. The leak won." |
+| **Fuse Eel** | Assassin (speed 170) | swims submerged (50% dmg taken) until close | Bite: arc(70°, 56) ×1.0 Lightning (Magic), Shock 20 | **Live Wire [RED]**: tint 0.6 s, lunge 220 px line(36, 220) ×1.4 | **Discharge [PIERCE]**: circle(120) around it, telegraph 1.0 s, ×1.3, Shock 50, cd 9 | "Joe has found the fuse box. It has found Joe." |
 
 ## 5. Zone 4 — Hollow Forest
 
@@ -93,6 +99,8 @@ Resist Holy 20%. Weak to Fire 40%.
 | **Stag Sentinel** | Brute (speed 130, charge 600) | paces, lines up | Antler sweep: cone(120°, 110) ×1.1 | **Charge [RED][AREA]**: tint 0.8 s, charges along line(90, room) wall to wall, ×1.8, then stunned 1.5 s on the wall (punish window), cd 10 | — | Hyper armor during charge. |
 | **Pixie Swarm** | Swarm (5 pieces) | flutters, darts | Poke ×0.7 | **Flash [PIERCE]**: cone(90°, 160) telegraph 0.8 s, ×0.3, Blind 1.5 s, cd 9 | **Pickpocket**: a piece that touches you steals 2% of your Shards (recovered on killing it) | Cheeky. |
 | **Hollow Huntsman** | Assassin | stealth (70% transparent) until 200 px | Knife ×1.0 | **Backstab [RED]**: from stealth behind the target, tint 0.6 s, ×2.2, cd 12 | **Trap**: places up to 3 bear traps in the room (visible, 1 s arm): trigger = root 1.5 s + ×1.0 | Traps also catch enemies. |
+| **Hollow Scarecrow** | Hazard-maker | stationary on its post | Crow: homing projectile 280 px/s ×0.8, cd 2.2 | **Murder of Crows [PIERCE][AREA]**: randomCircles(7, 60) across the room, telegraph 1.0 s, ×0.8, cd 11 | — | Burn kills it fast. "Scares nothing. The crows are on its payroll." |
+| **Beekeeper** | Support | walks (100), keeps 300 px | Bee Line: 3 homing bees ×0.5, Poison 15 | **Kicked Hive [PIERCE]**: circle(110) at the target, telegraph 1.0 s, ×1.2 + Poison 40, leaves a poison cloud 4 s, cd 10 | **Royal Jelly** (utility): an ally +30% damage 8 s, cd 10 | "Pays the rent in honey. The Landlord is allergic." |
 
 ## 6. Zone 5 — Ashen Forge
 
@@ -108,6 +116,8 @@ Resist Fire (immune), Burn immune. Weak to Frost 40%.
 | **Bellows Brute** | Brute | walks | Bellows punch ×1.2 | **Flame Sweep [PIERCE][AREA]**: sweep(180°, 2.4 s) cone r 300 rotating around him, telegraph 1.0 s shows the start wedge, ×0.9 Fire per 0.3 s, cd 14 | **Grab-and-Burn [RED]**: tint 0.6 s, line(60, 110), hold 1.5 s ×2.0 Fire, cd 14 | Sweep rotates clockwise, always; walk with it. |
 | **Ash Wraith** | Assassin | phases through props; invisible while > 250 px | Ember claw ×1.0 Fire | **Ember Strike [RED]**: tint 0.6 s, appears at the target's back, line(50, 120) ×1.8, cd 9 | **Scatter**: below 40% HP, bursts into 3 embers (circle(40) each ×0.5) and reforms elsewhere | — |
 | **Furnace Priest** | Support / Hazard | stationary, chants | Ember Bolt: proj(380) ×0.8 Fire, cd 2 | **Immolation Nova [PIERCE][AREA]**: room-wide pockets(1): the only safe circle (r 120) is **around the Priest himself**; telegraph 2.2 s; ×2.5 Fire; cd 18; `condition: allPlayersWithin(500)` (otherwise he picks Enrage) | **Enrage** (utility): all enemies +25% damage and +15% speed for 8 s, cd 15 | Run toward the scary thing. |
+| **Rivet Gunner** | Ranged | keeps 400 px, strafes | Hot rivet: projectile 480 px/s ×1.0 Fire, Burn 15, cd 1.6 | **Riveting [PIERCE][AREA]**: randomCircles(6, 60), telegraph 1.0 s, ×0.9 Fire, each leaves slag 3 s, cd 10 | — | "Paid by the rivet. Not fussy about where they go." |
+| **Crucible Bearer** | Hazard-maker ×1.2 HP | slow walk (80), keeps 120 px | Splash: cone(60°, 140) ×0.9 Fire, fire puddle 3 s | **Tip the Crucible [PIERCE]**: cone(80°, 240), telegraph 1.1 s, ×1.4 Fire + Burn 40, slag 4 s, cd 12 | — | "The health and safety officer. Nobody asks what happened to the last one." |
 
 ## 7. Zone 6 — Frozen Reliquary
 
@@ -123,6 +133,8 @@ Resist Frost (immune), Chill immune. Weak to Fire 40%, Lightning 20%.
 | **Glacial Golem** | Brute ×1.4 HP | slow (70) | Ice slam: circle(90) ×1.4 Frost | **Avalanche [PIERCE][AREA]**: lanes(4, 110) boulders roll across the room through those lanes, telegraph 1.2 s, ×1.5, cd 13 | **Ice Slam [RED]**: tint 0.7 s, line(90, 150) ×1.8 Frost, Chill 80, cd 9 | Boulders leave ice patches (slippery: −40% control 0.5 s). |
 | **Hoarfrost Archer** | Ranged | keeps 400 px | Ice arrow ×1.0 Frost, leaves a circle(40) ice patch 5 s | **Volley [PIERCE][AREA]**: randomCircles(6, 65) telegraph 1.0 s, ×0.8, patches, cd 10 | — | — |
 | **Relic Guardian** | Tank ×1.6 HP | slow (90), always faces target | Mace ×1.2 (unparryable) | **Shield Crush [RED]**: tint 0.6 s, line(80, 120) ×1.7, cd 9 | — | **Unbreakable front guard** (blocks 100%); must be hit from behind (its turn speed is 120°/s; dodge through it to get behind). |
+| **Rime Moths** | Swarm (5 pieces) | circle the target at 90 px, dart in | Flutter: dart 100 px line(24, 100) ×0.8 Frost (Magic), Chill 10 | **Frost Dust [PIERCE]**: circle(70) around each piece, telegraph 0.9 s, ×0.6, Chill 40, cd 9 (budget 1) | — | Pieces cannot be parried. "Ate every vestment in the Reliquary. Your jumper is next." |
+| **Frozen Censer** | Hazard-maker | stationary, hangs on its chain | Incense puff: ring(0, 100) ×0.6 Frost, Chill 20, cd 3 | **Thurible Swing [PIERCE][AREA]**: sweep(360°, 2.4 s) r 230 around it, telegraph 1.0 s, ×1.2, Chill 40, cd 12 | — | Construct. "Burns frankincense at minus forty. Smells like a freezer full of church." |
 
 ## 8. Zone 7 — Clockwork Citadel
 
@@ -138,6 +150,8 @@ Resist Physical 20% (metal). Weak to Lightning 40%.
 | **Pendulum Knight** | Brute | walks (100) | Blade arc ×1.3 | **Pendulum [PIERCE][AREA]**: sweep(360°, 2.0 s) r 220 giant blade, telegraph 1.0 s, ×1.5, cd 12 | **Overhead [RED]**: tint 0.7 s, line(70, 200) ×1.9, cd 9 | Hyper armor. |
 | **Repair Drone** | Support | hovers, keeps 250 px from players, near constructs | Spark: proj(400) ×0.5 Lightning, cd 2 | **Zap [PIERCE]**: cone(50°, 140) telegraph 0.8 s, ×0.6 Lightning, Shock 30, cd 7 | **Repair** (utility): heals one construct 20% per 2 s channel; also drops circle(90) oil for 10 s where it hovers (slippery; ignites on Fire: ×1.2 Fire burst + Burn) | Kill first; its oil is a tool for Fire builds. |
 | **Chronomancer's Hand** | Assassin | blinks around (cd 3) | Slash ×1.0 | **Rewind Strike [PIERCE]**: targets the player's position from **1.0 s ago**, circle(80) telegraph 0.6 s, ×1.8, cd 6 | **Stasis [RED]**: tint 0.6 s, line(40, 150) ×1.2, on hit applies **Freeze** 1.5 s, cd 12 | Keep moving and it never lands. |
+| **Cuckoo Clock** | Hazard-maker | stationary | Cuckoo: homing projectile 320 px/s ×0.9, cd 2 | **Tick-Tock [PIERCE][AREA]**: grid(150, 55) in 2 checkerboard sets 1.0 s apart, telegraph 1.0 s, ×1.1, cd 12 | — | Never flinches. "Cuckoo. Cuckoo. Your rent is due. Cuckoo." |
+| **Clockwork Butler** | Fodder ×1.3 HP | walks, pairs or threes | Silver tray: arc(100°, 58) ×1.0 | **Silver Service [RED]**: tint 0.6 s, lunge 200 px line(40, 200) ×1.4, cd 8 | — | Construct. "Will see you out." |
 
 ## 9. Zone 8 — The Abyss (final)
 
@@ -153,6 +167,8 @@ Resist Void 50%. Weak to Holy 40%.
 | **Maw** | Hazard-maker ×2 HP | stationary | Gnash: cone(90°, 100) ×1.0, windup 0.5 s, cd 2 | **Bite [PIERCE]**: circle(150) around it, telegraph 1.0 s, ×2.2, cd 7 (escapable: pull 60 → (0.9 × 200) = 180 ≥ 150 + 40 − 10; the pull stops during the last 0.2 s of the telegraph) | **Pull** (utility, passive): constant gravity toward it, 60 px/s within 350 px | Pull + Bite is the whole fight; kill it at range or fight at its edge. |
 | **Landlord's Clerk** | Support | keeps 300 px, floats | throws **Eviction Notices**: 3 homing paper projectiles ×0.6 Void each | **Late Fee**: buffs all enemies +20% damage 8 s, cd 14 | **Audit [PIERCE][AREA]**: pockets(2) room-wide, telegraph 1.5 s, ×1.5 Void, cd 18 | "Per section 4(b)…" |
 | **Star-Eater** | Brute ×1.5 HP | slow (90) | Claw ×1.4 Void | **Supernova [PIERCE][AREA]**: pockets(3) safe circles r 100, telegraph 1.8 s, ×2.8 Void, cd 16 | **Devour [RED]**: tint 0.7 s, line(70, 130) grab, hold 1.5 s ×2.2 Void, cd 12 | Hyper armor. |
+| **The Fine Print** | Caster | floats, keeps 320 px | Small Print: 3 paper projectiles ×0.6 Void | **Terms and Conditions [PIERCE][AREA]**: lanes(5, 80) horizontal, alternating sets 0.8 s apart, telegraph 1.0 s, ×1.0 Void, cd 11 | — | "You agreed to this. Page 4,011, paragraph 9." |
+| **The Bailiff** | Tank ×1.3 HP (speed 100) | walks | Truncheon: 2 arcs(90°, 75) ×1.0/×1.2 Void | **Eviction [RED]**: tint 0.7 s, shoulder charge 240 px line(70, 240) ×1.6 Void, knockback 240, cd 10 | — | Hyper armor on the charge. "Here to collect. Accepts Glowen, furniture or Joe." |
 
 ---
 
@@ -343,7 +359,7 @@ r 120, Chill 20/s) · Shielded (cyan bubble) · Summoner (green rune circle).
 1. Every enemy has exactly one normal attack and one or two specials, and at least one special is Red or
    Piercing (the rest are `utility`).
 2. No attack is both Red and Piercing.
-3. Every zone has ≥ 2 Red users and ≥ 2 Piercing users among its 8, so any 4-mix can satisfy the mix rule;
+3. Every zone has ≥ 2 Red users and ≥ 2 Piercing users among its 10, so any mix can satisfy the mix rule;
    the generator's mix-picker is tested to always produce a valid mix.
 4. Every Piercing pattern passes the escapability rule of GAME_DESIGN §5.6 (telegraph, pull, gaps,
    lane width, pocket reach or an attack `condition`). Every Piercing `expandingRing` declares ≥ 1 gap. Lanes

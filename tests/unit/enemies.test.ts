@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { validateData } from '../../src/data/validate';
+import { ROSTER_SIZE, validateData } from '../../src/data/validate';
+import { MELEE_ROLES } from '../../src/game/types';
+import { hasKind } from '../../src/game/procgen/mix';
+import { hasDraw } from '../../src/engine/draw/registry';
+import '../../src/engine/draw/enemies';
 import { ENEMIES, rosterOf } from '../../src/data/enemies';
 import { ZONES, zoneDef } from '../../src/data/zones';
 import { World } from '../../src/game/world';
@@ -29,9 +33,32 @@ describe('data validation (CONTENT_ENEMIES §13)', () => {
     const issues = validateData();
     expect(issues.map((i) => `${i.where}: ${i.msg}`)).toEqual([]);
   });
-  it('the Mossy Crypt roster is complete', () => {
-    expect(rosterOf(1).length).toBe(8);
+  it('every zone has 10 enemy types, 80 in all, each drawn', () => {
+    expect(ROSTER_SIZE).toBe(10);
+    let total = 0;
+    for (const z of ZONES) {
+      expect(z.enemies.length, z.name).toBe(10);
+      expect(new Set(z.enemies).size, z.name).toBe(10);
+      expect(rosterOf(z.id).map((d) => d.id).sort(), z.name).toEqual([...z.enemies].sort());
+      for (const id of z.enemies) {
+        expect(ENEMIES[id], id).toBeDefined();
+        expect(hasDraw(ENEMIES[id]!.draw), `${id} draws as ${ENEMIES[id]!.draw}`).toBe(true);
+      }
+      total += z.enemies.length;
+    }
+    expect(total).toBe(80);
+    expect(new Set(ZONES.flatMap((z) => z.enemies)).size).toBe(80);
+    expect(rosterOf(1).length).toBe(10);
     for (const id of zoneDef(1).enemies) expect(ENEMIES[id], id).toBeDefined();
+  });
+  it('every roster keeps melee and non-melee roles and at least two Red and two Piercing users (PROCGEN §4)', () => {
+    for (const z of ZONES) {
+      const roster = rosterOf(z.id);
+      expect(roster.filter((d) => MELEE_ROLES.includes(d.role)).length, z.name).toBeGreaterThanOrEqual(2);
+      expect(roster.filter((d) => !MELEE_ROLES.includes(d.role)).length, z.name).toBeGreaterThanOrEqual(2);
+      expect(roster.filter((d) => hasKind(d, 'red')).length, z.name).toBeGreaterThanOrEqual(2);
+      expect(roster.filter((d) => hasKind(d, 'pierce')).length, z.name).toBeGreaterThanOrEqual(2);
+    }
   });
   it('the mix picker always returns a valid mix for registered zones', () => {
     for (const z of ZONES) {
@@ -101,6 +128,29 @@ describe('AI', () => {
       }
       stepWorld(w);
       expect(w.livingEnemies().length, def.id).toBe(0);
+    }
+  });
+  it('each enemy added with the 10-type rosters spawns, uses its Red or Piercing special and can be killed', () => {
+    const added = ['weeping_mourner', 'pallbearer', 'lanternjaw', 'lichen_hermit', 'sewer_diver', 'fuse_eel', 'hollow_scarecrow', 'hollow_beekeeper', 'rivet_gunner', 'crucible_bearer', 'rime_moths', 'frozen_censer', 'cuckoo_clock', 'clockwork_butler', 'fine_print', 'bailiff'];
+    for (const id of added) {
+      const def = ENEMIES[id]!;
+      expect(zoneDef(def.zone).enemies, id).toContain(id);
+      const { w, p } = arena();
+      const stationary = def.moveStyle === 'stationary';
+      const units = spawnUnit(w, def, stationary ? 720 : 900, 368, { tellS: 0.1 });
+      const used = new Set<string>();
+      for (let i = 0; i < 60 * 40 && !def.attacks.every((a) => a.kind === 'utility' || used.has(a.id)); i++) {
+        stepWorld(w);
+        for (const u of units) if (u.en?.attack) used.add(u.en.attack.def.id);
+      }
+      for (const a of def.attacks) if (a.kind !== 'utility') expect(used.has(a.id), `${id} never used ${a.id}`).toBe(true);
+      for (const u of units) {
+        const s = emptySpec('player');
+        s.dmg.holy = 99999;
+        hitEnemy(w, p, u, s, u.x - 30, u.y);
+      }
+      stepWorld(w);
+      expect(w.livingEnemies().length, id).toBe(0);
     }
   });
   it('a swarm spawns its pieces as one group', () => {

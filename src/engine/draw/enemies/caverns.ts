@@ -794,3 +794,316 @@ registerDraw('caverns_weaver', (ctx, s) => {
   light(0);
   hot(ctx, s, s.x, s.y, u * 1.6, 0.4);
 });
+
+// ---------------------------------------------------------------- Lanternjaw
+// A blind cave angler gone ashore, seen from above: a pale violet, eyeless body on long spidery legs, a finned tail,
+// a wide flat head with a jutting underbite of needle teeth, and a stalk lure on its brow ending in a teal bulb that
+// is always lit (all you see of it until it is close). It gapes on the windup and stretches out long as it pounces.
+const LJ_SKIN = '#a08cbc';
+const LJ_SKIN_U = shade(LJ_SKIN, 0.64);
+const LJ_LEG = shade(LJ_SKIN, 0.8);
+const LJ_BODY = [-1.1, 0, -0.86, -0.28, -0.3, -0.44, 0.2, -0.46, 0.46, -0.32, 0.52, 0, 0.46, 0.32, 0.2, 0.46, -0.3, 0.44, -0.86, 0.28];
+const LJ_HEAD = [0.14, -0.5, 0.42, -0.8, 0.82, -0.78, 1.04, -0.5, 1.1, 0, 1.04, 0.5, 0.82, 0.78, 0.42, 0.8, 0.14, 0.5, 0.04, 0];
+
+registerDraw('caverns_lanternjaw', (ctx, s) => {
+  const u = s.r * s.scale;
+  shadow(ctx, s.x, s.y, u * 1.15);
+  const wind = s.pose === 'windup';
+  const leap = s.pose === 'attack';
+  const stretch = leap ? 1.25 : wind ? 0.88 : 1;
+  const squeeze = leap ? 0.88 : wind ? 1.08 : 1;
+  const gape = wind ? Math.min(1, 0.3 + s.poseT * 1.5) * 0.75 : leap ? 1 : s.pose === 'recover' ? 0.4 : 0.08 + Math.max(0, Math.sin(s.t * 1.3)) * 0.12;
+  const gait = Math.sin(s.t * 13) * 0.3 * u * s.moving;
+  const lureCol = TEAL;
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  ctx.rotate(s.facing);
+  light(s.facing);
+  ctx.scale(stretch, squeeze);
+  // finned tail, sculling
+  const wag = Math.sin(s.t * 5) * 0.3 + Math.sin(s.t * 13) * 0.25 * s.moving;
+  taper(ctx, s, [-0.95 * u, 0, -1.4 * u, wag * 0.3 * u, -1.8 * u, wag * 0.55 * u], 0.38 * u, 0.06 * u, LJ_SKIN, null, 2);
+  const ty = wag * 0.55;
+  flat(ctx, s, [-1.74, ty - 0.04, -2.2, ty - 0.34, -2.04, ty, -2.2, ty + 0.34, -1.74, ty + 0.04], u, mix(LJ_SKIN, VIOLET, 0.35), 1.5);
+  // long spidery legs, knees high and wide
+  const legs: readonly (readonly [number, number, number, number])[] = [
+    [0.15, 1, 0.95, 1],
+    [0.15, -1, 0.95, -1],
+    [-0.62, 1, -1.15, -1],
+    [-0.62, -1, -1.15, 1],
+  ];
+  for (const [hx, side, px, g] of legs) {
+    const pX = px * u + gait * g * side;
+    const pY = side * (wind ? 0.9 : 1.04) * u;
+    arm(ctx, s, hx * u, side * 0.28 * u, pX, pY, 0.62 * u, 0.62 * u, side * (hx > 0 ? -1 : 1), 0.14 * u, 0.09 * u, 0.06 * u, LJ_LEG, 2);
+    oval(ctx, s, J[0]!, J[1]!, 0.08 * u, 0.08 * u, LJ_SKIN, 1.5);
+    claws(ctx, s, J[2]!, J[3]!, hx > 0 ? 0.3 * side : Math.PI - 0.3 * side, 0.2 * u, 3, 1.3, '#ece4f4', 1.2);
+  }
+  shape(ctx, s, LJ_BODY, u, LJ_SKIN, LJ_SKIN_U, 0.14, 2.5);
+  if (!s.flash) {
+    // a darker dorsal stripe and two rows of glowing photophores down the flanks
+    mark(ctx, s, [-1.0, 0, -0.6, -0.12, 0.2, -0.14, 0.44, 0, 0.2, 0.14, -0.6, 0.12], u, withAlpha('#5a4878', 0.55));
+    const ph = elemGlow(s, TEAL);
+    for (let i = 0; i < 4; i++) {
+      const x = (-0.78 + i * 0.26) * u;
+      for (const side of [-1, 1]) {
+        const y = side * (0.26 + Math.sin(i * 1.3) * 0.03) * u;
+        glow(ctx, x, y, 0.22 * u, ph, 0.3 + Math.sin(s.t * 3 + i) * 0.1);
+        dot(ctx, x, y, Math.max(0.9, 0.045 * u), ph);
+      }
+    }
+  }
+  // the lower jaw, jutting out past the snout and sliding forward as it gapes
+  const jx = gape * 0.22;
+  const jw = 1 + gape * 0.15;
+  shape(ctx, s, [0.42, -0.78 * jw, 0.96 + jx, -0.9 * jw, 1.3 + jx, -0.62 * jw, 1.46 + jx, 0, 1.3 + jx, 0.62 * jw, 0.96 + jx, 0.9 * jw, 0.42, 0.78 * jw], u, mix(LJ_SKIN, '#ffffff', 0.2), LJ_SKIN_U, 0.1, 2.5);
+  const hb = -gape * 0.16;
+  if (gape > 0.18) {
+    flat(ctx, s, [0.92 + hb, -0.52 * jw, 1.26 + jx, -0.4 * jw, 1.36 + jx, 0, 1.26 + jx, 0.4 * jw, 0.92 + hb, 0.52 * jw, 1.0 + hb, 0], u, heat(s, '#1c0a20', 0.4), 1.5, true);
+    if (!s.flash) glow(ctx, (1.12 + jx) * u, 0, 0.6 * u, heat(s, mix(TEAL, '#1c0a20', 0.4), 0.8), 0.3 + gape * 0.3);
+  }
+  // the head, drawn back as the jaw drops
+  ctx.save();
+  ctx.translate(hb * u, 0);
+  shape(ctx, s, LJ_HEAD, u, shade(LJ_SKIN, 0.88), shade(LJ_SKIN, 0.6), 0.1, 2.5);
+  if (!s.flash) {
+    // no eyes: two milky scars where they used to be, and wrinkles
+    oval(ctx, null, 0.72 * u, -0.4 * u, 0.1 * u, 0.06 * u, withAlpha('#e8e0f4', 0.75), 0, 0.4);
+    oval(ctx, null, 0.72 * u, 0.4 * u, 0.1 * u, 0.06 * u, withAlpha('#e8e0f4', 0.75), 0, -0.4);
+    ctx.strokeStyle = withAlpha('#2a1838', 0.5);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (const side of [-1, 1]) {
+      ctx.moveTo(0.3 * u, side * 0.3 * u);
+      ctx.quadraticCurveTo(0.5 * u, side * 0.5 * u, 0.86 * u, side * 0.52 * u);
+    }
+    ctx.stroke();
+  }
+  // upper fangs along the snout, showing once it gapes
+  if (gape > 0.18) {
+    for (let i = 0; i < 5; i++) {
+      const a = -0.9 + i * 0.45;
+      const bx = (0.88 + Math.cos(a) * 0.28) * u;
+      const by = Math.sin(a) * 0.56 * u;
+      flat(ctx, s, [bx, by - 0.04 * u, bx + Math.cos(a) * 0.16 * u + 0.06 * u, by + Math.sin(a) * 0.1 * u, bx, by + 0.04 * u], 1, heat(s, '#f4f0e0'), 1);
+    }
+  }
+  ctx.restore();
+  // the underbite: needle teeth along the jaw's front edge, pointing back up over the snout
+  ctx.beginPath();
+  for (let i = 0; i < 11; i++) {
+    const a = -1.25 + (2.5 * i) / 10;
+    const c = Math.cos(a);
+    const sn = Math.sin(a);
+    const bx = (1.02 + jx + c * 0.4) * u;
+    const by = sn * 0.82 * jw * u;
+    const len = (0.2 + (i % 2) * 0.1 + gape * 0.08) * u;
+    ctx.moveTo(bx + sn * 0.035 * u, by - c * 0.035 * u);
+    ctx.lineTo(bx - c * len, by - sn * len * 0.6);
+    ctx.lineTo(bx - sn * 0.035 * u, by + c * 0.035 * u);
+    ctx.closePath();
+  }
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#120e14';
+  ctx.stroke();
+  ctx.fillStyle = s.flash ? '#ffffff' : heat(s, '#f4f0e0');
+  ctx.fill();
+  // the lure: a stalk from the brow arching forward, its bulb always lit
+  const sway = Math.sin(s.t * 2.2) * 0.35 + Math.sin(s.t * 5.3) * 0.08;
+  const lx = (1.6 + gape * 0.25) * u;
+  const ly = sway * 0.3 * u;
+  cord(ctx, s, (0.55 + hb) * u, 0, 1.0 * u, (-0.15 + sway * 0.4) * u, lx, ly, Math.max(1.6, 0.07 * u), LJ_SKIN, 2);
+  if (!s.flash) glow(ctx, lx, ly, (1.3 + gape * 0.5) * u, lureCol, 0.8);
+  oval(ctx, s, lx, ly, 0.15 * u, 0.15 * u, mix(lureCol, '#ffffff', 0.45), 1.5);
+  if (!s.flash) dot(ctx, lx - 0.04 * u, ly - 0.04 * u, Math.max(0.8, 0.05 * u), '#ffffff');
+  ctx.restore();
+  light(0);
+  const fx = Math.cos(s.facing);
+  const fy = Math.sin(s.facing);
+  hot(ctx, s, s.x + fx * u * 1.4, s.y + fy * u * 1.4, u * 0.9, 0.6);
+  if (leap) streak(ctx, s, s.x + fx * u * 0.2, s.y + fy * u * 0.2, s.x + fx * u * 2.0, s.y + fy * u * 2.0, u * 0.3);
+});
+
+// ---------------------------------------------------------------- Lichen Hermit
+// A stooped old cave hermit gone half to moss: a hooded, hunched cloak blotched with grey-green lichen and sprouting
+// tiny glowing mushrooms, a long white beard tangled with lichen, bare feet, a gnarled walking stick with a toadstool
+// on the knob, and a long clay pipe that never goes out. He puffs his cheeks and lifts the pipe to blow smoke rings.
+const LH_CLOAK = '#66603e';
+const LH_CLOAK_U = shade(LH_CLOAK, 0.62);
+const LH_LICHEN = '#b2c296';
+const LH_SKIN = '#dcb898';
+const LH_SKIN_U = shade(LH_SKIN, 0.72);
+const LH_BEARD = '#e0dccf';
+const LH_SMOKE = '#d4d8c4';
+const LH_CLOAKP = [-0.46, -0.5, -0.12, -0.66, 0.24, -0.52, 0.42, -0.16, 0.48, 0.3, 0.56, 0.66, 0.56, 0.66, 0.34, 0.6, 0.14, 0.72, 0.14, 0.72, -0.08, 0.6, -0.3, 0.7, -0.3, 0.7, -0.52, 0.58, -0.62, 0.1];
+const LH_HOOD = [-0.5, 0.2, -0.56, -0.22, -0.36, -0.58, 0.04, -0.66, 0.38, -0.5, 0.52, -0.12, 0.46, 0.24, 0.0, 0.36];
+const LH_BEARDP = [-0.26, 0.04, 0.26, 0.04, 0.32, 0.34, 0.16, 0.7, 0.06, 0.88, 0.06, 0.88, -0.04, 0.66, -0.14, 0.76, -0.14, 0.76, -0.24, 0.36];
+const LH_LICHENS = [
+  [-0.5, -0.2, -0.3, -0.36, -0.14, -0.2, -0.32, -0.06],
+  [-0.2, 0.2, 0.04, 0.12, 0.16, 0.3, -0.06, 0.4],
+  [-0.56, 0.38, -0.36, 0.3, -0.26, 0.5, -0.46, 0.56],
+  [0.24, 0.42, 0.42, 0.36, 0.5, 0.56, 0.3, 0.6],
+] as const;
+
+registerDraw('caverns_hermit', (ctx, s) => {
+  const u = s.r * s.scale;
+  const f = facing(s);
+  const fw = f.ax;
+  shadow(ctx, s.x, s.y, u * 0.9);
+  const wind = s.pose === 'windup';
+  const blow = s.pose === 'attack' || s.pose === 'recover';
+  const puff = wind ? Math.min(1, 0.3 + s.poseT * 2) : s.pose === 'attack' ? 0.4 : 0;
+  ctx.save();
+  upright(ctx, s, f, u, bob(s, 1, 3));
+  const step = Math.sin(s.t * 5) * 0.1 * u * s.moving;
+  // gnarled walking stick in the far hand, planted ahead of him
+  const stx = lerp(0.66, 0.4, fw) * u + step;
+  const stick = (): void => {
+    cord(ctx, s, stx + 0.06 * u, 0.74 * u, stx - 0.08 * u, 0.1 * u, stx, -0.52 * u, Math.max(2.2, 0.09 * u), '#6a4a30', 2);
+    oval(ctx, s, stx, -0.54 * u, 0.09 * u, 0.08 * u, '#5a3e28', 2);
+    line(ctx, stx + 0.02 * u, -0.58 * u, stx + 0.05 * u, -0.7 * u, Math.max(1.2, 0.04 * u), STEM);
+    ctx.save();
+    ctx.translate(stx + 0.05 * u, -0.69 * u);
+    shape(ctx, s, [-0.12, 0.02, -0.08, -0.1, 0.08, -0.1, 0.12, 0.02], u, VIOLET, shade(VIOLET, 0.65), 0.03, 1.5);
+    if (!s.flash) dot(ctx, 0, -0.06 * u, Math.max(0.7, 0.025 * u), elemGlow(s, TEAL));
+    ctx.restore();
+    arm(ctx, s, lerp(-0.2, -0.04, fw) * u, -0.34 * u, stx - 0.02 * u, -0.22 * u, 0.3 * u, 0.3 * u, 1, 0.08 * u, 0.07 * u, 0.06 * u, LH_CLOAK_U, 2);
+    oval(ctx, s, J[2]!, J[3]!, 0.075 * u, 0.07 * u, LH_SKIN_U, 1.5);
+  };
+  if (f.back) stick();
+  // bare knobbly feet under the hem
+  oval(ctx, s, -0.2 * u - step, 0.72 * u, 0.14 * u, 0.07 * u, LH_SKIN_U, 2);
+  oval(ctx, s, 0.22 * u + step, 0.73 * u, 0.15 * u, 0.075 * u, LH_SKIN, 2);
+  // the hunched cloak, blotched with lichen, little mushrooms on the hump
+  shape(ctx, s, LH_CLOAKP, u, LH_CLOAK, LH_CLOAK_U, 0.14, 2.5);
+  inside(ctx, LH_CLOAKP, u);
+  if (!s.flash) {
+    for (const b of LH_LICHENS) mark(ctx, s, b, u, withAlpha(LH_LICHEN, 0.8));
+    ctx.fillStyle = withAlpha('#e4ecd0', 0.7);
+    ctx.beginPath();
+    for (let i = 0; i < 9; i++) {
+      const x = (-0.5 + ((i * 0.37) % 1) * 0.95) * u;
+      const y = (-0.4 + ((i * 0.61) % 1) * 1.0) * u;
+      ctx.moveTo(x + 0.03 * u, y);
+      ctx.arc(x, y, Math.max(0.6, 0.03 * u), 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.strokeStyle = withAlpha('#2a2414', 0.45);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      ctx.moveTo((-0.3 + i * 0.22) * u, -0.1 * u);
+      ctx.lineTo((-0.34 + i * 0.26) * u, 0.62 * u);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+  for (const [mx, my, k] of [
+    [-0.42, -0.5, 1],
+    [-0.24, -0.62, 0.8],
+    [-0.56, -0.3, 0.7],
+  ] as const) {
+    line(ctx, mx * u, my * u, (mx + 0.02) * u, (my - 0.12 * k) * u, Math.max(1, 0.035 * u), STEM);
+    oval(ctx, s, (mx + 0.02) * u, (my - 0.12 * k) * u, 0.07 * k * u, 0.045 * k * u, k > 0.9 ? TEAL : VIOLET, 1.5);
+    if (!s.flash) glow(ctx, (mx + 0.02) * u, (my - 0.12 * k) * u, 0.2 * u, elemGlow(s, TEAL), 0.35);
+  }
+  if (!f.back) stick();
+  // the long clay pipe: drooping at rest, lifted to blow (the near arm holds it from below)
+  const h = 0.72 * u;
+  const headX = (0.2 + 0.12 * fw) * u;
+  const headY = -0.46 * u;
+  const c = 0.16 * fw * h;
+  const hx0 = headX + c + 0.12 * fw * h;
+  const hy0 = headY + 0.18 * h;
+  const pa = wind ? lerp(0.3, -0.5, puff) : blow ? -0.25 : 0.32 + Math.sin(s.t * 1.2) * 0.05;
+  const pl = 0.62 * h * (0.35 + 0.65 * fw);
+  const bx = hx0 + Math.cos(pa) * pl;
+  const by = hy0 + Math.sin(pa) * pl + (1 - fw) * 0.12 * h;
+  const gx = lerp(hx0, bx, 0.7);
+  const gy = lerp(hy0, by, 0.7) + 0.05 * u;
+  if (!f.back) arm(ctx, s, lerp(0.24, 0.12, fw) * u, -0.3 * u, gx, gy, 0.28 * u, 0.28 * u, 1, 0.08 * u, 0.07 * u, 0.06 * u, LH_CLOAK, 2);
+  // the head, low and forward under the hood
+  ctx.save();
+  ctx.translate(headX, headY);
+  shape(ctx, s, LH_HOOD, h, LH_CLOAK, LH_CLOAK_U, 0.1, 2.5);
+  if (!f.back) {
+    oval(ctx, s, c, -0.04 * h, 0.3 * h, 0.3 * h, LH_SKIN, 2);
+    if (!s.flash) {
+      // hood shadow over the brow, bushy white brows, beady eyes, a big nose and (puffed) cheeks
+      mark(ctx, s, [-0.3, -0.36, 0.3, -0.36, 0.3, -0.22, 0, -0.16, -0.3, -0.22], h, withAlpha('#2a2414', 0.45));
+      const sp = (0.13 - 0.03 * fw) * h;
+      const eye = elemGlow(s, TEAL);
+      dot(ctx, c - sp, -0.08 * h, Math.max(0.9, 0.04 * h), eye);
+      dot(ctx, c + sp, -0.08 * h, Math.max(0.9, 0.04 * h), eye);
+      oval(ctx, null, c - sp - 0.02 * h, -0.17 * h, 0.1 * h, 0.04 * h, LH_BEARD, 1, -0.2);
+      oval(ctx, null, c + sp + 0.02 * h, -0.17 * h, 0.1 * h, 0.04 * h, LH_BEARD, 1, 0.2);
+      const ck = 0.07 + puff * 0.06;
+      oval(ctx, null, c - 0.18 * h, 0.08 * h, ck * h, ck * h, mix(LH_SKIN, '#e08a7a', 0.25 + puff * 0.3), 1.2);
+      oval(ctx, null, c + 0.2 * h, 0.08 * h, ck * h, ck * h, mix(LH_SKIN, '#e08a7a', 0.25 + puff * 0.3), 1.2);
+    }
+    oval(ctx, s, c + 0.08 * fw * h, 0.02 * h, (0.09 + 0.03 * fw) * h, 0.09 * h, shade(LH_SKIN, 0.92), 1.5);
+    // the long beard, tangled with lichen
+    ctx.save();
+    ctx.translate(c, 0);
+    shape(ctx, s, LH_BEARDP, h, LH_BEARD, shade(LH_BEARD, 0.75), 0.08, 2);
+    if (!s.flash) {
+      mark(ctx, s, [-0.16, 0.36, 0.06, 0.32, 0.12, 0.5, -0.06, 0.56], h, withAlpha(LH_LICHEN, 0.9));
+      ctx.strokeStyle = withAlpha('#8a8678', 0.7);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = -1; i <= 1; i++) {
+        ctx.moveTo(i * 0.1 * h, 0.12 * h);
+        ctx.quadraticCurveTo(i * 0.12 * h, 0.4 * h, i * 0.06 * h + 0.04 * h, 0.66 * h);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // the hood's rim over the face
+  if (!s.flash && !f.back) {
+    ctx.strokeStyle = shade(LH_CLOAK, 0.55);
+    ctx.lineWidth = Math.max(2, 0.08 * h);
+    ctx.beginPath();
+    ctx.arc(c, -0.02 * h, 0.36 * h, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.stroke();
+  }
+  ctx.restore();
+  if (!f.back) {
+    cord(ctx, s, hx0, hy0, (hx0 + bx) / 2, (hy0 + by) / 2 - 0.02 * u, bx, by, Math.max(1.4, 0.05 * u), '#e8e0cc', 1.5);
+    flat(ctx, s, [bx - 0.08 * u, by - 0.12 * u, bx + 0.08 * u, by - 0.12 * u, bx + 0.06 * u, by + 0.04 * u, bx - 0.06 * u, by + 0.04 * u], 1, '#d8cfb8', 1.5, true);
+    if (!s.flash) {
+      const ember = heat(s, '#ff8a3a', 0.6);
+      dot(ctx, bx, by - 0.11 * u, Math.max(1, 0.05 * u), ember);
+      glow(ctx, bx, by - 0.12 * u, 0.3 * u, ember, 0.5 + puff * 0.3);
+    }
+    // the near hand steadying the pipe
+    oval(ctx, s, gx, gy, 0.075 * u, 0.07 * u, LH_SKIN, 1.5);
+  }
+  // a thread of smoke rising from the bowl
+  if (!s.flash) {
+    for (let i = 0; i < 3; i++) {
+      const k = (s.t * 0.45 + i / 3) % 1;
+      const sx = (f.back ? hx0 : bx) + Math.sin(s.t * 1.7 + i * 2) * 0.08 * u + k * 0.1 * u;
+      const sy = (f.back ? hy0 - 0.3 * u : by - 0.14 * u) - k * 0.9 * u;
+      dot(ctx, sx, sy, (0.04 + k * 0.1) * u, withAlpha(LH_SMOKE, 0.55 * (1 - k)));
+    }
+  }
+  hot(ctx, s, hx0, hy0, 0.9 * u, 0.6);
+  // blowing: smoke rings rolling off the lips
+  if (blow && !s.flash) {
+    const h2 = striking(s);
+    const col = mix(LH_SMOKE, atkGlow(s), 0.5);
+    for (let i = 0; i < 2; i++) {
+      const d = (0.35 + i * 0.4 + (s.pose === 'recover' ? s.poseT : 0)) * u;
+      const rx = hx0 + f.ax * d;
+      const ry = hy0 + f.ay * d * 0.6 - 0.05 * u;
+      ctx.strokeStyle = withAlpha(col, (0.75 - i * 0.25) * Math.max(0.3, h2));
+      ctx.lineWidth = Math.max(2, 0.07 * u);
+      ctx.beginPath();
+      ctx.ellipse(rx, ry, (0.08 + i * 0.05) * u * (0.4 + 0.6 * (1 - fw)), (0.12 + i * 0.06) * u, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+});
