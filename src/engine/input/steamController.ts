@@ -115,7 +115,7 @@ export const TRITON_STATE_REPORT = 0x42;
  * The new Steam Controller (2026) through its Puck: report 0x42, read without its id byte. Byte 0 counts reports, bytes
  * 1–8 are the buttons (the Steam Deck's 64-bit order, as far as seen), then the sticks as signed 16-bit values at 9, 11,
  * 13 and 15 (up positive) and the triggers at 17 and 19. Worked out from the controller's own reports (the readout in
- * Settings → Gamepad); buttons and stick signs to be confirmed on the hardware.
+ * Settings → Gamepad) and confirmed working on the owner's controller.
  */
 export function parseTritonReport(r: Uint8Array): SteamPadState | null {
   if (r.length < 21) return null;
