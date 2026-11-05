@@ -10,6 +10,7 @@ import { CreditsScene } from './game/scenes/credits';
 import { LobbyScene, lobbyHooks } from './game/scenes/lobby';
 import { GuestRunScene, guestHooks } from './game/scenes/guestRun';
 import { installDebugMenu } from './ui/menus/debug';
+import { reconnectSteamControllers, watchSteamDisconnects } from './engine/input/steamController';
 import { installAchievementToasts } from './ui/achievements';
 import { installTouchControls } from './ui/touchControls';
 import { h, uiRoot } from './ui/dom';
@@ -37,6 +38,9 @@ function boot(): void {
   const a = createApp(canvasEl, overlay);
   a.canvas.applyOverlayScale(uiRoot());
   installDebugMenu();
+  // a Steam Controller this site was allowed before opens again without asking (D206)
+  watchSteamDisconnects();
+  void reconnectSteamControllers();
   installAchievementToasts();
   // the on-screen controller on phones and tablets (D143)
   installTouchControls();

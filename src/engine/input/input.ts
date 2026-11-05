@@ -2,6 +2,7 @@
 import { ACTION_BIT, GAME_ACTIONS, type Action, type GameAction, type InputFrame, type LocalAction } from './actions';
 import { HOLD, PAD_BUTTON_COUNT, defaultGamepad, defaultKeyboard, type GamepadBindings, type KeyboardBindings } from './bindings';
 import { mergePads, virtualGamepad } from './virtualPad';
+import { steamGamepad } from './steamController';
 
 export type Device = 'kbm' | 'pad';
 /** Which button pictures a connected pad wants (Sony pads get PlayStation symbols, everything else Xbox). */
@@ -229,13 +230,16 @@ export class InputManager {
     } catch {
       // the Gamepad API can be blocked (permissions policy); the touch controls still work
     }
+    // with several pads listed (Steam adds virtual ones beside the real device), read the one in use (D206): a
+    // standard-layout pad first, the one that changed last; a pad with no buttons is a phantom
     let real: Gamepad | null = null;
-    for (const p of pads) if (p && p.connected) {
-      real = p;
-      break;
+    for (const p of pads) {
+      if (!p || !p.connected || !p.buttons.length) continue;
+      const std = (g: Gamepad): number => (g.mapping === 'standard' ? 1 : 0);
+      if (!real || std(p) > std(real) || (std(p) === std(real) && p.timestamp > real.timestamp)) real = p;
     }
-    // the on-screen touch controller counts as a pad too (D143)
-    const gp = mergePads(real, virtualGamepad());
+    // a Steam Controller read over WebHID (D206) and the on-screen touch controller (D143) count as pads too
+    const gp = mergePads(mergePads(real, steamGamepad()), virtualGamepad());
     this.padPrev = new Set(this.padDown);
     this.padDown.clear();
     this.lastPoll = now;

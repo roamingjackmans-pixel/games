@@ -2,6 +2,7 @@
 // menu confirm/back, conflicts swap instead of unbinding), the button-prompt style, accessibility, aim assist,
 // hold/toggle block, and the offline download for a Steam library (Game tab). Saved globally in `dj.settings`.
 import '../controls.css';
+import { connectSteamController, steamControllerConnected, steamControllerSupported } from '../../engine/input/steamController';
 import { app } from '../../app';
 import { ALL_ACTIONS, type Action } from '../../engine/input/actions';
 import {
@@ -392,9 +393,9 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
   }
 
   function padStatus(): HTMLElement {
-    let id = '';
+    let id = steamControllerConnected() ? 'Steam Controller' : '';
     try {
-      for (const p of navigator.getGamepads?.() ?? []) if (p && p.connected) {
+      if (!id) for (const p of navigator.getGamepads?.() ?? []) if (p && p.connected) {
         id = p.id;
         break;
       }
@@ -404,6 +405,25 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     return h('div', { class: 'small dim-text' }, id ? `Gamepad: ${id.replace(/\s*\(.*\)\s*$/, '') || id}` : 'No gamepad found yet. Press a button on it to wake it up.');
   }
 
+  /** A Steam Controller without Steam (D206): open it over WebHID, or how to get it working elsewhere. */
+  function steamBox(): HTMLElement {
+    const box = h('div', { class: 'col', style: 'gap:4px;margin:6px 0' }, h('h3', null, 'Steam Controller'));
+    if (steamControllerSupported()) {
+      const b = btn(steamControllerConnected() ? 'Steam Controller connected' : 'Connect a Steam Controller', () => {
+        void connectSteamController().then((n) => {
+          notice = n ? 'Steam Controller connected.' : 'No Steam Controller opened. Plug it in (or its dongle), switch it on, and pick it in the list.';
+          render();
+        });
+      }, 'small');
+      b.setAttribute('data-testid', 'steam-connect');
+      box.appendChild(h('div', { class: 'row', style: 'gap:8px;align-items:center' }, b));
+      box.appendChild(h('div', { class: 'small dim-text', style: 'max-width:640px' }, 'On its own a Steam Controller acts as a mouse and keyboard, so the browser never sees a gamepad. Connect it here once (pick "Steam Controller" or "Valve" in the list) and the game reads it directly; it reconnects by itself next time. Left stick moves, the right pad aims, the buttons are laid out as on an Xbox pad.'));
+    } else {
+      box.appendChild(h('div', { class: 'small dim-text', style: 'max-width:640px' }, 'This browser cannot talk to a Steam Controller directly: open the game in Chrome or Edge and connect it here. Or, with Steam running, add your browser to Steam as a non-Steam game, start it from Steam and choose the Gamepad controller layout.'));
+    }
+    return box;
+  }
+
   function bindings(el: HTMLElement, pad: boolean): void {
     prompts(el);
     if (!pad) {
@@ -411,6 +431,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     } else {
       el.appendChild(slider('Aim assist strength', () => s.controls.aimAssist, (v) => (s.controls.aimAssist = v)));
       el.appendChild(padStatus());
+      el.appendChild(steamBox());
       // the on-screen touch controller (D143): it uses these same bindings
       el.appendChild(h('h3', null, 'Touch controls'));
       el.appendChild(select('Show on screen', [['auto', 'Auto (phones and tablets)'], ['on', 'Always'], ['off', 'Off']] as [TouchMode, string][], () => s.controls.touch.mode, (v) => (s.controls.touch.mode = v), refreshTouchControls));
