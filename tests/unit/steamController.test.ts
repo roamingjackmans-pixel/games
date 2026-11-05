@@ -107,16 +107,39 @@ describe('the new Steam Controller through its Puck (28de:1304, report 66)', () 
   it('a full stick and a pressed A read through', async () => {
     const { parseTritonReport } = await import('../../src/engine/input/steamController');
     const r = atRest();
-    r[1] = 0b1000_0000; // A
-    r[2] = 0b0000_1000; // D-pad down
+    r[1] = 0b0000_0001; // A (D214: byte 1 bit 0)
+    r[2] = 0b0010_0100; // D-pad up (bit 5) and down (bit 2)
+    r[3] = 0b0000_1000; // LB (byte 3 bit 3)
     put16(r, 9, 32767); // left stick right
     put16(r, 11, 32767); // left stick up
-    put16(r, 17, 32767); // left trigger
+    put16(r, 5, 32767); // left trigger (bytes 5–6)
+    put16(r, 7, 16000); // right trigger part way (bytes 7–8)
     const s = parseTritonReport(r)!;
     expect(s.buttons[0]).toBe(true);
+    expect(s.buttons[1]).toBe(false);
+    expect(s.buttons[12]).toBe(true);
     expect(s.buttons[13]).toBe(true);
+    expect(s.buttons[4]).toBe(true);
+    expect(s.buttons[5]).toBe(false);
     expect(s.axes[0]).toBeCloseTo(1, 3);
     expect(s.axes[1]).toBeCloseTo(-1, 3);
+    expect(s.lt).toBeCloseTo(1, 3);
     expect(s.buttons[6]).toBe(true);
+    expect(s.rt).toBeCloseTo(16000 / 32767, 3);
+    expect(s.buttons[7]).toBe(false);
+  });
+
+  it('every button sits where the fixed build reads it (D214)', async () => {
+    const { parseTritonReport } = await import('../../src/engine/input/steamController');
+    const where: [number, number, number][] = [
+      [0, 1, 0], [1, 1, 1], [2, 1, 2], [3, 1, 3], [4, 3, 3], [5, 2, 1], [8, 2, 6], [9, 1, 6],
+      [10, 2, 7], [11, 1, 5], [12, 2, 5], [13, 2, 2], [14, 2, 4], [15, 2, 3], [16, 3, 0],
+    ];
+    for (const [btn, byte, b] of where) {
+      const r = atRest();
+      r[byte] = 1 << b;
+      const s = parseTritonReport(r)!;
+      expect(s.buttons.map((x, i) => (x ? i : -1)).filter((i) => i >= 0), `button ${btn}`).toEqual([btn]);
+    }
   });
 });

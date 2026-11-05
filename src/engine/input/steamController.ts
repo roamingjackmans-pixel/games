@@ -113,35 +113,33 @@ export const TRITON_STATE_REPORT = 0x42;
 
 /**
  * The new Steam Controller (2026) through its Puck: report 0x42, read without its id byte. Byte 0 counts reports, bytes
- * 1–8 are the buttons (the Steam Deck's 64-bit order, as far as seen), then the sticks as signed 16-bit values at 9, 11,
- * 13 and 15 (up positive) and the triggers at 17 and 19. Worked out from the controller's own reports (the readout in
+ * 1–3 are the buttons and 5–8 the triggers (unsigned 16-bit, D214), then the sticks as signed 16-bit values at 9, 11,
+ * 13 and 15 (up positive). Worked out from the controller's own reports (the readout in
  * Settings → Gamepad) and confirmed working on the owner's controller.
  */
 export function parseTritonReport(r: Uint8Array): SteamPadState | null {
-  if (r.length < 21) return null;
+  // the button bits and trigger bytes as the owner's fixed build reads them (D214): bytes 1–3 are buttons, 5–8 the
+  // two triggers (unsigned 16-bit); the sticks were already right
+  if (r.length < 17) return null;
   const b = (byte: number, n: number): boolean => bit(r[byte]!, n);
   const buttons = new Array<boolean>(BUTTONS).fill(false);
-  buttons[0] = b(1, 7); // A
-  buttons[1] = b(1, 5); // B
-  buttons[2] = b(1, 6); // X
-  buttons[3] = b(1, 4); // Y
-  buttons[4] = b(1, 3); // LB
-  buttons[5] = b(1, 2); // RB
-  buttons[12] = b(2, 0); // D-pad up
-  buttons[15] = b(2, 1); // right
-  buttons[14] = b(2, 2); // left
-  buttons[13] = b(2, 3); // down
-  buttons[8] = b(2, 4); // View
-  buttons[16] = b(2, 5); // Steam
-  buttons[9] = b(2, 6); // Menu
-  buttons[10] = b(3, 6); // left stick click
-  buttons[11] = b(4, 2); // right stick click
-  let lt = Math.max(0, le16(r, 17)) / 32767;
-  let rt = Math.max(0, le16(r, 19)) / 32767;
-  if (b(1, 1)) lt = Math.max(lt, 1);
-  if (b(1, 0)) rt = Math.max(rt, 1);
-  lt = Math.min(1, lt);
-  rt = Math.min(1, rt);
+  buttons[0] = b(1, 0); // A
+  buttons[1] = b(1, 1); // B
+  buttons[2] = b(1, 2); // X
+  buttons[3] = b(1, 3); // Y
+  buttons[4] = b(3, 3); // LB
+  buttons[5] = b(2, 1); // RB
+  buttons[8] = b(2, 6); // View
+  buttons[9] = b(1, 6); // Menu
+  buttons[10] = b(2, 7); // left stick click
+  buttons[11] = b(1, 5); // right stick click
+  buttons[12] = b(2, 5); // D-pad up
+  buttons[13] = b(2, 2); // down
+  buttons[14] = b(2, 4); // left
+  buttons[15] = b(2, 3); // right
+  buttons[16] = b(3, 0); // Steam
+  const lt = Math.min(1, (r[5]! | (r[6]! << 8)) / 32767);
+  const rt = Math.min(1, (r[7]! | (r[8]! << 8)) / 32767);
   buttons[6] = lt > 0.5;
   buttons[7] = rt > 0.5;
   return { buttons, lt, rt, axes: [norm(le16(r, 9)), -norm(le16(r, 11)), norm(le16(r, 13)), -norm(le16(r, 15))] };
@@ -313,7 +311,7 @@ async function openDevice(d: HidDevice): Promise<boolean> {
     // the new controller's numbered state report (D206)
     if (e.reportId === TRITON_STATE_REPORT) {
       diag.buttonsHex = hex(raw.slice(1, 9), 8);
-      diag.rawAxes = [9, 11, 13, 15, 17, 19].map((i) => le16(raw, i)).join(' ');
+      diag.rawAxes = [9, 11, 13, 15, 5, 7].map((i) => le16(raw, i)).join(' ');
       const t = parseTritonReport(raw);
       if (t) {
         diag.parsed++;
