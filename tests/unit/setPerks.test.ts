@@ -62,3 +62,12 @@ describe('set perks (D243)', () => {
     expect(SET_PERK_CHANCE.legendary).toBeGreaterThan(SET_PERK_CHANCE.rare);
   });
 });
+
+describe('set perk drop rates (D245)', () => {
+  it('are 35% below the first ones', () => {
+    expect(SET_PERK_CHANCE.uncommon).toBeCloseTo(0.078, 6);
+    expect(SET_PERK_CHANCE.rare).toBeCloseTo(0.143, 6);
+    expect(SET_PERK_CHANCE.epic).toBeCloseTo(0.208, 6);
+    expect(SET_PERK_CHANCE.legendary).toBeCloseTo(0.2925, 6);
+  });
+});

@@ -165,8 +165,17 @@ export const SET_PERKS: Record<string, SetPerkDef> = {
 
 export const SET_PERK_IDS = Object.keys(SET_PERKS);
 
-/** The chance a piece of this rarity rolls a set perk (D243). */
-export const SET_PERK_CHANCE: Record<Rarity, number> = { common: 0, uncommon: 0.12, rare: 0.22, epic: 0.32, legendary: 0.45 };
+/** D245: every chance 35% lower than D243's (12 / 22 / 32 / 45%). */
+const SET_PERK_RATE = 0.65;
+
+/** The chance a piece of this rarity rolls a set perk (D243, D245): about 7.8 / 14.3 / 20.8 / 29.3%. */
+export const SET_PERK_CHANCE: Record<Rarity, number> = {
+  common: 0,
+  uncommon: 0.12 * SET_PERK_RATE,
+  rare: 0.22 * SET_PERK_RATE,
+  epic: 0.32 * SET_PERK_RATE,
+  legendary: 0.45 * SET_PERK_RATE,
+};
 
 /** Which step a count of pieces reaches: 0 none, 1 small (3+), 2 medium (5+), 3 large (7+). */
 export function setStep(count: number): 0 | 1 | 2 | 3 {
