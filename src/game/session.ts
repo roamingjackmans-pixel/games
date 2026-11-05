@@ -1150,6 +1150,7 @@ export class GameSession {
     this.dead = true;
     this.w.paused = true;
     this.save.stats.deaths++;
+    if (this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id === INSTRUCTOR.id) this.save.stats.instructorDeaths = (this.save.stats.instructorDeaths ?? 0) + 1;
     achievements().note({ k: 'death', by: this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id });
     stats().note({ k: 'death', by: this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id });
     // the Shardpile: at the death spot (in a boss room just inside the door)

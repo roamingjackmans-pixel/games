@@ -155,7 +155,8 @@ export class RunScene extends WorldScene {
     this.view.propStyle = zoneDef(this.session.layout.zone).props;
     this.view.drawInteract = (ctx, e, now, pid) => this.drawInteractable(ctx, e, now, pid);
     super.enter();
-    achievements().begin({ clean: this.save.stats.deaths === 0 });
+    // a death to The Instructor does not spoil a clean zone (D207)
+    achievements().begin({ clean: this.save.stats.deaths - (this.save.stats.instructorDeaths ?? 0) <= 0 });
     window.addEventListener('beforeunload', this.onUnload);
   }
 

@@ -822,6 +822,8 @@ export interface SaveStats {
   elitesKilled: number;
   mimicsKilled: number;
   mimicDeaths: number;
+  /** deaths to The Instructor (D207): left out of "never died" for the clean-zone achievements */
+  instructorDeaths?: number;
   /** the Statistics screen's counters for this character (src/game/stats.ts; missing in older saves) */
   extra?: Record<string, number>;
 }

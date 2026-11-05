@@ -89,7 +89,8 @@ export class GuestRunScene extends WorldScene {
     };
     this.view.drawInteract = (ctx, e, now) => drawInteractable(ctx, e, now, { bonfireUsed: (k) => this.rested.has(k), stationDone: () => false });
     super.enter();
-    achievements().begin({ clean: this.save.stats.deaths === 0 });
+    // a death to The Instructor does not spoil a clean zone (D207)
+    achievements().begin({ clean: this.save.stats.deaths - (this.save.stats.instructorDeaths ?? 0) <= 0 });
   }
 
   override exit(): void {

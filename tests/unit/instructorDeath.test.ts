@@ -1,5 +1,5 @@
-// D207: dying to The Instructor is a death in zone 1 for the achievements: Spotless / Damage Deposit Returned
-// cannot count zone 1 afterwards.
+// D207: dying to The Instructor does not spoil zone 1's clean run (Spotless / Damage Deposit Returned); any other
+// death still does.
 import { describe, expect, it } from 'vitest';
 import { GameSession } from '../../src/game/session';
 import { newSave } from '../../src/game/save/schema';
@@ -11,7 +11,7 @@ import { rawDamage } from '../../src/game/combat/damage';
 import { stepWorld } from '../../src/game/sim';
 
 describe('The Instructor and clean zones (D207)', () => {
-  it('a new character who dies to him has not cleared zone 1 cleanly, even after beating its boss', () => {
+  it('a new character who dies to him still clears zone 1 cleanly by beating its boss without another death', () => {
     const ch = newCharacter('knight', 'Joe', 'p1', new Rng('s'));
     ch.tutorialDone = false;
     const s = new GameSession(newSave(1, ch, 'INSTRUCTOR-DEATH'));
@@ -37,7 +37,24 @@ describe('The Instructor and clean zones (D207)', () => {
     t.frame(s.w, me, ch, []);
     t.frame(s.w, me, ch, [{ t: 'death', id: 77, x: 0, y: 0, isPlayer: false, defId: 'the_caretaker' }]);
     expect(t.unlocked('boss_the_caretaker')).toBe(true);
+    expect(t.view.count('clean:1')).toBe(1);
+    expect(t.unlocked('clean_zone')).toBe(true);
+    // the save remembers it, so a reload starts clean too
+    expect(s.save.stats.deaths).toBe(1);
+    expect(s.save.stats.instructorDeaths).toBe(1);
+  });
+
+  it('any other death in zone 1 still spoils it', () => {
+    const t = new AchievementTracker(new MemoryStore(), () => 1_700_000_000_000);
+    const ch = newCharacter('knight', 'Joe', 'p1', new Rng('s'));
+    const s = new GameSession(newSave(1, ch, 'OTHER-DEATH'));
+    s.start();
+    t.begin({ clean: true });
+    t.frame(s.w, s.localPlayer, ch, []);
+    t.note({ k: 'death', by: 'the_instructor' });
+    t.note({ k: 'death', by: 'hollow_wolf' });
+    s.w.bossId = 77;
+    t.frame(s.w, s.localPlayer, ch, [{ t: 'death', id: 77, x: 0, y: 0, isPlayer: false, defId: 'the_caretaker' }]);
     expect(t.view.count('clean:1')).toBe(0);
-    expect(t.unlocked('clean_zone')).toBe(false);
   });
 });

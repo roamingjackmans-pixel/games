@@ -235,7 +235,8 @@ export class AchievementTracker {
         this.add('deaths');
         if (n.by === MIMIC.id) this.flag('mimicDeath');
         this.fight = null;
-        this.cleanZone = 0;
+        // The Instructor floors everybody: that does not spoil zone 1's clean run (D207)
+        if (n.by !== INSTRUCTOR.id) this.cleanZone = 0;
         break;
       case 'credits':
         this.flag('credits');
