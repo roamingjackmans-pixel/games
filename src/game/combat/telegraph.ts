@@ -77,6 +77,7 @@ export function spawnTelegraphs(w: World, pattern: PatternDef, o: TeleOpts): Ent
         sourceTag: o.sourceTag ?? '',
         slowable: 1,
         ...(dmgType ? { dmgType } : {}),
+        ...(pattern.vfx ? { vfx: pattern.vfx } : {}),
       },
     });
     out.push(e);

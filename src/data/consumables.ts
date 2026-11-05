@@ -36,7 +36,7 @@ export const CONSUMABLES: Record<ConsumableId, ConsumableDef> = {
     effect: [
       {
         op: 'damage',
-        pattern: { kind: 'projectile', speed: 520, r: 8, lob: true, onImpact: { kind: 'circle', r: 90, anchor: 'point', persist: { hazard: 'firePuddle', durationS: 3 } } },
+        pattern: { kind: 'projectile', speed: 520, r: 8, lob: true, onImpact: { kind: 'circle', r: 90, anchor: 'point', persist: { hazard: 'firePuddle', durationS: 3 }, vfx: 'fire_burst' } },
         base: 60,
         type: 'fire',
         status: { id: 'burn', buildup: 50 },
@@ -54,7 +54,7 @@ export const CONSUMABLES: Record<ConsumableId, ConsumableDef> = {
     effect: [
       {
         op: 'damage',
-        pattern: { kind: 'projectile', speed: 520, r: 8, lob: true, onImpact: { kind: 'circle', r: 100, anchor: 'point' } },
+        pattern: { kind: 'projectile', speed: 520, r: 8, lob: true, onImpact: { kind: 'circle', r: 100, anchor: 'point', vfx: 'frost_burst' } },
         base: 4,
         type: 'magic',
         status: { id: 'chill', buildup: 60 },
@@ -72,7 +72,7 @@ export const CONSUMABLES: Record<ConsumableId, ConsumableDef> = {
     description: 'You and allies within 120 px: clear all statuses; 40 Holy burst to undead and void.',
     effect: [
       { op: 'cleanse', what: ['statuses', 'controls'], target: 'party', r: 120 },
-      { op: 'damage', pattern: { kind: 'circle', r: 120, anchor: 'self' }, base: 40, type: 'holy', undeadMult: 1 },
+      { op: 'damage', pattern: { kind: 'circle', r: 120, anchor: 'self', vfx: 'holy_nova' }, base: 40, type: 'holy', undeadMult: 1 },
     ],
     thrown: false,
     flavor: 'Tap water, blessed by someone who meant it.',

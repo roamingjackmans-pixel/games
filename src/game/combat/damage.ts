@@ -772,7 +772,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
         }
         if (!best) break;
         chained.add(best.id);
-        w.fx('line', from.x, from.y, { x2: best.x, y2: best.y, color: '#ffe14a' });
+        w.fx('line', from.x, from.y, { a: Math.atan2(best.y - from.y, best.x - from.x), r: bd, x2: 10, color: '#ffe14a', v: 'lightning', el: 'magic' });
         const zap = emptySpec('player');
         zap.dmg = { magic: total * 0.8 };
         zap.sourceTag = 'thunderclap';

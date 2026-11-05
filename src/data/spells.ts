@@ -34,10 +34,10 @@ const P = (id: string, name: string, req: number, castS: number, cooldownS: numb
 const BRAIN: SpellDef[] = [
   B('arcane_bolt', 'Arcane Bolt', 8, 0.3, 1.2, 8, [dmg(proj(700, 7), 24, 'void')], 'A bolt of arcane force: 24 (counts as Void). The bread and butter.', 'void'),
   B('scatter_shards', 'Scatter Shards', 10, 0.4, 4, 14, [dmg(proj(600, 6, { count: 5, spreadDeg: 50 }), 14, 'void')], '5 shards in a 50° fan, 14 each.', 'void'),
-  B('frost_lance', 'Frost Lance', 12, 0.5, 5, 16, [dmg({ kind: 'line', w: 30, l: 420, anchor: 'self' }, 40, 'magic', { status: { id: 'chill', buildup: 50 } })], 'line(30,420) 40 Magic, Chill 50.', 'magic'),
-  B('fireball', 'Fireball', 14, 0.6, 6, 18, [dmg(proj(520, 10, { onImpact: { kind: 'circle', r: 100, anchor: 'point', persist: { hazard: 'firePuddle', durationS: 2 } } }), 48, 'fire', { status: { id: 'burn', buildup: 50 } })], 'A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s.', 'fire'),
+  B('frost_lance', 'Frost Lance', 12, 0.5, 5, 16, [dmg({ kind: 'line', w: 30, l: 420, anchor: 'self', vfx: 'ice_lance' }, 40, 'magic', { status: { id: 'chill', buildup: 50 } })], 'line(30,420) 40 Magic, Chill 50.', 'magic'),
+  B('fireball', 'Fireball', 14, 0.6, 6, 18, [dmg(proj(520, 10, { onImpact: { kind: 'circle', r: 100, anchor: 'point', persist: { hazard: 'firePuddle', durationS: 2 }, vfx: 'fire_burst' } }), 48, 'fire', { status: { id: 'burn', buildup: 50 } })], 'A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s.', 'fire'),
   B('blink', 'Blink', 12, 0.1, 10, 10, [{ op: 'teleport', distance: 240, toward: 'aim' }], 'Teleport 240 px toward the cursor. Not i-frames: it escapes Piercing areas if you land outside them.'),
-  B('chain_lightning', 'Chain Lightning', 16, 0.5, 7, 18, [{ op: 'chain', jumps: 4, r: 180, falloff: 0.15, hit: dmg({ kind: 'circle', r: 10, anchor: 'target' }, 36, 'magic', { status: { id: 'shock', buildup: 40 } }) }], '36 Magic lightning that chains to 4 more enemies within 180 px (−15% per jump), Shock 40.', 'magic'),
+  B('chain_lightning', 'Chain Lightning', 16, 0.5, 7, 18, [{ op: 'chain', jumps: 4, r: 180, falloff: 0.15, hit: dmg({ kind: 'circle', r: 10, anchor: 'target', vfx: 'lightning' }, 36, 'magic', { status: { id: 'shock', buildup: 40 } }) }], '36 Magic lightning that chains to 4 more enemies within 180 px (−15% per jump), Shock 40.', 'magic'),
   B(
     'void_rift',
     'Void Rift',
@@ -45,7 +45,7 @@ const BRAIN: SpellDef[] = [
     0.7,
     9,
     22,
-    [{ op: 'zone', pattern: { kind: 'circle', r: 120, anchor: 'aim' }, durationS: 4, tickS: 0.5, hazard: 'voidRift', slowPct: 0.2, enemiesOnly: true, tick: [dmg({ kind: 'circle', r: 10, anchor: 'target' }, 12, 'void')] }],
+    [{ op: 'zone', pattern: { kind: 'circle', r: 120, anchor: 'aim' }, durationS: 4, tickS: 0.5, hazard: 'voidRift', slowPct: 0.2, enemiesOnly: true, tick: [dmg({ kind: 'circle', r: 10, anchor: 'target', vfx: 'tick' }, 12, 'void')] }],
     'circle(120) at the cursor for 4 s: 12 Void per 0.5 s, enemies inside −20% speed.',
     'void',
   ),
@@ -56,11 +56,11 @@ const BRAIN: SpellDef[] = [
     0.6,
     12,
     22,
-    [{ op: 'zone', pattern: { kind: 'circle', r: 160, anchor: 'aim' }, durationS: 3, tickS: 0.5, hazard: 'gravityWell', enemiesOnly: true, tick: [], burst: dmg({ kind: 'circle', r: 160, anchor: 'point' }, 50, 'void') }],
+    [{ op: 'zone', pattern: { kind: 'circle', r: 160, anchor: 'aim' }, durationS: 3, tickS: 0.5, hazard: 'gravityWell', enemiesOnly: true, tick: [], burst: dmg({ kind: 'circle', r: 160, anchor: 'point', vfx: 'void_implode' }, 50, 'void') }],
     'circle(160) for 3 s pulling non-bosses to its centre (bosses −20% speed), then a 50 Void burst.',
     'void',
   ),
-  B('arcane_beam', 'Arcane Beam', 22, 0.1, 11, 30, [{ op: 'channel', durationS: 2, tickS: 0.2, moveSpeedPct: 0.4, followAim: true, tick: [dmg({ kind: 'line', w: 52, l: 700, anchor: 'self' }, 18, 'void')] }], 'Channel 2 s: a line(52,700) beam that follows the cursor, 18 per 0.2 s; walk at 40%.', 'void'),
+  B('arcane_beam', 'Arcane Beam', 22, 0.1, 11, 30, [{ op: 'channel', durationS: 2, tickS: 0.2, moveSpeedPct: 0.4, followAim: true, tick: [dmg({ kind: 'line', w: 52, l: 700, anchor: 'self', vfx: 'arcane_beam' }, 18, 'void')] }], 'Channel 2 s: a line(52,700) beam that follows the cursor, 18 per 0.2 s; walk at 40%.', 'void'),
   B('mirror_images', 'Mirror Images', 24, 0.5, 18, 20, [{ op: 'decoy', count: 2, durationS: 6, tauntR: 250, illusion: true }], 'Two decoys for 6 s that pull enemies within 250 px.'),
   B(
     'time_dilation',
@@ -72,9 +72,9 @@ const BRAIN: SpellDef[] = [
     [{ op: 'zone', pattern: { kind: 'circle', r: 200, anchor: 'aim' }, durationS: 5, tickS: 0.25, hazard: 'timeDilation', slowPct: 0.4, enemiesOnly: true, tick: [] }],
     'circle(200) at the cursor for 5 s: enemies inside act at 60% speed (bosses 80%).',
   ),
-  B('meteor', 'Meteor', 30, 0.8, 16, 34, [dmg({ kind: 'circle', r: 170, anchor: 'aim' }, 160, 'fire', { telegraphS: 1.5, status: { id: 'burn', buildup: 100 }, knockback: 120 })], 'circle(170) at the cursor, lands after 1.5 s: 160 Fire, Burn 100, knockback.', 'fire'),
+  B('meteor', 'Meteor', 30, 0.8, 16, 34, [dmg({ kind: 'circle', r: 170, anchor: 'aim', vfx: 'meteor' }, 160, 'fire', { telegraphS: 1.5, status: { id: 'burn', buildup: 100 }, knockback: 120 })], 'circle(170) at the cursor, lands after 1.5 s: 160 Fire, Burn 100, knockback.', 'fire'),
   B('overload', 'Overload', 26, 0.3, 30, 10, [{ op: 'modifyNext', count: 3, windowS: 8, mods: { powerPct: 0.5, noCooldown: true }, what: 'spell' }], 'Your next 3 spells within 8 s: +50% power and no cooldown.'),
-  B('comet_barrage', 'Comet Barrage', 35, 1.0, 22, 40, [dmg({ kind: 'randomCircles', n: 8, r: 70, within: 260, anchor: 'aim', overS: 2 }, 44, 'fire', { telegraphS: 0.6, status: { id: 'burn', buildup: 30 } })], '8 comets within 260 px of the cursor over 2 s, 44 each, Burn 30.', 'fire'),
+  B('comet_barrage', 'Comet Barrage', 35, 1.0, 22, 40, [dmg({ kind: 'randomCircles', n: 8, r: 70, within: 260, anchor: 'aim', overS: 2, vfx: 'meteor' }, 44, 'fire', { telegraphS: 0.6, status: { id: 'burn', buildup: 30 } })], '8 comets within 260 px of the cursor over 2 s, 44 each, Burn 30.', 'fire'),
 ];
 
 const PRAYER: SpellDef[] = [
@@ -89,14 +89,14 @@ const PRAYER: SpellDef[] = [
     12,
     [
       { op: 'cleanse', what: ['statuses', 'controls'], target: 'party', r: 140 },
-      dmg({ kind: 'circle', r: 140, anchor: 'self' }, 30, 'holy', { onlyUndead: true }),
+      dmg({ kind: 'circle', r: 140, anchor: 'self', vfx: 'holy_nova' }, 30, 'holy', { onlyUndead: true }),
     ],
     'You and allies within 140 px: clear all statuses; undead and void within 140 px take 30 Holy.',
     'holy',
   ),
   { ...P('bless_weapon', 'Bless Weapon', 12, 0.6, 25, 14, [{ op: 'buff', stat: 'holyConvertPct', amount: 0.2, durationS: 20, id: 'bless' }], '20 s: your weapon deals +20% as Holy; undead and void take +15% more.', 'holy'), weaponBuff: true },
   P('regen_aura', 'Regen Aura', 12, 0.8, 36, 18, [{ op: 'zone', pattern: { kind: 'circle', r: 180, anchor: 'self' }, durationS: 50, tickS: 1, hazard: 'regenAura', follow: true, alliesOnly: true, tick: [], allyTick: [{ op: 'heal', pct: 0.003, target: 'target', spell: true }] }], 'circle(180) around you for 50 s: allies inside heal 0.3% per second.'),
-  P('sunray', 'Sunray', 14, 0.5, 6, 14, [dmg({ kind: 'line', w: 60, l: 450, anchor: 'self' }, 36, 'holy'), { op: 'reveal', r: 450, durationS: 4 }], 'line(60,450) 36 Holy, reveals hidden and invisible enemies for 4 s.', 'holy'),
+  P('sunray', 'Sunray', 14, 0.5, 6, 14, [dmg({ kind: 'line', w: 60, l: 450, anchor: 'self', vfx: 'sunbeam' }, 36, 'holy'), { op: 'reveal', r: 450, durationS: 4 }], 'line(60,450) 36 Holy, reveals hidden and invisible enemies for 4 s.', 'holy'),
   P(
     'ward_of_steel',
     'Ward of Steel',

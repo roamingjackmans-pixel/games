@@ -82,6 +82,8 @@ export interface PatternCommon {
   parryable?: boolean;
   /** extra telegraph time added on top of the attack windup for this pattern */
   delayS?: number;
+  /** render only: the animation drawn where this area lands (a VfxId, src/render/skillFx.ts); none = the plain burst */
+  vfx?: string;
 }
 
 export type PatternDef = PatternCommon &

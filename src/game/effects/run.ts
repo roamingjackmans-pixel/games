@@ -552,7 +552,9 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         }
         if (!best) break;
         hit.add(best.id);
-        w.fx('line', fx, fy, { a: Math.atan2(best.y - fy, best.x - fx), r: dist(fx, fy, best.x, best.y), color: '#ffe14a' });
+        // each jump draws its hit pattern's animation (a lightning bolt) between the two bodies
+        const v = e.hit.op === 'damage' ? e.hit.pattern.vfx : undefined;
+        w.fx('line', fx, fy, { a: Math.atan2(best.y - fy, best.x - fx), r: dist(fx, fy, best.x, best.y), color: '#ffe14a', ...(v ? { v, x2: 12, el: e.hit.op === 'damage' ? e.hit.type : 'magic' } : {}) });
         if (e.hit.op === 'damage') {
           const spec = damageSpec(w, e.hit, { ...ctx, powerMult: ctx.powerMult * k }, src);
           if (best.en) hitEnemy(w, src ?? null, best, spec, fx, fy);

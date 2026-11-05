@@ -399,6 +399,8 @@ export interface TeleC {
   slowable: number;
   /** the attack's damage type: its ELEMENTS glow accents the telegraph's sparks and cracks (render only) */
   dmgType?: DamageType;
+  /** the pattern's animation id (PatternCommon.vfx): its impact draws that instead of the plain burst (render only) */
+  vfx?: string;
 }
 
 export interface HazardC {
@@ -501,9 +503,25 @@ export interface Entity {
   anim: AnimC;
 }
 
+/** A cosmetic fx event's optional fields. With `v` (a pattern's vfx id) the view draws that animation over the shape. */
+export interface FxExtra {
+  a?: number;
+  color?: string;
+  n?: number;
+  r?: number;
+  x2?: number;
+  y2?: number;
+  /** animation id (PatternCommon.vfx) */
+  v?: string;
+  /** the attack's damage type (tints the animation) */
+  el?: DamageType;
+  /** how long the area stays live, s (a beam tick's length) */
+  d?: number;
+}
+
 export type GameEvent =
   | { t: 'sfx'; id: string; x?: number; vol?: number; rate?: number }
-  | { t: 'fx'; kind: string; x: number; y: number; a?: number; color?: string; n?: number; r?: number; x2?: number; y2?: number }
+  | ({ t: 'fx'; kind: string; x: number; y: number } & FxExtra)
   | { t: 'dmg'; x: number; y: number; amount: number; type: DamageType; crit: boolean; toPlayer: boolean; heal?: boolean; targetId?: number; affinity?: 'weak' | 'resist'; src?: number }
   | { t: 'shake'; amount: number }
   | { t: 'hitstop'; ms: number; ids: number[] }
@@ -714,7 +732,7 @@ export class World {
     this.events.push(ev);
   }
 
-  fx(kind: string, x: number, y: number, extra: { a?: number; color?: string; n?: number; r?: number; x2?: number; y2?: number } = {}): void {
+  fx(kind: string, x: number, y: number, extra: FxExtra = {}): void {
     this.events.push({ t: 'fx', kind, x, y, ...extra });
   }
 

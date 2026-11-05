@@ -14,6 +14,7 @@ import { drawAmbience } from './ambience';
 import { drawMovingFloors } from './movingFloor';
 import { drawAttackIcon, drawTelegraph } from './telegraphs';
 import { clearTelegraphEchoes, drawTelegraphEchoes, hasTelegraphEchoes } from './telegraphFx';
+import { clearSkillFx, drawSkillFxGround, drawSkillFxTop, spawnSkillFx } from './skillFx';
 import { ROOM_Y0 } from '../game/room';
 import { debugHitboxes, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
@@ -136,6 +137,8 @@ export class WorldView {
   private fx(ev: Extract<GameEvent, { t: 'fx' }>): void {
     const p = this.particles;
     const c = ev.color ?? '#ffffff';
+    // a skill or spell that names its animation draws that over its true area instead of a plain burst
+    if (ev.v && spawnSkillFx(ev, performance.now() / 1000)) return;
     switch (ev.kind) {
       case 'hit':
         p.burst(ev.x, ev.y, ev.n ?? 7, 260, 0.3, 2.5, c, 'spark', ev.a ?? 0, 0.9);
@@ -252,6 +255,7 @@ export class WorldView {
     if (w.room !== this.echoRoom) {
       this.echoRoom = w.room;
       clearTelegraphEchoes();
+      clearSkillFx();
     }
     let markers = false;
     for (const e of w.entities.values()) if (e.type === 'telegraph' && !e.removed) {
@@ -259,6 +263,8 @@ export class WorldView {
       markers = true;
     }
     drawTelegraphEchoes(ctx, now, st.video.highContrastTelegraphs);
+    // skill and spell animations: their floor parts (scars, cracks, scorch) under the bodies
+    drawSkillFxGround(ctx, rt);
     // pillars, props, trees and inner walls sit above the attack markers, so they never vanish under one (D129)
     // only needed while an attack marker (or its fading echo) could be under them (D153)
     if (markers || hasTelegraphEchoes()) drawRoomObstacles(ctx);
@@ -316,6 +322,8 @@ export class WorldView {
         this.particles.spawn(e.x + (Math.random() - 0.5) * e.radius * 1.6, e.y - e.radius * 0.3 + (Math.random() - 0.5) * e.radius, (Math.random() - 0.5) * 20, vy, 0.7, 2.5, color, 'glow', { drag: 1 });
       }
     }
+    // skill and spell animations over the bodies (and meteors / arrows about to land on their telegraphs)
+    drawSkillFxTop(ctx, rt, this.particles, w.entities.values(), now);
     this.particles.draw(ctx);
     drawAmbience(ctx, realDt); // zone particles + vignette (render/ambience.ts)
     if (overlays.hitbox) debugHitboxes(ctx, w);
