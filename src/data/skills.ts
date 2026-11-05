@@ -196,7 +196,7 @@ const LIST: SkillDef[] = [
   // Dawn Glaive (Slicey + Prayer, Holy)
   S('glaive_sunrise', 'dawn_glaive', 0, 'Sunrise', 9, 22, [hit(arc(180, 160), 1.8, { knockback: 120 })], 'A rising half-moon arc(180°,160) ×1.8 that knocks foes back.', { castMs: 300, castHyperArmor: true }),
   S('glaive_halo_throw', 'dawn_glaive', 1, 'Halo Throw', 10, 18, [{ op: 'damage', pattern: { kind: 'projectile', speed: 520, r: 18, pierce: 99, returns: true, range: 420, drawId: 'p_crescent' }, mult: 1.2, type: 'holy' }], 'Throw the blade like a halo: ×1.2 Holy out and ×1.2 back.', { castMs: 180 }),
-  S('glaive_judgement_ray', 'dawn_glaive', 2, 'Judgement Ray', 18, 28, [hit(thrust(44, 700), 2.4, { telegraphS: 0.5 })], 'Point at the problem: after 0.5 s a ray of dawn line(44,700) ×2.4 Holy.', { castMs: 200 }),
+  S('glaive_judgement_ray', 'dawn_glaive', 2, 'Judgement Ray', 18, 28, [hit(thrust(88, 700), 2.4, { telegraphS: 0.5 })], 'Point at the problem: after 0.5 s a ray of dawn line(88,700) ×2.4 Holy.', { castMs: 200 }),
 ];
 
 export const SKILLS: Record<string, SkillDef> = Object.fromEntries(LIST.map((s) => [s.id, s]));

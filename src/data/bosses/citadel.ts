@@ -27,7 +27,7 @@ const laserSweep = (turrets: number): AttackDef => ({
   kind: 'pierce',
   // a corner turret's beam starts on the target and turns a full circle in 3 s (the telegraph shows the
   // turret's start line, the arc and the direction); phase 2: two opposite corners, turning opposite ways
-  pattern: { kind: 'sweep', angleDeg: 360, r: 'room', durationS: 3, anchor: 'corner', tickS: 0.25, w: 30, beamLine: true, gaps: 2, ...(turrets > 1 ? { count: turrets, opposite: true } : {}) },
+  pattern: { kind: 'sweep', angleDeg: 360, r: 'room', durationS: 3, anchor: 'corner', tickS: 0.25, w: 60, beamLine: true, gaps: 2, ...(turrets > 1 ? { count: turrets, opposite: true } : {}) },
   windupMs: 1000,
   recoverMs: 700,
   dmgMult: 1.0,

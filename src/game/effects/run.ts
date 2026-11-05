@@ -111,7 +111,7 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
 }
 
 /** How much bigger a player's spell projectiles are than their listed radius (D180). */
-export const SPELL_PROJECTILE_SCALE = 2;
+export const SPELL_PROJECTILE_SCALE = 4; // D204: twice D180's ×2
 
 function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: EffectCtx, src: Entity | undefined): void {
   const spec = damageSpec(w, e, ctx, src);

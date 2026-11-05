@@ -39,8 +39,40 @@ describe('projectiles and obstacles (D180)', () => {
     expect(shot.x).toBeGreaterThan(22 * TILE);
   });
 
-  it("a player's spell projectiles fly twice their listed size", () => {
-    expect(SPELL_PROJECTILE_SCALE).toBe(2);
+  it("a player's spell projectiles fly four times their listed size (D180 doubled them, D204 again)", () => {
+    expect(SPELL_PROJECTILE_SCALE).toBe(4);
+  });
+
+  it('every beam is twice as wide as it was (D204)', async () => {
+    const { SPELLS } = await import('../../src/data/spells');
+    const { SKILLS } = await import('../../src/data/skills');
+    const { BOSSES } = await import('../../src/data/bosses');
+    const { ENEMIES: EN } = await import('../../src/data/enemies');
+    const widthIn = (o: unknown): number[] => {
+      const out: number[] = [];
+      const walk = (x: unknown): void => {
+        if (!x || typeof x !== 'object') return;
+        const r = x as Record<string, unknown>;
+        if ((r.kind === 'line' || r.kind === 'beam' || r.beamLine) && typeof r.w === 'number') out.push(r.w);
+        for (const v of Object.values(r)) walk(v);
+      };
+      walk(o);
+      return out;
+    };
+    expect(widthIn(SPELLS.arcane_beam)).toContain(52);
+    expect(widthIn(SPELLS.sunray)).toContain(60);
+    expect(widthIn(SKILLS.glaive_judgement_ray)).toContain(88);
+    // enemy beams (sweeping beams and the laser sweeps), wherever they sit in a boss's phases
+    const enemyBeams: number[] = [];
+    const walkBeams = (x: unknown): void => {
+      if (!x || typeof x !== 'object') return;
+      const r = x as Record<string, unknown>;
+      if ((r.kind === 'beam' || r.beamLine === true) && typeof r.w === 'number') enemyBeams.push(r.w);
+      for (const v of Object.values(r)) walkBeams(v);
+    };
+    walkBeams([BOSSES, EN]);
+    expect(enemyBeams.length).toBeGreaterThanOrEqual(4);
+    for (const w of enemyBeams) expect(w).toBeGreaterThanOrEqual(52);
   });
 });
 

@@ -110,7 +110,7 @@ const gazeBeams: AttackDef = {
   name: 'Gaze Beams',
   kind: 'pierce',
   // two beams from him, rotating opposite ways for 4 s (the half-plane behind both is always clear)
-  pattern: { kind: 'beam', w: 30, l: 600, turnRateDeg: 35, durationS: 4, tickS: 0.25, anchor: 'self', count: 2, opposite: true }, // D172: 600 px (was the whole room)
+  pattern: { kind: 'beam', w: 60, l: 600, turnRateDeg: 35, durationS: 4, tickS: 0.25, anchor: 'self', count: 2, opposite: true }, // D172: 600 px (was the whole room); D204: twice as wide (was 30)
   windupMs: 1000,
   activeMs: 4000,
   recoverMs: 800,
