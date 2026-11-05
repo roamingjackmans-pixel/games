@@ -97,6 +97,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   let reinforceAsk: { itemId: string } | null = null;
   /** the respec question is open (D238) */
   let respecAsk = false;
+  /** selling a bag item with gems in it asks first (D240) */
+  let sellAsk: string | null = null;
   /** level-up points planned but not yet spent (D142) */
   let pending: PendingPoints = {};
   /** what to do after the Lock in / Discard question, while it is open */
@@ -115,8 +117,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     if (e.code !== 'Escape') return;
     // leaving with planned level-up points asks first (D142); Escape on that question means keep editing
-    const askLeave = !fuse && !confirmSell && !confirmLeave && !reinforceAsk && !respecAsk && pendingCount() > 0;
-    if (!fuse && !confirmSell && !confirmLeave && !reinforceAsk && !respecAsk && !askLeave) return;
+    const askLeave = !fuse && !confirmSell && !confirmLeave && !reinforceAsk && !respecAsk && !sellAsk && pendingCount() > 0;
+    if (!fuse && !confirmSell && !confirmLeave && !reinforceAsk && !respecAsk && !sellAsk && !askLeave) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     if (askLeave) confirmLeave = () => v.close();
@@ -125,6 +127,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     confirmSell = null;
     reinforceAsk = null;
     respecAsk = false;
+    sellAsk = null;
     render();
   };
   window.addEventListener('keydown', onKey, true);
@@ -760,6 +763,48 @@ export function openBonfire(v: BonfireView): HTMLElement {
     return box;
   }
 
+  /**
+   * Selling a bag item with gems in it (D240): are you sure? Back (first, with the focus), keep the gems (they go to
+   * the loose gems and the item sells alone), or sell it with them.
+   */
+  function sellAskDialog(): HTMLElement | null {
+    if (!sellAsk) return null;
+    const c = v.char;
+    const it = c.bag.find((x) => x.id === sellAsk);
+    const gems = it ? it.sockets.filter((g): g is Gem => !!g) : [];
+    if (!it || !gems.length) {
+      sellAsk = null;
+      return null;
+    }
+    const back = btn('Back', () => {
+      sellAsk = null;
+      render();
+    });
+    back.setAttribute('data-testid', 'sell-ask-back');
+    const keep = btn(['Keep the gems, sell for ', glowenEl(itemSellValue({ ...it, sockets: [] }), '+')], () => {
+      sellAsk = null;
+      it.sockets.forEach((g, i) => {
+        if (g) v.ops.unsocket(it.id, i);
+      });
+      say(v.ops.sellItem(it.id));
+    }, 'primary');
+    keep.setAttribute('data-testid', 'sell-ask-keep');
+    const all = btn(['Sell with the gems for ', glowenEl(itemSellValue(it), '+')], () => {
+      sellAsk = null;
+      say(v.ops.sellItem(it.id));
+    }, 'danger');
+    all.setAttribute('data-testid', 'sell-ask-all');
+    return h(
+      'div',
+      { class: 'panel col', style: 'width:520px;gap:10px', 'data-testid': 'sell-ask-dialog' },
+      h('h2', { style: 'margin:0' }, 'Sell it with its gems?'),
+      h('div', { class: `r-${it.rarity}`, style: 'font-weight:600' }, plusName(it)),
+      h('div', null, `It has ${gems.length} gem${gems.length === 1 ? '' : 's'} socketed. Sold with it, ${gems.length === 1 ? 'that gem is' : 'they are'} gone for good.`),
+      h('div', { class: 'col', style: 'gap:2px' }, ...gems.map((g) => h('div', { class: 'row small', style: 'gap:6px;align-items:center' }, gemIcon(g, 18), h('span', null, `${gemKindLabel(g)} · ${gemTitle(g)}`)))),
+      h('div', { class: 'row wrap' }, back, keep, all),
+    );
+  }
+
   /** "Sell all": what goes, for how much, and a confirm. */
   function sellAllDialog(): HTMLElement | null {
     if (!confirmSell) return null;
@@ -825,7 +870,17 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     sell.appendChild(allRow);
     for (const it of c.bag) {
-      const row = h('div', { class: 'row' }, itemIcon(it, 24), h('div', { class: `r-${it.rarity}`, style: 'flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' }, it.name), btn(glowenEl(itemSellValue(it), '+'), () => say(v.ops.sellItem(it.id)), 'tiny'));
+      const gems = it.sockets.filter((g) => !!g).length;
+      const sb = btn([glowenEl(itemSellValue(it), '+'), gems ? h('span', { class: 'small', style: 'margin-left:4px', title: `${gems} gem${gems === 1 ? '' : 's'} socketed` }, '◆'.repeat(gems)) : null], () => {
+        // an item with gems in it asks first (D240); the rest sell at once
+        if (gems) {
+          sellAsk = it.id;
+          render();
+        } else say(v.ops.sellItem(it.id));
+      }, 'tiny');
+      sb.setAttribute('data-testid', `sell-${it.id}`);
+      sb.setAttribute('data-focus', `sell-${it.id}`);
+      const row = h('div', { class: 'row' }, itemIcon(it, 24), h('div', { class: `r-${it.rarity}`, style: 'flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' }, it.name), sb);
       hoverTip(row, () => itemTooltip(it, c, 'auto'));
       sell.appendChild(row);
     }
@@ -872,6 +927,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
         fuse = null;
         confirmSell = null;
         respecAsk = false;
+        sellAsk = null;
         render();
       });
       if (tab === d.key) b.classList.add('on');
@@ -890,7 +946,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const content = h('div', { style: 'flex:1;overflow:auto', 'data-focus-group': `tab-${tab}` });
     defs.find((d) => d.key === tab)?.fn?.(content);
     panel.appendChild(content);
-    const box = confirmLeave ? leaveDialog() : tab === 'level' ? respecDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : tab === 'reinforce' ? reinforceDialog() : null;
+    const box = confirmLeave ? leaveDialog() : tab === 'level' ? respecDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? (sellAskDialog() ?? sellAllDialog()) : tab === 'reinforce' ? reinforceDialog() : null;
     if (box) {
       // a layer of its own so the pad's focus stays inside the dialog
       modal = h('div', { class: 'layer dim', style: 'z-index:40' }, box);
