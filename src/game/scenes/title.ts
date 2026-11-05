@@ -321,7 +321,8 @@ export class TitleScene implements Scene {
     let ap: Appearance = defaultAppearance(classId);
     /** once the player touches the appearance, a class change keeps it */
     let custom = false;
-    const name = h('input', { value: app().settings.net.name || 'Joe', maxlength: '16', 'data-testid': 'create-name', style: 'flex:1;min-width:0' });
+    // starts empty (D200): no name carried over from the co-op name or a previous character; left blank, it is Joe
+    const name = h('input', { value: '', placeholder: 'blank = Joe', maxlength: '16', 'data-testid': 'create-name', style: 'flex:1;min-width:0' });
     const seed = h('input', { placeholder: 'blank = random', maxlength: '24', 'data-testid': 'create-seed' });
     const canvas = h('canvas', { width: 248, height: 250, style: 'background:#14121a;border:2px solid #3a3447;border-radius:8px;display:block;cursor:grab', title: 'Drag to turn' });
     // click and drag left or right to turn the character (D125)
