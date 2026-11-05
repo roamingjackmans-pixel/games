@@ -41,3 +41,10 @@ export const ZONE_SHARD_FACTOR: Record<number, number> = { 1: 0.46, 2: 0.35, 3: 
 export function zoneShardFactor(zone: number): number {
   return ZONE_SHARD_FACTOR[Math.max(1, Math.min(8, zone))] ?? 1;
 }
+
+/** Extra damage from everything in a zone, bosses too, in every cycle (D231): zone 4 +10%, 5 and 6 +15%, 7 +35%. */
+export const ZONE_DMG_FACTOR: Record<number, number> = { 4: 1.1, 5: 1.15, 6: 1.15, 7: 1.35 };
+
+export function zoneDmgFactor(zone: number): number {
+  return ZONE_DMG_FACTOR[Math.max(1, Math.min(8, zone))] ?? 1;
+}

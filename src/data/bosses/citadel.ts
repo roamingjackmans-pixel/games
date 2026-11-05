@@ -138,18 +138,21 @@ export const ARCHMAGISTER_TOCK: BossDef = {
   role: 'boss',
   radius: 48,
   speed: 100,
+  // D233: 50% more than the standard boss (3600)
+  baseHp: 5400,
   resist: {},
   // the floating gear platform: hovers at range, is not carried by the floor ring
   moveStyle: 'hover',
   preferredRange: 300,
   hyperArmor: false,
   phases: [
-    { untilHpPct: 50, speedMult: 1, dmgMult: 1, summons: [turrets], attacks: [arcaneVolley, laserSweep(1), timeBubble(6), gearDash, tinReinforcements] },
+    // D233: phase 1 hits 20% harder, phase 2 starts at 40% and hits 35% harder than it did (1.25 → 1.69)
+    { untilHpPct: 40, speedMult: 1, dmgMult: 1.2, summons: [turrets], attacks: [arcaneVolley, laserSweep(1), timeBubble(6), gearDash, tinReinforcements] },
     {
       untilHpPct: 0,
       name: 'The clock runs backward',
       speedMult: 1.2,
-      dmgMult: 1.25,
+      dmgMult: 1.6875,
       arena: [{ op: 'reverseFloor' }],
       summons: [turrets],
       attacks: [arcaneVolley, laserSweep(2), timeBubble(10), gearDash, tinReinforcements, rewindVolley, overclock],

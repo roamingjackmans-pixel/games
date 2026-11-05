@@ -291,7 +291,7 @@ describe('Archmagister Tock', () => {
     expect(bigHit(s, t, 500)).toBe(0);
     expect(t.hp!.hp).toBe(hp);
   });
-  it('fights a god-mode player for a minute in both phases, changing phase at exactly 50%', () => {
+  it('fights a god-mode player for a minute in both phases, changing phase at exactly 40% (D233; was 50%)', () => {
     const s = session(7);
     s.w.god = true;
     s.enterRoom(s.layout.bossId, 's');
@@ -300,7 +300,7 @@ describe('Archmagister Tock', () => {
     expect(b.en!.phase).toBe(0);
     const max = b.hp!.max;
     bigHit(s, b, max * 10);
-    expect(b.hp!.hp).toBe(max * 0.5);
+    expect(b.hp!.hp).toBe(max * 0.4);
     expect(b.en!.phase).toBe(1);
     expect(b.en!.phaseAttacks.some((a) => a.id === 'tock_rewind_volley')).toBe(true);
     run(s, 40);

@@ -6,7 +6,7 @@ import { CONSUMABLE_IDS, CONSUMABLES } from '../../data/consumables';
 import { gemDropLevel, gemKindLabel, gemTitle } from '../../data/gems';
 import { itemLevelFor, gemSellTotal } from '../combat/formulas';
 import { generateItem, randomGem } from '../items/generate';
-import { itemSellValue } from '../items/inventory';
+import { itemSellValue, uniqueItemId } from '../items/inventory';
 import type { Character, GaryStockEntry, WorldState } from '../types';
 
 export const GARY_HITS_TO_LEAVE = 3;
@@ -68,7 +68,7 @@ export function buyFromGary(c: Character, e: GaryStockEntry): { ok: boolean; msg
   if ((e.kind === 'item' || e.kind === 'ring') && c.bag.length >= 60) return { ok: false, msg: 'Your bag is full.' };
   c.glowen -= e.price;
   e.sold = true;
-  if ((e.kind === 'item' || e.kind === 'ring') && e.item) c.bag.push(e.item);
+  if ((e.kind === 'item' || e.kind === 'ring') && e.item) c.bag.push(uniqueItemId(c, e.item));
   else if (e.kind === 'gem' && e.gem) c.gems.push({ perks: e.gem.perks.map((p) => ({ ...p })) });
   else if (e.kind === 'consumable' && e.consumable) {
     c.consumables[e.consumable] = Math.min(10, (c.consumables[e.consumable] ?? 0) + (e.count ?? 1));

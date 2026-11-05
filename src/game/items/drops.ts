@@ -20,7 +20,8 @@ export interface DropContext {
 }
 
 function lootRng(c: DropContext, playerId: string, tag = ''): Rng {
-  return stream(c.seed, `loot:${playerId}:${tag}${c.w.nextLootIndex(playerId)}`);
+  // the zone and cycle in the label: the counter starts again with every world, so zone 2 rolled zone 1's drops (D232)
+  return stream(c.seed, `loot:${playerId}:z${c.zone}c${c.cycle}:${tag}${c.w.nextLootIndex(playerId)}`);
 }
 
 function scatter(rng: Rng, x: number, y: number, r = 34): [number, number] {

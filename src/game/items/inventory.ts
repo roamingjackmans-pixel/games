@@ -5,6 +5,7 @@ import { CONSUMABLES, MAX_CONSUMABLE } from '../../data/consumables';
 import { gearSellValue, gemFuseCost, gemSellTotal, gemUpgradeCost, levelCost } from '../combat/formulas';
 import { canRaise, levelFromStats, respecStats } from '../player/character';
 import type { Character, ConsumableId, Gem, GemPerk, GemTier, Item, Rarity, StatId } from '../types';
+import { newId } from './make';
 
 export const BAG_SIZE = 60;
 export type EquipSlot = keyof Character['equipment'] | 'altMain' | 'altOff';
@@ -90,6 +91,30 @@ export function unequip(c: Character, slot: EquipSlot): OpResult {
 export function allItems(c: Character): Item[] {
   const e = c.equipment;
   return [...WORN_SLOTS.map((s) => e[s]), c.altMain, c.altOff, ...c.bag].filter((x): x is Item => !!x);
+}
+
+/**
+ * Give an item coming into the character a fresh id if something it carries already has that one (D232). Drops are
+ * rolled from seeded streams that repeat between visits, so two different items could be born with one id, and every
+ * menu that looks an item up by id (the gem bench, reinforce, equip) then found the wrong one.
+ */
+export function uniqueItemId(c: Character, item: Item): Item {
+  if (allItems(c).some((i) => i !== item && i.id === item.id)) item.id = newId();
+  return item;
+}
+
+/** Repair a character whose items share ids (saves from before D232): every later copy gets a new id. */
+export function dedupeItemIds(c: Character): number {
+  const seen = new Set<string>();
+  let fixed = 0;
+  for (const it of allItems(c)) {
+    if (seen.has(it.id)) {
+      it.id = newId();
+      fixed++;
+    }
+    seen.add(it.id);
+  }
+  return fixed;
 }
 
 /** Where an item is (D168): the slot it is worn in, or the bag. */
@@ -306,7 +331,7 @@ export function buyItem(c: Character, item: Item, price: number): OpResult {
   if (c.bag.length >= BAG_SIZE) return no('Your bag is full.');
   if (c.glowen < price) return no(`Needs ${price} Glowen.`);
   c.glowen -= price;
-  c.bag.push(item);
+  c.bag.push(uniqueItemId(c, item));
   return ok(`Bought ${item.name}.`);
 }
 

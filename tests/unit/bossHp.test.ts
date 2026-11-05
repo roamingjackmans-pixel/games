@@ -11,7 +11,7 @@ describe('boss HP (D187)', () => {
     expect(ROLE_STATS.boss.hp).toBe(1800 * 2);
     expect(Object.keys(BOSSES).length).toBe(8);
     for (const b of Object.values(BOSSES)) {
-      const want = b.id === 'the_landlord' ? 1800 * 2.5 : b.id === 'vexthorn' ? 1800 * 2 * 1.15 : b.id === 'saint_aurelia' ? 5544 : 1800 * 2; // D217: Vexthorn +15%; D224: Aurelia +40%
+      const want = b.id === 'the_landlord' ? 1800 * 2.5 : b.id === 'vexthorn' ? 1800 * 2 * 1.15 : b.id === 'saint_aurelia' ? 5544 : b.id === 'archmagister_tock' ? 5400 : 1800 * 2; // D217: Vexthorn +15%; D224: Aurelia +40%; D233: Tock +50%
       expect(b.baseHp ?? ROLE_STATS.boss.hp, b.id).toBe(want);
     }
   });

@@ -37,6 +37,7 @@ import { stats } from './stats';
 import { startPhaseSummons, tickPhaseSummons } from './boss/summons';
 import { spawnHazard } from './systems/hazards';
 import type { BossDef, Character, EliteAffix, SaveFile } from './types';
+import { uniqueItemId } from './items/inventory';
 
 export interface SessionListener {
   roomEntered?(node: RoomNode, zoneChanged: boolean): void;
@@ -970,7 +971,7 @@ export class GameSession {
     this.listener.autosave?.('pickup');
     if (pk.kind === 'item' && pk.item) {
       if (c.bag.length >= 60) return false;
-      c.bag.push(pk.item);
+      c.bag.push(uniqueItemId(c, pk.item));
       this.w.sfx(`loot${pk.rarity[0]!.toUpperCase()}${pk.rarity.slice(1)}`, e.x);
       this.w.emit({ t: 'msg', text: `${pk.item.name}`, forPlayer: p.pl!.playerId, color: rarityHex(pk.rarity) });
       return true;

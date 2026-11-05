@@ -3,7 +3,7 @@ import { CONSUMABLES } from '../../data/consumables';
 import { renderBestiary } from '../bestiary';
 import { CASTING_TOOLS } from '../../data/castingTools';
 import { statBoosts } from '../../data/classes';
-import { ESSENCES, MAX_REINFORCE, essenceCounts, essenceDef, plusName, reinforceMult } from '../../data/essence';
+import { ESSENCES, MAX_REINFORCE, canPayEssence, essenceCounts, essenceDef, plusName, reinforceMult } from '../../data/essence';
 import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { armorPieceDefense } from '../../data/armor';
 import { canReinforce, reinforceInfo } from '../../game/items/reinforce';
@@ -402,7 +402,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
   /** Weapons (D178): each weapon, casting tool and shield (D221) you carry, its experience bar, and raising it a rarity. */
   function weaponsTab(el: HTMLElement): void {
     const c = v.char;
-    const all = [c.equipment.main, c.equipment.off, c.altMain, ...c.bag].filter((i): i is Item => hasRarityBar(i));
+    const all = [c.equipment.main, c.equipment.off, c.altMain, c.altOff, ...c.bag].filter((i): i is Item => hasRarityBar(i));
     const list = h('div', { class: 'col', style: 'gap:6px;width:640px;max-height:540px;overflow:auto' }, h('h3', null, 'Weapons · ', glowenEl(c.glowen)));
     if (!all.length) list.appendChild(h('div', { class: 'dim-text' }, 'You carry no weapons, casting tools or shields.'));
     for (const it of all) {
@@ -440,7 +440,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       chip.title = `Tier ${d.tier}. ${d.blurb}`;
       purse.appendChild(chip);
     });
-    const all = [c.equipment.main, c.equipment.off, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && canReinforce(i));
+    const all = [c.equipment.main, c.equipment.off, c.altMain, c.altOff, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && canReinforce(i));
     const list = h('div', { class: 'col', style: 'gap:6px;width:640px;max-height:500px;overflow:auto' }, h('h3', null, 'Reinforce · ', glowenEl(c.glowen)), purse);
     if (!all.length) list.appendChild(h('div', { class: 'dim-text' }, 'You carry no weapons, shields or armour.'));
     for (const it of all) {
@@ -478,7 +478,17 @@ export function openBonfire(v: BonfireView): HTMLElement {
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, help));
   }
 
-  /** Before and after one reinforcement step (D216): damage for a weapon, block and stamina for a shield, defense for armour. */
+  /** What is missing for the next step (D232): the Essence (and where that tier drops) or the Glowen. */
+  function reinforceShortfall(c: Character, next: { tier: number; count: number; glowen: number; name: string }): string {
+    const have = essenceCounts(c);
+    if (!canPayEssence(have, next.tier, next.count)) {
+      const where = next.tier === 1 ? 'It drops from zone 4 of the first descent.' : `It drops only in New Game+${next.tier - 1}${next.tier === 5 ? ' and later' : ''}, so the first descent stops at +3.`;
+      return `You have ${have[next.tier - 1] ?? 0} × ${next.name} (Tier ${next.tier}) and nothing higher to break down. ${where}`;
+    }
+    return `Not enough Glowen: ${fmt(next.glowen)} needed, you have ${fmt(c.glowen)}.`;
+  }
+
+  /** Before and after one reinforcement step (D216):damage for a weapon, block and stamina for a shield, defense for armour. */
   function reinforceRows(it: Item, from: number, to: number): { label: string; before: string; after: string }[] {
     const c = v.char;
     const rows: { label: string; before: string; after: string }[] = [];
@@ -522,7 +532,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
   function reinforceDialog(): HTMLElement | null {
     if (!reinforceAsk) return null;
     const c = v.char;
-    const it = [c.equipment.main, c.equipment.off, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].find((x) => x?.id === reinforceAsk!.itemId);
+    const it = [c.equipment.main, c.equipment.off, c.altMain, c.altOff, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].find((x) => x?.id === reinforceAsk!.itemId);
     if (!it) {
       reinforceAsk = null;
       return null;
@@ -553,7 +563,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
       h('h2', null, 'Reinforce?'),
       h('div', { class: `r-${it.rarity}`, style: 'font-size:18px;font-weight:600' }, plusName(it), h('span', { class: 'dim-text' }, ' → '), `+${info.plus + 1}`),
       grid,
-      h('div', { class: 'row small', style: 'gap:6px;align-items:center' }, 'Costs ', h('span', { style: `color:${nd.color}` }, `${info.next.count} × ${nd.name}`), ' + ', glowenEl(info.next.glowen), h('span', { class: 'dim-text' }, ' (a higher tier pays 3:1)')),
+      h('div', { class: 'row small', style: 'gap:6px;align-items:center' }, 'Costs ', h('span', { style: `color:${nd.color}` }, `${info.next.count} × ${nd.name}`), ' + ', glowenEl(info.next.glowen), h('span', { class: 'dim-text' }, ' (one of a higher tier pays for three)')),
+      // D232: say why it cannot be done instead of only graying the button
+      info.affordable ? null : h('div', { class: 'small bad', 'data-testid': 'reinforce-why' }, reinforceShortfall(c, info.next)),
       h('div', { class: 'row' }, yes, back),
     );
   }
@@ -561,7 +573,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
   function gemsTab(el: HTMLElement): void {
     const c = v.char;
     // D227: the off hand too (a shield takes armour gems, a staff or talisman weapon gems)
-    const items = [c.equipment.main, c.equipment.off, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0 && !!socketKind(i));
+    const items = [c.equipment.main, c.equipment.off, c.altMain, c.altOff, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0 && !!socketKind(i));
     const list = h('div', { class: 'col', style: 'gap:6px;width:500px;max-height:540px;overflow:auto' }, h('h3', null, 'Socketed gear'));
     if (items.length === 0) list.appendChild(h('div', { class: 'dim-text' }, 'Nothing you carry has sockets. Rare and better gear does.'));
     // worn gear first, under its own heading and tagged with its slot, then the bag (D168)

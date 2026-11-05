@@ -5,6 +5,7 @@
 // the host replays any newer ops on top so nothing granted in flight is lost.
 import type { Character, ConsumableId, Gem, Item } from '../types';
 import { addBestiaryKill, addBestiarySeen } from '../../data/bestiary';
+import { uniqueItemId } from '../items/inventory';
 
 export type CharOp =
   | { op: 'add'; key: 'shards' | 'glowen' | 'tears' | 'bossesBeaten'; n: number }
@@ -65,7 +66,8 @@ export function applyCharOp(c: Character, o: CharOp): void {
       (c as unknown as Record<string, unknown>)[o.key] = o.v;
       break;
     case 'bag':
-      if (!c.bag.some((i) => i.id === o.item.id)) c.bag.push(o.item);
+      // a resend of the same item is ignored; a different item that happens to share its id gets a new one (D232)
+      if (!c.bag.some((i) => i.id === o.item.id && i.name === o.item.name && i.rarity === o.item.rarity && i.ilvl === o.item.ilvl)) c.bag.push(uniqueItemId(c, o.item));
       break;
     case 'gem':
       c.gems.push(o.gem);

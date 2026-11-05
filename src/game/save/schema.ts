@@ -2,6 +2,7 @@
 import type { Character, SaveFile, WorldState } from '../types';
 import { CLASS_IDS } from '../../data/classes';
 import { sanitizeAppearance } from '../../data/appearance';
+import { dedupeItemIds } from '../items/inventory';
 
 export const SAVE_VERSION = 3;
 export const SLOT_COUNT = 10;
@@ -117,7 +118,9 @@ export function normalizeSave(s: SaveFile): SaveFile {
     if (n) it.plus = n;
     else delete it.plus;
   };
-  for (const it of [...Object.values(c.equipment), c.altMain, ...c.bag]) clampPlus(it as { plus?: unknown } | null);
+  // D232: items that share an id (drops rolled from a repeated stream) each get their own
+  dedupeItemIds(c);
+  for (const it of [...Object.values(c.equipment), c.altMain, c.altOff, ...c.bag]) clampPlus(it as { plus?: unknown } | null);
   // statistics: numbers only (a hand-edited or newer file may carry anything)
   const ex = s.stats.extra as unknown;
   if (ex !== undefined) {
