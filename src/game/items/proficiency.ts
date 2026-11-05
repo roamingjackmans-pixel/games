@@ -2,28 +2,36 @@
 // active right now, and raising a weapon's rarity with Glowen once its bar is full.
 import { WEAPONS } from '../../data/weapons';
 import { CASTING_TOOLS } from '../../data/castingTools';
-import { PROF_CLASSES, RARITY_UPGRADE_COST, RARITY_XP, perkPoints, profLevel, type ProfStat } from '../../data/proficiency';
+import { SHIELDS } from '../../data/shields';
+import { PROF_CLASSES, RARITY_UPGRADE_COST, RARITY_XP, SHIELD_PROF_CLASS, perkPoints, profLevel, type ProfStat } from '../../data/proficiency';
 import { Rng } from '../../engine/rng';
 import { RARITIES, type Character, type Item, type Rarity } from '../types';
 import { findItem } from './inventory';
 import { itemName, powerSlotOf } from './generate';
 import { powersFor } from '../../data/legendaries';
 
-/** The proficiency class of an item: its weapon base, or 'staff' / 'talisman' (null: a shield, armor, a ring…). */
+/** The proficiency class of an item: its weapon base, 'staff' / 'talisman', or its shield size (null: armor, a ring…). */
 export function profClassOf(item: Item | null | undefined): string | null {
   if (!item) return null;
   if (WEAPONS[item.baseId] && PROF_CLASSES[item.baseId]) return item.baseId;
   const t = CASTING_TOOLS[item.baseId];
   if (t) return t.school === 'brain' ? 'staff' : 'talisman';
+  const s = SHIELDS[item.baseId];
+  if (s) return SHIELD_PROF_CLASS[s.size];
   return null;
 }
 
-/** What a character has out: the weapon hand's item, and a staff or talisman in the off hand (not when two-handing). */
+/** Weapons and casting tools have their own bar to raise a rarity; shields train only their class (D215). */
+export function hasRarityBar(item: Item | null | undefined): boolean {
+  return !!item && !!profClassOf(item) && !SHIELDS[item.baseId];
+}
+
+/** What a character has out: the weapon hand's item, and a staff, talisman or shield in the off hand (not when two-handing). */
 export function itemsOut(c: Character): Item[] {
   const out: Item[] = [];
   if (profClassOf(c.equipment.main)) out.push(c.equipment.main!);
   const off = c.equipment.off;
-  if (off && !c.twoHanded && CASTING_TOOLS[off.baseId]) out.push(off);
+  if (off && !c.twoHanded && (CASTING_TOOLS[off.baseId] || SHIELDS[off.baseId])) out.push(off);
   return out;
 }
 
@@ -38,6 +46,7 @@ export function profXp(c: Character, cls: string): number {
 
 /** The experience an item's bar needs at its rarity (0: legendary, the top). */
 export function itemXpCap(item: Item): number {
+  if (!hasRarityBar(item)) return 0;
   return RARITY_XP[item.rarity] ?? 0;
 }
 
@@ -71,7 +80,7 @@ export function grantKillXp(c: Character, xp: number): KillXpResult {
 
 export type ProfBonuses = Record<ProfStat, number>;
 
-const ZERO: ProfBonuses = { damage: 0, poise: 0, attackSpeed: 0, castSpeed: 0, skillCooldown: 0, spellCooldown: 0, spellPower: 0, dodge: 0, stamina: 0, reach: 0, bleed: 0, lifesteal: 0 };
+const ZERO: ProfBonuses = { damage: 0, poise: 0, attackSpeed: 0, castSpeed: 0, skillCooldown: 0, spellCooldown: 0, spellPower: 0, dodge: 0, stamina: 0, reach: 0, bleed: 0, lifesteal: 0, parryWindow: 0, blockStamina: 0, elemBlock: 0 };
 
 /** The perk totals of one class at its current level. */
 export function classBonuses(c: Character, cls: string): ProfBonuses {
@@ -100,7 +109,7 @@ function nextRarity(r: Rarity): Rarity | null {
 
 /** What raising this item would take: null when it cannot be raised at all (not a weapon or tool, or legendary). */
 export function upgradeInfo(item: Item): { to: Rarity; cost: number; xp: number; need: number; ready: boolean } | null {
-  if (!profClassOf(item)) return null;
+  if (!hasRarityBar(item)) return null;
   const to = nextRarity(item.rarity);
   const need = itemXpCap(item);
   if (!to || need <= 0) return null;

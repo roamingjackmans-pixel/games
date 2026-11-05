@@ -19,7 +19,13 @@ export type ProfStat =
   | 'stamina'
   | 'reach'
   | 'bleed'
-  | 'lifesteal';
+  | 'lifesteal'
+  /** shields (D215): seconds added to the parry window */
+  | 'parryWindow'
+  /** shields: less stamina lost per block (a fraction) */
+  | 'blockStamina'
+  /** shields: more of elemental, holy and void damage blocked (a fraction, the 85% cap still holds) */
+  | 'elemBlock';
 
 export interface ProfPerk {
   stat: ProfStat;
@@ -41,7 +47,10 @@ export const PROF_MAX_LEVEL = 50;
 
 const p = (stat: ProfStat, per: number, label: string): ProfPerk => ({ stat, per, label });
 
-/** Keyed by weapon base id, plus 'staff' and 'talisman' for the casting tools. */
+/** The shield classes by shield size (D215). */
+export const SHIELD_PROF_CLASS = { small: 'shield_small', medium: 'shield_medium', great: 'shield_great' } as const;
+
+/** Keyed by weapon base id, plus 'staff' and 'talisman' for the casting tools and one class per shield size (D215). */
 export const PROF_CLASSES: Record<string, ProfClass> = {
   greataxe: { id: 'greataxe', name: 'Greataxes', blurb: 'Lean into the swing. Then lean harder.', perks: [p('damage', 0.01, 'Damage'), p('poise', 0.01, 'Poise damage')] },
   greathammer: { id: 'greathammer', name: 'Greathammers', blurb: 'Every problem is a nail.', perks: [p('damage', 0.01, 'Damage'), p('poise', 0.015, 'Poise damage')] },
@@ -65,6 +74,11 @@ export const PROF_CLASSES: Record<string, ProfClass> = {
   crossbow: { id: 'crossbow', name: 'Crossbows', blurb: 'Point. Click. Problem solved.', perks: [p('damage', 0.01, 'Damage'), p('attackSpeed', 0.006, 'Reload speed')] },
   staff: { id: 'staff', name: 'Staffs', blurb: 'The words come quicker once you stop reading them.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('spellPower', 0.008, 'Spell power')] },
   talisman: { id: 'talisman', name: 'Talismans', blurb: 'Faith is a muscle. Use it.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('castSpeed', 0.006, 'Cast speed')] },
+  // shields (D215): at level 50, small +0.075 s parry and −15% block stamina; medium −20% and +7.5% elemental block;
+  // great −30% block stamina and +10% elemental block
+  shield_small: { id: 'shield_small', name: 'Small Shields', blurb: 'Late is just early with worse timing.', perks: [p('parryWindow', 0.003, 'Parry window'), p('blockStamina', 0.006, 'Block stamina')] },
+  shield_medium: { id: 'shield_medium', name: 'Medium Shields', blurb: 'Not too big, not too small. Like a good door.', perks: [p('blockStamina', 0.008, 'Block stamina'), p('elemBlock', 0.003, 'Elemental block')] },
+  shield_great: { id: 'shield_great', name: 'Great Shields', blurb: 'Plant your feet. Let the world happen to the shield.', perks: [p('blockStamina', 0.012, 'Block stamina'), p('elemBlock', 0.004, 'Elemental block')] },
 };
 
 /**

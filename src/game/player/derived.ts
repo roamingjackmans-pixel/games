@@ -57,6 +57,8 @@ export interface Derived {
   shield: ShieldDef | null;
   shieldIlvl: number;
   shieldVals: { physical: number; elemental: number; holyVoid: number };
+  /** seconds added to a shield's parry window by Small Shield proficiency (D215) */
+  parryBonusS: number;
   /** stamina per 100 blocked: the shield's stability, less for a reinforced shield (D198) */
   shieldStability: number;
   shieldMeetsReq: boolean;
@@ -348,6 +350,9 @@ export function computeDerived(c: Character): Derived {
   lifesteal += prof.lifesteal;
   if (prof.bleed) for (const sb of statusBuild) if (sb.id === 'bleed') sb.buildup *= 1 + prof.bleed;
   if (powers.has('unyielding')) stabilityRed += 0.4;
+  // shield proficiency (D215): less stamina a block, more elemental block
+  stabilityRed += prof.blockStamina;
+  elemBlockBonus += prof.elemBlock;
 
   // ---- defense ----
   const defense: Record<DamageType, number> = { physical: 0, magic: 0, void: 0, fire: 0, holy: 0 };
@@ -410,6 +415,7 @@ export function computeDerived(c: Character): Derived {
     shieldStability: shield ? shieldStability(shield, off?.plus) : 0,
     shieldMeetsReq: off && shield ? meetsRequirements(itemRequirements(off), stats, false) : false,
     stabilityMult: Math.max(0.2, 1 - stabilityRed),
+    parryBonusS: prof.parryWindow,
     tool: castTool?.def ?? null,
     toolIlvl: castTool?.ilvl ?? toolIlvl,
     toolMeetsReq: castTool?.meetsReq ?? false,

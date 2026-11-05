@@ -717,7 +717,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     pl.blockToggled = !pl.blockToggled;
     const d = pl.derived;
     if (canAct(w, e) && d.shield && d.shield.parryS && d.shieldMeetsReq && d.canBlock && now >= pl.parryReadyAt) {
-      pl.parryUntil = now + d.shield.parryS;
+      pl.parryUntil = now + d.shield.parryS + d.parryBonusS; // Small Shield proficiency widens it (D215)
       pl.parryReadyAt = now + 0.45;
       e.anim.pose = 'parry';
       e.anim.poseT = 0;

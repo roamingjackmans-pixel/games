@@ -287,7 +287,12 @@ export function openInventory(host: InventoryHost): HTMLElement {
   function profTab(el: HTMLElement): void {
     const c = host.char;
     const out = new Set(activeClasses(c));
-    const pct = (x: number, stat: string): string => (stat === 'dodge' ? `−${x.toFixed(2)} s` : `${stat === 'stamina' || stat.endsWith('Cooldown') ? '−' : '+'}${(x * 100).toFixed(x * 100 < 1 ? 2 : 1).replace(/\.0+$/, '')}%`);
+    const pct = (x: number, stat: string): string =>
+      stat === 'dodge'
+        ? `−${x.toFixed(2)} s`
+        : stat === 'parryWindow'
+          ? `+${Math.round(x * 1000)} ms`
+          : `${stat === 'stamina' || stat === 'blockStamina' || stat.endsWith('Cooldown') ? '−' : '+'}${(x * 100).toFixed(x * 100 < 1 ? 2 : 1).replace(/\.0+$/, '')}%`;
     const head = h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('h3', { style: 'margin:0' }, 'Weapon proficiency'));
     const q = btn(profHelp ? '✕' : '?', () => {
       profHelp = !profHelp;
@@ -301,7 +306,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     if (profHelp)
       el.appendChild(
         h('div', { class: 'card', 'data-testid': 'prof-help-text', style: 'padding:8px 10px;margin:6px 0;max-width:640px;border-left:3px solid #9ad0ff' },
-          h('div', { class: 'small' }, 'Every enemy that falls while you stand gives experience to what you have out (the weapon in your hand, and a staff or talisman you hold), whoever made the kill. It fills that item’s own bar (raise it a rarity at a bonfire) and trains its class here.'),
+          h('div', { class: 'small' }, 'Every enemy that falls while you stand gives experience to what you have out (the weapon in your hand, and a staff, talisman or shield in your other hand), whoever made the kill. It fills a weapon’s or casting tool’s own bar (raise it a rarity at a bonfire) and trains its class here. Shields train by size: small, medium or great.'),
           h('div', { class: 'small', style: 'margin-top:4px' }, `Each class levels up to ${PROF_MAX_LEVEL}. Odd levels add to its first perk, even levels to its second. Perks only work while an item of that class is out: switch weapons and the other class’s perks take over. Reaching ${PROF_MAX_LEVEL} with one class takes about three playthroughs.`),
         ),
       );
