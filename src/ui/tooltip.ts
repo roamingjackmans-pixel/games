@@ -404,7 +404,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const reqEl = requirementsEl(req, stats, false, false);
     if (reqEl) out.push(reqEl);
     if (!meets) out.push(h('div', { class: 'small req-bad' }, 'Below requirement: cannot cast.'));
-    // either hand (D117): in the weapon hand it bashes (no weapon skills) and still casts, so a shield fits beside it
+    // either hand (D117): in the weapon hand it bashes and casts on the weapon-skill keys (D201), so a shield fits beside it
     const bash = toolBash(t);
     out.push(
       section(
@@ -412,7 +412,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
         h(
           'div',
           { class: 'tt-text' },
-          `In the weapon hand: casts, swings a modest ${t.school === 'brain' ? 'staff bash' : 'talisman smack'} (${int0(weaponBase(bash.base1, item.ilvl))} base, ${t.school === 'brain' ? 'Bonk D, Brain E' : 'Bonk E, Prayer D, a quarter Holy'}), no weapon skills. A shield in the off hand still blocks. With a staff and a talisman in both hands, ${glyphText('skill1')} ${glyphText('skill2')} ${glyphText('skill3')} cast the off-hand one's spells.`,
+          `In the weapon hand: casts, swings a modest ${t.school === 'brain' ? 'staff bash' : 'talisman smack'} (${int0(weaponBase(bash.base1, item.ilvl))} base, ${t.school === 'brain' ? 'Bonk D, Brain E' : 'Bonk E, Prayer D, a quarter Holy'}), its spells on ${glyphText('skill1')} ${glyphText('skill2')} ${glyphText('skill3')} in place of weapon skills. A shield in the off hand still blocks. In the off hand its spells go on ${glyphText('spell1')} ${glyphText('spell2')} ${glyphText('spell3')}.`,
         ),
       ),
     );

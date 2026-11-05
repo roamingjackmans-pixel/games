@@ -143,7 +143,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   // skills (bottom-left): Q/E/R on a keyboard, LB/RB/Y on an Xbox pad… whatever is bound
   const pad = 20;
   const by = 720 - 60;
-  // a spell loadout drawn on three keys (1/2/3, or Q/E/R with a staff and a talisman in both hands: D117)
+  // a spell loadout drawn on three keys (Q/E/R for a weapon-hand staff or talisman, 1/2/3 for the off hand's: D201)
   const held = !w.hostilesPresent();
   const spellRow = (school: 'brain' | 'prayer' | null, keys: readonly Action[], readyAt: readonly number[], x0: number): void => {
     const loadout = school ? ch.spellLoadout[school] : [null, null, null];
@@ -173,7 +173,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       cdIcon(ctx, pad + i * 46, by, def?.name ?? '—', action, frac, locked, '#ffd27a', ready > now ? `${Math.ceil(ready - now)}` : '');
     }
   }
-  // spells (1/2/3, or the D-pad): the weapon-hand tool's school, else the off hand's
+  // spells (1/2/3, or the D-pad): the off-hand tool's school
   spellRow(d.spellKeys, ['spell1', 'spell2', 'spell3'], pl.spellReadyAt, pad + 160);
   // quick-use, and the "next item" button when there is more than one kind to cycle through
   const q = ch.quickSlot;

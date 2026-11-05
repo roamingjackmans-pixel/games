@@ -70,7 +70,7 @@ export interface Derived {
   mainTool: HeldTool | null;
   /** a staff or talisman in the off hand (null while two-handing) */
   offTool: HeldTool | null;
-  /** the school keys 1–3 cast, and the school Q/E/R cast (only with two tools of different schools) */
+  /** the school keys 1–3 cast (the off-hand tool's), and the school Q/E/R cast (the weapon-hand tool's), D201 */
   spellKeys: SpellSchool | null;
   skillKeySchool: SpellSchool | null;
   shardFind: number;
@@ -172,9 +172,11 @@ export function computeDerived(c: Character): Derived {
   // two-handing sets the off hand aside but a tool in the weapon hand still casts (held in both hands)
   const mainTool = held(mainToolDef, main, 'main');
   const offTool = twoHanded ? null : held(tool, off, 'off');
+  // which keys cast (D201): a staff or talisman in the weapon hand casts on the weapon-skill keys (Q/E/R), as its
+  // skills; one in the off hand casts on 1/2/3. A staff and a talisman together: six spells on six keys.
   const castTool = mainTool ?? offTool;
-  const spellKeys = castTool?.def.school ?? null;
-  const skillKeySchool = mainTool && offTool && offTool.def.school !== mainTool.def.school ? offTool.def.school : null;
+  const skillKeySchool = mainTool ? mainTool.def.school : null;
+  const spellKeys = offTool && offTool.def.school !== skillKeySchool ? offTool.def.school : null;
 
   let dmgPct = 0;
   const flat: Partial<Record<DamageType, number>> = {};

@@ -741,7 +741,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     else if (!silenced) {
       for (let i = 0; i < 3; i++) {
         if (pressed(inp, (['skill1', 'skill2', 'skill3'] as const)[i]!)) {
-          // a staff and a talisman in both hands: Q/E/R cast the off-hand tool's school (D117)
+          // a staff or talisman in the weapon hand: Q/E/R cast its spells (D201)
           if (pl.derived.skillKeySchool ? tryCastSpell(w, e, i, 'skill') : tryUseSkill(w, e, i)) break;
         }
         if (pressed(inp, (['spell1', 'spell2', 'spell3'] as const)[i]!)) {

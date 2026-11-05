@@ -17,7 +17,7 @@ export const CASTING_TOOL_IDS = Object.keys(CASTING_TOOLS);
 
 /**
  * A staff or talisman held in the weapon hand (D117) swings like this: a modest bash with no weapon skills
- * (Q/E/R stay empty, or cast the off-hand tool's school when that is the other one), and it still casts.
+ * and it casts its spells on Q/E/R, the weapon-skill keys (D201).
  * A staff is a long stick (Bonk D, Brain E); a talisman is a short smack (Bonk E, Prayer D, 25% of it Holy).
  */
 export function toolBash(t: CastingToolDef): WeaponDef {

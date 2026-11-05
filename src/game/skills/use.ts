@@ -35,9 +35,8 @@ export function skillOf(e: Entity, i: number): SkillDef | null {
 }
 
 /**
- * Which keys cast (D117): 1/2/3 ('spell') cast the school of the tool in your weapon hand, else the off hand's;
- * with a staff and a talisman in both hands, Q/E/R ('skill') cast the off-hand tool's school (a tool in the
- * weapon hand has no weapon skills to put there).
+ * Which keys cast (D201, was D117): Q/E/R ('skill') cast the school of a staff or talisman in your weapon hand (it has
+ * no weapon skills to put there); 1/2/3 ('spell') cast the off-hand tool's. Both tools: six spells on six keys.
  */
 export type SpellKeys = 'spell' | 'skill';
 

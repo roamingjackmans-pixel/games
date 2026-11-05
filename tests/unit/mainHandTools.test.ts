@@ -54,17 +54,17 @@ describe('staffs and talismans in either hand (D117)', () => {
     expect(c.equipment.off?.id).toBe(tal.id);
   });
 
-  it('a main-hand staff casts while a shield sits in the off hand, and its light attack is a bash with no skills', () => {
+  it('a main-hand staff casts on Q/E/R while a shield sits in the off hand, and its light attack is a bash with no skills (D201)', () => {
     const { w, p } = mage();
     const d = p.pl!.derived;
     expect(d.mainTool?.def.id).toBe('apprentice_staff');
     expect(d.shield?.id).toBe('kite_shield');
-    expect(d.spellKeys).toBe('brain');
+    expect(d.skillKeySchool).toBe('brain');
     expect(d.weapon.skills).toEqual(['', '', '']);
     expect(d.weapon.base1).toBeGreaterThan(0);
     expect(d.weapon.base1).toBeLessThan(30);
-    expect(d.skillKeySchool).toBeNull();
-    expect(tryCastSpell(w, p, 0)).toBe(true);
+    expect(d.spellKeys).toBeNull();
+    expect(tryCastSpell(w, p, 0, 'skill')).toBe(true);
     run(w, 1);
     expect(p.pl!.state).toBe('idle');
     // light attack swings the staff
@@ -75,7 +75,7 @@ describe('staffs and talismans in either hand (D117)', () => {
 
   it('blocks with the shield between casts', () => {
     const { w, p } = mage();
-    expect(tryCastSpell(w, p, 0)).toBe(true);
+    expect(tryCastSpell(w, p, 0, 'skill')).toBe(true);
     run(w, 1);
     hold(p, ACTION_BIT.block);
     stepWorld(w);
@@ -95,43 +95,54 @@ describe('staffs and talismans in either hand (D117)', () => {
     refreshDerived(p);
     expect(p.pl!.derived.mainTool?.meetsReq).toBe(false);
     expect(p.pl!.derived.weaponMeetsReq).toBe(false);
-    expect(tryCastSpell(w, p, 0)).toBe(false);
+    expect(tryCastSpell(w, p, 0, 'skill')).toBe(false);
     c.stats.brain = 14;
     refreshDerived(p);
     expect(p.pl!.derived.weaponMeetsReq).toBe(true);
-    expect(tryCastSpell(w, p, 0)).toBe(true);
+    expect(tryCastSpell(w, p, 0, 'skill')).toBe(true);
   });
 
-  it('two tools: 1/2/3 cast the weapon hand school, Q/E/R the off hand school, each with its own tool', () => {
+  it('two tools: Q/E/R cast the weapon hand school, 1/2/3 the off hand school, each with its own tool: six spells (D201)', () => {
     const { w, p, c } = mage();
     c.stats.prayer = 20;
     c.equipment.off = makeItem('saints_relic', 'common', 1); // Prayer 26
     c.stats.prayer = 26;
     refreshDerived(p);
     const d = p.pl!.derived;
-    expect(d.spellKeys).toBe('brain');
-    expect(d.skillKeySchool).toBe('prayer');
-    expect(spellOf(p, 0)?.id).toBe('arcane_bolt');
-    expect(spellOf(p, 0, 'skill')?.id).toBe('heal');
+    expect(d.skillKeySchool).toBe('brain');
+    expect(d.spellKeys).toBe('prayer');
+    expect(spellOf(p, 0, 'skill')?.id).toBe('arcane_bolt');
+    expect(spellOf(p, 0)?.id).toBe('heal');
     expect(toolForSchool(d, 'prayer')?.hand).toBe('off');
     // the relic's healing bonus applies to the Prayer spell; the staff's power to the Brain one
     expect(spellPowerMult(p, SPELLS.heal!)).toBeGreaterThan(spellPowerMult(p, SPELLS.arcane_bolt!) * 0.5);
-    // Q casts Heal from the off-hand talisman (the cooldown goes on the Q slot)
+    // Q casts Arcane Bolt from the weapon-hand staff (the cooldown goes on the Q slot)
     hold(p, ACTION_BIT.skill1, ACTION_BIT.skill1);
     stepWorld(w);
-    expect(p.pl!.action?.id).toBe('heal');
+    expect(p.pl!.action?.id).toBe('arcane_bolt');
     expect(p.pl!.skillReadyAt[0]).toBeGreaterThan(w.time);
     run(w, 1.5);
+    // 1 casts Heal from the off-hand talisman
     hold(p, ACTION_BIT.spell1, ACTION_BIT.spell1);
     stepWorld(w);
-    expect(p.pl!.action?.id).toBe('arcane_bolt');
-    // swap the hands: the talisman's school moves to 1/2/3
+    expect(p.pl!.action?.id).toBe('heal');
+    expect(p.pl!.spellReadyAt[0]).toBeGreaterThan(w.time);
+    // swap the hands: the talisman's school moves to Q/E/R
     const staff = c.equipment.main!;
     c.equipment.main = c.equipment.off;
     c.equipment.off = staff;
     refreshDerived(p);
-    expect(p.pl!.derived.spellKeys).toBe('prayer');
-    expect(p.pl!.derived.skillKeySchool).toBe('brain');
+    expect(p.pl!.derived.skillKeySchool).toBe('prayer');
+    expect(p.pl!.derived.spellKeys).toBe('brain');
+  });
+
+  it('a tool in the off hand alone casts on 1/2/3, and Q/E/R stay the weapon skills', () => {
+    const c = newCharacter('scholar', 'Joe', 'p', new Rng(1));
+    const d = computeDerived(c);
+    expect(d.mainTool).toBeNull();
+    expect(d.offTool?.def.school).toBe('brain');
+    expect(d.spellKeys).toBe('brain');
+    expect(d.skillKeySchool).toBeNull();
   });
 
   it('two-handing a main-hand tool still casts (the off hand is set aside)', () => {
@@ -139,7 +150,7 @@ describe('staffs and talismans in either hand (D117)', () => {
     c.twoHanded = true;
     refreshDerived(p);
     expect(p.pl!.derived.shield).toBeNull();
-    expect(tryCastSpell(w, p, 0)).toBe(true);
+    expect(tryCastSpell(w, p, 0, 'skill')).toBe(true);
   });
 
   it('equip load counts a main-hand tool and not the 2nd weapon', () => {
@@ -174,7 +185,7 @@ describe('weapon buff spells need a weapon (D131)', () => {
       if (ev.t === 'msg') msgs.push(ev.text);
       emit(ev);
     };
-    expect(tryCastSpell(w, p, 0)).toBe(false);
+    expect(tryCastSpell(w, p, 0, 'skill')).toBe(false);
     run(w, 1);
     expect(blessed(p)).toBe(false);
     expect(msgs.some((m) => m.includes('needs a weapon'))).toBe(true);
