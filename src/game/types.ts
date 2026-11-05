@@ -577,7 +577,8 @@ export interface WeaponDef {
   poiseDmg: number;
   reviveValue: number;
   skills: [string, string, string];
-  ranged?: { speed: number; chargeS?: number; chargeMult?: number; chargePierce?: number; pierceBonk?: number };
+  /** volley (D205): shots per attack, all at once, fanned `spreadDeg` apart either side of the aim */
+  ranged?: { speed: number; chargeS?: number; chargeMult?: number; chargePierce?: number; pierceBonk?: number; volley?: { count: number; spreadDeg: number } };
   hyperArmor?: 'all' | 'last' | 'none';
   holyPct?: number;
   bleed?: number;

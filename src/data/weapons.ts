@@ -80,7 +80,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     poiseDmg: 4,
     reviveValue: 1.5,
     skills: ['crossbow_piercing_bolt', 'crossbow_explosive_bolt', 'crossbow_rapid_fire'],
-    ranged: { speed: 620, pierceBonk: 30 },
+    ranged: { speed: 620, pierceBonk: 30, volley: { count: 3, spreadDeg: 5 } }, // D205: three bolts at once
     flavor: 'Reloading is a lifestyle.',
     draw: 'w_crossbow',
     legendaryNames: ['Second Opinion', 'The Notary', 'Quarrelsome'],
@@ -172,7 +172,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     poiseDmg: 2,
     reviveValue: 0.6,
     skills: ['bow_volley', 'bow_piercing_shot', 'bow_rain'],
-    ranged: { speed: 700, chargeS: 0.6, chargeMult: 1.8, chargePierce: 1 },
+    ranged: { speed: 700, chargeS: 0.6, chargeMult: 1.8, chargePierce: 1, volley: { count: 3, spreadDeg: 5 } }, // D205: three arrows at once
     flavor: 'Never misses. Rarely hits.',
     draw: 'w_bow',
     legendaryNames: ['Long Distance Relationship', 'Return to Sender', 'Cupid Retired'],

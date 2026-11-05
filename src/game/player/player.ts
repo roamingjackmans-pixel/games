@@ -298,8 +298,14 @@ function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number
   const spec = weaponSpec(w, e, swing.mult * mult);
   const wpn = pl.derived.weapon;
   const bonkPierce = wpn.ranged?.pierceBonk && pl.derived.stats.bonk >= wpn.ranged.pierceBonk ? 1 : 0;
-  const shot = spawnPlayerProjectile(w, e, a, swing.hitbox.speed, swing.hitbox.r, spec, pierce + bonkPierce, wpn.id === 'bow' ? 'p_arrow' : 'p_bolt');
-  shot.pr!.falloffFrom = { x: e.x, y: e.y };
+  // a volley (D205): one shot down the aim and the rest fanned out either side, all at once
+  const n = Math.max(1, wpn.ranged?.volley?.count ?? 1);
+  const step = (wpn.ranged?.volley?.spreadDeg ?? 0) * DEG;
+  for (let i = 0; i < n; i++) {
+    const off = (i - (n - 1) / 2) * step;
+    const shot = spawnPlayerProjectile(w, e, a + off, swing.hitbox.speed, swing.hitbox.r, { ...spec, dmg: { ...spec.dmg }, status: spec.status.map((s) => ({ ...s })) }, pierce + bonkPierce, wpn.id === 'bow' ? 'p_arrow' : 'p_bolt');
+    shot.pr!.falloffFrom = { x: e.x, y: e.y };
+  }
   w.sfx(wpn.id === 'bow' ? 'shootArrow' : 'shootBolt', e.x);
 }
 
