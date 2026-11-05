@@ -84,3 +84,39 @@ describe('Steam Controller over WebHID (D206)', () => {
     expect(steamGamepad(3500)).toBeNull();
   });
 });
+
+describe('the new Steam Controller through its Puck (28de:1304, report 66)', () => {
+  // the owner's controller at rest, as Settings → Gamepad showed it (report 66 without its id byte, 53 bytes)
+  const atRest = (): Uint8Array => {
+    const r = new Uint8Array(53);
+    r.set([0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0xb0, 0x01, 0x7b, 0xff, 0xbd, 0x01, 0x49, 0x01]);
+    r.set([0x61, 0xa9, 0x81], 31);
+    return r;
+  };
+
+  it('reads the sticks at rest as near the middle, no buttons, no triggers', async () => {
+    const { parseTritonReport } = await import('../../src/engine/input/steamController');
+    const s = parseTritonReport(atRest())!;
+    expect(s.buttons.some(Boolean)).toBe(false);
+    for (const a of s.axes) expect(Math.abs(a)).toBeLessThan(0.02);
+    expect(s.axes[0]).toBeCloseTo(432 / 32767, 4);
+    expect(s.axes[1]).toBeCloseTo(133 / 32767, 4); // raw −133, up positive on the wire
+    expect(s.lt).toBe(0);
+  });
+
+  it('a full stick and a pressed A read through', async () => {
+    const { parseTritonReport } = await import('../../src/engine/input/steamController');
+    const r = atRest();
+    r[1] = 0b1000_0000; // A
+    r[2] = 0b0000_1000; // D-pad down
+    put16(r, 9, 32767); // left stick right
+    put16(r, 11, 32767); // left stick up
+    put16(r, 17, 32767); // left trigger
+    const s = parseTritonReport(r)!;
+    expect(s.buttons[0]).toBe(true);
+    expect(s.buttons[13]).toBe(true);
+    expect(s.axes[0]).toBeCloseTo(1, 3);
+    expect(s.axes[1]).toBeCloseTo(-1, 3);
+    expect(s.buttons[6]).toBe(true);
+  });
+});

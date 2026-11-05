@@ -428,7 +428,10 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
         const types = Object.entries(dg.types).map(([k, n]) => `${k}×${n}`).join('  ');
         if (types) lines.push(`reports: ${types}   understood: ${dg.parsed}`);
         if (dg.lastBytes) lines.push(`last (id ${dg.lastReportId}, ${dg.lastLength} bytes): ${dg.lastBytes}`);
+        if (dg.featureIds || dg.outputIds) lines.push(`command reports: feature ${dg.featureIds || '—'}   output ${dg.outputIds || '—'}`);
+        if (dg.featureOk) lines.push(`mouse/keyboard off: sent on ${dg.featureOk}`);
         if (dg.featureError) lines.push(`mouse/keyboard off failed: ${dg.featureError}`);
+        if (dg.buttonsHex) lines.push(`buttons: ${dg.buttonsHex}   sticks LX LY RX RY, triggers L R: ${dg.rawAxes}`);
         if (gp) {
           const down = gp.buttons.map((x, i) => (x.pressed ? i : -1)).filter((i) => i >= 0).join(',');
           lines.push(`sticks: ${gp.axes.map((a) => a.toFixed(2)).join(' ')}   buttons down: ${down || '—'}`);

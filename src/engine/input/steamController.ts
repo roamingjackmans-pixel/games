@@ -108,6 +108,45 @@ export function parseSteamReport(d: Uint8Array, prevStick: [number, number] = [0
   return null;
 }
 
+/** The new Steam Controller's state report (D206): numbered 0x42 (66) and sent through its "Puck" receiver (28de:1304). */
+export const TRITON_STATE_REPORT = 0x42;
+
+/**
+ * The new Steam Controller (2026) through its Puck: report 0x42, read without its id byte. Byte 0 counts reports, bytes
+ * 1–8 are the buttons (the Steam Deck's 64-bit order, as far as seen), then the sticks as signed 16-bit values at 9, 11,
+ * 13 and 15 (up positive) and the triggers at 17 and 19. Worked out from the controller's own reports (the readout in
+ * Settings → Gamepad); buttons and stick signs to be confirmed on the hardware.
+ */
+export function parseTritonReport(r: Uint8Array): SteamPadState | null {
+  if (r.length < 21) return null;
+  const b = (byte: number, n: number): boolean => bit(r[byte]!, n);
+  const buttons = new Array<boolean>(BUTTONS).fill(false);
+  buttons[0] = b(1, 7); // A
+  buttons[1] = b(1, 5); // B
+  buttons[2] = b(1, 6); // X
+  buttons[3] = b(1, 4); // Y
+  buttons[4] = b(1, 3); // LB
+  buttons[5] = b(1, 2); // RB
+  buttons[12] = b(2, 0); // D-pad up
+  buttons[15] = b(2, 1); // right
+  buttons[14] = b(2, 2); // left
+  buttons[13] = b(2, 3); // down
+  buttons[8] = b(2, 4); // View
+  buttons[16] = b(2, 5); // Steam
+  buttons[9] = b(2, 6); // Menu
+  buttons[10] = b(3, 6); // left stick click
+  buttons[11] = b(4, 2); // right stick click
+  let lt = Math.max(0, le16(r, 17)) / 32767;
+  let rt = Math.max(0, le16(r, 19)) / 32767;
+  if (b(1, 1)) lt = Math.max(lt, 1);
+  if (b(1, 0)) rt = Math.max(rt, 1);
+  lt = Math.min(1, lt);
+  rt = Math.min(1, rt);
+  buttons[6] = lt > 0.5;
+  buttons[7] = rt > 0.5;
+  return { buttons, lt, rt, axes: [norm(le16(r, 9)), -norm(le16(r, 11)), norm(le16(r, 13)), -norm(le16(r, 15))] };
+}
+
 /** Apply one parsed report to the pad the input manager reads. */
 export function applySteamState(s: SteamPadState, now = performance.now()): void {
   for (let i = 0; i < BUTTONS; i++) {
@@ -143,12 +182,16 @@ export function steamGamepad(now = performance.now()): Gamepad | null {
 // ---------------------------------------------------------------- WebHID
 
 /* The WebHID types are not in TypeScript's DOM library everywhere; only what this file uses. */
+interface HidReportInfo {
+  reportId: number;
+  items?: { reportSize: number; reportCount: number }[];
+}
 interface HidDevice {
   opened: boolean;
   vendorId: number;
   productId: number;
   productName: string;
-  collections: { usagePage: number }[];
+  collections: { usagePage: number; featureReports?: HidReportInfo[]; outputReports?: HidReportInfo[] }[];
   open(): Promise<void>;
   sendFeatureReport(id: number, data: BufferSource): Promise<void>;
   addEventListener(t: 'inputreport', f: (e: { data: DataView; reportId: number }) => void): void;
@@ -178,8 +221,15 @@ export interface SteamDiag {
   lastLength: number;
   parsed: number;
   featureError: string;
+  /** the controller's own command reports (feature / output ids and their sizes) and which ones took the mouse-off */
+  featureIds: string;
+  outputIds: string;
+  featureOk: string;
+  /** the newest state report, decoded: buttons as hex, sticks and triggers as raw numbers */
+  buttonsHex: string;
+  rawAxes: string;
 }
-const diag: SteamDiag = { devices: [], types: {}, lastReportId: 0, lastBytes: '', lastLength: 0, parsed: 0, featureError: '' };
+const diag: SteamDiag = { devices: [], types: {}, lastReportId: 0, lastBytes: '', lastLength: 0, parsed: 0, featureError: '', featureIds: '', outputIds: '', featureOk: '', buttonsHex: '', rawAxes: '' };
 export function steamDiag(): SteamDiag {
   return diag;
 }
@@ -196,21 +246,40 @@ const noteDevice = (d: HidDevice, opened: boolean, note: string): void => {
 const isVendorInterface = (d: HidDevice): boolean => d.vendorId === VALVE_VENDOR_ID && d.collections.some((c) => c.usagePage >= 0xff00);
 
 /** Lizard mode off: clear the keyboard / mouse mappings and set both pads to report only (hid-steam's commands). */
+const reportBytes = (r: HidReportInfo): number => Math.ceil((r.items ?? []).reduce((t, it) => t + it.reportSize * it.reportCount, 0) / 8) || 63;
+/** the feature report id that took the commands last time, per device */
+const goodFeature = new Map<HidDevice, number>();
+
 async function lizardOff(d: HidDevice): Promise<void> {
-  const report = (bytes: number[]): Uint8Array<ArrayBuffer> => {
-    const out = new Uint8Array(new ArrayBuffer(64));
+  // a controller that numbers its reports (the Puck) takes commands only on its own feature report ids
+  const declared = d.collections.flatMap((c) => c.featureReports ?? []);
+  const known = goodFeature.get(d);
+  const tries: { id: number; len: number }[] = known !== undefined
+    ? [{ id: known, len: reportBytes(declared.find((r) => r.reportId === known) ?? { reportId: known }) }]
+    : declared.length ? declared.map((r) => ({ id: r.reportId, len: reportBytes(r) })) : [{ id: 0, len: 64 }];
+  const payload = (len: number, bytes: number[]): Uint8Array<ArrayBuffer> => {
+    const out = new Uint8Array(new ArrayBuffer(Math.max(len, bytes.length)));
     out.set(bytes);
     return out;
   };
-  try {
-    await d.sendFeatureReport(0, report([0x81])); // clear digital mappings
-    // settings: left pad mode none (0x07), right pad mode none (0x08), right pad margin 0 (0x18)
-    await d.sendFeatureReport(0, report([0x87, 9, 0x07, 0x07, 0x00, 0x08, 0x07, 0x00, 0x18, 0x00, 0x00]));
-    diag.featureError = '';
-  } catch (err) {
-    // some firmware refuses; the state reports still arrive, the pad just keeps moving the mouse too
-    diag.featureError = String((err as Error)?.message ?? err).slice(0, 120);
+  const errors: string[] = [];
+  for (const t of tries) {
+    try {
+      await d.sendFeatureReport(t.id, payload(t.len, [0x81])); // clear digital mappings
+      // settings: left pad mode none (0x07), right pad mode none (0x08), right pad margin 0 (0x18)
+      await d.sendFeatureReport(t.id, payload(t.len, [0x87, 9, 0x07, 0x07, 0x00, 0x08, 0x07, 0x00, 0x18, 0x00, 0x00]));
+      goodFeature.set(d, t.id);
+      diag.featureOk = `report ${t.id}`;
+      diag.featureError = '';
+      return;
+    } catch (err) {
+      errors.push(`${t.id}: ${String((err as Error)?.message ?? err).slice(0, 60)}`);
+    }
   }
+  // some firmware refuses; the state reports still arrive, the pad just keeps moving the mouse too
+  goodFeature.delete(d);
+  diag.featureOk = '';
+  diag.featureError = errors.join('; ').slice(0, 240);
 }
 
 async function openDevice(d: HidDevice): Promise<boolean> {
@@ -226,6 +295,9 @@ async function openDevice(d: HidDevice): Promise<boolean> {
     return false;
   }
   noteDevice(d, true, 'open');
+  const ids = (k: 'featureReports' | 'outputReports'): string => d.collections.flatMap((c) => c[k] ?? []).map((r) => `${r.reportId}(${reportBytes(r)}b)`).join(' ');
+  diag.featureIds = ids('featureReports');
+  diag.outputIds = ids('outputReports');
   opened.add(d);
   let stick: [number, number] = [0, 0];
   d.addEventListener('inputreport', (e) => {
@@ -238,6 +310,17 @@ async function openDevice(d: HidDevice): Promise<boolean> {
     diag.lastReportId = e.reportId;
     diag.lastLength = raw.length;
     diag.lastBytes = hex(raw);
+    // the new controller's numbered state report (D206)
+    if (e.reportId === TRITON_STATE_REPORT) {
+      diag.buttonsHex = hex(raw.slice(1, 9), 8);
+      diag.rawAxes = [9, 11, 13, 15, 17, 19].map((i) => le16(raw, i)).join(' ');
+      const t = parseTritonReport(raw);
+      if (t) {
+        diag.parsed++;
+        applySteamState(t);
+      }
+      return;
+    }
     if (!at) return;
     const s = parseSteamReport(at, stick);
     if (!s) return;
