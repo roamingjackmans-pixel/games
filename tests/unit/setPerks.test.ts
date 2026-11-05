@@ -15,7 +15,9 @@ function wearing(set: string, n: number): Character {
   for (const r of ['ring1', 'ring2', 'ring3', 'ring4'] as const) c.equipment[r] = makeItem('lucky_charm', 'rare', 3);
   const slots = [c.equipment.main, c.equipment.off, c.equipment.head, c.equipment.body, c.equipment.legs, c.equipment.ring1, c.equipment.ring2, c.equipment.ring3, c.equipment.ring4];
   slots.forEach((it, i) => {
-    if (it) it.setPerk = i < n ? set : undefined;
+    if (!it) return;
+    if (i < n) it.setPerk = set;
+    else delete it.setPerk;
   });
   return c;
 }
