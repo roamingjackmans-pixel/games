@@ -307,7 +307,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       el.appendChild(
         h('div', { class: 'card', 'data-testid': 'prof-help-text', style: 'padding:8px 10px;margin:6px 0;max-width:640px;border-left:3px solid #9ad0ff' },
           h('div', { class: 'small' }, 'Every enemy that falls while you stand gives experience to what you have out (the weapon in your hand, and a staff, talisman or shield in your other hand), whoever made the kill. It fills a weapon’s or casting tool’s own bar (raise it a rarity at a bonfire) and trains its class here. Shields train by size: small, medium or great.'),
-          h('div', { class: 'small', style: 'margin-top:4px' }, `Each class levels up to ${PROF_MAX_LEVEL}. Odd levels add to its first perk, even levels to its second. Perks only work while an item of that class is out: switch weapons and the other class’s perks take over. Reaching ${PROF_MAX_LEVEL} with one class takes about three playthroughs.`),
+          h('div', { class: 'small', style: 'margin-top:4px' }, `Each class levels up to ${PROF_MAX_LEVEL}. Odd levels add to its first perk, even levels to its second. Perks only work while an item of that class is out: switch weapons and the other class’s perks take over. Level 50 with one class takes about three playthroughs; ${PROF_MAX_LEVEL} is for the long haul.`),
         ),
       );
     const ids = Object.keys(PROF_CLASSES).sort((a, b) => Number(out.has(b)) - Number(out.has(a)) || profXp(c, b) - profXp(c, a) || PROF_CLASSES[a]!.name.localeCompare(PROF_CLASSES[b]!.name));

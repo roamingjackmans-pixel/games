@@ -1,7 +1,7 @@
 // Weapon experience and weapon-class proficiency (D178). Every enemy that dies gives each standing player experience
 // on what they have out: the item in the weapon hand and a staff or talisman they hold. That experience fills the
 // item's own bar (a full bar lets you pay Glowen at a bonfire to raise it a rarity) and the proficiency of its class,
-// which levels to 50. Each class has two small perks: odd levels raise the first, even levels the second. Perks work
+// which levels to 100 (D218; was 50). Each class has two small perks: odd levels raise the first, even levels the second. Perks work
 // only while an item of that class is out.
 
 import type { Rarity } from '../game/types';
@@ -43,7 +43,7 @@ export interface ProfClass {
   perks: [ProfPerk, ProfPerk];
 }
 
-export const PROF_MAX_LEVEL = 50;
+export const PROF_MAX_LEVEL = 100; // D218 (was 50): the same cost curve carried on, so no level already earned moved
 
 const p = (stat: ProfStat, per: number, label: string): ProfPerk => ({ stat, per, label });
 
@@ -75,16 +75,17 @@ export const PROF_CLASSES: Record<string, ProfClass> = {
   staff: { id: 'staff', name: 'Staffs', blurb: 'The words come quicker once you stop reading them.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('spellPower', 0.008, 'Spell power')] },
   talisman: { id: 'talisman', name: 'Talismans', blurb: 'Faith is a muscle. Use it.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('castSpeed', 0.006, 'Cast speed')] },
   // shields (D215): at level 50, small +0.075 s parry and −15% block stamina; medium −20% and +7.5% elemental block;
-  // great −30% block stamina and +10% elemental block
+  // great −30% block stamina and +10% elemental block (twice that at level 100, D218)
   shield_small: { id: 'shield_small', name: 'Small Shields', blurb: 'Late is just early with worse timing.', perks: [p('parryWindow', 0.003, 'Parry window'), p('blockStamina', 0.006, 'Block stamina')] },
   shield_medium: { id: 'shield_medium', name: 'Medium Shields', blurb: 'Not too big, not too small. Like a good door.', perks: [p('blockStamina', 0.008, 'Block stamina'), p('elemBlock', 0.003, 'Elemental block')] },
   shield_great: { id: 'shield_great', name: 'Great Shields', blurb: 'Plant your feet. Let the world happen to the shield.', perks: [p('blockStamina', 0.012, 'Block stamina'), p('elemBlock', 0.004, 'Elemental block')] },
 };
 
 /**
- * Experience to go from level L − 1 to L: about 23 at level 1 (ten kills) up to 175 at level 50. All 50 levels take
- * about 4,950 experience: a clean playthrough (every room cleared once, every boss) gives about 1,370, so one class
- * used throughout reaches 50 around the end of New Game+ 2, a little sooner with all the refighting a real run has.
+ * Experience to go from level L − 1 to L: about 23 at level 1 (ten kills), 175 at level 50, 330 at level 100. The first
+ * 50 levels take about 4,950 experience: a clean playthrough (every room cleared once, every boss) gives about 1,370,
+ * so one class used throughout reaches 50 around the end of New Game+ 2. All 100 (D218) take about 17,660: about
+ * thirteen clean playthroughs, a little sooner with all the refighting a real run has.
  */
 export function profLevelCost(level: number): number {
   return Math.round(20 + 3.1 * level);

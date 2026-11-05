@@ -7,7 +7,8 @@ import { grantKillXp, hasRarityBar, itemsOut, profClassOf, upgradeInfo } from '.
 import { PROF_MAX_LEVEL, profLevelCost } from '../../src/data/proficiency';
 import { Rng } from '../../src/engine/rng';
 
-const maxXp = Array.from({ length: PROF_MAX_LEVEL }, (_, i) => profLevelCost(i + 1)).reduce((a, b) => a + b, 0);
+const xpTo = (level: number): number => Array.from({ length: level }, (_, i) => profLevelCost(i + 1)).reduce((a, b) => a + b, 0);
+const maxXp = xpTo(50);
 
 describe('shield proficiency (D215)', () => {
   it('a shield in the off hand trains its size class on kills; no rarity bar of its own', () => {
@@ -45,6 +46,10 @@ describe('shield proficiency (D215)', () => {
     const g50 = computeDerived(c);
     expect(g50.stabilityMult).toBeCloseTo(g0.stabilityMult - 0.3, 6);
     expect(g50.shieldVals.elemental).toBeCloseTo(Math.min(0.85, g0.shieldVals.elemental + 0.1), 6);
+    // level 100 (D218): twice the level-50 numbers
+    expect(PROF_MAX_LEVEL).toBe(100);
+    c.proficiency = { shield_great: xpTo(PROF_MAX_LEVEL) };
+    expect(computeDerived(c).stabilityMult).toBeCloseTo(g0.stabilityMult - 0.6, 6);
     // a great-shield class does nothing while a small shield is out
     c.equipment.off = makeItem('buckler', 'common', 1);
     expect(computeDerived(c).stabilityMult).toBeCloseTo(base.stabilityMult, 6);

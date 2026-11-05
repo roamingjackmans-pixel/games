@@ -14,11 +14,16 @@ import { cloneChar, diffChar, applyCharOp } from '../../src/game/net/charSync';
 import { Rng } from '../../src/engine/rng';
 
 describe('proficiency levels (D178)', () => {
-  it('50 levels take about three clean playthroughs (each about 1,370 experience)', () => {
+  it('the first 50 levels take about three clean playthroughs (each about 1,370 experience); all 100 about thirteen (D218)', () => {
+    expect(PROF_MAX_LEVEL).toBe(100);
+    let half = 0;
+    for (let l = 1; l <= 50; l++) half += profLevelCost(l);
+    expect(half).toBeGreaterThan(3 * 1370 * 0.95);
+    expect(half).toBeLessThan(3 * 1370 * 1.4);
+    expect(profLevel(half).level).toBe(50);
     let total = 0;
     for (let l = 1; l <= PROF_MAX_LEVEL; l++) total += profLevelCost(l);
-    expect(total).toBeGreaterThan(3 * 1370 * 0.95);
-    expect(total).toBeLessThan(3 * 1370 * 1.4);
+    expect(total).toBe(17660);
     expect(profLevel(total).level).toBe(PROF_MAX_LEVEL);
     expect(profLevel(total - 1).level).toBe(PROF_MAX_LEVEL - 1);
     expect(profLevel(0)).toEqual({ level: 0, into: 0, next: profLevelCost(1) });
