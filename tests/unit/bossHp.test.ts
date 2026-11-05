@@ -45,3 +45,15 @@ describe('co-op boss poise (D194)', () => {
     expect(b.hp!.poise / b.hp!.poiseMax).toBeCloseTo(0.4, 5);
   });
 });
+
+describe('The Caretaker on the first playthrough (D211)', () => {
+  it('has 30% less HP the first time down, and the full amount in New Game+', () => {
+    const cr = BOSSES.the_caretaker!;
+    expect(cr.firstCycleHpMult).toBe(0.7);
+    const { firstCycleHpMult: _m, ...plain } = cr;
+    const hp = (def: typeof cr | typeof plain, cycle: number): number => spawnEnemy(new World(`CT${cycle}`, Room.empty()), def as typeof cr, 640, 368, { zone: 1, cycle, players: 1 }).hp!.max;
+    expect(hp(cr, 0)).toBeCloseTo(3600 * 0.7, 3);
+    expect(hp(cr, 0) / hp(plain, 0)).toBeCloseTo(0.7, 6);
+    expect(hp(cr, 1) / hp(plain, 1)).toBeCloseTo(1, 6);
+  });
+});

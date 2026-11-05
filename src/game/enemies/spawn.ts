@@ -43,6 +43,8 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   // co-op adds bodies to rooms instead of HP to each body (D79); bosses alone still grow with the party
   let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, 1) * (o.hpMult ?? 1);
   if (elite) hp *= 3;
+  // a boss lighter on the first playthrough (D211)
+  if (isBoss && cycle <= 0) hp *= (def as BossDef).firstCycleHpMult ?? 1;
   // co-op: more HP for each extra player, more for bosses and Elites (D159); special NPCs and illusions keep theirs
   const coop = def.special || o.illusion ? 1 : coopHpMult(players, isBoss || !!elite);
   hp *= coop;

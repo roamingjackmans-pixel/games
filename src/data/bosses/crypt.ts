@@ -114,6 +114,8 @@ const handsOfTheDead: AttackDef = {
 export const THE_CARETAKER: BossDef = {
   id: 'the_caretaker',
   zone: 1,
+  // the first boss is 30% lighter the first time down (D211): 2,520 HP solo instead of 3,600
+  firstCycleHpMult: 0.7,
   name: 'The Caretaker',
   role: 'boss',
   radius: 50,

@@ -544,6 +544,8 @@ export interface BossDef extends Omit<EnemyDef, 'attacks' | 'role'> {
   introTitle: string;
   introSub: string;
   baseHp?: number;
+  /** HP multiplier on the first playthrough only (cycle 0; New Game+ keeps the full amount), D211 */
+  firstCycleHpMult?: number;
   music: { root: number; tempo: number; bright: number };
 }
 
