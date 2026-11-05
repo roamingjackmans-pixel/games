@@ -115,7 +115,7 @@ export function itemScore(item: Item | null, stats: Stats, twoHanded: boolean): 
   if (w) return Object.values(weaponDamageByType(item, stats, twoHanded)).reduce((a, b) => a + (b ?? 0), 0);
   const s = SHIELDS[item.baseId];
   if (s) {
-    const v = shieldValues(s, item.ilvl, item.plus);
+    const v = shieldValues(s, item.ilvl, item.plus, item.rarity);
     return v.physical * 100 + v.elemental * 50;
   }
   const t = CASTING_TOOLS[item.baseId];
@@ -366,8 +366,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
 
   if (s) {
     const os = other ? SHIELDS[other.baseId] : undefined;
-    const v = shieldValues(s, item.ilvl, item.plus);
-    const ov = os && other ? shieldValues(os, other.ilvl, other.plus) : null;
+    const v = shieldValues(s, item.ilvl, item.plus, item.rarity);
+    const ov = os && other ? shieldValues(os, other.ilvl, other.plus, other.rarity) : null;
     const pick = (x: { physical: number; elemental: number; holyVoid: number }, k: DamageType): number => (k === 'physical' ? x.physical : k === 'holy' || k === 'void' ? x.holyVoid : x.elemental);
     const half = meets ? 1 : 0.5;
     const otherMeets = !!(os && other && meetsRequirements(reqsFor(other), stats, false));
@@ -379,7 +379,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
         { class: 'tt-section' },
         rowsEl(
           [
-            { label: 'Stability', cur: shieldStability(s, item.plus), prev: os ? shieldStability(os, other?.plus) : null, better: 'lower', fmt: int0, note: 'stamina lost per 100 damage blocked (lower is better)' },
+            { label: 'Stability', cur: shieldStability(s, item.plus, item.rarity), prev: os ? shieldStability(os, other?.plus, other?.rarity) : null, better: 'lower', fmt: int0, note: 'stamina lost per 100 damage blocked (lower is better)' },
             { label: 'Parry', cur: meets ? (s.parryS ?? 0) : 0, prev: os ? (otherMeets ? (os.parryS ?? 0) : 0) : null, better: 'higher', fmt: (x) => (x > 0 ? `${x.toFixed(2)} s` : 'none') },
           ],
           cmp,

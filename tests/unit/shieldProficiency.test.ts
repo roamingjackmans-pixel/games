@@ -3,15 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { newCharacter } from '../../src/game/player/character';
 import { computeDerived } from '../../src/game/player/derived';
 import { makeItem } from '../../src/game/items/make';
-import { grantKillXp, hasRarityBar, itemsOut, profClassOf, upgradeInfo } from '../../src/game/items/proficiency';
-import { PROF_MAX_LEVEL, profLevelCost } from '../../src/data/proficiency';
+import { grantKillXp, hasRarityBar, itemsOut, profClassOf, upgradeInfo, upgradeRarity } from '../../src/game/items/proficiency';
+import { PROF_MAX_LEVEL, RARITY_POWER, RARITY_XP, profLevelCost } from '../../src/data/proficiency';
 import { Rng } from '../../src/engine/rng';
 
 const xpTo = (level: number): number => Array.from({ length: level }, (_, i) => profLevelCost(i + 1)).reduce((a, b) => a + b, 0);
 const maxXp = xpTo(50);
 
 describe('shield proficiency (D215)', () => {
-  it('a shield in the off hand trains its size class on kills; no rarity bar of its own', () => {
+  it('a shield in the off hand trains its size class on kills, and fills its own rarity bar (D221)', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
     c.twoHanded = false;
     expect(profClassOf(c.equipment.off)).toBe('shield_medium');
@@ -20,13 +20,35 @@ describe('shield proficiency (D215)', () => {
     expect(itemsOut(c)).toContain(c.equipment.off);
     grantKillXp(c, 10);
     expect(c.proficiency?.shield_medium).toBe(10);
-    expect(c.equipment.off!.xp ?? 0).toBe(0);
-    expect(hasRarityBar(c.equipment.off)).toBe(false);
-    expect(upgradeInfo(c.equipment.off!)).toBeNull();
+    expect(c.equipment.off!.xp).toBe(10);
+    expect(hasRarityBar(c.equipment.off)).toBe(true);
+    expect(upgradeInfo(c.equipment.off!)).toMatchObject({ to: 'uncommon', xp: 10, need: 120, ready: false });
     // two-handing sets the shield aside: it trains nothing
     c.twoHanded = true;
     grantKillXp(c, 10);
     expect(c.proficiency?.shield_medium).toBe(10);
+  });
+
+  it('raising a shield a rarity tightens its block like reinforcement; the bars take twice the experience (D221)', () => {
+    expect(RARITY_XP).toEqual({ common: 120, uncommon: 240, rare: 400, epic: 640 });
+    const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
+    c.twoHanded = false;
+    c.glowen = 1e6;
+    const sh = c.equipment.off!;
+    expect(sh.rarity).toBe('common');
+    const before = computeDerived(c);
+    sh.xp = 120;
+    expect(upgradeRarity(c, sh.id).ok).toBe(true);
+    expect(sh.rarity).toBe('uncommon');
+    const after = computeDerived(c);
+    expect(1 - after.shieldVals.elemental).toBeCloseTo((1 - before.shieldVals.elemental) / RARITY_POWER.uncommon, 6);
+    expect(after.shieldStability).toBeCloseTo(before.shieldStability / RARITY_POWER.uncommon, 6);
+    // a shield raised to Legendary gets a legendary power, as a weapon does
+    sh.rarity = 'epic';
+    sh.xp = 640;
+    expect(upgradeRarity(c, sh.id).ok).toBe(true);
+    expect(sh.rarity).toBe('legendary');
+    expect(sh.legendaryPower).toBeTruthy();
   });
 
   it('level 50: small +75 ms parry, great −30% block stamina and +10% elemental block', () => {

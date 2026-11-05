@@ -21,9 +21,9 @@ export function profClassOf(item: Item | null | undefined): string | null {
   return null;
 }
 
-/** Weapons and casting tools have their own bar to raise a rarity; shields train only their class (D215). */
+/** Weapons, casting tools and shields (D221; shields trained only their class at first, D215) have a bar to raise a rarity. */
 export function hasRarityBar(item: Item | null | undefined): boolean {
-  return !!item && !!profClassOf(item) && !SHIELDS[item.baseId];
+  return !!item && !!profClassOf(item);
 }
 
 /** What a character has out: the weapon hand's item, and a staff, talisman or shield in the off hand (not when two-handing). */

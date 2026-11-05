@@ -394,12 +394,12 @@ export function openBonfire(v: BonfireView): HTMLElement {
     return b;
   }
 
-  /** Weapons (D178): each weapon and casting tool you carry, its experience bar, and raising it a rarity. */
+  /** Weapons (D178): each weapon, casting tool and shield (D221) you carry, its experience bar, and raising it a rarity. */
   function weaponsTab(el: HTMLElement): void {
     const c = v.char;
     const all = [c.equipment.main, c.equipment.off, c.altMain, ...c.bag].filter((i): i is Item => hasRarityBar(i));
     const list = h('div', { class: 'col', style: 'gap:6px;width:640px;max-height:540px;overflow:auto' }, h('h3', null, 'Weapons · ', glowenEl(c.glowen)));
-    if (!all.length) list.appendChild(h('div', { class: 'dim-text' }, 'You carry no weapons or casting tools.'));
+    if (!all.length) list.appendChild(h('div', { class: 'dim-text' }, 'You carry no weapons, casting tools or shields.'));
     for (const it of all) {
       const u = upgradeInfo(it);
       const worn = itemPlace(c, it.id) !== 'bag';
@@ -421,7 +421,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       list.appendChild(card);
     }
     const help = h('div', { class: 'small dim-text', style: 'max-width:420px' },
-      'Every enemy that falls gives experience to what you have out: the weapon in your hand and a staff or talisman you hold, whoever made the kill. A full bar lets you raise the item a rarity here for Glowen: it keeps its affixes, sockets, gems and skills and moves up to the new rarity’s damage. Epic becomes Legendary with a legendary power of its own. The same experience trains your weapon-class proficiency (inventory → Proficiency).');
+      'Every enemy that falls gives experience to what you have out: the weapon in your hand and a staff, talisman or shield in your other hand, whoever made the kill. A full bar lets you raise the item a rarity here for Glowen: it keeps its affixes, sockets, gems and skills and moves up to the new rarity’s damage (a shield’s block). Epic becomes Legendary with a legendary power of its own. The same experience trains your weapon-class proficiency (inventory → Proficiency).');
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, help));
   }
 
@@ -488,12 +488,12 @@ export function openBonfire(v: BonfireView): HTMLElement {
       add('Damage per hit', itemScore(at(from), st, c.twoHanded), itemScore(at(to), st, c.twoHanded), int);
     } else if (it.kind === 'shield' && SHIELDS[it.baseId]) {
       const sd = SHIELDS[it.baseId]!;
-      const a = shieldValues(sd, it.ilvl, from);
-      const b = shieldValues(sd, it.ilvl, to);
+      const a = shieldValues(sd, it.ilvl, from, it.rarity);
+      const b = shieldValues(sd, it.ilvl, to, it.rarity);
       add('Physical block', a.physical, b.physical, pc);
       add('Elemental block', a.elemental, b.elemental, pc);
       add('Holy / Void block', a.holyVoid, b.holyVoid, pc);
-      add('Stamina per 100 blocked', shieldStability(sd, from), shieldStability(sd, to), (x) => x.toFixed(1));
+      add('Stamina per 100 blocked', shieldStability(sd, from, it.rarity), shieldStability(sd, to, it.rarity), (x) => x.toFixed(1));
     } else if (it.kind === 'armor') {
       const a = armorPieceDefense(it.baseId, it.ilvl, from);
       const b = armorPieceDefense(it.baseId, it.ilvl, to);

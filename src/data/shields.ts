@@ -1,5 +1,6 @@
 // CONTENT_ITEMS §5: shields. Block values improve +1% physical / +1.5% elemental per ilvl above 1 (caps 100% / 85%).
-import type { ShieldDef } from '../game/types';
+import type { Rarity, ShieldDef } from '../game/types';
+import { RARITY_POWER } from './proficiency';
 import { reinforceMult } from './essence';
 
 export const SHIELDS: Record<string, ShieldDef> = {
@@ -34,9 +35,10 @@ export const SHIELD_IDS = Object.keys(SHIELDS);
  * Block values at an item level (+1% physical, +1.5% elemental per ilvl above 1; caps 100% / 85%). Reinforcement
  * (D198) lets through 1/×(1 + 0.2 a level) of what got past, so a +15 shield leaks a quarter as much.
  */
-export function shieldValues(s: ShieldDef, ilvl: number, plus = 0): { physical: number; elemental: number; holyVoid: number } {
+export function shieldValues(s: ShieldDef, ilvl: number, plus = 0, rarity: Rarity = 'common'): { physical: number; elemental: number; holyVoid: number } {
   const up = Math.max(0, ilvl - 1);
-  const m = reinforceMult(plus);
+  // rarity tightens it as it strengthens a weapon (D221: ×1 Common … ×1.28 Legendary), on top of reinforcement
+  const m = reinforceMult(plus) * RARITY_POWER[rarity];
   const tight = (v: number): number => 1 - (1 - v) / m;
   return {
     physical: Math.min(1, tight(Math.min(1, s.physical + 0.01 * up))),
@@ -45,7 +47,7 @@ export function shieldValues(s: ShieldDef, ilvl: number, plus = 0): { physical: 
   };
 }
 
-/** Stamina lost per 100 blocked; a reinforced shield loses that much less (D198). */
-export function shieldStability(s: ShieldDef, plus = 0): number {
-  return s.stability / reinforceMult(plus);
+/** Stamina lost per 100 blocked; a reinforced (D198) or rarer (D221) shield loses that much less. */
+export function shieldStability(s: ShieldDef, plus = 0, rarity: Rarity = 'common'): number {
+  return s.stability / (reinforceMult(plus) * RARITY_POWER[rarity]);
 }

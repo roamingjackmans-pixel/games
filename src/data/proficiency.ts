@@ -115,8 +115,9 @@ export function killXp(o: { isBoss: boolean; elite: boolean; role: string; mimic
   return 2;
 }
 
-/** A weapon's own bar: experience to fill it at each rarity (legendary is the top); Common to Legendary is about half a playthrough. */
-export const RARITY_XP: Partial<Record<Rarity, number>> = { common: 60, uncommon: 120, rare: 200, epic: 320 };
+/** An item's own bar: experience to fill it at each rarity (legendary is the top); D221 doubled every step (was 60 / 120 /
+ *  200 / 320), so Common to Legendary is about a whole playthrough of kills with it out. */
+export const RARITY_XP: Partial<Record<Rarity, number>> = { common: 120, uncommon: 240, rare: 400, epic: 640 };
 
 /** Glowen to raise an item from this rarity to the next (× 1 + 0.2 per item level above 1). */
 export const RARITY_UPGRADE_COST: Partial<Record<Rarity, number>> = { common: 150, uncommon: 400, rare: 1000, epic: 2500 };

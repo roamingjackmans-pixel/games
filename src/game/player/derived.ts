@@ -370,7 +370,7 @@ export function computeDerived(c: Character): Derived {
   const shieldIlvl = off?.ilvl ?? 1;
   const toolIlvl = off?.ilvl ?? 1;
   // a reinforced shield leaks less and costs less stamina a block (D198)
-  const sv = shield ? shieldValues(shield, shieldIlvl, off?.plus) : { physical: 0, elemental: 0, holyVoid: 0 };
+  const sv = shield ? shieldValues(shield, shieldIlvl, off?.plus, off?.rarity) : { physical: 0, elemental: 0, holyVoid: 0 };
   sv.elemental = Math.min(0.85, sv.elemental + elemBlockBonus);
   sv.holyVoid = Math.min(0.85, sv.holyVoid + elemBlockBonus);
 
@@ -412,7 +412,7 @@ export function computeDerived(c: Character): Derived {
     shield: twoHanded ? null : shield,
     shieldIlvl,
     shieldVals: sv,
-    shieldStability: shield ? shieldStability(shield, off?.plus) : 0,
+    shieldStability: shield ? shieldStability(shield, off?.plus, off?.rarity) : 0,
     shieldMeetsReq: off && shield ? meetsRequirements(itemRequirements(off), stats, false) : false,
     stabilityMult: Math.max(0.2, 1 - stabilityRed),
     parryBonusS: prof.parryWindow,
