@@ -9,7 +9,6 @@ import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
 import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, unequip, unsocketGem, type EquipSlot } from '../../game/items/inventory';
-import { itemRequirements, meetsRequirements } from '../../game/items/bases';
 import { levelCost } from '../../game/combat/formulas';
 import { LIGHT_LOAD_MAX, LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
@@ -17,7 +16,7 @@ import { spellSkill } from '../../game/skills/use';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
-import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemTooltip } from '../tooltip';
+import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemMeetsReqs, itemTooltip } from '../tooltip';
 
 export interface InventoryHost {
   char: Character;
@@ -90,7 +89,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
     if (item) {
       b.appendChild(itemIcon(item, 40));
       const c = host.char;
-      const meets = meetsRequirements(itemRequirements(item), c.stats, item.kind === 'weapon' ? c.twoHanded : false);
+      // the same check as the tooltip and the damage: stats with gear bonuses (D210; it used the base stats)
+      const meets = itemMeetsReqs(item, c);
       if (!meets) b.appendChild(h('span', { class: 'warn' }, '!'));
       if (item.sockets.length) b.appendChild(h('span', { class: 'badge' }, '◆'.repeat(item.sockets.filter(Boolean).length) + '◇'.repeat(item.sockets.filter((g) => !g).length)));
       const tipFor = (): void => showTip(b, itemTooltip(item, host.char, 'auto'));

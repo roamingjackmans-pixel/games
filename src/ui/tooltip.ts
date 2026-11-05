@@ -73,6 +73,15 @@ function weaponElement(w: WeaponDef): DamageType {
   return (w as { element?: DamageType }).element ?? 'physical';
 }
 
+/**
+ * Can this character use this item, as the game counts it (D210): its requirements (a hybrid's Brain / Prayer too)
+ * against the stats with gear bonuses (+Bonk affixes, bands), two-handing for a weapon. The inventory's "!" and the
+ * tooltip both ask this, so they never disagree with the damage the game deals.
+ */
+export function itemMeetsReqs(item: Item, c: Character, stats: Stats = computeDerived(c).stats): boolean {
+  return meetsRequirements(reqsFor(item), stats, item.kind === 'weapon' ? c.twoHanded : false);
+}
+
 /** Requirements at the item's level, including a hybrid weapon's Brain / Prayer requirement. */
 function reqsFor(item: Item): Requirements {
   const r = itemRequirements(item);
@@ -264,7 +273,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   const cmp = compare === 'auto' ? !!target : compare !== null && compare.id !== item.id;
   const other: Item | null = compare === 'auto' ? (target?.item ?? null) : cmp ? (compare as Item) : null;
   const req = reqsFor(item);
-  const meets = meetsRequirements(req, stats, item.kind === 'weapon' ? twoH : false);
+  const meets = itemMeetsReqs(item, c, stats);
   const out: (HTMLElement | null)[] = [];
 
   // ---- name and title line
