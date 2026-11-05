@@ -73,11 +73,16 @@ Let `z` be the zone number (1–8), `c` the NG+ cycle (0 for the first playthrou
 players.
 
 ```
-enemyHP     = baseHP  × (1 + 0.55 (z−1)) × 1.6^c × (1 + 1.5 (p−1))
-enemyDamage = baseDmg × (1 + 0.35 (z−1)) × 1.35^c
-enemyShards = baseShards × (1 + 1.1 (z−1)) × 1.8^c          (per player, instanced)
+curve(z, c, k) = 1 + k (z−1)                                        when c = 0
+               = (1.05 + 0.30 (z−1)/7) × (1 + 7k) × 1.1^(c−1)        when c ≥ 1   (D209)
+enemyHP     = baseHP  × curve(z, c, 0.55) × co-op (D159)
+enemyDamage = baseDmg × curve(z, c, 0.35)
+enemyShards = baseShards × curve(z, c, 1.1)          (per player, instanced)
 itemLevel   = z + c  (clamped to the item-level table, CONTENT_ITEMS §2)
 ```
+
+New Game+ (D209): its zone 1 is 5% harder than the first playthrough's zone 8, rising evenly to 35% harder by its
+zone 8; every cycle after that is 10% harder on every zone.
 
 Expected character level at zone end (solo, first cycle): 12 · 22 · 32 · 42 · 52 · 62 · 72 · 80.
 **Tuning target:** clearing every room of a zone once (no deaths, no Elites counted, no chests) yields
@@ -590,8 +595,8 @@ built for it.
 ## 13. New Game+
 
 After The Landlord: credits, then a bonfire with **Begin Cycle N+1**. New map seed, zone 1, everything
-kept (level, gear, spells, gems, flask max, Glowen). Enemies ×1.6^c HP, ×1.35^c damage, Shards
-×1.8^c, item level +c, no tutorial, merchant stock improves. The title screen shows the cycle next to
+kept (level, gear, spells, gems, flask max, Glowen). Enemies and Shards follow the New Game+ curve
+(§2.3, D209), item level +c, no tutorial, merchant stock improves. The title screen shows the cycle next to
 the character.
 
 ## 14. Save files

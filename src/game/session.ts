@@ -63,7 +63,8 @@ export interface SessionListener {
 /**
  * New Game+ (GAME_DESIGN §13): next cycle, a new map seed, zone 1, everything on the character kept
  * (level, gear, spells, gems, flask max, Glowen, Shards), no tutorial. Cycle scaling is applied by the
- * formulas (enemy HP ×1.6^c, damage ×1.35^c, Shards ×1.8^c, item level +c).
+ * formulas (D209: NG+ zone 1 starts 5% above the first zone 8 and climbs to 35% above it, +10% a cycle after; item
+ * level +c).
  */
 export function beginNextCycle(save: SaveFile): void {
   const c = save.character;

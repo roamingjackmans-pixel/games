@@ -217,14 +217,36 @@ export function coopHpMult(players: number, strong = true): number {
 export function coopPoiseMult(players: number): number {
   return 1 + 1.5 * (Math.max(1, Math.min(4, players)) - 1);
 }
+/** New Game+ (D209): its zone 1 is this much harder than the first playthrough's zone 8, its zone 8 this much. */
+export const NG_ZONE1_OVER_Z8 = 1.05;
+export const NG_ZONE8_OVER_Z8 = 1.35;
+/** Each New Game+ after the first: every zone this much harder again. */
+export const NG_PER_CYCLE = 1.1;
+
+/**
+ * A zone's scaling in a cycle (D209). The first playthrough climbs `1 + perZone × (zone − 1)`. New Game+ starts just
+ * above where that ended (zone 1 = 1.05 × the first playthrough's zone 8) and climbs evenly to 1.35 × it by zone 8;
+ * every New Game+ after that is ×1.1 on every zone. (It used to multiply the first playthrough by a fixed amount per
+ * cycle, so NG+ zone 1 was far easier than the zone 8 just beaten.)
+ */
+export function cycleZoneCurve(zone: number, cycle: number, perZone: number): number {
+  const z = Math.max(1, Math.min(8, zone));
+  const first = (n: number): number => 1 + perZone * (n - 1);
+  if (cycle <= 0) return first(z);
+  const top = first(8);
+  const lo = NG_ZONE1_OVER_Z8 * top;
+  const hi = NG_ZONE8_OVER_Z8 * top;
+  return (lo + ((hi - lo) * (z - 1)) / 7) * Math.pow(NG_PER_CYCLE, cycle - 1);
+}
 export function enemyHpMult(zone: number, cycle: number, players: number): number {
-  return (1 + 0.55 * (zone - 1)) * Math.pow(1.6, cycle) * coopHpMult(players);
+  return cycleZoneCurve(zone, cycle, 0.55) * coopHpMult(players);
 }
 export function enemyDmgMult(zone: number, cycle: number): number {
-  return (1 + 0.35 * (zone - 1)) * Math.pow(1.35, cycle);
+  return cycleZoneCurve(zone, cycle, 0.35);
 }
+/** Shards follow the same curve, so the reward keeps up with the danger (D209). */
 export function enemyShardMult(zone: number, cycle: number): number {
-  return (1 + 1.1 * (zone - 1)) * Math.pow(1.8, cycle);
+  return cycleZoneCurve(zone, cycle, 1.1);
 }
 export function itemLevelFor(zone: number, cycle: number): number {
   return Math.max(1, zone + cycle);

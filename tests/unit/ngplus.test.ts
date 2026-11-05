@@ -39,10 +39,31 @@ describe('New Game+ (GAME_DESIGN §13)', () => {
     expect(s.layout.tutorialId).toBeNull();
     expect(s.node.kind).toBe('start');
     expect(s.w.cycle).toBe(1);
-    // ×1.6 HP per cycle; item level +1
+    // D209: NG+ zone 1 is a little harder than the first playthrough's zone 8; item level +1
     const e1 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 1, zone: 1 });
-    const e0 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 0, zone: 1 });
-    expect(e1.hp!.max / e0.hp!.max).toBeCloseTo(1.6, 5);
+    const e8 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 0, zone: 8 });
+    expect(e1.hp!.max / e8.hp!.max).toBeCloseTo(1.05, 5);
     expect(itemLevelFor(1, 1)).toBe(2);
+  });
+});
+
+describe('New Game+ difficulty curve (D209)', () => {
+  it('NG+ runs from 5% to 35% harder than the first zone 8, then +10% on every zone each cycle', async () => {
+    const { enemyHpMult, enemyDmgMult, enemyShardMult } = await import('../../src/game/combat/formulas');
+    for (const f of [(z: number, c: number) => enemyHpMult(z, c, 1), enemyDmgMult, enemyShardMult]) {
+      const z8 = f(8, 0);
+      // the first playthrough is unchanged and climbs zone by zone
+      expect(f(1, 0)).toBe(1);
+      expect(f(8, 0)).toBeGreaterThan(f(7, 0));
+      // NG+: just above the first zone 8, up to 35% above it, evenly
+      expect(f(1, 1) / z8).toBeCloseTo(1.05, 6);
+      expect(f(8, 1) / z8).toBeCloseTo(1.35, 6);
+      expect(f(4, 1) - f(3, 1)).toBeCloseTo(f(8, 1) - f(7, 1), 6);
+      // every cycle after: +10% on every zone
+      for (const z of [1, 5, 8]) {
+        expect(f(z, 2) / f(z, 1)).toBeCloseTo(1.1, 6);
+        expect(f(z, 5) / f(z, 4)).toBeCloseTo(1.1, 6);
+      }
+    }
   });
 });
