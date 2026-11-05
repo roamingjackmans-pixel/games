@@ -55,6 +55,7 @@ npm run dev          # Vite dev server (preview it in the desktop app's browser 
 npm run build        # production build to dist/ (deployed by .github/workflows/deploy.yml)
 npm run preview      # serve dist/ locally under /games/dungeonjoe/
 npm run typecheck; npm run lint; npm test
-npm run test:e2e     # Playwright (boot, create character, tutorial, loopback co-op join, save round-trip)
+npm run test:e2e     # Playwright in Chromium and Firefox (boot, create character, tutorial, loopback co-op join, save round-trip)
+npx playwright install chromium firefox   # once, before the first e2e run
 npm run validate:data
 ```

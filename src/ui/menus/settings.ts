@@ -446,7 +446,17 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
       box.appendChild(live);
       box.appendChild(h('div', { class: 'small dim-text', style: 'max-width:640px' }, 'On its own a Steam Controller acts as a mouse and keyboard, so the browser never sees a gamepad. Connect it here once (pick "Steam Controller" or "Valve" in the list) and the game reads it directly; it reconnects by itself next time. Left stick moves, the right pad aims, the buttons are laid out as on an Xbox pad.'));
     } else {
-      box.appendChild(h('div', { class: 'small dim-text', style: 'max-width:640px' }, 'This browser cannot talk to a Steam Controller directly: open the game in Chrome or Edge and connect it here. Or, with Steam running, add your browser to Steam as a non-Steam game, start it from Steam and choose the Gamepad controller layout.'));
+      // D235: Firefox has no WebHID, so Steam has to turn the controller into an Xbox pad for it
+      const firefox = typeof navigator !== 'undefined' && /Firefox/i.test(navigator.userAgent);
+      box.appendChild(
+        h(
+          'div',
+          { class: 'small dim-text', style: 'max-width:640px', 'data-testid': 'steam-no-hid' },
+          firefox
+            ? 'Firefox cannot talk to a Steam Controller directly, but Steam can turn it into an Xbox pad that Firefox reads: in Steam, Games → Add a Non-Steam Game to My Library → Firefox. Close every Firefox window, start Firefox from Steam (Play), and in its controller settings pick the Gamepad layout. Xbox, PlayStation and other pads work in Firefox as they are. Or open the game in Chrome or Edge and connect the Steam Controller here.'
+            : 'This browser cannot talk to a Steam Controller directly: open the game in Chrome or Edge and connect it here. Or, with Steam running, add your browser to Steam as a non-Steam game, start it from Steam and choose the Gamepad controller layout.',
+        ),
+      );
     }
     return box;
   }

@@ -165,6 +165,9 @@ export class InputManager {
       }
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      // Firefox (D235): ' and / open its Quick Find bar, which then takes every key typed (WASD included), and a lone
+      // Alt shows its menu bar and takes the focus; neither belongs to a game
+      if (!e.ctrlKey && !e.metaKey && (e.code === 'Quote' || e.code === 'Slash' || e.key === 'Alt')) e.preventDefault();
       if (e.ctrlKey || e.metaKey || e.altKey) return; // browser and debug shortcuts never drive the game
       if (['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) && this.gameplayEnabled) e.preventDefault();
       if (e.code === 'Tab') e.preventDefault();
@@ -177,6 +180,9 @@ export class InputManager {
     });
     window.addEventListener('keyup', (e) => {
       this.down.delete(e.code);
+      // Firefox shows its menu bar when a lone Alt is let go (D235)
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (e.key === 'Alt' && tag !== 'INPUT' && tag !== 'TEXTAREA') e.preventDefault();
     });
     window.addEventListener('blur', () => {
       this.down.clear();
