@@ -136,7 +136,7 @@ describe('Saint Aurelia the Unthawed', () => {
     expect(mirrors.length).toBe(3);
     // D222: real enemies (they were 1 HP): a health bar's worth, two attacks of their own
     expect(mirrors.every((m) => m.hp!.max > 300)).toBe(true);
-    expect(mirrors[0]!.en!.def.attacks.map((a) => a.id)).toEqual(['mirror_glint', 'mirror_shatter']);
+    expect((mirrors[0]!.en!.def as { attacks: { id: string }[] }).attacks.map((a) => a.id)).toEqual(['mirror_glint', 'mirror_shatter']);
     expect(mirrors[0]!.en!.def.traits?.hideHpBar).toBeFalsy();
     const m = mirrors[0]!;
     const spec = emptySpec('player');
