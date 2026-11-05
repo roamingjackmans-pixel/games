@@ -4,6 +4,7 @@
 import { WEAPONS } from '../../data/weapons';
 import { SHIELDS } from '../../data/shields';
 import { CASTING_TOOLS } from '../../data/castingTools';
+import { RINGS } from '../../data/rings';
 import { armorPieceWeight } from '../../data/armor';
 import { maxEquipLoad } from '../combat/formulas';
 import { statBoosts } from '../../data/classes';
@@ -43,7 +44,8 @@ export function loadTier(frac: number): LoadTier {
   return 'encumbered';
 }
 
-export const RING_WEIGHT = 0.2;
+/** A ring missing from the table (an old save's unknown ring) weighs this (D237). */
+export const RING_WEIGHT = 1.0;
 
 /** Every item weighs this much more than its table says (D163, owner's request: everything 20% heavier). */
 export const ITEM_WEIGHT_MULT = 1.2;
@@ -57,7 +59,7 @@ function baseWeight(item: Item): number {
   const t = CASTING_TOOLS[item.baseId];
   if (t) return t.weight;
   if (item.kind === 'armor') return armorPieceWeight(item.baseId);
-  if (item.kind === 'ring') return RING_WEIGHT;
+  if (item.kind === 'ring') return RINGS[item.baseId]?.weight ?? RING_WEIGHT;
   return 0;
 }
 

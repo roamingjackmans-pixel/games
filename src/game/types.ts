@@ -674,6 +674,8 @@ export interface ArmorSetDef {
 export interface RingDef {
   id: string;
   name: string;
+  /** table weight, before ITEM_WEIGHT_MULT (D237: 0.8 … 1.5 in game) */
+  weight: number;
   floor: Rarity;
   effect: string;
   flavor: string;

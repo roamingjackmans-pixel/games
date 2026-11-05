@@ -95,6 +95,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   let modal: HTMLElement | null = null;
   /** the item whose next reinforcement is being looked at (D216 / D220): its before → after and the cost, to confirm or back out of */
   let reinforceAsk: { itemId: string } | null = null;
+  /** the respec question is open (D238) */
+  let respecAsk = false;
   /** level-up points planned but not yet spent (D142) */
   let pending: PendingPoints = {};
   /** what to do after the Lock in / Discard question, while it is open */
@@ -113,8 +115,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     if (e.code !== 'Escape') return;
     // leaving with planned level-up points asks first (D142); Escape on that question means keep editing
-    const askLeave = !fuse && !confirmSell && !confirmLeave && !reinforceAsk && pendingCount() > 0;
-    if (!fuse && !confirmSell && !confirmLeave && !reinforceAsk && !askLeave) return;
+    const askLeave = !fuse && !confirmSell && !confirmLeave && !reinforceAsk && !respecAsk && pendingCount() > 0;
+    if (!fuse && !confirmSell && !confirmLeave && !reinforceAsk && !respecAsk && !askLeave) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     if (askLeave) confirmLeave = () => v.close();
@@ -122,6 +124,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     fuse = null;
     confirmSell = null;
     reinforceAsk = null;
+    respecAsk = false;
     render();
   };
   window.addEventListener('keydown', onKey, true);
@@ -272,10 +275,16 @@ export function openBonfire(v: BonfireView): HTMLElement {
       h(
         'div',
         { class: 'row' },
-        btn(`Respec with a Tear of Undoing (${c.tears})`, () => {
-          pending = {};
-          say(v.ops.respec());
-        }, 'danger', c.tears <= 0),
+        (() => {
+          // asks first (D238): a Tear is rare and the old spread cannot be put back
+          const b = btn(`Respec with a Tear of Undoing (${c.tears})`, () => {
+            respecAsk = true;
+            render();
+          }, 'danger', c.tears <= 0);
+          b.setAttribute('data-testid', 'respec');
+          b.setAttribute('data-focus', 'respec');
+          return b;
+        })(),
         h('div', { class: 'small dim-text' }, 'Stats return to your class base; every point comes back to place freely.'),
       ),
     );
@@ -293,6 +302,37 @@ export function openBonfire(v: BonfireView): HTMLElement {
     });
     body.appendChild(h('div', { class: 'col', style: 'gap:4px' }, h('div', { class: 'small dim-text' }, count ? 'Now → after your planned points' : 'Your numbers now (plan points to see what changes)'), table));
     el.appendChild(body);
+  }
+
+  /** "Respec?" before a Tear of Undoing is spent (D238). Back (or B / Escape) leaves everything as it was. */
+  function respecDialog(): HTMLElement | null {
+    if (!respecAsk) return null;
+    const c = v.char;
+    if (c.tears <= 0) {
+      respecAsk = false;
+      return null;
+    }
+    const count = pendingCount();
+    const back = btn('Back', () => {
+      respecAsk = false;
+      render();
+    });
+    back.setAttribute('data-testid', 'respec-back');
+    const yes = btn('Respec', () => {
+      respecAsk = false;
+      pending = {};
+      say(v.ops.respec());
+    }, 'danger');
+    yes.setAttribute('data-testid', 'respec-confirm');
+    return h(
+      'div',
+      { class: 'panel col', style: 'max-width:520px;gap:10px', 'data-testid': 'respec-dialog' },
+      h('h2', { style: 'margin:0' }, 'Respec with a Tear of Undoing?'),
+      h('div', null, `Every stat goes back to your class base and every point you placed comes back to place freely. It uses 1 Tear of Undoing (you have ${c.tears}).`),
+      count ? h('div', { class: 'small bad' }, `Your ${count} planned point${count === 1 ? '' : 's'} not yet confirmed will be dropped.`) : null,
+      // Back first, so a stray confirm press does not spend the Tear
+      h('div', { class: 'row' }, back, yes),
+    );
   }
 
   /** "Lock in your stat changes?" when leaving with planned points (D142). */
@@ -831,6 +871,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
         tab = d.key;
         fuse = null;
         confirmSell = null;
+        respecAsk = false;
         render();
       });
       if (tab === d.key) b.classList.add('on');
@@ -849,7 +890,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const content = h('div', { style: 'flex:1;overflow:auto', 'data-focus-group': `tab-${tab}` });
     defs.find((d) => d.key === tab)?.fn?.(content);
     panel.appendChild(content);
-    const box = confirmLeave ? leaveDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : tab === 'reinforce' ? reinforceDialog() : null;
+    const box = confirmLeave ? leaveDialog() : tab === 'level' ? respecDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : tab === 'reinforce' ? reinforceDialog() : null;
     if (box) {
       // a layer of its own so the pad's focus stays inside the dialog
       modal = h('div', { class: 'layer dim', style: 'z-index:40' }, box);
