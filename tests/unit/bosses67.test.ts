@@ -118,14 +118,10 @@ describe('Saint Aurelia the Unthawed', () => {
     expect(b.en!.phase).toBe(1);
     expect(b.hp!.dead).toBe(false);
   });
-  it('phase 2 ices half the nave over', () => {
+  it('phase 2 no longer scatters ice patches over the nave (D224: they did nothing)', () => {
     const { s, b } = fight(6);
     toPhase2(s, b);
-    const ice = [...s.w.entities.values()].filter((e) => e.type === 'hazard' && e.hz?.hazard === 'ice');
-    expect(ice.length).toBeGreaterThanOrEqual(15);
-    // ~half of the interior floor (patches of r 80 spaced ≥ 150 px apart)
-    const area = ice.reduce((sum, h) => sum + h.hz!.shapes.reduce((a, sh) => a + (sh.k === 'circle' ? Math.PI * sh.r * sh.r : 0), 0), 0);
-    expect(area / (1216 * 640)).toBeGreaterThan(0.35);
+    expect([...s.w.entities.values()].filter((e) => e.type === 'hazard' && e.hz?.hazard === 'ice')).toEqual([]);
   });
   it('Mirror of Faith raises three mirrors that send a player projectile back and take real hits to break (D222)', () => {
     const { s, b, p } = fight(6);
@@ -136,6 +132,9 @@ describe('Saint Aurelia the Unthawed', () => {
     expect(mirrors.length).toBe(3);
     // D222: real enemies (they were 1 HP): a health bar's worth, two attacks of their own
     expect(mirrors.every((m) => m.hp!.max > 300)).toBe(true);
+    // D222: ×1.2 on the hazard role in zone 6 (D224 gave the 40% to Aurelia, not to them)
+    expect(mirrors[0]!.hp!.max).toBeCloseTo(80 * 1.2 * (1 + 0.55 * 5), 0);
+    expect(SAINT_AURELIA.baseHp).toBe(5040);
     expect((mirrors[0]!.en!.def as { attacks: { id: string }[] }).attacks.map((a) => a.id)).toEqual(['mirror_glint', 'mirror_shatter']);
     expect(mirrors[0]!.en!.def.traits?.hideHpBar).toBeFalsy();
     const m = mirrors[0]!;
@@ -162,6 +161,32 @@ describe('Saint Aurelia the Unthawed', () => {
     m.hp!.invulnUntil = 0;
     hitEnemy(s.w, p, m, big, m.x - 20, m.y);
     expect(m.hp!.dead).toBe(true);
+  });
+  it('the mirrors fly round Aurelia on a ring and follow her when she moves (D224)', () => {
+    const { s, b, p } = fight(6);
+    quiet(s, b);
+    startEnemyAttack(s.w, b, attackOf(SAINT_AURELIA, 0, 'aurelia_mirror_of_faith'), p);
+    run(s, 1.7);
+    quiet(s, b);
+    const mirrors = (): Entity[] => s.w.enemies.filter((e) => e.en?.def.id === 'ice_mirror' && !e.hp?.dead);
+    for (const m of mirrors()) m.en!.cooldowns = { mirror_glint: s.w.time + 99, mirror_shatter: s.w.time + 99 };
+    // she stands mid-room (away from the walls that would cut the ring short), rooted
+    b.x = 640;
+    b.y = 380;
+    b.en!.rootUntil = s.w.time + 99;
+    p.x = 1100;
+    p.y = 600;
+    run(s, 3);
+    const near = (): number[] => mirrors().map((m) => Math.hypot(m.x - b.x, m.y - b.y));
+    for (const d of near()) expect(Math.abs(d - 150)).toBeLessThan(40);
+    // spread round her, not bunched: every pair well apart
+    const ms = mirrors();
+    for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) expect(Math.hypot(ms[i]!.x - ms[j]!.x, ms[i]!.y - ms[j]!.y)).toBeGreaterThan(150);
+    // she moves; they come with her
+    b.x = 760;
+    b.y = 420;
+    run(s, 2);
+    for (const d of near()) expect(Math.abs(d - 150)).toBeLessThan(45);
   });
   it('a mirror attacks: Shatter when you stand at it, Frost Glint from range (D222)', () => {
     const { s, b, p } = fight(6);
@@ -397,5 +422,12 @@ describe('Archmagister Tock', () => {
     const tins = s.w.enemies.filter((e) => e.en?.def.id === 'tin_soldier' && !e.hp?.dead);
     expect(tins.length).toBe(4);
     for (const t of tins) expect(Math.min(t.x - 32, 1248 - t.x, t.y - 48, 688 - t.y)).toBeLessThan(110);
+  });
+});
+
+describe('Aurelia arena (D224)', () => {
+  it('has no ice patches: every floor tile is plain', async () => {
+    const { SAINT_AURELIA_ARENA } = await import('../../src/data/bosses/reliquary');
+    expect(SAINT_AURELIA_ARENA.rows.join('')).not.toContain('~');
   });
 });
