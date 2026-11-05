@@ -468,8 +468,8 @@ export class NetGuest {
         return true;
       }
     }
-    const bowLocked = d.weapon.twoHandOnly && !d.twoHanded;
-    const free = speed > 0 && !this.dodgePred && stam && !bowLocked;
+    // a one-handed bow is taken in both hands and shot on the same press (D203), so it is not held back here
+    const free = speed > 0 && !this.dodgePred && stam;
     if (free && (pressed || (held && !d.weapon.ranged))) {
       start(this.nextSwing && now <= this.nextSwing.until ? this.nextSwing.idx : 0);
       return true;

@@ -49,7 +49,6 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     guardBrokenUntil: 0,
     dodgeReadyAt: 0,
     bareParryUntil: 0,
-    lastBowHintAt: -9,
     dodgeRechargeTotal: derived.dodgeRecharge,
     dodgeUntil: 0,
     dodgeDir: [1, 0],
@@ -731,11 +730,9 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   // actions from idle
   if (pl.state === 'idle' && !pl.channel && !pl.charge) {
     if (pressed(inp, 'attack') && pl.derived.weapon.twoHandOnly && !pl.derived.twoHanded) {
-      // a bow needs both hands to draw (D88)
-      if (now - pl.lastBowHintAt > 1.5) {
-        pl.lastBowHintAt = now;
-        w.emit({ t: 'msg', text: 'A bow needs both hands. Two-hand it ({twoHand}) to shoot.', forPlayer: pl.playerId, color: '#ffb35a' });
-      }
+      // a bow needs both hands to draw (D88): shooting one-handed takes it in both hands and shoots (D203)
+      toggleTwoHand(w, e);
+      if (pl.derived.twoHanded && canAffordAttack(w, e, pl.derived.weapon.stamina)) startSwing(w, e, 0);
     } else if ((pressed(inp, 'attack') || (held(inp, 'attack') && !pl.derived.weapon.ranged)) && canAffordAttack(w, e, pl.derived.weapon.stamina)) {
       const idx = now <= pl.comboResetAt ? pl.nextComboIdx : 0;
       startSwing(w, e, idx);

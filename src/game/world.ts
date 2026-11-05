@@ -123,8 +123,6 @@ export interface ChargeRun {
 export interface PlayerC {
   /** a block pressed with no parrying shield: its parry-timing window (only the tutorial cares, D96) */
   bareParryUntil: number;
-  /** last "a bow needs both hands" hint (D88) */
-  lastBowHintAt: number;
   slot: number;
   playerId: string;
   name: string;

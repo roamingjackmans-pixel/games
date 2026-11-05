@@ -9,7 +9,7 @@ const times = (x: number): string => `×${Number(x.toFixed(2))}`;
 /** One line per special perk of a weapon (none: an empty list). */
 export function weaponSpecials(w: WeaponDef): string[] {
   const out: string[] = [];
-  if (w.twoHandOnly) out.push('Two hands only: it cannot be used one-handed.');
+  if (w.twoHandOnly) out.push('Two hands only: shooting takes it in both hands.');
   if (w.hyperArmor === 'all') out.push('Hyper armor: hits do not stagger you while it swings.');
   if (w.hyperArmor === 'last') out.push('Hyper armor on the last swing of a combo: hits do not stagger you then.');
   if (w.bleed) out.push(`Bleed: each hit builds bleed by ${w.bleed} (at 100 it bursts for 10% of an enemy's current HP, at least 3% of its max; 5% of a boss's current HP).`);
