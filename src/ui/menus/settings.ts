@@ -2,7 +2,7 @@
 // menu confirm/back, conflicts swap instead of unbinding), the button-prompt style, accessibility, aim assist,
 // hold/toggle block, and the offline download for a Steam library (Game tab). Saved globally in `dj.settings`.
 import '../controls.css';
-import { connectSteamController, steamControllerConnected, steamControllerSupported } from '../../engine/input/steamController';
+import { connectSteamController, steamControllerConnected, steamControllerSupported, steamDiag, steamGamepad } from '../../engine/input/steamController';
 import { app } from '../../app';
 import { ALL_ACTIONS, type Action } from '../../engine/input/actions';
 import {
@@ -417,6 +417,30 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
       }, 'small');
       b.setAttribute('data-testid', 'steam-connect');
       box.appendChild(h('div', { class: 'row', style: 'gap:8px;align-items:center' }, b));
+      // what the driver sees, live (D206): a screenshot of this tells what a controller really sends
+      const live = h('div', { class: 'mono small', 'data-testid': 'steam-diag', style: 'white-space:pre-wrap;font-size:11px;line-height:1.35;background:#0d0b12;border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:760px;color:#cfc6b4' });
+      const draw = (): void => {
+        const dg = steamDiag();
+        const gp = steamGamepad();
+        const lines: string[] = [];
+        if (!dg.devices.length) lines.push('No Valve device opened yet.');
+        for (const d of dg.devices) lines.push(`${d.opened ? '●' : '○'} ${d.name || '(no name)'}  ${d.ids}  pages ${d.pages}  ${d.note}`);
+        const types = Object.entries(dg.types).map(([k, n]) => `${k}×${n}`).join('  ');
+        if (types) lines.push(`reports: ${types}   understood: ${dg.parsed}`);
+        if (dg.lastBytes) lines.push(`last (id ${dg.lastReportId}, ${dg.lastLength} bytes): ${dg.lastBytes}`);
+        if (dg.featureError) lines.push(`mouse/keyboard off failed: ${dg.featureError}`);
+        if (gp) {
+          const down = gp.buttons.map((x, i) => (x.pressed ? i : -1)).filter((i) => i >= 0).join(',');
+          lines.push(`sticks: ${gp.axes.map((a) => a.toFixed(2)).join(' ')}   buttons down: ${down || '—'}`);
+        }
+        live.textContent = lines.join('\n');
+      };
+      draw();
+      const timer = setInterval(() => {
+        if (!live.isConnected) clearInterval(timer);
+        else draw();
+      }, 250);
+      box.appendChild(live);
       box.appendChild(h('div', { class: 'small dim-text', style: 'max-width:640px' }, 'On its own a Steam Controller acts as a mouse and keyboard, so the browser never sees a gamepad. Connect it here once (pick "Steam Controller" or "Valve" in the list) and the game reads it directly; it reconnects by itself next time. Left stick moves, the right pad aims, the buttons are laid out as on an Xbox pad.'));
     } else {
       box.appendChild(h('div', { class: 'small dim-text', style: 'max-width:640px' }, 'This browser cannot talk to a Steam Controller directly: open the game in Chrome or Edge and connect it here. Or, with Steam running, add your browser to Steam as a non-Steam game, start it from Steam and choose the Gamepad controller layout.'));

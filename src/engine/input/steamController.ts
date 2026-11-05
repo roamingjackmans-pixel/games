@@ -168,6 +168,30 @@ export function steamControllerSupported(): boolean {
 const opened = new Set<HidDevice>();
 let heartbeat: ReturnType<typeof setInterval> | null = null;
 
+/** What the driver has seen (Settings → Gamepad shows it live): enough to tell what a controller actually sends. */
+export interface SteamDiag {
+  devices: { name: string; ids: string; pages: string; opened: boolean; note: string }[];
+  /** reports seen per type byte (hex), and the newest one's first 32 bytes */
+  types: Record<string, number>;
+  lastReportId: number;
+  lastBytes: string;
+  lastLength: number;
+  parsed: number;
+  featureError: string;
+}
+const diag: SteamDiag = { devices: [], types: {}, lastReportId: 0, lastBytes: '', lastLength: 0, parsed: 0, featureError: '' };
+export function steamDiag(): SteamDiag {
+  return diag;
+}
+const hex = (b: Uint8Array, n = 32): string => [...b.slice(0, n)].map((x) => x.toString(16).padStart(2, '0')).join(' ');
+const noteDevice = (d: HidDevice, opened: boolean, note: string): void => {
+  const ids = `${d.vendorId.toString(16).padStart(4, '0')}:${d.productId.toString(16).padStart(4, '0')}`;
+  const pages = d.collections.map((c) => c.usagePage.toString(16)).join(',');
+  const row = diag.devices.find((x) => x.ids === ids && x.pages === pages);
+  if (row) Object.assign(row, { opened, note });
+  else diag.devices.push({ name: d.productName, ids, pages, opened, note });
+};
+
 /** The vendor interface (usage page 0xFF00) is the one that carries the controller's state. */
 const isVendorInterface = (d: HidDevice): boolean => d.vendorId === VALVE_VENDOR_ID && d.collections.some((c) => c.usagePage >= 0xff00);
 
@@ -182,18 +206,26 @@ async function lizardOff(d: HidDevice): Promise<void> {
     await d.sendFeatureReport(0, report([0x81])); // clear digital mappings
     // settings: left pad mode none (0x07), right pad mode none (0x08), right pad margin 0 (0x18)
     await d.sendFeatureReport(0, report([0x87, 9, 0x07, 0x07, 0x00, 0x08, 0x07, 0x00, 0x18, 0x00, 0x00]));
-  } catch {
+    diag.featureError = '';
+  } catch (err) {
     // some firmware refuses; the state reports still arrive, the pad just keeps moving the mouse too
+    diag.featureError = String((err as Error)?.message ?? err).slice(0, 120);
   }
 }
 
 async function openDevice(d: HidDevice): Promise<boolean> {
-  if (opened.has(d) || !isVendorInterface(d)) return false;
-  try {
-    if (!d.opened) await d.open();
-  } catch {
+  if (opened.has(d)) return false;
+  if (!isVendorInterface(d)) {
+    noteDevice(d, false, 'not the controller interface');
     return false;
   }
+  try {
+    if (!d.opened) await d.open();
+  } catch (err) {
+    noteDevice(d, false, `could not open: ${String((err as Error)?.message ?? err).slice(0, 80)}`);
+    return false;
+  }
+  noteDevice(d, true, 'open');
   opened.add(d);
   let stick: [number, number] = [0, 0];
   d.addEventListener('inputreport', (e) => {
@@ -201,9 +233,15 @@ async function openDevice(d: HidDevice): Promise<boolean> {
     // a numbered report arrives without its id byte; put the layout back where the parser expects it
     const bytes = e.reportId ? Uint8Array.of(e.reportId, ...raw) : raw;
     const at = bytes[0] === 0x01 && bytes[1] === 0x00 ? bytes : raw[0] === 0x01 && raw[1] === 0x00 ? raw : null;
+    const type = at ? at[2]!.toString(16) : `id${e.reportId}`;
+    diag.types[type] = (diag.types[type] ?? 0) + 1;
+    diag.lastReportId = e.reportId;
+    diag.lastLength = raw.length;
+    diag.lastBytes = hex(raw);
     if (!at) return;
     const s = parseSteamReport(at, stick);
     if (!s) return;
+    diag.parsed++;
     stick = [s.axes[0], s.axes[1]];
     applySteamState(s);
   });
