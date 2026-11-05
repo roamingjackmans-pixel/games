@@ -162,6 +162,8 @@ export interface PlayerC {
   healOver: { perS: number; until: number; interruptible: boolean }[];
   downed: boolean;
   ghostUntil: number;
+  /** a downed player's bleed-out countdown holds until then (D202: each ally hit holds it 3 s) */
+  ghostPauseUntil: number;
   reviveProgress: number;
   reviveNeed: number;
   downs: number;

@@ -834,12 +834,17 @@ export function typeColor(t: DamageType): string {
 export const STAGGER_GRACE_S = 2;
 
 /** Add revive progress to a ghost (D12). */
+/** How long one ally hit holds a downed player's bleed-out countdown (D202). */
+export const GHOST_HIT_PAUSE_S = 3;
+
 export function addRevive(w: World, ghost: Entity, attacker: Entity, value: number): void {
   const gp = ghost.pl!;
   if (!gp.downed) return;
   let v = value;
   if (attacker.pl?.derived.rings.has('ghost_lantern')) v *= 2;
   gp.reviveProgress += v;
+  // every hit holds the bleed-out countdown for 3 s, starting the 3 s again (D202)
+  gp.ghostPauseUntil = w.time + GHOST_HIT_PAUSE_S;
   w.sfx('reviveTick', ghost.x);
   w.fx('revive', ghost.x, ghost.y);
   if (gp.reviveProgress < gp.reviveNeed) return;

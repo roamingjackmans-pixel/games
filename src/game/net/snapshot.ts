@@ -388,6 +388,7 @@ export interface SelfState {
   guardBrokenUntil: number;
   riposteBuffUntil: number;
   ghostUntil: number;
+  ghostPauseUntil: number;
   stateUntil: number;
   invulnUntil: number;
   lastSeq: number;
@@ -424,6 +425,7 @@ export function selfStateOf(w: World, e: Entity, lastSeq: number): SelfState {
     guardBrokenUntil: pl.guardBrokenUntil,
     riposteBuffUntil: pl.riposteBuffUntil,
     ghostUntil: pl.ghostUntil,
+    ghostPauseUntil: pl.ghostPauseUntil,
     stateUntil: pl.stateUntil,
     invulnUntil: e.hp!.invulnUntil,
     lastSeq,

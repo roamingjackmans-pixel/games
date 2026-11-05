@@ -374,7 +374,8 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     ctx.fillStyle = '#efe6d2';
     ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.max(0, Math.ceil(pl.ghostUntil - now))}s`, x, y - 36);
+    // held by an ally's hit (D202): a pause mark before the seconds
+    ctx.fillText(`${now < pl.ghostPauseUntil ? '‖ ' : ''}${Math.max(0, Math.ceil(pl.ghostUntil - now))}s`, x, y - 36);
     ctx.restore();
   }
   // co-op name tag

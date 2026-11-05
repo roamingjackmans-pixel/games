@@ -68,6 +68,7 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     healOver: [],
     downed: false,
     ghostUntil: 0,
+    ghostPauseUntil: 0,
     reviveProgress: 0,
     reviveNeed: 10,
     downs: 0,
@@ -576,6 +577,8 @@ function updateGhost(w: World, e: Entity, dt: number): void {
   const inp = pl.input;
   const sp = GHOST_SPEED;
   w.room.moveCircle(e, inp.moveX * sp * dt, inp.moveY * sp * dt, false);
+  // an ally hitting you holds the countdown (D202): it stands still until 3 s after their last hit
+  if (w.time < pl.ghostPauseUntil) pl.ghostUntil += dt;
   if (w.time >= pl.ghostUntil && !pl.deadUntilRest) {
     pl.downed = false;
     pl.deadUntilRest = true;

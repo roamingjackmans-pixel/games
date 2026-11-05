@@ -1089,6 +1089,7 @@ export class GameSession {
     this.downs[pl.playerId] = pl.downs;
     pl.downed = true;
     pl.ghostUntil = this.w.time + 30;
+    pl.ghostPauseUntil = 0;
     pl.reviveProgress = 0;
     pl.reviveNeed = reviveRequirement(pl.downs);
     pl.state = 'idle';

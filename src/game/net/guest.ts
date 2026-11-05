@@ -558,6 +558,7 @@ export class NetGuest {
     pl.guardBrokenUntil = s.guardBrokenUntil;
     pl.riposteBuffUntil = s.riposteBuffUntil;
     pl.ghostUntil = s.ghostUntil;
+    pl.ghostPauseUntil = s.ghostPauseUntil ?? 0;
     pl.stateUntil = s.stateUntil;
     // reconcile the prediction (NETCODE §5): replay unacknowledged inputs from the host's position
     this.pending = this.pending.filter((p) => seqNewer(p.seq, s.lastSeq));

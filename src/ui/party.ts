@@ -26,7 +26,7 @@ export function drawPartyCards(ctx: CanvasRenderingContext2D, w: World, localPla
       ctx.fillStyle = withAlpha('#58d66a', 0.9);
       ctx.fillRect(22, y + 22, 170 * k, 7);
       const left = Math.max(0, pl.ghostUntil - w.time);
-      drawText(ctx, `DOWN — hit them to revive ${pl.ghostUntil > 0 ? `(${Math.ceil(left)}s)` : ''}`, 22, y + 36, { size: 10, color: '#ffcf6a' });
+      drawText(ctx, `DOWN — hit them to revive ${pl.ghostUntil > 0 ? `(${w.time < pl.ghostPauseUntil ? 'held, ' : ''}${Math.ceil(left)}s)` : ''}`, 22, y + 36, { size: 10, color: '#ffcf6a' });
     } else {
       ctx.fillStyle = '#c0303a';
       ctx.fillRect(22, y + 22, 170 * frac, 7);
