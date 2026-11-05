@@ -731,6 +731,8 @@ export interface Item {
   xp?: number;
   /** weapons, shields and armour: reinforced with Soul Essence, +0 … +15 (D198) */
   plus?: number;
+  /** times it was raised a rarity at a bonfire (D178), for the Legendary achievement (D239); absent if never */
+  raised?: number;
 }
 
 export type ConsumableId =

@@ -6,6 +6,7 @@
 import { ACHIEVEMENTS, ACHIEVEMENT_BY_ID, type AchievementDef, type AchView } from '../data/achievements';
 import { GEM_MAX_LEVEL, perkLevel, perkQuality } from '../data/gems';
 import { MAX_REINFORCE } from '../data/essence';
+import { bestiaryTally } from '../data/bestiary';
 import { BOSSES } from '../data/bosses';
 import { GARY, INSTRUCTOR, MIMIC, SPECIAL_ENEMIES } from '../data/enemies/special';
 import { parseArmorBase } from '../data/armor';
@@ -97,6 +98,17 @@ export function hasPerfectGem(c: Character): boolean {
 /** Any weapon, shield or armour piece at +15 (D199). */
 export function hasMaxReinforce(c: Character): boolean {
   return itemsOf(c).some((it) => (it.plus ?? 0) >= MAX_REINFORCE);
+}
+
+/** A weapon, staff or talisman raised to Legendary at a bonfire (D239), not one found that way. */
+export function hasRaisedLegendary(c: Character): boolean {
+  return itemsOf(c).some((it) => it.rarity === 'legendary' && (it.raised ?? 0) > 0 && (it.kind === 'weapon' || it.kind === 'staff' || it.kind === 'talisman'));
+}
+
+/** Every slot on the paper doll filled with a Legendary (D239): weapon, 2nd weapon, off hand, 2nd off hand, head, body, legs, four rings. */
+export function wearsAllLegendary(c: Character): boolean {
+  const e = c.equipment;
+  return [e.main, c.altMain, e.off, c.altOff, e.head, e.body, e.legs, e.ring1, e.ring2, e.ring3, e.ring4].every((it) => it?.rarity === 'legendary');
 }
 
 /** The boss fight in progress, from the local player's side. */
@@ -353,6 +365,15 @@ export class AchievementTracker {
     if (!this.view.count('gemMax') && hasMaxGem(c)) this.flag('gemMax');
     if (!this.view.count('gemPerfect') && hasPerfectGem(c)) this.flag('gemPerfect');
     if (!this.view.count('plusMax') && hasMaxReinforce(c)) this.flag('plusMax');
+    // D239
+    if (!this.view.count('raisedLegendary') && hasRaisedLegendary(c)) this.flag('raisedLegendary');
+    if (!this.view.count('allLegendary') && wearsAllLegendary(c)) this.flag('allLegendary');
+    const b = bestiaryTally(c);
+    this.max('bestiaryKnown', b.known);
+    if (b.total > 0 && b.known >= b.total) this.flag('bestiaryAll');
+    if (b.enemyDone) this.flag('bestiaryEnemy');
+    if (b.bossDone) this.flag('bestiaryBoss');
+    if (b.zoneDone) this.flag('bestiaryZone');
     if (!this.view.count('gary') && w.enemies.some((e) => e.en?.def.id === GARY.id && !e.removed)) this.flag('gary');
   }
 }

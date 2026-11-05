@@ -33,6 +33,7 @@ const ICON_PATHS: Record<AchIcon, string> = {
   weight: '<path d="M8 8a4 4 0 0 1 8 0"/><path d="M6 8h12l3 13H3z"/><path d="M9 15h6"/>',
   cart: '<path d="M2 5h3l3 10h11l2-7H7"/><circle cx="9" cy="19" r="1.8"/><circle cx="17" cy="19" r="1.8"/>',
   shard: '<path d="M12 2l5 7-3 13-5-3-4-8z"/><path d="M12 2l-1 10 3 10M5 11l6 1 6-3"/>',
+  book: '<path d="M4 4.5C6.5 3.5 9.5 3.5 12 5.5c2.5-2 5.5-2 8-1V19c-2.5-1-5.5-1-8 1-2.5-2-5.5-2-8-1z"/><path d="M12 5.5V20M7 8.5h2.5M7 11.5h2.5M14.5 8.5H17M14.5 11.5H17"/>',
 };
 
 /** One achievement icon as an element (`locked` greys it). */

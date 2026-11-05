@@ -100,3 +100,28 @@ export function addBestiarySeen(c: Character, id: string): void {
   c.bestiary ??= { kills: {}, seen: [] };
   if (!c.bestiary.seen.includes(id)) c.bestiary.seen.push(id);
 }
+
+/** How far the whole book is (D239, for achievements): entries with their picture, every entry, and whether any
+ * regular enemy, any boss, or a whole zone's chapter (its enemies and boss) is fully studied. */
+export function bestiaryTally(c: Pick<Character, 'bestiary'>): { known: number; total: number; enemyDone: boolean; bossDone: boolean; zoneDone: boolean } {
+  let known = 0;
+  let total = 0;
+  let enemyDone = false;
+  let bossDone = false;
+  let zoneDone = false;
+  for (const z of bestiaryZones()) {
+    const all: { id: string; role: string }[] = [...z.enemies, ...(z.boss ? [z.boss] : [])];
+    let chapter = all.length > 0;
+    for (const d of all) {
+      const p = bestiaryProgress(c, d);
+      total++;
+      if (p.icon) known++;
+      const done = p.takeLess;
+      if (done && d.role === 'boss') bossDone = true;
+      else if (done) enemyDone = true;
+      if (!done) chapter = false;
+    }
+    if (chapter) zoneDone = true;
+  }
+  return { known, total, enemyDone, bossDone, zoneDone };
+}

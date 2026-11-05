@@ -2,8 +2,15 @@
 // counters (src/game/achievements.ts keeps them in `dj.achievements`); none of them special-cases a save.
 // Counter keys: kills, deaths, parries, riposteKills, level, glowen, party, encumberedS (longest unbroken
 // stretch, seconds), credits, instructor, mimicKill, mimicDeath, legendary, fullSet, gemMax, gemPerfect, plusMax, flaskless,
-// fists, revive, ffDown, ffAbandon, gary, garyGone, ng1, ng2, boss:<bossId>, class:<classId>, clean:<zone>.
+// fists, revive, ffDown, ffAbandon, gary, garyGone, ng1, ng2, boss:<bossId>, class:<classId>, clean:<zone>,
+// raisedLegendary, allLegendary, bestiaryKnown, bestiaryAll, bestiaryEnemy, bestiaryBoss, bestiaryZone (D239).
 import type { ClassId } from '../game/types';
+import { bestiaryZones } from './bestiary';
+
+/** Entries in the Bestiary: every zone's enemies and its boss (D239). */
+function bestiaryTotal(): number {
+  return bestiaryZones().reduce((n, z) => n + z.enemies.length + (z.boss ? 1 : 0), 0);
+}
 
 /** What a check can see: the counters and the achievements already unlocked. */
 export interface AchView {
@@ -35,7 +42,8 @@ export type AchIcon =
   | 'coin'
   | 'weight'
   | 'cart'
-  | 'shard';
+  | 'shard'
+  | 'book';
 
 export interface AchievementDef {
   id: string;
@@ -118,6 +126,22 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   once('gem_max', 'Hard Pressed', 'Own a Tier 5 gem: a gem perk at its maximum.', 'gem', 'gemMax'),
   once('gem_perfect', 'Freshly Squeezed', 'Own a level 50 gem with three perks, every one of them an Orange roll.', 'gem', 'gemPerfect'),
   once('plus_max', 'Built to Code', 'Reinforce a weapon, shield or piece of armor to +15 with Soul Essence.', 'shield', 'plusMax'),
+  once('raised_legendary', 'Grown Into It', 'Use a weapon until it is ready, then raise it to Legendary at a bonfire.', 'star', 'raisedLegendary'),
+  once('all_legendary', 'Dressed to Evict', 'Wear a Legendary in every slot at once: both weapons, both off hands, head, body, legs and all four rings.', 'crown', 'allLegendary'),
+
+  // ---- the Bestiary (D239)
+  reach('bestiary_25', 'Field Notes', 'Fill in 25 entries in the Bestiary.', 'book', 'bestiaryKnown', 25),
+  {
+    id: 'bestiary_all',
+    name: 'Natural History',
+    desc: 'Fill in every entry in the Bestiary: every enemy and every boss.',
+    icon: 'book',
+    check: (s) => s.count('bestiaryAll') >= 1,
+    progress: (s) => [Math.min(bestiaryTotal(), s.count('bestiaryKnown')), bestiaryTotal()],
+  },
+  once('bestiary_enemy', 'Know Thy Neighbour', 'Learn all there is to learn about one enemy.', 'book', 'bestiaryEnemy'),
+  once('bestiary_boss', 'Repeat Business', 'Learn all there is to learn about one boss.', 'book', 'bestiaryBoss'),
+  once('bestiary_zone', 'Chapter and Verse', 'Learn all there is to learn about every enemy of one zone, and its boss.', 'book', 'bestiaryZone'),
 
   // ---- getting good
   reach('parry_50', 'Not Today', 'Parry 50 attacks.', 'shield', 'parries', 50),

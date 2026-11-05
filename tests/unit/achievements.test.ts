@@ -22,9 +22,9 @@ function setup(): { t: AchievementTracker; store: MemoryStore; w: World; c: Char
 const death = (id: number, defId: string): GameEvent => ({ t: 'death', id, x: 0, y: 0, isPlayer: false, defId });
 
 describe('achievement data', () => {
-  it('has 35–55 achievements with unique ids, names and descriptions', () => {
+  it('has 35–65 achievements with unique ids, names and descriptions', () => {
     expect(ACHIEVEMENTS.length).toBeGreaterThanOrEqual(35);
-    expect(ACHIEVEMENTS.length).toBeLessThanOrEqual(55);
+    expect(ACHIEVEMENTS.length).toBeLessThanOrEqual(65);
     const ids = ACHIEVEMENTS.map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const a of ACHIEVEMENTS) {
@@ -171,6 +171,7 @@ describe('The Dark Shard', () => {
     const keys = [
       'kills', 'deaths', 'parries', 'riposteKills', 'level', 'glowen', 'party', 'encumberedS', 'credits', 'instructor', 'mimicKill',
       'mimicDeath', 'legendary', 'fullSet', 'gemMax', 'gemPerfect', 'plusMax', 'flaskless', 'fists', 'revive', 'ffDown', 'ffAbandon', 'gary', 'ng1', 'ng2',
+      'raisedLegendary', 'allLegendary', 'bestiaryKnown', 'bestiaryAll', 'bestiaryEnemy', 'bestiaryBoss', 'bestiaryZone',
       ...Object.keys(BOSSES).map((b) => `boss:${b}`),
       ...CLASS_IDS.map((c) => `class:${c}`),
       ...[1, 2, 3, 4, 5, 6, 7, 8].map((z) => `clean:${z}`),

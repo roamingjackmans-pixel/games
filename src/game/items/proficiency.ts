@@ -132,6 +132,7 @@ export function upgradeRarity(c: Character, itemId: string): { ok: boolean; msg:
   if (c.glowen < u.cost) return { ok: false, msg: `Not enough Glowen (${u.cost} needed).` };
   c.glowen -= u.cost;
   it.rarity = u.to;
+  it.raised = (it.raised ?? 0) + 1;
   it.xp = 0;
   if (u.to === 'legendary') {
     const rng = new Rng(`raise|${it.id}`);
