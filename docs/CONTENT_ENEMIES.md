@@ -273,11 +273,11 @@ A knight-saint in a block of ice that cracks as the fight goes on. Arena: reliqu
 floor ices over in patches.
 
 Phase 1:
-- **Blessed Blade** combo: 3 arcs ×1.0/×1.0/×1.4 Frost, Chill 20 each. *Parryable (third hit).*
+- **Blessed Blade** combo: 3 arcs ×1.0/×1.0/×1.4 Frost, Chill 20 each, reach 190 (D223; was 135). *Parryable (every hit, D223; was the third only).*
 - **Ice Spears [PIERCE][AREA]**: lanes(5, 80) vertical, telegraph 1.1 s, ×1.2 Frost.
 - **Frostbite Lunge [RED]**: tint 0.6 s, line(50, 260) ×1.7 Frost, Chill 70.
 - **Hymn [PIERCE][AREA]**: expandingRing(280 px/s) 2 gaps, ×0.6 + Silence 2 s.
-- **Mirror of Faith**: 3 ice mirrors (1 HP each) that reflect projectiles and spells back.
+- **Mirror of Faith**: 3 ice mirrors that reflect projectiles and spells back. D222: real enemies (role hazard, HP ×1.2, about 360 in the first playthrough), each with **Frost Glint** (a ranged shot, Chill 20) and **Shatter** (circle(110) around itself, ×1.2, Chill 30, for anyone breaking it up close).
 
 Phase 2 (the ice shatters: she is faster, wings of frost; the floor is 50% ice patches):
 - New **Avalanche [PIERCE][AREA]**: lanes(4, 120) boulders roll horizontally, telegraph 1.2 s, ×1.5.

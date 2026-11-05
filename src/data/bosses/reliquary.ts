@@ -9,7 +9,8 @@ const blessedBlade: AttackDef = {
   id: 'aurelia_blessed_blade',
   name: 'Blessed Blade',
   kind: 'normal',
-  pattern: { kind: 'melee', shape: 'arc', angleDeg: 110, r: 135 },
+  // D223: reaches 190 px (was 135), and every arc can be parried (it was the third only)
+  pattern: { kind: 'melee', shape: 'arc', angleDeg: 110, r: 190 },
   windupMs: 750,
   recoverMs: 900,
   dmgMult: 1.0,
@@ -18,11 +19,9 @@ const blessedBlade: AttackDef = {
   comboMults: [1.0, 1.0, 1.4],
   comboGapMs: 420,
   cooldownS: 3,
-  range: [0, 135],
+  range: [0, 190],
   weight: 4,
-  // the sheet: parryable on the third hit only
   parryable: true,
-  parryableHits: [2],
 };
 
 const iceSpears = (twoSets: boolean): AttackDef => ({
@@ -211,13 +210,19 @@ export const SAINT_AURELIA_PARTS: Record<string, EnemyDef> = {
     zone: 6,
     name: 'Ice Mirror',
     role: 'hazard',
+    // D222: a real enemy now (it was 1 HP with no attacks): about 360 HP in the first playthrough, scaling with the
+    // zone and New Game+, a health bar, a ranged chill shot and a burst for anyone who walks up to break it.
+    // Projectiles and projectile spells still bounce back at the thrower.
+    mult: { hp: 1.2 },
     radius: 20,
     resist: {},
     moveStyle: 'stationary',
     preferredRange: 0,
-    attacks: [],
-    // 1 HP: any melee hit breaks it; projectiles and projectile spells bounce back at the thrower
-    traits: { fixedHp: 1, reflectsProjectiles: true, noFlinch: true, hideHpBar: true, noDrops: true, noShards: true },
+    attacks: [
+      { id: 'mirror_glint', name: 'Frost Glint', kind: 'normal', pattern: { kind: 'projectile', speed: 400, r: 7 }, windupMs: 700, recoverMs: 500, dmgMult: 0.8, type: 'magic', status: { id: 'chill', buildup: 20 }, cooldownS: 3.5, range: [0, 700], weight: 3 },
+      { id: 'mirror_shatter', name: 'Shatter', kind: 'normal', pattern: { kind: 'circle', r: 110, anchor: 'self' }, windupMs: 900, recoverMs: 800, dmgMult: 1.2, type: 'magic', status: { id: 'chill', buildup: 30 }, cooldownS: 5, range: [0, 120], weight: 4, area: true },
+    ],
+    traits: { reflectsProjectiles: true, noFlinch: true, noDrops: true, noShards: true },
     flavor: 'Faith, polished until it shows you your own arrow coming back.',
     draw: 'aurelia_mirror',
     palette: ['#cfeaff', '#9ad0ff', '#ffffff'],

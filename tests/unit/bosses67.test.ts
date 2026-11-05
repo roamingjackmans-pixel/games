@@ -127,14 +127,17 @@ describe('Saint Aurelia the Unthawed', () => {
     const area = ice.reduce((sum, h) => sum + h.hz!.shapes.reduce((a, sh) => a + (sh.k === 'circle' ? Math.PI * sh.r * sh.r : 0), 0), 0);
     expect(area / (1216 * 640)).toBeGreaterThan(0.35);
   });
-  it('Mirror of Faith raises three 1-HP mirrors that send a player projectile back; a melee hit breaks one', () => {
+  it('Mirror of Faith raises three mirrors that send a player projectile back and take real hits to break (D222)', () => {
     const { s, b, p } = fight(6);
     quiet(s, b);
     startEnemyAttack(s.w, b, attackOf(SAINT_AURELIA, 0, 'aurelia_mirror_of_faith'), p);
     run(s, 1.7);
     const mirrors = s.w.enemies.filter((e) => e.en?.def.id === 'ice_mirror' && !e.hp?.dead);
     expect(mirrors.length).toBe(3);
-    expect(mirrors.every((m) => m.hp!.max === 1)).toBe(true);
+    // D222: real enemies (they were 1 HP): a health bar's worth, two attacks of their own
+    expect(mirrors.every((m) => m.hp!.max > 300)).toBe(true);
+    expect(mirrors[0]!.en!.def.attacks.map((a) => a.id)).toEqual(['mirror_glint', 'mirror_shatter']);
+    expect(mirrors[0]!.en!.def.traits?.hideHpBar).toBeFalsy();
     const m = mirrors[0]!;
     const spec = emptySpec('player');
     spec.dmg.physical = 12;
@@ -148,13 +151,44 @@ describe('Saint Aurelia the Unthawed', () => {
     expect(pr.pr!.ownerId).toBe(m.id);
     expect(pr.vx).toBeLessThan(0);
     expect(m.hp!.dead).toBe(false);
-    // a sword breaks it
+    // a light cut no longer breaks it; enough damage does
     const cut = emptySpec('player');
     cut.dmg.physical = 5;
+    m.hp!.invulnUntil = 0;
     hitEnemy(s.w, p, m, cut, m.x - 20, m.y);
+    expect(m.hp!.dead).toBe(false);
+    const big = emptySpec('player');
+    big.dmg.physical = m.hp!.max * 3;
+    m.hp!.invulnUntil = 0;
+    hitEnemy(s.w, p, m, big, m.x - 20, m.y);
     expect(m.hp!.dead).toBe(true);
   });
-  it('Blessed Blade: three arcs, only the third can be parried', () => {
+  it('a mirror attacks: Shatter when you stand at it, Frost Glint from range (D222)', () => {
+    const { s, b, p } = fight(6);
+    quiet(s, b);
+    startEnemyAttack(s.w, b, attackOf(SAINT_AURELIA, 0, 'aurelia_mirror_of_faith'), p);
+    run(s, 1.7);
+    const m = s.w.enemies.find((e) => e.en?.def.id === 'ice_mirror' && !e.hp?.dead)!;
+    // keep the boss out of it
+    b.x = 100;
+    b.y = 100;
+    b.en!.cooldowns = Object.fromEntries(b.en!.phaseAttacks.map((atk) => [atk.id, s.w.time + 60]));
+    const seen = new Set<string>();
+    p.x = m.x + 60;
+    p.y = m.y;
+    for (let i = 0; i < 6 * 60; i++) {
+      if (m.en!.attack) seen.add(m.en!.attack.def.id);
+      run(s, 1 / 60);
+    }
+    expect(seen.has('mirror_shatter')).toBe(true);
+    p.x = m.x + 450;
+    for (let i = 0; i < 8 * 60; i++) {
+      if (m.en!.attack) seen.add(m.en!.attack.def.id);
+      run(s, 1 / 60);
+    }
+    expect(seen.has('mirror_glint')).toBe(true);
+  });
+  it('Blessed Blade: three arcs reaching 190 px, every one parryable (D223; it was the third only)', () => {
     const { s, b, p } = fight(6);
     quiet(s, b);
     p.x = b.x + 90;
@@ -166,7 +200,10 @@ describe('Saint Aurelia the Unthawed', () => {
       for (const t of telegraphsOf(s, b)) if (!before.has(t.id) && t.tg!.shapes[0]?.k === 'cone' && !seen.has(t.id)) seen.set(t.id, !!t.tg!.spec?.parryable);
       stepWorld(s.w);
     }
-    expect([...seen.values()]).toEqual([false, false, true]);
+    expect([...seen.values()]).toEqual([true, true, true]);
+    const atk = attackOf(SAINT_AURELIA, 0, 'aurelia_blessed_blade');
+    expect(atk.pattern).toMatchObject({ kind: 'melee', shape: 'arc', r: 190 });
+    expect(atk.range).toEqual([0, 190]);
   });
   it('Judgment dives through the target, then a Piercing Frost Nova with 5 gaps (one toward the centre) rings out where she lands', () => {
     const { s, b, p } = fight(6);
