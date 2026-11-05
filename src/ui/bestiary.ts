@@ -9,8 +9,8 @@ import { affinityMult, ELEMENTS, enemyElement } from '../game/elements';
 import { DAMAGE_TYPES, type BossDef, type Character, type DamageType, type EnemyDef } from '../game/types';
 import { btn, h } from './dom';
 
-/** Chapters folded shut this session (all open by default). */
-const folded = new Set<number>();
+/** Chapters opened this session: every zone starts folded shut each time the game is opened (D236). */
+const opened = new Set<number>();
 
 const TYPE_LABEL: Record<DamageType, string> = { physical: 'Physical', magic: 'Magic', void: 'Void', fire: 'Fire', holy: 'Holy' };
 
@@ -91,10 +91,10 @@ function entry(c: Character, def: EnemyDef | BossDef, zone: number): HTMLElement
 function chapter(c: Character, z: BestiaryZone, rerender: () => void): HTMLElement {
   const all = [...z.enemies, ...(z.boss ? [z.boss] : [])];
   const known = all.filter((d) => bestiaryProgress(c, d).icon).length;
-  const open = !folded.has(z.zone);
+  const open = opened.has(z.zone);
   const head = btn([open ? '▾ ' : '▸ ', `Zone ${z.zone} · ${z.name}`, h('span', { class: 'small dim-text' }, `  ${known} / ${all.length}`)], () => {
-    if (open) folded.add(z.zone);
-    else folded.delete(z.zone);
+    if (open) opened.delete(z.zone);
+    else opened.add(z.zone);
     rerender();
   }, 'tiny');
   head.setAttribute('data-testid', `bestiary-zone-${z.zone}`);
