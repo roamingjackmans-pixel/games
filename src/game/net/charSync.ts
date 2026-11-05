@@ -12,7 +12,7 @@ export type CharOp =
   | { op: 'gem'; gem: Gem }
   | { op: 'consumable'; id: ConsumableId; n: number }
   | { op: 'spell'; id: string }
-  | { op: 'gear'; equipment: Character['equipment']; altMain: Item | null }
+  | { op: 'gear'; equipment: Character['equipment']; altMain: Item | null; altOff?: Item | null }
   /** weapon-class proficiency experience gained (D178) */
   | { op: 'prof'; cls: string; n: number }
   /** Soul Essence picked up (D198): n more of tier */
@@ -41,8 +41,8 @@ export function diffChar(base: Character, cur: Character): CharOp[] {
     const d = (cur.essence?.[i] ?? 0) - (base.essence?.[i] ?? 0);
     if (d !== 0) ops.push({ op: 'essence', tier: i + 1, n: d });
   }
-  if (JSON.stringify(cur.equipment) !== JSON.stringify(base.equipment) || JSON.stringify(cur.altMain) !== JSON.stringify(base.altMain)) {
-    ops.push({ op: 'gear', equipment: JSON.parse(JSON.stringify(cur.equipment)) as Character['equipment'], altMain: cur.altMain ? (JSON.parse(JSON.stringify(cur.altMain)) as Item) : null });
+  if (JSON.stringify(cur.equipment) !== JSON.stringify(base.equipment) || JSON.stringify(cur.altMain) !== JSON.stringify(base.altMain) || JSON.stringify(cur.altOff ?? null) !== JSON.stringify(base.altOff ?? null)) {
+    ops.push({ op: 'gear', equipment: JSON.parse(JSON.stringify(cur.equipment)) as Character['equipment'], altMain: cur.altMain ? (JSON.parse(JSON.stringify(cur.altMain)) as Item) : null, altOff: cur.altOff ? (JSON.parse(JSON.stringify(cur.altOff)) as Item) : null });
   }
   return ops;
 }
@@ -78,6 +78,7 @@ export function applyCharOp(c: Character, o: CharOp): void {
     case 'gear':
       c.equipment = o.equipment;
       c.altMain = o.altMain;
+      if (o.altOff !== undefined) c.altOff = o.altOff;
       break;
     case 'prof':
       c.proficiency ??= {};

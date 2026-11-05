@@ -1,7 +1,7 @@
 // Paper doll for the equipment window: a dark human silhouette drawn as inline SVG (crisp at any UI scale),
 // with the equipment slots laid over the part of the body they go on. Helmet at the head, body at the torso,
-// legs at the legs; the off hand by one hand with the two rings beneath it; the weapon and the second
-// (quick-swap) weapon by the other hand. The caller builds the slot buttons (so clicks, tooltips and focus
+// legs at the legs; the off hand and the 2nd off hand by one hand, the weapon and the 2nd weapon by the other, two
+// rings under each (D228). The caller builds the slot buttons (so clicks, tooltips and focus
 // stay in the inventory) and this places them.
 import type { EquipSlot } from '../game/items/inventory';
 import { h } from './dom';
@@ -24,11 +24,15 @@ export const DOLL_SLOTS: DollSlot[] = [
   { slot: 'head', label: 'Helmet', x: 150, y: 48, size: 56 },
   { slot: 'body', label: 'Body', x: 150, y: 160, size: 60 },
   { slot: 'legs', label: 'Legs', x: 150, y: 298, size: 56 },
-  { slot: 'main', label: 'Weapon', x: 42, y: 236, size: 56 },
-  { slot: 'altMain', label: '2nd weapon', x: 42, y: 304, size: 56 },
-  { slot: 'off', label: 'Off hand', x: 258, y: 236, size: 56 },
-  { slot: 'ring1', label: 'Ring', x: 258, y: 298, size: 46 },
-  { slot: 'ring2', label: 'Ring', x: 258, y: 350, size: 46 },
+  // D228: the hands sit higher so each side has two rings under them (four rings), and a 2nd off hand by the off hand
+  { slot: 'main', label: 'Weapon', x: 42, y: 150, size: 56 },
+  { slot: 'altMain', label: '2nd weapon', x: 42, y: 214, size: 56 },
+  { slot: 'ring3', label: 'Ring', x: 42, y: 278, size: 46 },
+  { slot: 'ring4', label: 'Ring', x: 42, y: 332, size: 46 },
+  { slot: 'off', label: 'Off hand', x: 258, y: 150, size: 56 },
+  { slot: 'altOff', label: '2nd off hand', x: 258, y: 214, size: 56 },
+  { slot: 'ring1', label: 'Ring', x: 258, y: 278, size: 46 },
+  { slot: 'ring2', label: 'Ring', x: 258, y: 332, size: 46 },
 ];
 
 const SVG_NS = 'http://www.w3.org/2000/svg';

@@ -7,7 +7,23 @@ import { canRaise, levelFromStats, respecStats } from '../player/character';
 import type { Character, ConsumableId, Gem, GemPerk, GemTier, Item, Rarity, StatId } from '../types';
 
 export const BAG_SIZE = 60;
-export type EquipSlot = keyof Character['equipment'] | 'altMain';
+export type EquipSlot = keyof Character['equipment'] | 'altMain' | 'altOff';
+
+/** Every slot that is worn and counts (D228: four rings); the 2nd weapon and 2nd off hand wait their turn. */
+export const WORN_SLOTS = ['main', 'off', 'head', 'body', 'legs', 'ring1', 'ring2', 'ring3', 'ring4'] as const;
+export const RING_SLOTS = ['ring1', 'ring2', 'ring3', 'ring4'] as const;
+
+/** What is in a slot, the quick-swap ones included. */
+export function slotItem(c: Character, slot: EquipSlot): Item | null {
+  if (slot === 'altMain') return c.altMain;
+  if (slot === 'altOff') return c.altOff ?? null;
+  return c.equipment[slot] ?? null;
+}
+function setSlot(c: Character, slot: EquipSlot, item: Item | null): void {
+  if (slot === 'altMain') c.altMain = item;
+  else if (slot === 'altOff') c.altOff = item;
+  else c.equipment[slot] = item;
+}
 
 export interface OpResult {
   ok: boolean;
@@ -32,7 +48,7 @@ export function defaultSlotFor(c: Character, item: Item): EquipSlot | null {
     case 'legs':
       return item.slot;
     case 'ring':
-      return !c.equipment.ring1 ? 'ring1' : !c.equipment.ring2 ? 'ring2' : 'ring1';
+      return RING_SLOTS.find((s) => !c.equipment[s]) ?? 'ring1';
   }
 }
 
@@ -43,7 +59,8 @@ export function isToolItem(item: Pick<Item, 'kind'>): boolean {
 
 export function slotAccepts(slot: EquipSlot, item: Item): boolean {
   if (slot === 'altMain' || slot === 'main') return item.slot === 'main' || isToolItem(item);
-  if (slot === 'ring1' || slot === 'ring2') return item.slot === 'ring';
+  if (slot === 'altOff' || slot === 'off') return item.slot === 'off' || isToolItem(item);
+  if ((RING_SLOTS as readonly string[]).includes(slot)) return item.slot === 'ring';
   return item.slot === slot;
 }
 
@@ -55,37 +72,36 @@ export function equip(c: Character, itemId: string, slot?: EquipSlot): OpResult 
   const s = slot ?? defaultSlotFor(c, item);
   if (!s || !slotAccepts(s, item)) return no('That does not go there.');
   c.bag.splice(i, 1);
-  const prev = s === 'altMain' ? c.altMain : c.equipment[s];
-  if (s === 'altMain') c.altMain = item;
-  else c.equipment[s] = item;
+  const prev = slotItem(c, s);
+  setSlot(c, s, item);
   if (prev) c.bag.splice(i, 0, prev);
   return ok(`Equipped ${item.name}.`);
 }
 
 export function unequip(c: Character, slot: EquipSlot): OpResult {
-  const item = slot === 'altMain' ? c.altMain : c.equipment[slot];
+  const item = slotItem(c, slot);
   if (!item) return no('Nothing there.');
   if (c.bag.length >= BAG_SIZE) return no('Your bag is full.');
-  if (slot === 'altMain') c.altMain = null;
-  else c.equipment[slot] = null;
+  setSlot(c, slot, null);
   c.bag.push(item);
   return ok(`Unequipped ${item.name}.`);
 }
 
 export function allItems(c: Character): Item[] {
   const e = c.equipment;
-  return [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, c.altMain, ...c.bag].filter((x): x is Item => !!x);
+  return [...WORN_SLOTS.map((s) => e[s]), c.altMain, c.altOff, ...c.bag].filter((x): x is Item => !!x);
 }
 
 /** Where an item is (D168): the slot it is worn in, or the bag. */
 export function itemPlace(c: Character, itemId: string): EquipSlot | 'bag' | null {
   const e = c.equipment;
-  for (const s of ['main', 'off', 'head', 'body', 'legs', 'ring1', 'ring2'] as const) if (e[s]?.id === itemId) return s;
+  for (const s of WORN_SLOTS) if (e[s]?.id === itemId) return s;
   if (c.altMain?.id === itemId) return 'altMain';
+  if (c.altOff?.id === itemId) return 'altOff';
   return c.bag.some((i) => i.id === itemId) ? 'bag' : null;
 }
 
-const PLACE_LABEL: Record<EquipSlot | 'bag', string> = { main: 'Weapon', altMain: '2nd weapon', off: 'Off hand', head: 'Head', body: 'Body', legs: 'Legs', ring1: 'Ring 1', ring2: 'Ring 2', bag: 'Bag' };
+const PLACE_LABEL: Record<EquipSlot | 'bag', string> = { main: 'Weapon', altMain: '2nd weapon', off: 'Off hand', altOff: '2nd off hand', head: 'Head', body: 'Body', legs: 'Legs', ring1: 'Ring 1', ring2: 'Ring 2', ring3: 'Ring 3', ring4: 'Ring 4', bag: 'Bag' };
 
 /** "Weapon", "2nd weapon", "Head", ... or "Bag" (D168). */
 export function placeLabel(c: Character, itemId: string): string {

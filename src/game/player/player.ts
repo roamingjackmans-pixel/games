@@ -577,6 +577,23 @@ export function swapWeapon(w: World, e: Entity): void {
   w.sfx('uiClick', e.x, 0.6);
 }
 
+/** The off hand and the 2nd off hand trade places (D228): a shield for a staff, a talisman for a buckler… */
+export function swapOffhand(w: World, e: Entity): void {
+  const pl = e.pl!;
+  const ch = pl.char;
+  if (!ch.altOff) {
+    w.emit({ t: 'msg', text: 'No second off-hand item set (equip one from the bag).', forPlayer: pl.playerId });
+    return;
+  }
+  const cur = ch.equipment.off;
+  ch.equipment.off = ch.altOff;
+  ch.altOff = cur;
+  pl.spellReadyAt = [Math.max(pl.spellReadyAt[0], w.time + 0.5), Math.max(pl.spellReadyAt[1], w.time + 0.5), Math.max(pl.spellReadyAt[2], w.time + 0.5)];
+  refreshDerived(e);
+  w.sfx('uiClick', e.x, 0.6);
+  w.emit({ t: 'msg', text: `Off hand: ${ch.equipment.off?.name ?? 'empty'}`, forPlayer: pl.playerId });
+}
+
 function updateGhost(w: World, e: Entity, dt: number): void {
   const pl = e.pl!;
   const inp = pl.input;
@@ -700,7 +717,12 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
 
   // two-hand toggle and weapon swap (not mid-swing)
   if (pressed(inp, 'twoHand') && (pl.state === 'idle' || pl.state === 'flask')) toggleTwoHand(w, e);
-  if (pressed(inp, 'swapWeapon') && pl.state === 'idle') swapWeapon(w, e);
+  // swap weapon on its own swaps the weapon hand; with Interact held (hold A / F and click the left stick / X) it
+  // swaps the off hand (D228)
+  if (pressed(inp, 'swapWeapon') && pl.state === 'idle') {
+    if (held(inp, 'interact')) swapOffhand(w, e);
+    else swapWeapon(w, e);
+  }
 
   // dodge: from idle, blocking, or the back half of an attack's recovery
   if (pressed(inp, 'dodge')) {

@@ -116,8 +116,8 @@ export abstract class WorldScene implements Scene {
           ch.equipment.off = it;
           ch.twoHanded = false;
         } else if (it.slot === 'ring') {
-          if (!ch.equipment.ring1) ch.equipment.ring1 = it;
-          else if (!ch.equipment.ring2) ch.equipment.ring2 = it;
+          const free = (['ring1', 'ring2', 'ring3', 'ring4'] as const).find((r) => !ch.equipment[r]);
+          if (free) ch.equipment[free] = it;
           else ch.bag.push(it);
         } else {
           const s = it.slot as 'head' | 'body' | 'legs';

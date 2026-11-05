@@ -2,13 +2,13 @@
 // 60-slot bag, gems, consumables, compare tooltips, two-hand toggle, second weapon, quick-use selection.
 // Mouse, keyboard and gamepad (every slot is a focusable button; menuPad moves focus spatially).
 import { glyphText, inputText, padStyle, tabHints } from '../glyphs';
-import { PAD_ALT, PAD_ALT_EVENT, TAB_EDGE_EVENT, menuConfirmButton } from '../menuPad';
+import { PAD_ALT, PAD_ALT_EVENT, TAB_EDGE_EVENT } from '../menuPad';
 import { PROF_CLASSES, PROF_MAX_LEVEL, perkPoints, profLevel } from '../../data/proficiency';
 import { activeClasses, profXp } from '../../game/items/proficiency';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
-import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, unequip, unsocketGem, type EquipSlot } from '../../game/items/inventory';
+import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, unequip, unsocketGem, type EquipSlot, slotItem } from '../../game/items/inventory';
 import { levelCost } from '../../game/combat/formulas';
 import { LIGHT_LOAD_MAX, LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
@@ -75,6 +75,49 @@ export function openInventory(host: InventoryHost): HTMLElement {
     host.changed();
     render();
   };
+  /**
+   * A staff or talisman goes in either hand (D228): its click asks which, then fills that hand's first slot (the
+   * weapon or the off hand); its alternate click asks the same and fills the hand's second slot (the 2nd weapon or the
+   * 2nd off hand). `focus` is the bag slot to come back to.
+   */
+  let handAsk: { itemId: string; second: boolean; focus: string } | null = null;
+  const closeHandAsk = (then?: () => void): void => {
+    const back = handAsk?.focus;
+    handAsk = null;
+    if (then) then();
+    else render();
+    setTimeout(() => root.querySelector<HTMLElement>(`[data-focus="${back}"]`)?.focus(), 0);
+  };
+  const onHandKey = (e: KeyboardEvent): void => {
+    if (!root.isConnected) {
+      window.removeEventListener('keydown', onHandKey, true);
+      return;
+    }
+    if (e.code !== 'Escape' || !handAsk) return;
+    // Escape or the pad's back button closes the question, not the inventory
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    closeHandAsk();
+  };
+  window.addEventListener('keydown', onHandKey, true);
+  function handDialog(): HTMLElement | null {
+    if (!handAsk) return null;
+    const ask = handAsk;
+    const item = host.char.bag.find((i) => i.id === ask.itemId);
+    if (!item) return null;
+    const pick = (slot: EquipSlot): void => closeHandAsk(() => doEquip(ask.itemId, slot));
+    const main = btn(ask.second ? '2nd weapon (weapon hand)' : 'Weapon hand', () => pick(ask.second ? 'altMain' : 'main'), 'primary');
+    main.setAttribute('data-testid', 'hand-main');
+    const off = btn(ask.second ? '2nd off hand' : 'Off hand', () => pick(ask.second ? 'altOff' : 'off'));
+    off.setAttribute('data-testid', 'hand-off');
+    const back = btn('Back', () => closeHandAsk());
+    back.setAttribute('data-testid', 'hand-back');
+    return h(
+      'div',
+      { class: 'layer dim', style: 'z-index:40' },
+      h('div', { class: 'panel col', style: 'width:420px;gap:10px', 'data-testid': 'hand-dialog' }, h('h2', null, 'Which hand?'), h('div', { class: `r-${item.rarity}` }, item.name), h('div', { class: 'small dim-text' }, ask.second ? 'Into the hand’s second slot, ready to swap in.' : 'Into the hand’s first slot.'), h('div', { class: 'row', style: 'gap:8px' }, main, off, back)),
+    );
+  }
   const doUnequip = (slot: EquipSlot): void => {
     if (host.unequip) host.unequip(slot);
     else unequip(host.char, slot);
@@ -172,8 +215,24 @@ export function openInventory(host: InventoryHost): HTMLElement {
       h('div', { class: 'row', style: 'justify-content:space-between;gap:6px' }, h('span', null, 'Equip load'), h('span', { class: 'mono' }, `${fmtLoad(L)} (${Math.round(L.frac * 100)}%)`)),
       bar,
       h('div', { class: 'load-tier' }, h('b', { style: `color:${L.effects.color}` }, L.effects.label), h('span', { class: 'small' }, ` — ${L.effects.text}`)),
-      h('div', { class: 'small dim-text' }, 'Your 2nd (quick-swap) weapon is not counted.'),
+      h('div', { class: 'small dim-text' }, 'Your 2nd weapon and 2nd off hand are not counted until swapped in.'),
     );
+  }
+
+  /**
+   * The alternate select (right-click, X / □): a weapon becomes the 2nd weapon, a shield the 2nd off hand, a staff or
+   * talisman asks which hand's second slot, a ring goes in the next free ring slot after the first (D228).
+   */
+  function second(item: Item | null, i: number): void {
+    if (!item) return;
+    const c = host.char;
+    if (isToolItem(item)) {
+      handAsk = { itemId: item.id, second: true, focus: `bag-${i}` };
+      render();
+    } else if (item.slot === 'main') doEquip(item.id, 'altMain');
+    else if (item.slot === 'off') doEquip(item.id, 'altOff');
+    else if (item.slot === 'ring') doEquip(item.id, (['ring2', 'ring3', 'ring4'] as const).find((r) => !c.equipment[r]) ?? 'ring2');
+    else doEquip(item.id);
   }
 
   function itemsTab(el: HTMLElement): void {
@@ -182,7 +241,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     const cells: Partial<Record<EquipSlot, HTMLElement>> = {};
     const empty: Partial<Record<EquipSlot, boolean>> = {};
     for (const s of DOLL_SLOTS) {
-      const item = s.slot === 'altMain' ? c.altMain : c.equipment[s.slot];
+      const item = slotItem(c, s.slot);
       const b = cell(item, () => item && doUnequip(s.slot), undefined, 'equip-slot');
       b.setAttribute('data-testid', `equip-${s.slot}`);
       b.setAttribute('data-focus', `equip-${s.slot}`);
@@ -203,22 +262,18 @@ export function openInventory(host: InventoryHost): HTMLElement {
       const bagCell = bagGrid.appendChild(
         cell(
           item,
-          () => item && doEquip(item.id),
-          (ev) => {
-            if (!item) return;
-            // a staff or talisman (D117): right-click holds it in the weapon hand, Shift+right-click makes it the 2nd weapon
-            if (isToolItem(item)) doEquip(item.id, ev.shiftKey ? 'altMain' : 'main');
-            else if (item.slot === 'main') doEquip(item.id, 'altMain');
-            else if (item.slot === 'ring') doEquip(item.id, 'ring2');
-            else doEquip(item.id);
-          },
-          '',
-          // X / □ (D166): a weapon, staff or talisman becomes the 2nd weapon; a ring goes in the second ring slot
           () => {
             if (!item) return;
-            if (isToolItem(item) || item.slot === 'main') doEquip(item.id, 'altMain');
-            else if (item.slot === 'ring') doEquip(item.id, 'ring2');
+            // a staff or talisman asks which hand (D228)
+            if (isToolItem(item)) {
+              handAsk = { itemId: item.id, second: false, focus: `bag-${i}` };
+              render();
+            } else doEquip(item.id);
           },
+          () => second(item, i),
+          '',
+          // X / □ (D166): the same as a right-click
+          () => second(item, i),
         ),
       );
       // the same bag slot keeps the focus after equipping from it (D144)
@@ -227,7 +282,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       if (i === 0) bagCell.setAttribute('data-autofocus', '');
     }
     bag.appendChild(bagGrid);
-    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it. Right-click a weapon to make it your 2nd weapon (swap with ${glyphText('swapWeapon')}); right-click a ring for the second ring slot. Staffs and talismans go in either hand: click for the off hand, right-click for the weapon hand, Shift+right-click for the 2nd weapon. Click worn gear to take it off. With a controller: ${inputText(menuConfirmButton(), padStyle())} equips, ${inputText(PAD_ALT, padStyle())} makes a weapon your 2nd weapon (or a ring your second ring).`));
+    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it; right-click (${inputText(PAD_ALT, padStyle())} on a controller) puts it in the second slot: a weapon becomes your 2nd weapon (swap with ${glyphText('swapWeapon')}), a shield your 2nd off hand (hold ${glyphText('interact')} and press ${glyphText('swapWeapon')}), a ring the next ring slot. A staff or talisman asks which hand. Click worn gear to take it off.`));
     const gems = h('div', { class: 'row wrap', style: 'gap:4px;max-width:476px' });
     c.gems.forEach((g) => {
       const b = h('span', { tabindex: '0', style: 'display:inline-flex' }, gemIcon(g, 28));
@@ -360,6 +415,15 @@ export function openInventory(host: InventoryHost): HTMLElement {
     else host.extraTabs?.find((t) => t.label === tab)?.render(right);
     content.appendChild(right);
     body.appendChild(content);
+    // the which-hand question (D228) sits over everything, the focus inside it
+    root.querySelectorAll('[data-hand-modal]').forEach((x) => x.remove());
+    const ask = handDialog();
+    if (ask) {
+      ask.setAttribute('data-hand-modal', '1');
+      root.appendChild(ask);
+      setTimeout(() => ask.querySelector<HTMLElement>('button')?.focus(), 0);
+      return;
+    }
     setTimeout(() => {
       // something chosen since the redraw keeps the focus (D169)
       if (chosenFocus(body)) return;

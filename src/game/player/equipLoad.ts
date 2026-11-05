@@ -75,12 +75,12 @@ export interface EquipLoadInfo {
   effects: LoadEffects;
 }
 
-type Equipped = Pick<Character['equipment'], 'main' | 'off' | 'head' | 'body' | 'legs' | 'ring1' | 'ring2'>;
+type Equipped = Character['equipment'];
 
-/** Equip load of the worn set: the weapon in hand, off hand, armor and rings (never the quick-swap weapon). */
+/** Equip load of the worn set: the weapon in hand, the off hand in use, armor and rings (never the quick-swap weapon or off hand, D228). */
 export function equipLoadOf(eq: Equipped, endurance: number, m = 1): EquipLoadInfo {
   let load = 0;
-  for (const it of [eq.main, eq.off, eq.head, eq.body, eq.legs, eq.ring1, eq.ring2]) load += itemWeight(it);
+  for (const it of [eq.main, eq.off, eq.head, eq.body, eq.legs, eq.ring1, eq.ring2, eq.ring3, eq.ring4]) load += itemWeight(it ?? null);
   load = Math.round(load * 10) / 10;
   const max = Math.round(maxEquipLoad(endurance, m) * 10) / 10;
   const frac = max > 0 ? load / max : 2;

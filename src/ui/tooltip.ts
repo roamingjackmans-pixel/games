@@ -13,7 +13,7 @@ import { affixText } from '../data/affixes';
 import { armorPieceDefense, parseArmorBase } from '../data/armor';
 import { ELEMENTS } from '../game/elements';
 import { baseInfo, itemRequirements, meetsRequirements, type Requirements } from '../game/items/bases';
-import { defaultSlotFor, itemSellValue, type EquipSlot } from '../game/items/inventory';
+import { defaultSlotFor, itemSellValue, WORN_SLOTS, type EquipSlot } from '../game/items/inventory';
 import { itemSkillCount, poiseForSize, reqAtIlvl, scalingMult, tierName, toolMult, weaponBase } from '../game/combat/formulas';
 import { computeDerived } from '../game/player/derived';
 import { toolSpellSkill } from '../game/skills/use';
@@ -219,17 +219,17 @@ const gradeNum = (g: Grade | undefined): number => (g ? GRADE_ORDER.indexOf(g) :
 
 export function isEquipped(c: Character, item: Item): boolean {
   const e = c.equipment;
-  return [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, c.altMain].some((x) => x?.id === item.id);
+  return [...WORN_SLOTS.map((s) => e[s]), c.altMain, c.altOff].some((x) => x?.id === item.id);
 }
 
-type WornSlot = 'main' | 'off' | 'head' | 'body' | 'legs' | 'ring1' | 'ring2';
+type WornSlot = (typeof WORN_SLOTS)[number];
 
 /** The slot a bag item would go into when clicked, and what is in it now (compare target). */
 export function compareTargetFor(c: Character, item: Item): { slot: WornSlot; item: Item | null } | null {
   if (isEquipped(c, item)) return null;
   const s = defaultSlotFor(c, item) as EquipSlot | null;
-  if (!s || s === 'altMain') return null;
-  return { slot: s, item: c.equipment[s] };
+  if (!s || s === 'altMain' || s === 'altOff') return null;
+  return { slot: s, item: c.equipment[s] ?? null };
 }
 
 /**

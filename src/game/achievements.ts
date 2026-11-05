@@ -69,7 +69,7 @@ function countsAsKill(defId: string): boolean {
 
 function itemsOf(c: Character): Item[] {
   const e = c.equipment;
-  const all: (Item | null)[] = [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, c.altMain, ...c.bag];
+  const all: (Item | null | undefined)[] = [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, e.ring3, e.ring4, c.altMain, c.altOff, ...c.bag];
   return all.filter((x): x is Item => !!x);
 }
 

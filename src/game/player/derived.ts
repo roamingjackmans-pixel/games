@@ -134,7 +134,7 @@ const FIST: WeaponDef = {
 
 function itemsOf(c: Character): Item[] {
   const e = c.equipment;
-  return [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2].filter((x): x is Item => !!x);
+  return [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, e.ring3, e.ring4].filter((x): x is Item => !!x);
 }
 
 export function computeDerived(c: Character): Derived {

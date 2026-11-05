@@ -755,9 +755,12 @@ export interface Character {
   bossesBeaten: number;
   highestZoneBeaten: number;
   cycle: number;
-  equipment: { main: Item | null; off: Item | null; head: Item | null; body: Item | null; legs: Item | null; ring1: Item | null; ring2: Item | null };
+  /** worn gear; four ring slots since D228 (older saves get ring3 / ring4 empty) */
+  equipment: { main: Item | null; off: Item | null; head: Item | null; body: Item | null; legs: Item | null; ring1: Item | null; ring2: Item | null; ring3: Item | null; ring4: Item | null };
   /** second main-hand slot for the quick swap (CONTENT_SPELLS_CLASSES §3) */
   altMain: Item | null;
+  /** second off-hand slot, swapped in with Interact + swap weapon (D228); neither its weight nor its effects count until it is in hand */
+  altOff: Item | null;
   twoHanded: boolean;
   bag: Item[];
   gems: Gem[];

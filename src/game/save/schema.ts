@@ -98,6 +98,10 @@ export function normalizeSave(s: SaveFile): SaveFile {
   for (const k of Object.keys(d)) if (w[k] === undefined) w[k] = d[k];
   const c = s.character as Character & Partial<Character>;
   if (c.altMain === undefined) c.altMain = null;
+  // D228: a second off hand and rings 3 and 4
+  if (c.altOff === undefined) c.altOff = null;
+  if (c.equipment.ring3 === undefined) c.equipment.ring3 = null;
+  if (c.equipment.ring4 === undefined) c.equipment.ring4 = null;
   if (c.freePoints === undefined) c.freePoints = 0;
   if (c.quickSlot === undefined) c.quickSlot = null;
   if (!c.consumables) c.consumables = {};
