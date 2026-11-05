@@ -230,7 +230,7 @@ Phase 1:
 
 Phase 2 (throne sinks, he swims; grates become the only ground, waves come from two sides):
 - New **Crosswave [PIERCE][AREA]**: two waves from perpendicular walls 0.8 s apart, from the sides every player can still reach a grate from (D94).
-- New **Drowning Grasp [RED]**: tint 0.7 s, surfaces under the target circle(80), holds 1.5 s ×2.0 + Poison 50.
+- ~~Drowning Grasp [RED]~~: removed (D212).
 - Belch now leaves puddles. Summon Court adds a Rat Physician.
 
 ### Boss 4 — Vexthorn, the Hollow Stag (Hollow Forest)

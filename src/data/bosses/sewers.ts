@@ -66,9 +66,11 @@ const summonCourt = (physician: boolean): AttackDef => ({
   weight: 2,
 });
 
+// phase 2's belch leaves acid puddles instead of a passing cloud: its own attack (D212), so phase 2 still brings two
+// new ones (CONTENT_ENEMIES §13) after Drowning Grasp went
 const belch = (puddles: boolean): AttackDef => ({
-  id: 'bloat_belch',
-  name: 'Belch',
+  id: puddles ? 'bloat_belch_acid' : 'bloat_belch',
+  name: puddles ? 'Acid Belch' : 'Belch',
   kind: 'normal',
   pattern: { kind: 'cone', angleDeg: 70, r: 350, anchor: 'self', persist: { hazard: puddles ? 'acid' : 'poisonCloud', durationS: puddles ? 7 : 4 } },
   windupMs: 800,
@@ -105,21 +107,7 @@ const crosswave: AttackDef = {
   area: true,
 };
 
-const drowningGrasp: AttackDef = {
-  id: 'bloat_grasp',
-  name: 'Drowning Grasp',
-  kind: 'red',
-  pattern: { kind: 'circle', r: 80, anchor: 'target' },
-  windupMs: 700,
-  recoverMs: 900,
-  dmgMult: 2.0,
-  type: 'physical',
-  status: { id: 'poison', buildup: 50 },
-  grab: { holdS: 1.5, mult: 1 },
-  cooldownS: 10,
-  range: [0, 1000],
-  weight: 3,
-};
+// Drowning Grasp (a Red circle on the target that grabbed and poisoned) was removed at the owner's request (D212)
 
 export const THE_BLOATKING: BossDef = {
   id: 'bloatking',
@@ -142,7 +130,7 @@ export const THE_BLOATKING: BossDef = {
       // the flood swirls into a whirlpool round the middle of the hall that carries everyone 55 px/s anticlockwise
       // (D95); it stops short of the grates
       arena: [{ op: 'floodAll', value: 0.3 }, { op: 'movingFloor', floor: { kind: 'ring', x: 640, y: 368, rIn: 60, rOut: 150, speed: -55, look: 'water' } }],
-      attacks: [scepterSwing, wave, royalDecree, summonCourt(true), belch(true), crosswave, drowningGrasp],
+      attacks: [scepterSwing, wave, royalDecree, summonCourt(true), belch(true), crosswave],
     },
   ],
   arenaId: 'sewers_arena',
