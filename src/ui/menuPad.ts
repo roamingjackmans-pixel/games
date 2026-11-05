@@ -157,9 +157,12 @@ export function pollMenuPad(input: InputManager, now: number): void {
   if (input.padButtonEdge(mp.back)) {
     // B is Dodge in play: closing a menu with it must not dodge as well; it dodges again after a fresh press (D147)
     input.swallowPadButton(mp.back);
-    // a full press (down and up): a lone keydown left Escape "held", so B only ever backed out once
-    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' }));
-    window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Escape', key: 'Escape' }));
+    // a full press (down and up): a lone keydown left Escape "held", so B only ever backed out once. It starts at the
+    // focused control and bubbles up like a real key, so a menu's own dialog (its capture listener on the window)
+    // takes it first: sent at the window itself, the game's input heard it too and closed the whole menu (D220)
+    const at: EventTarget = document.activeElement ?? document.body;
+    at.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true, cancelable: true }));
+    at.dispatchEvent(new KeyboardEvent('keyup', { code: 'Escape', key: 'Escape', bubbles: true, cancelable: true }));
     input.lastDevice = 'pad';
   }
 }

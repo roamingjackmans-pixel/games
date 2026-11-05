@@ -88,8 +88,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   /** the Sell all confirmation */
   let confirmSell: SellAllFilter | null = null;
   let modal: HTMLElement | null = null;
-  /** the item just reinforced, with what the step changed (D216): shown as a dialog until dismissed */
-  let reinforced: { name: string; rarity: string; rows: { label: string; before: string; after: string }[] } | null = null;
+  /** the item whose next reinforcement is being looked at (D216 / D220): its before → after and the cost, to confirm or back out of */
+  let reinforceAsk: { itemId: string } | null = null;
   /** level-up points planned but not yet spent (D142) */
   let pending: PendingPoints = {};
   /** what to do after the Lock in / Discard question, while it is open */
@@ -108,15 +108,15 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     if (e.code !== 'Escape') return;
     // leaving with planned level-up points asks first (D142); Escape on that question means keep editing
-    const askLeave = !fuse && !confirmSell && !confirmLeave && !reinforced && pendingCount() > 0;
-    if (!fuse && !confirmSell && !confirmLeave && !reinforced && !askLeave) return;
+    const askLeave = !fuse && !confirmSell && !confirmLeave && !reinforceAsk && pendingCount() > 0;
+    if (!fuse && !confirmSell && !confirmLeave && !reinforceAsk && !askLeave) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     if (askLeave) confirmLeave = () => v.close();
     else if (confirmLeave) confirmLeave = null;
     fuse = null;
     confirmSell = null;
-    reinforced = null;
+    reinforceAsk = null;
     render();
   };
   window.addEventListener('keydown', onKey, true);
@@ -452,14 +452,10 @@ export function openBonfire(v: BonfireView): HTMLElement {
       if (!info.next) card.appendChild(h('div', { class: 'small dim-text' }, `+${MAX_REINFORCE}: as strong as it gets.`));
       else {
         const nd = essenceDef(info.next.tier);
+        // shows what the step would do first; nothing is spent until it is confirmed there (D220)
         const b = btn([`+${info.plus + 1} · `, h('span', { style: `color:${nd.color}` }, `${info.next.count} × ${nd.name}`), ' + ', glowenEl(info.next.glowen)], () => {
-          // what this step does, worked out before it is taken (D216)
-          const plus = info.plus;
-          const rows = reinforceRows(it, plus, plus + 1);
-          const msg = v.ops.reinforce(it.id);
-          const now = [c.equipment.main, c.equipment.off, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].find((x) => x?.id === it.id);
-          if ((now?.plus ?? 0) > plus) reinforced = { name: plusName(now!), rarity: now!.rarity, rows };
-          say(reinforced ? '' : msg);
+          reinforceAsk = { itemId: it.id };
+          render();
         }, 'tiny', !info.affordable);
         b.setAttribute('data-focus', `reinforce-${it.id}`);
         b.setAttribute('data-testid', `reinforce-${it.id}`);
@@ -507,24 +503,47 @@ export function openBonfire(v: BonfireView): HTMLElement {
     return rows;
   }
 
-  /** The reinforcement result (D216): the item's new name and each stat before → after. */
+  /**
+   * The next reinforcement of one item, before it is taken (D216 / D220): its name now and after, each stat before →
+   * after, and the cost. Reinforce spends and applies it; Back (or B / Escape) leaves everything as it was and the focus
+   * goes back to that item's button.
+   */
   function reinforceDialog(): HTMLElement | null {
-    if (!reinforced) return null;
-    const r = reinforced;
-    const ok = btn('OK', () => {
-      reinforced = null;
+    if (!reinforceAsk) return null;
+    const c = v.char;
+    const it = [c.equipment.main, c.equipment.off, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].find((x) => x?.id === reinforceAsk!.itemId);
+    if (!it) {
+      reinforceAsk = null;
+      return null;
+    }
+    const info = reinforceInfo(c, it);
+    if (!info.next) {
+      reinforceAsk = null;
+      return null;
+    }
+    const rows = reinforceRows(it, info.plus, info.plus + 1);
+    const nd = essenceDef(info.next.tier);
+    const yes = btn('Reinforce', () => {
+      const msg = v.ops.reinforce(it.id);
+      reinforceAsk = null;
+      say(msg);
+    }, 'primary', !info.affordable);
+    yes.setAttribute('data-testid', 'reinforce-confirm');
+    const back = btn('Back', () => {
+      reinforceAsk = null;
       render();
-    }, 'primary');
-    ok.setAttribute('data-testid', 'reinforce-ok');
+    });
+    back.setAttribute('data-testid', 'reinforce-back');
     const grid = h('div', { style: 'display:grid;grid-template-columns:auto auto auto auto;column-gap:12px;row-gap:4px;align-items:baseline' });
-    for (const row of r.rows) grid.append(h('div', { class: 'dim-text' }, row.label), h('div', { class: 'mono' }, row.before), h('div', { class: 'dim-text' }, '→'), h('div', { class: 'mono good' }, row.after));
+    for (const row of rows) grid.append(h('div', { class: 'dim-text' }, row.label), h('div', { class: 'mono' }, row.before), h('div', { class: 'dim-text' }, '→'), h('div', { class: 'mono good' }, row.after));
     return h(
       'div',
-      { class: 'panel col', style: 'width:440px;gap:10px', 'data-testid': 'reinforce-dialog' },
-      h('h2', null, 'Reinforced'),
-      h('div', { class: `r-${r.rarity}`, style: 'font-size:18px;font-weight:600' }, r.name),
+      { class: 'panel col', style: 'width:460px;gap:10px', 'data-testid': 'reinforce-dialog' },
+      h('h2', null, 'Reinforce?'),
+      h('div', { class: `r-${it.rarity}`, style: 'font-size:18px;font-weight:600' }, plusName(it), h('span', { class: 'dim-text' }, ' → '), `+${info.plus + 1}`),
       grid,
-      h('div', { class: 'row' }, ok),
+      h('div', { class: 'row small', style: 'gap:6px;align-items:center' }, 'Costs ', h('span', { style: `color:${nd.color}` }, `${info.next.count} × ${nd.name}`), ' + ', glowenEl(info.next.glowen), h('span', { class: 'dim-text' }, ' (a higher tier pays 3:1)')),
+      h('div', { class: 'row' }, yes, back),
     );
   }
 
