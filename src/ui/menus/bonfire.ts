@@ -1,6 +1,8 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
-import { ESSENCES, MAX_REINFORCE, essenceCounts, essenceDef, plusName } from '../../data/essence';
+import { ESSENCES, MAX_REINFORCE, essenceCounts, essenceDef, plusName, reinforceMult } from '../../data/essence';
+import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
+import { armorPieceDefense } from '../../data/armor';
 import { canReinforce, reinforceInfo } from '../../game/items/reinforce';
 import { CLASSES } from '../../data/classes';
 import { GEMS, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkText } from '../../data/gems';
@@ -11,10 +13,10 @@ import { ELEMENTS } from '../../game/elements';
 import { canSocket, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type GemTier, type Item, type StatId } from '../../game/types';
-import { profClassOf, upgradeInfo } from '../../game/items/proficiency';
+import { hasRarityBar, upgradeInfo } from '../../game/items/proficiency';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { tabHints } from '../glyphs';
-import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemSummary, itemTooltip, staticTip } from '../tooltip';
+import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemScore, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
 export interface BonfireOps {
   levelUp(stat: StatId): string;
@@ -86,6 +88,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   /** the Sell all confirmation */
   let confirmSell: SellAllFilter | null = null;
   let modal: HTMLElement | null = null;
+  /** the item just reinforced, with what the step changed (D216): shown as a dialog until dismissed */
+  let reinforced: { name: string; rarity: string; rows: { label: string; before: string; after: string }[] } | null = null;
   /** level-up points planned but not yet spent (D142) */
   let pending: PendingPoints = {};
   /** what to do after the Lock in / Discard question, while it is open */
@@ -104,14 +108,15 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     if (e.code !== 'Escape') return;
     // leaving with planned level-up points asks first (D142); Escape on that question means keep editing
-    const askLeave = !fuse && !confirmSell && !confirmLeave && pendingCount() > 0;
-    if (!fuse && !confirmSell && !confirmLeave && !askLeave) return;
+    const askLeave = !fuse && !confirmSell && !confirmLeave && !reinforced && pendingCount() > 0;
+    if (!fuse && !confirmSell && !confirmLeave && !reinforced && !askLeave) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     if (askLeave) confirmLeave = () => v.close();
     else if (confirmLeave) confirmLeave = null;
     fuse = null;
     confirmSell = null;
+    reinforced = null;
     render();
   };
   window.addEventListener('keydown', onKey, true);
@@ -392,7 +397,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
   /** Weapons (D178): each weapon and casting tool you carry, its experience bar, and raising it a rarity. */
   function weaponsTab(el: HTMLElement): void {
     const c = v.char;
-    const all = [c.equipment.main, c.equipment.off, c.altMain, ...c.bag].filter((i): i is Item => !!i && !!profClassOf(i));
+    const all = [c.equipment.main, c.equipment.off, c.altMain, ...c.bag].filter((i): i is Item => hasRarityBar(i));
     const list = h('div', { class: 'col', style: 'gap:6px;width:640px;max-height:540px;overflow:auto' }, h('h3', null, 'Weapons · ', glowenEl(c.glowen)));
     if (!all.length) list.appendChild(h('div', { class: 'dim-text' }, 'You carry no weapons or casting tools.'));
     for (const it of all) {
@@ -447,7 +452,15 @@ export function openBonfire(v: BonfireView): HTMLElement {
       if (!info.next) card.appendChild(h('div', { class: 'small dim-text' }, `+${MAX_REINFORCE}: as strong as it gets.`));
       else {
         const nd = essenceDef(info.next.tier);
-        const b = btn([`+${info.plus + 1} · `, h('span', { style: `color:${nd.color}` }, `${info.next.count} × ${nd.name}`), ' + ', glowenEl(info.next.glowen)], () => say(v.ops.reinforce(it.id)), 'tiny', !info.affordable);
+        const b = btn([`+${info.plus + 1} · `, h('span', { style: `color:${nd.color}` }, `${info.next.count} × ${nd.name}`), ' + ', glowenEl(info.next.glowen)], () => {
+          // what this step does, worked out before it is taken (D216)
+          const plus = info.plus;
+          const rows = reinforceRows(it, plus, plus + 1);
+          const msg = v.ops.reinforce(it.id);
+          const now = [c.equipment.main, c.equipment.off, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].find((x) => x?.id === it.id);
+          if ((now?.plus ?? 0) > plus) reinforced = { name: plusName(now!), rarity: now!.rarity, rows };
+          say(reinforced ? '' : msg);
+        }, 'tiny', !info.affordable);
         b.setAttribute('data-focus', `reinforce-${it.id}`);
         b.setAttribute('data-testid', `reinforce-${it.id}`);
         b.title = `×${info.mult.toFixed(1)} → ×${info.nextMult.toFixed(1)}. Higher-tier Essence pays 3:1 for this one.`;
@@ -462,6 +475,57 @@ export function openBonfire(v: BonfireView): HTMLElement {
       h('br'), h('br'),
       'None below zone 4 of the first descent; Tier 1 from zone 4, then one tier more each New Game+ (Tier 5 from New Game+4).');
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, help));
+  }
+
+  /** Before and after one reinforcement step (D216): damage for a weapon, block and stamina for a shield, defense for armour. */
+  function reinforceRows(it: Item, from: number, to: number): { label: string; before: string; after: string }[] {
+    const c = v.char;
+    const rows: { label: string; before: string; after: string }[] = [];
+    const add = (label: string, a: number, b: number, f: (x: number) => string): void => {
+      if (a !== b || a !== 0) rows.push({ label, before: f(a), after: f(b) });
+    };
+    const at = (plus: number): Item => ({ ...it, plus });
+    const int = (x: number): string => fmt(Math.round(x));
+    const pc = (x: number): string => `${Math.round(x * 100)}%`;
+    if (it.kind === 'weapon') {
+      const st = computeDerived(c).stats;
+      add('Damage per hit', itemScore(at(from), st, c.twoHanded), itemScore(at(to), st, c.twoHanded), int);
+    } else if (it.kind === 'shield' && SHIELDS[it.baseId]) {
+      const sd = SHIELDS[it.baseId]!;
+      const a = shieldValues(sd, it.ilvl, from);
+      const b = shieldValues(sd, it.ilvl, to);
+      add('Physical block', a.physical, b.physical, pc);
+      add('Elemental block', a.elemental, b.elemental, pc);
+      add('Holy / Void block', a.holyVoid, b.holyVoid, pc);
+      add('Stamina per 100 blocked', shieldStability(sd, from), shieldStability(sd, to), (x) => x.toFixed(1));
+    } else if (it.kind === 'armor') {
+      const a = armorPieceDefense(it.baseId, it.ilvl, from);
+      const b = armorPieceDefense(it.baseId, it.ilvl, to);
+      for (const t of DAMAGE_TYPES) add(`${t[0]!.toUpperCase()}${t.slice(1)} defense`, a[t], b[t], (x) => x.toFixed(1));
+    }
+    rows.push({ label: 'Strength', before: `×${reinforceMult(from).toFixed(1)}`, after: `×${reinforceMult(to).toFixed(1)}` });
+    return rows;
+  }
+
+  /** The reinforcement result (D216): the item's new name and each stat before → after. */
+  function reinforceDialog(): HTMLElement | null {
+    if (!reinforced) return null;
+    const r = reinforced;
+    const ok = btn('OK', () => {
+      reinforced = null;
+      render();
+    }, 'primary');
+    ok.setAttribute('data-testid', 'reinforce-ok');
+    const grid = h('div', { style: 'display:grid;grid-template-columns:auto auto auto auto;column-gap:12px;row-gap:4px;align-items:baseline' });
+    for (const row of r.rows) grid.append(h('div', { class: 'dim-text' }, row.label), h('div', { class: 'mono' }, row.before), h('div', { class: 'dim-text' }, '→'), h('div', { class: 'mono good' }, row.after));
+    return h(
+      'div',
+      { class: 'panel col', style: 'width:440px;gap:10px', 'data-testid': 'reinforce-dialog' },
+      h('h2', null, 'Reinforced'),
+      h('div', { class: `r-${r.rarity}`, style: 'font-size:18px;font-weight:600' }, r.name),
+      grid,
+      h('div', { class: 'row' }, ok),
+    );
   }
 
   function gemsTab(el: HTMLElement): void {
@@ -733,7 +797,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const content = h('div', { style: 'flex:1;overflow:auto', 'data-focus-group': `tab-${tab}` });
     defs.find((d) => d.key === tab)?.fn?.(content);
     panel.appendChild(content);
-    const box = confirmLeave ? leaveDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : null;
+    const box = confirmLeave ? leaveDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? sellAllDialog() : tab === 'reinforce' ? reinforceDialog() : null;
     if (box) {
       // a layer of its own so the pad's focus stays inside the dialog
       modal = h('div', { class: 'layer dim', style: 'z-index:40' }, box);
