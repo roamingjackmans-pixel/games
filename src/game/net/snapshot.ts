@@ -5,6 +5,7 @@
 import { walkSpeedFor } from '../player/player';
 import { speedMult } from '../combat/state';
 import type { Entity, EType, World, GameEvent } from '../world';
+import { SKILL_RECOVER_S } from '../skills/use';
 import type { MovingFloorDef } from '../types';
 
 export const ETYPES: EType[] = ['player', 'enemy', 'projectile', 'telegraph', 'hazard', 'pickup', 'interact', 'decoy', 'wall', 'corpse'];
@@ -87,6 +88,11 @@ export function recordOf(e: Entity, now: number): Rec {
       cPhase = Math.max(0, COMBO_PHASES.indexOf(pl.combo.phase));
       cK = q((pl.combo.t / Math.max(0.001, pl.combo.dur)) * 255, 0, 255);
       if (pl.combo.charging) flags |= F.charging;
+    } else if (pl.action?.kind === 'skill') {
+      // a weapon skill playing (D234): 200 + its key, then the windup (0–127) or the strike after it fires (128–255)
+      const a = pl.action;
+      cIdx = 200 + a.index;
+      cK = a.fired ? 128 + q(Math.min(1, (a.t - a.castS) / SKILL_RECOVER_S) * 127, 0, 127) : q(Math.min(1, a.t / Math.max(0.001, a.castS)) * 127, 0, 127);
     }
     extra = q(pl.reviveProgress * 100, 0, 65535);
     extra2 = q(pl.reviveNeed * 100, 0, 65535);

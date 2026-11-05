@@ -13,7 +13,7 @@ import { toolForSchool, type Derived, type SpellSchool } from '../player/derived
 import type { EffectDef, Item, SkillDef, SpellDef, Stats } from '../types';
 import type { Entity, World } from '../world';
 
-const SKILL_RECOVER_S = 0.2;
+export const SKILL_RECOVER_S = 0.2;
 
 export function attackSpeedFor(w: World, e: Entity): number {
   const pl = e.pl!;

@@ -13,6 +13,7 @@ import { generateZone, type ZoneLayout } from '../procgen/zone';
 import { Room } from '../room';
 import { terrainWalkMult } from '../systems/terrain';
 import { World, type Entity, type EType } from '../world';
+import { SKILL_RECOVER_S, skillOf } from '../skills/use';
 import { applyCharOp, cloneChar, type CharOp } from './charSync';
 import { CH, SNAP_HZ, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
 import { HostClock } from './clock';
@@ -416,6 +417,13 @@ export class NetGuest {
         const swing = combo[r.cIdx % combo.length]!;
         pl.combo = { idx: r.cIdx, phase: ph, t: r.cK / 255, dur: 1, swing, hit: new Set(), queued: false, charging: (r.flags & F.charging) !== 0, chargeT: 0, speed: 1, fired: false };
       } else pl.combo = null;
+      // another player's weapon skill, for its weapon's motion (D234): only drawn, never run here
+      if (!ph && r.cIdx >= 200 && pl.state === 'skill') {
+        const sk = skillOf(e, r.cIdx - 200);
+        const fired = r.cK >= 128;
+        const t = fired ? 1 + ((r.cK - 128) / 127) * SKILL_RECOVER_S : r.cK / 127;
+        if (sk) pl.action = { kind: 'skill', index: r.cIdx - 200, id: sk.id, t, castS: 1, fired, effects: [], aimX: e.x, aimY: e.y, powerMult: 1, hyperArmor: false };
+      } else if (pl.action?.kind === 'skill') pl.action = null;
     }
     if (e.pr?.lob) e.pr.lob.t = (r.extra / 1000) * e.pr.lob.dur;
     if (e.it) e.it.used = (r.flags & F.used) !== 0;

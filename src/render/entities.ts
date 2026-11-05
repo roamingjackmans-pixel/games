@@ -23,6 +23,8 @@ import { drawElementOver, drawElementUnder, drawGolden, isImmuneNow } from './el
 import type { Character, DamageType } from '../game/types';
 import { essenceDef } from '../data/essence';
 import type { Entity, World } from '../game/world';
+import { SKILL_RECOVER_S } from '../game/skills/use';
+import { channelPose, dashPose, leapPose, skillMotion, skillWeaponPose } from './skillPose';
 
 const RARITY_COLOR: Record<string, string> = { common: '#e8e8e8', uncommon: '#58d66a', rare: '#4aa3ff', epic: '#b06bff', legendary: '#ff9b2e' };
 export function rarityColor(r: string): string {
@@ -173,6 +175,78 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+/** What a player's weapon did last in a skill, to ease it back to rest afterwards (D234). */
+interface SkillMemo {
+  id: string;
+  rot: number;
+  ext: number;
+  at: number;
+  leapStart: number;
+  leapUntil: number;
+  /** a charged skill: held wound up while charging, swung when let go */
+  charging: boolean;
+  releaseAt: number;
+}
+const skillMemo = new WeakMap<Entity, SkillMemo>();
+const SKILL_EASE_BACK_S = 0.16;
+
+/**
+ * The weapon during a weapon skill (D234): its windup, the strike when it fires, held high through a leap or out
+ * through a dash, round and round through a spin it channels, then eased back to rest. Null when no skill is playing.
+ */
+function skillPose(e: Entity, now: number, rest: { rot: number; ext: number }): { rot: number; ext: number; flip: boolean } | null {
+  const pl = e.pl!;
+  const a = pl.action;
+  let memo = skillMemo.get(e);
+  if (a?.kind === 'skill') {
+    if (!memo || memo.id !== a.id || memo.at < now - 1) {
+      memo = { id: a.id, rot: rest.rot, ext: rest.ext, at: now, leapStart: 0, leapUntil: 0, charging: false, releaseAt: -1 };
+      skillMemo.set(e, memo);
+    }
+  }
+  if (!memo) return null;
+  const m = skillMotion(memo.id);
+  let pose: { rot: number; ext: number } | null = null;
+  const f = e.forced;
+  if (f && (f.kind === 'leap' || f.kind === 'dash') && f.until > now && (m.motion === 'leap' || m.motion === 'lunge')) {
+    if (memo.leapUntil !== f.until) {
+      memo.leapStart = now;
+      memo.leapUntil = f.until;
+    }
+    pose = f.kind === 'leap' ? leapPose((now - memo.leapStart) / Math.max(0.05, f.until - memo.leapStart)) : dashPose();
+  } else if (a?.kind === 'skill') {
+    const wind = Math.min(1, a.t / Math.max(0.001, a.castS));
+    const hit = a.t <= a.castS ? 0 : Math.min(1, (a.t - a.castS) / SKILL_RECOVER_S);
+    pose = skillWeaponPose(m, wind, Math.max(hit, a.fired ? 0.001 : 0));
+  } else if (pl.charge) {
+    memo.charging = true;
+    pose = skillWeaponPose(m, 1, 0);
+  } else if (memo.charging || (memo.releaseAt >= 0 && now - memo.releaseAt < SKILL_RECOVER_S)) {
+    if (memo.charging) {
+      memo.charging = false;
+      memo.releaseAt = now;
+    }
+    pose = skillWeaponPose(m, 1, Math.max(0.001, (now - memo.releaseAt) / SKILL_RECOVER_S));
+  } else if (pl.channel && pl.channel.source === 'skill' && pl.channel.until > now) {
+    pose = channelPose(m, now, pl.channel.tickS);
+  }
+  if (pose) {
+    memo.rot = pose.rot;
+    memo.ext = pose.ext;
+    memo.at = now;
+    // the edge leads: a blade turning toward its local +y is drawn mirrored (as a combo swing, D104)
+    return { ...pose, flip: m.motion === 'chop' || m.motion === 'sweep' || m.motion === 'crack' || m.motion === 'leap' };
+  }
+  // just finished: back to rest over a moment instead of snapping
+  const k = (now - memo.at) / SKILL_EASE_BACK_S;
+  if (k >= 1 || pl.combo || pl.blocking) {
+    skillMemo.delete(e);
+    return null;
+  }
+  const s = k * k * (3 - 2 * k);
+  return { rot: lerp(memo.rot, rest.rot, s), ext: lerp(memo.ext, rest.ext, s), flip: false };
+}
+
 /** Weapon angle relative to facing for the current swing phase. */
 function weaponPose(e: Entity): { rot: number; ext: number } {
   const pl = e.pl!;
@@ -215,8 +289,12 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   const offItem = pl.char.equipment.off;
   const shield = offItem ? SHIELDS[offItem.baseId] : undefined;
   const tool = offItem ? CASTING_TOOLS[offItem.baseId] : undefined;
-  const pose = weaponPose(e);
   const two = pl.char.twoHanded;
+  const basePose = weaponPose(e);
+  const restRot = !pl.combo && two && !pl.blocking && !isPairedWeapon(wDraw) ? 1.0 : basePose.rot;
+  // a weapon skill moves the weapon itself (D234); a staff or talisman in the weapon hand casts as before
+  const sk = pl.downed || pl.combo || pl.derived.mainTool ? null : skillPose(e, now, { rot: restRot, ext: basePose.ext });
+  const pose = sk ?? basePose;
   const charging = pl.combo?.charging ? pl.combo.chargeT : 0;
   const ghost = pl.downed;
   const dodge = pl.state === 'dodge';
@@ -251,11 +329,11 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   // hands: the main hand orbits the body with the swing so the arm carries the blade; the off hand holds
   // the shield (raised when blocking), the staff (thrust forward while casting) or the second weapon
   const f = e.facing;
-  const rot = !pl.combo && two && !pl.blocking && !isPairedWeapon(wDraw) ? 1.0 : pose.rot;
+  const rot = sk ? sk.rot : restRot;
   const ha = f + 0.9 + (rot - 0.7) * 0.55;
   const wa = f + rot;
   // which way the current arc swing turns: increasing angle moves the blade toward its local +y (D104)
-  const edgeFlip = !!pl.combo && pl.combo.swing.hitbox.shape === 'arc' && pl.combo.idx % 2 === 0;
+  const edgeFlip = sk ? sk.flip : !!pl.combo && pl.combo.swing.hitbox.shape === 'arc' && pl.combo.idx % 2 === 0;
   const main: HandPose | undefined = ghost
     ? undefined
     : {
