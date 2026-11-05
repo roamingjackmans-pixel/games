@@ -119,7 +119,7 @@ export function itemScore(item: Item | null, stats: Stats, twoHanded: boolean): 
     return v.physical * 100 + v.elemental * 50;
   }
   const t = CASTING_TOOLS[item.baseId];
-  if (t) return toolMult(t.grade, item.ilvl) * RARITY_POWER[item.rarity] * 100;
+  if (t) return toolMult(t.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceMult(item.plus) * 100;
   if (item.kind === 'armor') {
     const d = armorPieceDefense(item.baseId, item.ilvl, item.plus);
     return DAMAGE_TYPES.reduce((a, k) => a + d[k], 0);

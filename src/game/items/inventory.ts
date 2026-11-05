@@ -99,11 +99,17 @@ export function findItem(c: Character, itemId: string): Item | null {
 
 // ------------------------------------------------------------------ gems
 
-/** Weapon gems go in weapon sockets, armor gems in armor sockets. */
+/** Which gems an item's sockets take (D227): weapons, staffs and talismans weapon gems; armour and shields armour gems. */
+export function socketKind(item: Item): 'weapon' | 'armor' | null {
+  if (item.kind === 'armor' || item.kind === 'shield') return 'armor';
+  if (item.kind === 'weapon' || item.kind === 'staff' || item.kind === 'talisman') return 'weapon';
+  return null;
+}
+
+/** Weapon gems go in weapon sockets, armor gems in armor sockets (D227: staffs and talismans count as weapons, shields as armor). */
 export function canSocket(item: Item, gem: Gem): boolean {
-  if (item.kind === 'armor') return gemKind(gem) === 'armor';
-  if (item.kind === 'weapon') return gemKind(gem) === 'weapon';
-  return false;
+  const k = socketKind(item);
+  return !!k && gemKind(gem) === k;
 }
 
 /** Where a gem sits: loose in the bag (`gemIdx`) or in a socket of an item you carry. */

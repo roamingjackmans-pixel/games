@@ -82,6 +82,8 @@ export interface Derived {
   flaskBonus: number;
   powers: Set<string>;
   rings: Set<string>;
+  /** how many of each ring are worn (D227: every copy counts) */
+  ringCounts: Record<string, number>;
   maxHpMult: number;
   poiseThresholdPct: number;
   staminaRegenMult: number;
@@ -154,9 +156,13 @@ export function computeDerived(c: Character): Derived {
   }
   const powers = new Set<string>();
   const rings = new Set<string>();
+  const ringCounts: Record<string, number> = {};
   for (const it of items) {
     if (it.legendaryPower) powers.add(it.legendaryPower);
-    if (it.kind === 'ring' && RINGS[it.baseId]) rings.add(it.baseId);
+    if (it.kind === 'ring' && RINGS[it.baseId]) {
+      rings.add(it.baseId);
+      ringCounts[it.baseId] = (ringCounts[it.baseId] ?? 0) + 1;
+    }
   }
 
   const main = c.equipment.main;
@@ -170,7 +176,7 @@ export function computeDerived(c: Character): Derived {
   const twoHanded = c.twoHanded;
   const weaponMeetsReq = main ? meetsRequirements(itemRequirements(main), stats, twoHanded) : true;
   const held = (def: CastingToolDef | null, item: Item | null, hand: 'main' | 'off'): HeldTool | null =>
-    def && item ? { def, item, hand, ilvl: item.ilvl, meetsReq: meetsRequirements(itemRequirements(item), stats, false), mult: toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] } : null;
+    def && item ? { def, item, hand, ilvl: item.ilvl, meetsReq: meetsRequirements(itemRequirements(item), stats, false), mult: toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceMult(item.plus) } : null; // D227: reinforcement too
   // two-handing sets the off hand aside but a tool in the weapon hand still casts (held in both hands)
   const mainTool = held(mainToolDef, main, 'main');
   const offTool = twoHanded ? null : held(tool, off, 'off');
@@ -281,7 +287,8 @@ export function computeDerived(c: Character): Derived {
       const gd = GEMS[pk.family];
       if (!gd) continue;
       const v = perkValue(pk);
-      if (it.kind === 'armor') {
+      // D227: a shield's sockets take armour gems, a staff's or talisman's weapon gems
+      if (it.kind === 'armor' || it.kind === 'shield') {
         if (!gd.armorOnly) continue;
         if (pk.family === 'bulwark') defAll += v;
         else if (pk.family === 'hearth') hpFlat += v;
@@ -289,7 +296,7 @@ export function computeDerived(c: Character): Derived {
         else if (pk.family === 'gilt') glowenFind += v / 100;
         continue;
       }
-      if (it.kind !== 'weapon' || gd.armorOnly) continue;
+      if ((it.kind !== 'weapon' && it.kind !== 'staff' && it.kind !== 'talisman') || gd.armorOnly) continue;
       switch (pk.family) {
         case 'quicksilver':
           attackSpeedPct += v / 100;
@@ -318,20 +325,17 @@ export function computeDerived(c: Character): Derived {
       }
     }
   }
-  // rings
-  if (rings.has('lucky_charm')) shardFind += 0.1;
-  if (rings.has('thermos_lid')) flaskBonus += 0.15;
-  if (rings.has('fleet_ring')) dodgeRed += 0.5;
-  if (rings.has('chloranthy_knot')) regenMult += 0.2;
-  if (rings.has('glowcatcher')) {
-    gemFind += 0.25;
-    glowenFind += 0.2;
-  }
-  if (rings.has('slumlords_signet')) {
-    dmgPct += 0.15;
-    maxHpMult *= 0.85;
-  }
-  if (rings.has('red_thread')) redTakenMult = 0.75;
+  // rings: each copy worn counts (D227; two of a kind used to count once)
+  const rn = (id: string): number => ringCounts[id] ?? 0;
+  shardFind += 0.1 * rn('lucky_charm');
+  flaskBonus += 0.15 * rn('thermos_lid');
+  dodgeRed += 0.5 * rn('fleet_ring');
+  regenMult += 0.2 * rn('chloranthy_knot');
+  gemFind += 0.25 * rn('glowcatcher');
+  glowenFind += 0.2 * rn('glowcatcher');
+  dmgPct += 0.15 * rn('slumlords_signet');
+  maxHpMult *= Math.pow(0.85, rn('slumlords_signet'));
+  if (rn('red_thread')) redTakenMult = Math.pow(0.75, rn('red_thread'));
   // legendary powers that are plain numbers
   if (powers.has('hungering')) {
     lifesteal += 0.04;
@@ -431,6 +435,7 @@ export function computeDerived(c: Character): Derived {
     flaskBonus,
     powers,
     rings,
+    ringCounts,
     maxHpMult,
     poiseThresholdPct: 0.08,
     staminaRegenMult: regenMult,

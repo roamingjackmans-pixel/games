@@ -689,7 +689,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
       }
     }
     if (pl.derived.powers.has('momentum')) mult *= 1 + 0.03 * Math.min(10, pl.momentum);
-    if (pl.derived.rings.has('ring_stillness') && now - pl.stillSince >= 1) mult *= 1.15;
+    if (pl.derived.rings.has('ring_stillness') && now - pl.stillSince >= 1) mult *= Math.pow(1.15, pl.derived.ringCounts.ring_stillness ?? 1);
   }
   if (en.elite === 'armored') spec = { ...spec, dmg: { ...spec.dmg, physical: (spec.dmg.physical ?? 0) * 0.6 } };
   if (attacker) mult *= 1 + buffSum(attacker, 'damagePct', now);
@@ -841,7 +841,7 @@ export function addRevive(w: World, ghost: Entity, attacker: Entity, value: numb
   const gp = ghost.pl!;
   if (!gp.downed) return;
   let v = value;
-  if (attacker.pl?.derived.rings.has('ghost_lantern')) v *= 2;
+  if (attacker.pl?.derived.rings.has('ghost_lantern')) v *= Math.pow(2, attacker.pl.derived.ringCounts.ghost_lantern ?? 1);
   gp.reviveProgress += v;
   // every hit holds the bleed-out countdown for 3 s, starting the 3 s again (D202)
   gp.ghostPauseUntil = w.time + GHOST_HIT_PAUSE_S;

@@ -1,5 +1,7 @@
 // Bonfire menu (GAME_DESIGN §9.1): Level up · Respec · Gem bench · Shop · Warp (+ Spell loadout from M6).
 import { CONSUMABLES } from '../../data/consumables';
+import { CASTING_TOOLS } from '../../data/castingTools';
+import { statBoosts } from '../../data/classes';
 import { ESSENCES, MAX_REINFORCE, essenceCounts, essenceDef, plusName, reinforceMult } from '../../data/essence';
 import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { armorPieceDefense } from '../../data/armor';
@@ -8,9 +10,9 @@ import { CLASSES } from '../../data/classes';
 import { GEMS, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkText } from '../../data/gems';
 import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
 import { computeDerived } from '../../game/player/derived';
-import { spellSkill } from '../../game/skills/use';
+import { spellSkill, toolSpellSkill } from '../../game/skills/use';
 import { ELEMENTS } from '../../game/elements';
-import { canSocket, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
+import { canSocket, socketKind, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type GemTier, type Item, type StatId } from '../../game/types';
 import { hasRarityBar, upgradeInfo } from '../../game/items/proficiency';
@@ -81,6 +83,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   const tabKeys = ['level', 'gems', 'weapons', 'reinforce', 'shop', 'warp', ...(v.extraTabs ?? []).map((t) => t.label)];
   let tab = v.startTab === 'last' ? tabKeys[tabKeys.length - 1]! : v.startTab && v.startTab !== 'first' && tabKeys.includes(v.startTab) ? v.startTab : 'level';
   let selItem: string | null = null;
+  /** the empty socket picked on the selected item (D227): a gem goes there, not just into the first free one */
+  let selSocket = -1;
   /** which gem's per-perk upgrade list is open */
   let upOpen: string | null = null;
   /** the fuse dialog's state */
@@ -494,6 +498,12 @@ export function openBonfire(v: BonfireView): HTMLElement {
       add('Elemental block', a.elemental, b.elemental, pc);
       add('Holy / Void block', a.holyVoid, b.holyVoid, pc);
       add('Stamina per 100 blocked', shieldStability(sd, from, it.rarity), shieldStability(sd, to, it.rarity), (x) => x.toFixed(1));
+    } else if ((it.kind === 'staff' || it.kind === 'talisman') && CASTING_TOOLS[it.baseId]) {
+      // D227: a staff's or talisman's Spell Skill for your stats now
+      const st = computeDerived(c).stats;
+      const sch = CASTING_TOOLS[it.baseId]!.school;
+      const boost = statBoosts(c.classId);
+      add(`${sch === 'brain' ? 'Brain' : 'Prayer'} Spell Skill`, toolSpellSkill(at(from), st, boost), toolSpellSkill(at(to), st, boost), int);
     } else if (it.kind === 'armor') {
       const a = armorPieceDefense(it.baseId, it.ilvl, from);
       const b = armorPieceDefense(it.baseId, it.ilvl, to);
@@ -549,7 +559,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
 
   function gemsTab(el: HTMLElement): void {
     const c = v.char;
-    const items = [c.equipment.main, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0);
+    // D227: the off hand too (a shield takes armour gems, a staff or talisman weapon gems)
+    const items = [c.equipment.main, c.equipment.off, c.altMain, c.equipment.head, c.equipment.body, c.equipment.legs, ...c.bag].filter((i): i is Item => !!i && i.sockets.length > 0 && !!socketKind(i));
     const list = h('div', { class: 'col', style: 'gap:6px;width:500px;max-height:540px;overflow:auto' }, h('h3', null, 'Socketed gear'));
     if (items.length === 0) list.appendChild(h('div', { class: 'dim-text' }, 'Nothing you carry has sockets. Rare and better gear does.'));
     // worn gear first, under its own heading and tagged with its slot, then the bag (D168)
@@ -564,7 +575,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       const card = h('div', { class: `card ${selItem === it.id ? 'on' : ''}`, style: `padding:6px 8px${worn ? ';border-left:3px solid #e8c25a' : ''}` });
       card.setAttribute('data-testid', `gem-card-${it.id}`);
       const tag = worn ? h('span', { class: 'tag-equipped', style: 'margin-left:6px;padding:0 6px;border-radius:4px;background:#e8c25a;color:#1a1408;font-size:11px;font-weight:bold' }, `Equipped · ${placeLabel(c, it.id)}`) : null;
-      const nameEl = h('div', { class: `r-${it.rarity}` }, it.name, tag, h('span', { class: 'small dim-text' }, ` · ${it.kind === 'armor' ? 'armor gems' : 'weapon gems'}`));
+      const nameEl = h('div', { class: `r-${it.rarity}` }, it.name, tag, h('span', { class: 'small dim-text' }, ` · ${socketKind(it) === 'armor' ? 'armor gems' : 'weapon gems'}`));
       hoverTip(nameEl, () => itemTooltip(it, c, 'auto'));
       card.appendChild(nameEl);
       it.sockets.forEach((g, i) => {
@@ -576,10 +587,16 @@ export function openBonfire(v: BonfireView): HTMLElement {
             h(
               'div',
               { class: 'row', style: 'padding:3px 0' },
-              btn(`◇ Empty socket — ${selItem === it.id ? 'pick a gem →' : 'select'}`, () => {
-                selItem = it.id;
-                render();
-              }, 'tiny'),
+              (() => {
+                const chosen = selItem === it.id && (selSocket === i || (selSocket < 0 && it.sockets.findIndex((x) => !x) === i));
+                const b = btn(`◇ Empty socket ${i + 1} — ${chosen ? 'pick a gem →' : 'select'}`, () => {
+                  selItem = it.id;
+                  selSocket = i;
+                  render();
+                }, chosen ? 'tiny on' : 'tiny');
+                b.setAttribute('data-testid', `empty-socket-${it.id}-${i}`);
+                return b;
+              })(),
             ),
           );
       });
@@ -587,14 +604,15 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;min-width:0;max-height:540px;overflow:auto' }, h('h3', null, 'Loose gems · ', glowenEl(c.glowen)));
     const sel = selItem ? items.find((i) => i.id === selItem) : null;
-    const free = sel ? sel.sockets.findIndex((x) => !x) : -1;
+    // the socket picked, if it is still empty; else the first empty one
+    const free = sel ? (selSocket >= 0 && selSocket < sel.sockets.length && !sel.sockets[selSocket] ? selSocket : sel.sockets.findIndex((x) => !x)) : -1;
     c.gems.forEach((g, gi) => {
       const loc: GemLoc = { gemIdx: gi };
       let sock: HTMLElement | null = null;
       if (sel && free >= 0) {
         const fits = canSocket(sel, g);
         sock = btn('Socket', () => say(v.ops.socket(sel.id, free, gi)), 'tiny', !fits);
-        sock.title = fits ? `Into ${sel.name}` : `${sel.name} takes ${sel.kind === 'armor' ? 'armor' : 'weapon'} gems.`;
+        sock.title = fits ? `Into socket ${free + 1} of ${sel.name}` : `${sel.name} takes ${socketKind(sel) === 'armor' ? 'armor' : 'weapon'} gems.`;
       }
       const sell = btn(['Sell ', glowenEl(gemSellTotal(g), '+')], () => say(v.ops.sellGem(gi)), 'tiny');
       gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, upgradeCtl(g, loc), sell, fuseBtn(g, loc)], `loose-gem-${gi}`)));

@@ -5,8 +5,9 @@ import { MAX_REINFORCE, essenceCounts, essenceDef, payEssence, reinforceGlowen, 
 import { findItem } from './inventory';
 import type { Character, Item } from '../types';
 
+/** Weapons, shields, armour, and (D227) staffs and talismans, whose spell power each + raises. */
 export function canReinforce(it: Item): boolean {
-  return it.kind === 'weapon' || it.kind === 'shield' || it.kind === 'armor';
+  return it.kind === 'weapon' || it.kind === 'shield' || it.kind === 'armor' || it.kind === 'staff' || it.kind === 'talisman';
 }
 
 export interface ReinforceInfo {
