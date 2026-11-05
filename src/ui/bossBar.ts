@@ -1,4 +1,4 @@
-// Boss bar (GAME_DESIGN §7, §16): bottom-center, name above, a tick at each phase threshold, a pale
+// Boss bar (GAME_DESIGN §7, §16): bottom-center, name above (no phase ticks since D226), a pale
 // trailing bar for recent damage, and the phase name during a transition.
 import { drawText } from '../engine/text';
 import { withAlpha } from '../engine/draw/parts';
@@ -38,7 +38,6 @@ export function drawBossBar(ctx: CanvasRenderingContext2D, w: World, st: BossBar
   ctx.save();
   ctx.globalAlpha = k;
   drawText(ctx, def.name, x, y - 8, { size: 16, weight: 'bold', color: '#efe6d2' });
-  if (e.en.phase > 0) drawText(ctx, e.en.phase === 1 ? 'II' : 'III', x + W, y - 8, { size: 14, align: 'right', weight: 'bold', color: def.palette?.[1] ?? '#ffcf6a' });
   ctx.fillStyle = 'rgba(0,0,0,0.65)';
   ctx.fillRect(x - 3, y - 3, W + 6, H + 6);
   ctx.fillStyle = '#2a1418';
@@ -51,12 +50,7 @@ export function drawBossBar(ctx: CanvasRenderingContext2D, w: World, st: BossBar
   ctx.fillRect(x, y, W * frac * fill, H);
   ctx.fillStyle = withAlpha('#ffffff', 0.15);
   ctx.fillRect(x, y, W * frac * fill, H * 0.35);
-  // phase ticks
-  for (let i = 0; i < def.phases.length - 1; i++) {
-    const t = def.phases[i]!.untilHpPct / 100;
-    ctx.fillStyle = i < e.en.phase ? withAlpha('#efe6d2', 0.35) : '#efe6d2';
-    ctx.fillRect(x + W * t - 1.5, y - 5, 3, H + 10);
-  }
+  // no phase ticks and no II / III (D226): where a phase begins is for the player to find out
   ctx.restore();
   // the phase name while the boss transforms
   const ph = def.phases[e.en.phase];

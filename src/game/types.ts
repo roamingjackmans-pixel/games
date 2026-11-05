@@ -402,10 +402,8 @@ export interface EnemyTraits {
   packSize?: [number, number];
   /** pieces orbit target at this radius */
   orbitR?: number;
-  /** a summon that rides a ring round whoever summoned it (orbitR from its centre), its kin spaced evenly (D224) */
-  orbitSummoner?: boolean;
-  /** how fast that ring turns, radians a second */
-  orbitSpeed?: number;
+  /** drifts about the room on its own, a new spot every few seconds, whoever it is fighting (Aurelia's mirrors, D225) */
+  drift?: boolean;
   /** contact damage (swarm pieces) mult and cd */
   contact?: { mult: number; cdS: number; status?: { id: StatusId; buildup: number } };
   attachDrain?: number;

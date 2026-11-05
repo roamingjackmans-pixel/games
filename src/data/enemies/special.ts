@@ -119,11 +119,11 @@ export const INSTRUCTOR: EnemyDef = {
     { id: 'instructor_clap', name: 'Clap', kind: 'pierce', pattern: { kind: 'ring', rIn: 60, rOut: 260, anchor: 'self' }, windupMs: 1500, recoverMs: 900, dmgMult: 0.8, type: 'physical', cooldownS: 8, range: [40, 270], weight: 2, area: true },
   ],
   // he walks the whole room (D110: no more 230 px leash)
-  traits: { noFlinch: true, noDrops: true, fixedHp: 14420 }, // D111: he no longer heals
+  traits: { noFlinch: true, noDrops: true, fixedHp: 9373 }, // D111: he no longer heals; D226: 35% less (was 14,420)
   // below half health he blows the whistle: everything comes faster, he leaves his corner, and people who stand far
   // away get homework (D107)
   phase2: {
-    untilHpPct: 50,
+    untilHpPct: 65, // D226: from 65% of his health (was 50%)
     name: 'Second half',
     noLeash: true,
     attacks: [

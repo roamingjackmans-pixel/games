@@ -296,6 +296,8 @@ export interface EnemyC {
   projSpeedMult: number;
   /** where this enemy's next gaze attack strikes (AttackDef.gazeTurnDeg); drawn as an arrow */
   gaze?: number;
+  /** where a drifting enemy is floating to, and when it picks the next spot (D225) */
+  driftTo?: { x: number; y: number; at: number };
   homeX: number;
   homeY: number;
   movedAt: number;

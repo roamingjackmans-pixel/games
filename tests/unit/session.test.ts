@@ -282,16 +282,20 @@ describe('session: rooms, waves, death and the Shardpile', () => {
 });
 
 describe('The Instructor (D107)', () => {
-  it('has 14,420 HP and below half switches to a faster list with attacks for players who stand back', () => {
+  it('has 9,373 HP (D226: 35% less) and below 65% switches to a faster list with attacks for players who stand back', () => {
     const ch = newCharacter('knight', 'Joe', 'p1', new Rng('inst'));
     ch.tutorialDone = false;
     const s = new GameSession(newSave(1, ch, 'INSTRUCTOR-SEED'));
     s.start();
     s.enterRoom(s.layout.trialId!, 'w');
     const inst = [...s.w.entities.values()].find((e) => e.en?.def.id === 'the_instructor')!;
-    expect(inst.hp!.max).toBe(14420);
+    expect(inst.hp!.max).toBe(9373);
     const p1 = inst.en!.phaseAttacks.map((a) => a.id);
-    inst.hp!.hp = inst.hp!.max * 0.49;
+    inst.hp!.hp = inst.hp!.max * 0.66;
+    inst.hp!.lastHitAt = s.w.time;
+    for (let i = 0; i < 5; i++) stepWorld(s.w);
+    expect(inst.en!.phase).toBe(0);
+    inst.hp!.hp = inst.hp!.max * 0.64;
     inst.hp!.lastHitAt = s.w.time;
     for (let i = 0; i < 5; i++) stepWorld(s.w);
     expect(inst.en!.phase).toBe(1);

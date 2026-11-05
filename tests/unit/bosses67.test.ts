@@ -102,7 +102,7 @@ describe('Saint Aurelia the Unthawed', () => {
     for (let y = 0; y < 22; y++) for (let x = 0; x < 40; x++) if (s.w.room.get(x, y) === T.Pillar) pillars++;
     expect(pillars).toBe(6 * 4);
   });
-  it('fights a god-mode player for a minute in both phases, changing phase at exactly 50%', () => {
+  it('fights a god-mode player for a minute in both phases, changing phase at exactly 75% (D226; was 50%)', () => {
     const s = session(6);
     s.w.god = true;
     s.enterRoom(s.layout.bossId, 's');
@@ -111,7 +111,7 @@ describe('Saint Aurelia the Unthawed', () => {
     expect(b.en!.phase).toBe(0);
     const max = b.hp!.max;
     bigHit(s, b, max * 10);
-    expect(b.hp!.hp).toBe(max * 0.5);
+    expect(b.hp!.hp).toBe(max * 0.75);
     expect(b.en!.phase).toBe(1);
     expect(b.en!.phaseAttacks.some((a) => a.id === 'aurelia_judgment')).toBe(true);
     run(s, 40);
@@ -134,7 +134,7 @@ describe('Saint Aurelia the Unthawed', () => {
     expect(mirrors.every((m) => m.hp!.max > 300)).toBe(true);
     // D222: ×1.2 on the hazard role in zone 6 (D224 gave the 40% to Aurelia, not to them)
     expect(mirrors[0]!.hp!.max).toBeCloseTo(80 * 1.2 * (1 + 0.55 * 5), 0);
-    expect(SAINT_AURELIA.baseHp).toBe(5040);
+    expect(SAINT_AURELIA.baseHp).toBe(5544); // D224 +40%, D226 +10% more
     expect((mirrors[0]!.en!.def as { attacks: { id: string }[] }).attacks.map((a) => a.id)).toEqual(['mirror_glint', 'mirror_shatter']);
     expect(mirrors[0]!.en!.def.traits?.hideHpBar).toBeFalsy();
     const m = mirrors[0]!;
@@ -162,31 +162,29 @@ describe('Saint Aurelia the Unthawed', () => {
     hitEnemy(s.w, p, m, big, m.x - 20, m.y);
     expect(m.hp!.dead).toBe(true);
   });
-  it('the mirrors fly round Aurelia on a ring and follow her when she moves (D224)', () => {
+  it('the mirrors float about the room on their own, not tied to her (D225)', () => {
     const { s, b, p } = fight(6);
     quiet(s, b);
     startEnemyAttack(s.w, b, attackOf(SAINT_AURELIA, 0, 'aurelia_mirror_of_faith'), p);
     run(s, 1.7);
     quiet(s, b);
-    const mirrors = (): Entity[] => s.w.enemies.filter((e) => e.en?.def.id === 'ice_mirror' && !e.hp?.dead);
-    for (const m of mirrors()) m.en!.cooldowns = { mirror_glint: s.w.time + 99, mirror_shatter: s.w.time + 99 };
-    // she stands mid-room (away from the walls that would cut the ring short), rooted
-    b.x = 640;
-    b.y = 380;
     b.en!.rootUntil = s.w.time + 99;
-    p.x = 1100;
-    p.y = 600;
-    run(s, 3);
-    const near = (): number[] => mirrors().map((m) => Math.hypot(m.x - b.x, m.y - b.y));
-    for (const d of near()) expect(Math.abs(d - 150)).toBeLessThan(40);
-    // spread round her, not bunched: every pair well apart
-    const ms = mirrors();
-    for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) expect(Math.hypot(ms[i]!.x - ms[j]!.x, ms[i]!.y - ms[j]!.y)).toBeGreaterThan(150);
-    // she moves; they come with her
-    b.x = 760;
-    b.y = 420;
-    run(s, 2);
-    for (const d of near()) expect(Math.abs(d - 150)).toBeLessThan(45);
+    const mirrors = s.w.enemies.filter((e) => e.en?.def.id === 'ice_mirror' && !e.hp?.dead);
+    for (const m of mirrors) m.en!.cooldowns = { mirror_glint: s.w.time + 99, mirror_shatter: s.w.time + 99 };
+    const start = mirrors.map((m) => [m.x, m.y] as const);
+    let farFromHer = 0;
+    const moved = mirrors.map(() => 0);
+    for (let i = 0; i < 12 * 60; i++) {
+      run(s, 1 / 60);
+      mirrors.forEach((m, k) => {
+        farFromHer = Math.max(farFromHer, Math.hypot(m.x - b.x, m.y - b.y));
+        moved[k] = Math.max(moved[k]!, Math.hypot(m.x - start[k]![0], m.y - start[k]![1]));
+      });
+    }
+    // each one roamed, and they go well away from her
+    for (const d of moved) expect(d).toBeGreaterThan(150);
+    expect(farFromHer).toBeGreaterThan(350);
+    expect(mirrors.every((m) => m.en!.def.traits?.drift)).toBe(true);
   });
   it('a mirror attacks: Shatter when you stand at it, Frost Glint from range (D222)', () => {
     const { s, b, p } = fight(6);

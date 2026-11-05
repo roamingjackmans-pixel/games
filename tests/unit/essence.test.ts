@@ -9,7 +9,7 @@ import { Rng } from '../../src/engine/rng';
 import { World } from '../../src/game/world';
 import { Room } from '../../src/game/room';
 import { spawnPlayer } from '../../src/game/player/player';
-import { bossDrops } from '../../src/game/items/drops';
+import { bossDrops, ESSENCE_DROP } from '../../src/game/items/drops';
 import { applyCharOp, cloneChar, diffChar } from '../../src/game/net/charSync';
 import { normalizeSave, newSave } from '../../src/game/save/schema';
 
@@ -30,7 +30,7 @@ describe('Soul Essence (D198)', () => {
     expect([4, 7].map((cy) => essenceTierFor(3, cy))).toEqual([5, 5]);
   });
 
-  it('a boss drops three of its tier, none before zone 4', () => {
+  it('a boss drops one or two of its tier (D226: halved from three), none before zone 4', () => {
     const drops = (zone: number, cycle: number) => {
       const w = new World('ESS', Room.empty());
       spawnPlayer(w, knight(), 0, true, 600, 368);
@@ -38,8 +38,12 @@ describe('Soul Essence (D198)', () => {
       return [...w.entities.values()].filter((e) => e.pk?.kind === 'essence').map((e) => [e.pk!.essenceTier, e.pk!.amount]);
     };
     expect(drops(3, 0)).toEqual([]);
-    expect(drops(4, 0)).toEqual([[1, 3]]);
-    expect(drops(2, 1)).toEqual([[2, 3]]);
+    const a = drops(4, 0);
+    expect(a.length).toBe(1);
+    expect(a[0]![0]).toBe(1);
+    expect([1, 2]).toContain(a[0]![1]);
+    expect(drops(2, 1)[0]![0]).toBe(2);
+    expect(ESSENCE_DROP).toEqual({ enemy: 0.01, elite: 0.175, smallChest: 0.125, mimic: 0.25, treasure: 0.75, boss: 1.5 });
   });
 
   it('steps cost 1, 2, 3 of one tier, a new tier every three levels: 6 a tier, +3 in the first descent', () => {

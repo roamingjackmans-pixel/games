@@ -93,7 +93,14 @@ export function enemyDrops(c: DropContext, e: Entity): void {
 }
 
 /** Soul Essence (D198): rare from enemies, likelier from Elites and chests, three from every boss. */
-export const ESSENCE_DROP = { enemy: 0.02, elite: 0.35, smallChest: 0.25, mimic: 0.5, treasure: 1, boss: 3 } as const;
+/** D226: every rate halved (enemy 2%, Elite 35%, small chest 25%, mimic 50%, treasure 1–2, boss 3 before). */
+export const ESSENCE_DROP = { enemy: 0.01, elite: 0.175, smallChest: 0.125, mimic: 0.25, treasure: 0.75, boss: 1.5 } as const;
+
+/** A whole number with `avg` as its average: the whole part, plus one more at the fraction's chance. */
+function essenceCount(rng: { chance(p: number): boolean }, avg: number): number {
+  const whole = Math.floor(avg);
+  return whole + (rng.chance(avg - whole) ? 1 : 0);
+}
 const ESSENCE_RARITY = ['uncommon', 'rare', 'epic', 'legendary', 'legendary'] as const;
 
 function dropEssence(w: World, pid: string, tier: number, n: number, x: number, y: number): void {
@@ -131,7 +138,7 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
     spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round((kind === 'treasure' ? 60 : 25) * c.zone * (1 + pl.derived.glowenFind)), rarity: 'common' });
     const et = essenceTierFor(c.zone, c.cycle);
     if (et) {
-      const n = kind === 'treasure' ? 1 + (rng.chance(0.5) ? 1 : 0) : kind === 'mimic' ? (rng.chance(ESSENCE_DROP.mimic) ? 1 : 0) : kind === 'small' ? (rng.chance(ESSENCE_DROP.smallChest) ? 1 : 0) : 0;
+      const n = kind === 'treasure' ? essenceCount(rng, ESSENCE_DROP.treasure) : kind === 'mimic' ? (rng.chance(ESSENCE_DROP.mimic) ? 1 : 0) : kind === 'small' ? (rng.chance(ESSENCE_DROP.smallChest) ? 1 : 0) : 0;
       const [ex, ey] = scatter(rng, x, y + 20);
       dropEssence(w, pid, et, n, ex, ey);
     }
@@ -199,6 +206,6 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
     const [sx, sy] = scatter(rng, x, y, 60);
     spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round(150 * c.zone * (1 + pl.derived.glowenFind)), rarity: 'uncommon' });
     const [ex, ey] = scatter(rng, x, y, 60);
-    dropEssence(w, pid, essenceTierFor(c.zone, c.cycle), ESSENCE_DROP.boss, ex, ey);
+    dropEssence(w, pid, essenceTierFor(c.zone, c.cycle), essenceCount(rng, ESSENCE_DROP.boss), ex, ey);
   }
 }

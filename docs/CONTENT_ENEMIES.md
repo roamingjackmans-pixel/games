@@ -277,7 +277,7 @@ Phase 1:
 - **Ice Spears [PIERCE][AREA]**: lanes(5, 80) vertical, telegraph 1.1 s, ×1.2 Frost.
 - **Frostbite Lunge [RED]**: tint 0.6 s, line(50, 260) ×1.7 Frost, Chill 70.
 - **Hymn [PIERCE][AREA]**: expandingRing(280 px/s) 2 gaps, ×0.6 + Silence 2 s.
-- **Mirror of Faith**: 3 ice mirrors that reflect projectiles and spells back and (D224) fly round her on a turning ring (r 150). D222: real enemies (role hazard, HP ×1.2, about 360 in the first playthrough), each with **Frost Glint** (a ranged shot, Chill 20) and **Shatter** (circle(110) around itself, ×1.2, Chill 30, for anyone breaking it up close).
+- **Mirror of Faith**: 3 ice mirrors that reflect projectiles and spells back and (D225) float about the room on their own. D222: real enemies (role hazard, HP ×1.2, about 360 in the first playthrough), each with **Frost Glint** (a ranged shot, Chill 20) and **Shatter** (circle(110) around itself, ×1.2, Chill 30, for anyone breaking it up close).
 
 Phase 2 (the ice shatters: she is faster, wings of frost; D224: no ice patches any more):
 - New **Avalanche [PIERCE][AREA]**: lanes(4, 120) boulders roll horizontally, telegraph 1.2 s, ×1.5.

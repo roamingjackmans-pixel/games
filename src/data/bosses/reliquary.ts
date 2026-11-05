@@ -143,8 +143,8 @@ export const SAINT_AURELIA: BossDef = {
   zone: 6,
   name: 'Saint Aurelia the Unthawed',
   role: 'boss',
-  // D224: 40% more than the boss role's 3,600
-  baseHp: 5040,
+  // D224: 40% more than the boss role's 3,600; D226: 10% more again
+  baseHp: 5544,
   radius: 46,
   speed: 125,
   resist: {},
@@ -152,7 +152,8 @@ export const SAINT_AURELIA: BossDef = {
   preferredRange: 110,
   hyperArmor: false,
   phases: [
-    { untilHpPct: 50, speedMult: 1, dmgMult: 1, attacks: [blessedBlade, iceSpears(false), frostbiteLunge, hymn(false), mirrorOfFaith] },
+    // D226: phase 2 from 75% of her health (was 50%)
+    { untilHpPct: 75, speedMult: 1, dmgMult: 1, attacks: [blessedBlade, iceSpears(false), frostbiteLunge, hymn(false), mirrorOfFaith] },
     {
       untilHpPct: 0,
       name: 'The ice shatters',
@@ -213,12 +214,12 @@ export const SAINT_AURELIA_PARTS: Record<string, EnemyDef> = {
     name: 'Ice Mirror',
     role: 'hazard',
     // D222: a real enemy now (it was 1 HP with no attacks): about 360 HP in the first playthrough (scaling with the zone
-    // and New Game+), a health bar, a ranged chill shot and a burst for anyone who walks up to break it. D224: the three
-    // fly round Aurelia on a turning ring instead of standing where they appeared. Projectiles and projectile spells
-    // still bounce back at the thrower.
+    // and New Game+), a health bar, a ranged chill shot and a burst for anyone who walks up to break it. D225: they
+    // float about the room on their own (D224 had them orbit Aurelia). Projectiles and projectile spells still bounce
+    // back at the thrower.
     mult: { hp: 1.2 },
     radius: 20,
-    speed: 320,
+    speed: 110,
     resist: {},
     moveStyle: 'hover',
     preferredRange: 0,
@@ -226,7 +227,7 @@ export const SAINT_AURELIA_PARTS: Record<string, EnemyDef> = {
       { id: 'mirror_glint', name: 'Frost Glint', kind: 'normal', pattern: { kind: 'projectile', speed: 400, r: 7 }, windupMs: 700, recoverMs: 500, dmgMult: 0.8, type: 'magic', status: { id: 'chill', buildup: 20 }, cooldownS: 3.5, range: [0, 700], weight: 3 },
       { id: 'mirror_shatter', name: 'Shatter', kind: 'normal', pattern: { kind: 'circle', r: 110, anchor: 'self' }, windupMs: 900, recoverMs: 800, dmgMult: 1.2, type: 'magic', status: { id: 'chill', buildup: 30 }, cooldownS: 5, range: [0, 120], weight: 4, area: true },
     ],
-    traits: { reflectsProjectiles: true, noFlinch: true, noDrops: true, noShards: true, orbitSummoner: true, orbitR: 150, orbitSpeed: 0.9 },
+    traits: { reflectsProjectiles: true, noFlinch: true, noDrops: true, noShards: true, drift: true },
     flavor: 'Faith, polished until it shows you your own arrow coming back.',
     draw: 'aurelia_mirror',
     palette: ['#cfeaff', '#9ad0ff', '#ffffff'],

@@ -186,20 +186,16 @@ function moveByStyle(w: World, e: Entity, target: Entity, dt: number): void {
     face();
     return;
   }
-  // a summon that flies round its summoner (Aurelia's mirrors, D224): a turning ring, its kin spaced evenly round it
-  if (def.traits?.orbitSummoner && en.summonerId) {
-    const host = w.get(en.summonerId);
-    if (host && !host.removed && !host.hp?.dead) {
-      const kin = w.enemies.filter((x) => !x.hp?.dead && x.en?.summonerId === en.summonerId && x.en.def.id === def.id).sort((a, b) => a.id - b.id);
-      const slot = Math.max(0, kin.indexOf(e));
-      const r = def.traits.orbitR ?? host.radius + 90;
-      const a = now * (def.traits.orbitSpeed ?? 0.9) + (slot / Math.max(1, kin.length)) * Math.PI * 2;
-      const gx = clamp(host.x + Math.cos(a) * r, ROOM_MIN_X + 20, ROOM_MAX_X - 20);
-      const gy = clamp(host.y + Math.sin(a) * r, ROOM_MIN_Y + 20, ROOM_MAX_Y - 20);
-      stepTo(w, e, gx, gy, sp, dt);
-      face();
-      return;
+  // an enemy that floats about the room on its own (Aurelia's mirrors, D225): a new spot when it gets there or every
+  // 3–6 s, wherever its target is
+  if (def.traits?.drift) {
+    const to = en.driftTo;
+    if (!to || now >= to.at || dist(e.x, e.y, to.x, to.y) < 12) {
+      en.driftTo = { x: w.combat.range(ROOM_MIN_X + 80, ROOM_MAX_X - 80), y: w.combat.range(ROOM_MIN_Y + 80, ROOM_MAX_Y - 80), at: now + w.combat.range(3, 6) };
     }
+    stepTo(w, e, en.driftTo!.x, en.driftTo!.y, sp, dt);
+    face();
+    return;
   }
   // a boss phase can root the boss in place (BossPhase.passive.stationaryAt)
   const style = phasePassive(e)?.stationaryAt ? 'stationary' : def.moveStyle;
