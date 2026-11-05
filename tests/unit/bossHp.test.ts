@@ -11,7 +11,7 @@ describe('boss HP (D187)', () => {
     expect(ROLE_STATS.boss.hp).toBe(1800 * 2);
     expect(Object.keys(BOSSES).length).toBe(8);
     for (const b of Object.values(BOSSES)) {
-      const want = b.id === 'the_landlord' ? 1800 * 2.5 : 1800 * 2;
+      const want = b.id === 'the_landlord' ? 1800 * 2.5 : b.id === 'vexthorn' ? 1800 * 2 * 1.15 : 1800 * 2; // D217: Vexthorn +15%
       expect(b.baseHp ?? ROLE_STATS.boss.hp, b.id).toBe(want);
     }
   });
@@ -55,5 +55,27 @@ describe('The Caretaker on the first playthrough (D211)', () => {
     expect(hp(cr, 0)).toBeCloseTo(3600 * 0.7, 3);
     expect(hp(cr, 0) / hp(plain, 0)).toBeCloseTo(0.7, 6);
     expect(hp(cr, 1) / hp(plain, 1)).toBeCloseTo(1, 6);
+  });
+});
+
+describe('Vexthorn (D217)', () => {
+  it('has 15% more HP, one Stag Sentinel in phase 1 and two in phase 2', async () => {
+    const { startPhaseSummons } = await import('../../src/game/boss/summons');
+    const v = BOSSES.vexthorn!;
+    expect(v.baseHp).toBe(Math.round(3600 * 1.15));
+    expect(v.phases[0]!.summons).toEqual([{ enemyId: 'stag_sentinel', count: 1, max: 1, everyS: 15 }]);
+    expect(v.phases[1]!.summons?.[0]).toMatchObject({ enemyId: 'stag_sentinel', count: 2, max: 2 });
+    const w = new World('VEX', Room.empty());
+    const boss = spawnEnemy(w, v, 640, 368, { zone: 4 });
+    w.refreshLists();
+    const stags = (): number => w.enemies.filter((e) => !e.hp?.dead && e.en?.def.id === 'stag_sentinel' && e.en.summonerId === boss.id).length;
+    startPhaseSummons(w, boss);
+    expect(stags()).toBe(1);
+    boss.en!.phase = 1;
+    startPhaseSummons(w, boss);
+    expect(stags()).toBe(2);
+    // never more than the phase allows
+    startPhaseSummons(w, boss);
+    expect(stags()).toBe(2);
   });
 });

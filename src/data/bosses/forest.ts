@@ -134,6 +134,8 @@ export const VEXTHORN: BossDef = {
   zone: 4,
   name: 'Vexthorn, the Hollow Stag',
   role: 'boss',
+  // D217: 15% more than the boss role's 3,600
+  baseHp: 4140,
   radius: 46,
   speed: 175,
   resist: {},
@@ -141,10 +143,12 @@ export const VEXTHORN: BossDef = {
   preferredRange: 130,
   traits: { turnRate: 220 },
   phases: [
-    { untilHpPct: 50, speedMult: 1, dmgMult: 1, attacks: [antlerGore, charge, thornBurst(160, 900), feyLights(3), hexGale] },
+    // D217: a Stag Sentinel runs with him (one in phase 1, two in phase 2), a fallen one called back after 15 s
+    { untilHpPct: 50, speedMult: 1, dmgMult: 1, summons: [{ enemyId: 'stag_sentinel', count: 1, max: 1, everyS: 15 }], attacks: [antlerGore, charge, thornBurst(160, 900), feyLights(3), hexGale] },
     {
       untilHpPct: 0,
       name: 'The heart-lantern flares',
+      summons: [{ enemyId: 'stag_sentinel', count: 2, max: 2, everyS: 15 }],
       speedMult: 1.2,
       dmgMult: 1.25,
       // the clearing's edges grow thorn walls that deal ×0.5 on touch
