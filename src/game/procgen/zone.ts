@@ -4,7 +4,7 @@ import { stream, type Rng } from '../../engine/rng';
 import { ROOM_TEMPLATES } from '../../data/rooms';
 import { zoneDef } from '../../data/zones';
 import { ENEMIES, rosterOf } from '../../data/enemies';
-import { pickMix } from './mix';
+import { MIX_SIZE, pickMix } from './mix';
 import { shapeIds } from './shapes';
 import type { Side } from '../room';
 
@@ -253,7 +253,7 @@ export function generateZone(seed: string, zone: number, o: ZoneOpts = {}): Zone
     for (const r of rooms) byId[r.id] = r;
     const roster = rosterOf(zone);
     const mixRng = stream(seed, `rooms:${zone}:${cycle}`);
-    const mix = roster.length >= 4 ? pickMix(mixRng, roster).map((d) => d.id) : zoneDef(zone).enemies.filter((id) => !!ENEMIES[id]).slice(0, 4);
+    const mix = roster.length >= MIX_SIZE ? pickMix(mixRng, roster).map((d) => d.id) : zoneDef(zone).enemies.filter((id) => !!ENEMIES[id]).slice(0, MIX_SIZE);
     return {
       zone,
       seed,

@@ -77,7 +77,7 @@ each, grown as round blobs from a random seed tile), each patch **Slow** or **Hu
 
 ## 4. Enemy mix and waves
 
-**Mix picker** (per zone, from `rooms:<zone>` stream): choose 4 of the zone's 8 types such that the set has
+**Mix picker** (per zone, from `rooms:<zone>` stream): choose 5 of the zone's 10 types (D241; was 4 of 8) such that the set has
 ≥ 1 melee role (fodder, brute, tank, assassin), ≥ 1 non-melee role (ranged, caster, support, hazard,
 swarm), ≥ 1 type with a Red special, ≥ 1 with a Piercing special (role enum per GAME_DESIGN §6.1). Re-draw until valid (tested to always terminate). The mix
 is shown on the zone's title card ("Mossy Crypt — Shamblers, Bone Archers, Ghoul Leapers, Plague Bells").

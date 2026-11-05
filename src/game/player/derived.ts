@@ -5,6 +5,7 @@ import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { CASTING_TOOLS, toolBash } from '../../data/castingTools';
 import { armorPieceDefense } from '../../data/armor';
 import { AFFIXES, affixBuildup } from '../../data/affixes';
+import { SET_PERKS, setStep } from '../../data/setPerks';
 import { GEMS, gemBuildup, perkValue } from '../../data/gems';
 import { RINGS, bandAmount, bandStat } from '../../data/rings';
 import { castMoveMult, slickCast, dodgeRecharge, itemSkillCount, maxHP, maxStamina, scalingMult, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
@@ -84,6 +85,8 @@ export interface Derived {
   rings: Set<string>;
   /** how many of each ring are worn (D227: every copy counts) */
   ringCounts: Record<string, number>;
+  /** worn pieces per set perk, counting only gear whose requirements you meet (D243) */
+  setCounts: Record<string, number>;
   maxHpMult: number;
   poiseThresholdPct: number;
   staminaRegenMult: number;
@@ -353,6 +356,36 @@ export function computeDerived(c: Character): Derived {
   stamCostPct += prof.stamina;
   lifesteal += prof.lifesteal;
   if (prof.bleed) for (const sb of statusBuild) if (sb.id === 'bleed') sb.buildup *= 1 + prof.bleed;
+  // set perks (D243): the step each set reaches, from the worn pieces that carry it
+  const setCounts: Record<string, number> = {};
+  for (const it of items) if (it.setPerk && SET_PERKS[it.setPerk]) setCounts[it.setPerk] = (setCounts[it.setPerk] ?? 0) + 1;
+  let spellPowerSet = 0;
+  let spellCdrSet = 0;
+  let parrySet = 0;
+  let statusSet = 0;
+  for (const [id, n] of Object.entries(setCounts)) {
+    const step = setStep(n);
+    if (!step) continue;
+    const e = SET_PERKS[id]!.steps[step - 1]!;
+    dmgPct += e.damagePct ?? 0;
+    attackSpeedPct += e.attackSpeedPct ?? 0;
+    castSpeedPct += e.castSpeedPct ?? 0;
+    spellPowerSet += e.spellPowerPct ?? 0;
+    cdrPct += e.skillCdrPct ?? 0;
+    spellCdrSet += e.spellCdrPct ?? 0;
+    dodgeRed += e.dodgeS ?? 0;
+    stamCostPct += e.staminaCostPct ?? 0;
+    regenMult += e.staminaRegenPct ?? 0;
+    lifesteal += e.lifestealPct ?? 0;
+    poisePct += e.poiseDamagePct ?? 0;
+    maxHpMult *= 1 + (e.maxHpPct ?? 0);
+    defAll += e.defense ?? 0;
+    stabilityRed += e.blockStaminaPct ?? 0;
+    parrySet += e.parryS ?? 0;
+    statusSet += e.statusBuildupPct ?? 0;
+    flaskBonus += e.flaskPct ?? 0;
+  }
+  if (statusSet) for (const sb of statusBuild) sb.buildup *= 1 + statusSet;
   if (powers.has('unyielding')) stabilityRed += 0.4;
   // shield proficiency (D215): less stamina a block, more elemental block
   stabilityRed += prof.blockStamina;
@@ -408,8 +441,8 @@ export function computeDerived(c: Character): Derived {
     poiseDmgMult: 1 + poisePct,
     statBoost: boost,
     reachMult: 1 + prof.reach,
-    spellCdr: Math.min(0.5, prof.spellCooldown),
-    spellPowerPct: prof.spellPower,
+    spellCdr: Math.min(0.5, prof.spellCooldown + spellCdrSet),
+    spellPowerPct: prof.spellPower + spellPowerSet,
     defense,
     defensePct: defPct,
     offKind: twoHanded ? null : shield ? 'shield' : tool ? (tool.school === 'brain' ? 'staff' : 'talisman') : null,
@@ -419,7 +452,7 @@ export function computeDerived(c: Character): Derived {
     shieldStability: shield ? shieldStability(shield, off?.plus, off?.rarity) : 0,
     shieldMeetsReq: off && shield ? meetsRequirements(itemRequirements(off), stats, false) : false,
     stabilityMult: Math.max(0.2, 1 - stabilityRed),
-    parryBonusS: prof.parryWindow,
+    parryBonusS: prof.parryWindow + parrySet,
     tool: castTool?.def ?? null,
     toolIlvl: castTool?.ilvl ?? toolIlvl,
     toolMeetsReq: castTool?.meetsReq ?? false,
@@ -436,6 +469,7 @@ export function computeDerived(c: Character): Derived {
     powers,
     rings,
     ringCounts,
+    setCounts,
     maxHpMult,
     poiseThresholdPct: 0.08,
     staminaRegenMult: regenMult,

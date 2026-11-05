@@ -733,6 +733,8 @@ export interface Item {
   plus?: number;
   /** times it was raised a rarity at a bonfire (D178), for the Legendary achievement (D239); absent if never */
   raised?: number;
+  /** a set perk (D243): 3, 5 or 7 worn pieces with the same one give a playstyle bonus; absent on most gear */
+  setPerk?: string;
 }
 
 export type ConsumableId =

@@ -16,7 +16,8 @@ import { spellSkill } from '../../game/skills/use';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
-import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemMeetsReqs, itemTooltip } from '../tooltip';
+import { RARITY_BORDER, gemIcon, gemTooltip, glowenEl, itemIcon, itemMeetsReqs, itemTooltip, setPerkSection } from '../tooltip';
+import { SET_PERKS, SET_STEPS, setEffectText, setStep } from '../../data/setPerks';
 
 export interface InventoryHost {
   char: Character;
@@ -310,6 +311,22 @@ export function openInventory(host: InventoryHost): HTMLElement {
     if (!cons.childElementCount) cons.appendChild(h('div', { class: 'small dim-text' }, 'Nothing to quick-use.'));
     bag.appendChild(h('h3', { style: 'margin:4px 0 0' }, `Quick-use (${glyphText('quick')})`));
     bag.appendChild(cons);
+    // ---- set perks worn (D243): each set, the pieces, and the step reached (3 / 5 / 7)
+    const counts = host.derived().setCounts;
+    const sets = Object.entries(counts).filter(([id]) => SET_PERKS[id]).sort((a, b) => b[1] - a[1]);
+    if (sets.length) {
+      const list = h('div', { class: 'col', style: 'gap:2px;max-width:476px', 'data-testid': 'inv-sets' });
+      for (const [id, n] of sets) {
+        const sp = SET_PERKS[id]!;
+        const step = setStep(n);
+        const row = h('div', { class: 'small', style: step ? `color:${sp.color}` : '' }, h('b', null, `${sp.name} ${n} / 7`), h('span', { class: step ? '' : 'dim-text' }, ` · ${step ? setEffectText(sp.steps[step - 1]!) : `${SET_STEPS[0] - n} more for its first bonus`}`));
+        row.addEventListener('mouseenter', () => showTip(row, h('div', { class: 'tooltip' }, setPerkSection(sp, n))));
+        row.addEventListener('mouseleave', hideTip);
+        list.appendChild(row);
+      }
+      bag.appendChild(h('h3', { style: 'margin:4px 0 0' }, 'Set perks worn'));
+      bag.appendChild(list);
+    }
     // ---- gems in gear: take any of them out here, worn or in the bag, any time (D168)
     const socketed: { it: Item; g: Gem; si: number }[] = [];
     for (const it of allItems(c)) it.sockets.forEach((g, si) => g && socketed.push({ it, g, si }));

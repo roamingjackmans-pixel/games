@@ -1,20 +1,19 @@
 // Item tooltips (GAME_DESIGN §16): one organised, stacked layout for every item kind, side-by-side compare
 // against what is worn in that slot (green better, white same, red worse), and small item icons.
-import { glyphEl, glyphText } from './glyphs';
 import { WEAPONS } from '../data/weapons';
 import { SHIELDS, shieldStability, shieldValues } from '../data/shields';
-import { CASTING_TOOLS, toolBash } from '../data/castingTools';
+import { CASTING_TOOLS } from '../data/castingTools';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
-import { SKILLS } from '../data/skills';
 import { GEMS, GEM_QUALITIES, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkQuality, perkRollText, perkText } from '../data/gems';
 import type { GemPerk } from '../game/types';
 import { LEGENDARY_POWERS, LEGENDARY_FLAVOR } from '../data/legendaries';
+import { SET_PERKS, SET_STEPS, setEffectText, setStep, type SetPerkDef } from '../data/setPerks';
 import { affixText } from '../data/affixes';
 import { armorPieceDefense, parseArmorBase } from '../data/armor';
 import { ELEMENTS } from '../game/elements';
 import { baseInfo, itemRequirements, meetsRequirements, type Requirements } from '../game/items/bases';
 import { defaultSlotFor, itemSellValue, WORN_SLOTS, type EquipSlot } from '../game/items/inventory';
-import { itemSkillCount, poiseForSize, reqAtIlvl, scalingMult, tierName, toolMult, weaponBase } from '../game/combat/formulas';
+import { reqAtIlvl, scalingMult, toolMult, weaponBase } from '../game/combat/formulas';
 import { computeDerived } from '../game/player/derived';
 import { toolSpellSkill } from '../game/skills/use';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, equipLoadWith, itemWeight, type EquipLoadInfo } from '../game/player/equipLoad';
@@ -26,7 +25,6 @@ import { fmt, h } from './dom';
 import { shieldSpecials, weaponSpecials } from './itemSpecials';
 import { RARITY_POWER } from '../data/proficiency';
 import { plusName, reinforceMult } from '../data/essence';
-import { upgradeInfo } from '../game/items/proficiency';
 
 export const RARITY_LABEL: Record<string, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 export const RARITY_BORDER: Record<string, string> = { common: '#6a6a6a', uncommon: '#58d66a', rare: '#4aa3ff', epic: '#b06bff', legendary: '#ff9b2e' };
@@ -48,15 +46,6 @@ function hashStr(s: string): number {
   let h0 = 0;
   for (let i = 0; i < s.length; i++) h0 = (h0 * 31 + s.charCodeAt(i)) | 0;
   return Math.abs(h0);
-}
-
-/** What one hit of this poise damage staggers out of an attack (D78), by body size. */
-function staggerReach(p: number): string {
-  if (p >= poiseForSize(33)) return 'one hit staggers even brutes';
-  if (p >= poiseForSize(26)) return 'one hit staggers knights and smaller';
-  if (p >= poiseForSize(17)) return 'one hit staggers most small foes';
-  if (p >= poiseForSize(9)) return 'one hit staggers only swarms and the smallest';
-  return 'too light to stagger';
 }
 
 // ---------------------------------------------------------------- weapon fields, read defensively
@@ -246,6 +235,7 @@ export function itemSummary(item: Item): string {
   if (item.affixes.length) parts.push(`${item.affixes.length} affix${item.affixes.length === 1 ? '' : 'es'}`);
   if (item.sockets.length) parts.push(`${item.sockets.length} socket${item.sockets.length === 1 ? '' : 's'}`);
   if (item.legendaryPower) parts.push(LEGENDARY_POWERS[item.legendaryPower]?.name ?? 'Legendary power');
+  if (item.setPerk && SET_PERKS[item.setPerk]) parts.push(`Set: ${SET_PERKS[item.setPerk]!.name}`);
   return parts.join(' · ');
 }
 
@@ -342,7 +332,6 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
         { class: 'tt-section' },
         rowsEl(
           [
-            { label: 'Poise', cur: w.poiseDmg, prev: ow ? ow.poiseDmg : null, better: 'higher', fmt: int0, note: staggerReach(w.poiseDmg) },
             { label: 'Stamina', cur: w.stamina, prev: ow ? ow.stamina : null, better: 'lower', fmt: int0, after: 'per swing' },
           ],
           cmp,
@@ -351,16 +340,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
       ),
     );
 
-    const n = itemSkillCount(item);
-    const skills = h('div', { class: 'tt-rows' });
-    w.skills.forEach((sid, i) => {
-      const locked = i >= n || !meets;
-      skills.appendChild(h('div', { class: `lbl ${locked ? 'dim-text' : ''}` }, glyphEl((['skill1', 'skill2', 'skill3'] as const)[i]!, 16)));
-      skills.appendChild(h('div', { class: 'sep' }, '-'));
-      skills.appendChild(h('div', { class: `skill ${locked ? 'locked' : ''}` }, SKILLS[sid]?.name ?? sid));
-      skills.appendChild(h('div'));
-    });
-    out.push(section(`Skills · ${tierName(item.ilvl)}`, skills));
+    // D244: no Poise row and no Skills section on weapon cards (owner's request)
     specialSection(out, weaponSpecials(w));
   }
 
@@ -413,18 +393,6 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const reqEl = requirementsEl(req, stats, false, false);
     if (reqEl) out.push(reqEl);
     if (!meets) out.push(h('div', { class: 'small req-bad' }, 'Below requirement: cannot cast.'));
-    // either hand (D117): in the weapon hand it bashes and casts on the weapon-skill keys (D201), so a shield fits beside it
-    const bash = toolBash(t);
-    out.push(
-      section(
-        'Main hand or off hand',
-        h(
-          'div',
-          { class: 'tt-text' },
-          `In the weapon hand: casts, swings a modest ${t.school === 'brain' ? 'staff bash' : 'talisman smack'} (${int0(weaponBase(bash.base1, item.ilvl))} base, ${t.school === 'brain' ? 'Bonk D, Brain E' : 'Bonk E, Prayer D, a quarter Holy'}), its spells on ${glyphText('skill1')} ${glyphText('skill2')} ${glyphText('skill3')} in place of weapon skills. A shield in the off hand still blocks. In the off hand its spells go on ${glyphText('spell1')} ${glyphText('spell2')} ${glyphText('spell3')}.`,
-        ),
-      ),
-    );
   }
 
   if (armor) {
@@ -456,13 +424,10 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const lp = LEGENDARY_POWERS[item.legendaryPower];
     if (lp) out.push(section('Legendary power', h('div', { class: 'tt-text r-legendary' }, `${lp.name}: ${lp.text}`)));
   }
-  // the item's own experience bar (D178)
-  const up = upgradeInfo(item);
-  if (up) {
-    const fill = Math.min(1, up.xp / up.need);
-    const bar = h('div', { class: 'xpbar', style: 'height:6px;border-radius:3px;background:#2a2533;overflow:hidden;margin:3px 0' }, h('div', { style: `height:100%;width:${Math.round(fill * 100)}%;background:${up.ready ? '#ffd27a' : '#8fd3ff'}` }));
-    out.push(section('Experience', h('div', { class: 'tt-text' }, up.ready ? `Full: becomes ${up.to[0]!.toUpperCase()}${up.to.slice(1)} at a bonfire for ${up.cost} Glowen (keeps its affixes, sockets and gems; more damage).` : `${up.xp} / ${up.need} toward ${up.to[0]!.toUpperCase()}${up.to.slice(1)}. Earned from every enemy that falls while it is out.`), bar));
-  }
+  // its set perk (D243): the three steps, the one reached lit, and how many you wear
+  const sp = item.setPerk ? SET_PERKS[item.setPerk] : undefined;
+  if (sp) out.push(setPerkSection(sp, d0.setCounts[sp.id] ?? 0));
+  // D244: no Experience section on item cards (the bar is on the bonfire's Weapons tab, D178)
 
   // ---- footer: flavour left, sell value right
   const flavor = item.rarity === 'legendary' ? LEGENDARY_FLAVOR[hashStr(item.name) % LEGENDARY_FLAVOR.length]! : (info?.flavor ?? '');
@@ -610,4 +575,18 @@ export function gemIcon(g: Gem, size = 28): HTMLCanvasElement {
     ctx.fillText(g.perks.map((p) => p.tier).join(n > 1 ? '·' : ''), m, m + size * 0.11);
   }
   return c;
+}
+
+/** A set perk on a card (D243): its playstyle, how many pieces you wear, and each step, the one reached lit. */
+export function setPerkSection(sp: SetPerkDef, worn: number): HTMLElement {
+  const step = setStep(worn);
+  const rows = SET_STEPS.map((n, i) =>
+    h(
+      'div',
+      { class: `tt-text ${step === i + 1 ? '' : 'dim-text'}`, style: step === i + 1 ? `color:${sp.color}` : '' },
+      h('b', null, `${n}: `),
+      setEffectText(sp.steps[i]!),
+    ),
+  );
+  return section(`Set perk · ${sp.name}`, h('div', { class: 'tt-text', style: `color:${sp.color}` }, `${sp.style} · you wear ${worn} / 7`), ...rows);
 }

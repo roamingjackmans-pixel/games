@@ -1,6 +1,7 @@
 // Item generation (GAME_DESIGN §8, CONTENT_ITEMS §3–14): rarity by source, slot, base, affixes (no
 // duplicates), sockets, legendary powers, names. Deterministic for a given stream.
-import type { Rng } from '../../engine/rng';
+import { Rng } from '../../engine/rng';
+import { SET_PERK_CHANCE, SET_PERK_IDS } from '../../data/setPerks';
 import { WEAPONS, WEAPON_IDS } from '../../data/weapons';
 import { SHIELDS } from '../../data/shields';
 import { CASTING_TOOLS } from '../../data/castingTools';
@@ -151,7 +152,17 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
     }
   }
   item.name = itemName(rng, item);
+  rollSetPerk(item);
   return item;
+}
+
+/**
+ * A set perk on a fresh piece of gear (D243), by rarity. Rolled from its own stream (seeded by the item's id) so it
+ * draws nothing from the caller's: every drop, chest and shop roll stays where it was.
+ */
+export function rollSetPerk(item: Item): void {
+  const r = new Rng(`setperk|${item.id}`);
+  if (r.next() < SET_PERK_CHANCE[item.rarity]) item.setPerk = r.pick(SET_PERK_IDS);
 }
 
 /** Chance of a second and third perk on a dropped gem by NG+ cycle (cycle 0 gems always have one). */
