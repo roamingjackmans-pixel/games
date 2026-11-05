@@ -53,6 +53,6 @@ describe('the Bloatking (D212)', () => {
   it('has no Red circle attack', () => {
     const atks = BOSSES.bloatking!.phases.flatMap((ph) => ph.attacks);
     expect(atks.some((a) => a.id === 'bloat_grasp')).toBe(false);
-    expect(atks.some((a) => a.kind === 'red' && a.pattern.kind === 'circle')).toBe(false);
+    expect(atks.some((a) => a.kind === 'red' && a.pattern?.kind === 'circle')).toBe(false);
   });
 });
