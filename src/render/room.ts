@@ -254,7 +254,8 @@ function renderBase(room: Room, pal: Palette, propStyle: string, key: string): B
   mark('floor');
   // hazard floors, holes, raised grates
   const hc = { ctx, rng: new Rng(seed ^ 0x1001), tiles, pal, style, art, seed };
-  drawHazards(hc, room.hazardKind);
+  // a boss arena whose lava hurts draws those tiles as the spike field instead (D219), with the terrain below
+  if (!room.hazardSpikes) drawHazards(hc, room.hazardKind);
   mark('haz');
   let needSky = false;
   for (let i = 0; i < tiles.e.length && !needSky; i++) needSky = tiles.e[i] === E.Void || (style.voidPits && tiles.e[i] === E.Pit);
@@ -288,7 +289,9 @@ function renderBase(room: Room, pal: Palette, propStyle: string, key: string): B
   mark('light');
   // hazardous terrain patches over the light map, like the entities: gameplay ground must read in any corner
   // (they sit on open floor a tile clear of walls and props, so nothing drawn earlier overlaps them)
-  const terrain = drawTerrainBase(ctx, room, style.id, seed);
+  const spikeTiles: number[] = [];
+  if (room.hazardSpikes) for (let i = 0; i < room.tiles.length; i++) if (room.tiles[i] === T.Hazard) spikeTiles.push(i);
+  const terrain = drawTerrainBase(ctx, room, style.id, seed, spikeTiles);
   mark('terrain');
   // the obstacles in their own shape: recoloured and outlined there, and kept for drawing over attack markers (D155)
   const shape = obstacleShape(room, tiles, pal, style, seed, propStyle);

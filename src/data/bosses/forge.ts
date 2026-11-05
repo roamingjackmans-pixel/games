@@ -207,7 +207,8 @@ export const FOREMAN_IGNATIUS: BossDef = {
   construct: true,
 };
 
-export const FOREMAN_IGNATIUS_ARENA: RoomTemplate = { id: 'forge_arena', rows: ARENA_ROWS };
+// its lava hurts from the first second: drawn as the forge's spike field so nobody takes it for floor (D219)
+export const FOREMAN_IGNATIUS_ARENA: RoomTemplate = { id: 'forge_arena', rows: ARENA_ROWS, hazardSpikes: true };
 
 /** Boss-only bodies and summons (special: true), merged into ENEMIES. */
 export const FOREMAN_IGNATIUS_PARTS: Record<string, EnemyDef> = {

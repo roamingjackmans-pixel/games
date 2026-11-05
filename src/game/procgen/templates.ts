@@ -12,6 +12,8 @@ export interface RoomTemplate {
   rows: string[];
   /** boss arenas: a rotating floor ring (centre and radii in px, speed = px/s along the ring, sign = direction) */
   rotFloor?: { x: number; y: number; rIn: number; rOut: number; speed: number };
+  /** boss arenas whose '~' tiles hurt: drawn as the zone's spike field so it reads as damage (D219) */
+  hazardSpikes?: boolean;
 }
 
 export const DOOR_SIDES: Side[] = ['n', 's', 'e', 'w'];

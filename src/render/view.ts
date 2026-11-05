@@ -242,7 +242,7 @@ export class WorldView {
     drawMovingFloors(ctx, w.room, now);
     this.underlay?.(ctx, w, now);
     // hazards
-    for (const e of w.entities.values()) if (e.type === 'hazard' && !e.removed) drawHazardEntity(ctx, e, now, HAZARDS[e.hz!.hazard].color);
+    for (const e of w.entities.values()) if (e.type === 'hazard' && !e.removed && !HAZARDS[e.hz!.hazard].noWash) drawHazardEntity(ctx, e, now, HAZARDS[e.hz!.hazard].color);
     // a dimmed arena (boss phases): the floor darkens, telegraphs and bodies stay readable on top
     if (w.roomMods.dark > 0) {
       ctx.fillStyle = `rgba(4,2,8,${Math.min(0.8, w.roomMods.dark)})`;

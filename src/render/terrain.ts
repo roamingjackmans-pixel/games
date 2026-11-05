@@ -78,13 +78,15 @@ export function terrainKey(room: Room): number {
 }
 
 /** Bake every patch into the base layer; returns what the per-frame layer needs (null: the room has none). */
-export function drawTerrainBase(ctx: CanvasRenderingContext2D, room: Room, style: StyleId, seed: number): TerrainArt | null {
+export function drawTerrainBase(ctx: CanvasRenderingContext2D, room: Room, style: StyleId, seed: number, extraHurt: readonly number[] = []): TerrainArt | null {
   const slow: number[] = [];
   const hurt: number[] = [];
   for (let i = 0; i < room.terrain.length; i++) {
     if (room.terrain[i] === TERRAIN.Slow) slow.push(i);
     else if (room.terrain[i] === TERRAIN.Hurt) hurt.push(i);
   }
+  // tiles that hurt for another reason (an arena's live lava, D219) wear the same spike field
+  for (const i of extraHurt) if (!hurt.includes(i)) hurt.push(i);
   if (!slow.length && !hurt.length) return null;
   const theme = themeOf(style);
   const art: TerrainArt = { theme, slow: [], hurt: [], hurtGlow: null, slowGlow: null };
@@ -124,8 +126,10 @@ const DIRS: [number, number][] = [
   [0, -1],
 ];
 
-function paintKind(ctx: CanvasRenderingContext2D, room: Room, list: number[], kind: number, L: Look, theme: Theme, seed: number): void {
-  const is = (tx: number, ty: number): boolean => tx >= 0 && ty >= 0 && tx < ROOM_W && room.terrain[ty * ROOM_W + tx] === kind;
+function paintKind(ctx: CanvasRenderingContext2D, _room: Room, list: number[], kind: number, L: Look, theme: Theme, seed: number): void {
+  // the patch is exactly the tiles listed (terrain of this kind, plus any drawn the same way, D219)
+  const inList = new Set(list);
+  const is = (tx: number, ty: number): boolean => tx >= 0 && ty >= 0 && tx < ROOM_W && inList.has(ty * ROOM_W + tx);
   scratchRegion(tileBounds(list, 14));
   // the mask: tiles, rounded outer corners, a wobbly edge
   const M = scratch(5);

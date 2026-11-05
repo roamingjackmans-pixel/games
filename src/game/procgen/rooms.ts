@@ -78,6 +78,7 @@ export function buildRoom(layout: ZoneLayout, node: RoomNode, arenaId?: string):
   // a boss arena may carry a rotating floor ring (copied: phase changes reverse it in place)
   const rf = node.kind === 'boss' && arenaId ? BOSS_ARENAS[arenaId]?.rotFloor : undefined;
   if (rf) room.rotFloor = { ...rf };
+  if (node.kind === 'boss' && arenaId && BOSS_ARENAS[arenaId]?.hazardSpikes) room.hazardSpikes = true;
   const m: RoomMarkers = { spawns: [], chests: [], bonfire: null, reliquary: null, merchant: null, start: null, instructor: null, exit: null, stations: [], dummies: [], boss: null, stairs: null, graves: [], pools: [] };
   for (let y = 0; y < ROOM_H; y++) {
     for (let x = 0; x < ROOM_W; x++) {

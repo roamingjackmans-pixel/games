@@ -109,6 +109,8 @@ export class Room {
   terrain: Uint8Array;
   /** rotating floor ring (Tock): center, inner/outer radius, speed in px/s along the ring (sign = direction) */
   rotFloor: { x: number; y: number; rIn: number; rOut: number; speed: number } | null = null;
+  /** its hazard tiles are drawn as the spike field (a boss arena whose lava hurts, D219) */
+  hazardSpikes = false;
   /** moving floors a boss phase started (ArenaChange 'movingFloor', D95): rings and conveyor belts */
   movers: MovingFloorDef[] = [];
   /** destructible tree props (Vexthorn): tile index → hits left */

@@ -13,6 +13,8 @@ export interface HazardDef {
   slow?: number;
   slippery?: boolean;
   color: string;
+  /** no coloured wash over its area: the room art already shows it (the Foreman's spiked lava, D219) */
+  noWash?: boolean;
   blocksEnemies?: boolean;
   blocksProjectiles?: boolean;
   /** solid while it lasts (root walls): bodies cannot walk through */
@@ -38,7 +40,7 @@ export const HAZARDS: Record<HazardId, HazardDef> = {
   slag: { dmg: 0.3, tickS: 0.5, status: { id: 'burn', buildup: 10 }, color: '#ff5a1a', hitsTeam: 'players' },
   roots: { dmg: 0, tickS: 1, color: '#5a3a1a', blocksEnemies: true, blocksMove: true, hitsTeam: 'players' },
   water: { dmg: 0, tickS: 1, slow: 0.15, color: '#2a5a5a', hitsTeam: 'both' },
-  lava: { dmg: 1.2, tickS: 0.5, status: { id: 'burn', buildup: 40 }, color: '#ff4a10', hitsTeam: 'players' },
+  lava: { dmg: 1.2, tickS: 0.5, status: { id: 'burn', buildup: 40 }, color: '#ff4a10', hitsTeam: 'players', noWash: true },
   timeBubble: { dmg: 0, tickS: 0.25, slow: 0.4, color: '#b08de8', hitsTeam: 'players' },
   voidEdge: { dmg: 0, tickS: 1, color: '#7a2bd6', hitsTeam: 'players' },
   tendril: { dmg: 0.5, tickS: 0.6, slow: 0.4, color: '#c58cff', hitsTeam: 'players' },
