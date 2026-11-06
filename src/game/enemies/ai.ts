@@ -420,6 +420,12 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
   // regeneration out of combat (The Instructor)
   if (traits.regenPctPerS && now - hp.lastHitAt > 5) hp.hp = Math.min(hp.max, hp.hp + hp.max * traits.regenPctPerS * dt);
 
+  // hit once, gone (D253): teleports away even staggered or mid-attack, at most once per cooldown
+  const hitAt = en.extrasUsed.__hitAt;
+  if (traits.teleportOnHit && hitAt !== undefined && hitAt > (en.extrasUsed.__hitTp ?? -99) && now - (en.extrasUsed.__hitTp ?? -99) >= traits.teleportOnHit.cooldownS) {
+    en.extrasUsed.__hitTp = now;
+    teleportAway(w, e, traits.teleportOnHit.distance);
+  }
   if (hasControl(e, 'freeze', now) && !en.isBoss) return;
   if (en.stunUntil > now || hp.staggerUntil > now) {
     en.state = 'stagger';

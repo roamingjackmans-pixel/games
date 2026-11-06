@@ -14,7 +14,7 @@ import { GEM_FAMILIES, GEMS, familiesOfKind, rollGemQuality, type GemKind } from
 import { baseInfo } from './bases';
 import { rollSkillCount } from '../combat/formulas';
 import { makeItem, newId, socketCount } from './make';
-import type { Gem, GemPerk, GemTier, Item, Rarity } from '../types';
+import type { Gem, GemPerk, GemTier, Item, Rarity, StatId } from '../types';
 
 export const AFFIX_COUNT: Record<Rarity, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 3 };
 
@@ -27,19 +27,55 @@ function rarityIndex(r: Rarity): number {
   return RARITY_ORDER.indexOf(r);
 }
 
+/**
+ * Whose drop it is, for its weapons (D254): a weapon (or staff, or talisman) that scales with the class's primary stat
+ * drops 20% more often, with its secondary 10% more (both: ×1.32). A stat no weapon scales with (HP, Endurance) does
+ * nothing.
+ */
+export interface DropFavor {
+  primary: StatId;
+  secondary: StatId;
+}
+export const FAVOR_PRIMARY = 1.2;
+export const FAVOR_SECONDARY = 1.1;
+
+/** The stats a weapon base scales with (grade other than "-"); a staff Brain, a talisman Prayer. */
+export function scalingStatsOf(baseId: string): StatId[] {
+  const w = WEAPONS[baseId];
+  if (w) return (Object.entries(w.grades) as [StatId, string | undefined][]).filter(([, g]) => !!g && g !== '-').map(([k]) => k);
+  const t = CASTING_TOOLS[baseId];
+  return t ? [t.school] : [];
+}
+
+export function favorMult(stats: readonly StatId[], f: DropFavor | undefined): number {
+  if (!f) return 1;
+  return (stats.includes(f.primary) ? FAVOR_PRIMARY : 1) * (stats.includes(f.secondary) ? FAVOR_SECONDARY : 1);
+}
+
+const pickFavored = (rng: Rng, ids: readonly string[], f: DropFavor | undefined): string => (f ? ids[Math.max(0, rng.weighted(ids.map((id) => favorMult(scalingStatsOf(id), f))))]! : rng.pick(ids));
+
+/** How much more often a slot comes up for this player (D254): its bases' average favour. */
+export function slotFavor(slot: (typeof SLOT_WEIGHTS)[number]['slot'], f: DropFavor | undefined): number {
+  if (!f) return 1;
+  const ids = slot === 'weapon' ? WEAPON_IDS : slot === 'staff' ? toolIds('brain') : slot === 'talisman' ? toolIds('prayer') : null;
+  if (!ids?.length) return 1;
+  return ids.reduce((s, id) => s + favorMult(scalingStatsOf(id), f), 0) / ids.length;
+}
+const toolIds = (school: 'brain' | 'prayer'): string[] => Object.values(CASTING_TOOLS).filter((t) => t.school === school).map((t) => t.id);
+
 /** Pick a base for a slot category, respecting ring rarity floors and the Holy Bulwark rule. */
-export function rollBase(rng: Rng, slot: (typeof SLOT_WEIGHTS)[number]['slot'], rarity: Rarity, ilvl: number, zone: number): string {
+export function rollBase(rng: Rng, slot: (typeof SLOT_WEIGHTS)[number]['slot'], rarity: Rarity, ilvl: number, zone: number, favor?: DropFavor): string {
   switch (slot) {
     case 'weapon':
-      return rng.pick(WEAPON_IDS);
+      return pickFavored(rng, WEAPON_IDS, favor);
     case 'shield': {
       if (rarity === 'legendary' && ilvl >= 5 && rng.chance(0.25)) return 'holy_bulwark';
       return rng.pick(Object.values(SHIELDS).filter((s) => !s.legendaryOnly)).id;
     }
     case 'staff':
-      return rng.pick(Object.values(CASTING_TOOLS).filter((t) => t.school === 'brain')).id;
+      return pickFavored(rng, toolIds('brain'), favor);
     case 'talisman':
-      return rng.pick(Object.values(CASTING_TOOLS).filter((t) => t.school === 'prayer')).id;
+      return pickFavored(rng, toolIds('prayer'), favor);
     case 'head':
     case 'body':
     case 'legs': {
@@ -126,6 +162,8 @@ export interface GenOpts {
   minRarity?: Rarity;
   /** NG+ cycle (skill unlocks, D89); defaults to ilvl − zone */
   cycle?: number;
+  /** the player it drops for (D254): weapons that suit their class come up more often */
+  favor?: DropFavor | undefined;
 }
 
 export function generateItem(rng: Rng, o: GenOpts): Item {
@@ -133,8 +171,8 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
   if (o.minRarity && rarityIndex(rarity) < rarityIndex(o.minRarity)) rarity = o.minRarity;
   let baseId = o.baseId;
   if (!baseId) {
-    const slot = o.slot ?? SLOT_WEIGHTS[Math.max(0, rng.weighted(SLOT_WEIGHTS.map((s) => s.w)))]!.slot;
-    baseId = rollBase(rng, slot, rarity, o.ilvl, o.zone);
+    const slot = o.slot ?? SLOT_WEIGHTS[Math.max(0, rng.weighted(SLOT_WEIGHTS.map((s) => s.w * slotFavor(s.slot, o.favor))))]!.slot;
+    baseId = rollBase(rng, slot, rarity, o.ilvl, o.zone, o.favor);
   }
   // a ring below its rarity floor is lifted to the floor
   const ring = RINGS[baseId];

@@ -9,13 +9,16 @@ export function bossDefOf(e: Entity): BossDef | null {
   return e.en?.isBoss ? (e.en.def as unknown as BossDef) : null;
 }
 
-/** HP at which the boss's current phase ends (0 in the last phase). */
+/**
+ * HP at which the boss's current phase ends (0 in the last phase). A phase that is not the last but ends at 0% ends
+ * on the blow that would have killed it (D253): it stops at 1 HP instead.
+ */
 export function phaseFloor(e: Entity): number {
   const def = bossDefOf(e);
   if (!def || !e.hp) return 0;
   const ph = def.phases[e.en!.phase];
   if (!ph || e.en!.phase >= def.phases.length - 1) return 0;
-  return (e.hp.max * ph.untilHpPct) / 100;
+  return Math.max(1, (e.hp.max * ph.untilHpPct) / 100);
 }
 
 /** Call after a boss loses HP: clamps at the threshold and starts the next phase when reached. */
@@ -35,6 +38,8 @@ export function startBossPhase(w: World, e: Entity, phase: number): void {
   const now = w.time;
   en.phase = phase;
   en.phaseAttacks = ph.attacks;
+  // D253: a full bar again for the new phase
+  if (ph.refillHp && e.hp) e.hp.hp = e.hp.max;
   en.phaseTransitionUntil = now + PHASE_TRANSITION_S;
   // the attack in progress is dropped with its telegraphs
   if (en.attack) {

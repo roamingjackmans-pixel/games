@@ -394,6 +394,8 @@ export interface EnemyTraits {
   /** grants Lightning +40% vs it etc. */
   phasesThroughProps?: boolean;
   blinkWhenApproached?: { r: number; distance: number; cooldownS: number };
+  /** teleports away as soon as it is hit (D253: Ignatius on foot); at most once per cooldown */
+  teleportOnHit?: { distance: number; cooldownS: number };
   teleportEveryS?: number;
   fadeAfterAttackS?: number;
   revealedByHoly?: number;
@@ -537,6 +539,8 @@ export interface BossPhase {
   arena?: ArenaChange[];
   summons?: SummonDef[];
   name?: string;
+  /** the bar fills back up when this phase starts (D253: Ignatius splits when "killed"; the last phase ends at 0 as usual) */
+  refillHp?: boolean;
   /** phase-wide passive effects (pull toward face, grow, two targets) */
   passive?: { pull?: { speed: number; r: number }; splitBody?: string; stationaryAt?: 'farThird' | 'center'; scale?: number; projectileSpeedMult?: number };
 }

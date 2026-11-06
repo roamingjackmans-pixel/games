@@ -129,6 +129,27 @@ const immolation: AttackDef = {
   body: 'split',
 };
 
+/**
+ * D253: the Golem drags everyone across the forge to its feet, as the Abyss's Maw does but over the whole room: a
+ * swirl round it while it winds up, then a 1 s pull. No damage of its own; what it does next is the danger.
+ */
+const forgeDraw: AttackDef = {
+  id: 'ign_forge_draw',
+  name: 'Forge Draw',
+  kind: 'utility',
+  effects: [
+    { op: 'hazard', pattern: { kind: 'circle', r: 160, anchor: 'self' }, hazard: 'gravityWell', durationS: 2.2 },
+    { op: 'sequence', steps: [{ effect: { op: 'pull', r: 1500, speed: 650, durationS: 1.0 }, delayS: 1.0 }] },
+  ],
+  windupMs: 700,
+  recoverMs: 1400,
+  dmgMult: 0,
+  type: 'fire',
+  cooldownS: 14,
+  range: [260, 2000],
+  weight: 3,
+};
+
 // ---------------------------------------------------------------- the arena
 const ARENA_ROWS = [
   '###################DD###################',
@@ -184,16 +205,18 @@ export const FOREMAN_IGNATIUS: BossDef = {
   preferredRange: 110,
   traits: { turnRate: 120 },
   phases: [
-    { untilHpPct: 50, speedMult: 1, dmgMult: 1, arena: [LAVA], attacks: [golemSlam, hammerThrow(), forgeStrike, flamePillars(1.0), stoke] },
+    // D253: phase 1 runs the whole bar; the "killing" blow splits them and phase 2 starts on a full bar
+    { untilHpPct: 0, speedMult: 1, dmgMult: 1, arena: [LAVA], attacks: [golemSlam, hammerThrow(), forgeStrike, flamePillars(1.0), stoke] },
     {
       untilHpPct: 0,
       name: 'The Golem goes molten',
+      refillHp: true,
       speedMult: 1.2,
       dmgMult: 1.25,
       // the forge's conveyor belts start: east along the north wall, west through the middle of the floor (D95)
       arena: [{ op: 'setTiles', tiles: widenedChannel() }, LAVA, BELT_NORTH, BELT_MIDDLE],
       passive: { splitBody: 'ignatius_on_foot' },
-      attacks: [golemSlam, forgeStrike, stoke, moltenShockwave, hammerThrow('split'), flamePillars(0.5, 'split'), immolation],
+      attacks: [golemSlam, forgeStrike, stoke, moltenShockwave, forgeDraw, hammerThrow('split'), flamePillars(0.5, 'split'), immolation],
     },
   ],
   arenaId: 'forge_arena',
@@ -224,7 +247,8 @@ export const FOREMAN_IGNATIUS_PARTS: Record<string, EnemyDef> = {
     moveStyle: 'walk',
     preferredRange: 220,
     attacks: [hammerThrow('split'), flamePillars(0.5, 'split'), immolation],
-    traits: { hideHpBar: true, noDrops: true, noShards: true, turnRate: 300 },
+    // D253: hit him once and he is gone across the forge
+    traits: { hideHpBar: true, noDrops: true, noShards: true, turnRate: 300, teleportOnHit: { distance: 380, cooldownS: 0.8 } },
     flavor: 'Knocked off his Golem. Still on the clock.',
     draw: 'boss_ignatius_foot',
     palette: ['#5a2a1a', '#ff7a1a', '#ffd27a'],

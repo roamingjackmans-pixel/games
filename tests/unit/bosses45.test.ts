@@ -248,14 +248,15 @@ describe('Foreman Ignatius', () => {
     expect(inLava(9 * 32 + 16, 16 + 14 * 32 + 16)).toBe(false);
   });
 
-  it('fights a god-mode player for a minute in both phases; phase 2 starts at exactly 50% with two bodies', () => {
+  it('fights a god-mode player for a minute in both phases; the killing blow splits them and refills the bar (D253)', () => {
     const { s, b } = fight(5);
     const max = b.hp!.max;
     const p1 = watch(s, 20);
     expect(b.en!.phase).toBe(0);
     expect(p1.size, [...p1].join()).toBeGreaterThanOrEqual(3);
     bigHit(s, b, max * 10);
-    expect(b.hp!.hp).toBe(max * 0.5);
+    expect(b.hp!.dead).toBe(false);
+    expect(b.hp!.hp).toBe(max);
     expect(b.en!.phase).toBe(1);
     const p2 = watch(s, 40);
     expect(b.en!.phase).toBe(1);
@@ -340,5 +341,30 @@ describe('Foreman Ignatius', () => {
       const a = b.en!.attack;
       if (a) expect(a.def.body).toBeUndefined();
     }
+  });
+});
+
+describe('Foreman Ignatius phase 2 (D253)', () => {
+  it('Ignatius on foot teleports away when hit, and the Golem has Forge Draw, a room-wide pull', () => {
+    const { s, b } = fight(5);
+    bigHit(s, b, b.hp!.max * 10);
+    run(s, PHASE_TRANSITION_S + 0.2);
+    const foot = s.w.enemies.find((e) => e.en?.def.id === 'ignatius_on_foot')!;
+    const [x0, y0] = [foot.x, foot.y];
+    bigHit(s, foot, 10);
+    run(s, 0.1);
+    expect(Math.hypot(foot.x - x0, foot.y - y0)).toBeGreaterThan(150);
+    const draw = b.en!.phaseAttacks.find((a) => a.id === 'ign_forge_draw');
+    expect(draw).toBeDefined();
+    expect(JSON.stringify(draw!.effects)).toContain('"op":"pull"');
+    // a player across the forge ends up at the Golem's feet
+    const p = s.localPlayer!;
+    s.w.god = true;
+    place(p, 1180, 100);
+    place(b, 640, 520);
+    const d0 = Math.hypot(p.x - b.x, p.y - b.y);
+    startEnemyAttack(s.w, b, draw!, p);
+    run(s, 2.4);
+    expect(Math.hypot(p.x - b.x, p.y - b.y)).toBeLessThan(d0 * 0.4);
   });
 });

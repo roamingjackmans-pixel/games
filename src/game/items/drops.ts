@@ -8,8 +8,9 @@ import { SPELLS } from '../../data/spells';
 import { WEAPON_IDS } from '../../data/weapons';
 import { itemLevelFor } from '../combat/formulas';
 import { ROOM_ENEMY_MULT } from '../procgen/waves';
-import { generateItem, randomGem } from './generate';
-import type { ConsumableId, Item, Role } from '../types';
+import { generateItem, randomGem, type DropFavor } from './generate';
+import { CLASSES } from '../../data/classes';
+import type { Character, ConsumableId, Item, Role } from '../types';
 import type { Entity, PickupC, World } from '../world';
 
 export interface DropContext {
@@ -17,6 +18,12 @@ export interface DropContext {
   seed: string;
   zone: number;
   cycle: number;
+}
+
+/** The class's primary and secondary stats, which weapon drops lean toward (D254). */
+function favorOf(c: Character): DropFavor | undefined {
+  const cl = CLASSES[c.classId];
+  return cl ? { primary: cl.primary, secondary: cl.secondary } : undefined;
 }
 
 function lootRng(c: DropContext, playerId: string, tag = ''): Rng {
@@ -62,7 +69,7 @@ export function enemyDrops(c: DropContext, e: Entity): void {
     const rng = lootRng(c, pid, 'e');
     const chance = (en.elite ? DROP_CHANCE.elite : role === 'swarm' ? DROP_CHANCE.swarm : role === 'fodder' ? DROP_CHANCE.fodder : DROP_CHANCE.other) / divide;
     if (rng.chance(chance)) {
-      const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone });
+      const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone, favor: favorOf(pl.char) });
       const [x, y] = scatter(rng, e.x, e.y);
       dropItem(w, pid, item, x, y);
     }
@@ -122,7 +129,7 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
     const rng = stream(c.seed, `loot:${pid}:chest:${chestId}:${c.cycle}`);
     const rows: LootSource[] = kind === 'treasure' ? ['chestTreasure', 'chestTreasure'] : kind === 'mimic' ? ['chestSmall', 'mimic'] : kind === 'boss' ? ['boss'] : ['chestSmall'];
     for (const row of rows) {
-      const item = generateItem(rng, { source: row, ilvl, zone: c.zone });
+      const item = generateItem(rng, { source: row, ilvl, zone: c.zone, favor: favorOf(pl.char) });
       const [ix, iy] = scatter(rng, x, y + 20, 40);
       dropItem(w, pid, item, ix, iy);
     }
@@ -193,7 +200,7 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
     const rng = stream(c.seed, `loot:${pid}:boss:${bossId}:${c.cycle}`);
     const rolls = rng.int(DROP_CHANCE.bossMin, DROP_CHANCE.bossMax);
     for (let i = 0; i < rolls; i++) {
-      const item = generateItem(rng, { source: 'boss', ilvl, zone: c.zone });
+      const item = generateItem(rng, { source: 'boss', ilvl, zone: c.zone, favor: favorOf(pl.char) });
       const [ix, iy] = scatter(rng, x, y, 60);
       dropItem(w, pid, item, ix, iy);
     }

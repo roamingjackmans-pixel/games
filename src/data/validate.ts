@@ -83,8 +83,11 @@ export function validateBoss(d: BossDef, issues: ValidationIssue[]): void {
   let prev = 100;
   d.phases.forEach((p, i) => {
     const last = i === d.phases.length - 1;
-    if (last ? p.untilHpPct !== 0 : !(p.untilHpPct > 0 && p.untilHpPct < prev)) issues.push({ where, msg: `phase ${i + 1} threshold ${p.untilHpPct} is out of order` });
-    prev = p.untilHpPct;
+    // a phase may run the whole bar when the next one starts on a full bar again (D253: refillHp)
+    const refills = !last && !!d.phases[i + 1]!.refillHp;
+    const ok = last ? p.untilHpPct === 0 : refills ? p.untilHpPct === 0 : p.untilHpPct > 0 && p.untilHpPct < prev;
+    if (!ok) issues.push({ where, msg: `phase ${i + 1} threshold ${p.untilHpPct} is out of order` });
+    prev = refills ? 100 : p.untilHpPct;
     if (!p.attacks.some((a) => a.kind === 'red')) issues.push({ where, msg: `phase ${i + 1} has no Red attack` });
     if (!p.attacks.some((a) => a.kind === 'pierce')) issues.push({ where, msg: `phase ${i + 1} has no Piercing attack` });
     if (i > 0 && p.attacks.filter((a) => !d.phases[i - 1]!.attacks.some((b) => b.id === a.id)).length < 2) issues.push({ where, msg: `phase ${i + 1} adds fewer than 2 new attacks` });
