@@ -132,7 +132,8 @@ export const CRYPT: Record<string, EnemyDef> = {
         kind: 'red',
         pattern: { kind: 'cone', angleDeg: 90, r: 220, anchor: 'self' },
         control: { id: 'blind', durationS: 1.5 },
-        windupMs: 600,
+        // D255: charges 30% slower (was 600 ms)
+        windupMs: 780,
         recoverMs: 700,
         dmgMult: 0.9,
         type: 'physical',
