@@ -450,7 +450,8 @@ export const CITADEL: Record<string, EnemyDef> = {
         name: 'Stasis',
         kind: 'red',
         pattern: { kind: 'line', w: 40, l: 150, anchor: 'self' },
-        control: { id: 'freeze', durationS: 1.5 },
+        // D247: 25% shorter (was 1.5 s)
+        control: { id: 'freeze', durationS: 1.125 },
         windupMs: 600,
         recoverMs: 800,
         dmgMult: 1.2,

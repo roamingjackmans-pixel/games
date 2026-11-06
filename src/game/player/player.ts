@@ -640,6 +640,11 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     return;
   }
   if (pl.deadUntilRest) return;
+  // heal over time (Heal, the Thermos) runs on whatever else is happening: frozen, held, falling or staggered (D250)
+  if (pl.healOver.length) {
+    for (const h of pl.healOver) if (h.until > now) heal(w, e, h.perS * dt, false);
+    pl.healOver = pl.healOver.filter((h) => h.until > now);
+  }
   if (w.frozen(e)) return;
 
   pl.aimX = inp.aimX;
@@ -703,10 +708,6 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   }
 
   // heal-over-time (flask, Heal spell)
-  if (pl.healOver.length) {
-    for (const h of pl.healOver) if (h.until > now) heal(w, e, h.perS * dt, false);
-    pl.healOver = pl.healOver.filter((h) => h.until > now);
-  }
 
   const frozen = hasControl(e, 'freeze', now);
   const silenced = hasControl(e, 'silence', now) || buffSum(e, 'silence', now) > 0;

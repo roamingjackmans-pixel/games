@@ -120,7 +120,7 @@ export const RELIQUARY: Record<string, EnemyDef> = {
     role: 'assassin',
     radius: 16,
     resist: {},
-    // clings to the ceiling (untargetable, drawn as a wandering shadow) until its Drop, then fights on foot
+    // clings to the ceiling (untargetable and unseen, D248) until its Drop, then fights on foot
     moveStyle: 'ceiling',
     preferredRange: 50,
     attacks: [
@@ -143,7 +143,8 @@ export const RELIQUARY: Record<string, EnemyDef> = {
         kind: 'pierce',
         pattern: { kind: 'circle', r: 70, anchor: 'target' },
         move: { kind: 'leap' },
-        windupMs: 1000,
+        // D248: charges 25% faster (was 1000 ms)
+        windupMs: 750,
         activeMs: 250,
         recoverMs: 900,
         dmgMult: 1.8,
@@ -444,15 +445,16 @@ export const RELIQUARY: Record<string, EnemyDef> = {
         id: 'moth_flutter',
         name: 'Flutter',
         kind: 'normal',
-        pattern: { kind: 'line', w: 24, l: 100, anchor: 'self' },
-        move: { kind: 'lunge', distance: 100 },
+        // D249: 50% longer (was 100)
+        pattern: { kind: 'line', w: 24, l: 150, anchor: 'self' },
+        move: { kind: 'lunge', distance: 150 },
         status: { id: 'chill', buildup: 10 },
         windupMs: 320,
         recoverMs: 500,
         dmgMult: 0.8,
         type: 'magic',
         cooldownS: 1.6,
-        range: [20, 110],
+        range: [20, 160],
         weight: 3,
         parryable: false,
       },
@@ -505,6 +507,22 @@ export const RELIQUARY: Record<string, EnemyDef> = {
         range: [0, 230],
         weight: 2,
         area: true,
+      },
+      {
+        // D249: a Red circle of ice that bursts up under its target anywhere in the room (as the Bloatking's old
+        // Drowning Grasp did, D212)
+        id: 'hoarfrost_grasp',
+        name: 'Hoarfrost Grasp',
+        kind: 'red',
+        pattern: { kind: 'circle', r: 80, anchor: 'target' },
+        status: { id: 'chill', buildup: 40 },
+        windupMs: 800,
+        recoverMs: 900,
+        dmgMult: 1.5,
+        type: 'magic',
+        cooldownS: 9,
+        range: [0, 1400],
+        weight: 2,
       },
     ],
     flavor: 'Burns frankincense at minus forty. Smells like a freezer full of church.',

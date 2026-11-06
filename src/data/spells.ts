@@ -79,7 +79,8 @@ const BRAIN: SpellDef[] = [
 
 const PRAYER: SpellDef[] = [
   // D128: healing spells heal 10× slower and come back 2× slower
-  P('heal', 'Heal', 8, 1.0, 50, 20, [{ op: 'heal', pct: 0.25, overS: 20, interruptible: true, spell: true }], 'Heal yourself 25% of max HP over 20 s (a stagger interrupts it).'),
+  // D250: a stagger no longer cuts it short; it heals for the whole 20 s
+  P('heal', 'Heal', 8, 1.0, 50, 20, [{ op: 'heal', pct: 0.25, overS: 20, spell: true }], 'Heal yourself 25% of max HP over 20 s. Nothing interrupts it.'),
   P(
     'purify',
     'Purify',

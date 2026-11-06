@@ -28,13 +28,16 @@ export interface HazardDef {
   cures?: 'poison';
   /** wind: players inside are pushed away from the hazard's origin at this speed (px/s; dodging players are not) */
   push?: number;
+  /** drawn as plainly dangerous (D251): a pulsing glow, hazard stripes and a bright edge, not a faint wash */
+  danger?: boolean;
 }
 
 export const HAZARDS: Record<HazardId, HazardDef> = {
   poisonCloud: { dmg: 0, tickS: 0.5, status: { id: 'poison', buildup: 15 }, color: '#7ad040', hitsTeam: 'players' },
   firePuddle: { dmg: 0.25, tickS: 0.5, status: { id: 'burn', buildup: 15 }, color: '#ff7a1a', hitsTeam: 'both' },
   acid: { dmg: 0.15, tickS: 0.5, status: { id: 'poison', buildup: 12 }, color: '#a6e040', hitsTeam: 'players' },
-  thorns: { dmg: 0.3, tickS: 1.0, color: '#6a8a3a', hitsTeam: 'players' },
+  // D251: glowing and striped so the damage is plain (Vexthorn's thorn walls read as an unexplained poison)
+  thorns: { dmg: 0.3, tickS: 1.0, color: '#b6ff3a', hitsTeam: 'players', danger: true },
   ice: { dmg: 0, tickS: 0.5, slippery: true, color: '#cfeaff', hitsTeam: 'both' },
   oil: { dmg: 0, tickS: 0.5, slippery: true, color: '#3a3020', hitsTeam: 'both' },
   slag: { dmg: 0.3, tickS: 0.5, status: { id: 'burn', buildup: 10 }, color: '#ff5a1a', hitsTeam: 'players' },

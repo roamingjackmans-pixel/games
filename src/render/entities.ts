@@ -16,7 +16,7 @@ import { WEAPONS } from '../data/weapons';
 import { CASTING_TOOLS } from '../data/castingTools';
 import { SPELLS } from '../data/spells';
 import { toolForSchool } from '../game/player/derived';
-import { shapeHit } from '../game/combat/patterns';
+import { shapeHit, type Shape } from '../game/combat/patterns';
 import { drawAttackIcon } from './telegraphs';
 import { ELEMENTS, enemyElement } from '../game/elements';
 import { drawElementOver, drawElementUnder, drawGolden, isImmuneNow } from './elementFx';
@@ -436,6 +436,11 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     ctx.stroke();
     ctx.restore();
   }
+  // held in place (D252): grabbed, rooted or frozen. Grey stones bounce round you, tied by a ring, so being stuck
+  // never looks like the controls stopped working
+  const st = e.st;
+  const stuckUntil = Math.max(pl.state === 'held' ? pl.holdUntil : 0, st?.controls.hold ?? 0, st?.controls.root ?? 0, st?.controls.freeze ?? 0);
+  if (!ghost && stuckUntil > now) drawImmobilized(ctx, x, y, now, Math.min(1, (stuckUntil - now) / 0.25));
   if (ghost) {
     // revive ring and bleed-out timer
     const frac = Math.min(1, pl.reviveProgress / Math.max(1, pl.reviveNeed));
@@ -468,6 +473,38 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
 }
 
 export const PLAYER_COLORS = ['#e6b84a', '#5fd3c0', '#ff7aa8', '#9ad0ff'];
+
+/** Six grey stones bouncing round a stuck player on a grey ring (D252); `k` fades it out as the hold ends. */
+export function drawImmobilized(ctx: CanvasRenderingContext2D, x: number, y: number, now: number, k: number): void {
+  ctx.save();
+  ctx.globalAlpha = 0.8 * k;
+  ctx.strokeStyle = '#d0d0d8';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([5, 4]);
+  ctx.lineDashOffset = -now * 30;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 6, 28, 14, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  const n = 6;
+  for (let i = 0; i < n; i++) {
+    const a = now * 2.2 + (i / n) * Math.PI * 2;
+    // each stone hops on its own beat
+    const hop = Math.abs(Math.sin(now * 7 + i * 1.3)) * 10;
+    const sx = x + Math.cos(a) * 28;
+    const sy = y + 6 + Math.sin(a) * 14 - hop;
+    const front = Math.sin(a) > 0;
+    ctx.globalAlpha = (front ? 1 : 0.75) * k;
+    ctx.fillStyle = front ? '#e2e2ea' : '#9a9aa4';
+    ctx.strokeStyle = '#2a2a30';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
 
 export function enemyDrawState(e: Entity, x: number, y: number, now: number, pal: string[]): DrawState {
   const en = e.en!;
@@ -525,15 +562,8 @@ export function drawEnemyEntity(ctx: CanvasRenderingContext2D, e: Entity, x: num
     ctx.restore();
     if (k < 0.7) return;
   }
-  if (en.state === 'ceiling') {
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.beginPath();
-    ctx.ellipse(x, y, e.radius * 1.3, e.radius * 0.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-    return;
-  }
+  // on the ceiling it is not drawn at all (D248; it used to show as a wandering shadow)
+  if (en.state === 'ceiling') return;
   if (en.elite) {
     const c = ELITE_COLOR[en.elite] ?? '#fff';
     glow(ctx, x, y, e.radius * 2.2, c, 0.45 + Math.sin(now * 4) * 0.1);
@@ -751,10 +781,14 @@ export function drawProjectile(ctx: CanvasRenderingContext2D, e: Entity, x: numb
   }
 }
 
-export function drawHazardEntity(ctx: CanvasRenderingContext2D, e: Entity, now: number, color: string): void {
+export function drawHazardEntity(ctx: CanvasRenderingContext2D, e: Entity, now: number, color: string, danger = false): void {
   const hz = e.hz!;
   const life = Math.max(0, hz.until - now);
   const fade = Math.min(1, life / 0.6);
+  if (danger) {
+    drawDangerHazard(ctx, hz.shapes, now, color, fade);
+    return;
+  }
   ctx.save();
   for (const s of hz.shapes) {
     ctx.globalAlpha = 0.35 * fade;
@@ -803,6 +837,100 @@ export function drawHazardEntity(ctx: CanvasRenderingContext2D, e: Entity, now: 
     }
   }
   ctx.restore();
+}
+
+/**
+ * A hazard that hurts, drawn so nobody mistakes it for decoration (D251): a toxic glow that pulses, dark hazard
+ * stripes crawling across it, a bright edge, and spines poking out of it. Lines and circles (thorn walls, Thorn Burst).
+ */
+function drawDangerHazard(ctx: CanvasRenderingContext2D, shapes: readonly Shape[], now: number, color: string, fade: number): void {
+  const pulse = 0.5 + 0.5 * Math.sin(now * 4);
+  for (const s of shapes) {
+    if (s.k !== 'line' && s.k !== 'circle') continue;
+    ctx.save();
+    const path = new Path2D();
+    let cx: number;
+    let cy: number;
+    let span: number;
+    if (s.k === 'line') {
+      const ca = Math.cos(s.a);
+      const sa = Math.sin(s.a);
+      const hw = s.w / 2;
+      path.moveTo(s.x - sa * hw, s.y + ca * hw);
+      path.lineTo(s.x + ca * s.l - sa * hw, s.y + sa * s.l + ca * hw);
+      path.lineTo(s.x + ca * s.l + sa * hw, s.y + sa * s.l - ca * hw);
+      path.lineTo(s.x + sa * hw, s.y - ca * hw);
+      path.closePath();
+      cx = s.x + (ca * s.l) / 2;
+      cy = s.y + (sa * s.l) / 2;
+      span = s.l / 2 + s.w;
+    } else {
+      path.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      cx = s.x;
+      cy = s.y;
+      span = s.r;
+    }
+    // the glow under it, then the fill
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18 + pulse * 14;
+    ctx.globalAlpha = (0.32 + pulse * 0.18) * fade;
+    ctx.fillStyle = color;
+    ctx.fill(path);
+    ctx.shadowBlur = 0;
+    // dark stripes crawling across it, clipped to the shape
+    ctx.clip(path);
+    ctx.globalAlpha = 0.35 * fade;
+    ctx.strokeStyle = '#141a04';
+    ctx.lineWidth = 9;
+    const off = (now * 30) % 28;
+    ctx.beginPath();
+    for (let d = -span * 2 - 28; d < span * 2 + 28; d += 28) {
+      ctx.moveTo(cx + d + off - span, cy - span);
+      ctx.lineTo(cx + d + off + span, cy + span);
+    }
+    ctx.stroke();
+    // spines: short dark thorns tipped with the glow colour, fixed in place
+    ctx.globalAlpha = 0.8 * fade;
+    ctx.lineWidth = 2;
+    const n = Math.max(6, Math.floor((s.k === 'line' ? s.l : s.r * 6) / 26));
+    for (let i = 0; i < n; i++) {
+      const u = (i + 0.5) / n;
+      const h1 = Math.sin(i * 12.9898 + s.x * 0.01) * 43758.5453;
+      const jit = h1 - Math.floor(h1);
+      let px: number;
+      let py: number;
+      let ang: number;
+      if (s.k === 'line') {
+        const side = (jit - 0.5) * s.w * 0.8;
+        px = s.x + Math.cos(s.a) * s.l * u - Math.sin(s.a) * side;
+        py = s.y + Math.sin(s.a) * s.l * u + Math.cos(s.a) * side;
+        ang = s.a + Math.PI / 2 + (jit - 0.5) * 1.6;
+      } else {
+        const a = u * Math.PI * 2;
+        const rr = s.r * (0.3 + jit * 0.6);
+        px = s.x + Math.cos(a) * rr;
+        py = s.y + Math.sin(a) * rr;
+        ang = a + (jit - 0.5) * 1.2;
+      }
+      ctx.strokeStyle = '#1c2608';
+      ctx.beginPath();
+      ctx.moveTo(px - Math.cos(ang) * 6, py - Math.sin(ang) * 6);
+      ctx.lineTo(px + Math.cos(ang) * 8, py + Math.sin(ang) * 8);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(px + Math.cos(ang) * 8, py + Math.sin(ang) * 8, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    // the bright edge
+    ctx.save();
+    ctx.globalAlpha = (0.65 + pulse * 0.35) * fade;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke(path);
+    ctx.restore();
+  }
 }
 
 /** Glowen (D83): a ghostly green blob of ectoplasm with a wobbling skin and a wisp of tail; bigger for more. */

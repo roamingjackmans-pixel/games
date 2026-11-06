@@ -246,26 +246,13 @@ registerDraw('reliquary_icicle_lurker', (ctx, s) => {
   const f = frame(s);
   const E = el(s);
   const H = hot(s);
-  // Drop: during its (blue) windup it still hangs from the ceiling over a growing shadow, then falls in the leap
+  // Drop: during its (blue) windup it is still up on the ceiling and unseen (D248: no shadow, no body; the blue
+  // circle on the floor is the only warning), then falls in the leap
   const dropping = s.tint === 'blue' && s.pose === 'windup';
   const leaping = s.pose === 'attack' && s.scale > 1.001;
   const r = s.r;
   const BODY = '#a8cce8';
-  if (dropping) {
-    const k = Math.min(1, s.poseT);
-    floorShadow(ctx, s.x, s.y + r * 0.4, r * (0.8 + k * 0.6), r * (0.45 + k * 0.3), 0.3 + k * 0.25);
-    const hy = s.y - 130 + k * 25 + Math.sin(s.t * 30) * k * 1.5;
-    // hanging upside down: legs splayed on the ceiling, a beard of icicles pointing at the floor
-    for (const side of [-1, 1]) {
-      limb3(ctx, s, s.x + side * r * 0.4, hy - r * 0.1, s.x + side * r * 0.95, hy - r * 0.5, s.x + side * r * 1.2, hy - r * 0.1, r * 0.12, r * 0.08, '#6a8aaa', 2);
-      limb3(ctx, s, s.x + side * r * 0.3, hy + r * 0.1, s.x + side * r * 0.85, hy + r * 0.1, s.x + side * r * 1.05, hy + r * 0.45, r * 0.12, r * 0.08, '#6a8aaa', 2);
-    }
-    for (let i = -2; i <= 2; i++) shard(ctx, s, s.x + i * r * 0.3, hy + r * 0.2, Math.PI / 2 + i * 0.12, r * (1.3 - Math.abs(i) * 0.25), r * 0.14, i % 2 === 0 ? ICE : FROST);
-    smooth2(ctx, s, [s.x - r * 0.75, hy, s.x - r * 0.5, hy - r * 0.45, s.x + r * 0.5, hy - r * 0.45, s.x + r * 0.75, hy, s.x, hy + r * 0.5], BODY, 0.6);
-    for (const side of [-1, 1]) eye(ctx, s.x + side * r * 0.2, hy + r * 0.12, 1.6, E.glow, 0.6);
-    if (k > 0.3) for (let i = 0; i < 3; i++) spec(ctx, s.x + Math.sin(s.t * 7 + i * 2) * r * 0.6, hy + r * 1.2 + ((s.t * 140 + i * 40) % 90), 1.6, 0.7);
-    return;
-  }
+  if (dropping) return;
   const lift = leaping ? Math.max(0, 1 - s.poseT / 0.25) * 100 : 0;
   shadow(ctx, s.x, s.y, r * (lift > 0 ? 1.2 : 1));
   const gy = s.y + r * 0.62 - lift;
