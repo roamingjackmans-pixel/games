@@ -42,7 +42,7 @@ describe('New Game+ (GAME_DESIGN §13)', () => {
     // D209: NG+ zone 1 is a little harder than the first playthrough's zone 8 (D257: its regular enemies ×3 on top); item level +1
     const e1 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 1, zone: 1 });
     const e8 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 0, zone: 8 });
-    expect(e1.hp!.max / e8.hp!.max).toBeCloseTo(1.05 * 3, 5);
+    expect(e1.hp!.max / e8.hp!.max).toBeCloseTo(1.05 * 4.5, 5);
     expect(itemLevelFor(1, 1)).toBe(2);
   });
 });
@@ -57,14 +57,14 @@ describe('New Game+ difficulty curve (D209, D258)', () => {
     for (const z of [1, 5, 8]) expect(f(z, 2) / f(z, 1)).toBeCloseTo(1.1, 6);
   });
 
-  it('HP: NG+1 is 3× the D209 curve; then ×2.5, ×2, ×2, and ×1.15 a cycle; damage the same steps without the ×3 (D258)', async () => {
+  it('NG+1 is 4.5× the D209 curve for HP and 1.4× for damage; then ×2.5, ×2, ×2, and ×1.15 a cycle for both (D258, D259)', async () => {
     const { enemyHpMult, enemyDmgMult } = await import('../../src/game/combat/formulas');
     const hp = (z: number, c: number): number => enemyHpMult(z, c, 1);
     const z8 = hp(8, 0);
     expect(hp(1, 0)).toBe(1);
-    expect(hp(1, 1) / z8).toBeCloseTo(1.05 * 3, 6);
-    expect(hp(8, 1) / z8).toBeCloseTo(1.35 * 3, 6);
-    expect(enemyDmgMult(1, 1) / enemyDmgMult(8, 0)).toBeCloseTo(1.05, 6);
+    expect(hp(1, 1) / z8).toBeCloseTo(1.05 * 4.5, 6);
+    expect(hp(8, 1) / z8).toBeCloseTo(1.35 * 4.5, 6);
+    expect(enemyDmgMult(1, 1) / enemyDmgMult(8, 0)).toBeCloseTo(1.05 * 1.4, 6);
     for (const f of [hp, enemyDmgMult]) {
       for (const z of [1, 5, 8]) {
         expect(f(z, 2) / f(z, 1)).toBeCloseTo(2.5, 6);

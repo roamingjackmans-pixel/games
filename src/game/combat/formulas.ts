@@ -238,8 +238,10 @@ export function cycleZoneCurve(zone: number, cycle: number, perZone: number): nu
   const hi = NG_ZONE8_OVER_Z8 * top;
   return (lo + ((hi - lo) * (z - 1)) / 7) * Math.pow(NG_PER_CYCLE, cycle - 1);
 }
-/** D258: every enemy and boss has 3× the HP the NG+1 curve gives (its damage stays as the curve has it). */
-export const NG1_HP_MULT = 3;
+/** D258: every enemy and boss has 3× the HP the NG+1 curve gives; D259: +50% more (4.5×). */
+export const NG1_HP_MULT = 4.5;
+/** D259: and hits 40% harder than the NG+1 curve. Later cycles build on NG+1, so they carry both. */
+export const NG1_DMG_MULT = 1.4;
 /** D258: how much stronger (HP and damage both) each New Game+ is than the one before it: NG+2 ×2.5, NG+3 and NG+4 ×2. */
 export const NG_STEPS: Record<number, number> = { 2: 2.5, 3: 2, 4: 2 };
 /** D258: every New Game+ after NG+4. */
@@ -257,7 +259,7 @@ export function enemyHpMult(zone: number, cycle: number, players: number): numbe
   return cycleZoneCurve(zone, Math.min(1, cycle), 0.55) * (cycle >= 1 ? NG1_HP_MULT : 1) * ngGrowth(cycle) * coopHpMult(players);
 }
 export function enemyDmgMult(zone: number, cycle: number): number {
-  return cycleZoneCurve(zone, Math.min(1, cycle), 0.35) * ngGrowth(cycle);
+  return cycleZoneCurve(zone, Math.min(1, cycle), 0.35) * (cycle >= 1 ? NG1_DMG_MULT : 1) * ngGrowth(cycle);
 }
 /** Shards follow the same curve, so the reward keeps up with the danger (D209). */
 export function enemyShardMult(zone: number, cycle: number): number {
