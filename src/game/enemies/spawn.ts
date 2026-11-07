@@ -1,5 +1,5 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
-import { ROLE_STATS, SHARD_SCALE, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
+import { ROLE_STATS, SHARD_SCALE, zoneDmgFactor, zoneNgHpFactor, zoneShardFactor } from '../../data/roles';
 import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
@@ -41,7 +41,7 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   const elite = o.elite ?? null;
   const baseHp = isBoss ? ((def as BossDef).baseHp ?? rs.hp) : rs.hp;
   // co-op adds bodies to rooms instead of HP to each body (D79); bosses alone still grow with the party
-  let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, 1) * (o.hpMult ?? 1);
+  let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, 1) * zoneNgHpFactor(zone, cycle, isBoss) * (o.hpMult ?? 1);
   if (elite) hp *= 3;
   // a boss lighter on the first playthrough (D211)
   if (isBoss && cycle <= 0) hp *= (def as BossDef).firstCycleHpMult ?? 1;

@@ -39,10 +39,10 @@ describe('New Game+ (GAME_DESIGN §13)', () => {
     expect(s.layout.tutorialId).toBeNull();
     expect(s.node.kind).toBe('start');
     expect(s.w.cycle).toBe(1);
-    // D209: NG+ zone 1 is a little harder than the first playthrough's zone 8; item level +1
+    // D209: NG+ zone 1 is a little harder than the first playthrough's zone 8 (D257: its regular enemies ×3 on top); item level +1
     const e1 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 1, zone: 1 });
     const e8 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 0, zone: 8 });
-    expect(e1.hp!.max / e8.hp!.max).toBeCloseTo(1.05, 5);
+    expect(e1.hp!.max / e8.hp!.max).toBeCloseTo(1.05 * 3, 5);
     expect(itemLevelFor(1, 1)).toBe(2);
   });
 });
