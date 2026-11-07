@@ -156,7 +156,7 @@ describe('inventory, gems, Glowen, levels', () => {
     // armor perks in armor
     c.equipment.body = makeItem('crypt_rags_body', 'epic', 1, { sockets: 1, gems: [{ perks: [{ family: 'hearth', tier: 1 }, { family: 'bulwark', tier: 1 }] }] });
     const d2 = computeDerived(c);
-    expect(d2.maxHp).toBe(d.maxHp + 15);
+    expect(d2.maxHp).toBe(Math.round(d.maxHp * 1.04)); // D260: Hearth T1 is +4% max HP (was +15)
     // a gem mixing weapon and armor perks, or repeating a family, is not a gem
     expect(isValidGem({ perks: [{ family: 'brutal', tier: 1 }, { family: 'bulwark', tier: 1 }] })).toBe(false);
     expect(isValidGem({ perks: [{ family: 'brutal', tier: 1 }, { family: 'brutal', tier: 2 }] })).toBe(false);

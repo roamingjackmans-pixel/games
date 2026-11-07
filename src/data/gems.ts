@@ -28,7 +28,8 @@ export const GEMS: Record<GemFamily, GemDef> = {
   leech: { family: 'leech', name: 'Leech', color: '#8a1020', values: [2, 3, 4, 5, 6], text: '{v}% lifesteal', weaponOnly: true },
   vigor: { family: 'vigor', name: 'Vigor', color: '#2aa198', values: [8, 12, 16, 20, 24], text: '−{v}% stamina costs', weaponOnly: true },
   bulwark: { family: 'bulwark', name: 'Bulwark', color: '#9a9aa6', values: [8, 12, 16, 20, 24], text: '+{v} defense to all types', armorOnly: true },
-  hearth: { family: 'hearth', name: 'Hearth', color: '#e0705a', values: [15, 22, 30, 38, 45], text: '+{v} max HP', armorOnly: true },
+  // D260: a share of max HP (was +15 … +45 flat)
+  hearth: { family: 'hearth', name: 'Hearth', color: '#e0705a', values: [4, 6, 8, 10, 12], text: '+{v}% max HP', armorOnly: true },
   zephyr: { family: 'zephyr', name: 'Zephyr', color: '#a8e6cf', values: [8, 12, 16, 20, 24], text: '+{v}% stamina regeneration', armorOnly: true },
   gilt: { family: 'gilt', name: 'Gilt', color: '#d4af37', values: [5, 8, 11, 14, 17], text: '+{v}% Glowen found', armorOnly: true },
 };

@@ -206,6 +206,8 @@ export function computeDerived(c: Character): Derived {
   let reviveBonus = 0;
   let flaskBonus = 0;
   let hpFlat = 0;
+  /** Hearth gems (D260): a share of max HP */
+  let hpPctGem = 0;
   let stamFlat = 0;
   let defAll = 0;
   const defPct: Partial<Record<DamageType, number>> = {};
@@ -294,7 +296,7 @@ export function computeDerived(c: Character): Derived {
       if (it.kind === 'armor' || it.kind === 'shield') {
         if (!gd.armorOnly) continue;
         if (pk.family === 'bulwark') defAll += v;
-        else if (pk.family === 'hearth') hpFlat += v;
+        else if (pk.family === 'hearth') hpPctGem += v / 100; // D260: a share of max HP
         else if (pk.family === 'zephyr') regenMult += v / 100;
         else if (pk.family === 'gilt') glowenFind += v / 100;
         continue;
@@ -414,7 +416,7 @@ export function computeDerived(c: Character): Derived {
   const load = equipLoadOf(c.equipment, stats.endurance, boost.endurance);
   return {
     stats,
-    maxHp: Math.max(1, Math.round(hp * maxHpMult)),
+    maxHp: Math.max(1, Math.round(hp * maxHpMult * (1 + hpPctGem))),
     maxStam: stam,
     regen: staminaRegen(stats.endurance, boost.endurance) * regenMult,
     walk: 260 * (shield?.walkMult ?? 1) * load.effects.speed,
