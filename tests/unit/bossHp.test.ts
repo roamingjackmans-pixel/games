@@ -11,17 +11,18 @@ describe('boss HP (D187)', () => {
     expect(ROLE_STATS.boss.hp).toBe(1800 * 2);
     expect(Object.keys(BOSSES).length).toBe(8);
     for (const b of Object.values(BOSSES)) {
-      const want = b.id === 'the_landlord' ? 1800 * 2.5 : b.id === 'vexthorn' ? 1800 * 2 * 1.15 : b.id === 'saint_aurelia' ? 5544 : b.id === 'archmagister_tock' ? 5400 : 1800 * 2; // D217: Vexthorn +15%; D224: Aurelia +40%; D233: Tock +50%
+      const want = b.id === 'the_landlord' ? 9000 : b.id === 'vexthorn' ? 1800 * 2 * 1.15 : b.id === 'saint_aurelia' ? 5544 : b.id === 'archmagister_tock' ? 5400 : 1800 * 2; // D256: Landlord 9000; D217: Vexthorn +15%; D224: Aurelia +40%; D233: Tock +50%
       expect(b.baseHp ?? ROLE_STATS.boss.hp, b.id).toBe(want);
     }
   });
 
-  it('a spawned Landlord has 1.25× the HP of a spawned zone-8 boss on the shared base', () => {
+  it('a spawned Landlord has 2.5× the HP of a spawned zone-8 boss on the shared base, and hits 1.5× as hard (D256)', () => {
     const w = new World('BHP', Room.empty());
     const ll = spawnEnemy(w, BOSSES.the_landlord!, 640, 368, { zone: 8 });
-    const { baseHp: _own, ...shared } = BOSSES.the_landlord!;
+    const { baseHp: _own, mult: _m, ...shared } = BOSSES.the_landlord!;
     const other = spawnEnemy(w, shared, 640, 368, { zone: 8 });
-    expect(ll.hp!.max / other.hp!.max).toBeCloseTo(4500 / 3600, 3);
+    expect(ll.hp!.max / other.hp!.max).toBeCloseTo(9000 / 3600, 3);
+    expect(ll.en!.dmgMult / other.en!.dmgMult).toBeCloseTo(1.5, 6);
   });
 });
 
