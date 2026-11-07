@@ -53,6 +53,8 @@ export interface TeleSpec {
   follow: boolean;
   area: boolean;
   pullSpeed: number;
+  /** a later set of a two-set pattern: its marker appears `delay` s after the first set and charges for the same time (D261) */
+  showLate: boolean;
 }
 
 export interface PatternCtx {
@@ -106,6 +108,7 @@ function spec(shapes: Shape[], o: Partial<TeleSpec> = {}): TeleSpec {
     follow: false,
     area: false,
     pullSpeed: 0,
+    showLate: false,
     ...o,
   };
 }
@@ -418,7 +421,7 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
         const b: number[] = [];
         for (let i = 0; i < p.n * 2; i++) (i % 2 === 0 ? a : b).push(lo + step * (i + 0.5));
         const gap = p.setGapS ?? 0.8;
-        return [spec(make(a), { ...laneOpts }), spec(make(b), { ...laneOpts, delay: gap })];
+        return [spec(make(a), { ...laneOpts }), spec(make(b), { ...laneOpts, delay: gap, showLate: true })];
       }
       const step = span / p.n;
       const off = c.rng.range(-step * 0.25, step * 0.25);
@@ -445,7 +448,7 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
         const b = pts.filter((q) => q.parity === 1).map(circ);
         if ((p.sets ?? 1) >= 2) {
           const gap = p.setGapS ?? 1.0;
-          return [spec(a, { area: true, pulses }), spec(b, { area: true, delay: gap, pulses })];
+          return [spec(a, { area: true, pulses }), spec(b, { area: true, delay: gap, pulses, showLate: true })];
         }
         return [spec(a, { area: true, pulses })];
       }

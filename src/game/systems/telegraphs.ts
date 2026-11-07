@@ -6,6 +6,7 @@ import { runEffects } from '../effects/run';
 import { spawnHazard } from './hazards';
 import { attackDamage } from '../enemies/spawn';
 import type { Entity, World } from '../world';
+import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
 
 function targetsFor(w: World, t: Entity): Entity[] {
   const tg = t.tg!;
@@ -52,8 +53,12 @@ function impactTest(w: World, t: Entity, tau: number, onceSet: Set<number> | nul
   for (const target of targetsFor(w, t)) {
     if (onceSet && onceSet.has(target.id)) continue;
     let hitAny = false;
+    // an area attack catches a player only where the dot at their feet is (D262); melee swings still take the body
+    const dot = !!target.pl && tg.area;
+    const r = dot ? PLAYER_DOT_R : target.radius;
+    const ty = dot ? target.y + PLAYER_DOT_DY : target.y;
     for (const s of tg.shapes) {
-      if (shapeHit(s, tau, target.x, target.y, target.radius, w.room)) {
+      if (shapeHit(s, tau, target.x, ty, r, w.room)) {
         hitAny = true;
         break;
       }

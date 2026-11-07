@@ -76,6 +76,8 @@ export function drawTelegraph(ctx: CanvasRenderingContext2D, w: World, t: Entity
   const tg = t.tg!;
   if (tg.hidden) return;
   const now = alphaTime;
+  // a later set of a two-set pattern is not shown until its own charge starts (D261)
+  if (now < tg.start) return;
   const look = lookFor(tg.kind, tg.team, tg.dmgType);
   const pre = now < tg.impact;
   // a pulsing telegraph (grids) recharges between pulses

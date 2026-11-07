@@ -7,10 +7,10 @@
 //    into pits) and a soft vignette.
 // Math.random is fine here (cosmetic, client only).
 import { OUTLINE, getGlow, offscreen } from '../engine/draw/parts';
-import { ROOM_W, ROOM_Y0, TILE, type Room, type Side } from '../game/room';
+import { ROOM_W, ROOM_Y0, T, TILE, type Room, type Side } from '../game/room';
 import { gearPath } from './floors';
 import { AMB, RH, RW, type AmbKind, type Light, type RoomArt, type RoomStyle } from './roomStyle';
-import { doorRect } from './walls';
+import { doorRect, doorTorchSpots } from './walls';
 
 const MAXP = 110;
 
@@ -243,6 +243,16 @@ const FLAME: [string, string][] = [
 
 const SEAL: Record<string, string> = { forge: '#ff6a10', reliquary: '#9ad0ff', citadel: '#2aa198', abyss: '#d6a8ff' };
 
+const SIDES4: readonly Side[] = ['n', 's', 'e', 'w'];
+const torchCache = new Map<string, ReturnType<typeof doorTorchSpots>>();
+/** a door's torch spots, worked out once per side and wall height (no allocation per frame) */
+function torchSpots(side: Side, frontH: number): ReturnType<typeof doorTorchSpots> {
+  const key = side + frontH;
+  let s = torchCache.get(key);
+  if (!s) torchCache.set(key, (s = doorTorchSpots(side, frontH)));
+  return s;
+}
+
 export function drawAmbienceUnder(ctx: CanvasRenderingContext2D, room: Room, art: RoomArt, t: number): void {
   const s = ensure(art);
   const prevOp = ctx.globalCompositeOperation;
@@ -334,6 +344,24 @@ export function drawAmbienceUnder(ctx: CanvasRenderingContext2D, room: Room, art
   }
   ctx.globalCompositeOperation = prevOp;
   ctx.globalAlpha = 1;
+  // a door's torches burn while it stands open, and are cold while it is shut (D263)
+  for (let si = 0; si < 4; si++) {
+    const side = SIDES4[si]!;
+    const d = room.doors[side];
+    if (!d.exists || !d.open) continue;
+    const spots = torchSpots(side, art.style.frontH);
+    for (let k = 0; k < spots.length; k++) {
+      const p = spots[k]!;
+      if (room.tiles[p.ty * ROOM_W + p.tx] !== T.Wall) continue;
+      const ph = si * 2.3 + k * 1.7;
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.28 + 0.06 * Math.sin(t * 9.3 + ph) + 0.04 * Math.sin(t * 23.1 + ph);
+      ctx.drawImage(getGlow('#ff9a3a'), p.x - 64, p.y - 52, 128, 128);
+      ctx.globalCompositeOperation = prevOp;
+      ctx.globalAlpha = 1;
+      flame(ctx, p.x, p.y, 1.1, t, ph, FLAME[0]!);
+    }
+  }
   ctx.restore();
 }
 

@@ -54,7 +54,8 @@ export function spawnTelegraphs(w: World, pattern: PatternDef, o: TeleOpts): Ent
         team: o.team,
         shapes: s.shapes,
         kind: o.kind,
-        start: now,
+        // a later set shows up as late as it strikes, so each set charges for the full windup (D261)
+        start: s.showLate ? now + s.delay : now,
         impact,
         end,
         mode: s.mode,

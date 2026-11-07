@@ -3,7 +3,7 @@
 // masonry, brick, plates or brass for built zones. Plus wall decorations, pillars and doorways. Pre-rendered.
 import { OUTLINE, shade, withAlpha } from '../engine/draw/parts';
 import { Rng } from '../engine/rng';
-import { ROOM_H, ROOM_W, TILE, type Side } from '../game/room';
+import { ROOM_H, ROOM_W, TILE, doorTiles, type Side } from '../game/room';
 import type { Palette } from '../game/types';
 import { candles, fungusPatch, gearPath, rivet, root } from './floors';
 import { E, clipTo, crack, edgeBand, jitterPoly, scratch, silhouette, soft, type RoomArt, type RoomStyle, type Tiles } from './roomStyle';
@@ -1396,6 +1396,92 @@ export function drawDoorways(w: WallCtx): void {
       const tx = side === 'w' ? x + dw - 5 : x;
       ctx.fillRect(tx, y, 5, dh);
       ctx.strokeRect(tx, y, 5, dh);
+    }
+  }
+}
+
+
+/**
+ * Where a door's two torches stand (D263): on the wall tile either side of the doorway, room side. Returns the
+ * flame point (room-local px) and the wall tile each sits on.
+ */
+export function doorTorchSpots(side: Side, frontH: number): { x: number; y: number; tx: number; ty: number; front: boolean }[] {
+  const ts = doorTiles(side);
+  const vert = side === 'n' || side === 's';
+  const xs = ts.map((t) => t[0]);
+  const ys = ts.map((t) => t[1]);
+  const pairs: [number, number][] = vert
+    ? [
+        [Math.min(...xs) - 1, ys[0]!],
+        [Math.max(...xs) + 1, ys[0]!],
+      ]
+    : [
+        [xs[0]!, Math.min(...ys) - 1],
+        [xs[0]!, Math.max(...ys) + 1],
+      ];
+  return pairs.map(([tx, ty]) => {
+    const x = tx * TILE;
+    const y = ty * TILE;
+    // the north wall shows its front face; the others are seen from above, like the wall decor's anchors
+    const [ax, ay] = side === 'n' ? [x + 16, y + TILE - frontH * 0.55] : side === 's' ? [x + 16, y + 10] : side === 'w' ? [x + TILE - 7, y + 18] : [x + 7, y + 18];
+    const front = side === 'n';
+    return { x: ax, y: ay - (front ? 14 : 11), tx, ty, front };
+  });
+}
+
+/**
+ * The torches either side of every doorway (D263), unlit: an iron bracket, a wrapped handle and a charred head.
+ * Their flames are drawn per frame by the ambience layer while the door stands open.
+ */
+export function drawDoorTorches(w: WallCtx): void {
+  const { ctx, tiles, style } = w;
+  for (const side of ['n', 's', 'e', 'w'] as Side[]) {
+    const [first] = [...tiles.doorSide.entries()].filter(([, s]) => s === side);
+    if (!first || tiles.e[first[0]] !== E.Door) continue;
+    for (const s of doorTorchSpots(side, style.frontH)) {
+      if (!tiles.wall(s.tx, s.ty)) continue;
+      const x = s.x;
+      const by = s.y + (s.front ? 14 : 11);
+      const top = s.y + 3;
+      // a soot stain on the wall above where the flame burns
+      soft(ctx, x, s.y - 4, 9, '#000000', 0.25);
+      // iron bracket
+      ctx.fillStyle = OUTLINE;
+      ctx.fillRect(x - 5, by - 2, 10, 8);
+      ctx.fillStyle = '#4a4a52';
+      ctx.fillRect(x - 4, by - 1, 8, 6);
+      ctx.fillStyle = '#7a7a86';
+      ctx.fillRect(x - 4, by - 1, 8, 1.5);
+      // wrapped wooden handle
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(x, by + 3);
+      ctx.lineTo(x, top);
+      ctx.stroke();
+      ctx.strokeStyle = '#6a4a2a';
+      ctx.lineWidth = 3.6;
+      ctx.stroke();
+      ctx.strokeStyle = '#3a2614';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let k = by - 1; k > top + 2; k -= 3) {
+        ctx.moveTo(x - 1.8, k);
+        ctx.lineTo(x + 1.8, k - 1.5);
+      }
+      ctx.stroke();
+      // the charred, pitch-soaked head
+      ctx.fillStyle = OUTLINE;
+      ctx.beginPath();
+      ctx.ellipse(x, top, 4.6, 3.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#2a1a10';
+      ctx.beginPath();
+      ctx.ellipse(x, top, 3.6, 2.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#4a3a30';
+      ctx.fillRect(x - 1.5, top - 1.5, 2, 1);
     }
   }
 }

@@ -5,7 +5,7 @@ import { drawById, type DrawState } from '../engine/draw/registry';
 import { DEFAULT_LOOK, drawJoe, type BodyGear, type HeadGear, type JoeLook } from '../engine/draw/players';
 import type { Beard, Emblem, HairStyle, HandPose } from '../engine/draw/players';
 import { ARMOR_LOOKS, HEAD_OVERRIDE } from '../data/armorLooks';
-import { FLASK_DRINK_S } from '../game/player/player';
+import { FLASK_DRINK_S, PLAYER_DOT_DY, PLAYER_DOT_R } from '../game/player/player';
 import { drawShield, drawTool, drawWeapon, isPairedWeapon } from '../engine/draw/weapons';
 import { cacheable, drawCachedEnemy } from './spriteCache';
 import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/parts';
@@ -274,6 +274,32 @@ function weaponPose(e: Entity): { rot: number; ext: number } {
   if (c.phase === 'windup') return { rot: lerp(0.7 * dir, -half * dir - 0.3 * dir, k), ext: 0 };
   if (c.phase === 'active') return { rot: lerp(-half * dir - 0.3 * dir, half * dir, k), ext: 4 };
   return { rot: lerp(half * dir, 0.7 * dir, k), ext: 0 };
+}
+
+/**
+ * The dot at a player's feet in their eye colour (D262), drawn over the bodies and the attack markers so it shows
+ * through any area: it is exactly what an area attack tests, so a dot clear of a marker is safe.
+ */
+export function drawPlayerDot(ctx: CanvasRenderingContext2D, e: Entity, x: number, cy: number): void {
+  const y = cy + PLAYER_DOT_DY;
+  const pl = e.pl;
+  if (!pl || pl.deadUntilRest || pl.downed || e.hp?.dead) return;
+  const eyes = pl.char.appearance?.eyes || '#5a3a22';
+  ctx.save();
+  ctx.globalAlpha = e.anim.alpha;
+  ctx.fillStyle = OUTLINE;
+  ctx.beginPath();
+  ctx.arc(x, y, PLAYER_DOT_R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#f4efe4';
+  ctx.beginPath();
+  ctx.arc(x, y, PLAYER_DOT_R - 1.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = eyes;
+  ctx.beginPath();
+  ctx.arc(x, y, PLAYER_DOT_R - 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Entity, x: number, y: number, now: number, isLocal: boolean): void {

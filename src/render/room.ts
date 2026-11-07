@@ -14,7 +14,7 @@ import { floorEdgeShade, paintFloor } from './floors';
 import { drawCrumbling, drawFallenTile, drawGrates, drawHazards, drawHoles, isFallenOverlay, makeVoidSky } from './holes';
 import { E, RH, RW, Tiles, emptyArt, scratch, styleFor, type RoomArt, type RoomStyle } from './roomStyle';
 import { drawTerrainAnim, drawTerrainBase, terrainKey, type TerrainArt } from './terrain';
-import { drawClosedDoor, drawDoorways, drawPillars, drawWallDecor, drawWalls } from './walls';
+import { drawClosedDoor, drawDoorTorches, drawDoorways, drawPillars, drawWallDecor, drawWalls } from './walls';
 
 export const DEFAULT_PALETTE: Palette = {
   floor: '#2b3326',
@@ -269,6 +269,7 @@ function renderBase(room: Room, pal: Palette, propStyle: string, key: string): B
   drawWalls(wc);
   mark('walls');
   drawDoorways(wc);
+  drawDoorTorches(wc);
   drawWallDecor(wc);
   drawPillars(wc);
   mark('decor');
