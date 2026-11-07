@@ -13,12 +13,14 @@ import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/c
 import { computeDerived } from '../../game/player/derived';
 import { spellSkill, toolSpellSkill } from '../../game/skills/use';
 import { ELEMENTS } from '../../game/elements';
-import { canSocket, socketKind, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, planLevelUps, sellAllPreview, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
+import { canSocket, socketKind, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, lockedSkipped, planLevelUps, sellAllPreview, toggleItemLock, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type GemTier, type Item, type StatId } from '../../game/types';
 import { hasRarityBar, upgradeInfo } from '../../game/items/proficiency';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { tabHints } from '../glyphs';
+import { lockButton } from '../itemLock';
+import { PAD_LOCK_EVENT } from '../menuPad';
 import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemScore, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
 export interface BonfireOps {
@@ -810,6 +812,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     if (!confirmSell) return null;
     const def = SELL_ALL.find((s) => s.filter === confirmSell)!;
     const pv = sellAllPreview(v.char, def.filter);
+    const kept = lockedSkipped(v.char, def.filter);
     const yes = btn(['Sell ', String(pv.count), ' for ', glowenEl(pv.glowen, '+')], () => {
       confirmSell = null;
       say(v.ops.sellAll(def.filter));
@@ -822,7 +825,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
       h('div', null, `Sell ${def.what}: ${pv.count} item${pv.count === 1 ? '' : 's'}.`),
       h('div', { class: 'row' }, 'You get ', glowenEl(pv.glowen, '+'), h('span', { class: 'dim-text' }, ` (you have ${fmt(v.char.glowen)})`)),
       pv.gems ? h('div', { class: 'small good' }, `${pv.gems} socketed gem${pv.gems === 1 ? '' : 's'} come out first and go to your loose gems.`) : null,
-      h('div', { class: 'small dim-text' }, 'Worn gear and your second weapon are never sold.'),
+      kept ? h('div', { class: 'small good' }, `${kept} locked item${kept === 1 ? ' is' : 's are'} kept.`) : null,
+      h('div', { class: 'small dim-text' }, 'Worn gear, your second weapon and locked items are never sold.'),
       h('div', { class: 'row' }, yes, btn('Cancel', () => {
         confirmSell = null;
         render();
@@ -880,7 +884,14 @@ export function openBonfire(v: BonfireView): HTMLElement {
       }, 'tiny');
       sb.setAttribute('data-testid', `sell-${it.id}`);
       sb.setAttribute('data-focus', `sell-${it.id}`);
-      const row = h('div', { class: 'row' }, itemIcon(it, 24), h('div', { class: `r-${it.rarity}`, style: 'flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' }, it.name), sb);
+      // the same lock as the inventory's (D265): Sell all keeps a locked item
+      const lk = lockButton(it, () => {
+        toggleItemLock(c, it.id);
+        render();
+      });
+      lk.setAttribute('data-focus', `lock-${it.id}`);
+      sb.addEventListener(PAD_LOCK_EVENT, () => lk.click());
+      const row = h('div', { class: `row${it.locked ? ' locked-row' : ''}` }, itemIcon(it, 24), h('div', { class: `r-${it.rarity}`, style: 'flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' }, it.name), lk, sb);
       hoverTip(row, () => itemTooltip(it, c, 'auto'));
       sell.appendChild(row);
     }

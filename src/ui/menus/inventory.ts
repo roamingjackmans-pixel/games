@@ -2,13 +2,14 @@
 // 60-slot bag, gems, consumables, compare tooltips, two-hand toggle, second weapon, quick-use selection.
 // Mouse, keyboard and gamepad (every slot is a focusable button; menuPad moves focus spatially).
 import { glyphText, inputText, padStyle, tabHints } from '../glyphs';
-import { PAD_ALT, PAD_ALT_EVENT, TAB_EDGE_EVENT } from '../menuPad';
+import { PAD_ALT, PAD_ALT_EVENT, PAD_LOCK, PAD_LOCK_EVENT, TAB_EDGE_EVENT } from '../menuPad';
+import { lockButton } from '../itemLock';
 import { PROF_CLASSES, PROF_MAX_LEVEL, perkPoints, profLevel } from '../../data/proficiency';
 import { activeClasses, profXp } from '../../game/items/proficiency';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
-import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, unequip, unsocketGem, type EquipSlot, slotItem } from '../../game/items/inventory';
+import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, toggleItemLock, unequip, unsocketGem, type EquipSlot, slotItem } from '../../game/items/inventory';
 import { levelCost } from '../../game/combat/formulas';
 import { LIGHT_LOAD_MAX, LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
@@ -137,6 +138,19 @@ export function openInventory(host: InventoryHost): HTMLElement {
       const meets = itemMeetsReqs(item, c);
       if (!meets) b.appendChild(h('span', { class: 'warn' }, '!'));
       if (item.sockets.length) b.appendChild(h('span', { class: 'badge' }, '◆'.repeat(item.sockets.filter(Boolean).length) + '◇'.repeat(item.sockets.filter((g) => !g).length)));
+      // the lock (D265): its corner button, Y / △ on a pad, L on the keyboard
+      const lock = (): void => {
+        toggleItemLock(host.char, item.id);
+        host.changed();
+        render();
+      };
+      b.appendChild(lockButton(item, lock, true));
+      b.addEventListener(PAD_LOCK_EVENT, lock);
+      b.addEventListener('keydown', (e) => {
+        if (e.code !== 'KeyL' || e.repeat) return;
+        e.preventDefault();
+        lock();
+      });
       const tipFor = (): void => showTip(b, itemTooltip(item, host.char, 'auto'));
       b.addEventListener('mouseenter', tipFor);
       b.addEventListener('focus', tipFor);
@@ -283,7 +297,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       if (i === 0) bagCell.setAttribute('data-autofocus', '');
     }
     bag.appendChild(bagGrid);
-    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it; right-click (${inputText(PAD_ALT, padStyle())} on a controller) puts it in the second slot: a weapon becomes your 2nd weapon (swap with ${glyphText('swapWeapon')}), a shield your 2nd off hand (hold ${glyphText('interact')} and press ${glyphText('swapWeapon')}), a ring the next ring slot. A staff or talisman asks which hand. Click worn gear to take it off.`));
+    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it; right-click (${inputText(PAD_ALT, padStyle())} on a controller) puts it in the second slot: a weapon becomes your 2nd weapon (swap with ${glyphText('swapWeapon')}), a shield your 2nd off hand (hold ${glyphText('interact')} and press ${glyphText('swapWeapon')}), a ring the next ring slot. A staff or talisman asks which hand. Click worn gear to take it off. The padlock in a corner (or ${inputText(PAD_LOCK, padStyle())} / L) locks an item so Sell all keeps it.`));
     const gems = h('div', { class: 'row wrap', style: 'gap:4px;max-width:476px' });
     c.gems.forEach((g) => {
       const b = h('span', { tabindex: '0', style: 'display:inline-flex' }, gemIcon(g, 28));

@@ -54,6 +54,9 @@ function scrollBoxFor(scope: HTMLElement, focus: HTMLElement | null): HTMLElemen
 /** the pad button for a menu control's second action (X on Xbox, □ on PlayStation) and the event it sends (D166) */
 export const PAD_ALT = 2;
 export const PAD_ALT_EVENT = 'pad-alt';
+/** the pad button that locks or unlocks the focused item (Y on Xbox, △ on PlayStation) and its event (D265) */
+export const PAD_LOCK = 3;
+export const PAD_LOCK_EVENT = 'pad-lock';
 /** sent to a menu layer when LB / RB would wrap past its first or last tab (detail: -1 or 1); preventDefault takes it (D169) */
 export const TAB_EDGE_EVENT = 'tab-edge';
 
@@ -147,6 +150,12 @@ export function pollMenuPad(input: InputManager, now: number): void {
     const el = document.activeElement as HTMLElement | null;
     input.swallowPadButton(PAD_ALT);
     if (el && scope.contains(el)) el.dispatchEvent(new CustomEvent(PAD_ALT_EVENT));
+  }
+  // Y / △: lock or unlock the focused item (D265)
+  if (mp.confirm !== PAD_LOCK && mp.back !== PAD_LOCK && input.padButtonEdge(PAD_LOCK)) {
+    const el = document.activeElement as HTMLElement | null;
+    input.swallowPadButton(PAD_LOCK);
+    if (el && scope.contains(el)) el.dispatchEvent(new CustomEvent(PAD_LOCK_EVENT));
   }
   if (input.padButtonEdge(mp.confirm)) {
     const el = document.activeElement as HTMLElement | null;

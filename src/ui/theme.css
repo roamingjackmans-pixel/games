@@ -190,3 +190,11 @@ body.pad-nav button:focus, body.pad-nav .btn:focus, body.pad-nav [tabindex]:focu
 /* LB / RB tab hints (D145): only while a gamepad drives the menus */
 .tab-hint { display: none; align-self: center; opacity: .75; }
 body.pad-nav .tab-hint { display: inline-flex; }
+/* the item lock (D265): a corner padlock on inventory slots, shown on hover / focus, always when locked */
+.cell .lock-toggle { position: absolute; right: 1px; top: 1px; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; border-radius: 3px; background: rgba(12, 10, 18, .7); opacity: 0; cursor: pointer; z-index: 1; }
+.cell:hover .lock-toggle, .cell:focus-visible .lock-toggle, .cell .lock-toggle.on { opacity: 1; }
+.cell .lock-toggle:hover { background: rgba(60, 50, 80, .95); outline: 1px solid var(--accent); }
+.cell .lock-toggle svg { pointer-events: none; }
+button.lock-btn { padding: 3px 5px; display: inline-flex; align-items: center; }
+button.lock-btn.on { border-color: #8a6d2e; background: rgba(232, 192, 96, .12); }
+.locked-row { box-shadow: inset 2px 0 0 #e8c060; }

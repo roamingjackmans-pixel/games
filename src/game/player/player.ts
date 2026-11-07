@@ -305,10 +305,13 @@ function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number
   // a volley (D205): one shot down the aim and the rest fanned out either side, all at once
   const n = Math.max(1, wpn.ranged?.volley?.count ?? 1);
   const step = (wpn.ranged?.volley?.spreadDeg ?? 0) * DEG;
+  // one hit per target per shot (D264): the arrows share a list of what the volley has struck
+  const volleyHit = n > 1 ? new Set<number>() : undefined;
   for (let i = 0; i < n; i++) {
     const off = (i - (n - 1) / 2) * step;
     const shot = spawnPlayerProjectile(w, e, a + off, swing.hitbox.speed, swing.hitbox.r, { ...spec, dmg: { ...spec.dmg }, status: spec.status.map((s) => ({ ...s })) }, pierce + bonkPierce, wpn.id === 'bow' ? 'p_arrow' : 'p_bolt');
     shot.pr!.falloffFrom = { x: e.x, y: e.y };
+    if (volleyHit) shot.pr!.volleyHit = volleyHit;
   }
   w.sfx(wpn.id === 'bow' ? 'shootArrow' : 'shootBolt', e.x);
 }

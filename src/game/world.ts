@@ -320,6 +320,8 @@ export interface ProjC {
   until: number;
   pierce: number;
   hit: Set<number>;
+  /** shared by every arrow of one bow or crossbow volley: each target takes one arrow's hit per shot (D264) */
+  volleyHit?: Set<number>;
   poiseDmg: number;
   onImpact: EffectDef | null;
   parryable: boolean;

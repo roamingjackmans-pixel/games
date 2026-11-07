@@ -252,8 +252,27 @@ export function itemSellValue(item: Item): number {
 export type SellAllFilter = 'all' | 'common' | 'belowRare';
 const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
+function sellAllMatches(it: Item, filter: SellAllFilter): boolean {
+  return filter === 'all' || (filter === 'common' ? it.rarity === 'common' : RARITY_ORDER.indexOf(it.rarity) < RARITY_ORDER.indexOf('rare'));
+}
+
+/** a locked item is never picked (D265) */
 function sellAllPicks(c: Character, filter: SellAllFilter): Item[] {
-  return c.bag.filter((it) => filter === 'all' || (filter === 'common' ? it.rarity === 'common' : RARITY_ORDER.indexOf(it.rarity) < RARITY_ORDER.indexOf('rare')));
+  return c.bag.filter((it) => !it.locked && sellAllMatches(it, filter));
+}
+
+/** Bag items a "Sell all" with this filter would take but for their lock (D265). */
+export function lockedSkipped(c: Character, filter: SellAllFilter): number {
+  return c.bag.filter((it) => it.locked && sellAllMatches(it, filter)).length;
+}
+
+/** Lock or unlock an item in the bag or worn (D265): a locked item is never taken by "Sell all". */
+export function toggleItemLock(c: Character, itemId: string): OpResult {
+  const it = [...c.bag, ...Object.values(c.equipment), c.altMain, c.altOff].find((x): x is Item => !!x && x.id === itemId);
+  if (!it) return no('No such item.');
+  if (it.locked) delete it.locked;
+  else it.locked = true;
+  return ok(it.locked ? `Locked ${it.name}: Sell all will keep it.` : `Unlocked ${it.name}.`);
 }
 
 /**

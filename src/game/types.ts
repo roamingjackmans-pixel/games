@@ -739,6 +739,8 @@ export interface Item {
   raised?: number;
   /** a set perk (D243): 3, 5 or 7 worn pieces with the same one give a playstyle bonus; absent on most gear */
   setPerk?: string;
+  /** locked by the player (D265): "Sell all" never takes it; absent when unlocked */
+  locked?: boolean;
 }
 
 export type ConsumableId =

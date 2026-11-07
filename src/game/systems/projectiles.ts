@@ -213,6 +213,13 @@ export function updateProjectiles(w: World, dt: number): void {
           impact(w, e);
           break;
         }
+        // another arrow of this volley already struck it (D264): this one breaks on it (or flies through) for nothing
+        if (pr.volleyHit?.has(en.id)) {
+          if (pr.pierce > 0) continue;
+          impact(w, e);
+          break;
+        }
+        pr.volleyHit?.add(en.id);
         hitEnemy(w, owner, en, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, { light: !pr.isSpell && !pr.isSkill });
         if (pr.pierce > 0) {
           pr.pierce--;
@@ -233,8 +240,14 @@ export function updateProjectiles(w: World, dt: number): void {
             impact(w, e);
             break;
           }
+          if (pr.volleyHit?.has(a.id)) {
+            if (pr.pierce > 0) continue;
+            impact(w, e);
+            break;
+          }
           const res = hitAlly(w, owner, a, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e);
           if (res === 'dodged' || res === 'none') continue;
+          pr.volleyHit?.add(a.id);
           if (pr.pierce > 0) {
             pr.pierce--;
             continue;

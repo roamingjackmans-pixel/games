@@ -8,6 +8,8 @@ import { stepWorld } from '../../src/game/sim';
 import { emptyInput, ACTION_BIT } from '../../src/engine/input/actions';
 import { Rng } from '../../src/engine/rng';
 import { makeItem } from '../../src/game/items/make';
+import { spawnEnemy } from '../../src/game/enemies/spawn';
+import { CRYPT } from '../../src/data/enemies/crypt';
 
 describe('bow auto two-hand (D203)', () => {
   it('attack with a one-handed bow: two-hands it and shoots', () => {
@@ -47,5 +49,41 @@ describe('bow and crossbow volleys (D205)', () => {
   });
   it('so does a crossbow', () => {
     expect(shoot('knight', 'crossbow')).toEqual([-5, 0, 5]);
+  });
+});
+
+describe('a volley hits each target once (D264)', () => {
+  // shoots once and counts the arrow hits each enemy takes
+  const hitsOn = (weapon: string | null, ys: number[], dist: number): number[] => {
+    const c = newCharacter(weapon ? 'knight' : 'hunter', 'Joe', 'p1', new Rng(1));
+    if (weapon) c.equipment.main = makeItem(weapon, 'common', 1);
+    c.twoHanded = true;
+    const w = new World('VOLLEY1', Room.empty());
+    const p = spawnPlayer(w, c, 0, true, 400, 368);
+    const foes = ys.map((y) => {
+      const e = spawnEnemy(w, CRYPT.shambler!, 400 + dist, y, { tellS: 0 });
+      e.hp!.hp = e.hp!.max = 1e6;
+      e.en!.state = 'dormant';
+      return e;
+    });
+    p.pl!.input = { ...emptyInput(), aimX: 400 + dist, aimY: 368, buttons: ACTION_BIT.attack, pressed: ACTION_BIT.attack };
+    const counts = foes.map(() => 0);
+    for (let i = 0; i < 150; i++) {
+      w.events.length = 0;
+      stepWorld(w);
+      p.pl!.input = { ...p.pl!.input, pressed: 0, buttons: 0 };
+      for (const ev of w.events) if (ev.t === 'dmg' && !ev.toPlayer) foes.forEach((f, k) => (ev.targetId === f.id ? counts[k]!++ : 0));
+    }
+    return counts;
+  };
+  it('a point-blank bow volley lands one hit on a big enemy, not three', () => {
+    expect(hitsOn(null, [368], 70)).toEqual([1]);
+  });
+  it('so does a crossbow volley', () => {
+    expect(hitsOn('crossbow', [368], 70)).toEqual([1]);
+  });
+  it('the three arrows can still hit three different enemies', () => {
+    // 5° either side at 600 px is about 52 px off the aim line
+    expect(hitsOn(null, [368 - 52, 368, 368 + 52], 600)).toEqual([1, 1, 1]);
   });
 });
