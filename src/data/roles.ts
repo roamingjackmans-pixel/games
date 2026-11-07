@@ -48,11 +48,3 @@ export const ZONE_DMG_FACTOR: Record<number, number> = { 4: 1.1, 5: 1.15, 6: 1.1
 export function zoneDmgFactor(zone: number): number {
   return ZONE_DMG_FACTOR[Math.max(1, Math.min(8, zone))] ?? 1;
 }
-
-/** More HP for a zone's regular enemies in New Game+ only (every cycle from NG+1; not its boss), D257: zone 1 ×3. */
-export const ZONE_NG_HP_FACTOR: Record<number, number> = { 1: 3 };
-
-export function zoneNgHpFactor(zone: number, cycle: number, boss: boolean): number {
-  if (cycle < 1 || boss) return 1;
-  return ZONE_NG_HP_FACTOR[Math.max(1, Math.min(8, zone))] ?? 1;
-}

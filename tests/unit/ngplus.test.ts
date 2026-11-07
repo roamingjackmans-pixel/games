@@ -47,22 +47,31 @@ describe('New Game+ (GAME_DESIGN §13)', () => {
   });
 });
 
-describe('New Game+ difficulty curve (D209)', () => {
-  it('NG+ runs from 5% to 35% harder than the first zone 8, then +10% on every zone each cycle', async () => {
-    const { enemyHpMult, enemyDmgMult, enemyShardMult } = await import('../../src/game/combat/formulas');
-    for (const f of [(z: number, c: number) => enemyHpMult(z, c, 1), enemyDmgMult, enemyShardMult]) {
-      const z8 = f(8, 0);
-      // the first playthrough is unchanged and climbs zone by zone
-      expect(f(1, 0)).toBe(1);
-      expect(f(8, 0)).toBeGreaterThan(f(7, 0));
-      // NG+: just above the first zone 8, up to 35% above it, evenly
-      expect(f(1, 1) / z8).toBeCloseTo(1.05, 6);
-      expect(f(8, 1) / z8).toBeCloseTo(1.35, 6);
-      expect(f(4, 1) - f(3, 1)).toBeCloseTo(f(8, 1) - f(7, 1), 6);
-      // every cycle after: +10% on every zone
+describe('New Game+ difficulty curve (D209, D258)', () => {
+  it('Shards: NG+ runs from 5% to 35% above the first zone 8, then +10% a cycle (D209)', async () => {
+    const { enemyShardMult: f } = await import('../../src/game/combat/formulas');
+    const z8 = f(8, 0);
+    expect(f(1, 0)).toBe(1);
+    expect(f(1, 1) / z8).toBeCloseTo(1.05, 6);
+    expect(f(8, 1) / z8).toBeCloseTo(1.35, 6);
+    for (const z of [1, 5, 8]) expect(f(z, 2) / f(z, 1)).toBeCloseTo(1.1, 6);
+  });
+
+  it('HP: NG+1 is 3× the D209 curve; then ×2.5, ×2, ×2, and ×1.15 a cycle; damage the same steps without the ×3 (D258)', async () => {
+    const { enemyHpMult, enemyDmgMult } = await import('../../src/game/combat/formulas');
+    const hp = (z: number, c: number): number => enemyHpMult(z, c, 1);
+    const z8 = hp(8, 0);
+    expect(hp(1, 0)).toBe(1);
+    expect(hp(1, 1) / z8).toBeCloseTo(1.05 * 3, 6);
+    expect(hp(8, 1) / z8).toBeCloseTo(1.35 * 3, 6);
+    expect(enemyDmgMult(1, 1) / enemyDmgMult(8, 0)).toBeCloseTo(1.05, 6);
+    for (const f of [hp, enemyDmgMult]) {
       for (const z of [1, 5, 8]) {
-        expect(f(z, 2) / f(z, 1)).toBeCloseTo(1.1, 6);
-        expect(f(z, 5) / f(z, 4)).toBeCloseTo(1.1, 6);
+        expect(f(z, 2) / f(z, 1)).toBeCloseTo(2.5, 6);
+        expect(f(z, 3) / f(z, 2)).toBeCloseTo(2, 6);
+        expect(f(z, 4) / f(z, 3)).toBeCloseTo(2, 6);
+        expect(f(z, 5) / f(z, 4)).toBeCloseTo(1.15, 6);
+        expect(f(z, 9) / f(z, 8)).toBeCloseTo(1.15, 6);
       }
     }
   });
