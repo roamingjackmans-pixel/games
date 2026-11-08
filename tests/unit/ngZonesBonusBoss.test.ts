@@ -22,20 +22,38 @@ import { attackDamage } from '../../src/game/enemies/spawn';
 const level = (z: number): number => enemyDmgMult(z, 1) * zoneDmgFactor(z);
 
 describe('New Game+ room enemy damage by zone (D275)', () => {
-  it('doubles zone 2, steps zones 3 to 6 down to zone 8, never lowers a zone, and leaves the first playthrough alone', () => {
+  it('doubles zone 2, raises zone 8 by 65%, climbs zones 3 to 7 between them, and leaves the first playthrough alone (D287)', () => {
     expect(ngZoneEnemyDmg(1, 1)).toBe(1);
     expect(ngZoneEnemyDmg(2, 1)).toBe(2);
-    expect(ngZoneEnemyDmg(8, 1)).toBe(1);
+    expect(ngZoneEnemyDmg(8, 1)).toBe(1.65);
     for (let z = 1; z <= 8; z++) expect(ngZoneEnemyDmg(z, 0)).toBe(1);
     // later cycles carry it like everything else
     expect(ngZoneEnemyDmg(2, 3)).toBe(2);
-    const a = 2 * level(2);
-    const b = level(8);
-    for (let z = 3; z <= 7; z++) {
+    // each roster's average hit at NG+1 before this table, then after it
+    const rosterHit = (z: number): number => {
+      const w = new World('hit');
+      let s = 0;
+      let n = 0;
+      for (const d of Object.values(ENEMIES).filter((e) => e.zone === z && !e.special)) {
+        const e = spawnEnemy(w, d, 640, 300, { cycle: 1, zone: z });
+        for (const atk of d.attacks) {
+          if (!atk.dmgMult) continue;
+          s += attackDamage(e, atk.dmgMult);
+          n++;
+        }
+      }
+      return s / n / ngZoneEnemyDmg(z, 1);
+    };
+    const base = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((z) => (z ? rosterHit(z) : 0));
+    const a = 2 * base[2]!;
+    const b = 1.65 * base[8]!;
+    let prev = a;
+    for (let z = 3; z <= 8; z++) {
       const line = a * Math.pow(b / a, (z - 2) / 6);
-      const m = NG_ZONE_ENEMY_DMG[z] ?? 1;
-      expect(m).toBeGreaterThanOrEqual(1);
-      expect(Math.abs(level(z) * m - Math.max(line, level(z))) / Math.max(line, level(z))).toBeLessThan(0.01);
+      const hit = base[z]! * (NG_ZONE_ENEMY_DMG[z] ?? 1);
+      expect(Math.abs(hit - line) / line).toBeLessThan(0.01);
+      expect(hit).toBeGreaterThan(prev);
+      prev = hit;
     }
   });
 

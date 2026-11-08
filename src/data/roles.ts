@@ -50,12 +50,12 @@ export function zoneDmgFactor(zone: number): number {
 }
 
 /**
- * New Game+ (cycle 1 and later, D275): extra damage for a zone's non-boss enemies, on top of everything above. Zone 2
- * hits twice as hard; zones 3 to 6 step geometrically from there to zone 8's level (zone 7 already sits above that
- * line and keeps its own; zones 1 and 8 are unchanged). Bosses are not affected. Checked against the zone curve by
+ * New Game+ (cycle 1 and later, D275, D287): extra damage for a zone's non-boss enemies, on top of everything above.
+ * Zone 2 hits twice as hard, zone 8 65% harder, and zones 3 to 7 climb geometrically between them, by each zone
+ * roster's average hit (zone 1 is unchanged). Bosses are not affected. Checked against the rosters by
  * tests/unit/ngZonesBonusBoss.test.ts.
  */
-export const NG_ZONE_ENEMY_DMG: Record<number, number> = { 2: 2, 3: 1.78, 4: 1.44, 5: 1.22, 6: 1.09 };
+export const NG_ZONE_ENEMY_DMG: Record<number, number> = { 2: 2, 3: 1.64, 4: 1.61, 5: 1.5, 6: 1.43, 7: 1.36, 8: 1.65 };
 
 export function ngZoneEnemyDmg(zone: number, cycle: number): number {
   return cycle >= 1 ? (NG_ZONE_ENEMY_DMG[Math.max(1, Math.min(8, zone))] ?? 1) : 1;
