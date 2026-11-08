@@ -27,6 +27,7 @@ import { SPELLS } from '../../src/data/spells';
 import { SKILLS } from '../../src/data/skills';
 import { CLASSES } from '../../src/data/classes';
 import { ROLE_STATS, SHARD_SCALE, zoneShardFactor } from '../../src/data/roles';
+import { ARMOR_SETS } from '../../src/data/armor';
 import { ARMOR_GEM_FAMILIES, GEMS, WEAPON_GEM_FAMILIES, gemDropLevel, makeGem } from '../../src/data/gems';
 import { expectedReinforce, reinforceGlowen, reinforceDmgMult as reinforceMult, MAX_REINFORCE } from '../../src/data/essence';
 import { RARITY_POWER } from '../../src/data/proficiency';
@@ -253,10 +254,10 @@ function buildPlayer(b: Build, level: number, zone: number, cycle: number, gems:
   const plus = plusFor(zone, cycle);
   c.equipment.main = item(b.main, rar, ilvl, plus, gems);
   c.equipment.off = b.off ? item(b.off, rar, ilvl, plus) : null;
-  for (const s of ['head', 'body', 'legs'] as const) {
-    const old = c.equipment[s];
-    c.equipment[s] = old ? item(old.baseId, rar, ilvl, plus) : null;
-  }
+  // every build wears the zone's full medium set, blue (Rare), reinforced as far as that area allows, so a one-shot
+  // alert means the hit is too big, not that the build had no armour (a class starts with only some pieces)
+  const medium = ARMOR_SETS.find((st) => st.weight === 'medium' && st.zone === Math.min(8, zone)) ?? ARMOR_SETS.find((st) => st.weight === 'medium')!;
+  for (const sl of ['head', 'body', 'legs'] as const) c.equipment[sl] = item(`${medium.id}_${sl}`, 'rare', ilvl, plus);
   c.twoHanded = b.twoHanded ?? false;
   const w = new World(`pl:${b.name}:${zone}:${cycle}`, Room.empty());
   const p = spawnPlayer(w, c, 0, true, 400, 368);
@@ -499,7 +500,7 @@ function section2(foes: Record<string, ZoneFoes>, bosses: Record<string, BossRow
   out('## 2. Time to kill and hits to die');
   out();
   out(
-    'Each build at the zone\'s expected level, with points split as listed, wearing its class\'s armour and its weapon at the zone\'s item level (no affixes or gems), at the rarity and reinforcement assumed below. **DPS** is sustained light-attack damage per second (swing until the stamina bar is empty, then wait for it to refill); casters cast their three best damaging spells as often as cooldowns, cast time and stamina allow. **TTK** = seconds of that DPS to kill the zone\'s average room enemy / its boss (all phases). **Hits** = average hits of the zone\'s room enemies / the boss\'s biggest hit to kill the build, after its defense.',
+    'Each build at the zone\'s expected level, with points split as listed, wearing the zone\'s full **medium armour set at Rare (blue)** and its weapon at the zone\'s item level (no affixes or gems), both reinforced as far as that area allows, the weapon at the rarity assumed below. **DPS** is sustained light-attack damage per second (swing until the stamina bar is empty, then wait for it to refill); casters cast their three best damaging spells as often as cooldowns, cast time and stamina allow. **TTK** = seconds of that DPS to kill the zone\'s average room enemy / its boss (all phases). **Hits** = average hits of the zone\'s room enemies / the boss\'s biggest hit to kill the build, after its defense.',
   );
   out();
   out(table(['Cycle', ...ZONES.map((z) => `Z${z}`)], CYCLES.map((c) => [cycleName(c), ...ZONES.map((z) => `L${LEVEL_AT[c]![z - 1]} · ilvl ${gearIlvl(z, c)}${gearIlvl(z, c) > itemLevelFor(z, c) ? ` (drops ${itemLevelFor(z, c)})` : ''} · ${rarityFor(z, c)} +${plusFor(z, c)}`)])));
@@ -551,7 +552,17 @@ function section2(foes: Record<string, ZoneFoes>, bosses: Record<string, BossRow
       const lo = Math.min(...xs);
       const hi = Math.max(...xs);
       spreadRows.push([String(z), r0(med), r0(lo), r0(hi), r1(hi / Math.max(1, lo))]);
-      if (med > 300) find(3 + Math.min(4, med / 300), 'Boss length', `${cycleName(c)} zone ${z}: the median build needs ${r0(med)} s of nonstop hitting to kill ${(bosses[`${z}:${c}`] ?? [])[0]?.def.name ?? 'the boss'} (${r0((bosses[`${z}:${c}`] ?? [])[0]?.totalHp ?? 0)} HP), ${r1(med / 60)} minutes before any dodging.`, 'Trim the boss HP multiplier for this cycle (NG1_HP_MULT / NG_STEPS) or the extra phase bars.');
+      // the owner's fight lengths (D301): NG+1 5 min (the Landlord 8), NG+2 on 8 min (11); first playthrough under 5
+      const target = c <= 0 ? null : c === 1 ? (z === 8 ? 480 : 300) : z === 8 ? 660 : 480;
+      const bossName = (bosses[`${z}:${c}`] ?? [])[0]?.def.name ?? 'the boss';
+      const bossHp = r0((bosses[`${z}:${c}`] ?? [])[0]?.totalHp ?? 0);
+      if (target === null ? med > 300 : med > target * 1.25 || med < target * 0.75)
+        find(
+          3 + Math.min(4, med / 300),
+          'Boss length',
+          `${cycleName(c)} zone ${z}: the median build needs ${r0(med)} s of nonstop hitting to kill ${bossName} (${bossHp} HP), ${r1(med / 60)} minutes before any dodging${target ? ` (target ${r1(target / 60)} min, D301)` : ''}.`,
+          target && med < target ? 'Raise its NG_BOSS_HP factor (D301).' : 'Trim its NG_BOSS_HP factor (D301), the boss HP multiplier for this cycle, or the extra phase bars.',
+        );
       if (hi / lo > 3) {
         const iHi = ttkBossByZone[z]!.indexOf(hi);
         const iLo = ttkBossByZone[z]!.indexOf(lo);
