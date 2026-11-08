@@ -32,6 +32,8 @@ export interface Derived {
   skillsUnlocked: number;
   /** base(ilvl) × scaling — multiply by a swing's mult and dmgMult */
   weaponPower: number;
+  /** a weapon held in the off hand (D291: a crossbow), shot with the block button; null when two-handing */
+  offWeapon: { def: WeaponDef; item: Item; power: number; meetsReq: boolean } | null;
   dmgPct: number;
   flat: Partial<Record<DamageType, number>>;
   convert: { type: DamageType; pct: number }[];
@@ -140,6 +142,15 @@ const FIST: WeaponDef = {
 function itemsOf(c: Character): Item[] {
   const e = c.equipment;
   return [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, e.ring3, e.ring4].filter((x): x is Item => !!x);
+}
+
+/** A weapon in the off hand (D291): its own damage, from its own base, scaling, rarity and reinforcement. */
+function offWeaponOf(off: Item | null | undefined, twoHanded: boolean, stats: Stats, boost: ReturnType<typeof statBoosts>): Derived['offWeapon'] {
+  const def = off && off.kind === 'weapon' ? WEAPONS[off.baseId] : undefined;
+  if (!off || !def?.eitherHand || twoHanded) return null;
+  const meetsReq = meetsRequirements(itemRequirements(off), stats, false);
+  const power = weaponBase(def.base1, off.ilvl) * scalingMult(def.grades, stats, false, boost) * (meetsReq ? 1 : 0.4) * RARITY_POWER[off.rarity] * reinforceMult(off.plus);
+  return { def, item: off, power, meetsReq };
 }
 
 export function computeDerived(c: Character): Derived {
@@ -430,6 +441,7 @@ export function computeDerived(c: Character): Derived {
     weaponMeetsReq,
     skillsUnlocked: main && weaponMeetsReq ? itemSkillCount(main) : 0,
     // rarity sets the damage tier (D178)
+    offWeapon: offWeaponOf(off, twoHanded, stats, boost),
     weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceMult(main?.plus),
     dmgPct,
     flat,

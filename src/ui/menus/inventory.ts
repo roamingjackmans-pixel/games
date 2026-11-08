@@ -9,7 +9,7 @@ import { activeClasses, profXp } from '../../game/items/proficiency';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
-import { BAG_SIZE, allItems, equip, isToolItem, placeLabel, toggleItemLock, unequip, unsocketGem, type EquipSlot, slotItem } from '../../game/items/inventory';
+import { BAG_SIZE, allItems, equip, isEitherHandItem, placeLabel, toggleItemLock, unequip, unsocketGem, type EquipSlot, slotItem } from '../../game/items/inventory';
 import { levelCost } from '../../game/combat/formulas';
 import { LIGHT_LOAD_MAX, LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
@@ -241,7 +241,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
   function second(item: Item | null, i: number): void {
     if (!item) return;
     const c = host.char;
-    if (isToolItem(item)) {
+    if (isEitherHandItem(item)) {
       handAsk = { itemId: item.id, second: true, focus: `bag-${i}` };
       render();
     } else if (item.slot === 'main') doEquip(item.id, 'altMain');
@@ -280,7 +280,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
           () => {
             if (!item) return;
             // a staff or talisman asks which hand (D228)
-            if (isToolItem(item)) {
+            if (isEitherHandItem(item)) {
               handAsk = { itemId: item.id, second: false, focus: `bag-${i}` };
               render();
             } else doEquip(item.id);
@@ -297,7 +297,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       if (i === 0) bagCell.setAttribute('data-autofocus', '');
     }
     bag.appendChild(bagGrid);
-    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it; right-click (${inputText(PAD_ALT, padStyle())} on a controller) puts it in the second slot: a weapon becomes your 2nd weapon (swap with ${glyphText('swapWeapon')}), a shield your 2nd off hand (hold ${glyphText('interact')} and press ${glyphText('swapWeapon')}), a ring the next ring slot. A staff or talisman asks which hand. Click worn gear to take it off. The padlock in a corner (or ${inputText(PAD_LOCK, padStyle())} / L) locks an item so Sell all keeps it.`));
+    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it; right-click (${inputText(PAD_ALT, padStyle())} on a controller) puts it in the second slot: a weapon becomes your 2nd weapon (swap with ${glyphText('swapWeapon')}), a shield your 2nd off hand (hold ${glyphText('interact')} and press ${glyphText('swapWeapon')}), a ring the next ring slot. A staff, talisman or crossbow asks which hand. Click worn gear to take it off. The padlock in a corner (or ${inputText(PAD_LOCK, padStyle())} / L) locks an item so Sell all keeps it.`));
     const gems = h('div', { class: 'row wrap', style: 'gap:4px;max-width:476px' });
     c.gems.forEach((g) => {
       const b = h('span', { tabindex: '0', style: 'display:inline-flex' }, gemIcon(g, 28));

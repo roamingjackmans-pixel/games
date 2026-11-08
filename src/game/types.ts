@@ -608,6 +608,8 @@ export interface WeaponDef {
   req: { bonk: number; slicey: number; brain?: number; prayer?: number };
   /** can only be used two-handed (bows: D88) */
   twoHandOnly?: boolean;
+  /** may be held in either hand, like a staff or talisman (D291): in the off hand it shoots on the block button */
+  eitherHand?: boolean;
   /** the weapon's own damage type (hybrids: Bonk+Brain Void, Slicey+Brain Magic, Bonk+Prayer Fire, Slicey+Prayer Holy) */
   element?: DamageType;
   speedClass: SpeedClass;

@@ -4,7 +4,7 @@
 import { RARITIES, type Character, type Item } from '../types';
 import { baseInfo } from '../items/bases';
 import { makeItem } from '../items/make';
-import { isToolItem, slotAccepts } from '../items/inventory';
+import { isEitherHandItem, slotAccepts } from '../items/inventory';
 import { newCharacter } from '../player/character';
 import { sanitizeAppearance } from '../../data/appearance';
 import { LOBBY_GEAR_SLOTS, type LobbyGear, type LobbyGearItem, type PublicPlayer } from './protocol';
@@ -25,7 +25,7 @@ function itemFor(slot: (typeof LOBBY_GEAR_SLOTS)[number], gi: LobbyGearItem | nu
   if (!info) return null;
   const rarity = RARITIES.includes(gi.r) ? gi.r : 'common';
   const it = makeItem(gi.b, rarity, 1, { sockets: 0 });
-  if (!slotAccepts(slot, it) && !(slot === 'off' && isToolItem(it))) return null;
+  if (!slotAccepts(slot, it) && !(slot === 'off' && isEitherHandItem(it))) return null;
   if (rarity === 'legendary' && typeof gi.n === 'string') it.name = gi.n.slice(0, 60);
   return it;
 }

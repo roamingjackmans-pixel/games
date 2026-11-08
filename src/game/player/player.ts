@@ -9,7 +9,7 @@ import { buffSum, hasControl, speedMult } from '../combat/state';
 import { terrainWalkMult } from '../systems/terrain';
 import { computeDerived } from './derived';
 import { tryCastSpell, tryUseConsumable, tryUseSkill, updatePlayerAction } from '../skills/use';
-import type { Character, DamageType, SwingDef } from '../types';
+import type { Character, DamageType, SwingDef, WeaponDef } from '../types';
 import { DAMAGE_TYPES } from '../types';
 import { newStatus, type DamageSpec, type Entity, type PlayerC, type World } from '../world';
 
@@ -218,13 +218,16 @@ export function aimAngle(w: World, e: Entity, projectile: boolean): number {
 }
 
 /** Build the damage spec for a weapon hit with the given multiplier. */
-export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: boolean; ignoreFrontGuard?: boolean; poiseMult?: number } = {}): DamageSpec {
+export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: boolean; ignoreFrontGuard?: boolean; poiseMult?: number; offHand?: boolean } = {}): DamageSpec {
   const pl = e.pl!;
   const d = pl.derived;
   const now = w.time;
-  const base = d.weaponPower * mult * (1 + d.dmgPct);
+  // a shot of the off-hand weapon (D291) uses that weapon's own power
+  const ow = opts.offHand ? d.offWeapon : null;
+  const wdef = ow?.def ?? d.weapon;
+  const base = (ow?.power ?? d.weaponPower) * mult * (1 + d.dmgPct);
   // a hybrid weapon's base damage is its own type (D80); a weapon's holy share comes out of it
-  const own: DamageType = d.weapon.element ?? 'physical';
+  const own: DamageType = wdef.element ?? 'physical';
   const dmg: Partial<Record<DamageType, number>> = {};
   let ownLeft = base;
   // conversions never take more than all of it
@@ -248,10 +251,10 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   spec.dmg = dmg;
   spec.status = d.statusBuild.map((s) => ({ ...s }));
   // harder swings (combo finishers, charged shots, skills) hit poise harder in proportion (D78)
-  spec.poiseDmg = d.weapon.poiseDmg * Math.max(1, mult) * (opts.poiseMult ?? 1);
+  spec.poiseDmg = wdef.poiseDmg * Math.max(1, mult) * (opts.poiseMult ?? 1);
   spec.isSkill = !!opts.skill;
-  spec.reviveValue = d.weapon.reviveValue + d.reviveBonus;
-  spec.ignoreFrontGuard = !!(d.weapon.ignoreFrontGuard || opts.ignoreFrontGuard);
+  spec.reviveValue = wdef.reviveValue + d.reviveBonus;
+  spec.ignoreFrontGuard = !!(wdef.ignoreFrontGuard || opts.ignoreFrontGuard);
   if (buffSum(e, 'holyConvertPct', now) > 0) spec.undeadMult = 1.15;
   return spec;
 }
@@ -266,9 +269,15 @@ export function hitstopMs(e: Entity): number {
   return sc === 'veryslow' ? 90 : sc === 'slow' ? 80 : sc === 'mediumslow' ? 65 : sc === 'medium' ? 55 : 40;
 }
 
-function startSwing(w: World, e: Entity, idx: number): void {
+/** The weapon a swing uses: the off-hand one for an off-hand shot (D291). */
+function comboWeapon(e: Entity, offHand: boolean | undefined): WeaponDef {
+  const d = e.pl!.derived;
+  return offHand && d.offWeapon ? d.offWeapon.def : d.weapon;
+}
+
+function startSwing(w: World, e: Entity, idx: number, offHand = false): void {
   const pl = e.pl!;
-  const wpn = pl.derived.weapon;
+  const wpn = comboWeapon(e, offHand);
   const swing = wpn.combo[idx % wpn.combo.length]!;
   const spd = attackSpeedOf(w, e);
   if (!canAffordAttack(w, e, wpn.stamina)) return;
@@ -288,6 +297,7 @@ function startSwing(w: World, e: Entity, idx: number): void {
     chargeT: 0,
     speed: spd,
     fired: false,
+    ...(offHand ? { offHand: true } : {}),
   };
   pl.state = 'attack';
   pl.blocking = false;
@@ -296,13 +306,13 @@ function startSwing(w: World, e: Entity, idx: number): void {
   e.anim.poseT = 0;
 }
 
-function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number, pierce: number): void {
+function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number, pierce: number, offHand = false): void {
   const pl = e.pl!;
   if (swing.hitbox.shape !== 'proj') return;
   const a = aimAngle(w, e, true);
   e.facing = a;
-  const spec = weaponSpec(w, e, swing.mult * mult);
-  const wpn = pl.derived.weapon;
+  const spec = weaponSpec(w, e, swing.mult * mult, { offHand });
+  const wpn = comboWeapon(e, offHand);
   const bonkPierce = wpn.ranged?.pierceBonk && pl.derived.stats.bonk >= wpn.ranged.pierceBonk ? 1 : 0;
   // a volley (D205): one shot down the aim and the rest fanned out either side, all at once
   const n = Math.max(1, wpn.ranged?.volley?.count ?? 1);
@@ -411,7 +421,9 @@ function updateCombo(w: World, e: Entity, dt: number): void {
   const c = pl.combo;
   if (!c) return;
   const inp = pl.input;
-  const wpn = pl.derived.weapon;
+  const wpn = comboWeapon(e, c.offHand);
+  // an off-hand shot (D291) answers to the block button, a main-hand swing to attack
+  const key = c.offHand ? 'block' : 'attack';
   c.t += dt;
   const ranged = c.swing.hitbox.shape === 'proj';
   if (c.phase === 'windup') {
@@ -419,7 +431,7 @@ function updateCombo(w: World, e: Entity, dt: number): void {
     else e.facing = aimAngle(w, e, true);
     if (c.charging && ranged) {
       // bow: hold to charge, release to fire
-      if (held(inp, 'attack') && c.chargeT < 1.6) {
+      if (held(inp, key) && c.chargeT < 1.6) {
         c.chargeT += dt;
         if (c.t >= c.dur) c.t = c.dur;
         return;
@@ -440,7 +452,7 @@ function updateCombo(w: World, e: Entity, dt: number): void {
       w.sfx(swingSfx(e), e.x);
       if (ranged) {
         const charged = !!wpn.ranged?.chargeS && c.chargeT >= wpn.ranged.chargeS;
-        fireWeaponProjectile(w, e, c.swing, charged ? (wpn.ranged?.chargeMult ?? 1) : 1, charged ? (wpn.ranged?.chargePierce ?? 0) : 0);
+        fireWeaponProjectile(w, e, c.swing, charged ? (wpn.ranged?.chargeMult ?? 1) : 1, charged ? (wpn.ranged?.chargePierce ?? 0) : 0, !!c.offHand);
         c.fired = true;
       }
     }
@@ -455,20 +467,23 @@ function updateCombo(w: World, e: Entity, dt: number): void {
       e.anim.poseT = 0;
     }
   } else {
-    if (pressed(inp, 'attack') || (held(inp, 'attack') && c.t > c.dur * 0.3)) c.queued = true;
+    if (pressed(inp, key) || (held(inp, key) && c.t > c.dur * 0.3 && !c.offHand)) c.queued = true;
     const last = c.idx === wpn.combo.length - 1;
     // the next swing can start in the back half of the recovery
     if (c.queued && !last && c.t >= c.dur * 0.45 && canAffordAttack(w, e, wpn.stamina)) {
-      startSwing(w, e, c.idx + 1);
+      startSwing(w, e, c.idx + 1, !!c.offHand);
       return;
     }
     if (c.t >= c.dur) {
       pl.combo = null;
       pl.state = 'idle';
-      pl.nextComboIdx = last ? 0 : c.idx + 1;
-      pl.comboResetAt = w.time + 0.5;
+      // an off-hand shot leaves the main hand's combo where it was
+      if (!c.offHand) {
+        pl.nextComboIdx = last ? 0 : c.idx + 1;
+        pl.comboResetAt = w.time + 0.5;
+      }
       e.anim.pose = 'idle';
-      if (c.queued && last && canAffordAttack(w, e, wpn.stamina)) startSwing(w, e, 0);
+      if (c.queued && last && canAffordAttack(w, e, wpn.stamina)) startSwing(w, e, 0, !!c.offHand);
     }
   }
 }
@@ -747,7 +762,12 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
 
   // block / parry
   const holdToBlock = true;
-  if (pressed(inp, 'block')) {
+  const offShot = !!pl.derived.offWeapon;
+  if (pressed(inp, 'block') && offShot) {
+    // a crossbow in the off hand (D291): the block button shoots it, with its own stamina cost
+    const ow = pl.derived.offWeapon!;
+    if (pl.state === 'idle' && !pl.channel && !pl.charge && canAffordAttack(w, e, ow.def.stamina)) startSwing(w, e, 0, true);
+  } else if (pressed(inp, 'block')) {
     pl.blockToggled = !pl.blockToggled;
     const d = pl.derived;
     if (canAct(w, e) && d.shield && d.shield.parryS && d.shieldMeetsReq && d.canBlock && now >= pl.parryReadyAt) {
@@ -765,7 +785,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   const wantBlock = holdToBlock ? held(inp, 'block') : pl.blockToggled;
   // Phalanx: thrust while holding a two-hand guard
   const phalanx = !!e.buffs?.some((b) => b.id === 'phalanx' && b.until > now) && (pl.derived.twoHanded || !pl.derived.shield);
-  pl.blocking = wantBlock && (pl.state === 'idle' || (phalanx && pl.state === 'attack')) && pl.derived.canBlock && !pl.channel && !pl.charge;
+  pl.blocking = !offShot && wantBlock && (pl.state === 'idle' || (phalanx && pl.state === 'attack')) && pl.derived.canBlock && !pl.channel && !pl.charge;
 
   // actions from idle
   if (pl.state === 'idle' && !pl.channel && !pl.charge) {

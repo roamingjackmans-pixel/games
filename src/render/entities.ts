@@ -169,6 +169,10 @@ export function drawCharacterPreview(ctx: CanvasRenderingContext2D, c: Character
   if (paired && two) off = { x: Math.cos(f - 0.9) * 10, y: Math.sin(f - 0.9) * 10 + 2, a: f - rot * 0.8, draw: (g) => drawWeapon(g, wDraw, o.t, legendName) };
   else if (!two && shield) off = { x: Math.cos(f - 1.1) * 13, y: Math.sin(f - 1.1) * 13 + 2, a: Math.cos(f) * 0.18, hold: 'shield', draw: (g) => drawShield(g, shield.draw) };
   else if (!two && tool) off = { x: Math.cos(f - 1.1) * 13, y: Math.sin(f - 1.1) * 13 + 2, a: f - 0.4, draw: (g) => drawTool(g, tool.draw, o.t) };
+  else if (!two && offItem && WEAPONS[offItem.baseId]?.eitherHand) {
+    const od = WEAPONS[offItem.baseId]!.draw;
+    off = { x: Math.cos(f - 1.0) * 12, y: Math.sin(f - 1.0) * 12 + 2, a: f - 0.5, draw: (g) => drawWeapon(g, od, o.t) };
+  }
   drawJoe(ctx, look, { x: o.x, y: o.y, facing: f, t: o.t, moving: 0, scale: o.scale, twoHanded: two && !paired, main, ...(off ? { off } : {}) });
 }
 
@@ -251,7 +255,8 @@ function skillPose(e: Entity, now: number, rest: { rot: number; ext: number }): 
 /** Weapon angle relative to facing for the current swing phase. */
 function weaponPose(e: Entity): { rot: number; ext: number } {
   const pl = e.pl!;
-  const c = pl.combo;
+  // an off-hand shot (D291) leaves the main weapon at rest
+  const c = pl.combo?.offHand ? null : pl.combo;
   if (!c) {
     if (pl.blocking) return { rot: -0.9, ext: 0 };
     // a staff or talisman in the weapon hand points at the target while it casts (D117)
@@ -401,6 +406,12 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
       const side = -1.1 + 0.7 * cast;
       const rad = 13 + 2 * cast;
       off = { x: Math.cos(f + side) * rad, y: Math.sin(f + side) * rad + 2, a: f - 0.4 + 0.32 * cast, draw: (c) => drawTool(c, tool.draw, now) };
+    } else if (pl.derived.offWeapon) {
+      // a crossbow in the off hand (D291): held low at the side, raised and aimed while it shoots
+      const ow = pl.derived.offWeapon.def;
+      const aiming = pl.combo?.offHand ? 1 : 0;
+      const side = -1.0 + 0.75 * aiming;
+      off = { x: Math.cos(f + side) * 12, y: Math.sin(f + side) * 12 + 2, a: f - 0.5 * (1 - aiming), draw: (c) => drawWeapon(c, ow.draw, now) };
     }
   }
   // walking with something in hand: the arms swing with the stride as free hands do (D176), weapon hand forward as the

@@ -81,6 +81,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     reviveValue: 1.5,
     skills: ['crossbow_piercing_bolt', 'crossbow_explosive_bolt', 'crossbow_rapid_fire'],
     ranged: { speed: 620, pierceBonk: 30, volley: { count: 3, spreadDeg: 5 } }, // D205: three bolts at once
+    eitherHand: true, // D291: any weapon slot; in the off hand it shoots on the block button
     flavor: 'Reloading is a lifestyle.',
     draw: 'w_crossbow',
     legendaryNames: ['Second Opinion', 'The Notary', 'Quarrelsome'],

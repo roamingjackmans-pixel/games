@@ -84,7 +84,8 @@ export function recordOf(e: Entity, now: number): Rec {
     if (pl.blocking) flags |= F.blocking;
     if (pl.parryUntil > now) flags |= F.parry;
     if (pl.combo) {
-      cIdx = pl.combo.idx;
+      // an off-hand shot (D291) is sent as 100 + its index
+      cIdx = (pl.combo.offHand ? 100 : 0) + pl.combo.idx;
       cPhase = Math.max(0, COMBO_PHASES.indexOf(pl.combo.phase));
       cK = q((pl.combo.t / Math.max(0.001, pl.combo.dur)) * 255, 0, 255);
       if (pl.combo.charging) flags |= F.charging;

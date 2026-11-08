@@ -80,6 +80,8 @@ export interface ComboState {
   chargeT: number;
   speed: number;
   fired: boolean;
+  /** a shot of the weapon in the off hand (D291), on the block button */
+  offHand?: boolean;
 }
 
 export type PlayerState = 'idle' | 'attack' | 'dodge' | 'skill' | 'cast' | 'flask' | 'stagger' | 'held' | 'falling' | 'consumable' | 'channel' | 'charge' | 'dashing';

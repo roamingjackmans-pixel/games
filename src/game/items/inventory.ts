@@ -6,6 +6,7 @@ import { gearSellValue, gemFuseCost, gemSellTotal, levelCost } from '../combat/f
 import { canRaise, levelFromStats, respecStats } from '../player/character';
 import type { Character, ConsumableId, Gem, GemFamily, GemPerk, Item, Rarity, StatId } from '../types';
 import { newId } from './make';
+import { WEAPONS } from '../../data/weapons';
 
 export const BAG_SIZE = 60;
 export type EquipSlot = keyof Character['equipment'] | 'altMain' | 'altOff';
@@ -58,9 +59,14 @@ export function isToolItem(item: Pick<Item, 'kind'>): boolean {
   return item.kind === 'staff' || item.kind === 'talisman';
 }
 
+/** Goes in any of the four weapon slots: a staff, a talisman, or a weapon held in either hand (D291: the crossbow). */
+export function isEitherHandItem(item: Pick<Item, 'kind' | 'baseId'>): boolean {
+  return isToolItem(item) || (item.kind === 'weapon' && !!WEAPONS[item.baseId]?.eitherHand);
+}
+
 export function slotAccepts(slot: EquipSlot, item: Item): boolean {
-  if (slot === 'altMain' || slot === 'main') return item.slot === 'main' || isToolItem(item);
-  if (slot === 'altOff' || slot === 'off') return item.slot === 'off' || isToolItem(item);
+  if (slot === 'altMain' || slot === 'main') return item.slot === 'main' || isEitherHandItem(item);
+  if (slot === 'altOff' || slot === 'off') return item.slot === 'off' || isEitherHandItem(item);
   if ((RING_SLOTS as readonly string[]).includes(slot)) return item.slot === 'ring';
   return item.slot === slot;
 }

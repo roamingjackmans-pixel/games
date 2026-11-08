@@ -341,6 +341,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
         ),
       ),
     );
+    // D291: a crossbow goes in either hand
+    if (w.eitherHand) out.push(h('div', { class: 'small dim-text' }, 'Either hand: in the off hand, the block button shoots it.'));
 
     // D244: no Poise row on weapon cards. Skills: only the ones this item has unlocked (none: no section)
     const skills = itemUnlockedSkills(item);

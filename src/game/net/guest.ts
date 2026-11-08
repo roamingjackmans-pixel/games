@@ -414,10 +414,13 @@ export class NetGuest {
       pl.reviveProgress = r.extra / 100;
       pl.reviveNeed = Math.max(1, r.extra2 / 100);
       const ph = COMBO_PHASES[r.cPhase] ?? '';
-      const combo = pl.derived.weapon.combo;
+      // 100 + index: a shot of the off-hand weapon (D291)
+      const offShot = r.cIdx >= 100 && r.cIdx < 200 && !!pl.derived.offWeapon;
+      const idx = offShot ? r.cIdx - 100 : r.cIdx;
+      const combo = offShot ? pl.derived.offWeapon!.def.combo : pl.derived.weapon.combo;
       if (ph && combo.length) {
-        const swing = combo[r.cIdx % combo.length]!;
-        pl.combo = { idx: r.cIdx, phase: ph, t: r.cK / 255, dur: 1, swing, hit: new Set(), queued: false, charging: (r.flags & F.charging) !== 0, chargeT: 0, speed: 1, fired: false };
+        const swing = combo[idx % combo.length]!;
+        pl.combo = { idx, phase: ph, t: r.cK / 255, dur: 1, swing, hit: new Set(), queued: false, charging: (r.flags & F.charging) !== 0, chargeT: 0, speed: 1, fired: false, ...(offShot ? { offHand: true } : {}) };
       } else pl.combo = null;
       // another player's weapon skill, for its weapon's motion (D234): only drawn, never run here
       if (!ph && r.cIdx >= 200 && pl.state === 'skill') {
