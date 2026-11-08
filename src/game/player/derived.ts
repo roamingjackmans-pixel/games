@@ -9,7 +9,7 @@ import { armorPieceDefense } from '../../data/armor';
 import { AFFIXES, affixBuildup } from '../../data/affixes';
 import { SET_PERKS, setStep } from '../../data/setPerks';
 import { GEMS, gemBuildup, perkValue } from '../../data/gems';
-import { RINGS, bandAmount, bandStat } from '../../data/rings';
+import { RINGS, ballastPoise, bandAmount, bandStat } from '../../data/rings';
 import { castMoveMult, slickCast, dodgeRecharge, itemSkillCount, maxHP, maxStamina, scalingMult, staminaRegen, toolMult, weaponBase } from '../combat/formulas';
 import { itemRequirements, meetsRequirements } from '../items/bases';
 import { equipLoadOf, type EquipLoadInfo } from './equipLoad';
@@ -262,6 +262,8 @@ export function computeDerived(c: Character): Derived {
   let gemFind = 0;
   let reviveBonus = 0;
   let flaskBonus = 0;
+  /** D313: poise from rings, affixes and set perks, on top of armour and shield (D312) */
+  let poiseBonus = 0;
   let hpFlat = 0;
   /** Hearth gems (D260): a share of max HP */
   let hpPctGem = 0;
@@ -306,6 +308,9 @@ export function computeDerived(c: Character): Derived {
           break;
         case 'fleet':
           dodgeRed += v;
+          break;
+        case 'ballasted':
+          poiseBonus += v;
           break;
         case 'frugal':
           stamCostPct += v / 100;
@@ -398,6 +403,8 @@ export function computeDerived(c: Character): Derived {
   dmgPct += 0.15 * rn('slumlords_signet');
   maxHpMult *= Math.pow(0.85, rn('slumlords_signet'));
   if (rn('red_thread')) redTakenMult = Math.pow(0.75, rn('red_thread'));
+  // D313: each Ballast Ring worn adds poise by its rarity
+  for (const it of items) if (it.kind === 'ring' && it.baseId === 'ballast_ring') poiseBonus += ballastPoise(it.rarity);
   // legendary powers that are plain numbers
   if (powers.has('hungering')) {
     lifesteal += 0.04;
@@ -443,6 +450,7 @@ export function computeDerived(c: Character): Derived {
     parrySet += e.parryS ?? 0;
     statusSet += e.statusBuildupPct ?? 0;
     flaskBonus += e.flaskPct ?? 0;
+    poiseBonus += e.poise ?? 0;
   }
   if (statusSet) for (const sb of statusBuild) sb.buildup *= 1 + statusSet;
   if (powers.has('unyielding')) stabilityRed += 0.4;
@@ -532,8 +540,8 @@ export function computeDerived(c: Character): Derived {
     ringCounts,
     setCounts,
     maxHpMult,
-    poiseThresholdPct: poise / 100,
-    poise,
+    poiseThresholdPct: (poise + poiseBonus) / 100,
+    poise: poise + poiseBonus,
     staminaRegenMult: regenMult,
     canBlock: !rings.has('red_thread'),
     redTakenMult,

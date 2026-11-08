@@ -17,6 +17,8 @@ export const RINGS: Record<string, RingDef> = {
   glowcatcher: { id: 'glowcatcher', name: 'Glowcatcher', weight: 1.0, floor: 'epic', effect: '+25% gem drop chance, +20% Glowen.', flavor: 'Glowen sticks to it like gossip.' },
   red_thread: { id: 'red_thread', name: 'Red Thread', weight: 0.7, floor: 'legendary', effect: 'Blocking is impossible; Red attacks deal −25% to you.', flavor: 'Tied around a finger. Remember to dodge.' },
   ghost_lantern: { id: 'ghost_lantern', name: 'Ghost Lantern', weight: 1.1, floor: 'legendary', effect: 'Your hits on ghosts count double for reviving.', flavor: 'For friends who fell down the stairs.' },
+  // D313: poise (D312) on a ring; each one worn counts
+  ballast_ring: { id: 'ballast_ring', name: 'Ballast Ring', weight: 1.0, floor: 'rare', effect: '+5 poise (+7 Epic, +10 Legendary).', flavor: 'A ring with a weight on it. Keeps you where you were standing.' },
   slumlords_signet: { id: 'slumlords_signet', name: "Slumlord's Signet", weight: 1.2, floor: 'legendary', effect: '+15% damage, −15% max HP.', flavor: 'Pays well. Takes its cut out of you first.' },
 };
 
@@ -39,6 +41,11 @@ export function bandStat(ringId: string): 'bonk' | 'slicey' | 'brain' | 'prayer'
     default:
       return null;
   }
+}
+
+/** Poise from a Ballast Ring by its rarity (D313). */
+export function ballastPoise(rarity: string): number {
+  return rarity === 'legendary' ? 10 : rarity === 'epic' ? 7 : 5;
 }
 
 export function bandAmount(rarity: string): number {

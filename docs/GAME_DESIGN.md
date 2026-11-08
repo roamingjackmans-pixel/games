@@ -395,7 +395,8 @@ Bosses can be parried only on attacks marked *parryable*, and need two parries w
 
 **Being hit**: your **Poise** (D312) is the share of your max HP a hit must deal to stagger you: **8%**, plus armour
 (per piece light 1 / 2 / 1, medium 2 / 5 / 3, heavy 4 / 8 / 5 for head / body / legs: a full set +4, +10, +17) and a
-held shield (medium +2, great +5; none while two-handing), plus poise buffs. A hit of at least that interrupts you with
+held shield (medium +2, great +5; none while two-handing), plus rings (Ballast Ring +5 / +7 / +10 by rarity, the
+Ballasted affix +2–5) and the Load-Bearing Wall set perk (+5 / +10 / +18) (D313), plus poise buffs. A hit of at least that interrupts you with
 a 0.3 s stagger unless you have hyper armor; a **projectile needs twice** your poise; smaller hits only flinch. Poise
 shows on the stats panel and on armour and shield cards. A hit on a held player does not stagger them out of the hold.
 
@@ -704,8 +705,8 @@ damage, defense per type, max HP / stamina, Shard / Glowen / gem find, revive va
 **Legendary powers** (`data/legendaries.ts`) are unique effects on Legendary items (e.g. Joe's Lucky Socks: +1
 Thermos maximum).
 
-**Set perks** (D243, D245): any piece of gear can carry one of nine set perks — Counteroffer, Moonlight Flit,
-Eviction, Squatter's Rights, Fine Print, Late Fees, Handyman, Demolition, Tea Break. Wearing **3, 5 or 7** pieces with
+**Set perks** (D243, D245): any piece of gear can carry one of ten set perks — Counteroffer, Moonlight Flit,
+Eviction, Squatter's Rights, Fine Print, Late Fees, Handyman, Demolition, Tea Break, Load-Bearing Wall (poise, D313). Wearing **3, 5 or 7** pieces with
 the same one (every slot in use counts) gives a small, medium or large bonus to that playstyle. Drop chance: Uncommon
 7.8%, Rare 14.3%, Epic 20.8%, Legendary 29.3%; Commons never.
 
@@ -714,9 +715,9 @@ the item card (D171).
 
 ### 8.5 Rings
 
-Fifteen rings (`data/rings.ts`), each 0.8–1.5 weight (D237): Bands of Bonk / Slicey / Brain / Prayer / Vigor / Health,
+Sixteen rings (`data/rings.ts`), each 0.8–1.5 weight (D237): Bands of Bonk / Slicey / Brain / Prayer / Vigor / Health,
 the Lucky Charm (Shard find), Fleet Ring, Ring of Stillness, Chloranthy Knot, Glowcatcher, Red Thread, Ghost Lantern,
-Thermos Lid, Slumlord's Signet and others. **Every copy worn counts** (D227).
+Thermos Lid, Slumlord's Signet, the Ballast Ring (poise, D313) and others. **Every copy worn counts** (D227).
 
 ### 8.6 Weight and equip load (D82, D163, D196)
 

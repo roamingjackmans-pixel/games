@@ -35,6 +35,8 @@ export interface SetEffect {
   statusBuildupPct?: number;
   /** the Thermos heals more */
   flaskPct?: number;
+  /** poise (D312, D313): points of your stagger threshold, % of max HP */
+  poise?: number;
 }
 
 export interface SetPerkDef {
@@ -149,6 +151,19 @@ export const SET_PERKS: Record<string, SetPerkDef> = {
       { poiseDamagePct: 0.4, damagePct: 0.1, maxHpPct: 0.05 },
     ],
   }),
+  load_bearing_wall: S({
+    id: 'load_bearing_wall',
+    name: 'Load-Bearing Wall',
+    style: 'Standing your ground (poise)',
+    color: '#b08a5a',
+    flavor: 'The building leans on you now. Do not move.',
+    // D313: a good bit more poise, with a little defense and HP to go with it
+    steps: [
+      { poise: 5, defense: 4 },
+      { poise: 10, defense: 8, maxHpPct: 0.04 },
+      { poise: 18, defense: 14, maxHpPct: 0.08 },
+    ],
+  }),
   tea_break: S({
     id: 'tea_break',
     name: 'Tea Break',
@@ -204,5 +219,6 @@ export function setEffectText(e: SetEffect): string {
   if (e.parryS) out.push(`+${e.parryS.toFixed(2)} s parry window`);
   if (e.statusBuildupPct) out.push(`+${pct(e.statusBuildupPct)} status buildup`);
   if (e.flaskPct) out.push(`Thermos heals +${pct(e.flaskPct)}`);
+  if (e.poise) out.push(`+${e.poise} poise`);
   return out.join(', ');
 }

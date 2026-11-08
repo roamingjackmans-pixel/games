@@ -174,6 +174,7 @@ Rings have no ilvl scaling except the bands' stat amount. A ring's floor is the 
 | **Glowcatcher** | epic | +25% gem drop chance, +20% Glowen. | 1 |
 | **Red Thread** | legendary | Blocking is impossible; Red attacks deal −25% to you. | 0.7 |
 | **Ghost Lantern** | legendary | Your hits on ghosts count double for reviving. | 1.1 |
+| **Ballast Ring** | rare | +5 poise (+7 Epic, +10 Legendary) (D313). | 1 |
 | **Slumlord's Signet** | legendary | +15% damage, −15% max HP. | 1.2 |
 
 ## 7. Legendary powers
@@ -221,6 +222,7 @@ percentages are fixed.
 | **Swift** | prefix | weapon | +4–10% attack speed | no |
 | **Hasty** | prefix | weapon, ring | −4–12% skill cooldowns | no |
 | **Fleet** | prefix | legs, ring | −0.3–0.6 s dodge recharge | no |
+| **Ballasted** | prefix | ring | +2–5 poise (D313) | no |
 | **Frugal** | prefix | weapon, body | −5–12% stamina costs | no |
 | **Leeching** | prefix | weapon | 1–3% lifesteal | no |
 | **Crushing** | prefix | weapon | +10–30% poise damage | no |
@@ -260,6 +262,7 @@ the one before. Chance a piece rolls one (D245): common 0%, uncommon 7.8%, rare 
 | **Handyman** | Weapon skills | −6% skill cooldowns | −12% skill cooldowns, −5% stamina costs | +5% damage, −20% skill cooldowns, −10% stamina costs |
 | **Demolition** | Heavy hits and staggers | +10% poise damage | +4% damage, +25% poise damage | +10% damage, +40% poise damage, +5% max HP |
 | **Tea Break** | Healing and staying power | +8% stamina regen, Thermos heals +10% | +15% stamina regen, 1% life steal, Thermos heals +20% | +25% stamina regen, 2% life steal, Thermos heals +35% |
+| **Load-Bearing Wall** | Standing your ground (poise, D313) | +5 poise, +4 defense (all) | +10 poise, +8 defense (all), +4% max HP | +18 poise, +14 defense (all), +8% max HP |
 
 ## 10. Gems
 

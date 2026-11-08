@@ -35,6 +35,8 @@ export const AFFIXES: Record<string, AffixDef> = {
   radiant: A({ id: 'radiant', name: 'Radiant', pos: 'prefix', slots: ['weapon'], lo: 4, hi: 12, flat: true, text: '+{v} holy damage', element: 'holy', buildup: [10, 25], integer: true }),
   dusky: A({ id: 'dusky', name: 'Dusky', pos: 'prefix', slots: ['weapon'], lo: 4, hi: 12, flat: true, text: '+{v} void damage', element: 'void', buildup: [10, 25], integer: true }),
   swift: A({ id: 'swift', name: 'Swift', pos: 'prefix', slots: ['weapon'], lo: 4, hi: 10, flat: false, text: '+{v}% attack speed', integer: true }),
+  // D313: poise (D312) on a ring; it does not grow with item level (poise is a share of your max HP)
+  ballasted: A({ id: 'ballasted', name: 'Ballasted', pos: 'prefix', slots: ['ring'], lo: 2, hi: 5, flat: false, text: '+{v} poise', integer: true }),
   hasty: A({ id: 'hasty', name: 'Hasty', pos: 'prefix', slots: ['weapon', 'ring'], lo: 4, hi: 12, flat: false, text: '−{v}% skill cooldowns', integer: true }),
   fleet: A({ id: 'fleet', name: 'Fleet', pos: 'prefix', slots: ['legs', 'ring'], lo: 0.3, hi: 0.6, flat: false, text: '−{v} s dodge recharge' }),
   frugal: A({ id: 'frugal', name: 'Frugal', pos: 'prefix', slots: ['weapon', 'body'], lo: 5, hi: 12, flat: false, text: '−{v}% stamina costs', integer: true }),
