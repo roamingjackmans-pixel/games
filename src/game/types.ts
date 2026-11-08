@@ -561,6 +561,8 @@ export interface BossPhase {
   };
   /** the name on the boss bar in this phase (else the boss's own name) */
   barName?: string;
+  /** this phase's bar as a share of the boss's full HP (D289; else 1): the first phase's from the start, a refilling phase's when it starts */
+  barMult?: number;
   /** with refillHp: the new bar's size, as a multiple of the HP the phase before had to lose (its span of the bar) */
   hpOfPrevPhase?: number;
   /** how long this phase's invulnerable transition lasts (else PHASE_TRANSITION_S) */

@@ -208,7 +208,8 @@ export const FOREMAN_IGNATIUS: BossDef = {
   traits: { turnRate: 120 },
   phases: [
     // D253: phase 1 runs the whole bar; the "killing" blow splits them and phase 2 starts on a full bar
-    { untilHpPct: 0, speedMult: 1, dmgMult: 1, arena: [LAVA], attacks: [golemSlam, hammerThrow(), forgeStrike, flamePillars(1.0), stoke] },
+    // D289: the first bar is 60% of his HP (40% less); phase 2 refills to the full HP
+    { untilHpPct: 0, barMult: 0.6, speedMult: 1, dmgMult: 1, arena: [LAVA], attacks: [golemSlam, hammerThrow(), forgeStrike, flamePillars(1.0), stoke] },
     {
       untilHpPct: 0,
       name: 'The Golem goes molten',

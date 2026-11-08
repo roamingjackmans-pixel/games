@@ -65,6 +65,10 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   const resist = { ...(o.zoneResist ?? {}), ...def.resist };
   const immune = [...(o.zoneImmune ?? []), ...(def.statusImmune ?? [])];
   const now = w.time;
+  // a boss's first bar may be a share of its full HP (D289); hpScaleBase stays the full HP
+  const bar = isBoss ? ((def as BossDef).phases[0]?.barMult ?? 1) : 1;
+  const hpBase = hp / coop;
+  hp *= bar;
   const en: EnemyC = {
     def: { ...def, resist } as EnemyDef,
     isBoss,
@@ -120,7 +124,8 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
     spawnedAt: now,
     regenBlockedUntil: 0,
     attachedTo: 0,
-    hpScaleBase: hp / coop,
+    hpScaleBase: hpBase,
+    barMult: bar,
     poiseScaleBase: basePoise,
     share,
     splitDone: false,
@@ -189,7 +194,7 @@ export function rescaleForPlayers(w: World, players: number): void {
     if (e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
     const frac = e.hp.hp / e.hp.max;
     // everyone grows (or shrinks) with the party now, keeping their HP fraction (D159)
-    e.hp.max = e.en.hpScaleBase * coopHpMult(players, e.en.isBoss || !!e.en.elite);
+    e.hp.max = e.en.hpScaleBase * coopHpMult(players, e.en.isBoss || !!e.en.elite) * (e.en.barMult ?? 1);
     e.hp.hp = Math.max(1, frac * e.hp.max);
   }
 }

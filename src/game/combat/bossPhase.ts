@@ -55,10 +55,15 @@ export function startBossPhase(w: World, e: Entity, phase: number): void {
   en.phaseAttacks = ph.attacks;
   // D253: a full bar again for the new phase; a second health pool is sized from what the last phase had to lose
   if (ph.refillHp && e.hp) {
+    // the boss's full HP, whatever share of it the last bar was (D289)
+    const full = e.hp.max / (en.barMult ?? 1);
+    let bar = ph.barMult ?? 1;
     if (ph.hpOfPrevPhase) {
       const span = Math.max(1, phaseStartPct(def, prev) - (def.phases[prev]?.untilHpPct ?? 0)) / 100;
-      e.hp.max = Math.max(1, e.hp.max * span * ph.hpOfPrevPhase);
+      bar = (en.barMult ?? 1) * span * ph.hpOfPrevPhase;
     }
+    en.barMult = bar;
+    e.hp.max = Math.max(1, full * bar);
     e.hp.hp = e.hp.max;
   }
   const trans = phaseTransitionS(def, phase);

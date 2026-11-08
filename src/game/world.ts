@@ -287,6 +287,8 @@ export interface EnemyC {
   regenBlockedUntil: number;
   attachedTo: number;
   hpScaleBase: number;
+  /** a boss's current bar as a share of its full HP (D289): the party rescale keeps it */
+  barMult?: number;
   /** Poise before the co-op boss multiplier (D194). */
   poiseScaleBase: number;
   /** room-wave enemies: Shards and drop chances divided by this (D79) */

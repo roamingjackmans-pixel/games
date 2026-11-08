@@ -805,6 +805,10 @@ export class GameSession {
     ph.attacks.forEach((a, k) => {
       en.cooldowns[a.id] = w.time + 2.2 + k * 0.4;
     });
+    // that phase's bar (D289), then 30% of it
+    const full = e.hp!.max / (en.barMult ?? 1);
+    en.barMult = ph.barMult ?? 1;
+    e.hp!.max = Math.max(1, full * en.barMult);
     e.hp!.hp = Math.max(1, e.hp!.max * BONUS_BOSS_HP_PCT);
     en.shards = Math.max(1, Math.round(en.shards * BONUS_BOSS_SHARD_MULT));
     w.bossId = e.id;

@@ -256,7 +256,8 @@ describe('Foreman Ignatius', () => {
     expect(p1.size, [...p1].join()).toBeGreaterThanOrEqual(3);
     bigHit(s, b, max * 10);
     expect(b.hp!.dead).toBe(false);
-    expect(b.hp!.hp).toBe(max);
+    // phase 2's bar is his full HP; the first was 60% of it (D289)
+    expect(b.hp!.hp).toBeCloseTo(max / 0.6, 3);
     expect(b.en!.phase).toBe(1);
     const p2 = watch(s, 40);
     expect(b.en!.phase).toBe(1);
