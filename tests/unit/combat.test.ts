@@ -48,13 +48,22 @@ describe('formulas (GAME_DESIGN §3)', () => {
     expect(maxHP(10)).toBe(240);
     expect(maxHP(30)).toBe(520);
     expect(maxHP(40)).toBe(600);
-    expect(maxHP(99)).toBe(100 + 30 * 14 + 30 * 8 + 39 * 3);
+    // D311: past 50 the points' worth grows with an S weapon's shape: about double by 100, ×3 again from 150 to 999
+    expect(maxHP(50)).toBe(680);
+    expect((maxHP(100) - 100) / (maxHP(50) - 100)).toBeCloseTo(2, 5);
+    expect((maxHP(999) - 100) / (maxHP(150) - 100)).toBeCloseTo(3, 5);
     expect(maxStamina(10)).toBe(105);
+    expect(maxStamina(99)).toBe(Math.round(70 + 30 * 3.5 + 30 * 2 + 39 * 0.8));
   });
   it('scaling curve values', () => {
     expect(scalingCurve(10)).toBeCloseTo(0.166, 2);
     expect(scalingCurve(40)).toBeCloseTo(0.517, 2);
-    expect(scalingCurve(99)).toBeCloseTo(0.834, 2);
+    // D311: unchanged to 50; an S weapon (×1.9) doubles from 50 to 100 and triples from the soft cap 150 to 999
+    expect(scalingCurve(50)).toBeCloseTo(1 - Math.pow(0.982, 50), 10);
+    const s = (x: number): number => 1 + 1.9 * scalingCurve(x);
+    expect(s(100) / s(50)).toBeCloseTo(2, 6);
+    expect(s(999) / s(150)).toBeCloseTo(3, 6);
+    expect(scalingCurve(2000)).toBe(scalingCurve(999));
   });
   it('weapon damage and the 40% requirement penalty', () => {
     const full = weaponDamage(62, 1, { bonk: 'S', slicey: '-' }, { bonk: 14, slicey: 5 }, false, 1);

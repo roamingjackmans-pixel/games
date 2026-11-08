@@ -13,8 +13,9 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
 - **Weapon base damage** = `base1 × (1 + 0.45 × (ilvl − 1))`. **Armour defense** = `def1 × slot × (1 + 0.6 × (ilvl −
   1))`. **Requirements** grow `+2 per ilvl` to ilvl 8, then +0.5 per ilvl, on the primary stat only, never past 90 (D299).
 - **Damage per hit** = base × (1 + Σ grade × f(stat)) × the swing's multiplier × rarity × reinforcement × your bonuses,
-  40% below requirement. f(s) = 1 − 0.982^s; grade weights S 1.9, A 1.55, B 1.15, C 0.8, D 0.45, E 0.2. Two-handing
-  counts Bonk ×1.5 (cap 99) for scaling and requirements (D72). Classes get ×1.25 from their primary stat and ×1.15
+  40% below requirement. f(s) is the stat curve of GAME_DESIGN §3.1 (D311: stats to 999;
+  an S weapon ×2.13 at 50, ×4.27 at 100, ×5.87 at the soft cap 150, ×17.6 at 999); grade weights S 1.9, A 1.55, B 1.15,
+  C 0.8, D 0.45, E 0.2. Two-handing counts Bonk ×1.5 (cap 999) for scaling and requirements (D72). Classes get ×1.25 from their primary stat and ×1.15
   from their secondary (D184). **Grades are spread from E to S on purpose (D40).**
 - **Rarity power** (D178, D221): Common ×1, Uncommon ×1.06, Rare ×1.12, Epic ×1.2, Legendary ×1.28, on weapon damage,
   a casting tool's Spell Skill and a shield's block and stability. Armour defense does not depend on rarity.

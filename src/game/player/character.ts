@@ -5,7 +5,7 @@ import { SPELLS } from '../../data/spells';
 import type { Rng } from '../../engine/rng';
 import { makeItem } from '../items/make';
 import type { Character, ClassId, Gem, Item, StatId } from '../types';
-import { pointsForLevel } from '../combat/formulas';
+import { STAT_CAP, pointsForLevel } from '../combat/formulas';
 
 export function newCharacter(classId: ClassId, name: string, playerId: string, rng?: Rng): Character {
   const cls = CLASSES[classId];
@@ -66,7 +66,7 @@ export function levelFromStats(c: Character): number {
 }
 
 export function canRaise(c: Character, stat: StatId): boolean {
-  return c.stats[stat] < 99;
+  return c.stats[stat] < STAT_CAP;
 }
 
 /** Reset stats to the class base, keeping the level's points as unspent (refunded as levels to re-buy). */

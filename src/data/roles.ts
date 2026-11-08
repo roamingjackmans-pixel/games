@@ -58,13 +58,13 @@ export function zoneDmgFactor(zone: number): number {
 export const NG_ZONE_ENEMY_DMG: Record<number, number> = { 2: 2, 3: 1.64, 4: 1.59, 5: 1.5, 6: 1.37, 7: 1.34, 8: 1.65 }; // refitted after D308 raised weak attackers
 
 /**
- * New Game+ boss HP, by the boss's own zone (D301; refitted with D307's levels): sized so the median build of the balance report
+ * New Game+ boss HP, by the boss's own zone (D301; refitted with D307's levels and D311's stat curve): sized so the median build of the balance report
  * (docs/balance/report.md, nonstop light attacks) takes about 5 minutes on a zone boss and 8 on the Landlord in NG+1,
  * and about 8 and 11 minutes from NG+2 on. Later cycles use the NG+2 column on top of the usual cycle growth.
  */
 export const NG_BOSS_HP: Record<1 | 2, Record<number, number>> = {
-  1: { 1: 1.56, 2: 1.91, 3: 2.29, 4: 2.13, 5: 1.64, 6: 1.8, 7: 1.91, 8: 1.35 },
-  2: { 1: 2.82, 2: 3.1, 3: 3.41, 4: 3.04, 5: 2.23, 6: 2.36, 7: 2.48, 8: 1.5 },
+  1: { 1: 1.61, 2: 1.98, 3: 2.27, 4: 2.14, 5: 1.65, 6: 1.84, 7: 1.98, 8: 1.42 },
+  2: { 1: 2.87, 2: 3.1, 3: 3.33, 4: 2.88, 5: 2.04, 6: 2.1, 7: 2.13, 8: 1.25 },
 };
 
 export function ngBossHpMult(zone: number, cycle: number): number {
@@ -86,6 +86,41 @@ export const NG_LEVEL_COMP: { hp: Record<1 | 2, Record<number, number>>; dmg: Re
 export function ngLevelComp(kind: 'hp' | 'dmg', zone: number, cycle: number): number {
   if (cycle < 1) return 1;
   return NG_LEVEL_COMP[kind][cycle >= 2 ? 2 : 1][Math.max(1, Math.min(8, zone))] ?? 1;
+}
+
+/**
+ * The longer stat curve (D311) makes a player stronger from the late first playthrough on; enemies grow by 70% of the
+ * gain (owner: "30% less") through NG+2. Measured on the balance report's builds at each zone's expected level: the
+ * damage gain (new curve and 999 cap against the old curve and 99 cap) sets enemy HP, the HP gain sets enemy damage.
+ * From NG+3 on the cycle's own factors take over (NG_LATE), since the old curve stopped growing there at all.
+ */
+export const STAT_CURVE_COMP: { hp: Record<0 | 1 | 2, Record<number, number>>; dmg: Record<0 | 1 | 2, Record<number, number>> } = {
+  hp: { 0: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1.021 }, 1: { 1: 1.082, 2: 1.139, 3: 1.186, 4: 1.227, 5: 1.274, 6: 1.323, 7: 1.383, 8: 1.436 }, 2: { 1: 1.498, 2: 1.559, 3: 1.605, 4: 1.652, 5: 1.706, 6: 1.76, 7: 1.821, 8: 1.881 } },
+  dmg: { 0: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1 }, 1: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1.011, 7: 1.024, 8: 1.048 }, 2: { 1: 1.076, 2: 1.102, 3: 1.133, 4: 1.161, 5: 1.188, 6: 1.214, 7: 1.245, 8: 1.266 } },
+};
+
+/**
+ * NG+3 on (D311): HP and damage of every enemy and boss by cycle, on top of everything else. HP keeps boss fights
+ * near 8 minutes (the Landlord 11) through NG+7 and a little longer after; damage lets a build grow sturdier through
+ * NG+7, then climbs so NG+10 takes real skill. Cycles past the table use its last entry.
+ */
+export const NG_LATE: Record<number, { hp: number; dmg: number }> = {
+  3: { hp: 1.5, dmg: 1.06 },
+  4: { hp: 1.2, dmg: 0.74 },
+  5: { hp: 1.26, dmg: 0.74 },
+  6: { hp: 1.28, dmg: 0.73 },
+  7: { hp: 1.29, dmg: 0.69 },
+  8: { hp: 1.33, dmg: 0.84 },
+  9: { hp: 1.36, dmg: 1.09 },
+  10: { hp: 1.4, dmg: 1.57 },
+};
+
+export function statCurveComp(kind: 'hp' | 'dmg', zone: number, cycle: number): number {
+  const z = Math.max(1, Math.min(8, zone));
+  if (cycle <= 2) return STAT_CURVE_COMP[kind][Math.max(0, cycle) as 0 | 1 | 2][z] ?? 1;
+  const keys = Object.keys(NG_LATE).map(Number).filter((k) => k <= cycle);
+  if (keys.length === 0) return 1;
+  return NG_LATE[Math.max(...keys)]![kind];
 }
 
 export function ngZoneEnemyDmg(zone: number, cycle: number): number {

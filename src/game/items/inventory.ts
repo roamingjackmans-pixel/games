@@ -2,7 +2,7 @@
 // the co-op host runs the same functions to check guests' commands (NETCODE §6).
 import { GEMS, gemKind, gemKindLabel, gemOrigin, gemTitle } from '../../data/gems';
 import { CONSUMABLES, MAX_CONSUMABLE } from '../../data/consumables';
-import { buyPrice, gearSellValue, gemFuseCost, gemSellTotal, levelCost } from '../combat/formulas';
+import { STAT_CAP, buyPrice, gearSellValue, gemFuseCost, gemSellTotal, levelCost } from '../combat/formulas';
 import { canRaise, levelFromStats, respecStats } from '../player/character';
 import type { Character, ConsumableId, Gem, GemFamily, GemPerk, Item, Rarity, StatId } from '../types';
 import { newId } from './make';
@@ -386,7 +386,7 @@ export function buyGem(c: Character, gem: Gem, price: number): OpResult {
 // ------------------------------------------------------------------ levels
 
 export function levelUp(c: Character, stat: StatId): OpResult {
-  if (!canRaise(c, stat)) return no(`${stat} is at 99.`);
+  if (!canRaise(c, stat)) return no(`${stat} is at ${STAT_CAP}.`);
   if (c.freePoints > 0) {
     c.freePoints--;
     c.stats[stat]++;

@@ -13,7 +13,7 @@ import { armorPieceDefense, parseArmorBase } from '../data/armor';
 import { ELEMENTS } from '../game/elements';
 import { baseInfo, itemRequirements, meetsRequirements, type Requirements } from '../game/items/bases';
 import { defaultSlotFor, itemSellValue, WORN_SLOTS, type EquipSlot } from '../game/items/inventory';
-import { reqAtIlvl, scalingMult, toolMult, weaponBase } from '../game/combat/formulas';
+import { STAT_CAP, reqAtIlvl, scalingMult, toolMult, weaponBase } from '../game/combat/formulas';
 import { computeDerived } from '../game/player/derived';
 import { toolSpellSkill } from '../game/skills/use';
 import { itemUnlockedSkills } from '../game/items/weaponSkills';
@@ -465,7 +465,7 @@ function requirementsEl(req: Requirements, stats: Stats, twoH: boolean, weapon: 
   const rows: Row[] = [];
   for (const key of ['bonk', 'slicey', 'brain', 'prayer'] as const) {
     if (!req[key]) continue;
-    const have = key === 'bonk' && weapon && twoH ? Math.min(99, Math.floor(stats.bonk * 1.5)) : stats[key];
+    const have = key === 'bonk' && weapon && twoH ? Math.min(STAT_CAP, Math.floor(stats.bonk * 1.5)) : stats[key];
     const ok = have >= req[key];
     rows.push({ label: STAT_LABEL[key], cur: req[key], better: 'none', fmt: int0, cls: ok ? '' : 'req-bad', after: ok ? undefined : `(you have ${have})` });
   }

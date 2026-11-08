@@ -14,47 +14,36 @@ function piecewise(points: number, table: [number, number][]): number {
   return total;
 }
 
+/** Every stat goes to 999 (D311; was 99). Most of a stat's worth comes by 150, the soft cap. */
+export const STAT_CAP = 999;
+export const STAT_SOFT_CAP = 150;
+
 // `m` on each stat formula below is the class's boost for that stat (D184): primary 1.25, secondary 1.15, else 1. It
 // multiplies what the points give, never the base.
+/**
+ * Max HP (D311): up to HP 50 as before (14 a point to 30, 8 to 60); past 50 what the points give grows with the same
+ * shape as an S weapon's damage (statGrowth): about ×2 by 100, more slowly past the soft cap 150, ×3 again by 999.
+ */
 export function maxHP(hpStat: number, m = 1): number {
-  return Math.round(
-    100 +
-      m *
-        piecewise(hpStat, [
-          [30, 14],
-          [60, 8],
-          [99, 3],
-        ]),
-  );
+  const s = Math.max(0, hpStat);
+  const p = s <= 50 ? piecewise(s, [[30, 14], [60, 8]]) : piecewise(50, [[30, 14], [60, 8]]) * statGrowth(s);
+  return Math.round(100 + m * p);
 }
 
+/** Max stamina (D311): as before to 99, then +0.8 a point to 150 and +0.3 a point to 999. */
 export function maxStamina(stamStat: number, m = 1): number {
-  return Math.round(
-    70 +
-      m *
-      piecewise(stamStat, [
-        [30, 3.5],
-        [60, 2],
-        [99, 0.8],
-      ]),
-  );
+  return Math.round(70 + m * piecewise(stamStat, [[30, 3.5], [60, 2], [99, 0.8], [STAT_SOFT_CAP, 0.8], [STAT_CAP, 0.3]]));
 }
 
-/** Max equip load (D82): 26 + 1.5 per Endurance point to 30, 1.0 to 60, 0.5 to 99. */
+/** Max equip load (D82, D311): 26 + 1.5 per Endurance point to 30, 1.0 to 60, 0.5 to 150, 0.1 to 999. */
 export function maxEquipLoad(endurance: number, m = 1): number {
-  return (
-    26 +
-    m *
-    piecewise(endurance, [
-      [30, 1.5],
-      [60, 1.0],
-      [99, 0.5],
-    ])
-  );
+  return 26 + m * piecewise(endurance, [[30, 1.5], [60, 1.0], [STAT_SOFT_CAP, 0.5], [STAT_CAP, 0.1]]);
 }
 
+/** Stamina regen (D311): +0.25 a point to 150, then +0.02 a point. */
 export function staminaRegen(stamStat: number, m = 1): number {
-  return 22 + 0.25 * stamStat * m;
+  const s = Math.max(0, stamStat);
+  return 22 + (0.25 * Math.min(s, STAT_SOFT_CAP) + 0.02 * Math.max(0, s - STAT_SOFT_CAP)) * m;
 }
 export const STAMINA_REGEN_DELAY = 0.6;
 
@@ -77,26 +66,51 @@ export function attackStaminaCost(amount: number, stamCost: number, buffPct: num
 /** Elites have 50% more poise on top of their bigger body (D105). */
 export const ELITE_POISE_MULT = 1.5;
 
-/** Spell cast speed from Slicey (D106): ×(1 + 0.25 f(Slicey)), ≈ +13% at 40, +21% at 99. */
+/** Spell cast speed from Slicey (D106): ×(1 + 0.25 f(Slicey)), ≈ +13% at 40, +21% at 99 (the old, settling curve). */
 export function slickCast(slicey: number, m = 1): number {
-  return 1 + 0.25 * scalingCurve(slicey) * m;
+  return 1 + 0.25 * softStatCurve(slicey) * m;
 }
-/** Walking speed while casting (D106): 50% of normal, + 0.25 f(Bonk), ≈ 63% at 40, 70% at 99. */
+/** Walking speed while casting (D106): 50% of normal, + 0.25 f(Bonk), ≈ 63% at 40, 70% at 99 (the old curve). */
 export function castMoveMult(bonk: number, m = 1): number {
-  return 0.5 + 0.25 * scalingCurve(bonk) * m;
+  return 0.5 + 0.25 * softStatCurve(bonk) * m;
 }
 
-/** Scaling curve f(s) = 1 − 0.982^s */
-export function scalingCurve(s: number): number {
+/** The old scaling curve 1 − 0.982^s: it settles near 1 by 99. Cast speed and moving while casting still use it. */
+export function softStatCurve(s: number): number {
   return 1 - Math.pow(0.982, Math.max(0, s));
+}
+
+// Damage scaling (D311). With grade S (×1.9) a weapon's stat multiplier 1 + 1.9 f(s) is: as before to 50 (×2.13),
+// twice that at 100 (×4.27), ×5.87 at the soft cap 150, and three times that at 999 (×17.6), easing off as it goes.
+const REF_GRADE = 1.9;
+const F50 = softStatCurve(50);
+const F100 = (2 * (1 + REF_GRADE * F50) - 1) / REF_GRADE;
+const SLOPE_50_100 = (F100 - F50) / 50;
+const F150 = F100 + 0.75 * SLOPE_50_100 * 50;
+const F999 = (3 * (1 + REF_GRADE * F150) - 1) / REF_GRADE;
+const TAIL_K = 2;
+
+/** The scaling curve f(s) every damage grade multiplies (D311; it was 1 − 0.982^s, which flattened by 99). */
+export function scalingCurve(s: number): number {
+  const x = Math.max(0, Math.min(STAT_CAP, s));
+  if (x <= 50) return softStatCurve(x);
+  if (x <= 100) return F50 + SLOPE_50_100 * (x - 50);
+  if (x <= STAT_SOFT_CAP) return F100 + 0.75 * SLOPE_50_100 * (x - 100);
+  const t = (x - STAT_SOFT_CAP) / (STAT_CAP - STAT_SOFT_CAP);
+  return F150 + ((F999 - F150) * (1 - Math.exp(-TAIL_K * t))) / (1 - Math.exp(-TAIL_K));
+}
+
+/** How much a stat's worth has grown since 50, on an S grade's shape (1 at 50 or less; ×2 at 100, ×8.25 at 999). */
+export function statGrowth(s: number): number {
+  return (1 + REF_GRADE * scalingCurve(Math.max(50, s))) / (1 + REF_GRADE * F50);
 }
 
 /** Grade weights (D88: raised so stats matter more; were S 1.2, A 1.0, B 0.75, C 0.5, D 0.25, E 0.1). */
 export const GRADE_MULT: Record<Grade, number> = { S: 1.9, A: 1.55, B: 1.15, C: 0.8, D: 0.45, E: 0.2, '-': 0 };
 
-/** Two-handing counts Bonk ×1.5 (capped at 99) for scaling and requirements; Slicey is unchanged (D72). */
+/** Two-handing counts Bonk ×1.5 (capped at the stat cap) for scaling and requirements; Slicey is unchanged (D72). */
 export function effBonk(bonk: number, twoHanded: boolean): number {
-  return twoHanded ? Math.min(99, bonk * 1.5) : bonk;
+  return twoHanded ? Math.min(STAT_CAP, bonk * 1.5) : bonk;
 }
 
 /**
@@ -147,7 +161,7 @@ export function weaponDamage(
 }
 
 /** Requirement on the primary stat: req1 + 2 × (ilvl − 1). Secondary stays. */
-/** a requirement never climbs past this (D299: deep New Game+ gear stays wearable under the 99 stat cap) */
+/** a requirement never climbs past this (D299: deep New Game+ gear stays wearable) */
 export const REQ_CAP = 90;
 /**
  * The main stat a weapon or tool asks for at an item level: +2 a level to level 8 (the first playthrough), then +0.5

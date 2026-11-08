@@ -10,7 +10,7 @@ import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
 import { BAG_SIZE, allItems, equip, isEitherHandItem, placeLabel, toggleItemLock, unequip, unsocketGem, type EquipSlot, slotItem } from '../../game/items/inventory';
-import { levelCost } from '../../game/combat/formulas';
+import { STAT_CAP, levelCost } from '../../game/combat/formulas';
 import { LIGHT_LOAD_MAX, LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
 import { spellSkill } from '../../game/skills/use';
@@ -185,7 +185,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
         // the class's primary (+25%) and secondary (+15%) stats are marked (D184)
         ...kv('HP' + pTag('hp'), d.stats.hp),
         ...kv('Endurance' + pTag('endurance'), d.stats.endurance),
-        ...kv('Bonk' + pTag('bonk'), `${d.stats.bonk}${c.twoHanded ? ` (2H ${Math.min(99, Math.floor(d.stats.bonk * 1.5))})` : ''}`),
+        ...kv('Bonk' + pTag('bonk'), `${d.stats.bonk}${c.twoHanded ? ` (2H ${Math.min(STAT_CAP, Math.floor(d.stats.bonk * 1.5))})` : ''}`),
         ...kv('Slicey' + pTag('slicey'), d.stats.slicey),
         ...kv('Brain' + pTag('brain'), d.stats.brain),
         ...kv('Prayer' + pTag('prayer'), d.stats.prayer),

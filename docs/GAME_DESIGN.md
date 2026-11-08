@@ -147,8 +147,8 @@ minutes from NG+2 on.
 
 | Boss zone | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |---|---|---|---|---|---|---|---|---|
-| NG+1 × | 1.56 | 1.91 | 2.29 | 2.13 | 1.64 | 1.8 | 1.91 | 1.35 |
-| NG+2 on × | 2.82 | 3.1 | 3.41 | 3.04 | 2.23 | 2.36 | 2.48 | 1.5 |
+| NG+1 × | 1.61 | 1.98 | 2.27 | 2.14 | 1.65 | 1.84 | 1.98 | 1.42 |
+| NG+2 on × | 2.87 | 3.1 | 3.33 | 2.88 | 2.04 | 2.1 | 2.13 | 1.25 |
 
 **NG+ level growth** (D307): New Game+ levels now go much further (about level 300 by the end of NG+2), so every enemy
 and boss grows by 70% of what those levels give a player (`NG_LEVEL_COMP`, by zone; NG+3 on uses NG+2's column):
@@ -159,6 +159,19 @@ and boss grows by 70% of what those levels give a player (`NG_LEVEL_COMP`, by zo
 | NG+1 damage × | 1 | 1.02 | 1.039 | 1.067 | 1.084 | 1.111 | 1.137 | 1.16 |
 | NG+2 on HP × | 1.041 | 1.039 | 1.037 | 1.035 | 1.033 | 1.033 | 1.029 | 1.029 |
 | NG+2 on damage × | 1.165 | 1.171 | 1.181 | 1.183 | 1.195 | 1.197 | 1.214 | 1.218 |
+
+**The long stat curve** (D311) makes builds stronger from the late first playthrough on (damage ×1.0–1.03 in the first
+playthrough, ×1.1–1.6 at NG+1, ×1.7–2.3 at NG+2 against the old curve). To NG+2 every enemy and boss takes **70%** of
+that gain (`STAT_CURVE_COMP`: HP by the damage gain, damage by the HP gain). From NG+3 a cycle table (`NG_LATE`) takes
+over, because the old curve had stopped growing there: boss fights stay about 8 minutes (the Landlord 11) through NG+7
+and stretch to about 9.5 (13.5) by NG+10; a build takes more and more hits to bring down through NG+7 (median room
+hits 12 at NG+2, about 15 at NG+7), and then enemy damage climbs so NG+10 needs about half as many hits as NG+2 and
+the later zones' bosses can kill in one.
+
+| Cycle | NG+3 | NG+4 | NG+5 | NG+6 | NG+7 | NG+8 | NG+9 | NG+10 on |
+|---|---|---|---|---|---|---|---|---|
+| HP × | 1.5 | 1.2 | 1.26 | 1.28 | 1.29 | 1.33 | 1.36 | 1.4 |
+| Damage × | 1.06 | 0.74 | 0.74 | 0.73 | 0.69 | 0.84 | 1.09 | 1.57 |
 
 **Zone damage factor** (every cycle, bosses too, D231): zone 4 ×1.1, zones 5–6 ×1.15, zone 7 ×1.35, the rest ×1.
 
@@ -174,7 +187,7 @@ zone's end, solo, first playthrough (`EXPECTED_LEVEL`): 10 · 20 · 32 · 42 · 
 
 ## 3. Stats
 
-Six stats, 1–99 each: **HP, Endurance, Bonk, Slicey, Brain, Prayer**. Level-1 characters have 48 points (the Hunter
+Six stats, 1–**999** each (D311; most of a stat's worth comes by 150, the soft cap): **HP, Endurance, Bonk, Slicey, Brain, Prayer**. Level-1 characters have 48 points (the Hunter
 46; class tables in CONTENT_SPELLS_CLASSES §3). Each level adds one point; level = points − 47.
 
 | Stat | Governs |
@@ -192,22 +205,27 @@ them.
 ### 3.1 Formulas
 
 ```
-maxHP        = 100 + m × Σ per HP point:        1–30: 14 · 31–60: 8 · 61–99: 3
-maxStamina   = 70  + m × Σ per Endurance point: 1–30: 3.5 · 31–60: 2 · 61–99: 0.8
-staminaRegen = 22 + 0.25 × Endurance × m per second, 0.6 s after any spend; not during attack active frames or a dodge
-maxEquipLoad = 26 + m × Σ per Endurance point:  1–30: 1.5 · 31–60: 1.0 · 61–99: 0.5
+maxHP        = 100 + m × P(HP),  P = Σ 1–30: 14 · 31–50: 8 a point (680 at 50); past 50 P(50) × statGrowth(HP) (D311)
+               (HP 50: 680 · 100: 1,260 · 150: 1,695 · 300: 2,793 · 999: 4,885, before m)
+maxStamina   = 70  + m × Σ per Endurance point: 1–30: 3.5 · 31–60: 2 · 61–150: 0.8 · 151–999: 0.3
+staminaRegen = 22 + (0.25 per Endurance point to 150, 0.02 past it) × m per second, 0.6 s after any spend
+maxEquipLoad = 26 + m × Σ per Endurance point:  1–30: 1.5 · 31–60: 1.0 · 61–150: 0.5 · 151–999: 0.1
 
-f(s) = 1 − 0.982^s                                   (f(10) .17 · f(20) .30 · f(40) .52 · f(60) .66 · f(99) .83)
+f(s): 1 − 0.982^s up to 50 (f(10) .17 · f(30) .42 · f(50) .60); 50–100 straight up so an S weapon doubles
+      (f(100) 1.72); 100–150 at three-quarters that pace (f(150) 2.56, the soft cap); 150–999 easing off to f(999) 8.74,
+      so an S weapon's stat multiplier is ×2.13 at 50, ×4.27 at 100, ×5.87 at 150, ×17.6 at 999 (D311)
+statGrowth(s) = (1 + 1.9 f(s)) / (1 + 1.9 f(50))  (1 to 50, ×2 at 100, ×8.25 at 999)
 grades (D88): S 1.9 · A 1.55 · B 1.15 · C 0.8 · D 0.45 · E 0.2 · – 0
 
 weaponPower = base1 × (1 + 0.45 (ilvl − 1)) × (1 + Σ grade × f(effStat) × m) × rarity power × reinforcement
               × 0.4 if below requirement
-   effStat: Bonk counts ×1.5 (max 99) while two-handing (D72); everything else as it is
+   effStat: Bonk counts ×1.5 (max 999) while two-handing (D72); everything else as it is
 hit         = weaponPower × swing mult × (1 + damage %) + gem adds + flat affix damage   (weaponHitByType, D294)
 armorDef    = def1 × slot mult × (1 + 0.6 (ilvl − 1)) × reinforcement
 damageTaken = incoming × 100 / (100 + Def[type])
 thermosHeal = 40% maxHP × (1 + 0.003 × Prayer × m) × (1 + heal bonuses)
-castSpeed   × (1 + 0.25 f(Slicey) m)       castMove = 50% + 0.25 f(Bonk) m of walking speed   (D106)
+castSpeed   × (1 + 0.25 f₀(Slicey) m)      castMove = 50% + 0.25 f₀(Bonk) m of walking speed   (D106)
+   f₀(s) = 1 − 0.982^s, the old settling curve (these two never run away, D311)
 ```
 
 `m` is the class boost for that stat (§3.2). Requirements on a weapon's primary stat rise 2 per item level up to level 8, then 0.5 per level, never past 90

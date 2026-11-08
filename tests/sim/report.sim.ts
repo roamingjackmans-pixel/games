@@ -35,7 +35,7 @@ import { makeItem } from '../../src/game/items/make';
 import type { BossDef, ClassId, DamageType, EffectDef, Gem, Item, Rarity, StatId, WeaponDef } from '../../src/game/types';
 
 const OUT = 'docs/balance/report.md';
-const CYCLES = [0, 1, 2] as const;
+const CYCLES = [0, 1, 2, 3, 4, 5, 6, 7, 10] as const;
 const ZONES = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 const SHARD_SEEDS = 24;
 
@@ -52,6 +52,8 @@ const median = (xs: number[]): number => {
   const m = Math.floor(s.length / 2);
   return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
 };
+/** Cycles from here on are meant to be brutal (D311: NG+10 needs real skill); one-shot and growth alerts stop. */
+const HARD_FROM = 8;
 const cycleName = (c: number): string => (c === 0 ? 'First playthrough' : `NG+${c}`);
 const WARN = '⚠';
 
@@ -181,7 +183,7 @@ function zoneShardsWithBoss(zone: number, cycle: number): number {
 function levelsBought(from: number, shards: number): number {
   let L = from;
   let left = shards;
-  while (left >= levelCost(L) && L < 713) {
+  while (left >= levelCost(L) && L < 6000) {
     left -= levelCost(L);
     L++;
   }
@@ -193,7 +195,8 @@ const SHARDS_AT: Record<number, number[]> = {};
 function computeLevels(): void {
   LEVEL_AT[0] = ZONES.map((z) => EXPECTED_LEVEL[z - 1]! + Math.round((EXPECTED_LEVEL[z]! - EXPECTED_LEVEL[z - 1]!) / 2));
   let L = EXPECTED_LEVEL[8]!;
-  for (const c of CYCLES.filter((x) => x > 0)) {
+  // every cycle up to the last one shown: each starts where the one before ended
+  for (let c = 1; c <= Math.max(...CYCLES); c++) {
     LEVEL_AT[c] = [];
     SHARDS_AT[c] = [];
     for (const z of ZONES) {
@@ -535,7 +538,8 @@ function section2(foes: Record<string, ZoneFoes>, bosses: Record<string, BossRow
         const flag = bossHits < 1 ? ` ${WARN}1-shot` : '';
         cells.push(`${r0(d.dps)} dps · ${r1(ttkRoom)}s / ${r0(ttkBoss)}s · ${r1(roomHits)} / ${r1(bossHits)} hits${meets}${flag}`);
         if (!meetsReq) find(4, 'Builds', `${cycleName(c)} zone ${z}: the ${b.name} build at level ${level} does not meet its own ${b.caster ? 'casting tool' : 'weapon'}'s requirements at item level ${gearIlvl(z, c)} (40% damage, no skills).`, 'Item-level requirements (+2 a level on the primary stat) outpace the points a focused build has; ease reqAtIlvl or the NG+ item level.');
-        if (bossHits < 1) find(6, 'One-shots', `${cycleName(c)} zone ${z}: ${boss!.def.name}'s biggest hit (${bossBig!.name}, ${bossBig!.kind}, ${r0(bossBig!.dmg)} ${bossBig!.type}) kills the ${b.name} build (${r0(p.pl!.derived.maxHp)} HP) in one hit (${r2(bossHits)}).`, 'Cap a boss hit at ~70% of an expected-level player\'s HP, or lower that attack\'s multiplier.');
+        // from NG+8 the owner wants it brutal (D311): one-shots there are the design, not a finding
+        if (bossHits < 1 && c < HARD_FROM) find(6, 'One-shots', `${cycleName(c)} zone ${z}: ${boss!.def.name}'s biggest hit (${bossBig!.name}, ${bossBig!.kind}, ${r0(bossBig!.dmg)} ${bossBig!.type}) kills the ${b.name} build (${r0(p.pl!.derived.maxHp)} HP) in one hit (${r2(bossHits)}).`, 'Cap a boss hit at ~70% of an expected-level player\'s HP, or lower that attack\'s multiplier.');
       }
       rows.push(cells);
     }
@@ -764,8 +768,8 @@ function section6(): void {
       const flags: string[] = [];
       if (kill > 2) flags.push(`${WARN} kills ${r1(kill)}× slower`);
       if (surv < 0.5) flags.push(`${WARN} survives ${r1(1 / surv)}× fewer hits`);
-      if (kill > 2.5) find(3 + kill / 2, 'Growth', `${cycleName(c)} zone ${z}: the quality build needs ${r1(kill)}× as long to kill a room enemy as in zone 1 (${r1(foeHp / dps)} s against ${r1(base.foeHp / base.dps)} s).`, 'Enemy HP is outgrowing player damage here; trim the HP multiplier or give more damage growth.');
-      if (surv < 0.4) find(3 + 1 / surv / 2, 'Growth', `${cycleName(c)} zone ${z}: the quality build survives ${r1(cur.hp / taken)} average room hits, ${r1(1 / surv)}× fewer than in zone 1 (${r1(base.hp / base.foeHit)}).`, 'Enemy damage is outgrowing player HP and defense here; trim the damage multipliers.');
+      if (kill > 2.5 && c < HARD_FROM) find(3 + kill / 2, 'Growth', `${cycleName(c)} zone ${z}: the quality build needs ${r1(kill)}× as long to kill a room enemy as in zone 1 (${r1(foeHp / dps)} s against ${r1(base.foeHp / base.dps)} s).`, 'Enemy HP is outgrowing player damage here; trim the HP multiplier or give more damage growth.');
+      if (surv < 0.4 && c < HARD_FROM) find(3 + 1 / surv / 2, 'Growth', `${cycleName(c)} zone ${z}: the quality build survives ${r1(cur.hp / taken)} average room hits, ${r1(1 / surv)}× fewer than in zone 1 (${r1(base.hp / base.foeHit)}).`, 'Enemy damage is outgrowing player HP and defense here; trim the damage multipliers.');
       rows.push([cycleName(c), String(z), `L${LEVEL_AT[c]![z - 1]}`, r0(dps), r0(foeHp), r1(foeHp / dps), r0(cur.hp), r0(taken), r1(cur.hp / taken), r2(kill), r2(surv), flags.join('; ')]);
     }
   }

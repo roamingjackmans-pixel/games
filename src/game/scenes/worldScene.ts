@@ -20,6 +20,7 @@ import { levelFromStats } from '../player/character';
 import { gemKindLabel, gemTitle, isValidGem } from '../../data/gems';
 import type { ConsumableId, EliteAffix, EnemyDef, GemFamily, Item, Rarity, StatId } from '../types';
 import type { Entity, World } from '../world';
+import { STAT_CAP } from '../combat/formulas';
 
 export abstract class WorldScene implements Scene {
   abstract readonly name: string;
@@ -151,7 +152,7 @@ export abstract class WorldScene implements Scene {
         let i = 0;
         while (cur < target) {
           const s = order[i++ % 6]!;
-          if (ch.stats[s] < 99) {
+          if (ch.stats[s] < STAT_CAP) {
             ch.stats[s]++;
             cur++;
           }
@@ -163,7 +164,7 @@ export abstract class WorldScene implements Scene {
       },
       setStat(stat, n) {
         const ch = pl().pl!.char;
-        ch.stats[stat as StatId] = Math.max(1, Math.min(99, Math.floor(n)));
+        ch.stats[stat as StatId] = Math.max(1, Math.min(STAT_CAP, Math.floor(n)));
         ch.level = levelFromStats(ch);
         refreshDerived(pl());
         return `${stat} = ${ch.stats[stat as StatId]} (level ${ch.level}).`;
