@@ -132,6 +132,8 @@ export function applyControl(w: World, e: Entity, id: ControlId, durationS: numb
   if (id === 'freeze' && st.immune.has('chill')) return;
   const now = w.time;
   if (id === 'freeze' && e.pl && (e.pl.stunImmuneUntil ?? 0) > now) return;
+  // a full stun on a player (a freeze, a hold) lasts 30% less (D288)
+  if (e.pl && (id === 'freeze' || id === 'hold')) durationS *= PLAYER_STUN_MULT;
   st.controls[id] = Math.max(st.controls[id], now + durationS);
   if (id === 'freeze') interrupt(w, e, 0);
   if (id === 'hexed' && e.pl) e.pl.dodgeReadyAt = Math.max(e.pl.dodgeReadyAt, now) + 0;
@@ -510,6 +512,9 @@ export function playerHyperArmor(w: World, p: Entity): boolean {
   return false;
 }
 
+/** Grabs and full stuns on a player last this share of their listed length (D288: 30% shorter). The stagger is not one. */
+export const PLAYER_STUN_MULT = 0.7;
+
 /** After a grab lets go, this long before a grab (or a freeze) can take hold again (s). */
 export const STUN_IMMUNE_S = 0.5;
 
@@ -527,15 +532,16 @@ function startHold(w: World, p: Entity, attacker: Entity, spec: DamageSpec): voi
   // a grab cannot take a player who is already held or frozen, nor one just let go (the hit itself still lands)
   if (stunProtected(w, p)) return;
   interrupt(w, p, 0);
+  const holdS = g.holdS * PLAYER_STUN_MULT;
   pl.state = 'held';
-  pl.stateUntil = now + g.holdS;
+  pl.stateUntil = now + holdS;
   pl.holdBy = attacker.id;
-  pl.holdUntil = now + g.holdS;
+  pl.holdUntil = now + holdS;
   pl.holdDmg = specTotal(spec) * (g.mult - 1);
   pl.holdType = dominantType(spec);
   pl.holdStatus = spec.status[0] ?? null;
   if (g.staminaDrain && p.stam) p.stam.cur = Math.max(0, p.stam.cur - g.staminaDrain);
-  p.st!.controls.hold = now + g.holdS;
+  p.st!.controls.hold = now + holdS;
   if (attacker.en) attacker.en.holdingId = p.id;
 }
 

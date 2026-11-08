@@ -7,7 +7,7 @@ import { PLAYER_DOT_DY, PLAYER_DOT_R, spawnPlayer } from '../../src/game/player/
 import { spawnEnemy } from '../../src/game/enemies/spawn';
 import { CHARGE_REACH, LUNGE_REACH, startEnemyAttack } from '../../src/game/enemies/attacks';
 import { stepWorld } from '../../src/game/sim';
-import { emptySpec, hitPlayer } from '../../src/game/combat/damage';
+import { PLAYER_STUN_MULT, applyControl, emptySpec, hitPlayer } from '../../src/game/combat/damage';
 import { spawnTelegraphs } from '../../src/game/combat/telegraph';
 import { TRAINING_DUMMY } from '../../src/data/enemies/special';
 import { Rng } from '../../src/engine/rng';
@@ -117,7 +117,8 @@ describe('a sweeping beam hits as it swings past (zone 7 lasers)', () => {
 });
 
 describe('grabs cannot chain-stun (0.5 s grace after a grab)', () => {
-  function rig(): { w: World; p: Entity; grab: () => void; until: (t: number) => void } {
+  // a grab listed at 2 / 0.7 s holds for 2 s (D288), the owner's example
+  function rig(listedS = 2 / PLAYER_STUN_MULT): { w: World; p: Entity; grab: () => void; until: (t: number) => void } {
     const w = new World('TEST', Room.empty());
     const p = spawnPlayer(w, newCharacter('knight', 'Joe', 'p1', new Rng(1)), 0, true, 600, 368);
     const d = spawnEnemy(w, TRAINING_DUMMY, 640, 368, { tellS: 0 });
@@ -128,7 +129,7 @@ describe('grabs cannot chain-stun (0.5 s grace after a grab)', () => {
       grab: () => {
         const s = emptySpec('red');
         s.dmg = { physical: 1 };
-        s.grab = { holdS: 2, mult: 1 };
+        s.grab = { holdS: listedS, mult: 1 };
         hitPlayer(w, d.id, p, s, d.x, d.y);
       },
       until: (t: number) => {
@@ -153,6 +154,22 @@ describe('grabs cannot chain-stun (0.5 s grace after a grab)', () => {
     expect(r.p.pl!.state).not.toBe('held');
     r.grab();
     expect(r.p.pl!.state).not.toBe('held');
+  });
+  it('grabs and freezes on a player last 30% less than listed (D288)', () => {
+    const r = rig(2);
+    r.grab();
+    expect(r.p.pl!.holdUntil - r.w.time).toBeCloseTo(1.4, 5);
+    r.until(1.38);
+    expect(r.p.pl!.state).toBe('held');
+    r.until(1.43);
+    expect(r.p.pl!.state).not.toBe('held');
+    const f = rig();
+    applyControl(f.w, f.p, 'freeze', 1.5);
+    expect(f.p.st!.controls.freeze - f.w.time).toBeCloseTo(1.05, 5);
+    // an enemy's freeze is not shortened
+    const d = spawnEnemy(f.w, TRAINING_DUMMY, 300, 300, { tellS: 0 });
+    applyControl(f.w, d, 'freeze', 1.5);
+    expect(d.st!.controls.freeze - f.w.time).toBeCloseTo(1.5, 5);
   });
   it('a grab at 2.55 s takes hold again', () => {
     const r = rig();
