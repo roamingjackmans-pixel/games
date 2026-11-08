@@ -1,6 +1,8 @@
 // Derived player numbers from stats + equipment + affixes + gems + rings + legendary powers.
 // Recomputed on every equipment, stat or two-hand change. Never stored.
 import { WEAPONS } from '../../data/weapons';
+import { armorPiecePoise } from '../../data/armor';
+import { SHIELD_POISE } from '../../data/shields';
 import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { CASTING_TOOLS, toolBash } from '../../data/castingTools';
 import { armorPieceDefense } from '../../data/armor';
@@ -93,6 +95,8 @@ export interface Derived {
   setCounts: Record<string, number>;
   maxHpMult: number;
   poiseThresholdPct: number;
+  /** D312: your poise: a hit staggers you only if it deals at least this % of your max HP (8 + armour + a held shield) */
+  poise: number;
   staminaRegenMult: number;
   canBlock: boolean;
   redTakenMult: number;
@@ -170,6 +174,9 @@ const FIST: WeaponDef = {
   legendaryNames: [],
 };
 
+/** Everyone's poise before gear (D312): a hit of 8% of your max HP staggers you. */
+export const BASE_POISE = 8;
+
 function itemsOf(c: Character): Item[] {
   const e = c.equipment;
   return [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, e.ring3, e.ring4].filter((x): x is Item => !!x);
@@ -221,6 +228,11 @@ export function computeDerived(c: Character): Derived {
   const shield = off ? (SHIELDS[off.baseId] ?? null) : null;
   const tool = off ? (CASTING_TOOLS[off.baseId] ?? null) : null;
   const twoHanded = c.twoHanded;
+  // D312: poise from armour pieces and a held shield
+  const poise =
+    BASE_POISE +
+    (['head', 'body', 'legs'] as const).reduce((s, sl) => s + (c.equipment[sl] ? armorPiecePoise(c.equipment[sl]!.baseId) : 0), 0) +
+    (shield && !twoHanded ? (SHIELD_POISE[shield.size] ?? 0) : 0);
   const weaponMeetsReq = main ? meetsRequirements(itemRequirements(main), stats, twoHanded) : true;
   const held = (def: CastingToolDef | null, item: Item | null, hand: 'main' | 'off'): HeldTool | null =>
     def && item ? { def, item, hand, ilvl: item.ilvl, meetsReq: meetsRequirements(itemRequirements(item), stats, false), mult: toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus) } : null; // D227: reinforcement too
@@ -520,7 +532,8 @@ export function computeDerived(c: Character): Derived {
     ringCounts,
     setCounts,
     maxHpMult,
-    poiseThresholdPct: 0.08,
+    poiseThresholdPct: poise / 100,
+    poise,
     staminaRegenMult: regenMult,
     canBlock: !rings.has('red_thread'),
     redTakenMult,

@@ -438,8 +438,9 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   pl.momentum = 0;
   if (attacker?.en?.elite === 'vampiric' && total > 0) heal(w, attacker, total * 0.2);
 
-  // interrupt: ≥ 8% max HP (+poise buffs) unless hyper armor; grabs always
-  const threshold = hp.max * (d.poiseThresholdPct + buffSum(p, 'poiseThreshold', now) / 100);
+  // interrupt: a hit of at least your poise (D312: 8% of max HP + armour + shield, + poise buffs) staggers you unless
+  // hyper armor; a projectile needs twice that; grabs always
+  const threshold = hp.max * (d.poiseThresholdPct + buffSum(p, 'poiseThreshold', now) / 100) * (projectile ? 2 : 1);
   const hyper = playerHyperArmor(w, p);
   if (!guardBroke && total >= threshold && !hyper && !blockedAny) interrupt(w, p, PLAYER_STAGGER_S);
 

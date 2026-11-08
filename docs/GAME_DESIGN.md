@@ -393,8 +393,11 @@ Bosses can be parried only on attacks marked *parryable*, and need two parries w
 **Two-handing** (Shift): the off hand is set aside (a tool in the weapon hand still casts, D117). Bonk counts ×1.5
 (§3.1). Holding block is a **weapon guard**: 45% physical, 15% other types, stability 12, no parry.
 
-**Being hit**: a hit dealing **≥ 8% of max HP** (raised by poise buffs) interrupts you with a 0.3 s stagger unless
-you have hyper armor; smaller hits only flinch. A hit on a held player does not stagger them out of the hold.
+**Being hit**: your **Poise** (D312) is the share of your max HP a hit must deal to stagger you: **8%**, plus armour
+(per piece light 1 / 2 / 1, medium 2 / 5 / 3, heavy 4 / 8 / 5 for head / body / legs: a full set +4, +10, +17) and a
+held shield (medium +2, great +5; none while two-handing), plus poise buffs. A hit of at least that interrupts you with
+a 0.3 s stagger unless you have hyper armor; a **projectile needs twice** your poise; smaller hits only flinch. Poise
+shows on the stats panel and on armour and shield cards. A hit on a held player does not stagger them out of the hold.
 
 **Enemy front guards** (D176): a guarding enemy cuts physical damage by its guard value but other types only by 30% of
 it (`GUARD_NONPHYS_SHARE`). Twin Daggers deal ×1.5 from behind (a crit); the Brass Juggernaut takes ×1.5 to its back

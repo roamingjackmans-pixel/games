@@ -1,7 +1,7 @@
 // Item tooltips (GAME_DESIGN §16): one organised, stacked layout for every item kind, side-by-side compare
 // against what is worn in that slot (green better, white same, red worse), and small item icons.
 import { WEAPONS } from '../data/weapons';
-import { SHIELDS, shieldStability, shieldValues } from '../data/shields';
+import { SHIELDS, SHIELD_POISE, shieldStability, shieldValues } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
 import { GEMS, GEM_QUALITIES, gemColor, gemLevel, gemKind, gemKindLabel, gemTitle, perkName, perkQuality, perkRollText, perkText } from '../data/gems';
@@ -9,7 +9,7 @@ import type { GemPerk } from '../game/types';
 import { LEGENDARY_POWERS, LEGENDARY_FLAVOR } from '../data/legendaries';
 import { SET_PERKS, SET_STEPS, setEffectText, setStep, type SetPerkDef } from '../data/setPerks';
 import { affixText } from '../data/affixes';
-import { armorPieceDefense, parseArmorBase } from '../data/armor';
+import { armorPieceDefense, armorPiecePoise, parseArmorBase } from '../data/armor';
 import { ELEMENTS } from '../game/elements';
 import { baseInfo, itemRequirements, meetsRequirements, type Requirements } from '../game/items/bases';
 import { defaultSlotFor, itemSellValue, WORN_SLOTS, type EquipSlot } from '../game/items/inventory';
@@ -384,6 +384,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
           [
             { label: 'Stability', cur: shieldStability(s, item.plus, item.rarity), prev: os ? shieldStability(os, other?.plus, other?.rarity) : null, better: 'lower', fmt: int0, note: 'stamina lost per 100 damage blocked (lower is better)' },
             { label: 'Parry', cur: meets ? (s.parryS ?? 0) : 0, prev: os ? (otherMeets ? (os.parryS ?? 0) : 0) : null, better: 'higher', fmt: (x) => (x > 0 ? `${x.toFixed(2)} s` : 'none') },
+            // D312: a held shield adds poise (not while two-handing)
+            { label: 'Poise', cur: SHIELD_POISE[s.size] ?? 0, prev: os ? (SHIELD_POISE[os.size] ?? 0) : null, better: 'higher', fmt: (x) => `+${x}`, note: 'stagger threshold, % of your max HP' },
           ],
           cmp,
           false,
@@ -424,6 +426,10 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const def = armorPieceDefense(item.baseId, item.ilvl, item.plus);
     const odef = other && other.kind === 'armor' ? armorPieceDefense(other.baseId, other.ilvl, other.plus) : null;
     out.push(section('Defense', rowsEl(DAMAGE_TYPES.map((k) => ({ label: ELEMENTS[k].short, cur: def[k], prev: odef ? odef[k] : null, better: 'higher', fmt: int0 })), cmp)));
+    // D312: armour adds poise, heavy the most
+    const po = armorPiecePoise(item.baseId);
+    const opo = other && other.kind === 'armor' ? armorPiecePoise(other.baseId) : null;
+    out.push(h('div', { class: 'tt-section' }, rowsEl([{ label: 'Poise', cur: po, prev: opo, better: 'higher', fmt: (x) => `+${x}`, note: 'stagger threshold, % of your max HP' }], cmp, false)));
   }
 
   if (ring) {

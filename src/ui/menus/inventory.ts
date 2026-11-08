@@ -192,6 +192,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
         head('Combat'),
         ...kv('Max HP', d.maxHp),
         ...kv('Max stamina', d.maxStam),
+        // D312: a hit must deal this % of your max HP to stagger you (a projectile twice that)
+        ...kv('Poise', `${d.poise}% HP`),
         ...kv('Weapon power', Math.round(d.weaponPower), d.weaponMeetsReq ? '' : 'bad'),
         // Spell Skill per school you can cast (D182)
         ...(['brain', 'prayer'] as const).filter((sc) => toolForSchool(d, sc)).flatMap((sc) => kv(`${sc === 'brain' ? 'Brain' : 'Prayer'} Spell Skill`, spellSkill(d, sc), toolForSchool(d, sc)?.meetsReq ? '' : 'bad')),

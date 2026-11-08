@@ -10,6 +10,20 @@ export const WEIGHT_DEF: Record<ArmorWeight, Record<DamageType, number>> = {
 };
 export const SLOT_MULT = { head: 0.8, body: 1.4, legs: 0.8 } as const;
 
+/**
+ * Poise a piece adds (D312): your stagger threshold, in % of your max HP. Heavy armour is worth its weight here: a full
+ * light set +4, medium +10, heavy +17 on the base 8.
+ */
+export const ARMOR_POISE: Record<ArmorWeight, { head: number; body: number; legs: number }> = {
+  light: { head: 1, body: 2, legs: 1 },
+  medium: { head: 2, body: 5, legs: 3 },
+  heavy: { head: 4, body: 8, legs: 5 },
+};
+export function armorPiecePoise(baseId: string): number {
+  const p = parseArmorBase(baseId);
+  return p?.set ? ARMOR_POISE[p.set.weight][p.slot] : 0;
+}
+
 /** Equip load weight per piece by weight class (D82); each set is 0.85–1.15× of this (from its id). */
 export const PIECE_WEIGHT: Record<ArmorWeight, { head: number; body: number; legs: number }> = {
   light: { head: 1.2, body: 3.6, legs: 1.8 },

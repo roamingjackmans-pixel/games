@@ -3,6 +3,9 @@ import type { Rarity, ShieldDef } from '../game/types';
 import { RARITY_POWER } from './proficiency';
 import { reinforceMult } from './essence';
 
+/** Poise a held shield adds (D312), by size: small 0, medium +2, great +5. Not while two-handing. */
+export const SHIELD_POISE: Record<string, number> = { small: 0, medium: 2, great: 5 };
+
 export const SHIELDS: Record<string, ShieldDef> = {
   buckler: { id: 'buckler', name: 'Buckler', weight: 1.5, size: 'small', req: { bonk: 0, slicey: 8 }, physical: 0.6, elemental: 0.2, stability: 45, parryS: 0.18, flavor: 'Best parry. Worst everything else.', draw: 's_buckler' },
   targe: { id: 'targe', name: 'Targe', weight: 2.5, size: 'small', req: { bonk: 6, slicey: 6 }, physical: 0.7, elemental: 0.3, stability: 40, parryS: 0.16, flavor: 'A buckler that went to the gym.', draw: 's_targe' },
