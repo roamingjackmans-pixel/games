@@ -3,6 +3,7 @@ import { ROLE_STATS, SHARD_SCALE, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor
 import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
+import { ngBossDef } from '../boss/ngPhases';
 
 export interface SpawnOpts {
   elite?: EliteAffix | null;
@@ -31,12 +32,14 @@ export function roleOf(def: EnemyDef | BossDef): Role | 'boss' {
   return def.role;
 }
 
-export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: number, o: SpawnOpts = {}): Entity {
-  const isBoss = def.role === 'boss';
-  const isMimic = !!def.traits?.mimic;
-  const rs = isBoss ? ROLE_STATS.boss : isMimic ? ROLE_STATS.mimic : ROLE_STATS[def.role as Role];
+export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: number, o: SpawnOpts = {}): Entity {
+  const isBoss = def0.role === 'boss';
+  const isMimic = !!def0.traits?.mimic;
+  const rs = isBoss ? ROLE_STATS.boss : isMimic ? ROLE_STATS.mimic : ROLE_STATS[def0.role as Role];
   const zone = o.zone ?? w.zone;
   const cycle = o.cycle ?? w.cycle;
+  // New Game+ (D293): zone 1–7 bosses fight with a third phase
+  const def: EnemyDef | BossDef = isBoss ? ngBossDef(def0 as BossDef, cycle) : def0;
   const players = o.players ?? w.playerCount;
   const elite = o.elite ?? null;
   const baseHp = isBoss ? ((def as BossDef).baseHp ?? rs.hp) : rs.hp;

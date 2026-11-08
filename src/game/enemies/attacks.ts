@@ -78,7 +78,9 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
   const windup = atk.windupMs / 1000 / slow;
   const active = (atk.activeMs ?? defaultActive(atk)) / 1000 / slow;
   const recover = atk.recoverMs / 1000 / slow / phaseSpeed;
-  en.cooldowns[atk.id] = now + atk.cooldownS;
+  // a boss phase may shorten its cooldowns (D293: New Game+ Overtime)
+  const cdMult = en.isBoss ? ((en.def as unknown as { phases: { cooldownMult?: number }[] }).phases[en.phase]?.cooldownMult ?? 1) : 1;
+  en.cooldowns[atk.id] = now + atk.cooldownS * cdMult;
   en.lastAttackId = atk.id;
   if (atk.gazeTurnDeg !== undefined) {
     // a gaze attack strikes along the attacker's gaze (first use: at the target), which then turns for the next use

@@ -19,6 +19,7 @@
     "test:e2e": "playwright test",
     "validate:data": "vitest run tests/unit/data.test.ts",
     "balance": "vitest run tests/sim/balance.sim.ts --config vitest.sim.config.ts",
+    "balance:report": "vitest run tests/sim/report.sim.ts --config vitest.sim.config.ts",
     "deploy": "node scripts/deploy-info.mjs"
   },
   "dependencies": {

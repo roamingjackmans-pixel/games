@@ -176,8 +176,11 @@ export interface PlayerC {
   stillSince: number;
   holdBy: number;
   holdUntil: number;
-  /** after a grab lets go, no grab (and no freeze) takes hold of this player again until this time */
+  /** the one stun rule (D293): no full stun takes hold of this player again until this time (0.5 s after the last ended) */
   stunImmuneUntil?: number;
+  /** how many full stuns in a row (each started within 6 s of the last one ending), and when that chain lapses */
+  stunChain?: number;
+  stunChainUntil?: number;
   holdDmg: number;
   holdType: DamageType;
   holdStatus: { id: StatusId; buildup: number } | null;

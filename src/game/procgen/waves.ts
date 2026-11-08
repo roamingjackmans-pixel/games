@@ -2,7 +2,7 @@
 import { stream } from '../../engine/rng';
 import { ENEMIES, rosterOf } from '../../data/enemies';
 import { ROLE_STATS } from '../../data/roles';
-import { rollElite } from './elite';
+import { ensureNgElite, rollElite } from './elite';
 import { bonusBossFor } from './bonusBoss';
 import type { EliteAffix, EnemyDef, Role } from '../types';
 import type { RoomNode, ZoneLayout } from './zone';
@@ -130,6 +130,8 @@ export function planRoom(layout: ZoneLayout, node: RoomNode, players = 1): RoomP
     if (wave.length === 0) wave.push({ defId: mix[0]!.id, elite: null });
     waves.push(wave);
   }
+  // New Game+ (D294): every combat room has at least one Elite
+  if (layout.cycle >= 1 && elites === 0) ensureNgElite(stream(layout.seed, `ngElite:${layout.zone}:${layout.cycle}:${node.id}${p > 1 ? `:p${p}` : ''}`), waves, mix);
   return { waves, ambush, baseWaves: base, share: (ROOM_ENEMY_MULT * n * ngMore) / base };
 }
 

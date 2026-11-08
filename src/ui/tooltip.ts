@@ -17,6 +17,7 @@ import { reqAtIlvl, scalingMult, toolMult, weaponBase } from '../game/combat/for
 import { computeDerived } from '../game/player/derived';
 import { toolSpellSkill } from '../game/skills/use';
 import { itemUnlockedSkills } from '../game/items/weaponSkills';
+import { effectiveSpellSkill, effectiveWeaponHit } from '../game/items/effectiveDamage';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, equipLoadWith, itemWeight, type EquipLoadInfo } from '../game/player/equipLoad';
 import { drawShield, drawTool, drawWeapon, weaponGripBack } from '../engine/draw/weapons';
 import { OUTLINE, poly } from '../engine/draw/parts';
@@ -302,15 +303,18 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   // ---- per kind
   if (w) {
     const ow = other ? WEAPONS[other.baseId] : undefined;
-    const mine = weaponDamageByType(item, stats, twoH, d0.statBoost);
-    const theirs = ow && other ? weaponDamageByType(other, stats, twoH, d0.statBoost) : {};
+    // D293: what it would really deal in your hands, every perk counted (equipped on a copy of you)
+    const mineHit = effectiveWeaponHit(c, item);
+    const theirsHit = ow && other ? effectiveWeaponHit(c, other) : null;
+    const mine = mineHit?.byType ?? {};
+    const theirs = theirsHit?.byType ?? {};
     const types = DAMAGE_TYPES.filter((k) => (mine[k] ?? 0) > 0 || (cmp && (theirs[k] ?? 0) > 0));
     const dmgRows: Row[] = types.map((k) => ({ label: ELEMENTS[k].name, color: ELEMENTS[k].glow, cur: mine[k] ?? 0, prev: ow ? (theirs[k] ?? 0) : null, better: 'higher', fmt: int0 }));
-    if (types.length > 1) {
-      const sum = (o: Partial<Record<DamageType, number>>): number => Object.values(o).reduce((a, b) => a + (b ?? 0), 0);
-      dmgRows.push({ label: 'Total', cur: sum(mine), prev: ow ? sum(theirs) : null, better: 'higher', fmt: int0 });
-    }
-    out.push(section(meets ? 'Damage' : 'Damage (40%: below requirement)', rowsEl(dmgRows, cmp)));
+    if (types.length > 1) dmgRows.push({ label: 'Total', cur: mineHit?.total ?? 0, prev: theirsHit ? theirsHit.total : ow ? 0 : null, better: 'higher', fmt: int0 });
+    dmgRows.push({ label: 'Per second', cur: mineHit?.perSec ?? 0, prev: theirsHit ? theirsHit.perSec : ow ? 0 : null, better: 'higher', fmt: int0, note: 'light attacks, at your attack speed' });
+    const dmgTitle = `${mineHit?.offHand ? 'Damage per bolt (off hand)' : 'Damage per hit'}${meets ? '' : ' (40%: below requirement)'}`;
+    out.push(section(dmgTitle, rowsEl(dmgRows, cmp)));
+    out.push(h('div', { class: 'small dim-text' }, 'With your stats, proficiency, gems, set perks and gear. Not timed buffs.'));
 
     const g = weaponGrades(w);
     const og = ow ? weaponGrades(ow) : null;
@@ -395,9 +399,11 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   if (t) {
     const ot = other ? CASTING_TOOLS[other.baseId] : undefined;
     const statKey = t.school === 'brain' ? 'brain' : 'prayer';
+    const mySkill = effectiveSpellSkill(c, item) ?? toolSpellSkill(item, stats, d0.statBoost);
     const rows: Row[] = [
       // Spell Skill (D182): what this tool makes of your Brain or Prayer; spells deal and heal Spell Skill / 100 times their listed amounts
-      { label: 'Spell Skill', cur: toolSpellSkill(item, stats, d0.statBoost), prev: ot && other ? toolSpellSkill(other, stats, d0.statBoost) : null, better: 'higher', fmt: int0, note: `${STAT_LABEL[statKey]} ${t.gradeLetter} scaling · spells do ×${(toolSpellSkill(item, stats, d0.statBoost) / 100).toFixed(2)}` },
+      // D293: with you holding it: proficiency and set perks too (falls back to the tool on its own)
+      { label: 'Spell Skill', cur: mySkill, prev: ot && other ? (effectiveSpellSkill(c, other) ?? toolSpellSkill(other, stats, d0.statBoost)) : null, better: 'higher', fmt: int0, note: `${STAT_LABEL[statKey]} ${t.gradeLetter} scaling · spells do ×${(mySkill / 100).toFixed(2)}` },
       { label: 'Cast speed', cur: t.castSpeed, prev: ot ? ot.castSpeed : null, better: 'higher', fmt: (x) => `×${x.toFixed(2)}` },
     ];
     if (t.bonus) {

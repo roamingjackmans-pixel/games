@@ -1,5 +1,9 @@
 # Balance report (M15)
 
+> The generated numbers report (enemy and boss curves, time-to-kill per build, gems, weapons, spells, Shards) is
+> docs/balance/report.md: `npm run balance:report` rewrites it in a few seconds, and every deploy run shows it on its
+> summary page. This file is the curated write-up of the bot campaigns.
+
 Produced by the headless harness in `tests/sim/`: `npm run balance` plays full campaigns (`tests/sim/balance.sim.ts`,
 raw table in `docs/balance/campaigns.md`) and `npx vitest run tests/sim/bosses.sim.ts --config vitest.sim.config.ts`
 runs the boss sweep (`docs/balance/bosses.md`). Both use the same

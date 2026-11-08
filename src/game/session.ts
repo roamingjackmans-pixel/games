@@ -23,7 +23,7 @@ import { lootHooks } from './lootHooks';
 import './loot';
 import { rollShopPiece } from './bonfire/shop';
 import { dormantMimicNear, mimicBite } from './interact';
-import { cleanse } from './combat/damage';
+import { cleanse, resetPlayerStun } from './combat/damage';
 import { enemyDmgMult, reviveRequirement } from './combat/formulas';
 import { zoneDmgFactor } from '../data/roles';
 import { BONUS_BOSS_HP_PCT, BONUS_BOSS_PHASE, BONUS_BOSS_SHARD_MULT } from './procgen/bonusBoss';
@@ -1106,6 +1106,7 @@ export class GameSession {
       e.hp.hp = e.hp.max;
       sp.char.flaskCur = flaskCap(sp.char);
       cleanse(e, ['statuses', 'controls']);
+      resetPlayerStun(e);
       this.w.fx('levelup', e.x, e.y);
     }
     ws.respawnBonfireId = bonfireId;
@@ -1115,6 +1116,7 @@ export class GameSession {
       if (!e?.pl?.deadUntilRest) continue;
       e.pl.deadUntilRest = false;
       e.pl.downed = false;
+      resetPlayerStun(e);
       e.pl.state = 'idle';
       e.hp!.dead = false;
       e.hp!.hp = e.hp!.max;
@@ -1189,6 +1191,7 @@ export class GameSession {
     pl.downed = false;
     pl.downedBy = '';
     pl.reviveProgress = 0;
+    resetPlayerStun(ghost);
     pl.state = 'idle';
     ghost.hp!.dead = false;
     ghost.hp!.hp = ghost.hp!.max * 0.4;
@@ -1278,6 +1281,7 @@ export class GameSession {
         e.anim.alpha = 1;
         e.buffs = [];
         cleanse(e, ['statuses', 'controls']);
+        resetPlayerStun(e);
       }
     }
     this.downs = {};

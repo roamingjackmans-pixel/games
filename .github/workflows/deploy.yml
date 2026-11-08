@@ -41,6 +41,13 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # the generated balance report on the run's summary page; it can never fail or stall a deploy
+      - name: Balance report
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          npm run balance:report
+          cat docs/balance/report.md >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble the /games/ site
         run: |
           mkdir -p site/dungeonjoe

@@ -537,6 +537,8 @@ export interface BossPhase {
   attacks: AttackDef[];
   speedMult: number;
   dmgMult: number;
+  /** its attacks' cooldowns × this (D293: a New Game+ Overtime phase, 0.8) */
+  cooldownMult?: number;
   arena?: ArenaChange[];
   summons?: SummonDef[];
   name?: string;

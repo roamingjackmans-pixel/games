@@ -112,6 +112,37 @@ export interface HeldTool {
 }
 
 /** The tool that casts spells of `school`: the weapon hand's if it is of that school, else the off hand's. */
+/**
+ * One weapon hit by damage type for these derived stats (D293): weaponSpec deals it and the item cards show it, so
+ * they never disagree. `holyBuffPct` is a timed buff's holy share (none on a card).
+ */
+export function weaponHitByType(d: Pick<Derived, 'offWeapon' | 'weapon' | 'weaponPower' | 'dmgPct' | 'convert' | 'addDmg' | 'flat'>, mult: number, offHand = false, holyBuffPct = 0): Partial<Record<DamageType, number>> {
+  const ow = offHand ? d.offWeapon : null;
+  const wdef = ow?.def ?? d.weapon;
+  const base = (ow?.power ?? d.weaponPower) * mult * (1 + d.dmgPct);
+  // a hybrid weapon's base damage is its own type (D80); a weapon's holy share comes out of it
+  const own: DamageType = wdef.element ?? 'physical';
+  const dmg: Partial<Record<DamageType, number>> = {};
+  let ownLeft = base;
+  // conversions never take more than all of it
+  const convTotal = d.convert.reduce((t, c) => t + c.pct, 0);
+  const convScale = convTotal > 1 ? 1 / convTotal : 1;
+  for (const c of d.convert) {
+    const amt = base * c.pct * convScale;
+    ownLeft -= amt;
+    dmg[c.type] = (dmg[c.type] ?? 0) + amt;
+  }
+  dmg[own] = (dmg[own] ?? 0) + Math.max(0, ownLeft);
+  // D283: Ember, Rime, Storm, Dawn and Dusk add their share on top as their own type (they used to take it from the base)
+  for (const a of d.addDmg) dmg[a.type] = (dmg[a.type] ?? 0) + base * a.pct;
+  if (holyBuffPct > 0) dmg.holy = (dmg.holy ?? 0) + base * holyBuffPct;
+  for (const t of DAMAGE_TYPES) {
+    const f = d.flat[t];
+    if (f) dmg[t] = (dmg[t] ?? 0) + f * mult;
+  }
+  return dmg;
+}
+
 export function toolForSchool(d: Pick<Derived, 'mainTool' | 'offTool'>, school: SpellSchool): HeldTool | null {
   if (d.mainTool?.def.school === school) return d.mainTool;
   if (d.offTool?.def.school === school) return d.offTool;

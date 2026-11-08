@@ -131,9 +131,14 @@ export function applyControl(w: World, e: Entity, id: ControlId, durationS: numb
   if (!st || st.immune.has(id)) return;
   if (id === 'freeze' && st.immune.has('chill')) return;
   const now = w.time;
-  if (id === 'freeze' && e.pl && (e.pl.stunImmuneUntil ?? 0) > now) return;
-  // a full stun on a player (a freeze, a hold) lasts 30% less (D288)
-  if (e.pl && (id === 'freeze' || id === 'hold')) durationS *= PLAYER_STUN_MULT;
+  // a full stun on a player (a freeze, a hold) goes through the one stun rule (D293)
+  if (e.pl && isFullStun(id)) {
+    const len = startPlayerStun(w, e, durationS);
+    if (len <= 0) return;
+    st.controls[id] = now + len;
+    if (id === 'freeze') interrupt(w, e, 0);
+    return;
+  }
   st.controls[id] = Math.max(st.controls[id], now + durationS);
   if (id === 'freeze') interrupt(w, e, 0);
   if (id === 'hexed' && e.pl) e.pl.dodgeReadyAt = Math.max(e.pl.dodgeReadyAt, now) + 0;
@@ -512,27 +517,83 @@ export function playerHyperArmor(w: World, p: Entity): boolean {
   return false;
 }
 
-/** Grabs and full stuns on a player last this share of their listed length (D288: 30% shorter). The stagger is not one. */
+// ------------------------------------------------------------------ the one stun rule (D293)
+// A full stun stops a player acting and moving: a grab's hold, a freeze, a hold control. Every one goes through
+// startPlayerStun: (a) it lasts PLAYER_STUN_MULT of its listed length (D288); (b) none takes hold while one is on, nor
+// for STUN_GRACE_S after one ends (D274, now for every kind); (c) one that starts within STUN_CHAIN_S of the last one
+// ending is halved again for each one before it in that chain, down to STUN_CHAIN_FLOOR. The stagger is not a stun.
+
+/** Full stuns on a player last this share of their listed length (D288: 30% shorter). */
 export const PLAYER_STUN_MULT = 0.7;
+/** After a full stun ends, this long before another can take hold (s). */
+export const STUN_GRACE_S = 0.5;
+/** A full stun starting within this long after the last one ended is part of a chain, and shorter (s). */
+export const STUN_CHAIN_S = 6;
+/** The shortest a chained stun gets, as a share of its (already cut) length: 1, ½, ¼, ¼… */
+export const STUN_CHAIN_FLOOR = 0.25;
 
-/** After a grab lets go, this long before a grab (or a freeze) can take hold again (s). */
-export const STUN_IMMUNE_S = 0.5;
+/** The controls that are full stuns on a player (root, blind, silence and hexed are not: you can still act). */
+export function isFullStun(id: ControlId): boolean {
+  return id === 'freeze' || id === 'hold';
+}
 
-/** Is a player stunned now (held or frozen) or still in the grace after a grab? A grab cannot take them then. */
+/** Is a player under a full stun right now (held, frozen, or under a hold control)? */
+export function playerStunned(w: World, p: Entity): boolean {
+  if (!p.pl) return false;
+  return p.pl.state === 'held' || hasControl(p, 'freeze', w.time) || hasControl(p, 'hold', w.time);
+}
+
+/** Is a player stunned now or in the grace after one? No new full stun takes hold then. */
 export function stunProtected(w: World, p: Entity): boolean {
   const pl = p.pl;
   if (!pl) return false;
-  return pl.state === 'held' || hasControl(p, 'freeze', w.time) || (pl.stunImmuneUntil ?? 0) > w.time;
+  return playerStunned(w, p) || (pl.stunImmuneUntil ?? 0) > w.time;
+}
+
+/** How long a full stun listed at `listedS` would last on this player if it started now (0: it would not take hold). */
+export function playerStunLength(w: World, p: Entity, listedS: number): number {
+  const pl = p.pl;
+  if (!pl || stunProtected(w, p)) return 0;
+  const chain = w.time < (pl.stunChainUntil ?? 0) ? (pl.stunChain ?? 0) : 0;
+  return listedS * PLAYER_STUN_MULT * Math.max(STUN_CHAIN_FLOOR, Math.pow(0.5, chain));
+}
+
+/** Start a full stun on a player under the one rule: its length (0 when refused). The caller applies the stun itself. */
+export function startPlayerStun(w: World, p: Entity, listedS: number): number {
+  const pl = p.pl!;
+  const len = playerStunLength(w, p, listedS);
+  if (len <= 0) return 0;
+  const now = w.time;
+  pl.stunChain = (now < (pl.stunChainUntil ?? 0) ? (pl.stunChain ?? 0) : 0) + 1;
+  endPlayerStun(p, now + len);
+  return len;
+}
+
+/** A full stun ends (or is planned to) at `at`: the grace and the chain window count from there. */
+export function endPlayerStun(p: Entity, at: number): void {
+  const pl = p.pl!;
+  pl.stunImmuneUntil = at + STUN_GRACE_S;
+  pl.stunChainUntil = at + STUN_CHAIN_S;
+}
+
+/** A fresh start (a rest, a respawn, a revive): no grace, no chain. */
+export function resetPlayerStun(p: Entity): void {
+  const pl = p.pl;
+  if (!pl) return;
+  pl.stunImmuneUntil = 0;
+  pl.stunChainUntil = 0;
+  pl.stunChain = 0;
 }
 
 function startHold(w: World, p: Entity, attacker: Entity, spec: DamageSpec): void {
   const pl = p.pl!;
   const g = spec.grab!;
   const now = w.time;
-  // a grab cannot take a player who is already held or frozen, nor one just let go (the hit itself still lands)
-  if (stunProtected(w, p)) return;
+  // a grab cannot take a player who is already stunned, nor one in the grace after a stun (the hit itself still
+  // lands); a chained one is shorter (D293)
+  const holdS = startPlayerStun(w, p, g.holdS);
+  if (holdS <= 0) return;
   interrupt(w, p, 0);
-  const holdS = g.holdS * PLAYER_STUN_MULT;
   pl.state = 'held';
   pl.stateUntil = now + holdS;
   pl.holdBy = attacker.id;
