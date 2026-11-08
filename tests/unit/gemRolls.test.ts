@@ -90,6 +90,6 @@ describe('gem levels (D197)', () => {
     const base = e.pl!.derived.weaponPower * (1 + e.pl!.derived.dmgPct);
     expect(total).toBeCloseTo(base * (1 + add) + flat, 3);
     expect(spec.dmg.physical ?? 0).toBeCloseTo(base + (e.pl!.derived.flat.physical ?? 0), 3);
-    expect((spec.dmg.fire ?? 0) - (e.pl!.derived.flat.fire ?? 0)).toBeCloseTo(base * 42 * 3 * 1.5 / 100, 3);
+    expect((spec.dmg.fire ?? 0) - (e.pl!.derived.flat.fire ?? 0)).toBeCloseTo(base * 13.2 * 3 * 1.5 / 100, 3);
   });
 });

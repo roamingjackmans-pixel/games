@@ -22,12 +22,12 @@ export const GEMS: Record<GemFamily, GemDef> = {
   tempo: { family: 'tempo', name: 'Tempo', color: '#e6b84a', value: 12, text: '−{v}% skill cooldowns', weaponOnly: true },
   fleetfoot: { family: 'fleetfoot', name: 'Fleetfoot', color: '#58d66a', value: 0.6, text: '−{v} s dodge recharge', weaponOnly: true },
   brutal: { family: 'brutal', name: 'Brutal', color: '#d63a3a', value: 11, text: '+{v}% damage', weaponOnly: true },
-  // D283: these turned 20–40% (30% on average) of physical into their type; they now add 40% more than that on top
-  ember: { family: 'ember', name: 'Ember', color: '#ff7a1a', value: 42, text: '+{v}% of the hit as Fire, Burn buildup', weaponOnly: true, adds: { type: 'fire', status: 'burn' } },
-  rime: { family: 'rime', name: 'Rime', color: '#9ad0ff', value: 42, text: '+{v}% of the hit as Magic (frost), Chill buildup', weaponOnly: true, adds: { type: 'magic', status: 'chill' } },
-  storm: { family: 'storm', name: 'Storm', color: '#6f8dff', value: 42, text: '+{v}% of the hit as Magic (lightning), Shock buildup', weaponOnly: true, adds: { type: 'magic', status: 'shock' } },
-  dawn: { family: 'dawn', name: 'Dawn', color: '#ffe98a', value: 42, text: '+{v}% of the hit as Holy', weaponOnly: true, adds: { type: 'holy' } },
-  dusk: { family: 'dusk', name: 'Dusk', color: '#8a8396', value: 42, text: '+{v}% of the hit as Void', weaponOnly: true, adds: { type: 'void' } },
+  // D283: these add their share on top as their type (they used to convert 20–40% of the physical); D292: 20% more than Brutal
+  ember: { family: 'ember', name: 'Ember', color: '#ff7a1a', value: 13.2, text: '+{v}% of the hit as Fire, Burn buildup', weaponOnly: true, adds: { type: 'fire', status: 'burn' } },
+  rime: { family: 'rime', name: 'Rime', color: '#9ad0ff', value: 13.2, text: '+{v}% of the hit as Magic (frost), Chill buildup', weaponOnly: true, adds: { type: 'magic', status: 'chill' } },
+  storm: { family: 'storm', name: 'Storm', color: '#6f8dff', value: 13.2, text: '+{v}% of the hit as Magic (lightning), Shock buildup', weaponOnly: true, adds: { type: 'magic', status: 'shock' } },
+  dawn: { family: 'dawn', name: 'Dawn', color: '#ffe98a', value: 13.2, text: '+{v}% of the hit as Holy', weaponOnly: true, adds: { type: 'holy' } },
+  dusk: { family: 'dusk', name: 'Dusk', color: '#8a8396', value: 13.2, text: '+{v}% of the hit as Void', weaponOnly: true, adds: { type: 'void' } },
   leech: { family: 'leech', name: 'Leech', color: '#8a1020', value: 4, text: '{v}% lifesteal', weaponOnly: true },
   vigor: { family: 'vigor', name: 'Vigor', color: '#2aa198', value: 16, text: '−{v}% stamina costs', weaponOnly: true },
   bulwark: { family: 'bulwark', name: 'Bulwark', color: '#9a9aa6', value: 16, text: '+{v} defense to all types', armorOnly: true },

@@ -462,7 +462,7 @@ different family, and a gem is either a **weapon gem** (weapon perks, weapon soc
 | Tempo | −12% skill cooldowns |
 | Fleetfoot | −0.6 s dodge recharge (respects the 3 s floor) |
 | Brutal | +11% damage |
-| Ember / Rime / Storm / Dawn / Dusk | **adds** 42% of the hit as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of the physical (D283: they used to convert 20–40%), plus status buildup |
+| Ember / Rime / Storm / Dawn / Dusk | **adds** 13.2% of the hit (D292: Brutal's 11% + 20%) as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of the physical (D283: they used to convert 20–40%), plus status buildup |
 | Leech | 4% lifesteal |
 | Vigor | −16% stamina costs |
 | Bulwark (armor) | +16 defense to all types |

@@ -19,7 +19,7 @@ describe('gems without tiers (D284)', () => {
     expect(GEMS.brutal.value).toBe(11);
     expect(GEMS.hearth.value).toBe(8);
     expect(GEMS.fleetfoot.value).toBeCloseTo(0.6);
-    expect(GEMS.ember.value).toBe(42);
+    expect(GEMS.ember.value).toBeCloseTo(GEMS.brutal.value * 1.2, 5); // D292: Brutal + 20%
     expect(perkValue({ family: 'tempo', level: 50, q: 0.5 })).toBeCloseTo(12 * 3 * 1.5);
   });
 
@@ -79,7 +79,7 @@ describe('adding gems (D283)', () => {
     c.equipment.main = makeItem(c.equipment.main!.baseId, c.equipment.main!.rarity, c.equipment.main!.ilvl, { sockets: 1, gems: [makeGem('ember', { q: 0 })] });
     const d = computeDerived(c);
     expect(d.convert.filter((x) => x.type === 'fire')).toEqual([]);
-    expect(d.addDmg).toEqual([{ type: 'fire', pct: 0.42 }]);
+    expect(d.addDmg).toEqual([{ type: 'fire', pct: 0.132 }]);
     expect(d.statusBuild.some((s) => s.id === 'burn' && s.buildup === 22)).toBe(true);
     expect(plain.addDmg).toEqual([]);
   });
