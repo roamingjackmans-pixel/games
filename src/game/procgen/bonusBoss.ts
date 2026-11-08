@@ -6,7 +6,7 @@ import { BOSSES } from '../../data/bosses';
 import type { BossDef } from '../types';
 import type { ZoneLayout } from './zone';
 
-/** The share of its full HP a bonus boss starts (and fights) with. */
+/** A bonus boss's whole bar, as a share of its full HP in this playthrough; the bar starts full (D290). */
 export const BONUS_BOSS_HP_PCT = 0.3;
 /** Its Shards are cut the same way. */
 export const BONUS_BOSS_SHARD_MULT = 0.3;

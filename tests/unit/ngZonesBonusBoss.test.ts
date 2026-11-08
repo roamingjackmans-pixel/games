@@ -189,8 +189,10 @@ describe('New Game+ bonus boss rooms (D278)', () => {
     expect(boss.en!.phase).toBe(1);
     expect(boss.en!.phaseAttacks).toBe(BOSSES[bb.bossId]!.phases[1]!.attacks);
     const full = spawnEnemy(new World('ref'), BOSSES[bb.bossId]!, 0, 0, { cycle: 1, zone: BOSSES[bb.bossId]!.zone, players: 1 });
-    expect(boss.hp!.max).toBeCloseTo(full.hp!.max, 3);
-    expect(boss.hp!.hp).toBeCloseTo(full.hp!.max * BONUS_BOSS_HP_PCT, 3);
+    // a full bar whose total is 30% of the boss's HP in this playthrough (D290)
+    const fullHp = (full.hp!.max / (full.en!.barMult ?? 1)) * (BOSSES[bb.bossId]!.phases[1]!.barMult ?? 1);
+    expect(boss.hp!.max).toBeCloseTo(fullHp * BONUS_BOSS_HP_PCT, 3);
+    expect(boss.hp!.hp).toBe(boss.hp!.max);
     // only the waves are replaced: nothing else spawned
     expect(s.w.enemies.filter((e) => !e.hp?.dead && !e.en!.def.traits?.mimic).length).toBe(1);
     // it never changes phase again

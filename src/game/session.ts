@@ -805,11 +805,11 @@ export class GameSession {
     ph.attacks.forEach((a, k) => {
       en.cooldowns[a.id] = w.time + 2.2 + k * 0.4;
     });
-    // that phase's bar (D289), then 30% of it
+    // a full bar whose total is 30% of that phase's bar (D290; D289 bar shares): a party rescale keeps it
     const full = e.hp!.max / (en.barMult ?? 1);
-    en.barMult = ph.barMult ?? 1;
+    en.barMult = (ph.barMult ?? 1) * BONUS_BOSS_HP_PCT;
     e.hp!.max = Math.max(1, full * en.barMult);
-    e.hp!.hp = Math.max(1, e.hp!.max * BONUS_BOSS_HP_PCT);
+    e.hp!.hp = e.hp!.max;
     en.shards = Math.max(1, Math.round(en.shards * BONUS_BOSS_SHARD_MULT));
     w.bossId = e.id;
     w.refreshLists();
@@ -818,7 +818,7 @@ export class GameSession {
     for (const sp of this.players) addBestiarySeen(sp.char, def.id);
     w.sfx('doorLock');
     w.sfx('bossRoar', x, 0.8);
-    w.emit({ t: 'msg', text: `${def.name} waits here, already wounded.`, color: def.palette?.[1] ?? '#ffcf6a' });
+    w.emit({ t: 'msg', text: `${def.name} waits here, weakened.`, color: def.palette?.[1] ?? '#ffcf6a' });
   }
 
   /** The bonus boss is down (D278): what it called goes with it, a boss chest's worth of loot; the room clears as usual. */
