@@ -1,4 +1,4 @@
-// Reinforcing gear with Soul Essence and Glowen at a bonfire (D198): weapons, shields and armour go from +0 to +15,
+// Reinforcing gear with Soul Essence and Glowen at a bonfire (D198): weapons, shields, staffs, talismans and armour (D227) go from +0 to +15,
 // each level 20% stronger (four times at +15). Each step costs 1, 2, then 3 Essence of one tier (six per tier, a new
 // tier every three levels) plus Glowen; a higher tier pays for a lower one at 3:1.
 import { MAX_REINFORCE, essenceCounts, essenceDef, payEssence, reinforceGlowen, reinforceMult, reinforceNeed } from '../../data/essence';
@@ -50,7 +50,7 @@ export function breakDownEssence(c: Character, tier: number, all = false): { ok:
 export function reinforceItem(c: Character, itemId: string): { ok: boolean; msg: string } {
   const it = findItem(c, itemId);
   if (!it) return { ok: false, msg: 'That item is not with you.' };
-  if (!canReinforce(it)) return { ok: false, msg: 'Only weapons, shields and armour take Soul Essence.' };
+  if (!canReinforce(it)) return { ok: false, msg: 'Only weapons, shields, staffs, talismans and armour take Soul Essence.' };
   const info = reinforceInfo(c, it);
   if (!info.next) return { ok: false, msg: `${it.name} is already +${MAX_REINFORCE}.` };
   const paid = payEssence(essenceCounts(c), info.next.tier, info.next.count);

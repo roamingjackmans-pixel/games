@@ -38,7 +38,7 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   const rs = isBoss ? ROLE_STATS.boss : isMimic ? ROLE_STATS.mimic : ROLE_STATS[def0.role as Role];
   const zone = o.zone ?? w.zone;
   const cycle = o.cycle ?? w.cycle;
-  // New Game+ (D293): zone 1–7 bosses fight with a third phase
+  // New Game+ (D295): zone 1–7 bosses fight with a third phase
   const def: EnemyDef | BossDef = isBoss ? ngBossDef(def0 as BossDef, cycle) : def0;
   const players = o.players ?? w.playerCount;
   const elite = o.elite ?? null;

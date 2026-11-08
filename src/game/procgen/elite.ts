@@ -17,7 +17,7 @@ export function canBeElite(def: EnemyDef | undefined): boolean {
 }
 
 /**
- * New Game+ (D294): a room with no Elite gets one. An enemy that can be one, in the earliest wave that has one, is
+ * New Game+ (D296): a room with no Elite gets one. An enemy that can be one, in the earliest wave that has one, is
  * made an Elite (seeded); if no wave has such an enemy, one of the zone's mix that can be is added to the first wave.
  */
 export function ensureNgElite(rng: Rng, waves: { defId: string; elite: EliteAffix | null }[][], mix: EnemyDef[]): void {

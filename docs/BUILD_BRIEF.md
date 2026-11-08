@@ -1,5 +1,10 @@
 # Dungeon Joe — Build Brief (one session, no phases)
 
+> **History.** The build this brief describes is finished (M0–M16, `docs/PROGRESS.md`); the game is live and changes
+> now come from the owner's requests. For how the game works today read `docs/GAME_DESIGN.md`, `docs/DATA_MODEL.md`,
+> `docs/PROCGEN.md`, `docs/NETCODE.md`, `docs/ART_AUDIO.md` and the `docs/CONTENT_*` files; every decision since is in
+> `docs/DECISIONS.md`. Where this brief and those disagree, they win.
+
 This is the complete instruction set for building Dungeon Joe. It is executed by Claude Code (Opus) in
 **one session**, top to bottom. There are no owner-gated phases (D26). If the session ends before the end,
 the next session reads `docs/PROGRESS.md` and continues from the first unchecked item. **Everything in

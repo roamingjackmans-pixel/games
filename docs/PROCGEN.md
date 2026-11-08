@@ -1,145 +1,172 @@
 # Dungeon Joe — Procedural Generation
 
-Source for `src/game/procgen/*`. Everything here is deterministic from the playthrough **seed** so the
-save file stores only the seed plus state deltas, and the host and guests agree on the world.
+How zones, rooms, enemies and chests are generated today. Source: `src/game/procgen/*` (`zone.ts`, `rooms.ts`,
+`templates.ts`, `shapes.ts`, `terrain.ts`, `mix.ts`, `waves.ts`, `elite.ts`, `chests.ts`, `bonusBoss.ts`), room
+templates in `src/data/rooms/*`, wave spawning in `src/game/session.ts`. Decision ids point to `docs/DECISIONS.md`.
+
+Contents: [1 Random numbers](#1-random-numbers) · [2 Zone layout](#2-zone-layout) · [3 Rooms](#3-rooms) ·
+[4 Enemies and waves](#4-enemies-and-waves) · [5 Chests and mimics](#5-chests-and-mimics) · [6 New Game+](#6-new-game) ·
+[7 Bonfires, zones, cycles](#7-bonfires-zone-transitions-and-cycles) · [8 Training Hall](#8-the-training-hall) ·
+[9 Determinism and tests](#9-determinism-and-tests)
 
 ## 1. Random numbers
 
-- PRNG: **xoshiro128\*\*** (or mulberry32 if simpler), seeded from a 32-bit hash of the seed string.
-- Named streams derived from the seed with a label hash: `map:<zone>`, `rooms:<zone>`, `waves:<zone>:<room>`,
-  `loot:<playerId>:<counter>`, `combat` (host only, per tick), `cosmetic` (local, never affects state).
-- Never use `Math.random()` in `src/game`; a lint rule forbids it (allowed only in `src/engine/fx`).
+- PRNG: **xoshiro128\*\***, seeded through splitmix32 from a 32-bit FNV-1a hash of a string (`engine/rng.ts`).
+- Every gameplay roll comes from a **named stream**, `stream(seed, label)`, so the host, every guest and a reload
+  agree, and adding a roll to one stream never moves another. `Math.random()` is banned in `src/game` and `src/data`
+  by a lint rule; it is allowed only in cosmetic client code (`engine/particles.ts`, `render/ambience.ts`).
+
+| Stream label | Used for |
+|---|---|
+| `map:<zone>:<cycle>:<attempt>` | the zone grid and room kinds |
+| `shapes:<zone>:<cycle>` | each combat room's shape family |
+| `rooms:<zone>:<cycle>` | the zone's enemy mix |
+| `shape:<zone>:<roomId>`, `props:<zone>:<roomId>` | a room's shape mask; prop thinning |
+| `terrain:<zone>:<cycle>:<roomId>` | hazardous terrain |
+| `waves:<zone>:<cycle>:<roomId>[:p<n>]` | a room's waves and Elite rolls (per party size) |
+| `ngElite:<zone>:<cycle>:<roomId>[:p<n>]` | the guaranteed NG+ Elite (D296) |
+| `bonusBoss:<zone>:<cycle>` | the NG+ bonus boss room and boss (D278) |
+| `chest:<zone>:<cycle>:<roomId>` | a room's chest and mimic roll |
+| `spawn:<zone>:<roomId>:<wave>:<deaths>` | spawn points for a wave |
+| `loot:<playerId>:…` | drops, instanced per player (D33): enemies, chests, bosses, reliquaries, the Instructor |
+| `shop:<bonfireId>:<cycle>:<rolls>`, `shopgem:<zone>:<cycle>`, `gary:<zone>:<cycle>` | shop and merchant stock |
+| `<seed>\|combat` | the host's in-fight rolls (one stream per `World`) |
 
 ## 2. Zone layout
 
-Grid of **9 × 9 cells**; each cell is one room. Rooms are all the same size: **40 × 22 tiles of 32 px**
-(1280 × 704, with the HUD overlaying the top 16 px of margin); walls are the outer 1-tile ring; doors are
-2 tiles wide in the middle of each side.
+`generateZone(seed, zone, { cycle, tutorial, fewSpells })` → `ZoneLayout`. A **9 × 9 grid**; each cell is one room.
 
-Algorithm (Isaac-style growth):
+1. Room count `N = 12 + floor(zone / 2)` (12–16).
+2. Grow from the centre (4,4), the **start room**: pick a frontier room and a random direction; skip cells off the
+   grid or taken; never make a 2 × 2 block; a cell that would touch 2+ rooms is accepted only 70% of the time.
+3. BFS distances from the start. The **farthest dead end** with a free neighbour becomes the **boss anteroom**
+   (`z<zone>-boss`, a bonfire); the **boss room** (`z<zone>-bossroom`) goes in that free cell. If nothing fits, the
+   attempt is redone with the next attempt number (up to 50).
+4. Other dead ends, farthest first: a **treasure room** (always; a second 50%), a **spell reliquary** (35%; 100% from
+   zone 3 when the character knows fewer than 2 spells), a **merchant room** (Gary, 20%, never zone 1). Dead ends left
+   over are combat rooms with a guaranteed small chest (`bonusChest`).
+5. Every other room is **combat**; each combat room is an **ambush** 10% of the time (doors lock on entry, its waves
+   spring at once).
+6. Each combat / ambush room gets a **shape family** from its zone's list, never the family of a neighbour while
+   another is free.
+7. The zone's enemy **mix** is drawn (§4).
 
-1. Target room count `N = 12 + floor(zone / 2)` (12–16) plus specials.
-2. Place the **start room** at the center (4,4). Push it into a frontier list.
-3. While rooms < N: pop a random frontier room, pick a random free orthogonal neighbor cell, accept it
-   with probability 0.7 if it would have ≥ 2 room-neighbors (keep the map branchy) else 1.0; add it.
-   Reject neighbors that would create a 2×2 block of rooms (keeps corridors legible).
-4. Compute distances from the start (BFS). The **farthest dead end** becomes the **boss anteroom**; the
-   boss room is placed in a free neighbor cell of it (if none, pick the next farthest dead end; if the
-   whole map fails, re-roll with the next sub-seed). Anteroom gets a bonfire.
-5. Other dead ends, farthest first: **treasure room** (always 1; a second at 50%), **spell reliquary**
-   (35% per zone; 100% if the character knows fewer than 2 spells by zone 3), **merchant room** (20%, never
-   zone 1), remaining dead ends are combat rooms with a small-chest bonus.
-6. All other rooms are **combat rooms**. 10% of combat rooms are **ambush rooms** (doors lock and a wave
-   spawns the moment you enter, no safe second).
-7. The tutorial hall (new character, cycle 0) is a fixed extra room attached to the start room's south
-   door; the start room's bonfire is lit only after leaving the hall.
+Room ids: `z<zone>-start`, `z<zone>-boss` (anteroom), `z<zone>-bossroom`, `z<zone>-r<n>`, `z<zone>-tutorial`,
+`z<zone>-trial`. The minimap shows visited rooms and icons for special rooms seen through a door.
 
-The minimap shows discovered rooms; special rooms get an icon once seen through a door (treasure chest,
-reliquary, merchant, bonfire, boss skull).
+## 3. Rooms
 
-## 3. Room interiors
+Every room is **40 × 22 tiles of 32 px** (1280 × 704). Walls ring the outside; doors are 2 tiles wide in the middle
+of each side that has a neighbour. `buildRoom` turns a layout node into a `Room` (tiles, doors) and its markers
+(spawns, chest spots, bonfire, boss spot, stairs, graves, pools, stations).
 
-Each zone has **10 interior templates** (`src/data/rooms/<zone>.ts`), hand-authored ASCII grids:
+### 3.1 Templates and shapes
+
+Each zone has **10 interior templates** (`src/data/rooms/<zone>.ts`), ASCII grids:
 
 ```
 #  wall      .  floor      P  pillar (blocks movement and projectiles)
-o  prop (blocks movement, not projectiles: coffin, crate, mushroom)
-~  hazard tile (zone-specific: water in Sewers, lava channel in Forge, ice in Reliquary)
-_  pit (cannot walk; falling in = 30% of max HP, cannot be dodged, then respawn at the nearest edge)
-G  raised grate (Sewers: safe from waves)   S  enemy spawn point   C  chest spot   D  door
+o  prop (blocks movement; enemy shots stop at it, D180)       ~  zone hazard tile (walkable, hurts or slows)
+_  pit (cannot walk; falling in = 30% of max HP)               G  raised grate (Sewers: safe from waves)
+S  enemy spawn point (≥ 200 px from any door)    C  chest spot    D  door
+boss arenas: K boss spot, H stairs, g open grave (pit + summon spot), w pool, t breakable tree, V void
 ```
 
-Rules: at least 60% floor; every door reachable from every other door (flood fill test); spawn points
-≥ 200 px from any door; a template is mirrored horizontally/vertically at random for variety; props are
-randomly thinned by 20%. Hazard tiles are drawn under entities. Templates are validated by a unit test.
+Rules (validated by a unit test): at least 60% floor; every door reaches every other door; spawn points ≥ 200 px from
+doors; the gap rule: blocking things touch or leave at least 3 tiles (`MIN_GAP`, an Elite brute fits). Combat rooms
+pick a template at random, mirrored horizontally / vertically at random; mirrored templates thin their props by 20%
+(whole free-standing clumps).
 
-Special rooms have their own fixed layouts: treasure (a dais with the chest, 2 pillars), reliquary (a
-shrine, candles, no enemies), merchant (Gary's cart, a rug), bonfire rooms (the camp stove, no
-hazards), boss arenas (one per boss, CONTENT_ENEMIES §11).
+**Shapes** (`shapes.ts`): a combat room's shape family carves its outline inward from the rectangle (cross halls,
+caves, tunnels, clearings, stepped forges, naves, gears, void islands; per-zone lists) over the template, then a
+repair pass removes obstacles crowding the new walls, closes slivers, fills enclosed pockets and re-places lost spawn
+points and chest spots. Doors and door approaches never move. Shaped rooms may go down to 50% floor. A shape that
+cannot be made valid leaves the plain template. Special rooms get their zone's frame.
+
+Special rooms have fixed layouts (`data/rooms/special.ts`): start, anteroom (bonfire rooms), treasure, reliquary,
+merchant, Training Hall, the Instructor's room; boss arenas are in `data/rooms/bosses.ts` and the boss data.
 
 ### 3.2 Hazardous terrain
 
-A layer over plain floor (`Room.terrain`, `procgen/terrain.ts`), separate from the template's `~` tiles.
-**35%** of combat and ambush rooms roll it from their own stream `terrain:<zone>:<cycle>:<room>` (about 33% end
-up with some: a cramped room may have no room for it). Such a room gets **1–3 organic patches** (9–20 tiles
-each, grown as round blobs from a random seed tile), each patch **Slow** or **Hurt** (50/50).
+A layer over plain floor (`Room.terrain`, `terrain.ts`), separate from `~` tiles. **50%** of combat and ambush rooms
+roll it (D160). A normal terrain room gets **1–3 organic patches** (9–20 tiles, round blobs), each **Slow** or
+**Hurt** (50/50), covering at most **8%** of the floor. **30%** of terrain rooms are **heavy**: 4–8 big patches up to
+**30%** of the floor, all Slow, all Hurt, or mixed.
 
-- Only on `.` floor whose 8 neighbours are floor or grate: never on or touching walls, pillars, props, pits,
-  void, `~` tiles or doors, so a patch never narrows a passage. Never within 3 tiles of a door, never on or next to
-  a spawn point, a chest spot or the room's centre (where a chest without a C spot stands).
-- Patches keep a 1-tile gap from each other; total coverage **≤ 8%** of the room's floor (average about 5%).
-- After each patch, a flood fill checks that a **terrain-free walkable route** still joins every open door,
-  spawn point and chest spot; a patch that breaks one is dropped and another seed tried.
-- Never in boss arenas, the Training Hall, the Instructor's room, start/anteroom bonfire rooms, treasure,
-  reliquary or merchant rooms.
-- Deterministic; the host also sends it in the room sync (`RoomSync.terrain`, base64, only when present).
-  Effects and look: GAME_DESIGN §5.1, ART_AUDIO-style themes in `src/render/terrain.ts`.
+- Only on `.` floor whose 8 neighbours are floor or grate: never on or touching walls, pillars, props, pits, void,
+  `~` tiles or doors. Never within 3 tiles of a door, never on or next to a spawn point, chest spot or the centre.
+- Patches keep a 1-tile gap. After each patch a flood fill checks that a terrain-free route still joins every door,
+  spawn point and chest spot; a patch that breaks one is dropped and another tried.
+- Never in boss arenas, the Training Hall, the Instructor's room, bonfire rooms, treasure, reliquary or merchant rooms.
+- The host sends it in the room sync (`RoomSync.terrain`, base64, only when present). Effects: GAME_DESIGN §5.1.
 
-## 4. Enemy mix and waves
+## 4. Enemies and waves
 
-**Mix picker** (per zone, from `rooms:<zone>` stream): choose 5 of the zone's 10 types (D241; was 4 of 8) such that the set has
-≥ 1 melee role (fodder, brute, tank, assassin), ≥ 1 non-melee role (ranged, caster, support, hazard,
-swarm), ≥ 1 type with a Red special, ≥ 1 with a Piercing special (role enum per GAME_DESIGN §6.1). Re-draw until valid (tested to always terminate). The mix
-is shown on the zone's title card ("Mossy Crypt — Shamblers, Bone Archers, Ghoul Leapers, Plague Bells").
+**Mix** (`mix.ts`, stream `rooms:`): each zone visit draws **5 of the zone's 10 types** (D241) with ≥ 1 melee role
+(fodder, brute, assassin, tank), ≥ 1 non-melee role, ≥ 1 type with a Red attack and ≥ 1 with a Piercing attack.
 
-**Threat budget** per combat room: `budget = (6 + 2 × depth) × (1 + 0.15 × (zone − 1))` where depth is
-the BFS distance from the start. Enemy costs by role enum: fodder 2, swarm (one group) 3, ranged 3,
-caster 4, support 4, brute 6, assassin 4, tank 5, hazard 4. Waves: split the budget into 1–3 waves (depth 1–2: one wave;
-3–5: two; 6+: three), each wave spawning when the previous is 70% dead. Casters/support never exceed 2
-per wave per player; brutes/tanks never exceed 2 per wave per player; a wave holds at most 12 enemies per player
-and a room 18 live enemies per player.
+**Threat budget** (`waves.ts`): `budget = (6 + 2 × depth) × (1 + 0.15 × (zone − 1))`, depth = BFS distance from the
+start (at least 1), × **1.5** (`ROOM_ENEMY_MULT`, D79). Costs by role (`data/roles.ts`): fodder 2, swarm group 3,
+ranged 3, caster 4, support 4, brute 6, assassin 4, tank 5, hazard 4.
 
-**Room size and the party (D79):** the budget above is multiplied by **1.5 × players**: a room has 50% more
-enemies than the original budget, and 2, 3 and 4 players face 2×, 3× and 4× that (5 → 10 → 15 → 20). Room
-enemies do not gain HP for the party (bosses do). Each room enemy's Shards and per-player drop chances are
-divided by the same 1.5 × players, so what each player earns per room is unchanged; an Elite's drop chance is
-divided only by the party size.
-
-**Spawning**: each enemy appears at a spawn point ≥ 200 px from all players with a 1.0 s floor tell
-(a rising circle) and is invulnerable until it appears. **Elite** roll 8% per non-swarm spawn solo, 12% / 16% /
-20% with 2 / 3 / 4 players (D79), at most 2 Elites per player per room. Ambush rooms spawn all waves at once with a 1.5 s tell.
-
-**Room clear**: no live enemies and no pending waves → doors unlock (no chest appears: a room's chest, if it
-has one, was standing there from the start, §5), Shards and loot already dropped stay for 60 s then are auto-collected to the nearest
-player's bag (Shards) or stay on the floor until the room is left (items are listed in the map's room
-tooltip as "left behind: 2").
+- **Waves:** 1 at depth 1–2, 2 at 3–5, 3 at 6+, each worth an equal share of the budget. A wave holds at most 12
+  enemies and at most 2 casters / supports and 2 brutes / tanks. Packs (`traits.packSize`) spawn together.
+- **Co-op** (D159): every wave stays the solo size; the party adds **one full wave per extra player**. Each enemy's
+  Shards and drop chances are divided by the plan's `share`, so every player earns the same per room. Bosses and
+  Elites gain HP with the party (NETCODE §7); room enemies do not.
+- **Spawning** (`session.ts`): the first wave on entry (an ambush springs all its solo waves at once with a 1.5 s
+  tell); each next wave when the previous is 70% dead. Enemies appear at spawn points ≥ 200 px from every player
+  with a 1.0 s rising-circle tell, invulnerable until they appear.
+- **Elites** (`elite.ts`): 8% of non-swarm, non-special spawns solo, +4% per extra player (12 / 16 / 20%), at most 2
+  per player per room. One of 8 affixes: frenzied, armored, vampiric, arcane, molten, frostbound, shielded, summoner.
+- **Room clear:** no live enemies and no waves left → doors unlock. Shards are credited on each kill (`shardGain`).
+  Dropped items stay on the floor; leaving the room stores them (`world.leftBehind`) and they are back on return.
 
 ## 5. Chests and mimics
 
-- Treasure-room chest: always. Reliquary: the room's purpose.
-- **Small chest (D93)**: rolled per combat/ambush room from the room's stream with the zone (25%; the dead ends
-  left over after the special rooms always get one). A room with a chest has it standing on its C spot (the
-  room's centre if the template has none) from the moment you walk in, fight or not, and it can be opened at
-  any time; a room without one never gets one. Clearing a room spawns nothing. Opened chests and killed
-  mimics stay done (`chestsOpened`, `mimicsKilled`).
-- **Mimic**: every chest (not reliquary, not tutorial, not Gary's) rolls 5% from the room stream; a mimic
-  chest sits dormant in its room from entry like any chest and does not count toward the room clear. A mimic uses the same entity id scheme so the host and guests agree. Visual tells in
-  GAME_DESIGN §6.5.
-- Opening: hold Interact 0.6 s; loot bursts out (instanced per player, D33).
+- **Treasure room:** always one chest (`treasureChest`), guarded 30% of the time. **Reliquary:** the room's shrine.
+- **Small chest** (D93): a combat / ambush room holds one 25% of the time (leftover dead ends always). It stands on
+  its C spot (or the centre) from the moment you enter and can be opened any time; clearing a room spawns nothing.
+- **Mimic:** every chest (not reliquaries, the tutorial or Gary's) is a mimic **8%** of the time (D105). A mimic sits
+  dormant like a chest and does not count toward the room clear.
+- Opened chests and killed mimics stay done (`chestsOpened`, `mimicsKilled`; awake mimics in `mimicsAwake`).
+  Opening: hold Interact; loot is rolled and dropped per player (D33).
 
-## 6. Bonfires
+## 6. New Game+
 
-Start room and boss anteroom. Each has a stable id `z<zone>-start` / `z<zone>-boss`. The save tracks
-`bonfiresUsed` (first-rest rule, D38) and the current respawn bonfire.
+From cycle 1 (NG+1) the same generators run with the cycle in every stream label, plus:
 
-## 7. Zone transitions and NG+
+| Rule | What |
+|---|---|
+| **Zone 8 head counts** (D276) | every room is budgeted like a zone 8 room of its depth (`budgetZone`), priced in the zone's own mix, never below its own budget; the share grows with it, so Shards and loot per room stay the same |
+| **An Elite in every room** (D296) | a room whose waves rolled none makes one eligible enemy (earliest wave) an Elite, or adds an Elite from the mix to wave 1 (`ensureNgElite`) |
+| **Bonus boss room** (D278, D290) | one combat room per zone (`bonusBossFor`) holds a boss from any zone in its second phase instead of waves. Pool: every boss with a second phase that is not `arenaBound` (not the Bloatking, Ignatius or the Landlord). Its bar starts full at 30% of that boss's HP for the cycle; it hits like a boss of the room's zone; Shards ×0.3; a boss chest's loot; not counted as a boss kill |
+| **Third boss phase** (D295) | zone 1–7 bosses spawn with a derived three-phase list (`boss/ngPhases.ts`) |
+| Enemy scaling | HP, damage, item level and per-zone NG+ damage tables live in `combat/formulas.ts` and `data/roles.ts` (D209, D259, D275, D287); GAME_DESIGN covers the numbers |
 
-Beating the boss opens stairs in the boss room. Taking them: zone title card, generate the next zone
-from `map:<zone+1>` lazily, place the party at its start bonfire (fresh). After zone 8: credits, then
-"Begin Cycle N+1" at a special bonfire: new seed = hash(seed, cycle + 1), zone 1, no tutorial.
+## 7. Bonfires, zone transitions and cycles
 
-## 8. Tutorial hall layout
+- Bonfires: the start room and the boss anteroom, ids `z<zone>-start` / `z<zone>-boss`. Every rest heals and refills
+  the Thermos (D150) and respawns the zone's enemies.
+- Beating the boss opens stairs in the boss room; taking them generates the next zone and places the party at its
+  start bonfire.
+- After zone 8: credits, then a **Begin Cycle** bonfire (`ngplus` interactable). `beginNextCycle`: `cycle + 1`, a new
+  seed `<first 12 chars of the seed>+<cycle>`, a fresh `WorldState` at zone 1, no tutorial; the character keeps
+  everything.
 
-Fixed 40 × 22 room: a corridor of **9 stations** left to right (signs with a short line each and a glowing
-floor marker that completes when the action is performed): move · aim · attack a dummy · block a dummy's
-swing · parry it · dodge a dummy's **Red** stomp · step out of a dummy's **Piercing** ring · two-hand ·
-drink the flask (a dummy hits you once for 10%). Stations do not gate the door. The Instructor has his own room through
-the hall's south door (D75): an optional side room off the grid, linked back to the hall (CONTENT_ENEMIES §10).
-Nobody can die in the hall itself (D73); in his room you can, and you wake at the start of the hall.
+## 8. The Training Hall
+
+A new character's first zone (cycle 0, `tutorial`) adds the **Training Hall** (`z1-tutorial`) below the start room.
+It has **11 stations** (`TUTORIAL_STATIONS`): move, aim, attack, block, parry, dodge a Red attack, step out of a
+Piercing area, two-hand and swap, drink from the Thermos, Slow ground, Hurt ground. Stations do not gate the door.
+The hall's east door opens on **the Instructor's room** (`z1-trial`, off the grid, D75, D90), whose east door leads to
+the start room's south door. Nobody dies in the hall (D73); in the Instructor's room you can, and you wake at the start
+of the hall.
 
 ## 9. Determinism and tests
 
-- Generation is a pure function of (seed, zone) → `ZoneLayout`, and (seed, zone, roomId) → `RoomSpec`.
-- Tests: 1,000 random seeds generate every zone with no exceptions; every room has reachable doors; the
-  boss room exists and is a dead end; the mix picker returns a valid mix for every zone; thread budget
-  results never exceed 12 live enemies; mimic rate over 10,000 chests is 5% ± 0.5%.
+- Generation is a pure function of (seed, zone, cycle, options) → `ZoneLayout`, and (layout, room) → `Room` +
+  markers + `RoomPlan`. Host and guests generate the same map; the host still sends tiles and terrain in the room sync.
+- Unit tests: many seeds generate every zone without errors; doors reachable; the boss room exists off the anteroom;
+  the mix is valid for every zone; templates pass validation; wave caps hold; the mimic rate is 8% ± 0.6%; NG+ rooms
+  hold zone 8's head counts and an Elite; the bonus boss pick is deterministic.

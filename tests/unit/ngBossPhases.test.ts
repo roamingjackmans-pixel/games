@@ -1,4 +1,4 @@
-// New Game+ boss phases (D293) and an Elite in every New Game+ room (D294).
+// New Game+ boss phases (D295) and an Elite in every New Game+ room (D296).
 import { describe, expect, it } from 'vitest';
 import { BOSSES } from '../../src/data/bosses';
 import { GameSession } from '../../src/game/session';
@@ -19,7 +19,7 @@ import type { BossDef } from '../../src/game/types';
 
 const zoneBosses = (): BossDef[] => Object.values(BOSSES).filter((b) => b.zone <= 7);
 
-describe('New Game+ boss phases (D293)', () => {
+describe('New Game+ boss phases (D295)', () => {
   it('the first playthrough and zone 8 keep their phases', () => {
     for (const b of Object.values(BOSSES)) expect(ngBossDef(b, 0)).toBe(b);
     const ll = Object.values(BOSSES).find((b) => b.zone === 8)!;
@@ -118,7 +118,7 @@ describe('New Game+ boss phases (D293)', () => {
   });
 });
 
-describe('an Elite in every New Game+ room (D294)', () => {
+describe('an Elite in every New Game+ room (D296)', () => {
   const count = (cycle: number, seed: string, zone: number): { rooms: number; withElite: number; sig: string } => {
     const L = generateZone(seed, zone, { cycle });
     let rooms = 0;

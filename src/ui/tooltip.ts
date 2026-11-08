@@ -303,7 +303,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   // ---- per kind
   if (w) {
     const ow = other ? WEAPONS[other.baseId] : undefined;
-    // D293: what it would really deal in your hands, every perk counted (equipped on a copy of you)
+    // D294: what it would really deal in your hands, every perk counted (equipped on a copy of you)
     const mineHit = effectiveWeaponHit(c, item);
     const theirsHit = ow && other ? effectiveWeaponHit(c, other) : null;
     const mine = mineHit?.byType ?? {};
@@ -402,7 +402,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const mySkill = effectiveSpellSkill(c, item) ?? toolSpellSkill(item, stats, d0.statBoost);
     const rows: Row[] = [
       // Spell Skill (D182): what this tool makes of your Brain or Prayer; spells deal and heal Spell Skill / 100 times their listed amounts
-      // D293: with you holding it: proficiency and set perks too (falls back to the tool on its own)
+      // D294: with you holding it: proficiency and set perks too (falls back to the tool on its own)
       { label: 'Spell Skill', cur: mySkill, prev: ot && other ? (effectiveSpellSkill(c, other) ?? toolSpellSkill(other, stats, d0.statBoost)) : null, better: 'higher', fmt: int0, note: `${STAT_LABEL[statKey]} ${t.gradeLetter} scaling · spells do ×${(mySkill / 100).toFixed(2)}` },
       { label: 'Cast speed', cur: t.castSpeed, prev: ot ? ot.castSpeed : null, better: 'higher', fmt: (x) => `×${x.toFixed(2)}` },
     ];

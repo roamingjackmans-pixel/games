@@ -1,5 +1,5 @@
 // The host (NETCODE §2, §5–§7): runs the only simulation. In the lobby it collects guests' hellos; in the
-// world it applies their inputs, sends each of them snapshots at 20 Hz (a keyframe every 2 s), their own
+// world it applies their inputs, sends each of them snapshots at 30 Hz (SNAP_HZ) (a keyframe every 2 s), their own
 // character ops and the world events they should hear, and removes anyone silent for 10 s.
 import { emptyInput, type InputFrame } from '../../engine/input/actions';
 import { refreshDerived } from '../player/player';

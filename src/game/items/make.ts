@@ -15,8 +15,9 @@ export function newId(rng?: Rng): string {
 }
 
 export function socketCount(kind: Item['kind'], rarity: Rarity, rng?: Rng): number {
-  const isWeapon = kind === 'weapon';
-  const isArmor = kind === 'armor';
+  // staffs and talismans socket like weapons, shields like armour (D227, D298: they used to drop with none)
+  const isWeapon = kind === 'weapon' || kind === 'staff' || kind === 'talisman';
+  const isArmor = kind === 'armor' || kind === 'shield';
   if (!isWeapon && !isArmor) return 0;
   switch (rarity) {
     case 'common':

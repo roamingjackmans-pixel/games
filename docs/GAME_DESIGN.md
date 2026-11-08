@@ -1,755 +1,1006 @@
-# Dungeon Joe — Game Design Document
+# Dungeon Joe — Game Design
 
 > Joe went down the stairs to find the fuse box. The stairs kept going.
 
-A souls-like action RPG with the pace of Hades, the room-to-room rhythm of The Binding of Isaac, and the
-loot of Diablo 3. Top-down arenas, procedurally generated zones, cooldown skills on every weapon, spells on
-staffs and talismans, bonfires, a flask, red attacks you cannot block and blue attacks you cannot dodge,
-mimics, gems, New Game+, ten classes, ten save files, and four-player online co-op in the browser.
+A souls-like action RPG with the pace of Hades, the room-to-room rhythm of The Binding of Isaac and the loot of
+Diablo 3. Top-down arena rooms, procedurally generated zones, cooldown skills on every weapon, spells on staffs and
+talismans, bonfires, a flask, red attacks you cannot block and blue attacks you cannot dodge, mimics, gems, New
+Game+, ten classes, ten save files and four-player online co-op in the browser.
 
-All numbers in this document are **starting values**. The build tunes them, but keeps the *relationships*
-(what is faster, what is stronger, what counters what). Decisions and their reasons are in
-[DECISIONS.md](DECISIONS.md). Content lives in [CONTENT_ENEMIES.md](CONTENT_ENEMIES.md),
-[CONTENT_ITEMS.md](CONTENT_ITEMS.md) and [CONTENT_SPELLS_CLASSES.md](CONTENT_SPELLS_CLASSES.md).
+**This document is the current reference: every rule here is how the game works today** (written at v1.3.19). Bracketed ids
+such as (D293) point to [DECISIONS.md](DECISIONS.md), which keeps the history and the reasons. When this document
+and the code disagree, the code wins and this document should be fixed. Content tables (every enemy, boss, item,
+spell and class) live in [CONTENT_ENEMIES.md](CONTENT_ENEMIES.md), [CONTENT_ITEMS.md](CONTENT_ITEMS.md) and
+[CONTENT_SPELLS_CLASSES.md](CONTENT_SPELLS_CLASSES.md); schemas in [DATA_MODEL.md](DATA_MODEL.md); generation in
+[PROCGEN.md](PROCGEN.md); co-op in [NETCODE.md](NETCODE.md); look and sound in [ART_AUDIO.md](ART_AUDIO.md).
+
+## Contents
+
+1. [Pillars](#1-pillars)
+2. [The run](#2-the-run) — structure, the Training Hall, scaling
+3. [Stats](#3-stats) — formulas, class boosts, requirements, levelling
+4. [Controls](#4-controls)
+5. [Combat](#5-combat) — movement, attacks, stamina, dodge, block, damage types, statuses, stuns, Red and Blue, areas
+6. [Enemies](#6-enemies) — roles, zone mixes, AI, poise, Elites, mimics
+7. [Bosses](#7-bosses)
+8. [Gear](#8-gear) — slots, rarity, skills, affixes, set perks, weight, proficiency, reinforcing, gems, cards
+9. [Bonfires, the Thermos and death](#9-bonfires-the-thermos-and-death)
+10. [Spells](#10-spells)
+11. [Chests, reliquaries, Gary and the Bestiary](#11-chests-reliquaries-gary-and-the-bestiary)
+12. [Online co-op](#12-online-co-op)
+13. [New Game+](#13-new-game)
+14. [Saves](#14-saves)
+15. [Classes](#15-classes)
+16. [UI and HUD](#16-ui-and-hud)
+17. [Settings, platforms and installing](#17-settings-platforms-and-installing)
+18. [Glossary](#18-glossary)
+19. [Story and Glowen](#19-story-and-glowen)
+20. [Achievements](#20-achievements)
+21. [Statistics](#21-statistics)
+22. [Tools: debug menu, balance report, version](#22-tools-debug-menu-balance-report-version)
+23. [Not built](#23-not-built)
 
 ---
 
 ## 1. Pillars
 
-1. **Every hit is a decision.** Stamina, a 5-second dodge, and telegraphed attacks mean you commit. Button
-   mashing dies in zone 1.
-2. **Readable danger.** Every attack has a telegraph you can learn. Red means *don't block*. Blue means
-   *don't be there*. Nothing is both.
-3. **The floor is lava, often.** Enemies and bosses paint the arena: lines, rings, grids, sweeps, zones.
-   Positioning matters as much as timing, solo or with four people.
-4. **Loot you feel.** A new weapon changes your verbs (skills), your rhythm (gems), and your build (stats).
-5. **Grim place, dry voice.** The dungeon is deadly serious. The item descriptions are not.
+1. **Every hit is a decision.** Stamina, a 5-second dodge and telegraphed attacks mean you commit.
+2. **Readable danger.** Every attack has a telegraph you can learn. Red means *don't block*. Blue means *don't be
+   there*. Nothing is both. If the dot at your feet is outside an attack's marker, you are safe (D262).
+3. **The floor is lava, often.** Enemies and bosses paint the arena with lines, rings, grids, sweeps and zones.
+4. **Loot you feel.** A new weapon changes your verbs (skills), your rhythm (gems) and your build (stats).
+5. **Grim place, dry voice.** The dungeon is deadly serious. The item descriptions are not (D14).
 
 ## 2. The run
 
 ### 2.1 Structure
 
-A **playthrough** = one character, one map seed, one NG+ cycle. It is 8 zones in order:
+A **playthrough** is one character, one map seed and one cycle (0 = the first playthrough, 1 = NG+1, …). It is 8
+zones in order (D22):
 
-| # | Zone | Theme | Palette | Boss |
-|---|---|---|---|---|
-| 1 | Mossy Crypt | undead, moss, bone | moss green, bone white, grey | The Caretaker |
-| 2 | Fungal Caverns | beasts, spores, glow | violet, teal glow, brown | Mother Spore |
-| 3 | Drowned Sewers | drowned, slimes, rats | murky green, rust, black water | The Bloatking |
-| 4 | Hollow Forest | fey, wolves, treants | autumn orange, deep green, gold | Vexthorn, the Hollow Stag |
-| 5 | Ashen Forge | fire cult, constructs | red, black, ember orange | Foreman Ignatius |
-| 6 | Frozen Reliquary | frost knights, wraiths, choir | ice blue, white, gold | Saint Aurelia the Unthawed |
-| 7 | Clockwork Citadel | automata, magisters | brass, teal, violet | Archmagister Tock |
-| 8 | The Abyss (final) | void horrors, hollow Joes | black, violet, white | The Landlord (3 phases) |
+| # | Zone | Theme | Boss |
+|---|---|---|---|
+| 1 | Mossy Crypt | undead, moss, bone | The Caretaker |
+| 2 | Fungal Caverns | beasts, spores, glow | Mother Spore |
+| 3 | Drowned Sewers | drowned, slimes, rats | The Bloatking |
+| 4 | Hollow Forest | fey, wolves, treants | Vexthorn, the Hollow Stag |
+| 5 | Ashen Forge | fire cult, constructs | Foreman Ignatius |
+| 6 | Frozen Reliquary | frost knights, wraiths, choir | Saint Aurelia the Unthawed |
+| 7 | Clockwork Citadel | automata, magisters | Archmagister Tock |
+| 8 | The Abyss (final) | void horrors, hollow Joes | The Landlord (four phases) |
 
-Each zone is a procedurally generated graph of **rooms** (12–16 ordinary rooms plus the special rooms
-below, so 15–21 in all, see [PROCGEN.md](PROCGEN.md)):
+Each zone is a procedurally generated grid of **12 + ⌊zone / 2⌋ rooms** (12–16) plus its boss room
+([PROCGEN.md](PROCGEN.md)):
 
-- **Start room** with a **bonfire**.
-- Combat rooms: the room locks when you enter, 1–3 **waves** spawn from the zone's enemy mix, doors open
-  when the room is clear. Cleared rooms stay clear until you rest at a bonfire.
-- **Treasure room** (1–2): a chest, sometimes guarded.
-- **Spell reliquary** (rare): a special chest that holds a spell.
-- **Merchant room** (rare): the wandering merchant.
-- **Boss anteroom** with a **bonfire**, then the **boss room**. Beating the boss opens the stairs down.
+- **Start room** with a bonfire.
+- **Combat rooms**: the room locks when any player is 70 px inside (D52, D151), its waves spawn from the zone's enemy
+  mix, and the doors open when it is clear. 10% of combat rooms are **ambushes** (the first wave comes on entry).
+  Cleared rooms stay clear until you rest at a bonfire.
+- **Treasure rooms** (1, 50% a second): a chest.
+- **Spell reliquary** (35% a zone; 100% from zone 3 on while the character knows fewer than 2 spells).
+- **Merchant room** (20% a zone, never zone 1): Gary, the wandering merchant (§11).
+- **Boss anteroom** with a bonfire, then the **boss room**. Beating the boss opens the stairs down.
+- A quarter of combat and ambush rooms have a **small chest** standing in them from the moment you enter (D93), and
+  half have **hazardous terrain** (§5.1).
+- In NG+ one combat room per zone holds a **bonus boss** (§7.5).
 
-Zone **enemy mix**: when a zone is generated it picks **4 of the zone's 8 enemy types**; every room in that
-zone draws from those 4 (plus Elite variants). The mix must contain at least one melee type, one
-non-melee type, one type with a Red special and one with a Piercing special.
+**Zone mix** (D241, D242): every zone has **10 enemy types**. Each visit (zone and cycle) draws **5** of them, and
+every room of that visit uses those 5 (plus Elites). A mix always has at least one melee and one non-melee type, and
+at least one Red user and one Piercing user.
 
-### 2.2 Tutorial hall (new characters only, not in NG+)
+Every doorway has a torch on each side: unlit while the door is shut, lit when it is open (D263).
 
-The very first room is a training hall: sign posts teach move, aim, attack, block, parry (a dummy that
-swings on a timer), dodge through a **red** attack, step out of a **blue** attack, two-hand, drink the
-flask. You cannot die in the hall (D73). Through its south door, in **his own room**, waits **The Instructor**
-(see CONTENT_ENEMIES §10, D75): 120,000 HP, regenerates, slow, hits like a truck; there you can die, and you wake
-at the start of the hall. He is optional: the hall's exit to the first bonfire is its east door. If you somehow kill
-it, it drops a random *really good* item: a Legendary weapon with all 3 skills unlocked at zone-3 item
-level, or a random spell. The hall is not skippable, but it is short (under two minutes to walk through).
+### 2.2 The Training Hall and The Instructor (new characters only)
+
+A new character's first room is the **Training Hall**: eleven sign-posted stations teach move, aim, attack, block,
+parry (a dummy swinging on a timer; a well-timed block with no parrying shield also counts, D96), dodging through a
+Red attack, stepping out of a Blue ring (40–150 px, D107), two-handing, the Thermos, and walking over Slow and Hurt
+ground (stations 10 and 11, D126). **Nobody can die in the hall** (D73): a killing hit leaves you at 1 HP with 1.5 s
+of invulnerability.
+
+The hall's east door opens on **The Instructor's room** (D90). The Instructor has **9,373 HP** (unscaled, D226), a
+second half from **65%** with faster attacks and three ranged throws (a soccer-ball volley, a Red leap, a lobbed
+basketball; D107, D110), roams the whole room and never heals (D111). His room's way down to the first bonfire stays
+**locked while he lives** (D127): kill him, or die to him and wake at the first bonfire with the tutorial done. A
+death to him counts as a death but does not spoil zone 1's clean run (D207). Beating him drops **500 Glowen** and,
+for each player, either a random unknown spell (50%) or a **Legendary weapon at item level 3 with its first skill**
+(D89). Not in NG+.
 
 ### 2.3 Scaling
 
-Let `z` be the zone number (1–8), `c` the NG+ cycle (0 for the first playthrough), `p` the number of
-players.
+Let `z` be the zone (1–8), `c` the cycle and `p` the number of players.
+
+**The zone curve** (`cycleZoneCurve`, D209), with `k` = 0.55 for HP, 0.35 for damage, 1.1 for Shards:
 
 ```
-curve(z, c, k) = 1 + k (z−1)                                        when c = 0
-               = (1.05 + 0.30 (z−1)/7) × (1 + 7k) × 1.1^(c−1)        when c ≥ 1   (D209)
-enemyHP     = baseHP  × curve(z, c, 0.55) × co-op (D159)
-enemyDamage = baseDmg × curve(z, c, 0.35)
-enemyShards = baseShards × curve(z, c, 1.1)          (per player, instanced)
-itemLevel   = z + c  (clamped to the item-level table, CONTENT_ITEMS §2)
+first playthrough (c = 0):  curve = 1 + k (z − 1)
+New Game+ (c ≥ 1):          top = 1 + 7k   (the first playthrough's zone 8)
+                            curve = (1.05 top + 0.30 top × (z − 1) / 7) × 1.1^(c − 1)
 ```
 
-New Game+ (D209): its zone 1 is 5% harder than the first playthrough's zone 8, rising evenly to 35% harder by its
-zone 8; every cycle after that is 10% harder on every zone.
+So NG+ zone 1 starts 5% above the first zone 8 and climbs to 35% above it by zone 8.
 
-Expected character level at zone end (solo, first cycle): 12 · 22 · 32 · 42 · 52 · 62 · 72 · 80.
-**Tuning target:** clearing every room of a zone once (no deaths, no Elites counted, no chests) yields
-100% ± 20% of the Shards needed to go from the zone's expected entry level to its expected exit level
-using the §3.3 cost curve and CONTENT_ENEMIES §1 Shard values. A unit test computes the expected yield
-from the PROCGEN threat budgets and the role costs and fails outside the band. If it fails, retune the
-**Shard values** (not the curve) and record "(tuned)". (tuned: a per-zone Shard factor, D51)
+**HP and damage** follow the curve up to NG+1 and then grow by cycle (D258, D259); **Shards** keep the plain curve:
+
+```
+enemyHP     = role HP × enemy's own mult × curve(z, min(c,1), 0.55) × NG1_HP × ngGrowth(c) × co-op HP (D159)
+enemyDamage = role hit × enemy's own mult × curve(z, min(c,1), 0.35) × NG1_DMG × ngGrowth(c)
+              × zone damage factor × NG+ zone factor (room enemies only)
+enemyShards = role Shards × 5 × zone Shard factor × curve(z, c, 1.1)          (per player, instanced)
+itemLevel   = z + c
+```
+
+| Cycle | HP ×(on the NG+1 curve) | Damage × | Notes |
+|---|---|---|---|
+| NG+1 | **4.5** (`NG1_HP_MULT`) | **1.4** (`NG1_DMG_MULT`) | |
+| NG+2 | ×2.5 on NG+1 | ×2.5 on NG+1 | `NG_STEPS` |
+| NG+3 | ×2 on NG+2 | ×2 | |
+| NG+4 | ×2 on NG+3 | ×2 | |
+| NG+5 on | ×1.15 a cycle | ×1.15 a cycle | `NG_LATE_STEP` |
+
+**Zone damage factor** (every cycle, bosses too, D231): zone 4 ×1.1, zones 5–6 ×1.15, zone 7 ×1.35, the rest ×1.
+
+**NG+ room-enemy damage by zone** (cycle ≥ 1, not bosses or special NPCs, D287): zone 1 ×1, 2 ×2, 3 ×1.64, 4 ×1.61,
+5 ×1.5, 6 ×1.43, 7 ×1.36, 8 ×1.65, so the average room hit climbs from zone 2 to zone 8 (about 232 → 333 at NG+1).
+
+Individual bosses carry their own base HP and multipliers (§7.2). The Caretaker has 30% less HP in the first
+playthrough (D211).
+
+**Zone Shard factors** (tuned, D51): 1: 0.46 · 2: 0.35 · 3: 0.34 · 4: 0.26 · 5: 0.27 · 6: 0.24 · 7: 0.26 · 8: 0.19, so
+a full clear of a zone pays for its levels within ±20% (a unit test holds it). Expected character level at each
+zone's end, solo, first playthrough (`EXPECTED_LEVEL`): 10 · 20 · 32 · 42 · 52 · 62 · 72 · 80 (D147).
 
 ## 3. Stats
 
-Six stats, 1–99 each. Level 1 characters have 48 points total (class tables in
-CONTENT_SPELLS_CLASSES §3). Each level adds one point to one stat. Level = 1 + points bought.
+Six stats, 1–99 each: **HP, Endurance, Bonk, Slicey, Brain, Prayer**. Level-1 characters have 48 points (the Hunter
+46; class tables in CONTENT_SPELLS_CLASSES §3). Each level adds one point; level = points − 47.
 
 | Stat | Governs |
 |---|---|
 | **HP** | Max health. |
-| **Stamina** | Max stamina and regen. |
-| **Bonk** | Damage of slow, heavy weapons (and crossbows, greatshields' requirements). |
-| **Slicey** | Damage of fast, light weapons (and bows). |
-| **Brain** | Offensive magic (staff spells). |
-| **Prayer** | Healing and buff magic (talisman spells); slightly better flask. |
+| **Endurance** | Max stamina, stamina regen and max equip load (D82). |
+| **Bonk** | Damage of heavy weapons and crossbows; walking speed while casting (D106). |
+| **Slicey** | Damage of fast weapons and bows; cast speed (D106). |
+| **Brain** | Staff spells (Spell Skill, §10); the magic side of hybrid weapons. |
+| **Prayer** | Talisman spells; the holy/fire side of hybrid weapons; a slightly better Thermos. |
 
-Scaling grades are deliberately spread: a weapon's main stat can scale anywhere from **E to S**, with
-or without a second stat, and medium-speed hybrids scale with both anywhere from "a little" (D) to a
-real split (A/C or B/B). Weapons with poor scaling have higher base damage (CONTENT_ITEMS §4).
+Scaling grades are spread on purpose from E to S (D40): weapons with poor scaling have a higher base. Do not flatten
+them.
 
 ### 3.1 Formulas
 
 ```
-maxHP      = 100 + Σ per HP point:      pts 1–30: +14 · 31–60: +8  · 61–99: +3
-maxStamina = 70  + Σ per Stamina point: pts 1–30: +3.5 · 31–60: +2 · 61–99: +0.8
-staminaRegen (per second) = 22 + 0.25 × Stamina, after a 0.6 s delay following any spend;
-                            paused while blocking a hit and during attack active frames.
+maxHP        = 100 + m × Σ per HP point:        1–30: 14 · 31–60: 8 · 61–99: 3
+maxStamina   = 70  + m × Σ per Endurance point: 1–30: 3.5 · 31–60: 2 · 61–99: 0.8
+staminaRegen = 22 + 0.25 × Endurance × m per second, 0.6 s after any spend; not during attack active frames or a dodge
+maxEquipLoad = 26 + m × Σ per Endurance point:  1–30: 1.5 · 31–60: 1.0 · 61–99: 0.5
 
-scaling curve  f(s) = 1 − 0.982^s        (f(10)=.17 f(20)=.30 f(40)=.52 f(60)=.66 f(80)=.77 f(99)=.83)
-grade multipliers: S 1.2 · A 1.0 · B 0.75 · C 0.5 · D 0.25 · E 0.1 · – 0
+f(s) = 1 − 0.982^s                                   (f(10) .17 · f(20) .30 · f(40) .52 · f(60) .66 · f(99) .83)
+grades (D88): S 1.9 · A 1.55 · B 1.15 · C 0.8 · D 0.45 · E 0.2 · – 0
 
-weaponDamage = base × (1 + Σ_stat grade(stat) × f(effStat)) × attackMultiplier × gear/gem/affix mods
-   effStat = min(99, Bonk × 1.5) for Bonk while two-handing, otherwise the stat as it is (D72)
-spellPower   = spellBase × (1 + 1.2 × f(Brain))  × toolMult        (Brain spells)
-healPower    = spellBase × (1 + 1.0 × f(Prayer)) × toolMult        (Prayer spells)
-   toolMult  = toolGrade × (1 + 0.35 × (toolIlvl − 1))   (CONTENT_ITEMS §6; spells have no other level scaling)
-flaskHeal    = 40% maxHP × (1 + 0.003 × Prayer)
-damageTaken  = incoming × 100 / (100 + Def[type]) × status/affix mods
+weaponPower = base1 × (1 + 0.45 (ilvl − 1)) × (1 + Σ grade × f(effStat) × m) × rarity power × reinforcement
+              × 0.4 if below requirement
+   effStat: Bonk counts ×1.5 (max 99) while two-handing (D72); everything else as it is
+hit         = weaponPower × swing mult × (1 + damage %) + gem adds + flat affix damage   (weaponHitByType, D294)
+armorDef    = def1 × slot mult × (1 + 0.6 (ilvl − 1)) × reinforcement
+damageTaken = incoming × 100 / (100 + Def[type])
+thermosHeal = 40% maxHP × (1 + 0.003 × Prayer × m) × (1 + heal bonuses)
+castSpeed   × (1 + 0.25 f(Slicey) m)       castMove = 50% + 0.25 f(Bonk) m of walking speed   (D106)
 ```
 
-### 3.2 Requirements (D37)
+`m` is the class boost for that stat (§3.2). Requirements on a weapon's primary stat rise 2 per item level above 1
+(`reqAtIlvl`); secondary requirements stay.
 
-Every weapon, shield and casting tool lists minimum stats. Two-handing counts Bonk at ×1.5 toward
-requirements (D72).
+### 3.2 Primary and secondary stats (D184)
 
-- Weapon below requirement: swings at **40% damage**, **skills locked**, a red "!" on the slot.
+Every class has a **primary stat (×1.25)** and a **secondary (×1.15)**: what every point of that stat gives is
+multiplied (never the base), everywhere it counts — max HP; stamina, regen and equip load; weapon scaling; casting
+while moving; cast speed; Spell Skill; the Thermos's Prayer bonus. Requirements and level costs use the raw stats.
+Marked P / S in the creator, the inventory and the Level up tab.
+
+### 3.3 Requirements (D37, D72, D88, D210)
+
+Every weapon, shield and casting tool lists minimum stats; hybrid weapons also need their Brain or Prayer. Two-handing
+counts Bonk ×1.5 toward requirements. Requirements are checked against your stats including gear bonuses
+(`itemMeetsReqs`).
+
+- Weapon below requirement: **40% damage**, **skills locked**, a red "!" on the slot.
 - Shield below requirement: guards at **half** its block values, cannot parry.
 - Staff / talisman below requirement: **cannot cast**.
-- Spell below its own Brain/Prayer requirement: cannot be slotted (greyed with the number needed).
+- Spell below its own Brain/Prayer requirement: cannot be slotted.
+- Gear below requirement gives **none of its buffs** (affixes, gems, bands, ring effects, legendary powers, set
+  perks).
 
-### 3.3 Leveling
+### 3.4 Levelling and respec
 
-Enemies drop **Shards** (the soul currency). Spend them at a bonfire. Cost to go from level `L` to
-`L + 1` (L is your current level):
+Enemies drop **Shards**; spend them at a bonfire's **Level up** tab. Cost from level `L` to `L + 1` (D39, D147):
 
 ```
-cost(L) = floor((60 × 1.045^L + 15 L) × early(L)), early(L) = 1 + 0.6 × max(0, (21 − L) / 20)   L=1:124 · L=10:323 · L=20:458 · L=21:466 · L=30:674 · L=50:1291 · L=80:3229 (exact floor values; the first twenty levels cost up to 60% more, D147)
+cost(L) = floor((60 × 1.045^L + 15 L) × early(L)),   early(L) = 1 + 0.6 × max(0, (21 − L) / 20)
+L=1: 124 · L=10: 323 · L=20: 458 · L=30: 674 · L=50: 1,291 · L=80: 3,229
 ```
 
-Whole-run totals: level 1→12 ≈ 2,100 · 12→22 ≈ 3,800 · 32→42 ≈ 8,100 · 52→62 ≈ 15,600 · 72→80 ≈ 21,000.
+The tab plans points with **+1 / −1** (free points first, then Shards), shows every affected number **now → after**,
+and spends only on **Confirm**; leaving with unconfirmed points asks Lock in / Discard / Keep editing (D142).
 
-Death drops all unspent Shards as a glowing **Shardpile** where you died (D3). Touch it to recover. Die
-again before recovering and it is gone. In a boss room the pile appears just inside the boss door.
+Death drops all unspent Shards as a **Shardpile** where you died (in a boss room, just inside the door). Touch it to
+recover; die again first and it is gone (D3).
 
-**Respec:** a **Tear of Undoing** (boss drop 10%, spell reliquaries 5%, wandering merchant sometimes)
-resets all stats to the class base and refunds the points, used at a bonfire.
+**Respec:** a **Tear of Undoing** (bosses 10%, reliquaries 5%, sometimes Gary) resets stats to the class base and
+refunds the points as free points. It asks first, with Back focused (D238).
 
 ## 4. Controls
 
-Defaults (rebindable). Keyboard + mouse is the "host" layout; gamepad maps everything.
+Every action is rebindable on keyboard/mouse and gamepad (two slots each, plus Hold variants on the pad; D34, D85).
+Defaults (Xbox names; PlayStation shown when detected):
 
-| Action | Keyboard / mouse | Gamepad (Xbox names) |
+| Action | Keyboard / mouse | Gamepad |
 |---|---|---|
 | Move | WASD | Left stick |
-| Aim | Mouse cursor | Right stick (aim assist, §5.1) |
+| Aim | Mouse | Right stick |
 | Attack (light combo) | Left click | RT |
-| Block / parry (shield or two-handed guard) | Right click (hold / tap) | LT |
-| Dodge | Space | A |
+| Block / parry (off-hand crossbow: shoot, D291) | Right click | LT |
+| Dodge | Space | **B** |
 | Weapon skill 1 / 2 / 3 | Q / E / R | LB / RB / Y |
 | Spell 1 / 2 / 3 | 1 / 2 / 3 | D-pad left / up / right |
-| Flask | C | X |
-| Throwable (quick-use) | G | D-pad down |
-| Interact (chest, bonfire, door, sign, pickup) | F | B |
-| Two-hand toggle | Shift (tap) | Right stick click |
-| Inventory / character | Tab | Back (View) |
-| Map | M | Hold Back |
-| Pause / menu | Esc or P | Start |
-| Debug menu | Ctrl+Shift+D (then the owner code) | — |
+| Thermos | C | X |
+| Quick-use item | G | D-pad down (tap) |
+| Next quick-use item | T or mouse wheel | Hold D-pad down |
+| Interact | F | **A** |
+| Two-hand toggle | Shift | Right stick click |
+| Swap weapon | X | Left stick click |
+| Swap off hand (D228) | Hold F + X | Hold A + left stick click |
+| Inventory | Tab or I | View |
+| Map | M | Hold View |
+| Pause | Esc or P | Menu |
+| Debug menu | Ctrl+Shift+D, then the owner code | — |
 
-Gamepad right-stick aim: the character faces the stick direction; when the stick is neutral, melee
-attacks go toward the nearest enemy within 160 px of the facing cone, otherwise forward.
+The pad layout follows Dark Souls (D122): A interacts and confirms, B dodges and backs out of every menu.
+
+**Menus under a pad** (D122, D144–D148, D166, D169, D265): the focused control is always highlighted; menus open on
+their first content box; LB / RB step through tabs and **wrap** (the bonfire and its inventory form one loop); lists
+wrap at their ends; Up from the content reaches the tab bar; the right stick scrolls; left / right change a focused
+slider; **X / □** sends the focused control its second action (equip as 2nd weapon, next ring slot); **Y / △** (or L)
+locks the focused item or gem. A button a menu used is swallowed until released, so closing with B never dodges
+(D147).
+
+**Aim:** the mouse aims at the cursor. On a pad the character faces the right stick; with it neutral, melee goes to the
+nearest enemy within 160 px of the facing cone. Aim assist (strength in Settings) snaps projectiles within ±14° of an
+enemy.
+
+**Per-character pad layout** (D266): each character saves its own gamepad buttons, menu confirm / back and aim
+assist; keyboard keys, button-picture style, hold/toggle block and touch settings stay global. On the title screen
+the Gamepad tab edits the default layout, which new characters copy.
+
+Touch controls on phones and tablets (D143), the Steam Controller over WebHID (D206, D208, D214) and Firefox
+(D235) are covered in §17.
 
 ## 5. Combat
 
-### 5.1 Movement and aiming
+### 5.1 Movement, terrain and holes
 
-- Logical arena 1280 × 720 px. Player walk speed 260 px/s (modified by Chill, Haste, class perks).
-- Twin-stick. Melee swings are centered on the aim direction. Projectiles and spells go to the cursor.
-- Aim assist (gamepad): within ±14° of an enemy the aim snaps to it for projectiles.
-- **Hazardous terrain** (PROCGEN §3.2): about a third of combat rooms have 1–3 patches on open floor, themed per
-  zone and outlined so they never read as plain floor.
-  - **Slow** (heavy and gooey: grave mud with bones, spore sludge, sewage slime, bramble roots, cooling slag, snow
-    drifts, clockwork grease with gears, void tar): **−35% walking speed** while your centre is on it, players and
-    walking enemies alike (fliers skim over it; bosses never meet it). One multiplier, never stacked. The **dodge
-    is untouched**: it is forced motion and keeps its full distance and speed through the patch (so are leaps,
-    dashes and knockbacks).
-  - **Hurt** (flickering danger: ghostly grave-fire, acid, toxic bubbling, thorns, ember cracks, frost spikes,
-    sparking plates, void crackle): players standing in it take **3% of max HP every 0.5 s** (a steady beat; the
-    first hit lands on entry), with a hit flash and a soft hit sound. A dodge's i-frames skip a tick, so rolling
-    across a patch is free. Enemies take nothing (it is their dungeon) and path straight through.
+- Rooms are 1280 × 704 px (40 × 22 tiles of 32 px). Walking speed 260 px/s, changed by equip load, Chill, buffs and
+  class perks.
+- **Hazardous terrain** (D126, D160, D167): half of combat and ambush rooms roll patches (30% of those are *heavy*:
+  4–8 big patches up to 30% of the floor; otherwise 1–3 patches up to 8%), never in boss arenas, start or bonfire
+  rooms, always leaving a clear route joining every door, spawn and chest.
+  - **Slow** (gooey, themed per zone): −35% walking for players and walking enemies (fliers unaffected). Never
+    shortens a dodge, leap or knockback; never stacks.
+  - **Hurt** (the same spiked patch in every zone, coloured by zone): players take **3% of max HP every 0.5 s**,
+    ignoring defense; dodge i-frames skip a tick; enemies are never hurt.
+- **Holes** (D173, D175, D185): pits and the Abyss's void block every body's own movement — walking, dodging, dashes,
+  leaps, a swing's step. Only an attack puts you in: a knockback, a pull, or floor collapsing under you. A pit costs
+  30% of max HP; the void 50% and 1.5 s to climb back (untouchable while falling). Fliers path round holes too. A
+  body left half over a hole is slid clear.
 
-### 5.2 Attacks
+### 5.2 Attacks and stamina
 
-Each **weapon class** defines a light-attack **combo** (2–4 swings). Each swing has `windup`, `active`,
-`recovery` (ms), a stamina cost, a forward step, a hitbox (arc, thrust, line, or projectile) and a damage
-multiplier. Holding attack continues the combo; the last swing has a longer recovery. Attack speed mods
-(gems, affixes, Haste) scale windup/active/recovery together, capped at ×1.6 faster.
+Each weapon class has a light-attack **combo** (2–4 swings): windup, active, recovery, a forward step, a hitbox (arc,
+thrust, line or projectile) and a damage multiplier. Holding attack continues the combo; the last swing recovers
+longer; the next swing can start in the back 55% of a recovery. Attack speed (gems, affixes, buffs) scales all three
+phases, capped at ×1.6.
 
-Heavy weapons have **hyper armor** on their active frames (you cannot be staggered by light hits while
-swinging). Fast weapons do not.
-
-**Hitstop**: 40 ms (light) to 90 ms (heavy) freeze on hit, plus screen shake scaled by damage. Enemies
-flash white on hit, show floating damage numbers (colored by damage type), and a **stagger** when their
-poise breaks (see §6.3).
+- **You walk while swinging** at ×0.6 (very fast weapons) down to ×0.18 (very slow) of normal speed (D88).
+- **Hyper armor**: heavy weapons' active frames (every swing or the last of the combo) ignore hit interruptions.
+- **Hitstop** 40–90 ms by weapon weight (Settings can turn it off), screen shake by damage, white flash and floating
+  numbers coloured by type (yellow on a weakness, grey when resisted; D88).
+- **Stamina** (D105, D193): every stamina cost a player pays is ×1.15; weapon swings, weapon skills and spells cost
+  ×1.5 on top **and only start with the stamina to pay in full** (a cost never exceeds a full bar). Dodging and
+  blocking work with any stamina left. A held attack starts by itself once the bar refills enough.
+- **Bows** need both hands; shooting one held one-handed two-hands it and shoots on the same press (D203). A bow or
+  crossbow shot is a **volley of three** (straight and 5° to each side, D205) that **hits any one enemy at most
+  once** (D264). Shots keep full damage to 250 px, then fall to 70% at 750 px (D88). A bow charged 0.6 s deals ×1.8
+  and pierces one.
+- **Projectile range** (D185, D186): players' shots fly at most 850 px; enemies' 425 px. Enemy shots stop at props;
+  players' fly over them (D180). Player spell projectiles are ×4 their listed size (D204).
 
 ### 5.3 Dodge
 
-- Tap: 0.45 s dash, 220 px, i-frames from 0.05 s to 0.40 s. Costs 10 stamina.
-- **One charge, 5.0 s recharge** (V Rising). A ring around the character shows the recharge. The Fleet
-  affix (0.3–0.6 s per item), the Fleet Ring (0.5 s), Fleetfoot gems and Timekeeper shorten it; all
-  reductions add up with a **floor of 3.0 s**. Chill adds 1.5 s to the current recharge.
-- I-frames do **not** work against Piercing (blue) attacks (§5.6).
+- A 0.45 s dash of 220 px, i-frames from 0.05 s to 0.40 s, 10 stamina (× the multipliers above). Equip load changes
+  its distance and i-frames (§8.6).
+- **One charge, 5.0 s recharge**, shown as a ring around you. Fleet affixes, the Fleet Ring, Fleetfoot gems,
+  proficiency and set perks shorten it, to a **floor of 3.0 s**. Chill adds 1.5 s; Hexed adds 2 s while active.
+- I-frames do **not** work against Piercing (Blue) attacks.
 
-### 5.4 Block, parry, two-handing
+### 5.4 Block, parry, two-handing, being staggered
 
-**Shields** (off-hand) block while holding the block button:
+**Shields** (off hand) block while the block button is held, against hits from the front:
 
-| Shield type | Physical reduction | Elemental reduction | Stability (stamina per 100 dmg blocked) | Parry |
+| Shield | Physical | Elemental (incl. Holy/Void) | Stability (stamina per 100 blocked) | Parry window |
 |---|---|---|---|---|
-| Buckler | 60–70% | 20–30% | 45 | yes, 0.18 s window |
-| Medium (kite, round) | 80–90% | 35–50% | 30 | yes, 0.12 s window |
-| Greatshield | 100% | 55–65% | 18 | no |
+| Buckler (small) | 60% | 20% | 45 | 0.18 s |
+| Targe (small) | 70% | 30% | 40 | 0.16 s |
+| Round Shield (medium) | 80% | 35% | 30 | 0.12 s |
+| Kite Shield (medium) | 88% | 45% | 28 | 0.10 s |
+| Heater Shield (medium) | 90% | 50% | 26 | none |
+| Greatshields | 100% | 55–65% | 16–20 | none |
 
-Exact values per shield in CONTENT_ITEMS §5. Blocking a hit spends stamina; at 0 stamina you are **guard
-broken** (1.5 s stagger, ×1.5 damage taken).
+Values rise +1% physical / +1.5% elemental per item level (caps 100% / 85%); rarity and reinforcement cut what gets
+through and the stamina it costs (D198, D221). Shield proficiency improves parry windows and block stamina (D215).
+At 0 stamina you are **guard broken**: 1.5 s stagger and ×1.5 damage taken. Small shields parry best, some mediums
+cannot, greatshields never (D130).
 
-**Parry**: tapping block starts the parry window (a property of the shield, CONTENT_ITEMS §5). A hit
-inside it is parried if the attack is **parryable**: every `normal`-kind melee attack and every enemy
-projectile is parryable unless its table row says *unparryable*; **Red** attacks cannot be parried
-(they guard-break); **Piercing** attacks cannot be parried either (blocking them works at normal
-values). A parried melee attacker is **riposte-staggered** for 2 s and your next light hit on them deals
-×3; a parried projectile is reflected back along its path with the same damage. Bosses can be parried
-only on attacks marked *parryable* in their tables, and a boss needs two parries within 6 s to stagger
-("Souls boss parry").
+**Parry**: tapping block opens the shield's window. A **parryable** hit inside it is parried: every normal-kind melee
+attack and every enemy projectile unless marked *unparryable*; Red attacks cannot be parried (they guard-break);
+Piercing attacks cannot be parried (blocking them works). A parried melee attacker is **riposte-staggered** for 2 s and
+your next light hit on it deals **×2** (Riposte Master ×3; D88). A parried projectile flies back with the same damage.
+Bosses can be parried only on attacks marked *parryable*, and need two parries within 6 s to stagger.
 
-**Player poise.** Players have no poise meter. A hit that deals **≥ 8% of max HP** interrupts the
-current action with a 0.3 s stagger; smaller hits only flinch (no interruption). **Hyper armor** (heavy
-weapon active frames: Greathammer, Greataxe, Colossal Sword, Club, Mace, Battleaxe, Halberd; and the
-skills/spells that grant it) ignores interruptions from any hit. Grabs and holds interrupt regardless.
-Effects described as "+N poise" for players raise the interruption threshold by N% of max HP.
+**Two-handing** (Shift): the off hand is set aside (a tool in the weapon hand still casts, D117). Bonk counts ×1.5
+(§3.1). Holding block is a **weapon guard**: 45% physical, 15% other types, stability 12, no parry.
 
-**Two-handing** (Shift): the off-hand is disabled (no shield, no off-hand casting; a staff or talisman in the weapon hand still casts, D117). Bonk (strength) counts ×1.5
-for scaling and requirements; Slicey does not change (D72). Holding block performs a **weapon guard**: 45% physical, 15% elemental,
-stability 12 (stamina drains fast). No parry.
+**Being hit**: a hit dealing **≥ 8% of max HP** (raised by poise buffs) interrupts you with a 0.3 s stagger unless
+you have hyper armor; smaller hits only flinch. A hit on a held player does not stagger them out of the hold.
 
-### 5.5 Damage types and statuses (D21)
+**Enemy front guards** (D176): a guarding enemy cuts physical damage by its guard value but other types only by 30% of
+it (`GUARD_NONPHYS_SHARE`). Twin Daggers deal ×1.5 from behind (a crit); the Brass Juggernaut takes ×1.5 to its back
+from anything (D97).
 
-Types: **Physical, Fire, Frost, Lightning, Holy, Void**. Armor and shields list a defense per type;
-shields are built to favor physical (D11). Enemies have resistances (e.g., Crypt undead: weak to Holy
-and Fire, resist Frost; Abyss: resist Void, weak to Holy).
+### 5.5 Damage types, weaknesses and statuses
 
-Statuses build up on a 0–100 meter, decay 15/s when not applied, and trigger at 100:
+**Five damage types** (D80): **Physical** (white), **Magic** (blue; frost and lightning are Magic), **Void**
+(grey-black), **Fire** (red), **Holy** (yellow). Armor and shields list a defense per type; shields favour physical.
 
-| Status | Trigger effect | Typical source |
+**The weakness chart** (D81), applied to each part of a player's hit after resistances:
+
+| Attacking type | ×1.5 against | ×0.6 against |
 |---|---|---|
-| Burn | 3% maxHP per second for 4 s, refreshes | Fire |
-| Chill | −30% move and attack speed for 3 s; +1.5 s on the dodge recharge; at a second trigger while Chilled: **Freeze** 1.5 s | Frost |
-| Shock | next hit taken +20% and interrupts the victim's current action; drains 25 stamina | Lightning |
-| Bleed | players: burst of 12% maxHP. Enemies: 10% of **current** HP, never less than 3% of maxHP; bosses 5% of current HP | fast physical weapons |
-| Poison | 2% maxHP per second for 8 s | Sewers, Caverns |
+| Magic | Holy | Fire |
+| Void | Fire | Holy |
+| Holy | Void | Magic |
+| Fire | Magic | Void |
+| Physical | — | — |
 
-**Control effects** are not meters; they are applied directly for a fixed duration by the attack or
-effect that lists them, and they stack by refreshing, not adding:
+An enemy's **type** is the damage type of at least half its attacks (weighted), else Physical; it is drawn in that
+colour, and its windups and shots glow in the attack's type.
 
-| Control effect | Effect | Default duration |
+**Statuses** build a 0–100 meter, decay 15/s when not applied (after 0.5 s), and trigger at 100:
+
+| Status | Trigger effect |
+|---|---|
+| Burn | 3% max HP a second for 4 s (bosses take 40% of it) |
+| Chill | −30% attack speed and move speed for 3 s, +1.5 s on the dodge recharge; a second trigger while Chilled **Freezes** (1.5 s listed) |
+| Shock | for 3 s the next hit taken is ×1.2 and interrupts; drains 25 stamina |
+| Bleed | players: 12% of max HP at once. Enemies: 10% of **current** HP (at least 3% of max); bosses 5% of current HP |
+| Poison | 2% max HP a second for 8 s (bosses take 40% of it) |
+
+**Control effects** are applied directly for a fixed time and refresh rather than add:
+
+| Control | Effect | Typical listed length |
 |---|---|---|
-| Freeze | cannot act or move (bosses: −50% speed instead) | 1.5 s |
-| Blind | screen vignette closes to 35% of the view; enemy telegraphs still draw | 1.5 s |
+| Freeze | cannot act or move (bosses: −50% speed instead) — a **full stun** (§5.6) | 1.5 s |
+| Hold (a grab, or a control like Screech) | cannot act; a grab's extra damage lands when it lets go; a teammate hitting the grabber for ≥ 5% of its HP breaks it — a **full stun** | 1.2–2 s |
+| Root | cannot move; can attack, block and cast; a dodge breaks it after 0.5 s | 1–1.5 s |
+| Silence | no weapon skills or spells | 2 s |
+| Blind | the view closes to 35%; telegraphs still draw | 1.5 s |
 | Hexed | dodge recharge +2 s while active | 6 s |
-| Silence | weapon skills and spells cannot be used | 2 s |
-| Root | cannot move; can attack, block, cast; dodge breaks it after 0.5 s | 1–1.5 s |
-| Hold (grab) | cannot act; damage is dealt at the end; a teammate hitting the grabber for ≥ 5% of its HP breaks it | 1.2–1.5 s |
 
-Enemies and zones can be **immune** to statuses (`statusImmune` in the data, e.g. Caverns: Poison;
-Forge: Burn; Reliquary: Chill/Freeze). Players show status meters and control icons under the HP bar.
-Prayer's *Purify* and the *Holy Water* throwable clear all of them.
+Enemies and zones can be **immune** (`statusImmune`). Players show meters and control icons under the HP bar. Purify
+and Holy Water clear everything. While grabbed, rooted or frozen, grey stones circle the player so being stuck never
+looks like dead controls (D252). Healing over time keeps ticking while frozen or held (D250).
 
-### 5.6 The two special attack kinds
+### 5.6 The stun rule (D293)
 
-Every enemy has a **normal attack** and **one or two specials**, and **at least one special is Red or
-Piercing**. A second special may be a **utility** (summon, buff, split, trail, teleport, heal, trap):
-utilities are telegraphed like normal attacks and follow normal block/dodge rules where they deal damage.
+Every **full stun** on a player — a grab's hold, a freeze (Chill's too), a hold control — goes through one rule:
 
-- **Red (unblockable)**: the enemy tints **red** and emits a red pulse 0.6 s before the hit. Block and
-  parry fail: you take full damage and are guard-broken. **Dodge through it** (i-frames work) or get
-  out of range.
-- **Piercing (blue)**: the enemy glows **white-blue** and the exact hit area is drawn on the floor
-  for at least 0.8 s before the hit (longer for bigger areas). **I-frames do not help.** Blocking works
-  at normal values; parry does not. Leave the area. No attack is ever both Red and Piercing.
+1. It lasts **70%** of its listed length (`PLAYER_STUN_MULT`).
+2. **None takes hold while one is on, or for 0.5 s after one ends** (`STUN_GRACE_S`), whatever the kinds. A refused
+   grab still deals its hit.
+3. **Stuns in a row get shorter**: one starting within **6 s** of the last one ending lasts half as long, the next a
+   quarter, never less than a quarter (2 s → 1 s → 0.5 s → 0.5 s). The chain lapses 6 s after the last stun ends.
 
-**Escapability rule** (enforced by a data test for every Piercing attack): from the worst point of the
-area (its center, or the far end of a sweep), a player walking at base speed must be able to reach a
-safe spot before the hit lands:
+A grab let go early starts the grace and chain from that moment. A rest, a respawn, a revive or a wipe resets it.
+Roots, blinds, silences, hexes and the hit stagger are not stuns; stuns on enemies are unchanged; a mimic's devour
+(§6.6) is its own scripted grab.
+
+### 5.7 Red, Blue and the rules every attack follows
+
+Every enemy has a **normal attack** and one or two **specials**, at least one Red or Piercing. A second special may be
+a **utility** (summon, buff, split, trail, teleport, heal, trap), telegraphed like any attack.
+
+- **Red (unblockable, "Crimson")**: the enemy tints red with a pulse 0.6 s before the hit. Block and parry fail: you
+  take the hit and are guard-broken. **Dodge through it** (i-frames work) or get out of range.
+- **Piercing (blue, "Spectral")**: the exact area is drawn on the floor at least 0.8 s ahead (longer for bigger
+  areas). **I-frames do not help**; blocking works, parrying does not. Leave the area.
+- **No attack is ever both.** Colour-blind support: a skull over Red users, a hollow ring over Piercing users, and a
+  striped fill on Piercing floors.
+
+**What is tested against what you see:**
+- **Area attacks test the dot at your feet** (5 px, 9 px below your centre; D262): if the dot is outside the marker,
+  you are safe. Melee swings and other non-area hits test the body (14 px).
+- **A charge's or lunge's red bar is its whole hit area** (D272): from where the attacker starts over its full travel
+  plus its reach (radius + 22 for a charge, + 18 for a lunge), cut at a wall. Outside the bar is safe.
+- **Sweeping beams** are tested each frame along the arc they turned (1.5° steps or finer); a ticking sweep hits a
+  target at most once per 0.75 s (or its tick, if longer) (D273).
+- **Two-set attacks** (alternating lanes, two-set grids): set B's marker appears `setGapS` after set A's and charges
+  for the same windup — A shows, B shows, A hits, B hits (D261).
+- Inner walls, pillars, props and trees are drawn **above** attack markers so a marker never hides an obstacle
+  (D129, D155).
+
+**Escapability** (data tests, D47, D94, D114): every Piercing area and every ticking area must leave a walking player a
+way out:
 
 ```
 (telegraph − 0.1 s) × (260 − pullSpeed) ≥ distanceToSafety + 40 px
 ```
 
-where `distanceToSafety` is the area radius for circles/cones/lines, the distance to the nearest gap for
-`expandingRing` (every Piercing expanding ring must declare ≥ 1 gap of ≥ 90 px), half the lane width
-for lanes/grids (so stepping sideways escapes), and, for `pockets`, the distance to the nearest pocket
-edge; pocket patterns place at least one pocket within that reach of **every player** at telegraph
-start (or the attack has a `condition` that prevents it from being chosen when that is impossible).
-Room-wide **Red** bursts are allowed (i-frames beat them) but must have a telegraph ≥ 1.0 s.
+with `distanceToSafety` the radius (circles, cones, lines), half a lane (lanes, grids: lanes and grids leave ≥ 32 px
+gaps), the nearest gap of an expanding ring, or the nearest pocket edge. Every expanding ring has **at least 4 gaps
+plus one facing the room centre** that stays at the same angle through a series (D101, D114); gaps and pockets are
+placed within reach of every player. The Sewers' Wave has two 130 px breaks and the Citadel's full-turn Laser Sweep two
+safe bands (D163). A walking-escape simulation checks every boss phase in its real arena (D94). Room-wide **Red**
+attacks are allowed (i-frames beat them) but need a telegraph of at least 1.0 s. Every zone mix has a Red and a
+Piercing user; every boss has both kinds and at least two room-covering patterns.
 
-Other tested rules: every zone mix has at least one Red user and one Piercing user; every boss has both
-kinds and at least two [AREA] attacks.
+### 5.8 Area pattern primitives
 
-Colorblind support: Red specials also show a **skull** icon over the enemy; Piercing also shows a
-**hollow ring** icon, and the floor area uses a striped fill.
+`circle`, `ring`, `line`, `cone`, `lanes` (vertical or horizontal, optional two sets), `grid` (checkerboard, optional
+two sets), `sweep` (a turning cone or beam), `expandingRing` (with gaps), `randomCircles`, `wave` (a travelling wall,
+optionally with breaks), `pockets` (the whole room except safe circles), `trail`, `beam` (a tracking line). Each has a
+telegraph look and a hit test (DATA_MODEL §3 `PatternDef`); bosses chain them with `sequence`.
 
-### 5.7 Area attacks
+### 5.9 Consumables
 
-The owner's rule: *enemies have lots of attacks that hit many areas of the map* so solo and co-op are
-both busy. The telegraph system supports these **pattern primitives** that content tables reference:
-
-`circle(r)`, `ring(rIn, rOut)`, `line(width, length)`, `cone(angle, r)`, `lanes(n, width)` (vertical or
-horizontal lanes across the room), `grid(spacing, r)` (checkerboard of circles), `sweep(arc, duration)`
-(a rotating cone), `expandingRing(speed)`, `randomCircles(n, r)`, `wave(width, speed)` (a line that
-travels across the room), `pockets(n)` (room-wide except n safe circles), `trail(duration)` (hazard
-left behind the mover), `beam(width, turnRate, duration)` (a tracking line).
-
-Each primitive has a telegraph draw and a hit test, plus optional parameters (gaps, orientation, sets,
-anchor, persistence as a hazard) defined once in DATA_MODEL §3 (`PatternDef`). Content tables use the
-shorthand above; the builder maps it to the schema. Bosses chain them with `sequence`.
-
-### 5.8 Throwables and consumables
-
-Quick-use slot (G) cycles through owned consumables in the inventory: Throwing Knives, Firebombs,
-Frost Jars, Holy Water (clears statuses, Holy burst), Stamina Tonic, Shard Pouch, Lure (draws aggro).
-Bought at bonfires, found in chests, dropped rarely. Max 10 of each.
+The quick-use slot holds Throwing Knives, Firebombs, Frost Jars, Holy Water (clears statuses, Holy burst), Stamina
+Tonics, Lures (draw aggro) and Shard Pouches; G uses the selected one, T / the wheel / holding D-pad down switches
+without using one (D181). Bought at bonfires, found in chests, dropped rarely. Up to 10 of each.
 
 ## 6. Enemies
 
 ### 6.1 Roles
 
-Each zone's 8 types cover these roles so any 4-mix plays well. The role enum is exactly: `fodder`,
-`swarm`, `ranged`, `caster`, `support`, `brute`, `assassin`, `tank`, `hazard`. Melee roles: fodder,
-brute, assassin, tank. Non-melee: ranged, caster, support, hazard, swarm. Where a content table writes
-"Support / Hazard", the **first word** is the role. Full tables in CONTENT_ENEMIES.md.
+`fodder`, `swarm`, `ranged`, `caster`, `support`, `brute`, `assassin`, `tank`, `hazard`. Melee: fodder, brute,
+assassin, tank; the rest are non-melee. Role base stats are in `src/data/roles.ts` and CONTENT_ENEMIES §1. Every zone
+has 10 types (80 regular enemies, D242) covering these roles.
 
 ### 6.2 AI
 
-A state machine per enemy: `idle → alert → approach/kite → windup → attack → recover → (reposition)`.
-Each enemy has a **preferred range** and a **move style** (walk, dash, circle, flank, hover, burrow,
-teleport, stationary). Attack selection is weighted by distance, cooldowns and a per-attack
-"group budget": at most N enemies in a room may be in a special's windup at once (N = 2 in zones 1–3,
-3 after), so specials come in readable waves instead of all at once.
+A state machine: idle → alert → approach/kite → windup → attack → recover → reposition. Each enemy has a preferred
+range and a move style (walk, dash, circle, flank, hover, burrow, teleport, stationary). Attacks are weighted by
+distance and cooldowns, with a room-wide limit on how many specials wind up at once (2 in zones 1–3, 3 after).
+Enemies with a projectile attack keep within 340 px and only shoot within 425 px (D186). Co-op targeting weighs
+recent damage, proximity and taunts, re-evaluated every 1.5 s.
 
-Targeting in co-op: aggro score = damage dealt recently × 1.0 + proximity bonus + Lure/taunt bonus;
-re-evaluated every 1.5 s. Fodder spread out across targets.
+### 6.3 Waves and rooms
 
-### 6.3 Poise and stagger
+Room threat budgets are ×1.5 the PROCGEN values (D79). Each extra co-op player adds **one full solo-size wave** to
+every room (D159). In NG+, rooms in zones 1–7 get zone 8's budget priced in the zone's own mix, so they hold about as
+many enemies as zone 8's (D276). At most 12 per wave and 18 alive (per player). Shards and drop chances are divided by
+the room's size against a solo room, so every player earns the same per room.
 
-Every enemy has a **poise** stat set by its size (D78): poise = 0.05 × radius², so a rat (r 9) has 4, a
-skeleton (r 17) 14, a knight (r 24) 29, a brute (r 30) 45, and an Elite (30% bigger) about 70% more. A single
-hit **staggers** an enemy (0.6 s, heavy weapons 0.9 s), cancelling the attack it is winding up or swinging,
-only when that hit's poise damage reaches the enemy's poise. Hits do not add up: daggers (8) stagger only
-swarms, a longsword (25) skeletons and small knights, a greathammer (60) even brutes. Harder swings hit poise
-harder in proportion (combo finishers, charged shots, skills), and poise-damage affixes and buffs add on top.
-Hyper armor (a heavy enemy's own big swings) doubles its poise for that swing. Bosses instead have a large
-poise pool that hits wear down; it refills after 3 s without a hit, and their hyper-armor swings cannot be
-staggered. Weapon tooltips show poise damage and what one hit can stagger.
+### 6.4 Poise and stagger
 
-### 6.4 Elites (D21)
+An enemy's **poise** is set by its size: 0.05 × radius² (D78) — a rat 4, a skeleton 14, a knight 29, a brute 45.
+Elites are 30% bigger and have ×1.5 poise on top (D105). **One hit staggers** an enemy (0.6 s; heavy weapons 0.9 s),
+cancelling its attack, only if that hit's poise damage reaches its poise; hits do not add up. Harder swings (finishers,
+charged shots, skills) hit poise harder. Hyper armor doubles an enemy's poise for that swing. After a stagger the same
+enemy cannot be poise-staggered again until **2 s after it recovers** (D103). **Bosses** have a large poise pool that
+hits wear down (refills after 3 s unhit; grows +150% per extra co-op player, D194); their hyper-armor swings cannot be
+staggered.
 
-8% of spawned enemies solo, 12% / 16% / 20% with 2 / 3 / 4 players (D79; never bosses, never swarm pieces) are **Elite**: ×3 HP, ×1.5 damage, 30% larger,
-a colored aura, a named affix shown over them, a guaranteed drop from the Elite row of CONTENT_ITEMS §3
-(never Common) and 3× Shards.
-Affixes (one each): Frenzied (+40% speed), Armored (−40% physical taken), Vampiric (heals 20% of damage
-dealt), Arcane (3 orbiting orbs, Piercing on touch), Molten (fire trail), Frostbound (chill aura 120 px),
-Shielded (barrier absorbing 25% maxHP every 10 s), Summoner (spawns 2 fodder every 12 s, max 4).
+### 6.5 Elites
 
-### 6.5 Mimics
+**8%** of eligible spawns solo, 12% / 16% / 20% with 2–4 players, up to 2 per player per room (D79); never bosses,
+swarm pieces or special enemies. In NG+ **every combat room has at least one** (D296). An Elite has **×3 HP, ×1.5
+damage**, is 30% bigger, glows and shows its affix, gives **3× Shards**, and drops an item **15%** of the time from the
+Elite rarity row (D84). Affixes: Frenzied (+40% speed), Armored (−40% physical taken), Vampiric (heals 20% of damage
+dealt), Arcane (orbiting Piercing orbs), Molten (fire trail), Frostbound (chill aura), Shielded (a barrier of 25% max
+HP that comes back full **5 s after it is broken**, D213), Summoner (spawns fodder).
 
-5% of chests are **mimics** (not spell reliquaries, not the tutorial). A mimic looks exactly like a chest;
-observant players may notice it breathing (1 px scale pulse) and a slightly warmer lid color.
-**Interacting with it** = it bites: solo, instant death (Shardpile appears at the chest; the mimic is then
-awake and fights you when you return). In co-op the bite **downs** you (D12). **Attacking it first**
-wakes it as a mid-tier enemy (zone-scaled, Red bite, Piercing tongue sweep); kill it and it drops the
-chest's loot plus a bonus roll from the Mimic row of CONTENT_ITEMS §3.
+### 6.6 Mimics
+
+**8%** of chests are mimics (treasure and room chests; never reliquaries or the tutorial; D105). A mimic looks like a
+chest but breathes. **Opening one** (D179): its arms drag you in and it **bites every 0.7 s for 15% of max HP**,
+unblockable. Solo it always kills (nothing can hurt it while it eats the last player standing). In co-op the others
+can kill it to free you; if the bites down you, it climbs out to fight the rest. **Attacking it first** wakes it as a
+zone-scaled enemy (Red bite, Piercing tongue sweep); killed, it drops the chest's loot plus a Mimic-row roll. The
+Mimic's Tooth power turns mimics off.
+
+### 6.7 Immune enemies
+
+An enemy that is immune (faded, briefly invulnerable, a boss changing phase) is drawn **solid gold** with a glint
+(D109, D164). Stealthy enemies stay see-through because they still take damage. A scripted boss transformation plays in
+its own colours (D279).
 
 ## 7. Bosses
 
-8 bosses, one per zone. Each has: an arena with unique hazards, a **boss bar** with a phase marker, an
-intro (the boss cutscene of §19, inputs locked), 4–5 attacks in phase 1, and a **phase 2 at 50% HP**: a
-transition animation (2 s invulnerable), +20% speed, +25% damage, 2 new attacks, old attacks get
-extra projectiles/areas. **The Landlord** (final) has three phases at 66% and 33%. Every boss uses both
-Red and Piercing attacks and at least two room-covering patterns. Bosses never spawn as Elites.
+### 7.1 Framework
 
-Boss kill: 100% Rare+ drop (instanced), 10% Tear of Undoing, 25% a spell reliquary spawns in the arena,
-a gem, and big Shards. The stairs down open; the anteroom bonfire is reachable through a reopened door.
-Beating a boss increments the character's **bosses beaten** counter (flask upgrades, §9.2).
+One boss per zone, in its own arena. Every boss has an **intro** (storm-in, roar, a freeze-frame with its name, about
+4.9 s, skippable after 0.5 s; only the first meeting in a run, D87, D102), a **boss bar** (no phase ticks, D226) and
+**phases**:
 
-Full boss sheets: CONTENT_ENEMIES §9.
+- A boss's HP **stops at each phase threshold** (a big hit cannot skip a phase). A phase change is a transition
+  (2 s invulnerable unless the phase says otherwise; telegraphs clear) and swaps in the next attack table; phase 2
+  usually brings ×1.2 speed and ×1.25 damage plus new attacks.
+- A phase may end at 0% and **refill the bar** (`refillHp`): the killing blow leaves the boss at 1 HP and the next
+  phase starts on a fresh bar (D253). A phase's bar may be a share of the boss's full HP (`barMult`, D289) or sized from
+  what the previous phase had to lose (`hpOfPrevPhase`, D279). A party HP rescale keeps the current bar's share.
+- Phases can change the arena (lava, moving floors, D95), add summons, passives (pulls, split bodies, blinks) and
+  scripted transitions.
+- Base HP: the boss role's **3,600** (D187) unless the boss sets its own; co-op HP ×(1 + 1.25 per extra player).
+- Every boss attack can be avoided with skill and placement (D94).
+
+### 7.2 The eight bosses
+
+| Zone | Boss | Base HP | Phases (first playthrough) |
+|---|---|---|---|
+| 1 | The Caretaker | 3,600 (×0.7 in the first playthrough, D211) | 2nd at 50% |
+| 2 | Mother Spore | 3,600 | 2nd at 50% |
+| 3 | The Bloatking | 3,600 | 2nd at 50% (whirlpool, D95) |
+| 4 | Vexthorn | 4,140 (D217) | 2nd at 50%; Stag Sentinels 1 → 2 |
+| 5 | Foreman Ignatius | 3,600 | 1st bar **60%** of his HP (D289); its end splits Golem and Foreman, 2nd phase refills to full (D253) |
+| 6 | Saint Aurelia | 5,544 (D224, D226) | 2nd at **75%** (D226); drifting ice mirrors (D225) |
+| 7 | Archmagister Tock | 5,400 (D233) | 2nd at **40%**; phase damage ×1.2 then ×1.6875 |
+| 8 | The Landlord | 9,000, damage ×1.5 (D256) | 2nd at 66%, 3rd at 33%, then **phase 4 on a second bar** (§7.4) |
+
+Zone damage factors (§2.3) apply to bosses too. Full sheets in CONTENT_ENEMIES §9.
+
+### 7.3 New Game+ bosses
+
+- **A third phase for zones 1–7** (D295): the first phase change moves halfway up to full HP and a new change sits
+  halfway from there to 0 — 50% → **75% and 37.5%**; Aurelia 87.5% / 43.75%; Tock 70% / 35%; Ignatius keeps his split
+  and refill, and his third phase starts at 50% of the refilled bar. The third phase, "<last phase>: Overtime", is the
+  last phase again with speed and damage ×1.15 and cooldowns ×0.8; its arena changes are already in place. Derived from
+  the boss's data at spawn (`ngBossDef`).
+- **The Caretaker's Last Rites** (D277): from NG+1, a room-wide **Red** blast (2.2 s telegraph, 22 s cooldown, about
+  600 a hit at NG+1, growing each cycle) in every phase. Dodge it.
+
+### 7.4 The Landlord, Unbound (D279)
+
+When his third phase runs out he stops at 1 HP and transforms for 4.5 s (invulnerable; every telegraph, shot, hazard
+and add of his side clears): knocked down, he rises, a golden-violet aura flares, he screams and black spiked plate
+forms. **Phase 4** is player-sized, three times as fast, on a fresh bar of **1.2 × the HP his third phase had**
+(scaled for NG+ and co-op), named "The Landlord, Unbound". He **blinks** every 2.4 s (a flash where he stands and a
+mark where he lands, 0.35 s later; never within 110 px of a player, never on the void). Attacks: Final Notice (a
+parryable three-cut combo), Repossession (three Red charges), Hostile Takeover (a Red cross), Eminent Domain (Piercing
+circles round the target), Total Eviction (a Piercing burst with 1 s to walk out) and eviction notices. He dies, and
+the credits roll, only when phase 4's bar is empty. His earlier phases shrink the void platform (D69).
+
+### 7.5 NG+ bonus boss rooms (D278, D290)
+
+From NG+1 one combat room per zone (seeded) holds a random boss from any zone in its **second phase**, on a **full bar
+worth 30%** of the HP it has in this playthrough, instead of the room's waves ("… waits here, weakened."). It hits as
+hard as a boss of the room's zone and stays in that phase. Bosses whose phase 2 needs their own arena (`arenaBound`:
+the Bloatking, Ignatius, the Landlord) are never picked. Rewards: Shards ×0.3 and a boss chest's loot. It is not the
+zone's boss: boss kills, best times and boss achievements ignore it.
+
+### 7.6 Rewards
+
+Per player: **2–5 items** from the boss rarity row (20 / 35 / 30 / 11 / 4, D84), a **gem 65%** of the time (D281;
+one extra quality roll), **10% a Tear of Undoing**, 150 × zone Glowen, and Soul Essence (§8.8). 25% of boss kills
+place a **spell reliquary** in the arena (rolled from the world seed, so it is still there on return). The stairs down
+open. Bosses beaten count toward the Thermos (§9.2). Beating a boss adds to the boss's Bestiary entry (§11).
 
 ## 8. Gear
 
 ### 8.1 Slots
 
-Main hand (weapon, staff or talisman) · Off hand (shield, staff or talisman) · Head · Body · Legs · 2 Rings · Quick-use.
-Weapons and off-hands can be swapped any time from the inventory (not during an attack).
+Weapon hand · Off hand · **2nd weapon** · **2nd off hand** (D228) · Head · Body · Legs · **4 rings** · Quick-use.
+Swap weapon swaps the weapon hand with the 2nd weapon; hold Interact and press Swap weapon to swap the off hands. Only
+what is in use counts (weight, effects). Swapping works any time outside an attack.
 
-### 8.2 Rarity (Diablo)
+- Weapons go to the weapon hand; shields to the off hand.
+- **Staffs, talismans and crossbows go in any of the four weapon slots** (D117, D228, D291); choosing one in the bag
+  asks "Which hand?". A staff or talisman in the weapon hand swings a weak bash (D128) and casts on Q/E/R (§10). A
+  **crossbow in the off hand fires on the block button** with its own power and stamina, while the weapon keeps its
+  combo; with it there you cannot block or parry. Two-handing sets the off hand aside.
+- The bag holds 60 items. An empty armor slot shows the character bare (D176).
 
-| Rarity | Color | Affixes | Sockets (weapon / armor) | Drop weight (fodder) |
+### 8.2 Rarity
+
+| Rarity | Colour | Affixes | Sockets (weapon, staff, talisman / armor, shield; D298) | Damage / block power |
 |---|---|---|---|---|
-| Common | white | 0 | 0 / 0 | 60 |
-| Uncommon | green | 1 | 0–1 / 0 | 27 |
-| Rare | blue | 2 | 1 / 0–1 | 9 |
-| Epic | purple | 3 | 1–2 / 1 | 3.2 |
-| Legendary | orange | 3 + a unique legendary power | 2 / 1 | 0.8 |
+| Common | white | 0 | 0 / 0 | ×1 |
+| Uncommon | green | 1 | 0–1 / 0 | ×1.06 |
+| Rare | blue | 2 | 1 / 0–1 | ×1.12 |
+| Epic | purple | 3 | 1–2 / 1 | ×1.20 |
+| Legendary | orange | 3 + a legendary power | 2 / 1 | ×1.28 |
 
-Elites and bosses roll with shifted weights (CONTENT_ITEMS §3). Drop chance per kill: fodder 18%,
-swarm piece 4%, others 30%, elite 100%, boss 100% (plus a second roll at 50%).
+Rarity power (D178, D221) multiplies weapon and casting-tool damage and tightens shields.
 
-### 8.3 Item level and skills
+**Drops** (D84, D98): an item drops from **6%** of standard kills (swarm pieces 1.5%) at 70 / 22 / 5 / 2.5 / 0.5;
+**Elites 15%** at 45 / 35 / 12.5 / 6 / 1.5; **bosses 2–5 items** at 20 / 35 / 30 / 11 / 4. Small chests 25 / 40 / 25
+/ 8 / 2, treasure chests (two items) as bosses, mimics 0 / 20 / 45 / 27 / 8. Loot is instanced per player. A player's
+own drops favour weapons that scale with their class's primary stat (×1.2) and secondary (×1.1); staffs count as
+Brain, talismans as Prayer (D254). Most kills also shed a puff of Glowen (35%, D83).
 
-Item level `ilvl` = zone + cycle. Base damage/defense scale with ilvl. **Weapon skills unlock by item
-level tier** (owner's rule: early gear has no skills, then 1, 2, 3):
+Every item has its own id; duplicate ids are repaired on load and pickup (D232).
 
-| ilvl | Tier name | Skills unlocked |
+### 8.3 Item level and weapon skills
+
+Item level = zone + cycle (Gary's +1). Base damage, defense and tool power rise with it (§3.1, §10).
+
+Each weapon class has **three fixed skills** (CONTENT_ITEMS §4) on Q / E / R with cooldowns and stamina. **How many a
+weapon has unlocked is rolled when it drops** (D89):
+
+| Where | Skill 1 (Q) | Skill 2 (E) | Skill 3 (R) |
+|---|---|---|---|
+| First playthrough, zones 1–3 | never | never | never |
+| First playthrough, zones 4–8 | 20% → 60% | never | never |
+| NG+1 | 64% → 92% | 10% → 45% (if Q) | never |
+| NG+2 and later | always | 64% → 92% | 10% → 52% (+10% a cycle past NG+2) |
+
+Legendaries add 20% to each step within the caps. Items from saves before D89 keep their item-level tiers.
+
+### 8.4 Affixes, legendary powers, set perks
+
+**Affixes** (CONTENT_ITEMS §6): flat and percent damage, elemental damage (Burning, Freezing, Shocking, Radiant,
+Dusky), attack speed, cooldown reduction, Fleet (dodge recharge), stamina cost, lifesteal, status buildup, poise
+damage, defense per type, max HP / stamina, Shard / Glowen / gem find, revive value, +stat.
+
+**Legendary powers** (`data/legendaries.ts`) are unique effects on Legendary items (e.g. Joe's Lucky Socks: +1
+Thermos maximum).
+
+**Set perks** (D243, D245): any piece of gear can carry one of nine set perks — Counteroffer, Moonlight Flit,
+Eviction, Squatter's Rights, Fine Print, Late Fees, Handyman, Demolition, Tea Break. Wearing **3, 5 or 7** pieces with
+the same one (every slot in use counts) gives a small, medium or large bonus to that playstyle. Drop chance: Uncommon
+7.8%, Rare 14.3%, Epic 20.8%, Legendary 29.3%; Commons never.
+
+**Special perks** of weapons and shields (Thorns, Bleed, Backstab, Riposte, Hyper armor, charged shot…) are listed on
+the item card (D171).
+
+### 8.5 Rings
+
+Fifteen rings (`data/rings.ts`), each 0.8–1.5 weight (D237): Bands of Bonk / Slicey / Brain / Prayer / Vigor / Health,
+the Lucky Charm (Shard find), Fleet Ring, Ring of Stillness, Chloranthy Knot, Glowcatcher, Red Thread, Ghost Lantern,
+Thermos Lid, Slumlord's Signet and others. **Every copy worn counts** (D227).
+
+### 8.6 Weight and equip load (D82, D163, D196)
+
+Every item weighs 20% more than its table says (`ITEM_WEIGHT_MULT`). The load counts the weapon in hand, the off hand
+in use, armor and rings (never the 2nd slots), against max equip load (§3.1):
+
+| Tier | Load | Walk | Dodge distance | Dodge i-frames |
+|---|---|---|---|---|
+| Light | < 35% | ×1.1 | ×1.1 | ×1.2 |
+| Medium | 35–70% | ×1 | ×1 | ×1 |
+| Heavy | 70–100% | ×0.9 | ×0.8 | ×0.8 |
+| Encumbered | > 100% | ×0.5 | ×0.5 | ×0.5 |
+
+### 8.7 Weapon experience, rarity raising and proficiency (D178, D215, D218, D221)
+
+Every enemy that dies gives each standing player experience on what they have **out** (weapon hand, and a staff,
+talisman or shield in the off hand when not two-handing): fodder and swarms 1, others 2, Elites and mimics 5, bosses
+30.
+
+- **Item bars**: weapons, casting tools and shields fill a bar (Common 120, Uncommon 240, Rare 400, Epic 640). With a
+  full bar, the bonfire's **Weapons** tab raises the item a rarity for Glowen (150 / 400 / 1,000 / 2,500 × (1 + 0.2 per
+  item level above 1)); it keeps everything and its power moves to the new tier. Epic → Legendary rolls a legendary
+  power and name.
+- **Proficiency**: the same experience trains the item's class (each weapon base, Staffs, Talismans, and Small /
+  Medium / Great Shields) to **level 100**, costing 20 + 3.1 × level a level. Odd levels raise its first perk, even
+  levels its second (`data/proficiency.ts`), and perks work only while that class is out. An off-hand crossbow earns
+  none (D294). The inventory's **Proficiency** tab lists every class.
+
+### 8.8 Soul Essence and reinforcing (D198, D226, D285)
+
+**Soul Essence** (five tiers: Tenant's Wisp, Lodger's Ember, Caretaker's Flame, Superintendent's Blaze, Freeholder's
+Soul) is a counter on the character; it cannot be sold. **Where:** none in zones 1–3 of the first playthrough, Tier 1
+from zone 4; NG+1 Tier 2 only, NG+2 Tier 3, NG+3 Tier 4, NG+4 and later Tier 5. **Drops:** enemies 1%, Elites 17.5%,
+small chests 12.5%, mimics 25%, treasure chests 0.75 on average, bosses 1.5 on average.
+
+**Reinforce** (bonfire tab): weapons, shields, armor, staffs and talismans go **+0 … +15**. Each step is **+20%**
+(×4 at +15): weapon damage, armor defense, spell power, and a shield's leak and block stamina shrink. Step `k` costs
+1, 2, then 3 Essence of tier ⌊k / 3⌋ + 1 (six a tier) plus **100 × 1.45^k Glowen**. A higher tier pays for a lower
+one 3:1 automatically; the tab's **Break down Essence** panel turns one of tier 2–5 into three of the tier below
+(Convert 1 / Convert all). Reinforce shows before → after and asks first (D216, D220).
+
+### 8.9 Gems (D92, D197, D227, D280–D286, D292)
+
+Gems slot into sockets. **Weapons, staffs and talismans take weapon gems; armor and shields take armor gems.** A gem
+carries **1–3 perks**, each a different family, each with its own **level (1–50)** and **quality roll (−50% …
++50%)**. There are **no tiers**:
+
+```
+perk strength = family baseline × level mult × (1 + roll)
+level mult    = 0.25 at level 1 … 1 at about 14 … 3 at level 50 (even steps)
+roll bands    = Green −50…−15% (55%) · Blue −15…+10% (30%) · Purple +10…+35% (11%) · Orange +35…+50% (4%)
+```
+
+| Family | Baseline | Kind |
 |---|---|---|
-| 1–2 | Worn | 0 |
-| 3–4 | Fine | 1 |
-| 5–6 | Masterwork | 2 |
-| 7+ | Mythic | 3 |
+| Quicksilver | +12% attack and cast speed | weapon |
+| Tempo | −12% skill cooldowns | weapon |
+| Fleetfoot | −0.6 s dodge recharge (3 s floor) | weapon |
+| Brutal | +11% damage | weapon |
+| Ember / Rime / Storm / Dawn / Dusk | **adds** 13.2% of the hit as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of it, with Burn / Chill / Shock buildup (D283, D292) | weapon |
+| Leech | 4% lifesteal | weapon |
+| Vigor | −16% stamina costs | weapon |
+| Bulwark | +16 defense to all types | armor |
+| Hearth | +8% max HP, applied after everything else (D260) | armor |
+| Zephyr | +16% stamina regeneration | armor |
+| Gilt | +11% Glowen found | armor |
 
-Legendary rarity adds +1 skill (cap 3), so a Legendary drop in zone 1 already has one skill. The skills
-are fixed per weapon class (3 each, CONTENT_ITEMS §4), unlocked in order. Skills sit on Q/E/R with
-cooldowns (V Rising); they cost stamina too.
+Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost ×0.3).
 
-### 8.4 Affixes
+- **Drops**: enemies **1.3%**, chests **7.8%**, bosses **65%** (D281), the bonfire shop (one one-perk gem per zone)
+  and Gary. Drop level rises from about 1 in zone 1 to 50 by NG+3. **Perks by cycle**: one in the first playthrough;
+  NG+1 35% two; NG+2 and later 40% two and 25% three. **Better rolls**: level 25+ gems roll quality twice and keep the
+  best; treasure chests and bosses add a roll, Gary one or two.
+- **Socketing** happens at the bonfire's Gem bench; picking an empty socket lists only the gems that fit it (D280).
+  **Removing** a gem is free, anywhere, from the inventory's "Gems in your gear" list or the bench (D168).
+- **Fusing**: a gem with 2+ perks can fuse with a loose gem of the same kind; you choose which perks the original
+  keeps (as many as it had, no family twice, at least one from the other gem). A gem remembers its **original
+  perks** (`Gem.origin`), and **every fuse must keep at least one of them**; afterwards only the original perks that
+  were kept stay original (D286). Levels and rolls travel with their perks. Cost: the sale price of the best perk kept
+  (at least 40). The other gem is destroyed.
+- **Selling**: a perk sells for 80 × its level mult × (1 + roll) (at least 5); a gem for the sum of its perks; the
+  shop gem costs 3× its sale price. A gem can be **locked**; **Sell all gems** sells every loose, unlocked gem
+  (D282). There is no re-rolling and no upgrading.
 
-Rolled from CONTENT_ITEMS §6: flat/percent damage, elemental conversion, attack speed, cooldown
-reduction, Fleet (dodge recharge), stamina cost reduction, lifesteal, status buildup, poise damage,
-defense per type, max HP/stamina, Shard find, Glowen find, gem find, revive value, +1 stat.
+### 8.10 Selling, locking and item cards
 
-### 8.5 Gems (V Rising)
+- Gear sells for 10 / 25 / 60 / 150 / 400 Glowen by rarity × (1 + 0.3 per item level above 1), plus its gems.
+  **Sell all** / all Commons / all below Rare take bag items only, never locked ones; socketed gems come back loose
+  (D92, D265). Selling one item that holds gems asks whether to keep them (D240).
+- Any item can be **locked** with the padlock in its slot corner or its shop row (Y / △ or L) (D265).
+- **Item cards** (D171, D267, D294): a weapon's damage is the **hit you would really deal** with it equipped — every
+  perk counted (stats, proficiency, rarity, reinforcement, its affixes and gems, set perks gained or lost by the swap,
+  rings, the below-requirement penalty), per type, with a total and a light-combo damage per second, compared with
+  what you wear worked out the same way. Timed buffs are not counted. Weapon cards list only their **unlocked**
+  skills; staff and talisman cards show their effective Spell Skill. Cards end with the item's special perks, set perk
+  and sockets.
 
-Gems slot into sockets and **change how the weapon works, mostly its speed**. A gem carries one to three
-**perks**; each perk is one family below with its own **level** (1–50, from where it dropped) and its own
-**quality roll** (−50% … +50%: Green, Blue, Purple, Orange). There are no tiers (D284): a perk's strength is its
-family's baseline × its level (×0.25 at 1, ×1 at about 14, ×3 at 50) × (1 + roll). Every perk on a gem is a
-different family, and a gem is either a **weapon gem** (weapon perks, weapon sockets) or an **armor gem**
-(armor perks, armor sockets); the bench, tooltips, pickups and shops show a "Weapon gem" / "Armor gem" tag.
+## 9. Bonfires, the Thermos and death
 
-| Perk | Baseline (the old T1–T5 average) |
-|---|---|
-| Quicksilver | +12% attack and cast speed |
-| Tempo | −12% skill cooldowns |
-| Fleetfoot | −0.6 s dodge recharge (respects the 3 s floor) |
-| Brutal | +11% damage |
-| Ember / Rime / Storm / Dawn / Dusk | **adds** 13.2% of the hit (D292: Brutal's 11% + 20%) as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of the physical (D283: they used to convert 20–40%), plus status buildup |
-| Leech | 4% lifesteal |
-| Vigor | −16% stamina costs |
-| Bulwark (armor) | +16 defense to all types |
-| Hearth (armor) | +8% max HP |
-| Zephyr (armor) | +16% stamina regeneration |
-| Gilt (armor) | +11% Glowen found |
+### 9.1 The bonfire
 
-**Perk count by cycle**: in the first playthrough every gem has one perk. In NG+ (cycle 1) a gem has a
-35% chance of two perks; from NG+2 on, 40% two perks and 25% three (all perks at the drop's level, each with
-its own roll). The bonfire shop's gem is always one perk. Gems of level 25 and up roll their quality twice and
-keep the best; treasure chests and bosses add a roll, Gary one or two (any roll still lands in −50% … +50%).
+Tabs, in order: **Level up** (with Respec) · **Gem bench** · **Weapons** (rarity bars) · **Reinforce** · **Shop** ·
+**Warp** (to any discovered bonfire of this playthrough) · **Bestiary** · **Spells** · **Inventory**.
 
-Gems drop from enemies (1.3%), chests (7.8%), bosses (65%, one) (D281: 35% fewer than before), the wandering
-merchant, and the bonfire shop (one per zone). **Glowen**: a perk sells for 80 × its level's strength × (1 +
-roll) (at least 5) and a gem for the sum of its perks. Gems are not upgraded (D284). Glowen also comes from
-selling gear (10–400 by rarity/ilvl) and rare "Glowen Wisps" drops (better-made gear holds more Glowen, §19).
-Gems can be unsocketed for free. There is no re-rolling. Picking an empty socket at the gem bench lists only
-the gems that fit it (D280). A gem can be **locked** (the padlock, Y on a pad, L); **Sell all gems** sells every
-loose gem that is not locked (D282).
+**Resting** (D150, D152, D153, D177): **every rest heals, refills the Thermos and clears statuses for the whole
+party**, resets every player's revive downs and spell cooldowns, respawns the zone's enemies, autosaves and sets the
+respawn point. A used fire burns down to embers on the map as a record of where you have been.
 
-**Fusing**: a gem with two or more perks can be fused with a loose gem of the same kind. You choose which
-perks the original gem ends up with from both gems' perks — exactly as many as it had, no family twice, at
-least one from the other gem — and the other gem is destroyed. Levels and rolls travel with their perks.
-**At least one of the gem's original perks must stay** (D286): a gem remembers the families it was made with,
-only the ones kept stay original, and every later fuse must keep one of those. Fusing costs the sale price of
-the best perk kept (at least 40).
+**Shop**: sell gear and gems (one by one, Sell all, all Commons, all below Rare); buy consumables, the zone's one-perk
+gem and **one rotating gear piece** at the zone's item level (Rare or better in NG+), re-rolled on each rest and shown
+with full stats against what you wear.
 
-## 9. Bonfires, flask, death
+### 9.2 Joe's Thermos
 
-### 9.1 Bonfire menu
+Heals 40% max HP (§3.1) over 1.5 s; the drink takes 1.2 s and you can be hit; gold sparkles rise while you drink
+(D271). **Maximum charges**: 1 at the start, +1 for every 2 bosses beaten (max 5); Joe's Lucky Socks +1 (never above
+5). Kept in NG+.
 
-Rest · Level up · Respec (needs a Tear) ·
-Gem bench (socket, unsocket, upgrade each perk — loose or socketed —, sell, fuse; one gem per line) · Shop
-(sell gems and gear for Glowen, one by one or with **Sell all** / Sell all Commons / Sell all below Rare —
-bag only, never worn gear, socketed gems come back loose, a confirm shows the total; buy throwables,
-a T1 gem, and one rotating gear piece at the zone's ilvl re-rolled on each rest, shown with its full stats
-compared with what you wear) · Warp (to any
-**discovered** bonfire in this playthrough, fresh or ember) · Spell loadout (also available anywhere in
-the inventory).
-
-**Resting (D150; was D38):** a bonfire **heals you, refills the Thermos and clears statuses every time you rest
-at it.** Resting also respawns the zone's enemies, autosaves and sets your respawn point, and the menu (level up,
-shop, gem bench, warp) always works. After the first rest a fire still burns down to embers on the map (used),
-which is now only a record of where you have been; in co-op that record stays per player in the host's world
-save (`bonfiresUsedByPlayer`). *Changed at the owner's request: it used to heal and refill only on the first
-rest at each fire.*
-
-### 9.2 The flask: "Joe's Thermos"
-
-Heals 40% maxHP over 1.5 s (drink animation 1.2 s, you can be hit). **Max charges: 1 at the start; +1
-after every 2 bosses beaten** (bosses beaten counter 2, 4, 6, 8 → max 5). Kept in NG+.
-
-Charges come back in exactly **two** ways: **resting** at a bonfire (full refill, every rest, D150) and
-**dying** (you respawn with a full Thermos, §9.3). Nothing else restores a charge: no drop, no shop
-item, no spell, no affix (a data test asserts that no `EffectDef` or shop entry adds flask charges;
-*Joe's Lucky Socks* raises the **maximum**, which is allowed, and *Fortify Thermos* / *Thermos Lid*
-change the heal amount, not the count). An empty flask at a boss means you fight with what you have or
-die and come back with a full one.
+Charges come back in exactly **two** ways: **resting** at a bonfire (every rest, D150) and **dying** (you respawn
+full). Nothing else restores a charge — no drop, shop item, spell or affix (a data test asserts it). Raising the
+maximum and changing the heal are allowed.
 
 ### 9.3 Death (solo)
 
-Screen: "JOE DIED" (cheeky variants: "Joe has fallen down the stairs", "Joe is late for work"). Shards
-drop as a Shardpile. Respawn at the last bonfire rested at with **full HP and a full Thermos** (death
-refills the flask; the bonfire itself does not, D38); zone enemies respawn (bosses, opened chests,
-killed mimics stay done). The map does not change.
+A death screen with a quip and a tip ("JOE DIED", "Joe has fallen down the stairs"…). Shards drop as a Shardpile.
+You respawn at the last bonfire rested at with **full HP and a full Thermos**, spells ready; the zone's enemies
+respawn (bosses, opened chests and killed mimics stay done). The map does not change.
 
 ## 10. Spells
 
-Spells are cast with a **casting tool** in either hand (off hand, weapon hand or the 2nd weapon slot, D117): a **staff** casts **Brain** spells only, a **talisman**
-casts **Prayer** spells only. The tool has **3 spell slots**; any known spell of that school can be
-slotted at any time, subject to its requirement. The character keeps **one loadout per school** (a
-Brain loadout and a Prayer loadout), so swapping between a staff and a talisman keeps both arrangements.
-Spells have a **cooldown** and a **stamina** cost, a
-cast time (scaled by cast speed), and most are aimed at the cursor. Spells are **learned** from spell
-reliquaries (rare chests) and sometimes bosses; never sold; once learned, known forever on that character.
-Brain spells: 14. Prayer spells: 14. Lists in CONTENT_SPELLS_CLASSES §1–2.
+- **Casting tools**: a **staff** casts **Brain** spells, a **talisman** **Prayer** spells. Each school has one
+  loadout of **3 slots** on the character; any known spell meeting its requirement can be slotted, any time.
+- **Keys** (D201): a tool in the **off hand** casts on 1 / 2 / 3; a tool in the **weapon hand** casts on Q / E / R
+  (its weapon-skill keys, on the skill cooldowns). A staff and a talisman together: six spells on six keys. Two tools
+  of the same school: the weapon hand's keys only.
+- **Spell Skill** (D182): `100 × tool grade × (1 + 0.35 (ilvl − 1)) × rarity power × reinforcement × (1 + letter
+  weight × f(Brain or Prayer) × m) × (1 + proficiency and set spell power)`, with letter weights as weapons (C 0.8 …
+  S 1.9). Spells **deal and heal Spell Skill / 100 × their listed amounts**; other effects (buffs, barriers, durations)
+  grow on a gentler curve (×1.5 at 270, at most ×3). Shown on tool cards, the inventory, the Level up preview and the
+  Spells tab.
+- Spells have a cast time (cast speed scales it; you walk slower while casting, §3.1), a cooldown and a stamina cost
+  (§5.2). **Cooldowns only run while there is something to fight** in the room (D177), and every spell is ready after
+  a rest or a death.
+- Healing spells are slow: Heal 25% over 20 s (cooldown 50 s), and it cannot be interrupted (D128, D250).
+- Weapon buffs (Bless Weapon) need a weapon in the weapon hand (D131); a buffed weapon glows its element (D129).
+- Spells are **learned** from spell reliquaries, sometimes bosses and The Instructor; never sold; known forever.
+  14 Brain and 14 Prayer spells (CONTENT_SPELLS_CLASSES §1–2). Gravity Well pulls hovering enemies too, including
+  Aurelia's ice mirrors, and deals no damage (D269, D270).
+- Spells revive poorly (0.25 per hit), except Last Rites.
 
-Spells are bad at reviving (0.25 revive value per hit, D12) except *Last Rites* (Prayer), the one spell
-built for it.
+## 11. Chests, reliquaries, Gary and the Bestiary
 
-## 11. Chests, reliquaries, the merchant
+- **Chests**: treasure rooms hold a chest of two items from the boss row; a quarter of combat rooms have a small chest
+  standing in them from the start (D93). Opening takes a 0.6 s hold, possible mid-fight. Chests also give a little
+  Glowen, a gem 7.8%, a consumable bundle 8%, and Essence (§8.8). 8% are mimics.
+- **Spell reliquary**: holds one spell the character does not know (either school), 5% a Tear of Undoing instead.
+  Never a mimic.
+- **Gary**, the wandering merchant (20% a zone from zone 2, D70): 3–5 entries rolled once per zone and cycle — gear at
+  item level + 1 from Epic/Legendary weights (half of NG+ gear is Legendary), gems at 3× their sale price with
+  better rolls, consumable bundles, a Lucky Charm ring, and a Tear of Undoing 20% (30% in NG+). A detail pane shows
+  full stats against your gear. Hit him three times and he leaves for the playthrough. Only the host trades in co-op.
+- **Bestiary** (D229, D236): a bonfire tab with one collapsible chapter per zone (88 entries). Kills credit every
+  standing player. A regular enemy unlocks its picture and name at 1 kill, its lore at 15, its resistances at 40,
+  **+25% damage to it at 200** and **25% less damage from it at 500**; a boss its picture on first sight, lore at 1,
+  resistances at 4, and both bonuses at 8.
 
-- **Chest**: 1–2 per zone in treasure rooms, plus 25% of combat rooms have a small chest standing in them from the moment you enter (rolled with the zone, D93; clearing a room never spawns one).
-  Loot roll from the matching chest row of CONTENT_ITEMS §3, 12% a gem, 8% consumables bundle. 5% are
-  mimics.
-- **Spell reliquary**: ornate, glowing. Chance per zone 35% to generate one; also 25% after a boss. Holds
-  one spell the character does not know yet (either school), 5% a Tear of Undoing instead. Never a mimic.
-- **Wandering merchant** ("Gary"): 20% chance per zone to generate a merchant room (never zone 1). Sells
-  3–5 random *special* things for Glowen: an Epic/Legendary at ilvl+1, a T2–T3 gem, 3 random
-  consumables, a Tear of Undoing (rare), a **Lucky Charm** ring (+10% Shard find). Each entry says what it is (gear: rarity, class, level, affixes, sockets; gems: kind and perks) and a detail pane shows the full stats of the entry under the pointer or focus, gear compared with what you wear. Hit Gary three times
-  and he leaves for the rest of the playthrough (he is nearly unkillable and drops nothing).
+## 12. Online co-op
 
-## 12. Online co-op (D4, D5, D12, D15, D31, D33)
-
-- **Lobby**: Title → Load character → *Play solo* / *Host* / *Join*. Hosting shows a 6-digit room
-  code; guests enter it. Joining happens **only in the lobby**. The host presses Start; everyone enters
-  the host's world at the host's last bonfire. "Return to lobby" from the pause menu brings the party
-  back (world saved) so more people can join.
-- The host simulates everything ([NETCODE.md](NETCODE.md)). Guests send inputs, receive state.
-- **Scaling** (D79, replacing D15's per-enemy HP rule): rooms hold **1.5 × players** times the original number of
-  enemies (5 solo → 10 → 15 → 20 with 2–4 players) at solo HP, and Elites come more often (8% → 20%). Each room
-  enemy's Shards and drop chances are divided by the same factor, so every player earns what they would solo.
-  HP (D159): bosses and Elites × (1 + 1.25 × (players − 1)), every other enemy × (1 + 0.75 × (players − 1)). Each
-  extra player adds one full wave to every room. Damage unchanged. Shards and loot instanced.
-- **Loot** is instanced per player: each player sees and picks up only their own drops.
-- **Downed and revive**: at 0 HP a player becomes a ghost (crawls at 90 px/s, cannot act) for 30 s.
-  Teammates revive by **hitting the ghost**. Each hit adds the weapon's **revive value** (CONTENT_ITEMS
-  §4: greathammer 4 … daggers 0.8; spells 0.25; throwables 0.5). Requirement = 10 × 2^(downs−1), capped at
-  40 (10 → 20 → 40 → 40), where *downs* counts how often that player has been downed since the last
-  bonfire rest. Revived at 40% HP, 2 s of i-frames; being revived does **not** refill the Thermos. Ghost
-  timer expires → the player is **dead** until the party rests at a bonfire or wipes, and returns then
-  with full HP and a full Thermos (death refills, §9.3). Everyone down → party wipe → all respawn at the
-  host's bonfire with full HP and Thermos, each player's Shards dropped where they fell.
-- **Nobody leaves a ghost behind** (D115): while any player is a ghost waiting for a revive, the room's doors
-  and the stairs let nobody through; whoever tries hears "Revive *name* first!". A revive or a bleed-out (the
-  player is then out until the bonfire and holds nobody up) opens the way again. Everyone down is still a wipe.
-- **Friendly fire** (D115): on by default. A player's damaging attacks (weapon swings, shots and thrown
-  weapons, weapon skills, damaging spells and their blasts and chains, consumables, burning ground they leave)
-  also hit the **other standing players** at the friendly-fire percentage: Settings → Game → *Friendly fire
-  damage*, 0–200% in steps of 10, default 100%, 0% = off. The **host's** setting is the party's: it travels to
-  guests in the lobby and in every snapshot, and guests see it read-only ("set by the host"); a change mid-run
-  applies at once. An ally hit goes through the normal player hit pipeline (i-frames, block and stamina,
-  defense, barrier; status buildup scaled the same way) with the damage kind `player`: never parried, never
-  riposted (Riposte Stance only blocks it), no stagger for the attacker. Your own attacks never hit you, attacks
-  without damage (control, buffs, heals) never hit allies, healing and buffs aimed at allies still work, and
-  hitting a **downed** ally's ghost still revives them (D12). Downing an ally counts toward "Friendly Fire";
-  letting an ally you downed bleed out counts toward "Not My Problem" (§20).
-- **Progress for guests**: Shards, loot, levels, spells, gems, Glowen, flask upgrades always carry
-  home. A boss beaten at zone `z` also marks zone `z` beaten in a guest's own world **if** `z` = the
-  guest's highest beaten zone + 1 (D31); their world then starts them at the zone `z+1` start bonfire.
-- Guests who disconnect are removed after 10 s; their character is saved locally on their side with the
-  last confirmed state (the host sends save-relevant deltas to each guest as they happen).
-- No pause in co-op; the pause menu is an overlay.
+- **Lobby** (D31, D74, D134): Title → **Co-op play** → Host / Join, or the Host / Join buttons on a character card.
+  The host gets a **6-digit room code** (D76). **Joining happens only in the lobby**; Start puts everyone in the host's
+  world at the host's last bonfire; "Return to lobby" brings the party back so more can join. Up to 4 players.
+- **Authority** (NETCODE): the host simulates the world; guests send inputs, predict their own movement, swings and
+  dodges, and own their inventory.
+- **Scaling** (D159, D194): every extra player adds one full wave to every room; HP per extra player +75% for room
+  enemies, +125% for Elites and bosses; boss poise +150%; damage unchanged. Elites come more often (§6.5). Shards and
+  loot are instanced and divided so each player earns what they would solo.
+- **Downed and revive** (D12, D202): at 0 HP a player becomes a ghost (90 px/s, cannot act) for 30 s. Teammates
+  revive by **hitting the ghost**; each hit adds the weapon's revive value (greathammer 4 … daggers 0.8; spells 0.25;
+  throwables 0.5) and holds the countdown for 3 s. Requirement 10 × 2^(downs − 1), max 40 (downs since the last
+  rest). Revived at 40% HP with 2 s of i-frames (no Thermos refill). A ghost that bleeds out is dead until the party
+  rests or wipes. **Everyone down** wipes the party: all wake at the host's bonfire full (the host's death screen moves
+  on by itself after 3 s, D64).
+- **Nobody leaves a ghost behind** (D115): while a player is down, doors and stairs refuse ("Revive *name* first!").
+- **Friendly fire** (D115): players' damaging attacks hit standing allies at Settings → Co-op → Friendly fire
+  damage (0–200%, default 100%); the host's value rules the session. Your own attacks never hit you.
+- **What a guest takes home** (D195): Shards, loot, levels, spells, gems, Glowen and Thermos upgrades always. Zone
+  progress counts in the guest's own world only for zones that world had already reached, and then chains.
+- Guests who disconnect are dropped after 10 s; the host sends save-relevant changes as they happen. No pause in
+  co-op; cutscenes play as local overlays. Players must run the same version (§22).
 
 ## 13. New Game+
 
-After The Landlord: credits, then a bonfire with **Begin Cycle N+1**. New map seed, zone 1, everything
-kept (level, gear, spells, gems, flask max, Glowen). Enemies and Shards follow the New Game+ curve
-(§2.3, D209), item level +c, no tutorial, merchant stock improves. The title screen shows the cycle next to
-the character.
+After The Landlord: credits, then a blue fire offers **Begin Cycle N+1** (D70). A new seed, zone 1, everything kept
+(level, gear, spells, gems, Essence, Thermos maximum, Glowen); no Training Hall. What changes from NG+1:
 
-## 14. Save files
+- Enemy HP, damage and Shards on the NG+ curve (§2.3), room-enemy damage by zone, and zone 8's head counts in every
+  zone (§6.3).
+- **An Elite in every combat room** (§6.5); a **bonus boss room** in every zone (§7.5).
+- **Third boss phases** in zones 1–7 and the Caretaker's **Last Rites** (§7.3).
+- Item level +c; weapon skills roll E (NG+1) and R (NG+2) (§8.3); gems roll more perks and higher levels; Essence
+  tiers step up (§8.8); the shop's gear is Rare or better; Gary's stock improves.
 
-10 slots in `localStorage` (`dj.save.<n>`), JSON, versioned, with a migration table. Export to a
-`.dungeonjoe.json` file and import from one. Autosave: bonfire rest, zone transition, boss kill, level
-up, pickup (debounced 2 s), every 30 s, and on `beforeunload`. Settings and key bindings are global
-(`dj.settings`). Schema in [DATA_MODEL.md](DATA_MODEL.md).
+The title screen shows the cycle next to the character.
 
-## 15. Classes (D23)
+## 14. Saves
 
-Ten starting classes with different stats, gear and spells (the table in CONTENT_SPELLS_CLASSES §3 is
-the source of truth): **Knight** (longsword + kite shield), **Brute** (greathammer, two-handed),
-**Duelist** (twin daggers + buckler), **Scholar** (rapier + apprentice staff: Arcane Bolt, Frost Lance),
-**Pyre Priest** (censer flail + wooden talisman: Heal, Bless Weapon), **Battlemage** (colossal sword +
-targe, apprentice staff on the swap: Arcane Bolt, Scatter Shards), **Hunter** (bow, with a whip in the
-bag), **Nobody** (club, a loincloth, one random gem, 8 in everything), **Berserker** (dual twin daggers,
-all HP and Endurance), **Zealot** (dawn glaive + silver talisman: Sunray, Bless Weapon). Every starting
-kit meets its own requirements (tested). Staffs and talismans may be held in either hand (D117).
+10 slots in `localStorage` (`dj.save.<n>`), JSON, save version 3 with a migration table and a sanitiser that cleans
+every load (older gems lose their tiers, D284; repeated item ids are renewed, D232). Export to a `.dungeonjoe.json`
+file and import from one. Autosave on rest, zone change, boss kill, level up, pickup (debounced), every 30 s and on
+unload. Each character also carries its own pad layout (D266), Bestiary, proficiency and statistics. Settings
+(`dj.settings`), achievements (`dj.achievements`) and account-wide statistics (`dj.stats`) are shared by every slot.
 
-Character creation: name (default "Joe"), class, optional **seed** (text; blank = random), a preview of
-the vector character with the class's starting gear, and the class's dry one-line blurb.
+## 15. Classes
+
+Ten classes (CONTENT_SPELLS_CLASSES §3 is the source of truth; every kit meets its own requirements, tested):
+
+| Class | HP / End / Bonk / Slicey / Brain / Prayer | Primary / secondary | Kit |
+|---|---|---|---|
+| Knight | 10 / 10 / 10 / 9 / 3 / 6 | HP / Endurance | Longsword, Kite Shield |
+| Brute | 12 / 8 / 14 / 5 / 4 / 5 | Bonk / HP | Greathammer (two-handed) |
+| Duelist | 8 / 11 / 5 / 14 / 5 / 5 | Slicey / Endurance | Twin Daggers, Buckler |
+| Scholar | 7 / 7 / 3 / 10 / 15 / 6 | Brain / Slicey | Rapier, Apprentice Staff; Arcane Bolt, Frost Lance |
+| Pyre Priest | 10 / 7 / 11 / 3 / 4 / 13 | Prayer / Bonk | Censer Flail, Wooden Talisman; Heal, Bless Weapon |
+| Battlemage | 7 / 7 / 13 / 8 / 10 / 3 | Bonk / Brain | Colossal Sword, Targe, Apprentice Staff as 2nd weapon; Arcane Bolt, Scatter Shards |
+| Hunter | 7 / 4 / 5 / 12 / 9 / 9 | Slicey / Brain | Bow (two-handed), Wooden Talisman, Apprentice Staff as 2nd weapon, a Whip in the bag; Arcane Bolt, Scatter Shards, Heal, Bless Weapon |
+| Zealot | 8 / 8 / 3 / 12 / 3 / 14 | Prayer / Slicey | Dawn Glaive, Silver Talisman; Sunray, Bless Weapon |
+| Berserker | 9 / 7 / 13 / 14 / 2 / 3 | Slicey / Bonk | Twin Axes (dual-wielded) |
+| Nobody | 8 / 8 / 8 / 8 / 8 / 8 | Bonk / Slicey | Club, a loincloth, one random gem |
+
+**Character creation**: name (blank = Joe, D200), class (a fixed-layout card, D188), optional seed, and an
+**Appearance** panel (D100, D183): body (male / female), skin, hair, facial hair, eyes and eye colour, nose, brows,
+face marks and per-limb features, with Randomize and a preview you turn with the right stick or a drag (D125).
 
 ## 16. UI and HUD
 
-- **HUD**: HP bar (red) and stamina bar (green) top-left with status meters under them; flask count;
-  Shards and Glowen counters; Q/E/R skill icons with radial cooldowns; 1/2/3 spell icons; quick-use
-  item; dodge recharge ring drawn around the player; minimap top-right (rooms discovered, icons for
-  bonfire, chest, boss, merchant); boss bar bottom-center with phase tick; co-op player cards (name,
-  HP, status, downed timer) along the left.
-- **Menus** are HTML overlays (DOM), the game is Canvas. Title · Save slots · Character creation ·
-  Lobby · Pause · Inventory/Character (stats, equipment, 60-slot bag, compare tooltip, gem bench at
-  bonfires) · Spell loadout · Map · Settings (video, audio, controls rebinding, accessibility) ·
-  Death screen · Credits.
-- Item tooltips show: name (rarity color), type, ilvl, tier and skills (locked ones greyed), base
-  damage per type, scaling grades, requirements (red if unmet), affixes, sockets with gems, sell value,
-  and a flavor line.
+- **HUD**: HP and stamina bars top-left with status meters; Thermos count; Shards and Glowen; Q/E/R and 1/2/3 icons
+  with radial cooldowns (‖ while a spell cooldown is held, D177); the quick-use item; the dodge ring round the player;
+  minimap; the boss bar bottom-centre; co-op cards (name, HP, status, downed timer) along the left.
+- **In the world**: an eye-coloured dot at every player's feet (D262); door torches (D263); gold immune enemies (§6.7);
+  grey stones round a stuck player (D252); gold sparkles on a Thermos drink (D271).
+- **Menus** are HTML overlays over the canvas: Title · Load Character · Character creation · Co-op play · Lobby ·
+  Pause · Inventory (Items, Spells, Proficiency tabs; stats, paper doll, bag, gems in your gear, set perks worn) ·
+  Bonfire (§9.1) · Map · Settings · Achievements · Statistics · Death screen · Credits. Menus keep their focus across
+  redraws (D144).
+- **Cutscenes** (D87, D112): zone entry (first visit per cycle) types 2–4 lines and waits for a button; boss intros
+  and defeats as §7.1. Skippable; solo pauses under them; `?nocut` skips them.
 
-## 17. Settings and accessibility
+## 17. Settings, platforms and installing
 
-Resolution scale, fullscreen, VSync-ish frame cap, screen shake 0–100%, hitstop on/off, damage numbers
-on/off, colorblind telegraph icons (always on, can enlarge), high-contrast telegraphs, master/SFX/music
-volume, key rebinding (keyboard and gamepad), aim-assist strength, "hold to block" vs "toggle", co-op friendly
-fire damage 0–200% (Game tab, default 100%; the host's value rules a co-op session, §12).
+- **Settings tabs**: Video & accessibility (resolution, full screen, frame cap, screen shake, hitstop, damage numbers,
+  colour-blind icon size, high-contrast telegraphs, full sharpness on high-DPI screens, D153) · Audio · Keyboard &
+  mouse (bindings, hold or toggle block) · Gamepad (this character's layout, D266; button prompts Auto / Keyboard /
+  Xbox / PlayStation, D85; aim assist; Steam Controller; touch controls) · Co-op (name, friendly fire) · Game
+  (install, the offline download).
+- **Browsers**: Chrome, Edge and Firefox on desktop (D235). **Phones and tablets** get an on-screen controller (two
+  sticks and a full pad; Auto / Always / Off, size and opacity; D143).
+- **Steam Controller** (D206, D208, D214): connected once through WebHID in Chrome / Edge; in Firefox, start the
+  browser from Steam with the Gamepad layout.
+- **Installing** (D135–D139): install Dungeon Joe as an app from Edge or Chrome (Settings → Game → Install), then
+  add it to Steam as a non-Steam game; `icons/DungeonJoe.png` is its icon. **Offline** (D86, D133): a zip with one
+  self-contained HTML file and a `Dungeon Joe.cmd` launcher; its saves are separate (Export / Import moves a
+  character).
 
-## 18. Glossary of names
+## 18. Glossary
 
-Shards (XP currency) · Glowen (the money: a warm ectoplasm everything alive or well-made seeps, §19) · Joe's Thermos (flask) · Shardpile (dropped Shards) ·
-Bonfire (the camp stove Joe sits at) · Red attack = "Crimson" · Piercing attack = "Spectral" · Tear of
-Undoing (respec) · Spell reliquary · Gary (the wandering merchant) · The Instructor (tutorial boss) ·
-The Landlord (final boss) · Cycle (NG+ count).
+Shards (XP currency) · Glowen (the money, §19) · Joe's Thermos (flask) · Shardpile (dropped Shards) · Bonfire (the
+camp stove Joe sits at) · Red = "Crimson" · Piercing / Blue = "Spectral" · Tear of Undoing (respec) · Soul Essence
+(reinforcing) · Spell reliquary · Gary (the wandering merchant) · The Instructor (tutorial boss) · The Landlord (final
+boss) · Cycle (NG+ count).
 
 ## 19. Story and Glowen
 
-All story text lives in `src/data/story.ts` (premise, zone and boss cutscene lines, death quips, bonfire lines,
-tips, credits epilogue). Tone per D14: the world is grim, the text is dry.
+All story text lives in `src/data/story.ts` (premise, zone and boss lines, death quips, bonfire lines, tips, credits).
+Tone (D14): the world is grim, the text is dry.
 
-**Glowen** is the money. It is a pale, warm, faintly glowing ectoplasm that seeps out of everything alive or
-valuable. The harder someone worked on a thing, the more Glowen soaked into it: a hand-forged sword holds a
-fortune, a plastic spoon holds a smell. It is why a lamp feels cosy and a grandmother's ring feels heavier than
-it is. That is why the game deals in it:
+**Glowen** is the money: a pale, warm, faintly glowing ectoplasm that seeps out of everything alive or valuable. The
+harder someone worked on a thing, the more Glowen soaked into it: a hand-forged sword holds a fortune, a plastic spoon
+holds a smell.
 
 - **Monsters** are full of Glowen scraped off something else; hit one hard enough and it seeps out.
 - **Gear** sells by rarity and item level because rarer, harder-worked things soaked up more of their maker.
-- **Gems** are Glowen that set hard under pressure; the deeper they set, the harder they are.
-- **Bonfires** were lit by the Joes who came down before. Someone always opens a stall by a fire, and down
-  here stalls take only Glowen, the one thing the Landlord wants. **Gary** pays no rent and never says where
-  anything came from.
+- **Gems** are Glowen that set hard under pressure.
+- **Soul Essence** is what is left of somebody once the Landlord's staff have taken all their Glowen: the part that
+  never paid rent.
+- **Bonfires** were lit by the Joes who came down before; stalls by them take only Glowen. **Gary** pays no rent and
+  never says where anything came from.
 - Anything drained of its last Glowen goes **hollow**: Hollow Knights, the Hollow Forest, the Hollow Joes.
 
-**The premise.** The Landlord, at the bottom of the Abyss, holds the deed to everything under the stairs; the
-small print says the world above is a sublet. Rent is paid in Glowen, and he is foreclosing on the living
-world one glow at a time. The lights went out in Joe's building, so Joe went down the stairs to find the fuse
-box. The stairs kept going.
+**The premise.** The Landlord, at the bottom of the Abyss, holds the deed to everything under the stairs; the small
+print says the world above is a sublet. Rent is paid in Glowen, and he is foreclosing on the living world one glow at
+a time. The lights went out in Joe's building, so Joe went down the stairs to find the fuse box. The stairs kept
+going.
 
 Each boss is a link in the rent chain: **The Caretaker** buries the dead and keeps their Glowen; **Mother Spore**
-farms it in the dark; **The Bloatking** skims the rent that drains through the sewers; **Vexthorn** wears the
-Hollow Forest's last Glowen as a lantern-heart (the forest was tapped like maple); **Foreman Ignatius** runs a
-forge where fine things are made only to be melted down for the Glowen the work put in; **Saint Aurelia**
-froze herself at the reliquary door to keep the collectors out and no longer knows Joe isn't one;
-**Archmagister Tock** keeps the ledger of every drop owed; **The Landlord** collects. Beating him voids the
-lease, every drop goes home, the fuse clicks back on, and the stairs go up (credits). In NG+ the lights go out
-again a week later: landlords always come back.
-
-**Cutscenes.** Zone entry (first time per character per cycle, zones 1–8, never in the Training Hall):
-letterbox, a drawn vignette in the zone's palette, the zone's name and 2–4 typed lines; it replaces the D57
-title card the first time, and the plain card shows on later visits. Boss room lock: the boss storms in and
-roars (camera punch-in, shake), then a freeze-frame with its name in huge letters over a slanted panel and its
-`introSub` beneath (about 4 s; later solo attempts get the 2 s freeze-frame only; skippable after 0.5 s). The
-Instructor gets the freeze-frame alone. Boss defeat: 2–3 letterboxed lines, then the normal reward flow; The
-Landlord's lines lead into the credits' epilogue. Everything is skippable with any key, mouse button or gamepad
-button. Solo pauses the simulation under a cutscene; co-op cannot pause, so each client plays it as a local
-overlay (zone cutscenes end if the party leaves the room) and the host holds the boss and every player's input
-for the whole boss intro. Seen cutscenes are stored in `world.cutscenesSeen` (optional, so no migration).
-Automated test panes (`?auto=…`) and `?nocut` skip cutscenes; `?cutscenes=1` forces them on.
+farms it in the dark; **The Bloatking** skims the rent that drains through the sewers; **Vexthorn** wears the Hollow
+Forest's last Glowen as a lantern-heart; **Foreman Ignatius** runs a forge where fine things are made only to be
+melted down; **Saint Aurelia** froze herself at the reliquary door to keep the collectors out and no longer knows Joe
+isn't one; **Archmagister Tock** keeps the ledger of every drop owed; **The Landlord** collects. Beating him voids the
+lease, every drop goes home, the fuse clicks back on, and the stairs go up. In NG+ the lights go out again a week
+later: landlords always come back.
 
 ## 20. Achievements
 
-51 achievements, all in `src/data/achievements.ts` (id, name, description, icon, optional `hidden`, a check
-on the tracker's counters, an optional progress bar). They are **account-wide**: one record in
-`localStorage` (`dj.achievements`: unlock dates and counters) shared by all ten save slots, rebuilt empty
-if missing or corrupt, and unknown ids are kept for newer builds.
-
-- **What counts.** Kills (1 / 100 / 1,000 / 5,000; training dummies and Gary do not count), each of the 8
-  bosses, The Instructor, seeing the credits, The Landlord on Cycle 2 (NG+) and Cycle 3 (NG+2), every class
-  finishing a zone (any boss kill as that class), deaths (1 / 25 / 100; a death is a solo death or a party
-  wipe), being killed by a mimic and killing one, a legendary item, a full armor set from zone 2 or deeper
-  (every starting kit is a zone-1 set), a gem with an Orange roll, 50 parries, 10 riposte kills, a boss without the
-  Thermos, a boss with nothing in the weapon hand, a zone cleared without dying (from arriving by the stairs
-  to its boss; a character that has never died counts its current zone) and each of the 8 that way, reviving
-  a friend, downing a friend with friendly fire and letting a friend you downed bleed out (D115), a four-player
-  party, levels 50 and 100, 10,000 Glowen held, a minute Encumbered, finding Gary and
-  driving him off. Six are hidden ("???") until unlocked.
-- **The Dark Shard** unlocks with the last of the others.
-- **Tracking** (`src/game/achievements.ts`) reads each client's own view: the run scenes pass every frame's
-  world events and the local player, so a co-op guest tracks theirs exactly like a host. Party kills count for
-  everyone in the room; parries, ripostes, revives and loot count only for the player who did them (`feat`
-  events carry the player for ripostes, revives, friendly-fire downs and bleed-outs). The session notes deaths (with the killer) and Gary
-  leaving; the scenes note the credits.
-- **UI** (`src/ui/achievements.ts`): an unlock toast top-right (icon, name, description, 4 s, queued, a small
-  bell); the Achievements screen from the title menu and the pause menu, with the total, The Dark Shard on
-  top, unlocked ones first, progress bars on counters. Icons are inline SVG drawn in code.
+**60** account-wide achievements (`src/data/achievements.ts`; D91, D199, D239), stored in `dj.achievements` and shared
+by all ten slots. Kills (1 / 100 / 1,000 / 5,000), each boss and The Instructor, the credits, The Landlord on NG+ and
+NG+2, a boss win with each class, deaths, mimics, a Legendary, a full armor set from zone 2 or deeper, a gem with an
+Orange roll, a level-50 three-perk all-Orange gem, a +15 item, parries, ripostes, a Thermos-free boss, a boss with an
+empty weapon hand, clean zones, revives, friendly-fire downs (hidden), a full party, levels 50 and 100, 10,000 Glowen,
+a minute Encumbered, Gary, Bestiary milestones, raising a weapon to Legendary, a Legendary in every slot, and **The
+Dark Shard** for all the rest. Some are hidden ("???") until unlocked. Each client tracks its own from world events,
+so guests earn theirs. Unlocks show a toast and a bell; the Achievements screen is on the title and pause menus.
 
 ## 21. Statistics
 
-About forty fun numbers, counted **twice**: per character (in the save, `stats.extra`, so it travels with
-export / import; older saves start from the counters they already had — kills, deaths, bosses, elites,
-mimics, mimic bites, playtime) and **account-wide** for every character this browser has played, deleted
-ones included (`localStorage` `dj.stats`; on the first run it starts from the sum of the existing saves).
-Plain counters add up, `best:` ones keep the lowest (fastest boss kills) and `most:` ones the highest.
+About forty counters (D99), kept per character (`stats.extra`, travels with export) and account-wide (`dj.stats`),
+counted on each client from world events: combat (kills by type and zone, Elites by affix, bosses with fastest kills,
+damage dealt and taken, biggest hit, weakness and resisted hits, parries, ripostes, dodges, blocks, sips), death and
+Shards (deaths by killer, falls, mimic bites, Shards gained / spent / dropped / recovered, Glowen), loot (items by
+rarity, gems, chests, Gary), exploration (time, distance, rooms, bonfires, deepest zone, cycles) and co-op (time,
+party size, revives, downs). The Statistics screen sits below Achievements, with "This character" and "All
+characters" tabs and a headline strip (most hated enemy, nemesis, Shards donated to the floor…).
 
-- **Combat**: enemies killed (and per enemy type and per zone), elites (and per affix), bosses (per boss, with
-  the fastest kill from the end of its intro), mimics, damage dealt and taken, the biggest single hit, crits,
-  Weak! and resisted hits, parries, ripostes, dodges, blocks, Thermos sips.
-- **Death & Shards**: deaths (and per killer; deaths in boss fights), falls into pits, mimic bites, Shards
-  gained / spent / dropped on death / recovered, the most held at once, levels gained, Glowen earned / spent.
-- **Loot**: items found by rarity, gems found / upgraded / fused, chests opened, Gary visits, purchases and
-  Glowen spent at Gary.
-- **Exploration**: time played (paused time excluded), distance walked (a tile is a metre), rooms entered and
-  cleared, bonfires lit, the deepest zone, NG+ cycles finished.
-- **Co-op**: time in co-op, biggest party, revives given / received, times downed.
-- **Tracking** (`src/game/stats.ts`) works like the achievements: the run scenes pass each frame's world events,
-  the local body and the save; the client counts only its own player (kills and damage carry their source in
-  the `death` / `dmg` events, and a `stat` event carries the rest — dodges, blocks, falls, chests, recovered
-  Shards — for one player or the party). Shards, Glowen, levels, sips and cycles come from the character's
-  numbers changing; distance from the body moving (a jump of more than 40 px in a frame is a teleport). So a
-  co-op guest's numbers are theirs, not the host's.
-- **Screen** (`src/ui/statistics.ts`): from the title menu and the pause menu, directly below Achievements.
-  Tabs "This character" (the title screen picks a save slot) and "All characters"; a headline strip — most
-  hated enemy, nemesis, Shards donated to the floor (dropped minus recovered), favourite elite affix to
-  flatten, kills per death — then Combat, Death & Shards, Co-op, Loot, Exploration, Bosses and Kills by zone.
+## 22. Tools: debug menu, balance report, version
+
+- **Debug menu** (D29, D44): Ctrl+Shift+D asks for the owner's code, checked by SHA-256 only (the code is never in the
+  repo). God mode, spawn, jump to zone or boss, give items, set level and cycle. On the dev server `?debug` opens it
+  without the code.
+- **Balance report** (D297): `npm run balance:report` writes `docs/balance/report.md` from the live data: enemy and
+  boss curves, time to kill and hits to die for seven builds per zone, gems, weapons, spells, Shards and player
+  growth, with a ranked Findings list. Every deploy shows it on the run's summary page. `npm run balance` plays bot
+  campaigns (docs/BALANCE_REPORT.md).
+- **Version** (D116, D132): `major.minor` from package.json plus the number of commits since that line last changed
+  (v1.3.19 when this was written). Co-op players must match.
+
+## 23. Not built
+
+- Translations (all strings are in English; D36).
+- A Steam store release (personal Steam play only, §17).
+- A real `.exe` launcher (D133).

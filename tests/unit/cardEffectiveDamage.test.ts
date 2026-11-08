@@ -1,4 +1,4 @@
-// D293: a weapon card shows the hit you would really deal with it, every perk counted, and compares like with like.
+// D294: a weapon card shows the hit you would really deal with it, every perk counted, and compares like with like.
 import { describe, expect, it } from 'vitest';
 import { newCharacter } from '../../src/game/player/character';
 import { Rng } from '../../src/engine/rng';
@@ -20,7 +20,7 @@ const knight = (): Character => {
 };
 const total = (o: Partial<Record<string, number>>): number => Object.values(o).reduce<number>((a, b) => a + (b ?? 0), 0);
 
-describe('weapon cards show the real hit (D293)', () => {
+describe('weapon cards show the real hit (D294)', () => {
   it("the equipped weapon's shown hit is exactly the hit weaponSpec deals", () => {
     const c = knight();
     const w = new World('CARD', Room.empty());

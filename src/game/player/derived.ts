@@ -113,7 +113,7 @@ export interface HeldTool {
 
 /** The tool that casts spells of `school`: the weapon hand's if it is of that school, else the off hand's. */
 /**
- * One weapon hit by damage type for these derived stats (D293): weaponSpec deals it and the item cards show it, so
+ * One weapon hit by damage type for these derived stats (D294): weaponSpec deals it and the item cards show it, so
  * they never disagree. `holyBuffPct` is a timed buff's holy share (none on a card).
  */
 export function weaponHitByType(d: Pick<Derived, 'offWeapon' | 'weapon' | 'weaponPower' | 'dmgPct' | 'convert' | 'addDmg' | 'flat'>, mult: number, offHand = false, holyBuffPct = 0): Partial<Record<DamageType, number>> {

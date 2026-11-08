@@ -130,7 +130,7 @@ export function planRoom(layout: ZoneLayout, node: RoomNode, players = 1): RoomP
     if (wave.length === 0) wave.push({ defId: mix[0]!.id, elite: null });
     waves.push(wave);
   }
-  // New Game+ (D294): every combat room has at least one Elite
+  // New Game+ (D296): every combat room has at least one Elite
   if (layout.cycle >= 1 && elites === 0) ensureNgElite(stream(layout.seed, `ngElite:${layout.zone}:${layout.cycle}:${node.id}${p > 1 ? `:p${p}` : ''}`), waves, mix);
   return { waves, ambush, baseWaves: base, share: (ROOM_ENEMY_MULT * n * ngMore) / base };
 }

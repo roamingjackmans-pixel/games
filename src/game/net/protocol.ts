@@ -1,4 +1,4 @@
-// Co-op protocol (NETCODE §3): message names and shapes, room codes, the version check and the 60 Hz input
+// Co-op protocol (NETCODE §3): message names and shapes, room codes, the version check and the per-frame input
 // packet. Snapshots live in snapshot.ts, character sync in charSync.ts.
 import type { InputFrame } from '../../engine/input/actions';
 import type { Appearance, Character, ClassId, Rarity } from '../types';

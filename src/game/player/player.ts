@@ -223,7 +223,7 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   const now = w.time;
   // a shot of the off-hand weapon (D291) uses that weapon's own power
   const wdef = (opts.offHand ? d.offWeapon?.def : null) ?? d.weapon;
-  // the hit by type (shared with the item cards, D293), plus a timed holy buff (Bless Weapon, Consecrate…)
+  // the hit by type (shared with the item cards, D294), plus a timed holy buff (Bless Weapon, Consecrate…)
   const dmg = weaponHitByType(d, mult, !!opts.offHand, buffSum(e, 'holyConvertPct', now));
   const spec = emptySpec('player');
   spec.dmg = dmg;

@@ -1,6 +1,6 @@
 // Soul Essence (D198): what is left of somebody when the Landlord's staff have taken all their Glowen. Glowen is rent;
 // the soul is the bit that never paid. Five tiers, one per playthrough, spent with Glowen at a bonfire to reinforce
-// weapons, shields and armour from +0 to +15. It cannot be sold: nobody down here will touch it but the fires.
+// weapons, shields, staffs, talismans and armour (D227) from +0 to +15. It cannot be sold: nobody down here will touch it but the fires.
 
 export type EssenceTier = 1 | 2 | 3 | 4 | 5;
 

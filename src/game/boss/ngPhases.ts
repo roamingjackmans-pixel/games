@@ -1,4 +1,4 @@
-// New Game+ boss phases (D293): from the second playthrough on, every zone 1–7 boss gets a third phase. Its first
+// New Game+ boss phases (D295): from the second playthrough on, every zone 1–7 boss gets a third phase. Its first
 // phase change moves halfway up to full HP (50% → 75%) and the new change sits halfway from there to 0 (37.5%).
 // The new phase is an "Overtime" of the boss's last phase: its attacks, faster, harder, shorter cooldowns.
 // The list is derived from the boss's own data when it spawns, so the host, guests, the boss bar and the AI all

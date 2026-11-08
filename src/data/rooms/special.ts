@@ -253,7 +253,7 @@ export const TUTORIAL_STATIONS: TutorialStation[] = [
   { n: 6, sign: 'RED attacks cannot be blocked or parried. DODGE through them ({dodge}). One dodge per 5 seconds.', goal: 'dodgeRed' },
   { n: 7, sign: 'BLUE attacks ignore dodging. Walk out of the drawn area before it lands.', goal: 'escapePierce' },
   { n: 8, sign: 'TWO-HAND with {twoHand}: your Bonk counts ×1.5 for damage and requirements; no shield, weapon guard only. SWAP your weapon with {swapWeapon}; hold {interact} and press {swapWeapon} to swap your off hand.', goal: 'twoHand' },
-  { n: 9, sign: "DRINK from Joe's Thermos ({flask}). It refills when you die, or the first time you rest at a bonfire.", goal: 'flask' },
+  { n: 9, sign: "DRINK from Joe's Thermos ({flask}). It refills when you die, and every time you rest at a bonfire.", goal: 'flask' },
   { n: 10, sign: 'SLOW GROUND: gooey patches cut your walking speed by 35%. A dodge ({dodge}) still crosses them at full distance.', goal: 'slowTerrain' },
   { n: 11, sign: 'HURT GROUND: flickering patches bite every half second. Dodging across skips the bite. Step in, feel it, step out.', goal: 'hurtTerrain' },
 ];

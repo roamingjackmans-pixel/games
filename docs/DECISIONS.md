@@ -1,8 +1,74 @@
 # Dungeon Joe — Decisions
 
-Every locked decision, with the rationale, so the build session never re-litigates them.
-Decided 2026-11-02 in the design session (owner answered multiple-choice rounds; the recommended option
-is marked where it was chosen). Add new decisions at the bottom with the next number.
+**This file is the history**: every decision in the order it was made, with its reason, so nothing is re-litigated
+and every rule can be traced. Many later decisions change or reverse earlier ones, so an entry here is not
+necessarily how the game works today. **The current reference is [GAME_DESIGN.md](GAME_DESIGN.md)** (rules and
+formulas) together with the CONTENT docs (enemies, items, spells, classes) and DATA_MODEL / PROCGEN / NETCODE /
+ART_AUDIO; they cite these ids. The first decisions were made on 2026-11-02 in the design session (the owner answered
+multiple-choice rounds). Add new decisions at the bottom with the next number, and update GAME_DESIGN.md with them.
+
+## Superseded
+
+A decision on the left was replaced, reversed or narrowed by the one(s) on the right; read the later one for what
+holds now. Additions that only build on an earlier decision are not listed.
+
+| Earlier | Later | What changed |
+|---|---|---|
+| D7 | D48 | The game moved to `/games/dungeonjoe/` (repo `games`). |
+| D11, D19 | D130 | Parry windows by shield size: Kite 0.10 s, the Heater Shield cannot parry. |
+| D12, D15 | D79 → D150 → D159 | Co-op scaling: D15's HP-per-player rule, then more bodies per room, then 20% bigger rooms, now one extra wave per player and +75% / +125% HP per player. |
+| D19 | D88 | A riposte deals ×2 (was ×3). |
+| D20 | D92 | Gem re-rolls removed from the shop. |
+| D21 | D80 | Five damage types (Physical, Magic, Void, Fire, Holy), not six; Frost and Lightning became Magic. |
+| D22, D69 | D279 | The Landlord has four phases (a second bar), not three. |
+| D23 | D118, D119, D121 | Cleric → Pyre Priest, Spearman → Battlemage, Occultist → Zealot. |
+| D24 | D241, D242 | Ten enemy types a zone (was 8), five used per visit (was 4). |
+| D28 | D143, D235 | Touch controls on phones and tablets; Firefox supported. |
+| D31 | D195 | What a guest takes home: any zone their own world had reached counts, and chains. |
+| D35 | D82 | Equip load exists (Endurance, weight, four load tiers). |
+| D37 | D72 | Two-handing counts only Bonk ×1.5 (not Slicey). |
+| D38 | D150 | Bonfires heal and refill the Thermos on every rest, not only the first. |
+| D39 (spell scaling) | D88 → D182 | Spells scale by Spell Skill (tool grade letter × Brain/Prayer curve × item level × rarity × reinforcement × proficiency). |
+| D46 (pad defaults) | D122 | Pad layout: A interacts and confirms, B dodges and backs out. |
+| D58 (boss drops) | D84, D281, D284 | Bosses drop 2–5 items with no rarity floor, a gem 65% of the time, and gems have levels and rolls, not tiers. |
+| D58 (phase marker) | D226 | Boss bars show no phase ticks. |
+| D66 | D253 → D289 | Ignatius's phase 2 starts when phase 1's bar runs out and refills the bar; his first bar is 60% of his HP. |
+| D67 (mirrors) | D222 → D224 → D225 | Aurelia's mirrors are real enemies (about 360 HP) that drift about the room. |
+| D67 (parry) | D223 | Every arc of Blessed Blade can be parried, and it reaches 190 px. |
+| D75 | D90 → D127 | The Instructor's room is on the main path, and its way down stays locked while he lives. |
+| D82 (Light < 25%) | D196 | Light load runs to 35%. |
+| D86 (launcher) | D133 | The offline launcher is `Dungeon Joe.cmd`, with an icon. |
+| D92 (tiers, upgrades, fuse rule) | D197 → D284, D286 | Gem tiers and upgrading are gone; each perk has a level and a roll; every fuse must keep an original perk. |
+| D97 | D107 | The backstab station was removed from the Training Hall. |
+| D101 | D114 | Every expanding ring (not just the Plague Bell's) has at least 4 gaps plus a centre gap. |
+| D107 (Instructor HP and phase) | D226 | The Instructor has 9,373 HP and his second half starts at 65%. |
+| D108 | D109 → D164 | Immune enemies are drawn solid gold, at full opacity. |
+| D110 (walk past him) | D127 | You cannot walk past The Instructor: his door is locked while he lives. |
+| D116 (version count) | D132 | The version's last number counts commits since package.json's version line changed. |
+| D117 (spell keys) | D201 | A tool in the weapon hand casts on Q/E/R, one in the off hand on 1/2/3. |
+| D120 | D123 → D140 | Berserker stats and weapon (Twin Axes again, HP 9 / End 7 / Bonk 13 / Slicey 14 / Brain 2 / Prayer 3). |
+| D129 (Q/E/R hint) | D131 | The "a tool has no weapon skills" hint was withdrawn. |
+| D138 | D139 | Steam's icon is a PNG, not the .ico. |
+| D145 (stop at the ends) | D169 | Tabs and lists wrap. |
+| D150 (20% bigger co-op rooms) | D159 | Each extra player adds one full wave instead. |
+| D178 (prof. level 50, bar sizes) | D218, D221 | Proficiency to level 100; item bars doubled (120 / 240 / 400 / 640). |
+| D180 (spell shots ×2) | D204 | Player spell projectiles are ×4 their listed size. |
+| D185 (enemy range 850) | D186 | Enemy projectiles reach 425 px; players' 850. |
+| D198 (Essence rates) | D226 | Essence drops at half the rate. |
+| D205 (each arrow full hit) | D264 | A volley hits any one enemy at most once. |
+| D209 (HP and damage ×1.1 a cycle) | D258 → D259 | NG+1 HP ×4.5 and damage ×1.4 on the curve, then ×2.5, ×2, ×2, ×1.15 a cycle; Shards keep D209's ×1.1. |
+| D215 (shields train only their class) | D221 | Shields also fill their own rarity bar. |
+| D224 (Aurelia HP, orbit) | D225, D226 | Mirrors drift; Aurelia has 5,544 HP and phase 2 at 75%. |
+| D243 (set perk rates) | D245 | Set perks 35% rarer. |
+| D244 (no skills on cards) | D267 | Weapon cards list their unlocked skills again (poise stays off). |
+| D257 | D258 | Zone 1's NG+ tripling was replaced by NG+-wide HP. |
+| D260 (Hearth by tier) | D284 | Hearth's +% max HP is a baseline 8% × level × roll. |
+| D274, D288 | D293 | One stun rule: 70% length, no stun during or 0.5 s after another, chained stuns halve. |
+| D275 | D287 | NG+ zone damage table: zone 8 ×1.65 and zones 3–7 climbing to it. |
+| D278 (30%-full bar) | D290 | The bonus boss starts on a full bar worth 30% of its HP. |
+| D283 (42% adds) | D292 | Elemental gems add 13.2% (Brutal's 11% × 1.2). |
+
+## Decisions
 
 | # | Area | Decision | Why |
 |---|---|---|---|
@@ -303,3 +369,4 @@ is marked where it was chosen). Add new decisions at the bottom with the next nu
 | D295 | New Game+ bosses have a third phase | Owner's request: from NG+1 every zone 1–7 boss fights in three phases. Its first phase change moves halfway up to full HP and the new change sits halfway from there to 0: 50% → 75% and 37.5% (Caretaker, Mother Spore, Bloatking, Vexthorn); Aurelia 87.5% / 43.75%; Tock 70% / 35%. Ignatius keeps his split and refilled bar (D253) and his third phase starts at 50% of the refilled bar. The third phase, "<last phase>: Overtime", is the last phase again (its attacks, Last Rites included, passive and summons) with speed and damage ×1.15 and cooldowns ×0.8 (`BossPhase.cooldownMult`); its arena changes are already in place and not applied again; Ignatius's on-foot body carries on. The list is derived from the boss's data at spawn (`ngBossDef`), so guests, the boss bar and the AI read the same phases. Zone 8 and the first playthrough are unchanged; NG+ bonus bosses (D278) carry the list but stay in their phase 2. |
 | D296 | An Elite in every New Game+ room | Owner's request: from NG+1 every combat room (ambush rooms too) has at least one Elite. If its rolled waves have none, a seeded pick makes an enemy that can be one (not a swarm piece or a special) an Elite in the earliest wave that has one; if no wave has one, an Elite from the zone's mix joins the first wave. Its own seeded stream (`ngElite:…`), so the other wave rolls and the first playthrough are unchanged. |
 | D297 | A generated balance report | Owner's request (#1 of the top-10 list): `npm run balance:report` (tests/sim/report.sim.ts) measures the game from its live data, formulas and player code in about a second, deterministically, and writes docs/balance/report.md: enemy and boss HP and damage per zone and phase (first playthrough, NG+1, NG+2), time to kill and hits to die for seven builds at each zone's expected level, gems by their effect on DPS and effective HP, every weapon's burst and sustained DPS and skill rate, every damaging spell's rate, Shards against level costs, and player growth against the world. Anything out of line gets a ⚠ and goes into a ranked "Findings" list with a suggested fix. Every deploy runs it as a step that can never fail the deploy (`continue-on-error`, 5 min timeout) and shows it on the run's summary page. docs/BALANCE_REPORT.md stays the curated write-up of the bot campaigns (`npm run balance`). |
+| D298 | Staffs, talismans and shields drop with sockets | Found while rewriting the docs: D227 let staffs and talismans take weapon gems and shields armour gems, but loot gave sockets only to weapons and armour, so those items always dropped with none. `socketCount` now treats staffs and talismans as weapons and shields as armour (uncommon weapon-likes may roll 1, rare 1, epic 1–2, legendary 2; armour-likes rare 0–1, epic and legendary 1). Also from the docs pass: the tutorial's Thermos sign now says it refills at every rest (D150), and stale comments (snapshot rate, Unbound "phase 3", decision ids) were corrected. |

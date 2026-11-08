@@ -7,7 +7,7 @@
 // Phase 2, The Deep Lease: a colossal void face filling the far third of the platform under a floating top
 // hat, ram horns, glowing slit-pupil eyes, a grinning maw that opens on the windup, two huge clawed hands
 // gripping the platform's edge, and a red sweep arrow showing where Foreclosure's gaze strikes next (s.gaze).
-// Phase 3, The Landlord, Unbound (D279): the face knocked down, he rises player-sized in black spiked plate, his
+// Phase 4, The Landlord, Unbound (D279): the face knocked down, he rises player-sized in black spiked plate, his
 // TV head a horned helm with burning eyes, a void blade in his hand, wreathed in a golden-violet aura with
 // crackling arcs. The 4.5 s transition (s.trans) plays it: face shards fly, he lies stunned, gets up, the power
 // gathers, the top hat falls away and the armour forms.

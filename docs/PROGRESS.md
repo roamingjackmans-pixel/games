@@ -1,5 +1,9 @@
 # Dungeon Joe — Build progress
 
+> **History.** This is the log of the original build. The current design is in `docs/GAME_DESIGN.md`,
+> `docs/DATA_MODEL.md`, `docs/PROCGEN.md`, `docs/NETCODE.md`, `docs/ART_AUDIO.md` and `docs/CONTENT_*`; later changes
+> are in `docs/DECISIONS.md`. Balance numbers: `npm run balance:report` (`docs/balance/report.md`, D297).
+
 > **Next session starts here:** M0–M16 done; the game is live at https://josephjackman.com/games/dungeonjoe/. Any further work is owner feedback (docs/OWNER_CHECKS.md) or balance from real play (docs/BALANCE_REPORT.md).
 > Dev: npm run dev → http://localhost:5173/games/dungeonjoe/?debug (or ?arena, ?new&class=cleric&seed=X). For long scripted playtests use the no-HMR server (vite.stable.config.ts, port 5174) and window.__dj.loop.advance(s).
 

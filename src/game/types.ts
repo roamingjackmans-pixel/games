@@ -537,7 +537,7 @@ export interface BossPhase {
   attacks: AttackDef[];
   speedMult: number;
   dmgMult: number;
-  /** its attacks' cooldowns × this (D293: a New Game+ Overtime phase, 0.8) */
+  /** its attacks' cooldowns × this (D295: a New Game+ Overtime phase, 0.8) */
   cooldownMult?: number;
   arena?: ArenaChange[];
   summons?: SummonDef[];
@@ -863,7 +863,7 @@ export interface WorldState {
   instructorKilled?: boolean;
   /** items left on the floor when the room was left (GAME_DESIGN PROCGEN §4) */
   leftBehind: Record<string, { playerId: string; item: Item; x: number; y: number }[]>;
-  /** awakened mimics that still live (they fight when you return) */
+  /** not read any more; kept so older saves load unchanged */
   bossKilled: number[];
   /** cutscenes already played this cycle (src/data/story.ts ids: `zone-N`, `boss-intro-N`, `instructor`) */
   cutscenesSeen?: string[];

@@ -1,4 +1,4 @@
-// What an item would really do in your hands (D293): the item cards equip it on a copy of the character and read the
+// What an item would really do in your hands (D294): the item cards equip it on a copy of the character and read the
 // result, so every perk counts (stats and their scaling, proficiency, rarity, reinforcement, the item's own affixes,
 // gems and legendary power, set perks gained or lost by the swap, rings and the rest of your gear). Timed buffs and
 // situational bonuses (spells, Battle Cry, backstabs, Momentum) are not counted.
