@@ -115,6 +115,42 @@ const uproot: AttackDef = {
   stunAfterS: 3,
 };
 
+// ---------------------------------------------------------------- New Game+ Overtime only (D309)
+
+/** Six roots shoot out from her stalk like spokes, poisoning: stand between them (they are widest apart far out). */
+const myceliumWeb: AttackDef = {
+  id: 'spore_mycelium_web',
+  name: 'Mycelium Web',
+  kind: 'pierce',
+  pattern: { kind: 'line', w: 50, l: 'room', anchor: 'self', count: 6, spokes: true },
+  windupMs: 1100,
+  recoverMs: 800,
+  dmgMult: 1.3,
+  type: 'physical',
+  status: { id: 'poison', buildup: 30 },
+  cooldownS: 10,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
+/** The cap bursts: a Red ring from 150 px out to 460 px. Hug her stalk, get far away, or roll as it lands. */
+const capBurst: AttackDef = {
+  id: 'spore_cap_burst',
+  name: 'Cap Burst',
+  kind: 'red',
+  pattern: { kind: 'ring', rIn: 150, rOut: 460, anchor: 'self' },
+  windupMs: 1300,
+  recoverMs: 1000,
+  dmgMult: 1.7,
+  type: 'physical',
+  status: { id: 'poison', buildup: 25 },
+  cooldownS: 13,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
 export const MOTHER_SPORE: BossDef = {
   id: 'mother_spore',
   zone: 2,
@@ -137,6 +173,8 @@ export const MOTHER_SPORE: BossDef = {
       attacks: [stalkSlam, sporeBloom(120), tendrilWhip, sporelingBirth(5), gasVent, rainOfCaps, uproot],
     },
   ],
+  // New Game+ third phase only (D309)
+  overtimeAttacks: [myceliumWeb, capBurst],
   arenaId: 'caverns_arena',
   introTitle: 'MOTHER SPORE',
   introSub: 'Everything down here is her child. You are about to be adopted.',

@@ -138,6 +138,68 @@ const judgment: AttackDef = {
   chain: frostNova,
 };
 
+// ---------------------------------------------------------------- New Game+ Overtime only (D309)
+
+/** A cross of ice through her, then another turned 45°, 0.8 s later: stand between the arms of both. */
+const glacialCross: AttackDef = {
+  id: 'aurelia_glacial_cross',
+  name: 'Glacial Cross',
+  kind: 'pierce',
+  pattern: {
+    kind: 'sequence',
+    steps: [
+      { pattern: { kind: 'line', w: 70, l: 'room', anchor: 'self', count: 4, spokes: true }, delayS: 0 },
+      { pattern: { kind: 'line', w: 70, l: 'room', anchor: 'self', count: 4, spokes: true, angleOffsetDeg: 45 }, delayS: 0.8 },
+    ],
+  },
+  windupMs: 1100,
+  recoverMs: 900,
+  dmgMult: 1.3,
+  type: 'magic',
+  status: { id: 'chill', buildup: 40 },
+  cooldownS: 11,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
+/** Her blade spins all the way round in four quick cuts: Red, so no parry; roll out or through. */
+const saintsWrath: AttackDef = {
+  id: 'aurelia_saints_wrath',
+  name: "Saint's Wrath",
+  kind: 'red',
+  pattern: { kind: 'cone', angleDeg: 100, r: 210, anchor: 'self' },
+  comboMults: [1.0, 1.0, 1.0, 1.4],
+  comboGapMs: 280,
+  comboRotateDeg: 90,
+  windupMs: 750,
+  recoverMs: 1000,
+  dmgMult: 1.0,
+  type: 'magic',
+  status: { id: 'chill', buildup: 20 },
+  cooldownS: 9,
+  range: [0, 210],
+  weight: 4,
+  hyperArmor: true,
+};
+
+/** Icicles fall one after another over 1.5 s across a wide patch round you: keep moving. */
+const shatterstorm: AttackDef = {
+  id: 'aurelia_shatterstorm',
+  name: 'Shatterstorm',
+  kind: 'pierce',
+  pattern: { kind: 'randomCircles', n: 12, r: 75, within: 520, anchor: 'target', overS: 1.5 },
+  windupMs: 1000,
+  recoverMs: 900,
+  dmgMult: 1.2,
+  type: 'magic',
+  status: { id: 'chill', buildup: 30 },
+  cooldownS: 12,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
 export const SAINT_AURELIA: BossDef = {
   id: 'saint_aurelia',
   zone: 6,
@@ -167,6 +229,8 @@ export const SAINT_AURELIA: BossDef = {
       attacks: [blessedBlade, iceSpears(true), frostbiteLunge, hymn(true), mirrorOfFaith, avalanche, judgment],
     },
   ],
+  // New Game+ third phase only (D309)
+  overtimeAttacks: [glacialCross, saintsWrath, shatterstorm],
   arenaId: 'reliquary_arena',
   introTitle: 'SAINT AURELIA THE UNTHAWED',
   introSub: 'Four hundred years on guard duty. Nobody told her she could stop.',

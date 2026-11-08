@@ -358,9 +358,19 @@ export function gemPerkSellValue(p: { level?: number; q?: number }): number {
 export function gemSellTotal(g: { perks: { level?: number; q?: number }[] }): number {
   return g.perks.reduce((s, p) => s + gemPerkSellValue(p), 0);
 }
-/** Fusing two gems costs the sale price of the best perk the result keeps (at least 40). */
+/**
+ * Everything bought with Glowen costs this many times its listed price (D309: with gem upgrades gone (D284) Glowen
+ * piled up). Selling is unchanged, so this is what makes Glowen worth keeping. Reinforcement has its own, larger
+ * multiplier (REINFORCE_GLOWEN_MULT in data/essence.ts).
+ */
+export const GLOWEN_PRICE_MULT = 2;
+export function buyPrice(listed: number): number {
+  return Math.round(listed * GLOWEN_PRICE_MULT);
+}
+
+/** Fusing two gems costs twice (D309) the sale price of the best perk the result keeps (at least 80). */
 export function gemFuseCost(perks: { level?: number; q?: number }[]): number {
-  return Math.max(40, perks.reduce((m, p) => Math.max(m, gemPerkSellValue(p)), 0));
+  return buyPrice(Math.max(40, perks.reduce((m, p) => Math.max(m, gemPerkSellValue(p)), 0)));
 }
 
 export const GEAR_SELL: Record<string, number> = { common: 10, uncommon: 25, rare: 60, epic: 150, legendary: 400 };

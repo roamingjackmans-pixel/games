@@ -3,7 +3,7 @@
 import { stream } from '../../engine/rng';
 import { GEM_FAMILIES, gemDropLevel, gemQualityRolls, makeGem, rollGemQuality } from '../../data/gems';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
-import { itemLevelFor, gemSellTotal, GEM_PERK_PRICE } from '../combat/formulas';
+import { buyPrice, itemLevelFor, gemSellTotal, GEM_PERK_PRICE } from '../combat/formulas';
 import { generateItem } from '../items/generate';
 import { itemSellValue } from '../items/inventory';
 import type { ConsumableId, Gem, Item, WorldState } from '../types';
@@ -16,16 +16,16 @@ export function shopGem(seed: string, zone: number, cycle: number): Gem {
   return makeGem(family, { level, q: rollGemQuality(rng, gemQualityRolls(level)) });
 }
 export function shopGemPrice(gem?: Gem): number {
-  return (gem ? gemSellTotal(gem) : GEM_PERK_PRICE) * 3;
+  return buyPrice((gem ? gemSellTotal(gem) : GEM_PERK_PRICE) * 3);
 }
 
 export function shopConsumables(): { id: ConsumableId; price: number }[] {
-  return CONSUMABLE_IDS.filter((id) => CONSUMABLES[id].price !== null).map((id) => ({ id, price: CONSUMABLES[id].price! }));
+  return CONSUMABLE_IDS.filter((id) => CONSUMABLES[id].price !== null).map((id) => ({ id, price: buyPrice(CONSUMABLES[id].price!) }));
 }
 
 /** Price for the rotating piece: 4× its sell value. */
 export function shopItemPrice(item: Item): number {
-  return Math.max(100, itemSellValue(item) * 4);
+  return buyPrice(Math.max(100, itemSellValue(item) * 4));
 }
 
 /** Re-roll the rotating piece at a bonfire (called on every rest). */

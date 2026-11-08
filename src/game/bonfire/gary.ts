@@ -4,7 +4,7 @@
 import { stream } from '../../engine/rng';
 import { CONSUMABLE_IDS, CONSUMABLES } from '../../data/consumables';
 import { gemDropLevel, gemKindLabel, gemTitle } from '../../data/gems';
-import { itemLevelFor, gemSellTotal } from '../combat/formulas';
+import { buyPrice, itemLevelFor, gemSellTotal } from '../combat/formulas';
 import { generateItem, randomGem } from '../items/generate';
 import { itemSellValue, uniqueItemId } from '../items/inventory';
 import type { Character, GaryStockEntry, WorldState } from '../types';
@@ -20,22 +20,22 @@ export function garyStock(ws: WorldState, zone: number, cycle: number): GaryStoc
   const pool: (() => GaryStockEntry)[] = [
     () => {
       const item = generateItem(rng, { source: 'gary', ilvl, zone, ...(cycle > 0 && rng.chance(0.5) ? { rarity: 'legendary' as const } : {}) });
-      return { kind: 'item', item, price: Math.max(400, itemSellValue(item) * 5), sold: false };
+      return { kind: 'item', item, price: buyPrice(Math.max(400, itemSellValue(item) * 5)), sold: false };
     },
     () => {
       // D284: Gary's gems roll their quality two or three times (one more in NG+) and keep the best (they were a tier or two up)
       const bonus = (rng.chance(0.6) ? 1 : 2) + (cycle > 0 ? 1 : 0);
       const gem = randomGem(rng, cycle, undefined, gemDropLevel(rng, zone, cycle), bonus);
-      return { kind: 'gem', gem, price: gemSellTotal(gem) * 3, sold: false };
+      return { kind: 'gem', gem, price: buyPrice(gemSellTotal(gem) * 3), sold: false };
     },
     () => {
       const ids = CONSUMABLE_IDS.filter((id) => CONSUMABLES[id].price !== null);
       const id = rng.pick(ids);
-      return { kind: 'consumable', consumable: id, count: 3, price: Math.round((CONSUMABLES[id].price ?? 50) * 3 * 1.5), sold: false };
+      return { kind: 'consumable', consumable: id, count: 3, price: buyPrice((CONSUMABLES[id].price ?? 50) * 3 * 1.5), sold: false };
     },
     () => {
       const item = generateItem(rng, { source: 'gary', ilvl, zone, baseId: 'lucky_charm', rarity: 'uncommon' });
-      return { kind: 'ring', item, price: 450 * zone, sold: false };
+      return { kind: 'ring', item, price: buyPrice(450 * zone), sold: false };
     },
   ];
   const n = rng.int(3, 5);
@@ -43,7 +43,7 @@ export function garyStock(ws: WorldState, zone: number, cycle: number): GaryStoc
   if (n >= 4) out.push(pool[3]!());
   if (n >= 5) out.push(rng.chance(0.5) ? pool[0]!() : pool[2]!());
   // a Tear of Undoing, sometimes (rare)
-  if (rng.chance(0.2 + (cycle > 0 ? 0.1 : 0))) out.push({ kind: 'tear', price: 2000 * zone, sold: false });
+  if (rng.chance(0.2 + (cycle > 0 ? 0.1 : 0))) out.push({ kind: 'tear', price: buyPrice(2000 * zone), sold: false });
   ws.garyStock[key] = out;
   return out;
 }

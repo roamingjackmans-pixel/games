@@ -129,6 +129,42 @@ const tripleCharge: AttackDef = {
   hyperArmor: true,
 };
 
+// ---------------------------------------------------------------- New Game+ Overtime only (D309)
+
+/** Brambles erupt in a ring round you, leaving thorns: stay still in the clear middle, or get clear of it. */
+const brambleCage: AttackDef = {
+  id: 'vex_bramble_cage',
+  name: 'Bramble Cage',
+  kind: 'pierce',
+  pattern: { kind: 'ring', rIn: 90, rOut: 260, anchor: 'target', persist: { hazard: 'thorns', durationS: 3 } },
+  windupMs: 1000,
+  recoverMs: 800,
+  dmgMult: 1.3,
+  type: 'physical',
+  status: { id: 'bleed', buildup: 30 },
+  cooldownS: 10,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
+/** Spectral stags stampede down three lanes from alternate ends: Red, so a timed roll through them is safe too. */
+const wildHunt: AttackDef = {
+  id: 'vex_wild_hunt',
+  name: 'Wild Hunt',
+  kind: 'red',
+  pattern: { kind: 'lanes', n: 3, w: 110, orientation: 'vertical', roll: { speed: 700 } },
+  windupMs: 1200,
+  recoverMs: 900,
+  dmgMult: 1.7,
+  type: 'physical',
+  knockback: 120,
+  cooldownS: 12,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
 export const VEXTHORN: BossDef = {
   id: 'vexthorn',
   zone: 4,
@@ -157,6 +193,8 @@ export const VEXTHORN: BossDef = {
       attacks: [antlerGore, charge, thornBurst(220, 1100), feyLights(5), hexGale, rootLines, tripleCharge],
     },
   ],
+  // New Game+ third phase only (D309)
+  overtimeAttacks: [brambleCage, wildHunt],
   arenaId: 'forest_arena',
   introTitle: 'VEXTHORN, THE HOLLOW STAG',
   introSub: 'The forest has a heart. He is wearing it, and he will not give it back.',

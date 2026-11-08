@@ -107,6 +107,41 @@ const crosswave: AttackDef = {
 
 // Drowning Grasp (a Red circle on the target that grabbed and poisoned) was removed at the owner's request (D212)
 
+// ---------------------------------------------------------------- New Game+ Overtime only (D309)
+
+/** Royal Decree three times over, each re-aimed with a fresh 0.5 s bar. */
+const tidalDecree: AttackDef = {
+  id: 'bloat_tidal_decree',
+  name: 'Tidal Decree',
+  kind: 'red',
+  pattern: { kind: 'line', w: 110, l: 400, anchor: 'self' },
+  move: { kind: 'charge', distance: 400, speed: 760, charges: 3, chargeGapS: 0.5 },
+  windupMs: 800,
+  recoverMs: 1000,
+  dmgMult: 1.6,
+  type: 'physical',
+  cooldownS: 13,
+  range: [80, 700],
+  weight: 3,
+  hyperArmor: true,
+};
+
+/** Two rings of churning water roll out from him a second apart, dragging everyone toward him: find a gap in each. */
+const undertow: AttackDef = {
+  id: 'bloat_undertow',
+  name: 'Undertow',
+  kind: 'pierce',
+  pattern: { kind: 'expandingRing', speed: 280, thickness: 40, gaps: 3, gapW: 120, anchor: 'self', centerGapDeg: 15, count: 2, spacingS: 1.0, pullSpeed: 50 },
+  windupMs: 1200,
+  recoverMs: 900,
+  dmgMult: 1.2,
+  type: 'physical',
+  cooldownS: 11,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
 export const THE_BLOATKING: BossDef = {
   id: 'bloatking',
   zone: 3,
@@ -133,6 +168,8 @@ export const THE_BLOATKING: BossDef = {
       attacks: [scepterSwing, wave, royalDecree, summonCourt(true), belch(true), crosswave],
     },
   ],
+  // New Game+ third phase only (D309)
+  overtimeAttacks: [tidalDecree, undertow],
   arenaId: 'sewers_arena',
   introTitle: 'THE BLOATKING',
   introSub: 'Skims the rent. Drinks the runoff. Long may he float.',

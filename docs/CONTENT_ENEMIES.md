@@ -232,8 +232,8 @@ Common rules (GAME_DESIGN §7):
 - A boss never repeats the same attack twice in a row and picks by weighted distance.
 - **New Game+ third phase (D295):** from NG+1 every zone 1–7 boss has three phases. Its first change moves halfway up
   to full HP and the new change sits halfway from there to 0 (50% → 75% and 37.5%). The new phase, "&lt;last
-  phase&gt;: Overtime", is the last phase again with speed ×1.15, damage ×1.15 and cooldowns ×0.8; its arena changes
-  are already in place. Ignatius keeps his split and refilled bar and starts Overtime at 50% of the refilled bar. The
+  phase&gt;: Overtime", is the last phase again with speed ×1.15, damage ×1.15 and cooldowns ×0.8, **plus at least two
+  attacks of its own** (D309, `BossDef.overtimeAttacks`; listed under each boss); its arena changes are already in place. Ignatius keeps his split and refilled bar and starts Overtime at 50% of the refilled bar. The
   Landlord is unchanged in NG+.
 - **NG+ bonus boss rooms (D278, D290):** from NG+1 one combat room per zone holds a random boss from any zone,
   fighting in its phase 2 for the whole fight, on a full bar worth 30% of that boss's HP for the playthrough. It hits
@@ -280,7 +280,9 @@ Phase 2 — **The lantern breaks** (50% → 0%; speed ×1.2, damage ×1.25, aren
 - **Hands of the Dead [PIERCE] [AREA]**: randomCircles(8, 70) within 420, ×0.6 physical (34), root 1.5 s, tell 1 s, cd 11 *(new)*
 - **Last Rites [RED] [AREA]**: ring(0, edge), ×2.1 physical (118), tell 2.2 s, cd 22, only if cycleAtLeast(1), hyper armor
 
-**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The lantern breaks until 37.5%; 3. The lantern breaks: Overtime until 0%. The last is the Overtime phase: the last phase's attacks with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The lantern breaks until 37.5%; 3. The lantern breaks: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime attacks (D309):** **Coffin Rows [PIERCE] [AREA]** — lanes(5 vertical, w 64, two sets 1 s apart), ×1.3 physical, tell 1.2 s, cd 11; **Gravedigger's Fury [RED]** — three shovel arcs(140°, 170) ×1.0 / ×1.2 / ×1.6, tell 0.7 s, cd 8, hyper armor.
 
 ### Boss 2 — Mother Spore (Fungal Caverns)
 
@@ -304,7 +306,9 @@ Phase 2 — **The cap splits open** (50% → 0%; speed ×1.2, damage ×1.25, are
 - **Rain of Caps [PIERCE] [AREA]**: lanes(5, 64) horizontal, two sets 1 s apart, ×1.2 physical (91), tell 1.2 s, cd 11 *(new)*
 - **Uproot [RED] [AREA]**: circle(200) at target, leaps, ×2 physical (152), then staggered 3 s, tell 1 s, cd 14 *(new)*
 
-**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The cap splits open until 37.5%; 3. The cap splits open: Overtime until 0%. The last is the Overtime phase: the last phase's attacks with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The cap splits open until 37.5%; 3. The cap splits open: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime attacks (D309):** **Mycelium Web [PIERCE] [AREA]** — six root spokes line(50, room) from her, ×1.3 physical, Poison 30, tell 1.1 s, cd 10; **Cap Burst [RED] [AREA]** — ring(150–460) round her, ×1.7 physical, Poison 25, tell 1.3 s, cd 13 (hug the stalk, keep far, or roll).
 
 ### Boss 3 — The Bloatking (Drowned Sewers)
 
@@ -327,7 +331,9 @@ Phase 2 — **The throne sinks** (50% → 0%; speed ×1.2, damage ×1.25, arena:
 - **Acid Belch [AREA]**: cone(70°, 350), leaves acid 7 s, ×0.3 physical (29), poison 25, windup 0.8 s, cd 8 *(new)*
 - **Crosswave [PIERCE] [AREA]**: wave(140, 340 px/s) from random, grates safe, 2 gaps then wave(140, 340 px/s) from cross, grates safe, 2 gaps (+0.8 s), ×1.3 physical (124), tell 1.2 s, cd 12 *(new)*
 
-**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The throne sinks until 37.5%; 3. The throne sinks: Overtime until 0%. The last is the Overtime phase: the last phase's attacks with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The throne sinks until 37.5%; 3. The throne sinks: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime attacks (D309):** **Tidal Decree [RED]** — Royal Decree three times, line(110, 400) charges re-aimed 0.5 s apart, ×1.6 physical, cd 13; **Undertow [PIERCE] [AREA]** — two expanding rings 1 s apart (3 gaps of 120 px) that pull 50 px/s toward him, ×1.2 physical, tell 1.2 s, cd 11.
 
 ### Boss 4 — Vexthorn, the Hollow Stag (Hollow Forest)
 
@@ -351,7 +357,9 @@ Phase 2 — **The heart-lantern flares** (50% → 0%; speed ×1.2, damage ×1.25
 - **Root Lines [PIERCE] [AREA]**: 5× line(50, room) at random angles, leaves roots 3 s, ×1.3 physical (165), tell 1.2 s, cd 12 *(new)*
 - **Triple Charge [RED] [AREA]**: line(100, room), charges to the wall ×3 (re-aimed, 0.5 s apart), ×1.9 physical (241), tell 0.8 s, cd 14, hyper armor *(new)*
 
-**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The heart-lantern flares until 37.5%; 3. The heart-lantern flares: Overtime until 0%. The last is the Overtime phase: the last phase's attacks with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The heart-lantern flares until 37.5%; 3. The heart-lantern flares: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime attacks (D309):** **Bramble Cage [PIERCE] [AREA]** — ring(90–260) round the target leaving thorns 3 s, ×1.3 physical, Bleed 30, tell 1 s, cd 10 (stand still in the middle or get out); **Wild Hunt [RED] [AREA]** — spectral stags roll down 3 vertical lanes (w 110, 700 px/s), ×1.7 physical, knockback 120, tell 1.2 s, cd 12.
 
 ### Boss 5 — Foreman Ignatius (Ashen Forge)
 
@@ -376,7 +384,9 @@ Phase 2 — **The Golem goes molten** (fresh bar → 0%; speed ×1.2, damage ×1
 - (on-foot body) **Flame Pillars [PIERCE] [AREA]**: grid(150, 55) checkerboard, 2 sets 0.5 s apart, ×1.1 fire (171), tell 1 s, cd 11
 - (on-foot body) **Immolation [RED] [AREA]**: room-wide, 1 safe pocket r 140 (self), ×2.5 fire (388), tell 1 s, cd 16 *(new)*
 
-**New Game+ phases (D295):** 1. Phase 1 until 0%; 2. The Golem goes molten until 50% of a fresh bar; 3. The Golem goes molten: Overtime until 0%. The last is the Overtime phase: the last phase's attacks with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 0%; 2. The Golem goes molten until 50% of a fresh bar; 3. The Golem goes molten: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime attacks (D309):** **Slag Rain [PIERCE] [AREA]** — 10 circles(70) within 450 px of the target leaving slag 4 s, ×1.1 fire, Burn 20, tell 1.1 s, cd 10; **Anvil Drop [RED] [AREA]** — the Golem leaps onto the target, circle(210), ×1.9 fire, tell 1.1 s, cd 13, stuck 1.5 s after landing.
 
 ### Boss 6 — Saint Aurelia the Unthawed (Frozen Reliquary)
 
@@ -400,7 +410,9 @@ Phase 2 — **The ice shatters** (75% → 0%; speed ×1.2, damage ×1.25, arena:
 - **Avalanche [PIERCE] [AREA]**: lanes(4, 120) horizontal, boulders roll 650 px/s, ×1.5 physical (267), knockback 140, tell 1.2 s, cd 12 *(new)*
 - **Judgment [RED] [AREA]**: line(120, room), charges to the wall, ×2.2 magic (391), tell 0.9 s, cd 14, hyper armor; then **Frost Nova [PIERCE] [AREA]**: expandingRing(300 px/s) 4 gaps of 110 (one toward the centre), ×1 magic (178), tell 1 s, cd 0 *(new)*
 
-**New Game+ phases (D295):** 1. Phase 1 until 87.5%; 2. The ice shatters until 43.75%; 3. The ice shatters: Overtime until 0%. The last is the Overtime phase: the last phase's attacks with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 87.5%; 2. The ice shatters until 43.75%; 3. The ice shatters: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime attacks (D309):** **Glacial Cross [PIERCE] [AREA]** — a cross of line(70, room) through her, then a second turned 45° 0.8 s later, ×1.3 magic, Chill 40, tell 1.1 s, cd 11; **Saint's Wrath [RED]** — four cone(100°, 210) cuts turning 90° each, ×1.0 ×3 then ×1.4, Chill 20, tell 0.75 s, cd 9, hyper armor; **Shatterstorm [PIERCE] [AREA]** — 12 icicles circle(75) within 520 px of the target falling over 1.5 s, ×1.2 magic, Chill 30, tell 1 s, cd 12.
 
 ### Boss 7 — Archmagister Tock (Clockwork Citadel)
 
@@ -424,7 +436,9 @@ Phase 2 — **The clock runs backward** (40% → 0%; speed ×1.2, damage ×1.69,
 - **Rewind Volley [PIERCE] [AREA]**: 8× circle(90) at eachPlayerPast(1.0), ×1.1 void (350), tell 0.9 s, cd 13; repeated 2 more times at once, re-aimed (tell 0.7 s each) *(new)*
 - **Overclock [RED]**: line(110, 380), charges 380 px, ×1.6 physical (508), tell 0.8 s, cd 15, hyper armor; repeated 3 more times at once, re-aimed (tell 0.6 s each) *(new)*
 
-**New Game+ phases (D295):** 1. Phase 1 until 70%; 2. The clock runs backward until 35%; 3. The clock runs backward: Overtime until 0%. The last is the Overtime phase: the last phase's attacks with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 70%; 2. The clock runs backward until 35%; 3. The clock runs backward: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime attacks (D309):** **Chrono Lattice [PIERCE] [AREA]** — checkerboard grid(160, r 60) in two sets 0.9 s apart, ×1.2 void, tell 1.1 s, cd 11; **Pendulum [RED] [AREA]** — a 180° sweep r 420 round him over 1.2 s, ×1.5 physical, tell 0.9 s, cd 9, hyper armor.
 
 ### Boss 8 — The Landlord (The Abyss)
 

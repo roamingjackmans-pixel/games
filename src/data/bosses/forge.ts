@@ -193,6 +193,44 @@ const LAVA: ArenaChange = { op: 'hazardTiles', hazard: 'lava' };
 const BELT_NORTH: ArenaChange = { op: 'movingFloor', floor: { kind: 'belt', x: 64, y: 48, w: 1152, h: 64, dir: 'e', speed: 70, look: 'forge' } };
 const BELT_MIDDLE: ArenaChange = { op: 'movingFloor', floor: { kind: 'belt', x: 64, y: 240, w: 1152, h: 64, dir: 'w', speed: 70, look: 'forge' } };
 
+// ---------------------------------------------------------------- New Game+ Overtime only (D309)
+
+/** Molten slag rains on a wide patch round you and leaves burning slag behind. */
+const slagRain: AttackDef = {
+  id: 'ign_slag_rain',
+  name: 'Slag Rain',
+  kind: 'pierce',
+  pattern: { kind: 'randomCircles', n: 10, r: 70, within: 450, anchor: 'target', persist: { hazard: 'slag', durationS: 4 } },
+  windupMs: 1100,
+  recoverMs: 800,
+  dmgMult: 1.1,
+  type: 'fire',
+  status: { id: 'burn', buildup: 20 },
+  cooldownS: 10,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
+/** The molten Golem leaps onto you: a Red circle where you stand; it is stuck a moment after landing. */
+const anvilDrop: AttackDef = {
+  id: 'ign_anvil_drop',
+  name: 'Anvil Drop',
+  kind: 'red',
+  pattern: { kind: 'circle', r: 210, anchor: 'target' },
+  move: { kind: 'leap' },
+  windupMs: 1100,
+  activeMs: 450,
+  recoverMs: 400,
+  dmgMult: 1.9,
+  type: 'fire',
+  cooldownS: 13,
+  range: [150, 900],
+  weight: 3,
+  area: true,
+  stunAfterS: 1.5,
+};
+
 export const FOREMAN_IGNATIUS: BossDef = {
   id: 'foreman_ignatius',
   zone: 5,
@@ -222,6 +260,8 @@ export const FOREMAN_IGNATIUS: BossDef = {
       attacks: [golemSlam, forgeStrike, stoke, moltenShockwave, forgeDraw, hammerThrow('split'), flamePillars(0.5, 'split'), immolation],
     },
   ],
+  // New Game+ third phase only (D309)
+  overtimeAttacks: [slagRain, anvilDrop],
   arenaId: 'forge_arena',
   introTitle: 'FOREMAN IGNATIUS',
   introSub: 'Twelve-hour shifts. No breaks. You are the break.',

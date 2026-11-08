@@ -1,4 +1,4 @@
-// No room enemy hits feebly next to its zone (DXa): the Frozen Censer, Plague Bell, Choir Acolyte, Repair Drone and Pixie
+// No room enemy hits feebly next to its zone (D308): the Frozen Censer, Plague Bell, Choir Acolyte, Repair Drone and Pixie
 // Swarm were raised. Measure: each enemy's damaging attacks (dmgMult > 0) as one hit each, at its own zone, in the
 // first playthrough and NG+1 (the NG+ zone factors, D275/D287, apply to the whole roster alike).
 import { describe, expect, it } from 'vitest';
@@ -30,7 +30,7 @@ function zoneRows(zone: number, cycle: number): Row[] {
     });
 }
 
-describe('no feeble room enemies (DXa)', () => {
+describe('no feeble room enemies (D308)', () => {
   for (const cycle of [0, 1]) {
     for (let zone = 1; zone <= 8; zone++) {
       it(`zone ${zone}, ${cycle ? 'NG+1' : 'first playthrough'}`, () => {

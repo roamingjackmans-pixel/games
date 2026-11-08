@@ -273,12 +273,12 @@ weapons, staffs and talismans; armor gems in armour and shields (D227). Each per
 - **Drop level** rises evenly from 1 (zone 1) to 50 (the start of NG+3), up to 4 below that target.
 - **Elemental families** (Ember, Rime, Storm, Dawn, Dusk) **add** their share of the hit as their own type on top of
   the physical (D283), at a baseline 20% above Brutal's (D292), with 22 status buildup × the roll.
-- **Drops** (D281): 1.3% per enemy, 7.8% per chest, 65% per boss. The bonfire shop and Gary also sell gems (3× their
-  sale price).
+- **Drops** (D281): 1.3% per enemy, 7.8% per chest, 65% per boss. The bonfire shop and Gary also sell gems (6× their
+  sale price, D309).
 - **Fusing**: the original gem (2+ perks) keeps the chosen perks and takes the rest from a loose donor gem of the same
   kind, which is used up. It must keep at least one of its **original** perks, and after the fuse only the original
-  perks it kept count as original: a,b,c + d,e,f keeping a,d,f must keep a in every later fuse (D286). Cost: the sale
-  price of the best perk kept, at least 40 Glowen.
+  perks it kept count as original: a,b,c + d,e,f keeping a,d,f must keep a in every later fuse (D286). Cost: twice the sale
+  price of the best perk kept, at least 80 Glowen (D309).
 - **Gem bench**: picking an empty socket lists only the gems that fit it (D280); **Sell all gems** sells every loose
   gem that is not locked (D282). Unsocketing is free, anywhere (D168).
 - **Sale price**: per perk 80 × level strength × (1 + roll), at least 5.
@@ -302,6 +302,9 @@ weapons, staffs and talismans; armor gems in armour and shields (D227). Each per
 | **Gilt** | armor | 11 | +11% Glowen found | `#d4af37` |
 
 ## 11. Consumables (quick use, up to 10 of each)
+
+Prices below are listed prices; the bonfire shop charges **twice** that (D309), Gary 4.5× for his bundles of 3, and
+selling one pays half the listed price.
 
 | Item | Price | Effect |
 |---|---|---|
@@ -340,7 +343,7 @@ charge except resting at a bonfire or dying (D150, D38).**
   others 1.5, Elite 4).
 - **Consumables**: 8% of chests give a bundle of 3–6 of one kind; fodder 3% a single knife or bomb.
 - **Sell values**: gear Common 10, Uncommon 25, Rare 60, Epic 150, Legendary 400, × (1 + 0.3 (ilvl − 1)); gems as §10;
-  consumables half price. Sell all returns socketed gems to your pouch; selling one item on its own sells its gems with
+  consumables half their listed price (buying costs twice it, D309). Sell all returns socketed gems to your pouch; selling one item on its own sells its gems with
   it and asks first (D240).
 
 ## 13. Proficiency (D178, D215, D218)
@@ -379,8 +382,8 @@ that class is out.
 | Great Shields | Block stamina 1.2% | Elemental block 0.4% |
 
 **Raising a rarity**: a full item bar (Common 120, Uncommon 240, Rare 400, Epic 640 experience) lets you pay Glowen at
-a bonfire to raise the item one rarity (Common → Uncommon 150, → Rare 400, → Epic 1,000, → Legendary 2,500, × (1 + 0.2
-per ilvl above 1)).
+a bonfire to raise the item one rarity (Common → Uncommon 300, → Rare 800, → Epic 2,000, → Legendary 5,000, × (1 + 0.2
+per ilvl above 1); D309 doubled them).
 
 ## 14. Soul Essence and reinforcement (D198)
 
@@ -397,23 +400,23 @@ Enemies carry less HP to match the weapon change (D303).
 | 4 | **Superintendent’s Blaze** | Kept the whole building running for years. The Landlord sent three staff to collect it. None came back. |
 | 5 | **Freeholder’s Soul** | Owned outright. No lease, no rent, no Landlord. It does not glow; everything near it does. |
 
-| Step | Essence | Glowen | Strength after (weapon, staff, talisman / armour, shield) |
+| Step | Essence | Glowen (D309: ×4) | Strength after (weapon, staff, talisman / armour, shield) |
 |---|---|---|---|
-| +0 → +1 | 1 × Tier 1 | 100 | ×1.15 / ×1.2 |
-| +1 → +2 | 2 × Tier 1 | 145 | ×1.3 / ×1.4 |
-| +2 → +3 | 3 × Tier 1 | 210 | ×1.45 / ×1.6 |
-| +3 → +4 | 1 × Tier 2 | 305 | ×1.6 / ×1.8 |
-| +4 → +5 | 2 × Tier 2 | 442 | ×1.75 / ×2 |
-| +5 → +6 | 3 × Tier 2 | 641 | ×1.9 / ×2.2 |
-| +6 → +7 | 1 × Tier 3 | 929 | ×2.05 / ×2.4 |
-| +7 → +8 | 2 × Tier 3 | 1348 | ×2.2 / ×2.6 |
-| +8 → +9 | 3 × Tier 3 | 1954 | ×2.35 / ×2.8 |
-| +9 → +10 | 1 × Tier 4 | 2833 | ×2.5 / ×3 |
-| +10 → +11 | 2 × Tier 4 | 4108 | ×2.65 / ×3.2 |
-| +11 → +12 | 3 × Tier 4 | 5957 | ×2.8 / ×3.4 |
-| +12 → +13 | 1 × Tier 5 | 8638 | ×2.95 / ×3.6 |
-| +13 → +14 | 2 × Tier 5 | 12525 | ×3.1 / ×3.8 |
-| +14 → +15 | 3 × Tier 5 | 18162 | ×3.25 / ×4 |
+| +0 → +1 | 1 × Tier 1 | 400 | ×1.15 / ×1.2 |
+| +1 → +2 | 2 × Tier 1 | 580 | ×1.3 / ×1.4 |
+| +2 → +3 | 3 × Tier 1 | 841 | ×1.45 / ×1.6 |
+| +3 → +4 | 1 × Tier 2 | 1219 | ×1.6 / ×1.8 |
+| +4 → +5 | 2 × Tier 2 | 1768 | ×1.75 / ×2 |
+| +5 → +6 | 3 × Tier 2 | 2564 | ×1.9 / ×2.2 |
+| +6 → +7 | 1 × Tier 3 | 3718 | ×2.05 / ×2.4 |
+| +7 → +8 | 2 × Tier 3 | 5391 | ×2.2 / ×2.6 |
+| +8 → +9 | 3 × Tier 3 | 7816 | ×2.35 / ×2.8 |
+| +9 → +10 | 1 × Tier 4 | 11334 | ×2.5 / ×3 |
+| +10 → +11 | 2 × Tier 4 | 16434 | ×2.65 / ×3.2 |
+| +11 → +12 | 3 × Tier 4 | 23829 | ×2.8 / ×3.4 |
+| +12 → +13 | 1 × Tier 5 | 34552 | ×2.95 / ×3.6 |
+| +13 → +14 | 2 × Tier 5 | 50101 | ×3.1 / ×3.8 |
+| +14 → +15 | 3 × Tier 5 | 72646 | ×3.25 / ×4 |
 
 When short of a tier, a reinforcement breaks higher tiers 3:1 by itself. The Reinforce tab's **Break down Essence**
 panel also converts by hand: one Essence becomes three of the tier below, with **Convert 1** and **Convert all** for

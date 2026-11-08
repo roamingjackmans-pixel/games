@@ -235,7 +235,7 @@ export const RELIQUARY: Record<string, EnemyDef> = {
         pattern: { kind: 'projectile', speed: 360, r: 6, range: 900 },
         windupMs: 500,
         recoverMs: 400,
-        dmgMult: 0.95, // DXa: was 0.7
+        dmgMult: 0.95, // D308: was 0.7
         type: 'holy',
         cooldownS: 2,
         range: [60, 900],
@@ -250,7 +250,7 @@ export const RELIQUARY: Record<string, EnemyDef> = {
         control: { id: 'silence', durationS: 2 },
         windupMs: 1000,
         recoverMs: 900,
-        dmgMult: 0.8, // DXa: was 0.5
+        dmgMult: 0.8, // D308: was 0.5
         type: 'holy',
         cooldownS: 12,
         range: [0, 800],
@@ -491,7 +491,7 @@ export const RELIQUARY: Record<string, EnemyDef> = {
     moveStyle: 'stationary',
     preferredRange: 0,
     attacks: [
-      // DXa: the puff was ×0.6, the Thurible ×1.2 and the Grasp every 9 s: it barely touched anyone
+      // D308: the puff was ×0.6, the Thurible ×1.2 and the Grasp every 9 s: it barely touched anyone
       { id: 'incense_puff', name: 'Incense Puff', kind: 'normal', pattern: { kind: 'ring', rIn: 0, rOut: 100, anchor: 'self' }, status: { id: 'chill', buildup: 20 }, windupMs: 600, recoverMs: 500, dmgMult: 1.1, type: 'magic', cooldownS: 3, range: [0, 100], weight: 3, parryable: false },
       {
         // swings round on its chain: one full turn
@@ -502,7 +502,7 @@ export const RELIQUARY: Record<string, EnemyDef> = {
         status: { id: 'chill', buildup: 40 },
         windupMs: 1000,
         recoverMs: 900,
-        dmgMult: 1.6, // DXa: was 1.2
+        dmgMult: 1.6, // D308: was 1.2
         type: 'magic',
         cooldownS: 12,
         range: [0, 230],
@@ -521,7 +521,7 @@ export const RELIQUARY: Record<string, EnemyDef> = {
         recoverMs: 900,
         dmgMult: 1.5,
         type: 'magic',
-        cooldownS: 7, // DXa: was 9
+        cooldownS: 7, // D308: was 9
         range: [0, 1400],
         weight: 2,
       },

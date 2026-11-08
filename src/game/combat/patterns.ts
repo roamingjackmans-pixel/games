@@ -365,7 +365,8 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
           let a = c.facing;
           if (p.anchor === 'target' || p.anchor === 'targetPast(1.0)') a = c.facing;
           if (p.randomAngles) a = c.rng.range(-Math.PI, Math.PI);
-          else if (n > 1 && p.spokes) a = c.facing + (i * Math.PI * 2) / n;
+          // spokes turned by angleOffsetDeg as a whole (D309: a second cross set 45° off the first)
+          else if (n > 1 && p.spokes) a = c.facing + (p.angleOffsetDeg ?? 0) * DEG + (i * Math.PI * 2) / n;
           else if (n > 1) a = c.facing + (i - (n - 1) / 2) * ((p.angleOffsetDeg ?? 90) * DEG);
           else if (p.angleOffsetDeg) a += p.angleOffsetDeg * DEG;
           if (p.toAim) {

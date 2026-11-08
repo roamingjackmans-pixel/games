@@ -586,6 +586,8 @@ export interface BossDef extends Omit<EnemyDef, 'attacks' | 'role'> {
   firstCycleHpMult?: number;
   /** its second phase needs its own arena (grates, a split body, the void platform): never a New Game+ bonus fight (D278) */
   arenaBound?: boolean;
+  /** attacks only its New Game+ third phase ("Overtime", D295) brings, on top of its last phase's (D309) */
+  overtimeAttacks?: AttackDef[];
   music: { root: number; tempo: number; bright: number };
 }
 

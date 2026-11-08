@@ -587,7 +587,11 @@ Zone damage factors (§2.3) apply to bosses too. Full sheets in CONTENT_ENEMIES 
 - **A third phase for zones 1–7** (D295): the first phase change moves halfway up to full HP and a new change sits
   halfway from there to 0 — 50% → **75% and 37.5%**; Aurelia 87.5% / 43.75%; Tock 70% / 35%; Ignatius keeps his split
   and refill, and his third phase starts at 50% of the refilled bar. The third phase, "<last phase>: Overtime", is the
-  last phase again with speed and damage ×1.15 and cooldowns ×0.8; its arena changes are already in place. Derived from
+  last phase again with speed and damage ×1.15 and cooldowns ×0.8, **plus at least two attacks only Overtime has**
+  (D309, `BossDef.overtimeAttacks`): Caretaker Coffin Rows / Gravedigger's Fury; Mother Spore Mycelium Web / Cap Burst;
+  Bloatking Tidal Decree / Undertow; Vexthorn Bramble Cage / Wild Hunt; Ignatius Slag Rain / Anvil Drop; Aurelia
+  Glacial Cross / Saint's Wrath / Shatterstorm; Tock Chrono Lattice / Pendulum (CONTENT_ENEMIES §11). Its arena changes
+  are already in place. Derived from
   the boss's data at spawn (`ngBossDef`).
 - **The Caretaker's Last Rites** (D277): from NG+1, a room-wide **Red** blast (2.2 s telegraph, 22 s cooldown, about
   600 a hit at NG+1, growing each cycle) in every phase. Dodge it.
@@ -712,7 +716,7 @@ talisman or shield in the off hand when not two-handing): fodder and swarms 1, o
 30.
 
 - **Item bars**: weapons, casting tools and shields fill a bar (Common 120, Uncommon 240, Rare 400, Epic 640). With a
-  full bar, the bonfire's **Weapons** tab raises the item a rarity for Glowen (150 / 400 / 1,000 / 2,500 × (1 + 0.2 per
+  full bar, the bonfire's **Weapons** tab raises the item a rarity for Glowen (2 × (150 / 400 / 1,000 / 2,500) (D309) × (1 + 0.2 per
   item level above 1)); it keeps everything and its power moves to the new tier. Epic → Legendary rolls a legendary
   power and name.
 - **Proficiency**: the same experience trains the item's class (each weapon base, Staffs, Talismans, and Small /
@@ -730,7 +734,7 @@ small chests 12.5%, mimics 25%, treasure chests 0.75 on average, bosses 1.5 on a
 **Reinforce** (bonfire tab): weapons, shields, armor, staffs and talismans go **+0 … +15**. Each step gives weapons,
 staffs and talismans **+15%** damage / spell power (×3.25 at +15, D303), and armor and shields **+20%** (×4 at +15:
 armor defense, and a shield's leak and block stamina shrink). Step `k` costs
-1, 2, then 3 Essence of tier ⌊k / 3⌋ + 1 (six a tier) plus **100 × 1.45^k Glowen**. A higher tier pays for a lower
+1, 2, then 3 Essence of tier ⌊k / 3⌋ + 1 (six a tier) plus **400 × 1.45^k Glowen** (D309: 4× what it was). A higher tier pays for a lower
 one 3:1 automatically; the tab's **Break down Essence** panel turns one of tier 2–5 into three of the tier below
 (Convert 1 / Convert all). Reinforce shows before → after and asks first (D216, D220).
 
@@ -771,10 +775,10 @@ Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost �
 - **Fusing**: a gem with 2+ perks can fuse with a loose gem of the same kind; you choose which perks the original
   keeps (as many as it had, no family twice, at least one from the other gem). A gem remembers its **original
   perks** (`Gem.origin`), and **every fuse must keep at least one of them**; afterwards only the original perks that
-  were kept stay original (D286). Levels and rolls travel with their perks. Cost: the sale price of the best perk kept
-  (at least 40). The other gem is destroyed.
+  were kept stay original (D286). Levels and rolls travel with their perks. Cost: twice the sale price of the best perk kept
+  (at least 80; D309). The other gem is destroyed.
 - **Selling**: a perk sells for 80 × its level mult × (1 + roll) (at least 5); a gem for the sum of its perks; the
-  shop gem costs 3× its sale price. A gem can be **locked**; **Sell all gems** sells every loose, unlocked gem
+  shop gem costs 6× its sale price (3× before D309's doubling). A gem can be **locked**; **Sell all gems** sells every loose, unlocked gem
   (D282). There is no re-rolling and no upgrading.
 
 ### 8.10 Selling, locking and item cards
@@ -804,6 +808,11 @@ respawn point. A used fire burns down to embers on the map as a record of where 
 **Shop**: sell gear and gems (one by one, Sell all, all Commons, all below Rare); buy consumables, the zone's one-perk
 gem and **one rotating gear piece** at the zone's item level (Rare or better in NG+), re-rolled on each rest and shown
 with full stats against what you wear.
+
+**Prices** (D309): everything bought with Glowen costs **twice** its listed price (`GLOWEN_PRICE_MULT`): consumables,
+the shop gem (6× its sale value) and gear piece (8× its sale value, at least 200), all of Gary's stock (gear 10× its
+sale value, at least 800; rings 900 × zone; a Tear 4,000 × zone), rarity raises and gem fusing. Reinforcing costs
+**four times** (§8.8). Selling is unchanged, so Glowen is worth keeping.
 
 ### 9.2 Joe's Thermos
 
@@ -851,7 +860,7 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - **Spell reliquary**: holds one spell the character does not know (either school), 5% a Tear of Undoing instead.
   Never a mimic.
 - **Gary**, the wandering merchant (20% a zone from zone 2, D70): 3–5 entries rolled once per zone and cycle — gear at
-  item level + 1 from Epic/Legendary weights (half of NG+ gear is Legendary), gems at 3× their sale price with
+  item level + 1 from Epic/Legendary weights (half of NG+ gear is Legendary), gems at 6× their sale price with
   better rolls, consumable bundles, a Lucky Charm ring, and a Tear of Undoing 20% (30% in NG+). A detail pane shows
   full stats against your gear. Hit him three times and he leaves for the playthrough. Only the host trades in co-op.
 - **Bestiary** (D229, D236): a bonfire tab with one collapsible chapter per zone (88 entries). Kills credit every

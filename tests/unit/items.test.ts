@@ -179,7 +179,7 @@ describe('inventory, gems, Glowen, levels', () => {
     expect(c.gems.length).toBe(2);
     expect(c.gems[0]).toBe(orig);
     expect(c.glowen).toBe(10000 - gemFuseCost(orig.perks));
-    expect(gemFuseCost(orig.perks)).toBe(Math.round(80 * 1.45));
+    expect(gemFuseCost(orig.perks)).toBe(2 * Math.round(80 * 1.45)); // D309: buying costs twice
     // a one-perk gem cannot be the original
     expect(fusePreview(c.gems[1]!, orig, [{ from: 'donor', idx: 0 }])).toHaveProperty('error');
   });
@@ -237,7 +237,7 @@ describe('inventory, gems, Glowen, levels', () => {
     expect(c.freePoints).toBe(1);
     expect(levelUp(c, 'bonk').ok).toBe(true);
     expect(c.level).toBe(2);
-    c.glowen = 15;
+    c.glowen = 30; // D309: the knife's 15 doubled
     expect(buyConsumable(c, 'throwing_knife').ok).toBe(true);
     expect(c.consumables.throwing_knife).toBe(4);
   });

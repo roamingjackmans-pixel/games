@@ -32,7 +32,9 @@ describe('New Game+ boss phases (D295)', () => {
     const ng = ngBossDef(b, 1);
     expect(ng.phases.map((p) => p.untilHpPct)).toEqual([75, 37.5, 0]);
     const [, last, ot] = ng.phases;
-    expect(ot!.attacks).toEqual(last!.attacks);
+    // the last phase's attacks, then its own Overtime attacks (D309)
+    expect(ot!.attacks.slice(0, last!.attacks.length)).toEqual(last!.attacks);
+    expect(ot!.attacks.slice(last!.attacks.length)).toEqual(b.overtimeAttacks);
     expect(ot!.speedMult).toBeCloseTo(last!.speedMult * NG_PHASE3_SPEED, 6);
     expect(ot!.dmgMult).toBeCloseTo(last!.dmgMult * NG_PHASE3_DMG, 6);
     expect(ot!.cooldownMult).toBeCloseTo(NG_PHASE3_COOLDOWN, 6);

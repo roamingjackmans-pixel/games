@@ -1,9 +1,10 @@
 // New Game+ boss phases (D295): from the second playthrough on, every zone 1–7 boss gets a third phase. Its first
 // phase change moves halfway up to full HP (50% → 75%) and the new change sits halfway from there to 0 (37.5%).
-// The new phase is an "Overtime" of the boss's last phase: its attacks, faster, harder, shorter cooldowns.
+// The new phase is an "Overtime" of the boss's last phase: its attacks plus the boss's own Overtime attacks (D309),
+// faster, harder, shorter cooldowns.
 // The list is derived from the boss's own data when it spawns, so the host, guests, the boss bar and the AI all
 // read the same phases from the spawned boss's def.
-import type { BossDef, BossPhase } from '../types';
+import type { AttackDef, BossDef, BossPhase } from '../types';
 
 /** The highest zone whose boss gets the New Game+ third phase. */
 export const NG_PHASE3_MAX_ZONE = 7;
@@ -14,7 +15,7 @@ export const NG_PHASE3_COOLDOWN = 0.8;
 const cache = new WeakMap<BossDef, BossDef>();
 
 /** The Overtime phase: the last phase again, harder; its arena changes are already in place, so none are re-applied. */
-function overtime(last: BossPhase, bossName: string): BossPhase {
+function overtime(last: BossPhase, bossName: string, extra: readonly AttackDef[]): BossPhase {
   const {
     arena: _arena,
     refillHp: _refill,
@@ -29,6 +30,8 @@ function overtime(last: BossPhase, bossName: string): BossPhase {
     ...rest,
     untilHpPct: 0,
     name: `${last.name ?? bossName}: Overtime`,
+    // the last phase's attacks and at least two of its own (D309)
+    attacks: [...last.attacks, ...extra.filter((a) => !last.attacks.some((b) => b.id === a.id))],
     speedMult: last.speedMult * NG_PHASE3_SPEED,
     dmgMult: last.dmgMult * NG_PHASE3_DMG,
     cooldownMult: (last.cooldownMult ?? 1) * NG_PHASE3_COOLDOWN,
@@ -55,7 +58,7 @@ export function ngBossDef(def: BossDef, cycle: number): BossDef {
   // the new change: halfway from the change before it to 0, or halfway down a refilled bar
   const at = last.refillHp || before <= 0 ? 50 : before / 2;
   ph[n - 1] = { ...last, untilHpPct: at };
-  ph.push(overtime(last, def.name));
+  ph.push(overtime(last, def.name, def.overtimeAttacks ?? []));
   const out: BossDef = { ...def, phases: ph };
   cache.set(def, out);
   return out;

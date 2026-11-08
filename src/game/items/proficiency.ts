@@ -9,6 +9,7 @@ import { RARITIES, type Character, type Item, type Rarity } from '../types';
 import { findItem } from './inventory';
 import { itemName, powerSlotOf } from './generate';
 import { powersFor } from '../../data/legendaries';
+import { buyPrice } from '../combat/formulas';
 
 /** The proficiency class of an item: its weapon base, 'staff' / 'talisman', or its shield size (null: armor, a ring…). */
 export function profClassOf(item: Item | null | undefined): string | null {
@@ -113,7 +114,7 @@ export function upgradeInfo(item: Item): { to: Rarity; cost: number; xp: number;
   const to = nextRarity(item.rarity);
   const need = itemXpCap(item);
   if (!to || need <= 0) return null;
-  const cost = Math.round((RARITY_UPGRADE_COST[item.rarity] ?? 0) * (1 + 0.2 * (item.ilvl - 1)));
+  const cost = buyPrice((RARITY_UPGRADE_COST[item.rarity] ?? 0) * (1 + 0.2 * (item.ilvl - 1)));
   const xp = item.xp ?? 0;
   return { to, cost, xp, need, ready: xp >= need };
 }

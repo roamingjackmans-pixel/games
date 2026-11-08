@@ -6,6 +6,7 @@ import { ZONES } from './zones';
 import { checkEscapable } from '../game/combat/patterns';
 import { CONTROL_IDS, STATUS_IDS, type AttackDef, type BossDef, type EffectDef, type EnemyDef, type PatternDef } from '../game/types';
 import { hasKind } from '../game/procgen/mix';
+import { ngBossDef } from '../game/boss/ngPhases';
 
 /** Enemy types in every zone roster (CONTENT_ENEMIES: 10 per zone, 80 in all). */
 export const ROSTER_SIZE = 10;
@@ -134,6 +135,9 @@ export function validateData(o: ValidateOpts = {}): ValidationIssue[] {
     }
     if (b.zone !== z.id) issues.push({ where: `zone ${z.id}`, msg: `${b.id} says zone ${b.zone}` });
     validateBoss(b, issues);
+    // its New Game+ phase list (D295) is held to the same rules: Overtime brings at least two new attacks (D309)
+    const ng = ngBossDef(b, 1);
+    if (ng !== b) validateBoss({ ...ng, id: `${b.id} (NG+)` }, issues);
   }
   return issues;
 }

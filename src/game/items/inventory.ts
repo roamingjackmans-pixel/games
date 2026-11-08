@@ -2,7 +2,7 @@
 // the co-op host runs the same functions to check guests' commands (NETCODE §6).
 import { GEMS, gemKind, gemKindLabel, gemOrigin, gemTitle } from '../../data/gems';
 import { CONSUMABLES, MAX_CONSUMABLE } from '../../data/consumables';
-import { gearSellValue, gemFuseCost, gemSellTotal, levelCost } from '../combat/formulas';
+import { buyPrice, gearSellValue, gemFuseCost, gemSellTotal, levelCost } from '../combat/formulas';
 import { canRaise, levelFromStats, respecStats } from '../player/character';
 import type { Character, ConsumableId, Gem, GemFamily, GemPerk, Item, Rarity, StatId } from '../types';
 import { newId } from './make';
@@ -360,8 +360,9 @@ export function buyConsumable(c: Character, id: ConsumableId): OpResult {
   const def = CONSUMABLES[id];
   if (def.price === null) return no('Not for sale.');
   if ((c.consumables[id] ?? 0) >= MAX_CONSUMABLE) return no(`You can carry ${MAX_CONSUMABLE}.`);
-  if (c.glowen < def.price) return no(`Needs ${def.price} Glowen.`);
-  c.glowen -= def.price;
+  const price = buyPrice(def.price);
+  if (c.glowen < price) return no(`Needs ${price} Glowen.`);
+  c.glowen -= price;
   c.consumables[id] = (c.consumables[id] ?? 0) + 1;
   if (!c.quickSlot) c.quickSlot = id;
   return ok(`Bought a ${def.name}.`);

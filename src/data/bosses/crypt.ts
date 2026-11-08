@@ -134,6 +134,42 @@ const lastRites = (mult: number): AttackDef => ({
   condition: 'cycleAtLeast(1)',
 });
 
+// ---------------------------------------------------------------- New Game+ Overtime only (D309)
+
+/** Coffin lids slam down the hall in two sets of five columns, a second apart (D261): stand in a B column while A falls. */
+const coffinRows: AttackDef = {
+  id: 'caretaker_coffin_rows',
+  name: 'Coffin Rows',
+  kind: 'pierce',
+  pattern: { kind: 'lanes', n: 5, w: 64, orientation: 'vertical', alternate: true, setGapS: 1.0 },
+  windupMs: 1200,
+  recoverMs: 900,
+  dmgMult: 1.3,
+  type: 'physical',
+  cooldownS: 11,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
+/** Three shovel arcs in a row, the last the heaviest: Red, so no parry; roll through or back off. */
+const gravediggersFury: AttackDef = {
+  id: 'caretaker_gravediggers_fury',
+  name: "Gravedigger's Fury",
+  kind: 'red',
+  pattern: { kind: 'melee', shape: 'arc', angleDeg: 140, r: 170 },
+  comboMults: [1.0, 1.2, 1.6],
+  comboGapMs: 380,
+  windupMs: 700,
+  recoverMs: 1100,
+  dmgMult: 1.0,
+  type: 'physical',
+  cooldownS: 8,
+  range: [0, 170],
+  weight: 4,
+  hyperArmor: true,
+};
+
 export const THE_CARETAKER: BossDef = {
   id: 'the_caretaker',
   zone: 1,
@@ -158,6 +194,8 @@ export const THE_CARETAKER: BossDef = {
       attacks: [shovelSwing, lanternToss(3), graveCall(3, 5), overheadSlam, dirtSweep, graveQuake, handsOfTheDead, lastRites(2.1)],
     },
   ],
+  // New Game+ third phase only (D309)
+  overtimeAttacks: [coffinRows, gravediggersFury],
   arenaId: 'crypt_arena',
   introTitle: 'THE CARETAKER',
   introSub: 'Fixes nothing. Buries everything. Keeps your deposit.',

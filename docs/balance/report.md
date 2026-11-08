@@ -15,7 +15,6 @@ Written by `npm run balance:report` (tests/sim/report.sim.ts) from the live data
 9. **Enemy curve** (severity 3.1): NG+1: zone 7 room enemies have 2,329 HP on average, below zone 6's 2,585. *Suggested:* Check the zone roster mix and the HP curve.
 10. **Enemy curve** (severity 3): NG+2: zone 2 room enemies have 4,141 HP on average, below zone 1's 4,575. *Suggested:* Check the zone roster mix and the HP curve.
 11. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
-12. **Boss curve** (severity 2.9): NG+2: Mother Spore (zone 2) averages 999 a hit, below zone 1's boss (1,116). *Suggested:* Raise its phase damage multipliers.
 
 (2 more findings of the same kinds are in the tables below.)
 
@@ -90,13 +89,13 @@ Average hit by role (HP in brackets):
 
 | Zone | Boss | Phases | HP per phase | Total HP | Avg hit per phase | Biggest hit | Flags |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | The Caretaker | 3 | 28,714 / 43,071 / 43,071 | 114,856 | 351 / 367 / 422 | 689 |  |
-| 2 | Mother Spore | 3 | 36,306 / 54,459 / 54,459 | 145,225 | 236 / 358 / 412 | 697 |  |
-| 3 | The Bloatking | 3 | 44,958 / 67,437 / 67,437 | 179,832 | 289 / 372 / 428 | 590 |  |
-| 4 | Vexthorn, the Hollow Stag | 3 | 50,149 / 75,223 / 75,223 | 200,595 | 353 / 495 / 569 | 821 |  |
-| 5 | Foreman Ignatius | 3 | 84,327 / 70,273 / 70,273 | 224,873 | 404 / 585 / 673 | 1,189 |  |
-| 6 | Saint Aurelia the Unthawed | 3 | 30,945 / 108,307 / 108,307 | 247,558 | 395 / 600 / 690 | 1,110 |  |
-| 7 | Archmagister Tock | 3 | 79,895 / 93,210 / 93,210 | 266,316 | 593 / 898 / 1,032 | 1,354 |  |
+| 1 | The Caretaker | 3 | 28,714 / 43,071 / 43,071 | 114,856 | 351 / 367 / 412 | 689 |  |
+| 2 | Mother Spore | 3 | 36,306 / 54,459 / 54,459 | 145,225 | 236 / 358 / 440 | 697 |  |
+| 3 | The Bloatking | 3 | 44,958 / 67,437 / 67,437 | 179,832 | 289 / 372 / 453 | 590 |  |
+| 4 | Vexthorn, the Hollow Stag | 3 | 50,149 / 75,223 / 75,223 | 200,595 | 353 / 495 / 589 | 821 |  |
+| 5 | Foreman Ignatius | 3 | 84,327 / 70,273 / 70,273 | 224,873 | 404 / 585 / 682 | 1,189 |  |
+| 6 | Saint Aurelia the Unthawed | 3 | 30,945 / 108,307 / 108,307 | 247,558 | 395 / 600 / 656 | 1,110 |  |
+| 7 | Archmagister Tock | 3 | 79,895 / 93,210 / 93,210 | 266,316 | 593 / 898 / 1,064 | 1,354 |  |
 | 8 | The Landlord | 4 | 109,742 / 106,515 / 106,514 / 127,818 | 450,589 | 702 / 893 / 1,317 / 1,116 | 1,991 |  |
 
 ### NG+2
@@ -128,13 +127,13 @@ Average hit by role (HP in brackets):
 
 | Zone | Boss | Phases | HP per phase | Total HP | Avg hit per phase | Biggest hit | Flags |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | The Caretaker | 3 | 129,291 / 193,937 / 193,937 | 517,164 | 1,024 / 1,068 / 1,228 | 2,007 |  |
-| 2 | Mother Spore | 3 | 146,260 / 219,391 / 219,391 | 585,042 | 678 / 1,029 / 1,183 | 1,999 | ⚠ hits softer than zone 1's boss |
-| 3 | The Bloatking | 3 | 165,519 / 248,279 / 248,279 | 662,077 | 820 / 1,057 / 1,215 | 1,676 |  |
-| 4 | Vexthorn, the Hollow Stag | 3 | 175,758 / 263,637 / 263,637 | 703,031 | 979 / 1,372 / 1,577 | 2,276 |  |
-| 5 | Foreman Ignatius | 3 | 278,310 / 231,926 / 231,926 | 742,163 | 1,113 / 1,612 / 1,854 | 3,278 |  |
-| 6 | Saint Aurelia the Unthawed | 3 | 97,813 / 342,344 / 342,344 | 782,501 | 1,064 / 1,616 / 1,858 | 2,991 |  |
-| 7 | Archmagister Tock | 3 | 247,462 / 288,706 / 288,706 | 824,875 | 1,583 / 2,397 / 2,756 | 3,614 |  |
+| 1 | The Caretaker | 3 | 129,291 / 193,937 / 193,937 | 517,164 | 1,024 / 1,068 / 1,200 | 2,007 |  |
+| 2 | Mother Spore | 3 | 146,260 / 219,391 / 219,391 | 585,042 | 678 / 1,029 / 1,262 | 1,999 |  |
+| 3 | The Bloatking | 3 | 165,519 / 248,279 / 248,279 | 662,077 | 820 / 1,057 / 1,287 | 1,676 |  |
+| 4 | Vexthorn, the Hollow Stag | 3 | 175,758 / 263,637 / 263,637 | 703,031 | 979 / 1,372 / 1,632 | 2,276 |  |
+| 5 | Foreman Ignatius | 3 | 278,310 / 231,926 / 231,926 | 742,163 | 1,113 / 1,612 / 1,879 | 3,278 |  |
+| 6 | Saint Aurelia the Unthawed | 3 | 97,813 / 342,344 / 342,344 | 782,501 | 1,064 / 1,616 / 1,767 | 2,991 |  |
+| 7 | Archmagister Tock | 3 | 247,462 / 288,706 / 288,706 | 824,875 | 1,583 / 2,397 / 2,840 | 3,614 |  |
 | 8 | The Landlord | 4 | 291,989 / 283,401 / 283,400 / 340,081 | 1,198,870 | 1,843 / 2,345 / 3,458 / 2,931 | 5,227 |  |
 
 ## 2. Time to kill and hits to die
@@ -324,7 +323,7 @@ Reinforcement: each +1 is +20% (×4 at +15), against rarity steps of ×1.06–×
 
 | + | +1 | +2 | +3 | +4 | +5 | +6 | +7 | +8 | +9 | +10 | +11 | +12 | +13 | +14 | +15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Glowen | 100 | 145 | 210 | 305 | 442 | 641 | 929 | 1,348 | 1,954 | 2,833 | 4,108 | 5,957 | 8,638 | 12,525 | 18,162 |
+| Glowen | 400 | 580 | 841 | 1,219 | 1,768 | 2,564 | 3,718 | 5,391 | 7,816 | 11,334 | 16,434 | 23,829 | 34,552 | 50,101 | 72,646 |
 | Power | ×1.15 | ×1.3 | ×1.45 | ×1.6 | ×1.75 | ×1.9 | ×2.05 | ×2.2 | ×2.35 | ×2.5 | ×2.65 | ×2.8 | ×2.95 | ×3.1 | ×3.25 |
 
 ## 6. Growth: player against the world

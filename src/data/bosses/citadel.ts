@@ -131,6 +131,42 @@ const overclock = overclockDash(1, 4, 800);
 /** The corner turrets rise right after the name card and stay for the whole fight. */
 const turrets: SummonDef = { enemyId: 'clock_turret', count: 4, max: 4, everyS: 1, at: 'corners' };
 
+// ---------------------------------------------------------------- New Game+ Overtime only (D309)
+
+/** The floor's clock face lights up in two checkerboard sets, 0.9 s apart (D261). */
+const chronoLattice: AttackDef = {
+  id: 'tock_chrono_lattice',
+  name: 'Chrono Lattice',
+  kind: 'pierce',
+  pattern: { kind: 'grid', spacing: 160, r: 60, checkerboard: true, sets: 2, setGapS: 0.9 },
+  windupMs: 1100,
+  recoverMs: 900,
+  dmgMult: 1.2,
+  type: 'void',
+  cooldownS: 11,
+  range: [0, 1400],
+  weight: 3,
+  area: true,
+};
+
+/** A pendulum swings a half circle round him: Red, so roll through the blade or stay out of its reach. */
+const pendulum: AttackDef = {
+  id: 'tock_pendulum',
+  name: 'Pendulum',
+  kind: 'red',
+  pattern: { kind: 'sweep', angleDeg: 180, r: 420, durationS: 1.2, anchor: 'self' },
+  windupMs: 900,
+  activeMs: 1200,
+  recoverMs: 800,
+  dmgMult: 1.5,
+  type: 'physical',
+  cooldownS: 9,
+  range: [0, 420],
+  weight: 3,
+  area: true,
+  hyperArmor: true,
+};
+
 export const ARCHMAGISTER_TOCK: BossDef = {
   id: 'archmagister_tock',
   zone: 7,
@@ -158,6 +194,8 @@ export const ARCHMAGISTER_TOCK: BossDef = {
       attacks: [arcaneVolley, laserSweep(2), timeBubble(10), gearDash, tinReinforcements, rewindVolley, overclock],
     },
   ],
+  // New Game+ third phase only (D309)
+  overtimeAttacks: [chronoLattice, pendulum],
   arenaId: 'citadel_arena',
   introTitle: 'ARCHMAGISTER TOCK',
   introSub: 'Your appointment was at the start of time. You are late. He is billing you.',
