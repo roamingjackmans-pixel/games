@@ -342,7 +342,7 @@ export const FOREST: Record<string, EnemyDef> = {
         onHitEffects: [{ op: 'dash', distance: 150, durationS: 0.25, toward: 'away', iframes: 'none' }],
         windupMs: 220,
         recoverMs: 300,
-        dmgMult: 0.7,
+        dmgMult: 1.1, // DXa: was 0.7
         type: 'physical',
         cooldownS: 0.6,
         range: [0, 34],
@@ -357,7 +357,7 @@ export const FOREST: Record<string, EnemyDef> = {
         control: { id: 'blind', durationS: 1.5 },
         windupMs: 800,
         recoverMs: 600,
-        dmgMult: 0.3,
+        dmgMult: 0.6, // DXa: was 0.3
         type: 'holy',
         cooldownS: 9,
         range: [20, 170],

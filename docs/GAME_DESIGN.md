@@ -125,6 +125,7 @@ So NG+ zone 1 starts 5% above the first zone 8 and climbs to 35% above it by zon
 ```
 enemyHP     = role HP × enemy's own mult × curve(z, min(c,1), 0.55) × NG1_HP × ngGrowth(c) × co-op HP (D159)
               × reinforcement factor (D303: (1 + 0.15p) / (1 + 0.2p), p = the reinforcement expected by that zone)
+              × NG+ level growth (D307, below)                    (enemy damage × its damage column too)
 enemyDamage = role hit × enemy's own mult × curve(z, min(c,1), 0.35) × NG1_DMG × ngGrowth(c)
               × zone damage factor × NG+ zone factor (room enemies only)
 enemyShards = role Shards × 5 × zone Shard factor × curve(z, c, 1.1)          (per player, instanced)
@@ -146,13 +147,23 @@ minutes from NG+2 on.
 
 | Boss zone | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |---|---|---|---|---|---|---|---|---|
-| NG+1 × | 1.54 | 1.88 | 2.21 | 2.04 | 1.55 | 1.69 | 1.81 | 1.29 |
-| NG+2 on × | 2.7 | 2.98 | 3.27 | 2.89 | 2.11 | 2.22 | 2.32 | 1.39 |
+| NG+1 × | 1.56 | 1.91 | 2.29 | 2.13 | 1.64 | 1.8 | 1.91 | 1.35 |
+| NG+2 on × | 2.82 | 3.1 | 3.41 | 3.04 | 2.23 | 2.36 | 2.48 | 1.5 |
+
+**NG+ level growth** (D307): New Game+ levels now go much further (about level 300 by the end of NG+2), so every enemy
+and boss grows by 70% of what those levels give a player (`NG_LEVEL_COMP`, by zone; NG+3 on uses NG+2's column):
+
+| Zone | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| NG+1 HP × | 1.004 | 1.012 | 1.019 | 1.024 | 1.034 | 1.041 | 1.048 | 1.044 |
+| NG+1 damage × | 1 | 1.02 | 1.039 | 1.067 | 1.084 | 1.111 | 1.137 | 1.16 |
+| NG+2 on HP × | 1.041 | 1.039 | 1.037 | 1.035 | 1.033 | 1.033 | 1.029 | 1.029 |
+| NG+2 on damage × | 1.165 | 1.171 | 1.181 | 1.183 | 1.195 | 1.197 | 1.214 | 1.218 |
 
 **Zone damage factor** (every cycle, bosses too, D231): zone 4 ×1.1, zones 5–6 ×1.15, zone 7 ×1.35, the rest ×1.
 
-**NG+ room-enemy damage by zone** (cycle ≥ 1, not bosses or special NPCs, D287): zone 1 ×1, 2 ×2, 3 ×1.64, 4 ×1.61,
-5 ×1.5, 6 ×1.43, 7 ×1.36, 8 ×1.65, so the average room hit climbs from zone 2 to zone 8 (about 232 → 333 at NG+1).
+**NG+ room-enemy damage by zone** (cycle ≥ 1, not bosses or special NPCs, D287): zone 1 ×1, 2 ×2, 3 ×1.64, 4 ×1.59,
+5 ×1.5, 6 ×1.37, 7 ×1.34, 8 ×1.65 (refitted after D308), so the average room hit climbs from zone 2 to zone 8 (about 232 → 333 at NG+1).
 
 Individual bosses carry their own base HP and multipliers (§7.2). The Caretaker has 30% less HP in the first
 playthrough (D211).
@@ -227,9 +238,13 @@ counts Bonk ×1.5 toward requirements. Requirements are checked against your sta
 Enemies drop **Shards**; spend them at a bonfire's **Level up** tab. Cost from level `L` to `L + 1` (D39, D147):
 
 ```
-cost(L) = floor((60 × 1.045^L + 15 L) × early(L)),   early(L) = 1 + 0.6 × max(0, (21 − L) / 20)
-L=1: 124 · L=10: 323 · L=20: 458 · L=30: 674 · L=50: 1,291 · L=80: 3,229
+cost(L) = floor((60 × 1.045^L + 15 L) × early(L)),   early(L) = 1 + 0.6 × max(0, (21 − L) / 20)   for L < 80
+cost(L) = floor(2,750 + 1.5 × (L − 80))                                                for L ≥ 80 (D307)
+L=1: 124 · L=10: 323 · L=20: 458 · L=30: 674 · L=50: 1,291 · L=79: 3,127 · L=80: 2,750 · L=200: 2,930 · L=300: 3,080
 ```
+
+The first playthrough ends near level 80; past it a level costs nearly the same, so NG+1 reaches about 185 and the
+end of NG+2 about 300 (D307; it was about 136).
 
 The tab plans points with **+1 / −1** (free points first, then Shards), shows every affected number **now → after**,
 and spends only on **Confirm**; leaving with unconfirmed points asks Lock in / Discard / Keep editing (D142).
@@ -770,7 +785,7 @@ Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost �
 - Any item can be **locked** with the padlock in its slot corner or its shop row (Y / △ or L) (D265).
 - **Item cards** (D171, D267, D294): a weapon's damage is the **hit you would really deal** with it equipped — every
   perk counted (stats, proficiency, rarity, reinforcement, its affixes and gems, set perks gained or lost by the swap,
-  rings, the below-requirement penalty), per type, with a total and a light-combo damage per second, compared with
+  rings, the below-requirement penalty), per type, with a total (no damage per second, D305), compared with
   what you wear worked out the same way. Timed buffs are not counted. Weapon cards list only their **unlocked**
   skills; staff and talisman cards show their effective Spell Skill. Cards end with the item's special perks, set perk
   and sockets.

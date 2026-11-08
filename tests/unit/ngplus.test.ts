@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { reinforceHpFactor } from '../../src/data/essence';
+import { ngLevelComp } from '../../src/data/roles';
 import { GameSession, beginNextCycle } from '../../src/game/session';
 import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
@@ -44,7 +45,7 @@ describe('New Game+ (GAME_DESIGN §13)', () => {
     const e1 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 1, zone: 1 });
     const e8 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 0, zone: 8 });
     // D303: each zone loses the HP share its expected weapon reinforcement lost in damage
-    expect(e1.hp!.max / e8.hp!.max).toBeCloseTo((1.05 * 4.5 * reinforceHpFactor(1, 1)) / reinforceHpFactor(8, 0), 5);
+    expect(e1.hp!.max / e8.hp!.max).toBeCloseTo((1.05 * 4.5 * reinforceHpFactor(1, 1) * ngLevelComp('hp', 1, 1)) / reinforceHpFactor(8, 0), 5); // D307
     // D299: each cycle adds 8, so NG+1 zone 1 (9) beats the first playthrough's zone 8 (8)
     expect(itemLevelFor(1, 1)).toBe(9);
     expect(itemLevelFor(8, 0)).toBe(8);

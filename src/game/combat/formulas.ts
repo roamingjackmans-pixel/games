@@ -197,7 +197,16 @@ export function damageAfterDefense(incoming: number, def: number): number {
  */
 export const EARLY_LEVEL_SURCHARGE = 0.6;
 export const EARLY_LEVEL_END = 21;
+/**
+ * Past the first playthrough's last level (80) the cost nearly stops climbing (D307): LATE_LEVEL_BASE Shards plus
+ * LATE_LEVEL_STEP a level, so the Shards of New Game+ 1 and 2 reach about level 300 (it was about 136). The first
+ * playthrough's costs are unchanged.
+ */
+export const LATE_LEVEL_FROM = 80;
+export const LATE_LEVEL_BASE = 2750;
+export const LATE_LEVEL_STEP = 1.5;
 export function levelCost(level: number): number {
+  if (level >= LATE_LEVEL_FROM) return Math.floor(LATE_LEVEL_BASE + LATE_LEVEL_STEP * (level - LATE_LEVEL_FROM));
   const early = 1 + EARLY_LEVEL_SURCHARGE * Math.max(0, (EARLY_LEVEL_END - level) / (EARLY_LEVEL_END - 1));
   return Math.floor((60 * Math.pow(1.045, level) + 15 * level) * early);
 }

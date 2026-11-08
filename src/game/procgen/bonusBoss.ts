@@ -13,10 +13,13 @@ export const BONUS_BOSS_SHARD_MULT = 0.3;
 /** The phase it fights in (0-based: its second phase). */
 export const BONUS_BOSS_PHASE = 1;
 
-/** Bosses that can fight outside their arena: every boss with a second phase that is not `arenaBound`. */
-export function bonusBossPool(): BossDef[] {
+/**
+ * Bosses that can fight outside their arena: every boss with a second phase that is not `arenaBound`; with a zone,
+ * never that zone's own boss (D306: it waits at the end of the zone).
+ */
+export function bonusBossPool(zone?: number): BossDef[] {
   return Object.values(BOSSES)
-    .filter((b) => !b.arenaBound && b.phases.length > BONUS_BOSS_PHASE)
+    .filter((b) => !b.arenaBound && b.phases.length > BONUS_BOSS_PHASE && b.zone !== zone)
     .sort((a, b) => a.zone - b.zone || a.id.localeCompare(b.id));
 }
 
@@ -29,7 +32,7 @@ export interface BonusBoss {
 export function bonusBossFor(layout: Pick<ZoneLayout, 'seed' | 'zone' | 'cycle' | 'rooms'>): BonusBoss | null {
   if (layout.cycle < 1) return null;
   const rooms = layout.rooms.filter((r) => r.kind === 'combat').sort((a, b) => a.id.localeCompare(b.id));
-  const pool = bonusBossPool();
+  const pool = bonusBossPool(layout.zone);
   if (rooms.length === 0 || pool.length === 0) return null;
   const rng = stream(layout.seed, `bonusBoss:${layout.zone}:${layout.cycle}`);
   const room = rng.pick(rooms);

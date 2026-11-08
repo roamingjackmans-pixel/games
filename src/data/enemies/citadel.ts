@@ -364,7 +364,7 @@ export const CITADEL: Record<string, EnemyDef> = {
         pattern: { kind: 'projectile', speed: 400, r: 5, range: 800 },
         windupMs: 400,
         recoverMs: 350,
-        dmgMult: 0.5,
+        dmgMult: 0.7, // DXa: was 0.5
         type: 'magic',
         cooldownS: 2,
         range: [60, 750],
@@ -378,7 +378,7 @@ export const CITADEL: Record<string, EnemyDef> = {
         status: { id: 'shock', buildup: 30 },
         windupMs: 800,
         recoverMs: 600,
-        dmgMult: 0.6,
+        dmgMult: 0.8, // DXa: was 0.6
         type: 'magic',
         cooldownS: 7,
         range: [0, 140],

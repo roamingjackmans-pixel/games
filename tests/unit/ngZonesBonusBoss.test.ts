@@ -9,7 +9,7 @@ import { spawnEnemy } from '../../src/game/enemies/spawn';
 import { ENEMIES } from '../../src/data/enemies';
 import { BOSSES } from '../../src/data/bosses';
 import { THE_CARETAKER } from '../../src/data/bosses/crypt';
-import { NG_ZONE_ENEMY_DMG, ngZoneEnemyDmg, zoneDmgFactor } from '../../src/data/roles';
+import { NG_ZONE_ENEMY_DMG, ngLevelComp, ngZoneEnemyDmg, zoneDmgFactor } from '../../src/data/roles';
 import { enemyDmgMult } from '../../src/game/combat/formulas';
 import { generateZone } from '../../src/game/procgen/zone';
 import { planRoom } from '../../src/game/procgen/waves';
@@ -42,7 +42,8 @@ describe('New Game+ room enemy damage by zone (D275)', () => {
           n++;
         }
       }
-      return s / n / ngZoneEnemyDmg(z, 1);
+      // without D287's table and D307's level growth, which is checked on its own
+      return s / n / ngZoneEnemyDmg(z, 1) / ngLevelComp('dmg', z, 1);
     };
     const base = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((z) => (z ? rosterHit(z) : 0));
     const a = 2 * base[2]!;
@@ -61,10 +62,11 @@ describe('New Game+ room enemy damage by zone (D275)', () => {
     const w = new World('dmg');
     const s1 = spawnEnemy(w, ENEMIES.shambler!, 640, 300, { cycle: 1, zone: 2 });
     const s0 = spawnEnemy(w, ENEMIES.shambler!, 640, 300, { cycle: 1, zone: 1 });
-    expect(s1.en!.dmgMult / s0.en!.dmgMult).toBeCloseTo((2 * level(2)) / level(1), 5);
+    const lc = ngLevelComp('dmg', 2, 1) / ngLevelComp('dmg', 1, 1); // D307, for everyone
+    expect(s1.en!.dmgMult / s0.en!.dmgMult).toBeCloseTo(((2 * level(2)) / level(1)) * lc, 5);
     const b2 = spawnEnemy(w, THE_CARETAKER, 640, 300, { cycle: 1, zone: 2 });
     const b1 = spawnEnemy(w, THE_CARETAKER, 640, 300, { cycle: 1, zone: 1 });
-    expect(b2.en!.dmgMult / b1.en!.dmgMult).toBeCloseTo(level(2) / level(1), 5);
+    expect(b2.en!.dmgMult / b1.en!.dmgMult).toBeCloseTo((level(2) / level(1)) * lc, 5);
   });
 });
 

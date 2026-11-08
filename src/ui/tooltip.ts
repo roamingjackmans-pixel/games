@@ -311,7 +311,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const types = DAMAGE_TYPES.filter((k) => (mine[k] ?? 0) > 0 || (cmp && (theirs[k] ?? 0) > 0));
     const dmgRows: Row[] = types.map((k) => ({ label: ELEMENTS[k].name, color: ELEMENTS[k].glow, cur: mine[k] ?? 0, prev: ow ? (theirs[k] ?? 0) : null, better: 'higher', fmt: int0 }));
     if (types.length > 1) dmgRows.push({ label: 'Total', cur: mineHit?.total ?? 0, prev: theirsHit ? theirsHit.total : ow ? 0 : null, better: 'higher', fmt: int0 });
-    dmgRows.push({ label: 'Per second', cur: mineHit?.perSec ?? 0, prev: theirsHit ? theirsHit.perSec : ow ? 0 : null, better: 'higher', fmt: int0, note: 'light attacks, at your attack speed' });
+    // D305: no damage-per-second row (owner's request); the per-hit numbers stay
     const dmgTitle = `${mineHit?.offHand ? 'Damage per bolt (off hand)' : 'Damage per hit'}${meets ? '' : ' (40%: below requirement)'}`;
     out.push(section(dmgTitle, rowsEl(dmgRows, cmp)));
     out.push(h('div', { class: 'small dim-text' }, 'With your stats, proficiency, gems, set perks and gear. Not timed buffs.'));

@@ -315,7 +315,8 @@ export const CRYPT: Record<string, EnemyDef> = {
     moveStyle: 'stationary',
     preferredRange: 0,
     attacks: [
-      { id: 'bell_chime', name: 'Chime', kind: 'normal', pattern: { kind: 'ring', rIn: 0, rOut: 90, anchor: 'self' }, windupMs: 500, recoverMs: 500, dmgMult: 0.6, type: 'void', cooldownS: 3, range: [0, 90], weight: 3, parryable: false },
+      // DXa: Chime was ×0.6, Toll ×0.8: the weakest hits in zone 1
+      { id: 'bell_chime', name: 'Chime', kind: 'normal', pattern: { kind: 'ring', rIn: 0, rOut: 90, anchor: 'self' }, windupMs: 500, recoverMs: 500, dmgMult: 0.95, type: 'void', cooldownS: 3, range: [0, 90], weight: 3, parryable: false },
       {
         id: 'bell_toll',
         name: 'Toll',
@@ -324,7 +325,7 @@ export const CRYPT: Record<string, EnemyDef> = {
         pattern: { kind: 'expandingRing', speed: 220, gaps: 4, gapW: 90, anchor: 'self', count: 3, spacingS: 1.2, centerGapDeg: 15 },
         windupMs: 1000,
         recoverMs: 2600,
-        dmgMult: 0.8,
+        dmgMult: 1.15, // DXa: was 0.8
         type: 'void',
         cooldownS: 14,
         range: [0, 900],

@@ -55,21 +55,37 @@ export function zoneDmgFactor(zone: number): number {
  * roster's average hit (zone 1 is unchanged). Bosses are not affected. Checked against the rosters by
  * tests/unit/ngZonesBonusBoss.test.ts.
  */
-export const NG_ZONE_ENEMY_DMG: Record<number, number> = { 2: 2, 3: 1.64, 4: 1.61, 5: 1.5, 6: 1.43, 7: 1.36, 8: 1.65 };
+export const NG_ZONE_ENEMY_DMG: Record<number, number> = { 2: 2, 3: 1.64, 4: 1.59, 5: 1.5, 6: 1.37, 7: 1.34, 8: 1.65 }; // refitted after D308 raised weak attackers
 
 /**
- * New Game+ boss HP, by the boss's own zone (D301): sized so the median build of the balance report
+ * New Game+ boss HP, by the boss's own zone (D301; refitted with D307's levels): sized so the median build of the balance report
  * (docs/balance/report.md, nonstop light attacks) takes about 5 minutes on a zone boss and 8 on the Landlord in NG+1,
  * and about 8 and 11 minutes from NG+2 on. Later cycles use the NG+2 column on top of the usual cycle growth.
  */
 export const NG_BOSS_HP: Record<1 | 2, Record<number, number>> = {
-  1: { 1: 1.54, 2: 1.88, 3: 2.21, 4: 2.04, 5: 1.55, 6: 1.69, 7: 1.81, 8: 1.29 },
-  2: { 1: 2.7, 2: 2.98, 3: 3.27, 4: 2.89, 5: 2.11, 6: 2.22, 7: 2.32, 8: 1.39 },
+  1: { 1: 1.56, 2: 1.91, 3: 2.29, 4: 2.13, 5: 1.64, 6: 1.8, 7: 1.91, 8: 1.35 },
+  2: { 1: 2.82, 2: 3.1, 3: 3.41, 4: 3.04, 5: 2.23, 6: 2.36, 7: 2.48, 8: 1.5 },
 };
 
 export function ngBossHpMult(zone: number, cycle: number): number {
   if (cycle < 1) return 1;
   return NG_BOSS_HP[cycle >= 2 ? 2 : 1][Math.max(1, Math.min(8, zone))] ?? 1;
+}
+
+/**
+ * The levels New Game+ now buys (D307: about 300 by the end of NG+2, was about 136) make a player stronger; every
+ * enemy and boss grows by 70% of that gain (owner: "30% less than the gain"). Measured on the balance report's builds
+ * (same gear, the new level against the old): damage rose 1–7% (stats near their caps) and HP up to 31%, so enemy HP
+ * grows by 70% of the damage gain and enemy damage by 70% of the HP gain. NG+3 on uses the NG+2 column.
+ */
+export const NG_LEVEL_COMP: { hp: Record<1 | 2, Record<number, number>>; dmg: Record<1 | 2, Record<number, number>> } = {
+  hp: { 1: { 1: 1.004, 2: 1.012, 3: 1.019, 4: 1.024, 5: 1.034, 6: 1.041, 7: 1.048, 8: 1.044 }, 2: { 1: 1.041, 2: 1.039, 3: 1.037, 4: 1.035, 5: 1.033, 6: 1.033, 7: 1.029, 8: 1.029 } },
+  dmg: { 1: { 1: 1, 2: 1.02, 3: 1.039, 4: 1.067, 5: 1.084, 6: 1.111, 7: 1.137, 8: 1.16 }, 2: { 1: 1.165, 2: 1.171, 3: 1.181, 4: 1.183, 5: 1.195, 6: 1.197, 7: 1.214, 8: 1.218 } },
+};
+
+export function ngLevelComp(kind: 'hp' | 'dmg', zone: number, cycle: number): number {
+  if (cycle < 1) return 1;
+  return NG_LEVEL_COMP[kind][cycle >= 2 ? 2 : 1][Math.max(1, Math.min(8, zone))] ?? 1;
 }
 
 export function ngZoneEnemyDmg(zone: number, cycle: number): number {
