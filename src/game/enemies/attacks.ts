@@ -85,7 +85,8 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
   if (atk.gazeTurnDeg !== undefined) {
     // a gaze attack strikes along the attacker's gaze (first use: at the target), which then turns for the next use
     const g = en.gaze ?? (target ? Math.atan2(ty - e.y, tx - e.x) : e.facing);
-    e.facing = g;
+    // a sweeping gaze (D315) starts at the gaze and turns the way the arrow points, to where it will look next
+    e.facing = atk.pattern?.kind === 'sweep' ? g + (atk.gazeTurnDeg * DEG) / 2 : g;
     const next = g + atk.gazeTurnDeg * DEG;
     en.gaze = Math.atan2(Math.sin(next), Math.cos(next));
   } else if (target) e.facing = Math.atan2(ty - e.y, tx - e.x);

@@ -462,7 +462,7 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
       const a0 = Math.abs(p.angleDeg) >= 360 ? c.facing : c.facing - arc / 2;
       const r = p.r === 'room' ? ROOM_DIAG : p.r;
       return [
-        spec([withSweepGaps({ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }, p, c.rng)], {
+        spec([withSweepGaps({ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : (p.sliceDeg ?? 28) / 2) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }, p, c.rng)], {
           mode: p.tickS ? 'tick' : 'once',
           activeS: p.durationS,
           tickS: p.tickS ?? 0,

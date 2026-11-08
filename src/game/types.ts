@@ -148,6 +148,8 @@ export type PatternDef = PatternCommon &
         tickS?: number;
         w?: number;
         beamLine?: boolean;
+        /** the sweeping slice's full width in degrees (else 28°; D315) */
+        sliceDeg?: number;
         /** this many sweeps at once (anchor 'corner': distinct corners, the second diagonally opposite the first) */
         count?: number;
         /** with count: every other sweep turns the opposite way */

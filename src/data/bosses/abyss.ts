@@ -163,10 +163,12 @@ const foreclosure: AttackDef = {
   id: 'landlord_foreclosure',
   name: 'Foreclosure',
   kind: 'red',
-  // everything within the face's gaze; the gaze turns 120° after each use (the arrow shows where next)
-  pattern: { kind: 'cone', angleDeg: 60, r: 520, anchor: 'self' }, // D172: 520 px (was the whole room)
+  // D315: a 60° slice of the face's gaze sweeps 120° round him, from where it looks the way the arrow points, to
+  // where it will look next (it was a still cone that only turned between uses). D172: 520 px.
+  pattern: { kind: 'sweep', angleDeg: 120, sliceDeg: 60, r: 520, durationS: 1.5, anchor: 'self' },
   gazeTurnDeg: 120,
   windupMs: 1200,
+  activeMs: 1500,
   recoverMs: 1000,
   dmgMult: 2.1, // D300: 30% less (was 3.0; it one-shot most builds)
   type: 'void',
@@ -330,7 +332,8 @@ export const THE_LANDLORD: BossDef | null = {
       speedMult: 1.2,
       dmgMult: 1.5,
       arena: [{ op: 'shrinkPlatform', value: 0.25 }],
-      passive: { pull: { speed: DEEP_PULL, r: 2000 }, stationaryAt: 'farThird', scale: 1.9, projectileSpeedMult: 1.4 },
+      // D315: 40% smaller than before (was 1.9), so the room and the player stay in view
+      passive: { pull: { speed: DEEP_PULL, r: 2000 }, stationaryAt: 'farThird', scale: 1.14, projectileSpeedMult: 1.4 },
       summons: [{ enemyId: 'hollow_joe', count: 2, max: 2, everyS: 10 }],
       attacks: [evictionNotices(10, 140), gazeBeams, supernova(3, DEEP_PULL), maw, foreclosure, collapse],
     },
@@ -351,8 +354,8 @@ export const THE_LANDLORD: BossDef | null = {
       clearField: true,
       speedMult: 3,
       dmgMult: 1.6,
-      // player-sized (46 × 0.3 ≈ 14 px, the player's radius), on the move again, blinking every 2.4 s
-      passive: { scale: 0.3, formAtStart: true, preferredRange: 50, blink: { everyS: 2.4, warnS: 0.35, minD: 110, maxD: 260 } },
+      // D315: half again the player's size (46 × 0.45 ≈ 21 px; was 0.3), on the move again, blinking every 2.4 s
+      passive: { scale: 0.45, formAtStart: true, preferredRange: 50, blink: { everyS: 2.4, warnS: 0.35, minD: 110, maxD: 260 } },
       attacks: [unboundCuts, unboundDash(1, 3, 550), hostileTakeover, unboundDecree, totalEviction, evictionNotices(5, 60)],
     },
   ],

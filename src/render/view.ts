@@ -289,7 +289,9 @@ export class WorldView {
       if (e.removed) continue;
       if (e.type === 'player' || e.type === 'enemy' || e.type === 'pickup' || e.type === 'interact' || e.type === 'decoy') list.push(e);
     }
-    list.sort((a, b) => a.y - b.y);
+    // bosses on the bottom layer (D315): players and anything they summon always show over a big boss body
+    const layer = (e: Entity): number => (e.type === 'enemy' && e.en?.isBoss ? 0 : 1);
+    list.sort((a, b) => layer(a) - layer(b) || a.y - b.y);
     const iconScale = st.video.telegraphIconSize * (st.video.highContrastTelegraphs ? 1.5 : 1);
     for (const e of list) {
       const x = e.px + (e.x - e.px) * alpha;

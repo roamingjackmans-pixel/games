@@ -21,7 +21,7 @@ Contents: [1 Rendering](#1-rendering) · [2 Style](#2-style) · [3 Telegraphs an
   `render/ambience.ts`.
 - **Frame order** (`render/view.ts`): room floor → moving floors → hazards → arena darkness → telegraphs and their
   impact echoes → ground parts of skill / spell animations → room obstacles again (pillars and props sit above attack
-  markers, D129) → spell walls → bodies sorted by `y` (players, enemies, pickups, interactables, decoys) →
+  markers, D129) → spell walls → bodies sorted by `y` (players, enemies, pickups, interactables, decoys), bosses always first, underneath (D315) →
   projectiles → status particles → skill / spell animations over the bodies → **Thermos sparkles** (D271) → **each
   player's foot dot** (D262) → zone ambience (particles, vignette) → darkness (Blind, dark phases) → phase flash →
   banners and messages. The HUD is drawn after the world.

@@ -254,7 +254,7 @@ Common rules (GAME_DESIGN §7):
 - **Archmagister Tock**: a square arena with a rotating floor ring and turrets in the corners that sweep lasers.
   Sweeping beams hit along the whole arc they turn each frame (D273).
 - **The Landlord**: a black platform floating in the void. Falling off costs 50% of max HP and a short climb back. The
-  platform shrinks in phases 2 and 3; in phase 4 he is player-sized and blinks about it (D279).
+  platform shrinks in phases 2 and 3; in phase 4 he is half again the player's size and blinks about it (D279, D315).
 
 ### Boss 1 — The Caretaker (Mossy Crypt)
 
@@ -463,15 +463,15 @@ Phase 2 — **The Eviction** (66% → 33%; speed ×1.2, damage ×1.25, size ×1.
 - **Gaze Beams [PIERCE] [AREA]**: 2× beam(60, 600) tracking 35°/s for 4 s, tick 0.25 s, opposite ways, ×0.8 void (233), tell 1 s, cd 14 *(new)*
 - **Supernova [PIERCE] [AREA]**: room-wide, 4 safe pockets r 110, ×2.6 void (757), tell 1.8 s, cd 16 *(new)*
 
-Phase 3 — **The Deep Lease** (33% → 0%; speed ×1.2, damage ×1.5, pull 70 px/s within 2000, stationary at farThird, size ×1.9, projectiles ×1.4, summons 2 Hollow Joe (max 2, every 10 s), arena: shrinkPlatform):
+Phase 3 — **The Deep Lease** (33% → 0%; speed ×1.2, damage ×1.5, pull 70 px/s within 2000, stationary at farThird, size ×1.14 (D315: was ×1.9), projectiles ×1.4, summons 2 Hollow Joe (max 2, every 10 s), arena: shrinkPlatform):
 - **Eviction Notices**: 10× proj(250, homing) in a 140° fan, ×0.6 void (210), windup 0.7 s, cd 5
 - **Gaze Beams [PIERCE] [AREA]**: 2× beam(60, 600) tracking 35°/s for 4 s, tick 0.25 s, opposite ways, ×0.8 void (279), tell 1 s, cd 14
 - **Supernova [PIERCE] [AREA]**: room-wide, 3 safe pockets r 110, pulls 70 px/s, ×2.6 void (908), tell 1.8 s, cd 16
 - **Maw [PIERCE]**: circle(220) at self, pulls 70 px/s, ×2.5 void (873), tell 1.5 s, cd 6 *(new)*
-- **Foreclosure [RED] [AREA]**: cone(60°, 520), ×2.1 void (734; D300: 30% less), tell 1.2 s, cd 9 *(new)*
+- **Foreclosure [RED] [AREA]**: a 60° slice (r 520) sweeping 120° round him over 1.5 s, from his gaze the way the arrow points to where he looks next (D315), ×2.1 void (734; D300: 30% less), tell 1.2 s, cd 9 *(new)*
 - **Collapse [PIERCE] [AREA]**: ring(220, edge), pulls 70 px/s, collapseFloor, tell 1.5 s, cd 15, only if ringReachable *(new)*
 
-Phase 4 — **The Landlord, Unbound** (fresh bar → 0%; speed ×3, damage ×1.6, bar 1.2× the HP the phase before had, 4.5 s transition, clears the field, bar "The Landlord, Unbound", size ×0.3, blinks every 2.4 s (0.35 s warning, 110–260 px)):
+Phase 4 — **The Landlord, Unbound** (fresh bar → 0%; speed ×3, damage ×1.6, bar 1.2× the HP the phase before had, 4.5 s transition, clears the field, bar "The Landlord, Unbound", size ×0.45 (D315: was ×0.3), blinks every 2.4 s (0.35 s warning, 110–260 px)):
 - **Final Notice**: arc(130°, 72), ×0.56/×0.56/×0.8 void (298), windup 0.38 s, cd 1.8, parryable *(new)*
 - **Repossession [RED]**: line(56, 300), charges 300 px, ×1.3 void (484), tell 0.55 s, cd 7, hyper armor; repeated 2 more times at once, re-aimed (tell 0.42 s each) *(new)*
 - **Hostile Takeover [RED] [AREA]**: 4× line(90, room ×0.6) spokes, ×1.8 void (671), tell 0.7 s, cd 8, hyper armor *(new)*

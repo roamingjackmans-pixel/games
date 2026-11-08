@@ -66,7 +66,7 @@ describe('The Landlord, Unbound: data', () => {
     expect(P4.refillHp).toBe(true);
     expect(P4.hpOfPrevPhase).toBe(1.2);
     expect(P4.barName).toBe('The Landlord, Unbound');
-    expect(L.radius * P4.passive!.scale!).toBeCloseTo(14, 0);
+    expect(L.radius * P4.passive!.scale!).toBeCloseTo(21, 0); // D315: half again the player's size
     expect(P4.speedMult).toBeGreaterThanOrEqual(2.5);
     expect(P4.passive!.blink).toBeDefined();
     expect(P4.attacks.some((a) => a.kind === 'red')).toBe(true);
@@ -85,7 +85,7 @@ describe('The Landlord, Unbound: the fight', () => {
     expect(b.hp!.max).toBeCloseTo(max * 0.33 * 1.2, 4);
     expect(b.hp!.hp).toBeCloseTo(b.hp!.max, 4);
     // the new form at once, and the field is cleared
-    expect(b.radius).toBeCloseTo(L.radius * 0.3, 4);
+    expect(b.radius).toBeCloseTo(L.radius * 0.45, 4);
     expect(s.w.enemies.filter((e) => !e.en?.isBoss && !e.hp?.dead && !e.removed).length).toBe(0);
     expect([...s.w.entities.values()].filter((e) => e.type === 'telegraph' && e.tg?.team === 1 && !e.removed).length).toBe(0);
     // invulnerable for the whole 4.5 s transformation (not just the usual 2 s)
@@ -155,7 +155,7 @@ describe('The Landlord, Unbound: the fight', () => {
     const s = session();
     const { b } = toUnbound(s);
     const m = metaOf(b, 'p2');
-    expect(m && m.t === 'enemy' ? m.r : 0).toBeCloseTo(13.8, 1);
+    expect(m && m.t === 'enemy' ? m.r : 0).toBeCloseTo(20.7, 1);
     const ctx = fakeCtx();
     // the glow sprites are drawn on an offscreen canvas
     vi.stubGlobal('OffscreenCanvas', class { getContext(): CanvasRenderingContext2D { return fakeCtx(); } });
