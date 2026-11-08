@@ -8,18 +8,18 @@ import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { armorPieceDefense } from '../../data/armor';
 import { canReinforce, reinforceInfo } from '../../game/items/reinforce';
 import { CLASSES } from '../../data/classes';
-import { GEMS, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkText } from '../../data/gems';
-import { flaskHeal, levelCost, gemSellTotal, gemUpgradeCost } from '../../game/combat/formulas';
+import { GEMS, gemColor, gemKind, gemKindLabel, gemOrigin, gemTitle, perkName } from '../../data/gems';
+import { flaskHeal, levelCost, gemSellTotal } from '../../game/combat/formulas';
 import { computeDerived } from '../../game/player/derived';
 import { spellSkill, toolSpellSkill } from '../../game/skills/use';
 import { ELEMENTS } from '../../game/elements';
-import { canSocket, socketKind, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, lockedSkipped, planLevelUps, sellAllPreview, toggleItemLock, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
+import { canSocket, socketKind, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, lockedSkipped, planLevelUps, sellAllGemsPreview, sellAllPreview, toggleItemLock, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
-import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type GemTier, type Item, type StatId } from '../../game/types';
+import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { hasRarityBar, upgradeInfo } from '../../game/items/proficiency';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { tabHints } from '../glyphs';
-import { lockButton } from '../itemLock';
+import { gemLockButton, lockButton } from '../itemLock';
 import { PAD_LOCK_EVENT } from '../menuPad';
 import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemScore, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
@@ -28,8 +28,12 @@ export interface BonfireOps {
   respec(): string;
   socket(itemId: string, socketIdx: number, gemIdx: number): string;
   unsocket(itemId: string, socketIdx: number): string;
-  /** upgrade one perk of a loose or socketed gem */
-  upgradeGem(loc: GemLoc, perkIdx: number): string;
+  /** lock or unlock a loose or socketed gem: Sell all gems keeps a locked one (D282) */
+  toggleGemLock(loc: GemLoc): string;
+  /** sell every loose gem that is not locked (D282) */
+  sellAllGems(): string;
+  /** break Soul Essence of `tier` into three of the tier below: one, or all of them (D285) */
+  breakEssence(tier: number, all: boolean): string;
   /** fuse a loose donor gem into the original (loose or socketed), keeping the picked perks */
   fuseGem(orig: GemLoc, donorIdx: number, picks: FusePick[]): string;
   sellItem(itemId: string): string;
@@ -88,8 +92,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   let selItem: string | null = null;
   /** the empty socket picked on the selected item (D227): a gem goes there, not just into the first free one */
   let selSocket = -1;
-  /** which gem's per-perk upgrade list is open */
-  let upOpen: string | null = null;
+  /** the Sell all gems confirmation (D282) */
+  let confirmGemSell = false;
   /** the fuse dialog's state */
   let fuse: { orig: GemLoc; donor: number | null; picks: FusePick[] } | null = null;
   /** the Sell all confirmation */
@@ -119,14 +123,15 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     if (e.code !== 'Escape') return;
     // leaving with planned level-up points asks first (D142); Escape on that question means keep editing
-    const askLeave = !fuse && !confirmSell && !confirmLeave && !reinforceAsk && !respecAsk && !sellAsk && pendingCount() > 0;
-    if (!fuse && !confirmSell && !confirmLeave && !reinforceAsk && !respecAsk && !sellAsk && !askLeave) return;
+    const askLeave = !fuse && !confirmSell && !confirmGemSell && !confirmLeave && !reinforceAsk && !respecAsk && !sellAsk && pendingCount() > 0;
+    if (!fuse && !confirmSell && !confirmGemSell && !confirmLeave && !reinforceAsk && !respecAsk && !sellAsk && !askLeave) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     if (askLeave) confirmLeave = () => v.close();
     else if (confirmLeave) confirmLeave = null;
     fuse = null;
     confirmSell = null;
+    confirmGemSell = false;
     reinforceAsk = null;
     respecAsk = false;
     sellAsk = null;
@@ -382,55 +387,30 @@ export function openBonfire(v: BonfireView): HTMLElement {
     return el;
   }
 
-  /** The upgrade control: one button for a one-perk gem, a drop-down of perks for more. */
-  function upgradeCtl(g: Gem, loc: GemLoc): HTMLElement {
-    const c = v.char;
-    if (g.perks.length === 1) {
-      const p = g.perks[0]!;
-      const cost = gemUpgradeCost(p.tier);
-      const b = btn(p.tier >= 5 ? 'T5 (max)' : ['Upgrade ', glowenEl(cost)], () => say(v.ops.upgradeGem(loc, 0)), 'tiny', p.tier >= 5 || c.glowen < cost);
-      b.title = p.tier >= 5 ? 'Already T5.' : `T${p.tier + 1}: ${perkText({ ...p, tier: (p.tier + 1) as GemTier })}`;
-      b.setAttribute('data-testid', 'gem-upgrade');
-      return b;
-    }
-    const key = locKey(loc);
-    const b = btn(upOpen === key ? 'Upgrade ▴' : 'Upgrade ▾', () => {
-      upOpen = upOpen === key ? null : key;
-      render();
-    }, 'tiny', g.perks.every((p) => p.tier >= 5));
-    b.title = 'Each perk upgrades on its own.';
-    b.setAttribute('data-testid', 'gem-upgrade');
+  /** The gem's lock (D282): Sell all gems keeps a locked gem. */
+  function gemLock(g: Gem, loc: GemLoc): HTMLElement {
+    const b = gemLockButton(g, `gem-lock-${locKey(loc)}`, () => say(v.ops.toggleGemLock(loc)));
+    b.setAttribute('data-focus', `gem-lock-${locKey(loc)}`);
     return b;
   }
 
-  /** The per-perk upgrade list under a gem row (when open). */
-  function perkUpgrades(g: Gem, loc: GemLoc): HTMLElement | null {
-    if (g.perks.length < 2 || upOpen !== locKey(loc)) return null;
-    const c = v.char;
-    const row = h('div', { class: 'row wrap', style: 'gap:4px;padding:0 8px 6px 40px' });
-    g.perks.forEach((p, i) => {
-      const cost = gemUpgradeCost(p.tier);
-      const b = btn(
-        p.tier >= 5 ? [h('span', { style: `color:${GEMS[p.family].color}` }, GEMS[p.family].name), ' T5 (max)'] : [h('span', { style: `color:${GEMS[p.family].color}` }, GEMS[p.family].name), ` T${p.tier}→T${p.tier + 1} `, glowenEl(cost)],
-        () => say(v.ops.upgradeGem(loc, i)),
-        'tiny perk-up',
-        p.tier >= 5 || c.glowen < cost,
-      );
-      b.setAttribute('data-testid', `perk-up-${i}`);
-      b.title = p.tier >= 5 ? 'Already T5.' : `Now: ${perkText(p)}. T${p.tier + 1}: ${perkText({ ...p, tier: (p.tier + 1) as GemTier })}`;
-      row.appendChild(b);
-    });
-    return row;
-  }
-
-  /** One gem on one line: icon, name + chip + effects, then its buttons. */
+  /** One gem on one line: icon, name + chip + effects, then its buttons, the lock last (Y on a pad or L on any of them). */
   function gemRow(g: Gem, loc: GemLoc, acts: (HTMLElement | null)[], testid: string): HTMLElement {
     const icon = h('span', { style: 'display:inline-flex;flex:none' }, gemIcon(g, 26));
     hoverTip(icon, () => gemTooltip(g));
     const main = h('div', { class: 'gem-main' }, gemNameEl(g), h('div', { class: 'small' }, perkEffectsEl(g)));
-    const row = h('div', { class: 'gem-row', 'data-testid': testid }, icon, main, h('div', { class: 'gem-acts' }, ...acts));
-    const sub = perkUpgrades(g, loc);
-    return sub ? h('div', null, row, sub) : row;
+    const lock = gemLock(g, loc);
+    const row = h('div', { class: `gem-row${g.locked ? ' locked-row' : ''}`, 'data-testid': testid }, icon, main, h('div', { class: 'gem-acts' }, ...acts, lock));
+    for (const b of row.querySelectorAll<HTMLElement>('button')) {
+      if (b === lock) continue;
+      b.addEventListener(PAD_LOCK_EVENT, () => lock.click());
+      b.addEventListener('keydown', (e) => {
+        if (e.code !== 'KeyL' || e.repeat) return;
+        e.preventDefault();
+        lock.click();
+      });
+    }
+    return row;
   }
 
   function fuseBtn(g: Gem, loc: GemLoc): HTMLElement | null {
@@ -520,7 +500,29 @@ export function openBonfire(v: BonfireView): HTMLElement {
       'Each +1 makes a weapon hit, a shield block or a piece of armour defend 20% better: +15 is four times the item. A step costs 1, then 2, then 3 Essence of one tier (6 a tier), a new tier every three levels, plus Glowen. One Essence of a higher tier pays for three of the tier below.',
       h('br'), h('br'),
       'None below zone 4 of the first descent; Tier 1 from zone 4, then one tier more each New Game+ (Tier 5 from New Game+4).');
-    el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, help));
+    // D285: break Essence down by hand, one into three of the tier below
+    const brk = h('div', { class: 'card col', style: 'gap:6px;padding:8px 10px;width:420px', 'data-testid': 'essence-breakdown' }, h('h3', { style: 'margin:0' }, 'Break down Essence'), h('div', { class: 'small dim-text' }, 'One Essence becomes three of the tier below.'));
+    for (const d of ESSENCES) {
+      if (d.tier < 2) continue;
+      const n = have[d.tier - 1] ?? 0;
+      const lower = essenceDef(d.tier - 1);
+      const one = btn('Convert 1', () => say(v.ops.breakEssence(d.tier, false)), 'tiny', n <= 0);
+      one.setAttribute('data-testid', `essence-break-${d.tier}`);
+      one.title = `1 × ${d.name} → 3 × ${lower.name}`;
+      const all = btn('Convert all', () => say(v.ops.breakEssence(d.tier, true)), 'tiny', n <= 0);
+      all.setAttribute('data-testid', `essence-break-all-${d.tier}`);
+      all.title = `${n} × ${d.name} → ${3 * n} × ${lower.name}`;
+      brk.appendChild(
+        h(
+          'div',
+          { class: 'row', style: 'gap:6px;align-items:center' },
+          h('span', { class: 'small', style: `flex:1;min-width:0;color:${d.color};${n ? '' : 'opacity:.45'}` }, `${d.name} × ${n}`, h('span', { class: 'dim-text' }, ' → 3 × '), h('span', { style: `color:${lower.color}` }, lower.name)),
+          one,
+          all,
+        ),
+      );
+    }
+    el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, h('div', { class: 'col', style: 'gap:12px' }, brk, help)));
   }
 
   /** What is missing for the next step (D232): the Essence (and where that tier drops) or the Glowen. */
@@ -639,7 +641,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       it.sockets.forEach((g, i) => {
         if (g) {
           const loc: GemLoc = { itemId: it.id, socketIdx: i };
-          card.appendChild(gemRow(g, loc, [upgradeCtl(g, loc), fuseBtn(g, loc), btn('Remove', () => say(v.ops.unsocket(it.id, i)), 'tiny')], `socket-gem-${it.id}-${i}`));
+          card.appendChild(gemRow(g, loc, [fuseBtn(g, loc), btn('Remove', () => say(v.ops.unsocket(it.id, i)), 'tiny')], `socket-gem-${it.id}-${i}`));
         } else
           card.appendChild(
             h(
@@ -661,10 +663,27 @@ export function openBonfire(v: BonfireView): HTMLElement {
       list.appendChild(card);
     }
     const gems = h('div', { class: 'col', style: 'gap:4px;flex:1;min-width:0;max-height:540px;overflow:auto' }, h('h3', null, 'Loose gems · ', glowenEl(c.glowen)));
+    // D282: sell every loose gem that is not locked, after a confirm
+    const gpv = sellAllGemsPreview(c);
+    const sellAllB = btn('Sell all gems', () => {
+      confirmGemSell = true;
+      render();
+    }, 'tiny danger', gpv.count === 0);
+    sellAllB.setAttribute('data-testid', 'sell-all-gems');
+    sellAllB.title = `${gpv.count} gem${gpv.count === 1 ? '' : 's'} for ${gpv.glowen} Glowen${gpv.locked ? ` (${gpv.locked} locked kept)` : ''}`;
+    gems.appendChild(h('div', { class: 'row wrap', style: 'gap:4px;margin-bottom:4px' }, sellAllB));
     const sel = selItem ? items.find((i) => i.id === selItem) : null;
     // the socket picked, if it is still empty; else the first empty one
     const free = sel ? (selSocket >= 0 && selSocket < sel.sockets.length && !sel.sockets[selSocket] ? selSocket : sel.sockets.findIndex((x) => !x)) : -1;
+    // D280: with a socket picked only the gems that fit it are listed (armor gems for armour and shields, weapon gems for
+    // weapons, staffs and talismans); the rest come back when nothing is picked
+    const filterKind = sel && free >= 0 ? socketKind(sel) : null;
+    let hidden = 0;
     c.gems.forEach((g, gi) => {
+      if (filterKind && gemKind(g) !== filterKind) {
+        hidden++;
+        return;
+      }
       const loc: GemLoc = { gemIdx: gi };
       let sock: HTMLElement | null = null;
       if (sel && free >= 0) {
@@ -673,10 +692,23 @@ export function openBonfire(v: BonfireView): HTMLElement {
         sock.title = fits ? `Into socket ${free + 1} of ${sel.name}` : `${sel.name} takes ${socketKind(sel) === 'armor' ? 'armor' : 'weapon'} gems.`;
       }
       const sell = btn(['Sell ', glowenEl(gemSellTotal(g), '+')], () => say(v.ops.sellGem(gi)), 'tiny');
-      gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, upgradeCtl(g, loc), sell, fuseBtn(g, loc)], `loose-gem-${gi}`)));
+      gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, sell, fuseBtn(g, loc)], `loose-gem-${gi}`)));
     });
+    if (filterKind && sel) {
+      const all = btn('Show all gems', () => {
+        selItem = null;
+        selSocket = -1;
+        render();
+      }, 'tiny');
+      all.setAttribute('data-testid', 'gem-filter-clear');
+      gems.insertBefore(
+        h('div', { class: 'row small', style: 'gap:6px;align-items:center', 'data-testid': 'gem-filter' }, h('span', { class: 'dim-text' }, `${filterKind === 'armor' ? 'Armor' : 'Weapon'} gems for socket ${free + 1} of ${sel.name}${hidden ? ` · ${hidden} ${filterKind === 'armor' ? 'weapon' : 'armor'} gem${hidden === 1 ? '' : 's'} hidden` : ''}`), all),
+        gems.children[2] ?? null,
+      );
+    }
     if (c.gems.length === 0) gems.appendChild(h('div', { class: 'dim-text' }, 'No loose gems.'));
-    gems.appendChild(h('div', { class: 'small dim-text', style: 'margin-top:6px' }, 'Weapon gems fit weapon sockets, armor gems armor sockets. Upgrade any perk without unsocketing. Gems can also be removed from the inventory, anywhere. NG+ gems carry two or three perks; Fuse swaps perks between two gems of the same kind.'));
+    else if (filterKind && hidden === c.gems.length) gems.appendChild(h('div', { class: 'dim-text' }, `No loose ${filterKind} gems.`));
+    gems.appendChild(h('div', { class: 'small dim-text', style: 'margin-top:6px' }, 'Weapon gems fit weapon sockets, armor gems armor sockets; picking an empty socket lists only the gems that fit it. A gem is as strong as its level and its roll (−50% … +50%). The padlock keeps a gem from Sell all gems. Gems can also be removed from the inventory, anywhere. NG+ gems carry two or three perks; Fuse swaps perks between two gems of the same kind.'));
     el.appendChild(h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, list, gems));
   }
 
@@ -695,13 +727,20 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const donors = c.gems.map((g, i) => ({ g, i })).filter(({ g }) => g !== orig && gemKind(g) === kind);
     const donor = f.donor !== null ? (c.gems[f.donor] ?? null) : null;
     const pickedFamilies = f.picks.map((p) => (p.from === 'orig' ? orig : donor)?.perks[p.idx]?.family);
+    // D286: the original gem's original perks, one of which every fuse keeps
+    const origin = gemOrigin(orig);
     const perkBtn = (g: Gem, from: 'orig' | 'donor', idx: number): HTMLElement => {
       const p = g.perks[idx]!;
       const on = f.picks.some((x) => x.from === from && x.idx === idx);
       const dup = !on && pickedFamilies.includes(p.family);
       const full = !on && f.picks.length >= n;
       const b = btn(
-        [h('span', { class: 'tick' }, on ? '✓' : ''), h('span', { style: `color:${GEMS[p.family].color};width:120px` }, perkName(p)), h('span', { class: 'small' }, perkEffectEl(p))],
+        [
+          h('span', { class: 'tick' }, on ? '✓' : ''),
+          h('span', { style: `color:${GEMS[p.family].color};width:120px` }, perkName(p)),
+          h('span', { class: 'small' }, perkEffectEl(p)),
+          from === 'orig' && origin.includes(p.family) ? h('span', { class: 'small', style: 'margin-left:6px;padding:0 5px;border-radius:4px;border:1px solid #e8c25a;color:#e8c25a', title: 'An original perk: every fuse must keep at least one.', 'data-testid': `fuse-original-${idx}` }, 'original') : null,
+        ],
         () => {
           if (on) f.picks = f.picks.filter((x) => !(x.from === from && x.idx === idx));
           else f.picks.push({ from, idx });
@@ -727,6 +766,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
       }, `tiny fuse-perk ${on ? 'on' : ''}`);
       b.setAttribute('data-testid', `fuse-gem-${d.i}`);
       right.appendChild(b);
+      // D286: every perk's effect and strength, to compare without opening each gem
+      if (!on) right.appendChild(h('div', { class: 'col', style: 'gap:1px;padding:0 0 4px 30px', 'data-testid': `fuse-gem-effects-${d.i}` }, ...gemPerkLines(d.g)));
       if (on) {
         const perks = h('div', { class: 'col', style: 'gap:4px;padding-left:18px' });
         d.g.perks.forEach((_, i) => perks.appendChild(perkBtn(d.g, 'donor', i)));
@@ -745,7 +786,6 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const go = btn(['Fuse', 'error' in res ? '' : [' (', glowenEl(cost), ')']], () => {
       const msg = v.ops.fuseGem(f.orig, f.donor ?? -1, f.picks);
       fuse = null;
-      upOpen = null;
       say(msg);
     }, 'primary', 'error' in res || c.glowen < cost);
     go.setAttribute('data-testid', 'fuse-confirm');
@@ -757,7 +797,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       'div',
       { class: 'panel col', style: 'width:860px;gap:10px', 'data-testid': 'fuse-dialog' },
       h('h2', null, 'Fuse gems'),
-      h('div', { class: 'small dim-text' }, 'Choose the perks the original gem keeps; the rest come from the other gem, which is destroyed. Tiers come with their perks.'),
+      h('div', { class: 'small dim-text' }, `Choose the perks the original gem keeps; the rest come from the other gem, which is destroyed. Each perk keeps its own level and roll. Keep at least one original perk (${origin.map((f) => GEMS[f].name).join(', ')}): only the ones kept stay original, through every later fuse.`),
       h('div', { class: 'row', style: 'align-items:flex-start;gap:20px' }, left, right),
       preview,
       h('div', { class: 'row' }, go, cancel, h('div', { class: 'grow' }), glowenEl(c.glowen)),
@@ -804,6 +844,30 @@ export function openBonfire(v: BonfireView): HTMLElement {
       h('div', null, `It has ${gems.length} gem${gems.length === 1 ? '' : 's'} socketed. Sold with it, ${gems.length === 1 ? 'that gem is' : 'they are'} gone for good.`),
       h('div', { class: 'col', style: 'gap:2px' }, ...gems.map((g) => h('div', { class: 'row small', style: 'gap:6px;align-items:center' }, gemIcon(g, 18), h('span', null, `${gemKindLabel(g)} · ${gemTitle(g)}`)))),
       h('div', { class: 'row wrap' }, back, keep, all),
+    );
+  }
+
+  /** "Sell all gems" (D282): how many loose gems go, for how much, the locked ones kept, and a confirm. */
+  function gemSellAllDialog(): HTMLElement | null {
+    if (!confirmGemSell) return null;
+    const pv = sellAllGemsPreview(v.char);
+    const yes = btn(['Sell ', String(pv.count), ' for ', glowenEl(pv.glowen, '+')], () => {
+      confirmGemSell = false;
+      say(v.ops.sellAllGems());
+    }, 'primary', pv.count === 0);
+    yes.setAttribute('data-testid', 'sell-all-gems-confirm');
+    return h(
+      'div',
+      { class: 'panel col', style: 'width:460px;gap:10px', 'data-testid': 'sell-all-gems-dialog' },
+      h('h2', null, 'Sell all gems'),
+      h('div', null, `Sell every loose gem that is not locked: ${pv.count} gem${pv.count === 1 ? '' : 's'}.`),
+      h('div', { class: 'row' }, 'You get ', glowenEl(pv.glowen, '+'), h('span', { class: 'dim-text' }, ` (you have ${fmt(v.char.glowen)})`)),
+      pv.locked ? h('div', { class: 'small good' }, `${pv.locked} locked gem${pv.locked === 1 ? ' is' : 's are'} kept.`) : null,
+      h('div', { class: 'small dim-text' }, 'Gems in sockets and locked gems are never sold.'),
+      h('div', { class: 'row' }, yes, btn('Cancel', () => {
+        confirmGemSell = false;
+        render();
+      })),
     );
   }
 
@@ -937,6 +1001,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
         tab = d.key;
         fuse = null;
         confirmSell = null;
+        confirmGemSell = false;
         respecAsk = false;
         sellAsk = null;
         render();
@@ -957,7 +1022,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const content = h('div', { style: 'flex:1;overflow:auto', 'data-focus-group': `tab-${tab}` });
     defs.find((d) => d.key === tab)?.fn?.(content);
     panel.appendChild(content);
-    const box = confirmLeave ? leaveDialog() : tab === 'level' ? respecDialog() : tab === 'gems' ? fuseDialog() : tab === 'shop' ? (sellAskDialog() ?? sellAllDialog()) : tab === 'reinforce' ? reinforceDialog() : null;
+    const box = confirmLeave ? leaveDialog() : tab === 'level' ? respecDialog() : tab === 'gems' ? (fuseDialog() ?? gemSellAllDialog()) : tab === 'shop' ? (sellAskDialog() ?? sellAllDialog()) : tab === 'reinforce' ? reinforceDialog() : null;
     if (box) {
       // a layer of its own so the pad's focus stays inside the dialog
       modal = h('div', { class: 'layer dim', style: 'z-index:40' }, box);

@@ -3,6 +3,7 @@ import type { Character, SaveFile, WorldState } from '../types';
 import { CLASS_IDS } from '../../data/classes';
 import { sanitizeAppearance } from '../../data/appearance';
 import { dedupeItemIds } from '../items/inventory';
+import { normalizePadLayout } from '../../engine/padProfile';
 
 export const SAVE_VERSION = 3;
 export const SLOT_COUNT = 10;
@@ -107,6 +108,11 @@ export function normalizeSave(s: SaveFile): SaveFile {
   if (c.quickSlot === undefined) c.quickSlot = null;
   if (!c.consumables) c.consumables = {};
   if (!c.gems) c.gems = [];
+  // a character's own controller layout: checked when present (absent: it copies the global one when it plays)
+  if (c.pad !== undefined) {
+    if (c.pad && typeof c.pad === 'object') c.pad = normalizePadLayout(c.pad);
+    else delete c.pad;
+  }
   // Soul Essence (D198): five whole, non-negative counts; reinforcement levels 0–15 on every item
   if (c.essence !== undefined) {
     const e = Array.isArray(c.essence) ? c.essence : [];

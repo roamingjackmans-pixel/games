@@ -1,5 +1,5 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
-import { ROLE_STATS, SHARD_SCALE, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
+import { ROLE_STATS, SHARD_SCALE, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
 import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
@@ -50,7 +50,9 @@ export function spawnEnemy(w: World, def: EnemyDef | BossDef, x: number, y: numb
   hp *= coop;
   if (def.traits?.invincible) hp = def.mult?.hp ? baseHp * def.mult.hp : 120000;
   if (def.traits?.fixedHp) hp = def.traits.fixedHp;
-  const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * zoneDmgFactor(zone) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
+  // New Game+ room enemies hit harder by zone (D275); bosses and special NPCs keep the plain curve
+  const ngZone = isBoss || def.special ? 1 : ngZoneEnemyDmg(zone, cycle);
+  const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * zoneDmgFactor(zone) * ngZone * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
   const speed = (def.speed ?? rs.speed) * (def.mult?.speed ?? 1) * (elite === 'frenzied' ? 1.4 : 1);
   const share = Math.max(1, o.share ?? 1);
   const rawShards = (rs.shards * SHARD_SCALE * zoneShardFactor(zone) * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1)) / share;

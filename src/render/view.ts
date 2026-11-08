@@ -15,6 +15,7 @@ import { drawMovingFloors } from './movingFloor';
 import { drawAttackIcon, drawTelegraph } from './telegraphs';
 import { clearTelegraphEchoes, drawTelegraphEchoes, hasTelegraphEchoes } from './telegraphFx';
 import { clearSkillFx, drawSkillFxGround, drawSkillFxTop, spawnSkillFx } from './skillFx';
+import { drawThermosSparkle } from './thermosFx';
 import { ROOM_Y0 } from '../game/room';
 import { debugHitboxes, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerDot, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
@@ -325,6 +326,8 @@ export class WorldView {
     // skill and spell animations over the bodies (and meteors / arrows about to land on their telegraphs)
     drawSkillFxTop(ctx, rt, this.particles, w.entities.values(), now);
     this.particles.draw(ctx);
+    // golden sparkles on anyone drinking from the Thermos
+    for (const e of list) if (e.type === 'player') drawThermosSparkle(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha, now);
     // each player's eye-coloured dot over everything, so it shows through any attack marker (D262)
     for (const e of list) if (e.type === 'player') drawPlayerDot(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha);
     drawAmbience(ctx, realDt); // zone particles + vignette (render/ambience.ts)

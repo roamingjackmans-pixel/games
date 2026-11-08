@@ -17,7 +17,7 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
     if (it.slot === 'head' || it.slot === 'body' || it.slot === 'legs') equipment[it.slot] = it;
   }
   const gems: Gem[] = [];
-  for (let i = 0; i < (cls.start.gems ?? 0); i++) gems.push(makeGem(rng ? rng.pick(GEM_FAMILIES) : 'brutal', 1, 1, rng ? rollGemQuality(rng) : 0));
+  for (let i = 0; i < (cls.start.gems ?? 0); i++) gems.push(makeGem(rng ? rng.pick(GEM_FAMILIES) : 'brutal', { level: 1, q: rng ? rollGemQuality(rng) : 0 }));
   const altMain = cls.start.alt ? mk(cls.start.alt) : null;
   // each starting spell goes in its own school's loadout, in order
   const loadoutOf = (school: 'brain' | 'prayer'): [string | null, string | null, string | null] => {

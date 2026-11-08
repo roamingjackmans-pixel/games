@@ -81,7 +81,7 @@ export function enemyDrops(c: DropContext, e: Entity): void {
     }
     if (rng.chance((GEM_CHANCE.enemy * (1 + pl.derived.gemFind)) / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
-      spawnPickup(w, x, y, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, 1, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle)), amount: 1, rarity: 'rare' });
+      spawnPickup(w, x, y, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle)), amount: 1, rarity: 'rare' });
     }
     if (role === 'fodder' && rng.chance(CONSUMABLE_CHANCE.fodderSingle / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
@@ -135,7 +135,7 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
     }
     if (rng.chance(GEM_CHANCE.chest * (1 + pl.derived.gemFind))) {
       const [gx, gy] = scatter(rng, x, y + 20);
-      spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, kind === 'treasure' ? 2 : 1, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle)), amount: 1, rarity: 'rare' });
+      spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle), kind === 'treasure' ? 1 : 0), amount: 1, rarity: 'rare' });
     }
     if (rng.chance(CONSUMABLE_CHANCE.chestBundle)) {
       const [bx, by] = scatter(rng, x, y + 20);
@@ -187,7 +187,7 @@ export function instructorDrops(c: DropContext, x: number, y: number): void {
 }
 
 /**
- * A boss (GAME_DESIGN §7, §8.2, D84): per player 2–5 items from the boss rarity row, one gem, 10% a Tear of
+ * A boss (GAME_DESIGN §7, §8.2, D84): per player 2–5 items from the boss rarity row, a gem (65%, D281), 10% a Tear of
  * Undoing, and some Glowen. The arena's spell reliquary is rolled by the session (it is a world object).
  */
 export function bossDrops(c: DropContext, bossId: string, x: number, y: number): void {
@@ -204,9 +204,11 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
       const [ix, iy] = scatter(rng, x, y, 60);
       dropItem(w, pid, item, ix, iy);
     }
-    const tier = Math.min(5, Math.ceil(c.zone / 3) + c.cycle) as 1 | 2 | 3 | 4 | 5;
-    const [gx, gy] = scatter(rng, x, y, 60);
-    spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, tier, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle)), amount: 1, rarity: 'rare' });
+    // D281: a gem 65% of the time (was always); D284: it rolls its quality one extra time and keeps the best
+    if (rng.chance(GEM_CHANCE.boss)) {
+      const [gx, gy] = scatter(rng, x, y, 60);
+      spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle), 1), amount: 1, rarity: 'rare' });
+    }
     if (rng.chance(TEAR_CHANCE.boss)) {
       const [tx, ty] = scatter(rng, x, y, 60);
       spawnPickup(w, tx, ty, { kind: 'tear', forPlayer: pid, amount: 1, rarity: 'legendary' });

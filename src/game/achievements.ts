@@ -83,8 +83,8 @@ export function wearsFullSet(c: Character): boolean {
 }
 
 export function hasMaxGem(c: Character): boolean {
-  // a gem perk at Tier 5 (perks carry the tiers since gems can hold several)
-  const maxed = (g: { perks: { tier: number }[] } | null): boolean => !!g && g.perks.some((p) => p.tier >= 5);
+  // D284: a gem perk with an Orange roll (it was a perk at Tier 5; gems have no tiers now)
+  const maxed = (g: Gem | null): boolean => !!g && g.perks.some((p) => perkQuality(p).id === 'orange');
   if (c.gems.some(maxed)) return true;
   return itemsOf(c).some((it) => it.sockets.some(maxed));
 }
@@ -317,7 +317,8 @@ export class AchievementTracker {
           this.add('riposteKills');
         }
         const boss = BOSSES[ev.defId];
-        if (boss) this.bossDown(boss.id, boss.zone, c);
+        // a New Game+ bonus fight (D278) is not the boss's own fight: no boss feats from it
+        if (boss && !ev.bonus) this.bossDown(boss.id, boss.zone, c);
         if (ev.defId === INSTRUCTOR.id) this.flag('instructor');
         if (ev.defId === MIMIC.id) this.flag('mimicKill');
         if (countsAsKill(ev.defId)) this.add('kills');

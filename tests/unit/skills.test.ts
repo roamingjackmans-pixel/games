@@ -157,7 +157,7 @@ describe('caps and casting rules', () => {
   it('cooldown reduction is capped at 50% and attack speed at ×1.6', () => {
     const { w, p } = world();
     const c = p.pl!.char;
-    c.equipment.main = makeItem('longsword', 'legendary', 5, { gems: [makeGem('tempo', 5), makeGem('tempo', 5)] });
+    c.equipment.main = makeItem('longsword', 'legendary', 5, { gems: [makeGem('tempo', { q: 0.5 }), makeGem('tempo', { q: 0.5 })] });
     c.equipment.main.affixes.push({ id: 'hasty', value: 12 }, { id: 'swift', value: 40 });
     c.equipment.ring1 = makeItem('band_bonk', 'rare', 1);
     c.equipment.ring1.affixes.push({ id: 'hasty', value: 12 });

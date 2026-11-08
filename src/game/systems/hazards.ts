@@ -170,7 +170,9 @@ export function updateHazards(w: World, _dt: number): void {
         break;
       }
       if (!inside) continue;
-      if (v.flying && !def.slow) continue;
+      // ground hazards miss flyers; a slowing field and a pulling field (Gravity Well) reach them, so the well pulls
+      // Saint Aurelia's hovering ice mirrors too
+      if (v.flying && !def.slow && !hz.pull) continue;
       if (def.trap) {
         // caught: root + one hit, then the trap is spent (it catches enemies too)
         applyControl(w, v, def.trap.control.id, def.trap.control.durationS);

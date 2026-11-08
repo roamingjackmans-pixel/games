@@ -112,6 +112,8 @@ export const THE_BLOATKING: BossDef = {
   zone: 3,
   name: 'The Bloatking',
   role: 'boss',
+  // his Wave is dodged on the sewer's grates (D278)
+  arenaBound: true,
   radius: 60,
   speed: 95,
   resist: {},

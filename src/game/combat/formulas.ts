@@ -326,26 +326,21 @@ export function flaskCap(c: { flaskMax: number; equipment: { legs: { legendaryPo
   return Math.min(5, c.flaskMax + (c.equipment.legs?.legendaryPower === 'lucky_socks' ? 1 : 0));
 }
 
-/** Glowen for one gem perk: 40 × 3^(tier−1); upgrading a perk = 10× its value. */
-export function gemSellValue(tier: number): number {
-  return 40 * Math.pow(3, tier - 1);
-}
-export function gemUpgradeCost(tier: number): number {
-  return 10 * gemSellValue(tier);
-}
-/** One perk's sale price: its tier's value × its level's strength (D197; a perk from before levels sells as it did). */
-export function gemPerkSellValue(p: { tier: number; level?: number }): number {
-  if (p.level === undefined) return gemSellValue(p.tier);
-  const l = Math.max(1, Math.min(50, p.level));
-  return Math.max(5, Math.round(gemSellValue(p.tier) * (0.25 + (2.75 * (l - 1)) / 49)));
+/** Glowen for one baseline gem perk (D284: one price for every family now tiers are gone; T1 sold for 40, T3 for 360). */
+export const GEM_PERK_PRICE = 80;
+/** A perk's sale price: the baseline price × its level's strength × its roll (a perk from before levels counts as ×1). */
+export function gemPerkSellValue(p: { level?: number; q?: number }): number {
+  const l = p.level === undefined ? null : Math.max(1, Math.min(50, p.level));
+  const lm = l === null ? 1 : 0.25 + (2.75 * (l - 1)) / 49;
+  return Math.max(5, Math.round(GEM_PERK_PRICE * lm * (1 + (p.q ?? 0))));
 }
 /** A whole gem sells for the sum of its perks. */
-export function gemSellTotal(g: { perks: { tier: number; level?: number }[] }): number {
+export function gemSellTotal(g: { perks: { level?: number; q?: number }[] }): number {
   return g.perks.reduce((s, p) => s + gemPerkSellValue(p), 0);
 }
-/** Fusing two gems costs the value of the best perk the result keeps (small next to an upgrade). */
-export function gemFuseCost(perks: { tier: number }[]): number {
-  return gemSellValue(perks.reduce((m, p) => Math.max(m, p.tier), 1));
+/** Fusing two gems costs the sale price of the best perk the result keeps (at least 40). */
+export function gemFuseCost(perks: { level?: number; q?: number }[]): number {
+  return Math.max(40, perks.reduce((m, p) => Math.max(m, gemPerkSellValue(p)), 0));
 }
 
 export const GEAR_SELL: Record<string, number> = { common: 10, uncommon: 25, rare: 60, epic: 150, legendary: 400 };

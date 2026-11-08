@@ -89,7 +89,7 @@ describe('save schema (DATA_MODEL §1)', () => {
     expect(s.character.freePoints).toBe(0);
     expect(s.world.leftBehind).toEqual({});
   });
-  it('migrates version-2 gems ({family, tier}) to perk lists everywhere they live', () => {
+  it('migrates version-2 gems ({family, tier}) to perk lists everywhere they live, the tier folded into the roll (D284)', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const v2 = JSON.parse(JSON.stringify(newSave(1, newCharacter('knight', 'Joe', 'p'), 'SEED'))) as Record<string, any>;
     v2.version = 2;
@@ -102,10 +102,10 @@ describe('save schema (DATA_MODEL §1)', () => {
     const m = migrate(v2) as Record<string, any>;
     expect(m.version).toBe(SAVE_VERSION);
     expect(validateSave(m)).toEqual([]);
-    expect(m.character.gems).toEqual([{ perks: [{ family: 'bulwark', tier: 2 }] }]);
-    expect(m.character.equipment.main.sockets).toEqual([{ perks: [{ family: 'brutal', tier: 3 }] }, null]);
-    expect(m.character.bag[0].sockets[0]).toEqual({ perks: [{ family: 'brutal', tier: 3 }] });
-    expect(m.world.garyStock.z2c0[0].gem).toEqual({ perks: [{ family: 'tempo', tier: 2 }] });
+    expect(m.character.gems).toEqual([{ perks: [{ family: 'bulwark', q: -0.25 }] }]);
+    expect(m.character.equipment.main.sockets).toEqual([{ perks: [{ family: 'brutal', q: 0 }] }, null]);
+    expect(m.character.bag[0].sockets[0]).toEqual({ perks: [{ family: 'brutal', q: 0 }] });
+    expect(m.world.garyStock.z2c0[0].gem).toEqual({ perks: [{ family: 'tempo', q: -0.25 }] });
   });
 });
 

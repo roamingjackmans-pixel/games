@@ -34,6 +34,8 @@ export interface DrawState {
   elem: DamageType;
   /** the damage type of the attack it is winding up or swinging right now (null when not attacking) */
   atk: DamageType | null;
+  /** a boss in a phase transition: how far through it (0–1); absent otherwise */
+  trans?: number;
 }
 
 export type DrawFn = (ctx: CanvasRenderingContext2D, s: DrawState) => void;

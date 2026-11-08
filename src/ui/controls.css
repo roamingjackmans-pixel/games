@@ -10,6 +10,7 @@
 .bind-name { font-size: 13px; color: var(--text); }
 .bind-foot > button { white-space: nowrap; flex: none; }
 .bind-notice { font-size: 13px; color: var(--good); background: rgba(88, 214, 106, 0.08); border: 1px solid rgba(88, 214, 106, 0.3); border-radius: 6px; padding: 5px 10px; }
+.settings-panel .pad-owner { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; border: 1px solid var(--line, #3a3448); border-radius: 6px; background: rgba(255, 255, 255, 0.03); }
 .capture-bar { display: flex; flex-direction: column; gap: 6px; background: #2a2418; border: 2px solid var(--accent); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
 .capture-hold { gap: 6px; cursor: pointer; font-size: 13px; }
 .capture-progress { width: 160px; height: 8px; background: #3a3447; border-radius: 4px; overflow: hidden; }

@@ -157,6 +157,30 @@ export const SFX = {
       { wave: 'noise', f0: 0, dur: 1.0, a: 0.1, vol: 0.4, lp: 900 },
     ],
   },
+  // The Landlord, Unbound (phase 4): the power gathering, the scream as the armour forms, and his blink
+  unboundCharge: {
+    voices: [
+      { wave: 'saw', f0: 55, f1: 220, dur: 1.6, a: 0.6, vol: 0.22, lp: 500, lpEnd: 2400, vib: 0.03, vibRate: 14, detune: 15 },
+      { wave: 'noise', f0: 0, dur: 1.6, a: 0.8, vol: 0.18, lp: 800, lpEnd: 5000 },
+    ],
+  },
+  unboundRoar: {
+    voices: [
+      { wave: 'saw', f0: 140, f1: 420, dur: 0.5, a: 0.05, vol: 0.32, lp: 1800, vib: 0.08, vibRate: 11, detune: 25 },
+      { wave: 'saw', f0: 420, f1: 260, dur: 1.4, delay: 0.45, vol: 0.3, lp: 1600, vib: 0.1, vibRate: 9, detune: 30 },
+      { wave: 'noise', f0: 0, dur: 1.6, a: 0.05, vol: 0.35, lp: 3000, lpEnd: 400 },
+      { wave: 'sine', f0: 60, f1: 32, dur: 1.8, vol: 0.5 },
+      { wave: 'square', f0: 2400, f1: 900, dur: 0.06, delay: 0.2, vol: 0.08 },
+      { wave: 'square', f0: 2800, f1: 700, dur: 0.06, delay: 0.55, vol: 0.08 },
+      { wave: 'square', f0: 2000, f1: 800, dur: 0.06, delay: 0.9, vol: 0.08 },
+    ],
+  },
+  voidBlink: {
+    voices: [
+      { wave: 'sine', f0: 1600, f1: 200, dur: 0.18, vol: 0.18 },
+      { wave: 'noise', f0: 0, dur: 0.12, vol: 0.12, lp: 4000, lpEnd: 600 },
+    ],
+  },
   phaseChange: {
     voices: [
       { wave: 'sine', f0: 120, f1: 30, dur: 1.4, a: 0.01, vol: 0.6 },

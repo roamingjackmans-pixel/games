@@ -7,8 +7,12 @@
 // Phase 2, The Deep Lease: a colossal void face filling the far third of the platform under a floating top
 // hat, ram horns, glowing slit-pupil eyes, a grinning maw that opens on the windup, two huge clawed hands
 // gripping the platform's edge, and a red sweep arrow showing where Foreclosure's gaze strikes next (s.gaze).
+// Phase 3, The Landlord, Unbound (D279): the face knocked down, he rises player-sized in black spiked plate, his
+// TV head a horned helm with burning eyes, a void blade in his hand, wreathed in a golden-violet aura with
+// crackling arcs. The 4.5 s transition (s.trans) plays it: face shards fly, he lies stunned, gets up, the power
+// gathers, the top hat falls away and the armour forms.
 // The red/blue tint glow is added by the registry.
-import { poly } from '../parts';
+import { mix, poly } from '../parts';
 import { registerDraw, type DrawState } from '../registry';
 import {
   OUTLINE,
@@ -23,6 +27,7 @@ import {
   dizzy,
   elbow,
   f,
+  flame,
   glow,
   glowEye,
   groundShadow,
@@ -744,7 +749,265 @@ function drawVoidFace(ctx: CanvasRenderingContext2D, s: DrawState): void {
   if (s.gaze !== undefined) sweepArrow(ctx, x, y, Math.max(rx, ry) * 1.25, s.gaze, s.t);
 }
 
+// ---------------------------------------------------------------- Unbound (phase 4)
+
+const GOLD = '#ffd24a';
+const GOLD_HI = '#fff3b0';
+const PLATE = '#110d17';
+const PLATE_HI = '#43375a';
+const EVIL_EYE = '#ff2a3a';
+
+const ease = (k: number): number => k * k * (3 - 2 * k);
+
+/** The aura: gold and violet flame tongues licking up round him and a gold glow; k = strength (0–1.5). */
+function unboundAura(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, t: number, k: number): void {
+  if (k <= 0.01) return;
+  glow(ctx, x, y - r * 0.9, r * (2.4 + k * 1.2), '#ffb52a', Math.min(0.5, (0.26 + Math.sin(t * 9) * 0.04) * k));
+  glow(ctx, x, y - r * 0.9, r * 2.0, LILAC, 0.32 * Math.min(1, k));
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha *= Math.min(1, k);
+  const n = 9;
+  for (let i = 0; i < n; i++) {
+    const a = (i / (n - 1) - 0.5) * 2.6;
+    const bx = x + Math.sin(a) * r * 0.85;
+    const by = y + r * 0.85 - Math.cos(a) * r * 0.25;
+    const h = r * (1.7 + 1.3 * hash(i * 13 + Math.floor(t * 12))) * Math.min(1.4, k) * (1 - Math.abs(a) * 0.18);
+    flame(ctx, bx, by, h, r * 0.6, t * 1.6, i * 7.3, i % 3 === 0 ? LILAC : '#ffb52a', GOLD_HI, 0);
+  }
+  ctx.restore();
+}
+
+/** Crackling arcs round him, re-rolled 16 times a second (deterministic: no Math.random). */
+function crackle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, t: number, k: number): void {
+  if (k <= 0.2) return;
+  const frame = Math.floor(t * 16);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (let i = 0; i < 4; i++) {
+    if (hash(frame * 3 + i * 17) > 0.35 + 0.3 * Math.min(1, k)) continue;
+    const a0 = hash(frame * 5 + i) * TAU;
+    let px = x + Math.cos(a0) * r * 0.5;
+    let py = y - r * 0.9 + Math.sin(a0) * r * 0.9;
+    const pts = [px, py];
+    for (let j = 1; j <= 4; j++) {
+      const aa = a0 + (hash(frame * 11 + i * 7 + j) - 0.5) * 1.6;
+      px += Math.cos(aa) * r * 0.45;
+      py += Math.sin(aa) * r * 0.45;
+      pts.push(px, py);
+    }
+    const [outer, inner] = i % 2 ? [GOLD, GOLD_HI] : [LILAC, '#f0e0ff'];
+    for (const [c, wd] of [[outer, r * 0.16], [inner, r * 0.06]] as const) {
+      ctx.strokeStyle = withAlpha(c, 0.9);
+      ctx.lineWidth = wd;
+      linePath(ctx, pts);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+/** A round-capped stroke with an outline (arms, the blade). */
+function limb(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, wd: number, fill: string, lw: number): void {
+  ctx.lineCap = 'round';
+  for (const [c, w] of [[OUTLINE, wd + lw], [fill, wd]] as const) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+}
+
+/**
+ * The small form. `armour` 0–1 turns the torn suit and TV head into spiked black plate and a horned helm with
+ * burning eyes (the top hat falls away); `lie` 0–1 lays him on his back (knocked down).
+ */
+function drawSmall(ctx: CanvasRenderingContext2D, s: DrawState, armour: number, lie: number): void {
+  const r = s.r;
+  const lw = Math.max(1, r * 0.09);
+  const [side, aL] = mirrored(s);
+  const back = Math.sin(s.facing) < -0.6 && lie < 0.5;
+  const w = poseWeights(s);
+  const ag = atkGlow(s);
+  const ak = atkK(s);
+  // blade arm angle (local, facing +x): low and forward at rest, raised over the shoulder, struck through
+  const bladeA = blendPose([0.9], [-2.0], [aL + 0.7], w)[0]!;
+  const offA = 1.9 - w[1] * 0.6;
+  const stride = Math.sin(s.t * 14) * r * 0.16 * s.moving * (1 - lie);
+  const bob = lie > 0 ? 0 : Math.sin(s.t * 3) * r * 0.03;
+  const col = (a: string, b: string): string => f(s, mix(a, b, armour));
+  const fillPoly = (pts: number[], fill: string): void => {
+    linePath(ctx, pts);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+  };
+
+  groundShadow(ctx, s.x, s.y + r * 0.9, r * (0.7 + lie * 0.7), r * 0.22, 0.5);
+  ctx.save();
+  ctx.translate(s.x, s.y + r * 0.9);
+  // knocked down: turned onto his back about the feet, along the floor
+  if (lie > 0) {
+    ctx.translate(-side * r * 1.1 * lie, -r * 0.35 * lie);
+    ctx.rotate(-side * (Math.PI / 2) * lie);
+  }
+  ctx.scale(side * (1 + s.squash * 0.05), 1 - s.squash * 0.08);
+
+  // the cape (his coat tails, ragged)
+  const capeSway = Math.sin(s.t * 3) * r * 0.05 + s.moving * r * 0.12;
+  fillPoly([-0.42 * r, -1.5 * r + bob, -0.62 * r - capeSway, -0.1 * r, ...raggedEdge(-0.62 * r - capeSway, -0.05 * r, -0.05 * r, 0.14 * r, 4, 5, s.t), -0.1 * r, -1.2 * r + bob], col(SUIT, '#1a0d24'));
+  // the empty hand, behind (clawed gauntlet once armoured)
+  const bsX = -0.42 * r;
+  const bsY = -1.42 * r + bob;
+  const oX = bsX + Math.cos(offA) * r * 0.8;
+  const oY = bsY + Math.sin(offA) * r * 0.8;
+  limb(ctx, bsX, bsY, oX, oY, r * 0.22, col(SUIT, PLATE), lw);
+  if (armour > 0.3) claws(ctx, oX, oY, offA, r * 0.3 * armour, r * 0.08, 3, 0.9, 0.3, f(s, '#2a2236'));
+  // legs: greaves with a spike at each knee
+  for (const [hx, fx] of [[-0.16, -0.22], [0.16, 0.24]] as const) {
+    const st = fx > 0 ? stride : -stride;
+    taper(ctx, hx * r, -0.78 * r, fx * r + st, 0, r * 0.26, r * 0.2, col(TROUSER, PLATE));
+    if (armour > 0.2) horn(ctx, (hx + fx) * 0.5 * r + st * 0.5, -0.42 * r, -0.3, 0.26 * r * armour, 0.1 * r, 0.3, f(s, PLATE_HI), 0.6);
+  }
+  // the torso: the suit, or a cuirass with a burning void core
+  fillPoly([-0.5 * r, -1.58 * r + bob, 0.5 * r, -1.58 * r + bob, 0.34 * r, -0.78 * r, -0.34 * r, -0.78 * r], col(SUIT, PLATE));
+  if (!back) {
+    if (armour < 1) {
+      ctx.save();
+      ctx.globalAlpha *= 1 - armour;
+      fillPoly([-0.12 * r, -1.58 * r + bob, 0.12 * r, -1.58 * r + bob, 0, -1.05 * r], f(s, PALE));
+      fillPoly([-0.04 * r, -1.55 * r + bob, 0.04 * r, -1.55 * r + bob, 0.05 * r, -1.2 * r, -0.05 * r, -1.2 * r], f(s, '#6a1fb0'));
+      ctx.restore();
+    }
+    if (armour > 0) {
+      ctx.save();
+      ctx.globalAlpha *= armour;
+      ctx.strokeStyle = PLATE_HI;
+      ctx.lineWidth = r * 0.06;
+      ctx.beginPath();
+      ctx.moveTo(-0.36 * r, -1.36 * r + bob);
+      ctx.lineTo(0, -1.12 * r);
+      ctx.lineTo(0.36 * r, -1.36 * r + bob);
+      ctx.moveTo(-0.28 * r, -0.98 * r);
+      ctx.lineTo(0.28 * r, -0.98 * r);
+      ctx.stroke();
+      glow(ctx, 0, -1.2 * r, r * 0.55, ag ?? GOLD, 0.8);
+      oval(ctx, 0, -1.2 * r, r * 0.1, r * 0.1, f(s, GOLD_HI), { under: null, w: 0.3 });
+      ctx.restore();
+    }
+  }
+  // pauldrons, spiked
+  for (const k of [-1, 1]) {
+    oval(ctx, k * 0.5 * r, -1.55 * r + bob, r * 0.24, r * 0.18, col(SUIT_HI, '#241c30'), { under: null, w: 0.4 });
+    if (armour > 0) {
+      horn(ctx, k * 0.56 * r, -1.66 * r + bob, -Math.PI / 2 + k * 0.6, 0.5 * r * armour, 0.14 * r, k * 0.35, f(s, PLATE_HI), 0.6);
+      horn(ctx, k * 0.4 * r, -1.68 * r + bob, -Math.PI / 2 + k * 0.25, 0.32 * r * armour, 0.1 * r, k * 0.2, f(s, PLATE_HI), 0.6);
+    }
+  }
+  // the head: the TV set, or a horned helm with burning slits
+  const hX = 0.04 * r;
+  const hY = -1.98 * r + bob;
+  const hW = 0.66 * r;
+  const hH = 0.54 * r;
+  ctx.beginPath();
+  ctx.roundRect(hX - hW / 2, hY - hH / 2, hW, hH, hW * 0.22);
+  ctx.fillStyle = col(BEZEL, PLATE);
+  ctx.fill();
+  ctx.lineWidth = lw;
+  ctx.strokeStyle = OUTLINE;
+  ctx.stroke();
+  if (!back) {
+    if (armour < 0.6) staticFace(ctx, hX + 0.02 * r, hY, hW * 0.72, hH * 0.66, s.t, s.flash, 1 - armour / 0.6);
+    else {
+      ctx.beginPath();
+      ctx.roundRect(hX - hW * 0.36, hY - hH * 0.3, hW * 0.72, hH * 0.6, hW * 0.12);
+      ctx.fillStyle = '#05030a';
+      ctx.fill();
+    }
+    if (armour > 0.3) {
+      const eye = ag ?? (armour > 0.8 ? EVIL_EYE : GOLD);
+      for (const k of [-1, 1]) glowEye(ctx, hX + k * hW * 0.18 + 0.03 * r, hY - hH * 0.02, r * 0.1, r * 0.035, eye, k * -0.25, armour);
+    }
+  }
+  if (armour > 0) for (const k of [-1, 0, 1]) horn(ctx, hX + k * hW * 0.32, hY - hH * 0.42, -Math.PI / 2 + k * 0.45, (k === 0 ? 0.5 : 0.42) * r * armour, 0.12 * r, k * 0.4, f(s, PLATE_HI), 0.6);
+  // the top hat, tumbling away as the armour forms
+  if (armour < 1) {
+    ctx.save();
+    ctx.globalAlpha *= 1 - armour;
+    ctx.translate(hX + armour * r * 0.6, hY - hH * 0.5 - armour * r * 0.5);
+    ctx.rotate(armour * 0.9);
+    fillPoly([-0.24 * r, 0, -0.26 * r, -0.5 * r, 0.26 * r, -0.5 * r, 0.24 * r, 0], f(s, '#16121e'));
+    fillPoly([-0.38 * r, 0.04 * r, 0.38 * r, 0.04 * r, 0.3 * r, -0.04 * r, -0.3 * r, -0.04 * r], f(s, '#1e1828'));
+    ctx.restore();
+  }
+  // the blade arm, in front: a long void blade, gold-edged
+  const fsX = 0.42 * r;
+  const fsY = -1.42 * r + bob;
+  const hx = fsX + Math.cos(bladeA) * r * 0.85;
+  const hy = fsY + Math.sin(bladeA) * r * 0.85;
+  if (ag && s.pose === 'attack') trail(ctx, fsX, fsY, r * 2.2, r * 0.9, -2.0, bladeA, ag, ak);
+  limb(ctx, fsX, fsY, hx, hy, r * 0.22, col(SUIT, PLATE), lw);
+  const bl = r * (0.6 + 1.0 * armour);
+  const tx = hx + Math.cos(bladeA) * bl;
+  const ty = hy + Math.sin(bladeA) * bl;
+  if (armour > 0) glow(ctx, (hx + tx) / 2, (hy + ty) / 2, bl * 0.7, ag ?? GOLD, 0.45 * armour + 0.4 * ak);
+  limb(ctx, hx, hy, tx, ty, r * 0.16, f(s, VOID), lw);
+  limb(ctx, hx, hy, tx, ty, r * 0.05, f(s, mix(LILAC, GOLD_HI, armour)), 0);
+  oval(ctx, hx, hy, r * 0.12, r * 0.12, f(s, armour > 0.5 ? '#2a2236' : HAND), { under: null, w: 0.4 });
+  ctx.restore();
+}
+
+/** The face's pieces flying apart as it is knocked down (the first moments of the transformation). */
+function faceShards(ctx: CanvasRenderingContext2D, x: number, y: number, k: number): void {
+  if (k >= 1) return;
+  ctx.save();
+  ctx.globalAlpha *= 1 - k;
+  for (let i = 0; i < 12; i++) {
+    const a = hash(i * 3.7) * TAU;
+    const d = 40 + ease(k) * (160 + hash(i) * 220);
+    const sx = x + Math.cos(a) * d;
+    const sy = y + Math.sin(a) * d * 0.7 + k * k * 80;
+    const sz = 8 + hash(i * 9) * 14;
+    poly(ctx, [sx, sy - sz, sx + sz * 0.7, sy, sx, sy + sz * 0.6, sx - sz * 0.6, sy], i % 3 ? '#1a1424' : LILAC, OUTLINE, 1.5);
+  }
+  ctx.restore();
+}
+
+function drawUnbound(ctx: CanvasRenderingContext2D, s: DrawState): void {
+  const r = s.r;
+  const k = s.trans;
+  if (k === undefined) {
+    // the duel: full plate, a steady blaze that flares on his windups
+    const aura = 1 + (s.pose === 'windup' ? 0.35 : 0) + Math.sin(s.t * 6) * 0.08;
+    unboundAura(ctx, s.x, s.y, r, s.t, aura);
+    drawSmall(ctx, s, 1, 0);
+    crackle(ctx, s.x, s.y, r, s.t, aura);
+    if (s.pose === 'stagger') dizzy(ctx, s.x, s.y - r * 2.6, r * 0.9, s.t);
+    return;
+  }
+  // the transformation: knocked down (0–0.32), getting up (–0.5), the power gathering (–0.68), the scream as the
+  // armour forms (–0.9), the blaze settling (–1)
+  const lie = k < 0.32 ? 1 : k < 0.5 ? 1 - ease((k - 0.32) / 0.18) : 0;
+  const armour = ease(Math.max(0, Math.min(1, (k - 0.6) / 0.3)));
+  const aura = k < 0.42 ? 0 : Math.min(1, (k - 0.42) / 0.26) * (k > 0.68 && k < 0.85 ? 1.5 : 1);
+  const screaming = k > 0.68 && k < 0.85;
+  faceShards(ctx, s.x, s.y - r, Math.min(1, k / 0.3));
+  unboundAura(ctx, s.x, s.y, r, s.t, aura);
+  const squash = k > 0.45 && k < 0.66 ? Math.sin(((k - 0.45) / 0.21) * Math.PI) * -0.6 : 0;
+  drawSmall(ctx, { ...s, squash, pose: 'idle', moving: 0, flash: screaming && Math.floor(s.t * 20) % 4 === 0 }, armour, lie);
+  crackle(ctx, s.x, s.y, r, s.t, aura);
+  if (k < 0.32) dizzy(ctx, s.x - r * 0.4, s.y + r * 0.2, r * 0.9, s.t);
+  if (screaming) roarLines(ctx, s.x, s.y - r * 2, r * 2.2, 1, s.t, GOLD);
+}
+
 registerDraw('boss_landlord', (ctx, s) => {
-  if (s.phase >= 2) drawVoidFace(ctx, s);
+  if (s.phase >= 3) drawUnbound(ctx, s);
+  else if (s.phase >= 2) drawVoidFace(ctx, s);
   else drawSuited(ctx, s, s.phase >= 1);
 });

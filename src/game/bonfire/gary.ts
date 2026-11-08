@@ -1,6 +1,6 @@
 // Gary, the wandering merchant (GAME_DESIGN §11, CONTENT_ITEMS §3): 3–5 special things for Glowen in a
 // merchant room. The stock is rolled once per zone and cycle from the world seed and kept in the save, so
-// it is the same every visit; sold entries stay sold. NG+ stock is better (more Legendaries, gems +1 tier).
+// it is the same every visit; sold entries stay sold. NG+ stock is better (more Legendaries, gems roll better).
 import { stream } from '../../engine/rng';
 import { CONSUMABLE_IDS, CONSUMABLES } from '../../data/consumables';
 import { gemDropLevel, gemKindLabel, gemTitle } from '../../data/gems';
@@ -23,8 +23,9 @@ export function garyStock(ws: WorldState, zone: number, cycle: number): GaryStoc
       return { kind: 'item', item, price: Math.max(400, itemSellValue(item) * 5), sold: false };
     },
     () => {
-      const tier = Math.min(5, (rng.chance(0.6) ? 2 : 3) + (cycle > 0 ? 1 : 0)) as 2 | 3 | 4;
-      const gem = randomGem(rng, tier, cycle, undefined, gemDropLevel(rng, zone, cycle));
+      // D284: Gary's gems roll their quality two or three times (one more in NG+) and keep the best (they were a tier or two up)
+      const bonus = (rng.chance(0.6) ? 1 : 2) + (cycle > 0 ? 1 : 0);
+      const gem = randomGem(rng, cycle, undefined, gemDropLevel(rng, zone, cycle), bonus);
       return { kind: 'gem', gem, price: gemSellTotal(gem) * 3, sold: false };
     },
     () => {
@@ -69,7 +70,7 @@ export function buyFromGary(c: Character, e: GaryStockEntry): { ok: boolean; msg
   c.glowen -= e.price;
   e.sold = true;
   if ((e.kind === 'item' || e.kind === 'ring') && e.item) c.bag.push(uniqueItemId(c, e.item));
-  else if (e.kind === 'gem' && e.gem) c.gems.push({ perks: e.gem.perks.map((p) => ({ ...p })) });
+  else if (e.kind === 'gem' && e.gem) c.gems.push({ perks: e.gem.perks.map((p) => ({ ...p })), ...(e.gem.origin ? { origin: [...e.gem.origin] } : {}) });
   else if (e.kind === 'consumable' && e.consumable) {
     c.consumables[e.consumable] = Math.min(10, (c.consumables[e.consumable] ?? 0) + (e.count ?? 1));
     if (!c.quickSlot) c.quickSlot = e.consumable;

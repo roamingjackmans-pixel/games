@@ -159,7 +159,7 @@ function sections(c: Counters): { title: string; rows: Row[] }[][] {
           ['Epic', N('loot:epic'), 'r-epic'],
           ['Legendary', N('loot:legendary'), 'r-legendary'],
           ['Gems found', N('gems')],
-          ['Gems upgraded / fused', `${N('gemsUpgraded')} / ${N('gemsFused')}`],
+          ['Gems fused', `${N('gemsFused')}`],
           ['Chests opened', N('chests')],
           ['Gary visits', N('garyVisits')],
           ['Bought from Gary', N('garyBuys')],

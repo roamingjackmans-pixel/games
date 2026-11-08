@@ -24,7 +24,9 @@ import './loot';
 import { rollShopPiece } from './bonfire/shop';
 import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse } from './combat/damage';
-import { reviveRequirement } from './combat/formulas';
+import { enemyDmgMult, reviveRequirement } from './combat/formulas';
+import { zoneDmgFactor } from '../data/roles';
+import { BONUS_BOSS_HP_PCT, BONUS_BOSS_PHASE, BONUS_BOSS_SHARD_MULT } from './procgen/bonusBoss';
 import { BOSSES } from '../data/bosses';
 import { DEATH_TITLES } from '../data/story';
 import { newWorldState } from './save/schema';
@@ -147,7 +149,8 @@ export class GameSession {
         this.save.stats.kills++;
         if (e.en?.elite) this.save.stats.elitesKilled++;
         if (e.en?.def.traits?.mimic && e.en.mimicChestId) this.mimicKilled(e);
-        if (e.en?.isBoss) this.bossKilled(e);
+        if (e.en?.bonusBoss) this.bonusBossKilled(e);
+        else if (e.en?.isBoss) this.bossKilled(e);
         if (e.en?.def.id === INSTRUCTOR.id) {
           this.save.world.instructorKilled = true;
           lootHooks.instructor(this, e.x, e.y);
@@ -740,6 +743,10 @@ export class GameSession {
   private spawnWave(i: number, tellS: number): void {
     const plan = this.plan;
     if (!plan) return;
+    if (i === 0 && plan.bonusBoss) {
+      this.spawnBonusBoss(plan.bonusBoss);
+      return;
+    }
     const wave = plan.waves[i];
     if (!wave) return;
     const w = this.w;
@@ -766,6 +773,65 @@ export class GameSession {
       this.waveSize += ents.length;
       w.sfx('spawnTell', x, 0.4);
     }
+  }
+
+  /**
+   * A New Game+ bonus fight (D278): a boss from any zone, in its second phase, at 30% of the HP it has in this
+   * playthrough (its own zone's, this cycle's, the party's). It hits as hard as a boss of the room's zone would (not
+   * its own zone's), and its arena's changes and timed summons stay in its arena: it brings its phase's attacks. Its
+   * Shards are cut like its HP. The room clears when it (and anything it called) is down.
+   */
+  private spawnBonusBoss(bossId: string): void {
+    const def = BOSSES[bossId];
+    const w = this.w;
+    if (!def) return;
+    const zd = zoneDef(this.layout.zone);
+    const cyc = this.save.character.cycle;
+    const here = this.layout.zone;
+    const dmgFix = (enemyDmgMult(here, cyc) * zoneDmgFactor(here)) / (enemyDmgMult(def.zone, cyc) * zoneDmgFactor(def.zone));
+    // the spawn point farthest from the party
+    const players = w.livingPlayers();
+    const far = (p: [number, number]): number => Math.min(1e9, ...players.map((q) => dist(q.x, q.y, p[0], p[1])));
+    const pts: [number, number][] = this.markers.spawns.length ? [...this.markers.spawns].sort((a, b) => far(b) - far(a)) : [[640, 300]];
+    const [x, y] = w.room.nearestFloor(pts[0]![0], pts[0]![1], def.radius || 56);
+    const e = spawnEnemy(w, def, x, y, { tellS: 1.6, zone: def.zone, dmgMult: dmgFix, zoneResist: zd.resist, zoneImmune: zd.statusImmune });
+    const en = e.en!;
+    const phase = Math.min(BONUS_BOSS_PHASE, def.phases.length - 1);
+    const ph = def.phases[phase]!;
+    en.bonusBoss = true;
+    en.phase = phase;
+    en.phaseAttacks = ph.attacks;
+    // its table starts staggered, as a phase change leaves it
+    ph.attacks.forEach((a, k) => {
+      en.cooldowns[a.id] = w.time + 2.2 + k * 0.4;
+    });
+    e.hp!.hp = Math.max(1, e.hp!.max * BONUS_BOSS_HP_PCT);
+    en.shards = Math.max(1, Math.round(en.shards * BONUS_BOSS_SHARD_MULT));
+    w.bossId = e.id;
+    w.refreshLists();
+    this.waveIds = [e.id];
+    this.waveSize = 1;
+    for (const sp of this.players) addBestiarySeen(sp.char, def.id);
+    w.sfx('doorLock');
+    w.sfx('bossRoar', x, 0.8);
+    w.emit({ t: 'msg', text: `${def.name} waits here, already wounded.`, color: def.palette?.[1] ?? '#ffcf6a' });
+  }
+
+  /** The bonus boss is down (D278): what it called goes with it, a boss chest's worth of loot; the room clears as usual. */
+  private bonusBossKilled(e: Entity): void {
+    const w = this.w;
+    for (const o of w.livingEnemies()) {
+      if (o === e || o.en!.summonerId !== e.id) continue;
+      o.en!.quietDeath = true;
+      o.hp!.dead = true;
+      w.fx('dust', o.x, o.y, { n: 10 });
+      w.remove(o);
+    }
+    if (w.bossId === e.id) w.bossId = 0;
+    const p = w.players[0];
+    if (p) lootHooks.chest(this, p, `${this.node.id}-bonus:${e.en!.def.id}`, 'boss', e.x, e.y);
+    w.emit({ t: 'levelBanner', text: 'CHALLENGER DEFEATED', sub: e.en!.def.name });
+    w.emit({ t: 'shake', amount: 10 });
   }
 
   clearRoom(): void {

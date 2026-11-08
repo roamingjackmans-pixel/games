@@ -4,7 +4,7 @@ import { WEAPONS } from '../data/weapons';
 import { SHIELDS, shieldStability, shieldValues } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
-import { GEMS, GEM_QUALITIES, gemColor, gemKind, gemKindLabel, gemTitle, perkName, perkQuality, perkRollText, perkText } from '../data/gems';
+import { GEMS, GEM_QUALITIES, gemColor, gemLevel, gemKind, gemKindLabel, gemTitle, perkName, perkQuality, perkRollText, perkText } from '../data/gems';
 import type { GemPerk } from '../game/types';
 import { LEGENDARY_POWERS, LEGENDARY_FLAVOR } from '../data/legendaries';
 import { SET_PERKS, SET_STEPS, setEffectText, setStep, type SetPerkDef } from '../data/setPerks';
@@ -16,6 +16,7 @@ import { defaultSlotFor, itemSellValue, WORN_SLOTS, type EquipSlot } from '../ga
 import { reqAtIlvl, scalingMult, toolMult, weaponBase } from '../game/combat/formulas';
 import { computeDerived } from '../game/player/derived';
 import { toolSpellSkill } from '../game/skills/use';
+import { itemUnlockedSkills } from '../game/items/weaponSkills';
 import { LOAD_TIERS, LOAD_TIERS_ORDER, equipLoadWith, itemWeight, type EquipLoadInfo } from '../game/player/equipLoad';
 import { drawShield, drawTool, drawWeapon, weaponGripBack } from '../engine/draw/weapons';
 import { OUTLINE, poly } from '../engine/draw/parts';
@@ -200,6 +201,7 @@ function loadLine(before: EquipLoadInfo, after: EquipLoadInfo): HTMLElement {
 }
 
 const pct0 = (n: number): string => `${Math.round(n * 100)}%`;
+const fmtS = (n: number): string => `${Number(n.toFixed(1))} s`;
 const int0 = (n: number): string => String(Math.round(n));
 const gradeOf = (n: number): string => (n <= 0 ? DASH : GRADE_ORDER[Math.round(n)] ?? DASH);
 const gradeNum = (g: Grade | undefined): number => (g ? GRADE_ORDER.indexOf(g) : 0);
@@ -340,7 +342,22 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
       ),
     );
 
-    // D244: no Poise row and no Skills section on weapon cards (owner's request)
+    // D244: no Poise row on weapon cards. Skills: only the ones this item has unlocked (none: no section)
+    const skills = itemUnlockedSkills(item);
+    if (skills.length)
+      out.push(
+        section(
+          meets ? 'Skills' : 'Skills (locked: below requirement)',
+          ...skills.map((k) =>
+            h(
+              'div',
+              { class: 'tt-skill', 'data-testid': `tt-skill-${k.slot + 1}` },
+              h('div', null, h('span', { class: 'dim-text' }, `Skill ${k.slot + 1} `), h('b', null, k.def.name), h('span', { class: 'dim-text' }, ` - ${fmtS(k.def.cooldownS)} cooldown, ${k.def.stamina} stamina`)),
+              h('div', { class: 'tt-text small' }, k.def.description),
+            ),
+          ),
+        ),
+      );
     specialSection(out, weaponSpecials(w));
   }
 
@@ -466,7 +483,7 @@ export function gemKindChip(g: Gem): HTMLElement {
 /** What a perk does, in its quality colour (Green, Blue, Purple, Orange), its roll beside it (D197). */
 export function perkEffectEl(p: GemPerk): HTMLElement {
   const qd = perkQuality(p);
-  return h('span', { style: `color:${qd.color}`, title: `${perkRollText(p)} of its tier and level value` }, perkText(p), h('span', { class: 'dim-text', style: 'font-size:.85em' }, ` (${perkRollText(p)})`));
+  return h('span', { style: `color:${qd.color}`, title: `${perkRollText(p)} of its level value` }, perkText(p), h('span', { class: 'dim-text', style: 'font-size:.85em' }, ` (${perkRollText(p)})`));
 }
 
 /** Perks' effects side by side, " · " between. */
@@ -479,7 +496,7 @@ export function perkEffectsEl(g: Gem): HTMLElement {
   return el;
 }
 
-/** One line per perk: name (tier and level, family colour) and what it does (quality colour). */
+/** One line per perk: name (level, family colour) and what it does (quality colour). */
 export function gemPerkLines(g: Gem): HTMLElement[] {
   return g.perks.map((p) => h('div', { class: 'small' }, h('span', { style: `color:${GEMS[p.family].color}` }, perkName(p)), ' ', perkEffectEl(p)));
 }
@@ -567,12 +584,12 @@ export function gemIcon(g: Gem, size = 28): HTMLCanvasElement {
     ctx.restore();
     poly(ctx, pts, 'rgba(0,0,0,0)', OUTLINE, 2);
   }
-  // the tier on a one-perk gem; a multi-perk gem's facets say enough at icon size (names carry the tiers)
+  // the level on a one-perk gem (D284: was its tier); a multi-perk gem's facets say enough at icon size
   if (n <= 1 || size >= 40) {
     ctx.fillStyle = '#000';
-    ctx.font = `bold ${Math.round(size * (n > 1 ? 0.24 : 0.35))}px "Segoe UI", system-ui, sans-serif`;
+    ctx.font = `bold ${Math.round(size * (n > 1 ? 0.24 : 0.3))}px "Segoe UI", system-ui, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(g.perks.map((p) => p.tier).join(n > 1 ? '·' : ''), m, m + size * 0.11);
+    ctx.fillText(String(gemLevel(g)), m, m + size * 0.11);
   }
   return c;
 }

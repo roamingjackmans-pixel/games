@@ -1,4 +1,5 @@
 // Shared game types (DATA_MODEL.md). Data tables in src/data conform to these; systems read them.
+import type { PadLayout } from '../engine/padProfile';
 import type { ArmFeature, Beard, Brows, EyeShape, FaceMark, HairStyle, LegFeature, NoseShape } from '../engine/draw/players';
 
 /** The person picked in the character creator (src/data/appearance.ts lists the options). */
@@ -542,7 +543,32 @@ export interface BossPhase {
   /** the bar fills back up when this phase starts (D253: Ignatius splits when "killed"; the last phase ends at 0 as usual) */
   refillHp?: boolean;
   /** phase-wide passive effects (pull toward face, grow, two targets) */
-  passive?: { pull?: { speed: number; r: number }; splitBody?: string; stationaryAt?: 'farThird' | 'center'; scale?: number; projectileSpeedMult?: number };
+  passive?: {
+    pull?: { speed: number; r: number };
+    splitBody?: string;
+    stationaryAt?: 'farThird' | 'center';
+    scale?: number;
+    projectileSpeedMult?: number;
+    /** the new size (and the end of the old pin) as soon as the phase starts, so the transition plays in the new form */
+    formAtStart?: boolean;
+    /** the distance the boss walks to in this phase (else the def's preferredRange) */
+    preferredRange?: number;
+    /**
+     * short telegraphed blinks every `everyS` between attacks: a flash where it stands and a mark where it will be,
+     * then `warnS` later it is there, `minD`–`maxD` from its target and never within `minD` of any player
+     */
+    blink?: { everyS: number; warnS: number; minD: number; maxD: number };
+  };
+  /** the name on the boss bar in this phase (else the boss's own name) */
+  barName?: string;
+  /** with refillHp: the new bar's size, as a multiple of the HP the phase before had to lose (its span of the bar) */
+  hpOfPrevPhase?: number;
+  /** how long this phase's invulnerable transition lasts (else PHASE_TRANSITION_S) */
+  transitionS?: number;
+  /** a scripted transition: sounds, shakes and bursts at set seconds into it */
+  transitionBeats?: { atS: number; sfx?: string; shake?: number; fx?: string; color?: string; n?: number; r?: number }[];
+  /** the field clears when it starts: every telegraph, shot and hazard of the boss's side, and its adds */
+  clearField?: boolean;
 }
 
 export interface BossDef extends Omit<EnemyDef, 'attacks' | 'role'> {
@@ -554,6 +580,8 @@ export interface BossDef extends Omit<EnemyDef, 'attacks' | 'role'> {
   baseHp?: number;
   /** HP multiplier on the first playthrough only (cycle 0; New Game+ keeps the full amount), D211 */
   firstCycleHpMult?: number;
+  /** its second phase needs its own arena (grates, a split body, the void platform): never a New Game+ bonus fight (D278) */
+  arenaBound?: boolean;
   music: { root: number; tempo: number; bright: number };
 }
 
@@ -685,12 +713,10 @@ export interface RingDef {
   flavor: string;
 }
 
-export type GemTier = 1 | 2 | 3 | 4 | 5;
-/** One effect on a gem. The tier belongs to the perk, not the gem: each perk is upgraded on its own. */
+/** One effect on a gem (D284: no tiers; its strength is its family's baseline × its level × its roll). */
 export interface GemPerk {
   family: GemFamily;
-  tier: GemTier;
-  /** the perk's own level 1–50 (D197): ×0.25 of the tier value at 1, ×3 at 50; perks from before it read as 14 */
+  /** the perk's own level 1–50 (D197): ×0.25 of the baseline at 1, ×3 at 50; perks from before it read as 14 */
   level?: number;
   /** its quality roll −0.5 … +0.5 (D197): Green, Blue, Purple or Orange; older perks read as 0 */
   q?: number;
@@ -698,6 +724,13 @@ export interface GemPerk {
 /** A gem: 1–3 perks of distinct families, all weapon perks or all armor perks (NG+ gems carry more). */
 export interface Gem {
   perks: GemPerk[];
+  /** D282: "Sell all gems" keeps a locked gem */
+  locked?: boolean;
+  /**
+   * D286: the families the gem was made with that it still carries. Every fuse must keep one of them, and after a fuse
+   * only the kept ones stay. Missing means "all of its current perks" (new drops and saves from before).
+   */
+  origin?: GemFamily[];
 }
 export type GemFamily =
   | 'quicksilver'
@@ -794,6 +827,9 @@ export interface Character {
   appearance?: Appearance;
   /** weapon-class proficiency experience by class (D178); absent on old saves (all zero) */
   proficiency?: Record<string, number>;
+  /** this character's own controller layout (gamepad bindings, menu confirm / back, aim assist); absent until it
+   * first plays, when it copies the global one */
+  pad?: PadLayout;
 }
 
 export interface WorldState {

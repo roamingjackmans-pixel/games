@@ -8,6 +8,7 @@ import { mixer } from '../../engine/audio/mixer';
 import { music, type MusicSeed } from '../../engine/audio/music';
 import { playSfx } from '../../engine/audio/sfx';
 import { getStore } from '../../engine/settings';
+import { releasePad, usePadOf } from '../../engine/padProfile';
 import { drawText } from '../../engine/text';
 import { glow } from '../../engine/draw/parts';
 import { ZONES, zoneDef } from '../../data/zones';
@@ -31,9 +32,9 @@ import { openInventory } from '../../ui/menus/inventory';
 import { openBonfire } from '../../ui/menus/bonfire';
 import { renderSpellTab } from '../../ui/menus/spells';
 import { renderGary } from '../../ui/menus/gary';
-import { buyConsumable, buyGem, buyItem, cycleQuickSlot, fuseGems, levelUp, respec, sellAll, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
+import { buyConsumable, buyGem, buyItem, cycleQuickSlot, fuseGems, levelUp, respec, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
 import { upgradeRarity } from '../items/proficiency';
-import { reinforceItem } from '../items/reinforce';
+import { breakDownEssence, reinforceItem } from '../items/reinforce';
 import { shopGem, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
 import { refreshDerived, toggleTwoHand } from '../player/player';
 import { stream } from '../../engine/rng';
@@ -155,6 +156,9 @@ export class RunScene extends WorldScene {
     this.view.propStyle = zoneDef(this.session.layout.zone).props;
     this.view.drawInteract = (ctx, e, now, pid) => this.drawInteractable(ctx, e, now, pid);
     super.enter();
+    // this character's own controller layout goes live (it copies the global one the first time)
+    usePadOf(app().settings, this.save.character, () => this.persist());
+    app().applySettings();
     // a death to The Instructor does not spoil a clean zone (D207)
     achievements().begin({ clean: this.save.stats.deaths - (this.save.stats.instructorDeaths ?? 0) <= 0 });
     window.addEventListener('beforeunload', this.onUnload);
@@ -162,6 +166,8 @@ export class RunScene extends WorldScene {
 
   override exit(): void {
     super.exit();
+    releasePad(app().settings, this.save.character);
+    app().applySettings();
     this.persist();
     this.closeOverlay();
     music.stop();
@@ -422,7 +428,10 @@ export class RunScene extends WorldScene {
           raiseRarity: (it) => r(upgradeRarity(c, it)),
           // Soul Essence and Glowen, +1 on a weapon, shield or armour piece (D198); a guest reinforces its own
           reinforce: (it) => r(reinforceItem(c, it)),
-          upgradeGem: (loc, pi) => r(stats().count(upgradeGem(c, loc, pi), 'gemsUpgraded')),
+          // D282: lock a gem; Sell all gems keeps locked ones. D285: break Soul Essence down 1 → 3 of the tier below
+          toggleGemLock: (loc) => r(toggleGemLock(c, loc)),
+          sellAllGems: () => r(sellAllGems(c)),
+          breakEssence: (tier, all) => r(breakDownEssence(c, tier, all)),
           fuseGem: (o, d, picks) => r(stats().count(fuseGems(c, o, d, picks), 'gemsFused')),
           sellItem: (it) => r(sellItem(c, it)),
           sellAll: (f) => r(sellAll(c, f)),

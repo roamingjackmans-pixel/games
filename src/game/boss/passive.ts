@@ -22,8 +22,10 @@ export function pullPaused(e: Entity): boolean {
   return !!a && a.phase === 'windup' && a.def.kind === 'pierce' && a.windup - a.t < PULL_PAUSE_S;
 }
 
-function applyPhasePassive(w: World, e: Entity): void {
+/** Apply the boss's current phase passive now (a phase with `formAtStart` takes its new form as the transition begins). */
+export function applyPhasePassive(w: World, e: Entity): void {
   const en = e.en!;
+  en.extrasUsed.__passivePhase = en.phase;
   const pp = phasePassive(e);
   const base = (en.extrasUsed.__baseRadius ??= e.radius);
   e.radius = base * (pp?.scale ?? 1);
@@ -42,15 +44,12 @@ function applyPhasePassive(w: World, e: Entity): void {
   }
 }
 
-/** Every AI tick of a living boss (not during spawn or a phase transition). */
-export function tickBossPassive(w: World, e: Entity, dt: number): void {
+/** Every AI tick of a living boss (not during spawn or a phase transition). True while a blink holds it still. */
+export function tickBossPassive(w: World, e: Entity, dt: number): boolean {
   const en = e.en!;
-  if (en.extrasUsed.__passivePhase !== en.phase) {
-    en.extrasUsed.__passivePhase = en.phase;
-    applyPhasePassive(w, e);
-  }
+  if (en.extrasUsed.__passivePhase !== en.phase) applyPhasePassive(w, e);
   const pp = phasePassive(e);
-  if (!pp) return;
+  if (!pp) return false;
   if (pp.stationaryAt) {
     // pinned: bodies pushing against it do not move it
     e.x = en.homeX;
@@ -65,4 +64,65 @@ export function tickBossPassive(w: World, e: Entity, dt: number): void {
       w.room.moveCircle(p, ((e.x - p.x) / d) * pull.speed * dt, ((e.y - p.y) / d) * pull.speed * dt);
     }
   }
+  return pp.blink ? tickBlink(w, e, pp.blink) : false;
+}
+
+type Blink = NonNullable<NonNullable<BossPhase['passive']>['blink']>;
+
+/** Where a blink may land: open floor (not the void, not a wall), `minD`–`maxD` from the target, clear of every player. */
+export function blinkSpot(w: World, e: Entity, target: Entity, b: Blink): { x: number; y: number } | null {
+  const players = w.livingPlayers();
+  for (let i = 0; i < 24; i++) {
+    const a = w.combat.range(-Math.PI, Math.PI);
+    const d = w.combat.range(b.minD, b.maxD);
+    const x = target.x + Math.cos(a) * d;
+    const y = target.y + Math.sin(a) * d;
+    if (w.room.circleBlocked(x, y, e.radius + 6) || w.room.isFallAt(x, y)) continue;
+    if (players.some((p) => dist(p.x, p.y, x, y) < b.minD)) continue;
+    return { x, y };
+  }
+  return null;
+}
+
+/**
+ * A telegraphed blink (BossPhase.passive.blink): between attacks, every `everyS` it flashes where it stands and a
+ * mark lights where it will appear; `warnS` later it is there, facing its target. It holds still while it gathers.
+ */
+function tickBlink(w: World, e: Entity, b: Blink): boolean {
+  const en = e.en!;
+  const now = w.time;
+  if (en.attack) return false;
+  const x = en.extrasUsed;
+  if ((x.__blinkAt ?? 0) > 0) {
+    if (now < x.__blinkAt!) return true;
+    x.__blinkAt = 0;
+    x.__lastBlink = now;
+    const tx = x.__blinkX!;
+    const ty = x.__blinkY!;
+    // a player may have walked onto the mark meanwhile: it fizzles rather than land on them
+    if (w.livingPlayers().some((p) => dist(p.x, p.y, tx, ty) < p.radius + e.radius + 8) || w.room.circleBlocked(tx, ty, e.radius)) return false;
+    w.fx('teleport', e.x, e.y);
+    e.x = e.px = tx;
+    e.y = e.py = ty;
+    e.forced = null;
+    w.fx('teleport', tx, ty);
+    w.fx('impact', tx, ty, { color: '#ffd24a', r: 40 });
+    w.sfx('voidBlink', tx, 0.6);
+    const t = w.get(en.targetId);
+    if (t) e.facing = Math.atan2(t.y - e.y, t.x - e.x);
+    en.thinkAt = now;
+    return false;
+  }
+  if (now - (x.__lastBlink ?? -99) < b.everyS) return false;
+  const target = w.get(en.targetId) ?? w.livingPlayers()[0];
+  if (!target) return false;
+  const spot = blinkSpot(w, e, target, b);
+  x.__lastBlink = now;
+  if (!spot) return false;
+  x.__blinkAt = now + b.warnS;
+  x.__blinkX = spot.x;
+  x.__blinkY = spot.y;
+  w.fx('teleport', e.x, e.y);
+  w.fx('impact', spot.x, spot.y, { color: '#b06bff', r: 30 });
+  return true;
 }

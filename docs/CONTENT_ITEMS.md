@@ -221,8 +221,8 @@ at ilvl 1, ×(1 + 0.2 (ilvl − 1)) for flat values; percents fixed).
 
 ## 11. Gems
 
-Defined in GAME_DESIGN §8.5. A gem has 1–3 perks, each with its own tier T1–T5. Drop sources and Glowen
-economy there. Gem names in the inventory list the perks: "Quicksilver (T3) + Leech (T1)" with a "Weapon gem"
+Defined in GAME_DESIGN §8.5. A gem has 1–3 perks, each with its own level and quality roll (no tiers, D284). Drop
+sources and Glowen economy there. Gem names in the inventory list the perks: "Lv 12 Quicksilver + Leech" with a "Weapon gem"
 or "Armor gem" chip and a cut-gem icon split into one facet per perk colour (Quicksilver silver, Tempo gold,
 Fleetfoot green, Brutal red, Ember orange, Rime ice blue, Storm blue, Dawn pale yellow, Dusk grey-violet, Leech
 dark red, Vigor teal; armor: Bulwark grey, Hearth coral, Zephyr mint, Gilt gold).
@@ -249,7 +249,7 @@ Consumables as drops: 8% of chests give a bundle (3–6 of one kind); fodder 3% 
 ## 13. Sell values (Glowen)
 
 Gear: Common 10, Uncommon 25, Rare 60, Epic 150, Legendary 400, each × (1 + 0.3 (ilvl − 1)).
-Gems: the sum over their perks of 40 × 3^(tier−1). Consumables sell for half price. Spells cannot be sold.
+Gems: the sum over their perks of 80 × level strength × (1 + roll) (D284). Consumables sell for half price. Spells cannot be sold.
 
 ## 14. Naming
 

@@ -111,6 +111,29 @@ const handsOfTheDead: AttackDef = {
   area: true,
 };
 
+/**
+ * New Game+ only (D277): the whole crypt heaves. A Red blast over every tile of the room, about 600 a hit at NG+1 (solo,
+ * before defense; `mult` is per phase so both phases land near 600) and growing with every cycle after, like all
+ * New Game+ damage. Red: no block, no parry, but a dodge through it at the moment it lands is safe. A long 2.2 s
+ * telegraph, so there is time to see it and time the roll.
+ */
+const lastRites = (mult: number): AttackDef => ({
+  id: 'caretaker_last_rites',
+  name: 'Last Rites',
+  kind: 'red',
+  pattern: { kind: 'ring', rIn: 0, rOut: 'edge', anchor: 'self' },
+  windupMs: 2200,
+  recoverMs: 1400,
+  dmgMult: mult,
+  type: 'physical',
+  cooldownS: 22,
+  range: [0, 2000],
+  weight: 2,
+  area: true,
+  hyperArmor: true,
+  condition: 'cycleAtLeast(1)',
+});
+
 export const THE_CARETAKER: BossDef = {
   id: 'the_caretaker',
   zone: 1,
@@ -125,14 +148,14 @@ export const THE_CARETAKER: BossDef = {
   preferredRange: 120,
   hyperArmor: false,
   phases: [
-    { untilHpPct: 50, speedMult: 1, dmgMult: 1, attacks: [shovelSwing, lanternToss(1), graveCall(2, 4), overheadSlam, dirtSweep] },
+    { untilHpPct: 50, speedMult: 1, dmgMult: 1, attacks: [shovelSwing, lanternToss(1), graveCall(2, 4), overheadSlam, dirtSweep, lastRites(2.6)] },
     {
       untilHpPct: 0,
       name: 'The lantern breaks',
       speedMult: 1.2,
       dmgMult: 1.25,
       arena: [{ op: 'hazardFloor', hazard: 'emberMoss', value: 6 }],
-      attacks: [shovelSwing, lanternToss(3), graveCall(3, 5), overheadSlam, dirtSweep, graveQuake, handsOfTheDead],
+      attacks: [shovelSwing, lanternToss(3), graveCall(3, 5), overheadSlam, dirtSweep, graveQuake, handsOfTheDead, lastRites(2.1)],
     },
   ],
   arenaId: 'crypt_arena',

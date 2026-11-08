@@ -16,10 +16,10 @@ test('remove a gem from an unequipped weapon in the inventory; the Gem bench sho
     const c = r.session.save.character;
     const genPath = '/games/dungeonjoe/src/game/items/generate.ts';
     const rngPath = '/games/dungeonjoe/src/engine/rng.ts';
-    const gen = (await import(/* @vite-ignore */ genPath)) as { randomGem(rng: unknown, t: number, cy: number, k: string): object };
+    const gen = (await import(/* @vite-ignore */ genPath)) as { randomGem(rng: unknown, cy: number, k: string): object };
     const { Rng } = (await import(/* @vite-ignore */ rngPath)) as { Rng: new (s: string) => unknown };
     const rng = new Rng('gems');
-    const mk = (id: string): Item => ({ ...structuredClone(c.equipment.main!), id, name: 'Longsword', rarity: 'rare', sockets: [gen.randomGem(rng, 1, 0, 'weapon'), null] });
+    const mk = (id: string): Item => ({ ...structuredClone(c.equipment.main!), id, name: 'Longsword', rarity: 'rare', sockets: [gen.randomGem(rng, 0, 'weapon'), null] });
     c.equipment.main = mk('worn-w');
     c.bag.unshift(mk('bag-w'));
     r.showInventory();

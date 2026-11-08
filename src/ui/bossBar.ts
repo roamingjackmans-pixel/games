@@ -37,7 +37,8 @@ export function drawBossBar(ctx: CanvasRenderingContext2D, w: World, st: BossBar
   const fill = spawning ? 1 - Math.pow(1 - Math.max(0, Math.min(1, 1 - (e.en.spawnUntil - w.time) / 1.1)), 3) : 1;
   ctx.save();
   ctx.globalAlpha = k;
-  drawText(ctx, def.name, x, y - 8, { size: 16, weight: 'bold', color: '#efe6d2' });
+  // a phase may carry its own name on the bar (D279: The Landlord, Unbound)
+  drawText(ctx, def.phases[e.en.phase]?.barName ?? def.name, x, y - 8, { size: 16, weight: 'bold', color: '#efe6d2' });
   ctx.fillStyle = 'rgba(0,0,0,0.65)';
   ctx.fillRect(x - 3, y - 3, W + 6, H + 6);
   ctx.fillStyle = '#2a1418';

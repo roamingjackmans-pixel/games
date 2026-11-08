@@ -2,7 +2,7 @@
 // fx event carries that id with the true shape (a line's start, angle, length and width; a cone's origin, angle,
 // half-angle and radius; a circle's centre and radius) and the damage type, and this module draws the animation
 // over exactly that area: a guillotine's slice and travelling shockwave, a frost lance's ice spike that flies and
-// shatters, a meteor that falls before it lands, and so on. Without an id the view keeps its plain burst.
+// melts away, a meteor that falls before it lands, and so on. Without an id the view keeps its plain burst.
 // Records are pooled (no per-frame allocation once warm); particles carry the debris. Cosmetic only.
 import { glow } from '../engine/draw/parts';
 import type { Particles } from '../engine/particles';
@@ -864,9 +864,12 @@ const iceLance: VfxDef = {
     }
     // the spike: a faceted crystal, bright face up, shadowed face down
     const holdS = flyS + 0.05;
-    if (age < holdS) {
+    // at the end of the line the spike melts away: no shatter burst
+    const meltS = 0.18;
+    if (age < holdS + meltS) {
+      const k = fade(age, holdS, holdS + meltS);
       ctx.translate(cx, 0);
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = k;
       glow(ctx, 0, 0, L * 0.85, '#7cc4ff', 0.75);
       ctx.beginPath();
       ctx.moveTo(L / 2, 0);
@@ -916,28 +919,15 @@ const iceLance: VfxDef = {
         ctx.fill();
         ctx.stroke();
       }
-      star(ctx, L / 2, 0, 10 + 4 * Math.sin(age * 60), age * 6, '#ffffff', 0.9);
+      star(ctx, L / 2, 0, 10 + 4 * Math.sin(age * 60), age * 6, '#ffffff', 0.9 * k);
     }
     ctx.restore();
+    ctx.globalAlpha = 1;
     // motes shed in flight
     if (age < flyS) {
       const mx = f.x + Math.cos(f.a) * (cx - L * 0.4);
       const my = f.y + Math.sin(f.a) * (cx - L * 0.4);
       p.burst(mx, my, 2, 40, 0.5, 3, '#cfeaff', 'glow', f.a + Math.PI, 1.4);
-    }
-    // it shatters at the end of the line
-    if (age >= holdS) {
-      const tx = f.x + Math.cos(f.a) * (f.l - L * 0.25);
-      const ty = f.y + Math.sin(f.a) * (f.l - L * 0.25);
-      const k = fade(age, holdS, holdS + 0.3);
-      glow(ctx, tx, ty, L * 0.9, '#9ad0ff', 0.8 * k);
-      star(ctx, tx, ty, L * 0.6 * k, f.seed, '#ffffff', k, 6);
-      if (once(f, 1)) {
-        p.burst(tx, ty, 14, 300, 0.6, 5, '#cfeaff', 'shard', f.a, 1.6, { drag: 3 });
-        p.burst(tx, ty, 8, 200, 0.5, 4, '#7cc4ff', 'shard', f.a, 2.4, { drag: 3 });
-        p.burst(tx, ty, 8, 120, 0.7, 4, '#e6f7ff', 'glow');
-        p.spawn(tx, ty, 0, 0, 0.35, 8, '#bfe6ff', 'ring', { grow: 180 });
-      }
     }
   },
 };

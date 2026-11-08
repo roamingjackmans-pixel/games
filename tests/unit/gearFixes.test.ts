@@ -30,7 +30,7 @@ describe('gear fixes (D227)', () => {
     c.equipment.off = shield;
     c.stats.bonk = 30;
     const before = computeDerived(c).maxHp;
-    c.gems = [makeGem('hearth', 1)];
+    c.gems = [makeGem('hearth')];
     expect(socketGem(c, shield.id, 0, 0).ok).toBe(true);
     expect(computeDerived(c).maxHp).toBeGreaterThan(before);
   });

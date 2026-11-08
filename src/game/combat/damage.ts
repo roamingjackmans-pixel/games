@@ -131,6 +131,7 @@ export function applyControl(w: World, e: Entity, id: ControlId, durationS: numb
   if (!st || st.immune.has(id)) return;
   if (id === 'freeze' && st.immune.has('chill')) return;
   const now = w.time;
+  if (id === 'freeze' && e.pl && (e.pl.stunImmuneUntil ?? 0) > now) return;
   st.controls[id] = Math.max(st.controls[id], now + durationS);
   if (id === 'freeze') interrupt(w, e, 0);
   if (id === 'hexed' && e.pl) e.pl.dodgeReadyAt = Math.max(e.pl.dodgeReadyAt, now) + 0;
@@ -141,7 +142,8 @@ export function interrupt(w: World, e: Entity, staggerS: number): void {
   const now = w.time;
   if (e.pl) {
     const p = e.pl;
-    if (p.state === 'dodge' || p.state === 'falling') return;
+    // a held player stays held: a second hit does not stagger them out of the grab (its end, and the grace after it, stand)
+    if (p.state === 'dodge' || p.state === 'falling' || p.state === 'held') return;
     p.combo = null;
     p.action = null;
     p.channel = null;
@@ -150,7 +152,7 @@ export function interrupt(w: World, e: Entity, staggerS: number): void {
     if (staggerS > 0) {
       p.state = 'stagger';
       p.stateUntil = now + staggerS;
-    } else if (p.state !== 'held') p.state = 'idle';
+    } else p.state = 'idle';
   } else if (e.en) {
     const en = e.en;
     if (en.attack) cancelEnemyAttack(w, e);
@@ -237,7 +239,7 @@ export function checkDeath(w: World, e: Entity, killerId: number): void {
   }
   e.hp.hp = 0;
   e.hp.dead = true;
-  w.emit({ t: 'death', id: e.id, x: e.x, y: e.y, isPlayer: false, defId: e.en?.def.id ?? '', by: killerId, elite: e.en?.elite ?? null });
+  w.emit({ t: 'death', id: e.id, x: e.x, y: e.y, isPlayer: false, defId: e.en?.def.id ?? '', by: killerId, elite: e.en?.elite ?? null, ...(e.en?.bonusBoss ? { bonus: true } : {}) });
   w.hooks.onEnemyKilled?.(w, e, killerId);
 }
 
@@ -508,10 +510,22 @@ export function playerHyperArmor(w: World, p: Entity): boolean {
   return false;
 }
 
+/** After a grab lets go, this long before a grab (or a freeze) can take hold again (s). */
+export const STUN_IMMUNE_S = 0.5;
+
+/** Is a player stunned now (held or frozen) or still in the grace after a grab? A grab cannot take them then. */
+export function stunProtected(w: World, p: Entity): boolean {
+  const pl = p.pl;
+  if (!pl) return false;
+  return pl.state === 'held' || hasControl(p, 'freeze', w.time) || (pl.stunImmuneUntil ?? 0) > w.time;
+}
+
 function startHold(w: World, p: Entity, attacker: Entity, spec: DamageSpec): void {
   const pl = p.pl!;
   const g = spec.grab!;
   const now = w.time;
+  // a grab cannot take a player who is already held or frozen, nor one just let go (the hit itself still lands)
+  if (stunProtected(w, p)) return;
   interrupt(w, p, 0);
   pl.state = 'held';
   pl.stateUntil = now + g.holdS;

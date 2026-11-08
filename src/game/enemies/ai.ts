@@ -12,6 +12,7 @@ import { terrainWalkMult } from '../systems/terrain';
 import { patternAllowed, ringReachable, startEnemyAttack, teleportAway, updateEnemyAttack } from './attacks';
 import { updateDevour } from '../interact';
 import { phasePassive, tickBossPassive } from '../boss/passive';
+import { tickBossTransition } from '../combat/bossPhase';
 import { stepToward } from './pathing';
 import { attackDamage } from './spawn';
 import type { AttackDef, EnemyDef } from '../types';
@@ -47,6 +48,9 @@ function conditionOk(w: World, e: Entity, atk: AttackDef, target: Entity): boole
   if (m) return e.hp!.hp < (e.hp!.max * Number(m[1])) / 100;
   m = /^alliesAlive\((\d+)\)$/.exec(c);
   if (m) return w.livingEnemies().filter((x) => x !== e).length >= Number(m[1]);
+  // a New Game+ attack (D277): only from this cycle on (1 = NG+1)
+  m = /^cycleAtLeast\((\d+)\)$/.exec(c);
+  if (m) return w.cycle >= Number(m[1]);
   if (c === 'targetBehind') return Math.abs(angleDiff(target.facing, Math.atan2(e.y - target.y, e.x - target.x))) > 100 * DEG;
   if (c === 'deadAllies') return w.enemies.some((x) => x.hp?.dead && !x.en?.elite && !x.en?.isBoss && !x.removed && x.type === 'enemy');
   if (c === 'injuredAlly') return w.livingEnemies().some((x) => x !== e && x.hp!.hp < x.hp!.max * 0.8);
@@ -170,7 +174,8 @@ function moveByStyle(w: World, e: Entity, target: Entity, dt: number): void {
   const d = dist(e.x, e.y, target.x, target.y);
   // a shooter keeps to 80% of its shots' reach so it stays in range to use them (D186)
   const shoots = en.phaseAttacks.some((a) => a.pattern?.kind === 'projectile');
-  const pref = shoots ? Math.min(def.preferredRange, ENEMY_PROJECTILE_RANGE * 0.8) : def.preferredRange;
+  const basePref = (en.isBoss ? phasePassive(e)?.preferredRange : undefined) ?? def.preferredRange;
+  const pref = shoots ? Math.min(basePref, ENEMY_PROJECTILE_RANGE * 0.8) : basePref;
   const face = (): void => {
     const rate = (def.traits?.turnRate ?? 540) * DEG;
     e.facing = turnToward(e.facing, Math.atan2(target.y - e.y, target.x - e.x), rate * dt);
@@ -403,9 +408,13 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
   }
   if (en.state === 'dormant') return;
   if (en.gary) return;
-  if (en.phaseTransitionUntil > now) return;
-  // boss phase passives: pull toward it, a stationary form, size, projectile speed (BossPhase.passive)
-  if (en.isBoss) tickBossPassive(w, e, dt);
+  if (en.phaseTransitionUntil > now) {
+    // a scripted transition plays its beats (BossPhase.transitionBeats)
+    if (en.isBoss) tickBossTransition(w, e);
+    return;
+  }
+  // boss phase passives: pull toward it, a stationary form, size, projectile speed, blinks (BossPhase.passive)
+  if (en.isBoss && tickBossPassive(w, e, dt)) return;
 
   // a non-boss second phase (The Instructor, D107): a new, faster attack list below a health line
   const p2 = (def as { phase2?: { untilHpPct: number; attacks: AttackDef[]; name?: string } }).phase2;

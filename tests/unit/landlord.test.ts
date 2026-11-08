@@ -120,11 +120,12 @@ function solidUnder(w: World, b: Entity): boolean {
 
 describe('The Landlord: data', () => {
   const L = THE_LANDLORD!;
-  it('is registered for zone 8 with three phases at 66% and 33% and passes the boss rules', () => {
+  it('is registered for zone 8 with phases at 66% and 33%, then a fourth on a second bar (D279), and passes the boss rules', () => {
     expect(BOSSES.the_landlord).toBe(L);
     expect(ZONES.find((z) => z.id === 8)!.boss).toBe('the_landlord');
     expect(L.zone).toBe(8);
-    expect(L.phases.map((p) => p.untilHpPct)).toEqual([66, 33, 0]);
+    expect(L.phases.map((p) => p.untilHpPct)).toEqual([66, 33, 0, 0]);
+    expect(L.phases[3]!.refillHp).toBe(true);
     const issues: ValidationIssue[] = [];
     validateBoss(L, issues);
     expect(issues).toEqual([]);
@@ -177,6 +178,11 @@ describe('The Landlord: the fight', () => {
     expect(b.en!.phase).toBe(2);
     expect(b.en!.phaseAttacks.some((a) => a.id === 'landlord_collapse')).toBe(true);
     run(s, PHASE_TRANSITION_S + 0.1);
+    // phase 3's bar running out is not the end (D279): he stops at 1 HP and becomes Unbound
+    bigHit(s, b, max * 10);
+    expect(b.hp!.dead).toBe(false);
+    expect(b.en!.phase).toBe(3);
+    run(s, THE_LANDLORD!.phases[3]!.transitionS! + 0.1);
     bigHit(s, b, max * 10);
     expect(b.hp!.dead).toBe(true);
     // zone 8 has no stairs down (the ending is the session's)

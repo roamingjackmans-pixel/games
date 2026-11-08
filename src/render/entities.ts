@@ -20,7 +20,8 @@ import { shapeHit, type Shape } from '../game/combat/patterns';
 import { drawAttackIcon } from './telegraphs';
 import { ELEMENTS, enemyElement } from '../game/elements';
 import { drawElementOver, drawElementUnder, drawGolden, isImmuneNow } from './elementFx';
-import type { Character, DamageType } from '../game/types';
+import type { BossDef, Character, DamageType } from '../game/types';
+import { PHASE_TRANSITION_S } from '../game/combat/bossPhase';
 import { essenceDef } from '../data/essence';
 import type { Entity, World } from '../game/world';
 import { SKILL_RECOVER_S } from '../game/skills/use';
@@ -532,6 +533,22 @@ export function drawImmobilized(ctx: CanvasRenderingContext2D, x: number, y: num
   ctx.restore();
 }
 
+/** How far a boss is through its phase transition (DrawState.trans), only while it is in one. */
+function transOf(e: Entity, now: number): { trans?: number } {
+  const en = e.en!;
+  if (!en.isBoss || en.phaseTransitionUntil <= now) return {};
+  const at = en.extrasUsed.__phaseAt;
+  if (at === undefined) return {};
+  const dur = (en.def as unknown as BossDef).phases?.[en.phase]?.transitionS ?? PHASE_TRANSITION_S;
+  return { trans: Math.max(0, Math.min(1, (now - at) / dur)) };
+}
+
+/** A boss in a phase transition with its own scripted animation (BossPhase.transitionBeats). */
+function scriptedTransition(e: Entity, now: number): boolean {
+  const en = e.en!;
+  return en.isBoss && en.phaseTransitionUntil > now && !!(en.def as unknown as BossDef).phases?.[en.phase]?.transitionBeats;
+}
+
 export function enemyDrawState(e: Entity, x: number, y: number, now: number, pal: string[]): DrawState {
   const en = e.en!;
   // a co-op guest's mirror sets anim.moving from what it saw move (D151); the host measures this tick's step
@@ -556,6 +573,7 @@ export function enemyDrawState(e: Entity, x: number, y: number, now: number, pal
     variant: en.pieceIndex,
     awake: en.state !== 'dormant',
     ...(en.gaze !== undefined ? { gaze: en.gaze } : {}),
+    ...transOf(e, now),
     elem: enemyElement(en.def),
     atk: en.attack ? en.attack.def.type : null,
   };
@@ -615,7 +633,8 @@ export function drawEnemyEntity(ctx: CanvasRenderingContext2D, e: Entity, x: num
   drawElementUnder(ctx, e, x, y, now);
   // an immune enemy turns to gold while it cannot be hurt (D108), fully solid even if it is otherwise see-through
   // (an invisible Ash Wraith fading after an attack was a ghost of gold at 8%, D164)
-  if (isImmuneNow(e, now)) drawGolden(ctx, e, x, y, now, (c, cx, cy) => drawById(c, e.drawId, { ...enemyDrawState(e, cx, cy, now, pal), alpha: 1 }));
+  // (a scripted boss transformation, D279, plays in its own colours: the gold would wash it out)
+  if (isImmuneNow(e, now) && !scriptedTransition(e, now)) drawGolden(ctx, e, x, y, now, (c, cx, cy) => drawById(c, e.drawId, { ...enemyDrawState(e, cx, cy, now, pal), alpha: 1 }));
   else if (cacheable(e)) {
     // the body through its own cached picture, redrawn at most 24 times a second (D152)
     const st = enemyDrawState(e, x, y, now, pal);

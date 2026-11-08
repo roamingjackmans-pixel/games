@@ -35,6 +35,8 @@ export interface Derived {
   dmgPct: number;
   flat: Partial<Record<DamageType, number>>;
   convert: { type: DamageType; pct: number }[];
+  /** D283: gem damage added on top of the hit as another type (a share of the base hit; the physical stays) */
+  addDmg: { type: DamageType; pct: number }[];
   statusBuild: { id: StatusId; buildup: number }[];
   attackSpeed: number;
   castSpeed: number;
@@ -192,6 +194,7 @@ export function computeDerived(c: Character): Derived {
   let dmgPct = 0;
   const flat: Partial<Record<DamageType, number>> = {};
   const convert: { type: DamageType; pct: number }[] = [];
+  const addDmg: { type: DamageType; pct: number }[] = [];
   const statusBuild: { id: StatusId; buildup: number }[] = [];
   let attackSpeedPct = 0;
   let castSpeedPct = 0;
@@ -323,9 +326,9 @@ export function computeDerived(c: Character): Derived {
           stamCostPct += v / 100;
           break;
         default:
-          if (gd.convert) {
-            convert.push({ type: gd.convert.type, pct: v / 100 });
-            if (gd.convert.status) statusBuild.push({ id: gd.convert.status, buildup: gemBuildup(pk.tier) });
+          if (gd.adds) {
+            addDmg.push({ type: gd.adds.type, pct: v / 100 });
+            if (gd.adds.status) statusBuild.push({ id: gd.adds.status, buildup: gemBuildup(pk) });
           }
       }
     }
@@ -431,6 +434,7 @@ export function computeDerived(c: Character): Derived {
     dmgPct,
     flat,
     convert,
+    addDmg,
     statusBuild,
     attackSpeed: Math.min(1.6, 1 + attackSpeedPct),
     // Slicey quickens your casting hands a little: up to about +21% at 99 (D106)

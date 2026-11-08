@@ -1,7 +1,9 @@
-// CONTENT_ENEMIES §11 Boss 8 — The Landlord (The Abyss, final, 3 phases at 66% and 33%). A black platform
+// CONTENT_ENEMIES §11 Boss 8 — The Landlord (The Abyss, final, 3 phases at 66% and 33%, then a fourth on a
+// second bar: D279). A black platform
 // floating in void: the edges have no walls (walking off = 50% max HP and 1.5 s to climb back at the nearest
 // edge point; the fall cannot be dodged). Phase 2 shrinks the platform by 25% and he grows four arms; phase 3
-// shrinks it again and he becomes a stationary void face in the far third that pulls everyone in.
+// shrinks it again and he becomes a stationary void face in the far third that pulls everyone in. When that bar
+// runs out the face is knocked down and he rises player-sized, Unbound, on a second bar 1.2× phase 3's share.
 // Damage multipliers are of the boss hit (45 at zone 1).
 import type { RoomTemplate } from '../../game/procgen/templates';
 import type { AttackDef, BossDef, EnemyDef, PatternDef } from '../../game/types';
@@ -196,11 +198,107 @@ const collapse: AttackDef = {
   area: true,
 };
 
+// ---------------------------------------------------------------- Phase 4 — The Landlord, Unbound (D279)
+// The face is knocked down and he rises player-sized in black spiked plate, wreathed in a golden-violet aura: a fast
+// duelist who blinks about the platform (a flash where he stands, a mark where he lands, never on a player).
+
+/** A quick three-cut combo at arm's length (parryable). */
+const unboundCuts: AttackDef = {
+  id: 'landlord_unbound_cuts',
+  name: 'Final Notice',
+  kind: 'normal',
+  pattern: { kind: 'melee', shape: 'arc', angleDeg: 130, r: 72 },
+  comboMults: [0.7, 0.7, 1.0],
+  comboGapMs: 210,
+  windupMs: 380,
+  recoverMs: 450,
+  dmgMult: 0.8,
+  type: 'void',
+  cooldownS: 1.8,
+  range: [0, 80],
+  weight: 5,
+  parryable: true,
+};
+
+/** One dash of Repossession: a short straight charge, re-aimed at the target each time (three in a row). */
+function unboundDash(n: number, last: number, windupMs: number): AttackDef {
+  return {
+    id: n === 1 ? 'landlord_repossession' : `landlord_repossession_${n}`,
+    name: 'Repossession',
+    kind: 'red',
+    pattern: { kind: 'line', w: 56, l: 300, anchor: 'self' },
+    move: { kind: 'charge', distance: 300, speed: 1100 },
+    windupMs,
+    recoverMs: n < last ? 0 : 700,
+    dmgMult: 1.3,
+    type: 'void',
+    cooldownS: 7,
+    range: [90, 520],
+    weight: 3,
+    hyperArmor: true,
+    ...(n < last ? { chain: unboundDash(n + 1, last, 420) } : {}),
+  };
+}
+
+/** Two crossing cuts through him, out to 60% of the room (an X when he faces a diagonal). */
+const hostileTakeover: AttackDef = {
+  id: 'landlord_hostile_takeover',
+  name: 'Hostile Takeover',
+  kind: 'red',
+  pattern: { kind: 'line', w: 90, l: 'room', anchor: 'self', count: 4, spokes: true, lMult: 0.6 },
+  windupMs: 700,
+  recoverMs: 600,
+  dmgMult: 1.8,
+  type: 'void',
+  cooldownS: 8,
+  range: [0, 500],
+  weight: 2,
+  area: true,
+  hyperArmor: true,
+};
+
+/** Void circles rain round the target (blue: no dodging, walk out). */
+const unboundDecree: AttackDef = {
+  id: 'landlord_unbound_decree',
+  name: 'Eminent Domain',
+  kind: 'pierce',
+  pattern: { kind: 'randomCircles', n: 7, r: 80, within: 340, anchor: 'target' },
+  windupMs: 1000,
+  recoverMs: 500,
+  dmgMult: 1.5,
+  type: 'void',
+  cooldownS: 9,
+  range: [0, 1400],
+  weight: 2,
+  area: true,
+};
+
+/** A burst all round him (blue): 170 px, a second to get out. */
+const totalEviction: AttackDef = {
+  id: 'landlord_total_eviction',
+  name: 'Total Eviction',
+  kind: 'pierce',
+  pattern: { kind: 'circle', r: 170, anchor: 'self' },
+  windupMs: 1000,
+  recoverMs: 700,
+  dmgMult: 2.2,
+  type: 'void',
+  cooldownS: 10,
+  range: [0, 200],
+  weight: 2,
+  area: true,
+};
+
+/** The transformation (4.5 s, invulnerable): knocked down, he rises, the power gathers, he screams, the armour forms. */
+const UNBOUND_TRANSITION_S = 4.5;
+
 export const THE_LANDLORD: BossDef | null = {
   id: 'the_landlord',
   zone: 8,
   name: 'The Landlord',
   role: 'boss',
+  // his later phases stand on the void platform (D278)
+  arenaBound: true,
   // D187: 2.5× the old boss base of 1800 (the other bosses got 2×); D256: doubled again, and 50% more damage
   baseHp: 9000,
   mult: { dmg: 1.5 },
@@ -235,6 +333,27 @@ export const THE_LANDLORD: BossDef | null = {
       passive: { pull: { speed: DEEP_PULL, r: 2000 }, stationaryAt: 'farThird', scale: 1.9, projectileSpeedMult: 1.4 },
       summons: [{ enemyId: 'hollow_joe', count: 2, max: 2, everyS: 10 }],
       attacks: [evictionNotices(10, 140), gazeBeams, supernova(3, DEEP_PULL), maw, foreclosure, collapse],
+    },
+    {
+      // D279: phase 3 "kills" him (he stops at 1 HP); a second bar 1.2× what phase 3 had (33% of the first bar)
+      untilHpPct: 0,
+      name: 'The Landlord, Unbound',
+      barName: 'The Landlord, Unbound',
+      refillHp: true,
+      hpOfPrevPhase: 1.2,
+      transitionS: UNBOUND_TRANSITION_S,
+      transitionBeats: [
+        { atS: 0.25, sfx: 'hitBone', shake: 8, fx: 'dust', n: 18 },
+        { atS: 2.0, sfx: 'unboundCharge', shake: 4 },
+        { atS: 3.1, sfx: 'unboundRoar', shake: 18, fx: 'burst', color: '#ffd24a', n: 40, r: 50 },
+        { atS: 4.35, shake: 10, fx: 'burst', color: '#b06bff', n: 40, r: 50 },
+      ],
+      clearField: true,
+      speedMult: 3,
+      dmgMult: 1.6,
+      // player-sized (46 × 0.3 ≈ 14 px, the player's radius), on the move again, blinking every 2.4 s
+      passive: { scale: 0.3, formAtStart: true, preferredRange: 50, blink: { everyS: 2.4, warnS: 0.35, minD: 110, maxD: 260 } },
+      attacks: [unboundCuts, unboundDash(1, 3, 550), hostileTakeover, unboundDecree, totalEviction, evictionNotices(5, 60)],
     },
   ],
   arenaId: 'abyss_arena',

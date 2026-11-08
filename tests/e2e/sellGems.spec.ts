@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 // D240: selling a bag item with gems in it asks first: Back keeps everything, "Keep the gems" sells the item alone,
 // "Sell with the gems" sells both. An item without gems sells at once.
 
-type Gem = { perks: { family: string; tier: number; level: number; q: number }[] };
+type Gem = { perks: { family: string; level: number; q: number }[] };
 type It = { id: string; sockets: (Gem | null)[] };
 type Run = {
   showBonfire(p: unknown, id: string, first: boolean): void;
@@ -16,7 +16,7 @@ test('selling an item with gems asks first (D240)', async ({ page }) => {
   const ids = await page.evaluate(() => {
     const r = (window as unknown as { __dj: { scenes: { current: Run } } }).__dj.scenes.current;
     const c = r.session.save.character;
-    const gem = { perks: [{ family: 'brutal', tier: 2, level: 10, q: 0 }] };
+    const gem = { perks: [{ family: 'brutal', level: 10, q: 0 }] };
     const a = structuredClone(c.equipment.main);
     a.id = 'with-gem';
     a.sockets = [gem, null];

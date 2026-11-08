@@ -5,6 +5,7 @@ import { Loop } from './engine/loop';
 import { Particles } from './engine/particles';
 import { SceneManager } from './engine/scene';
 import { loadSettings, saveSettings, type Settings } from './engine/settings';
+import { diskSettings, syncPad } from './engine/padProfile';
 import { Tweens } from './engine/tween';
 import { mixer } from './engine/audio/mixer';
 import { pollMenuPad } from './ui/menuPad';
@@ -79,7 +80,9 @@ export function createApp(canvasEl: HTMLCanvasElement, overlay: HTMLElement): Ap
       canvas.setMaxPixelScale(s.video.fullSharpness ? Infinity : 1.5);
     },
     saveSettings() {
-      saveSettings(a.settings);
+      // the global pad layout goes to dj.settings; a playing character's own layout goes onto it (its save)
+      saveSettings(diskSettings(a.settings));
+      syncPad(a.settings);
     },
   };
   appRef = a;

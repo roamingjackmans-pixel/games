@@ -30,6 +30,22 @@ export function reinforceInfo(c: Character, it: Item): ReinforceInfo {
   return { plus, next: { ...need, glowen, name: essenceDef(need.tier).name }, mult: reinforceMult(plus), nextMult: reinforceMult(plus + 1), affordable };
 }
 
+/**
+ * Break Soul Essence down by hand (D285): each one of `tier` (2–5) becomes three of the tier below. `all` breaks every
+ * one of that tier, else one.
+ */
+export function breakDownEssence(c: Character, tier: number, all = false): { ok: boolean; msg: string } {
+  if (!Number.isInteger(tier) || tier < 2 || tier > 5) return { ok: false, msg: 'Only Tier 2 and higher Essence breaks down.' };
+  const e = essenceCounts(c);
+  const have = e[tier - 1]!;
+  if (have <= 0) return { ok: false, msg: `You have no ${essenceDef(tier).name}.` };
+  const n = all ? have : 1;
+  e[tier - 1] = have - n;
+  e[tier - 2]! += 3 * n;
+  c.essence = e;
+  return { ok: true, msg: `${n} × ${essenceDef(tier).name} → ${3 * n} × ${essenceDef(tier - 1).name}.` };
+}
+
 /** Reinforce one item a level, paying its Essence (breaking higher tiers if needed) and Glowen. */
 export function reinforceItem(c: Character, itemId: string): { ok: boolean; msg: string } {
   const it = findItem(c, itemId);

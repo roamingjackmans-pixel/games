@@ -9,7 +9,6 @@ import {
   dodgeRecharge,
   reviveRequirement,
   flaskMaxFor,
-  gemUpgradeCost,
   enemyHpMult,
 } from '../../src/game/combat/formulas';
 import { World, type Entity } from '../../src/game/world';
@@ -87,7 +86,6 @@ describe('formulas (GAME_DESIGN §3)', () => {
     expect(flaskMaxFor(8, false)).toBe(5);
     expect(flaskMaxFor(8, true)).toBe(5);
     expect(flaskMaxFor(2, true)).toBe(3);
-    expect([1, 2, 3, 4].map(gemUpgradeCost)).toEqual([400, 1200, 3600, 10800]);
     // bosses: +125% per extra player (D159)
     expect(enemyHpMult(1, 0, 2)).toBeCloseTo(2.25);
     expect(enemyHpMult(1, 0, 4)).toBeCloseTo(4.75);

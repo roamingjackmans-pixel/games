@@ -174,6 +174,8 @@ export interface PlayerC {
   stillSince: number;
   holdBy: number;
   holdUntil: number;
+  /** after a grab lets go, no grab (and no freeze) takes hold of this player again until this time */
+  stunImmuneUntil?: number;
   holdDmg: number;
   holdType: DamageType;
   holdStatus: { id: StatusId; buildup: number } | null;
@@ -221,6 +223,9 @@ export interface AttackRun {
   /** repeated charges (AttackMove.charges): charges finished so far, and the re-aim pause before the next */
   chargesDone?: number;
   pauseUntil?: number;
+  /** a charge or lunge: the telegraph whose bar is its whole hit area, and a copy of that bar kept after it fades */
+  laneTeleId?: number;
+  lane?: { x: number; y: number; a: number; w: number; l: number };
 }
 
 export interface EnemyC {
@@ -305,6 +310,8 @@ export interface EnemyC {
   quietDeath: boolean;
   stolen: number;
   stolenFrom: string;
+  /** a New Game+ bonus fight (D278): a boss out of its arena, held in the phase it started in; not the zone's boss */
+  bonusBoss?: boolean;
 }
 
 export interface ProjC {
@@ -382,6 +389,8 @@ export interface TeleC {
   tickS: number;
   nextTick: number;
   hit: Set<number>;
+  /** a ticking sweep: when each target it struck may be struck again (host only, not sent) */
+  rehitUntil?: Map<number, number>;
   spec: DamageSpec | null;
   pulses: number;
   pulseGap: number;
@@ -528,7 +537,7 @@ export type GameEvent =
   | { t: 'shake'; amount: number }
   | { t: 'hitstop'; ms: number; ids: number[] }
   | { t: 'msg'; text: string; forPlayer?: string | undefined; color?: string }
-  | { t: 'death'; id: number; x: number; y: number; isPlayer: boolean; defId?: string; playerId?: string; by?: number; elite?: string | null }
+  | { t: 'death'; id: number; x: number; y: number; isPlayer: boolean; defId?: string; playerId?: string; by?: number; elite?: string | null; bonus?: boolean }
   | { t: 'telegraph'; id: number }
   | { t: 'parry'; x: number; y: number; playerId: string }
   | { t: 'guardBreak'; playerId: string }

@@ -1,5 +1,5 @@
 // Enemy attack execution: windup (tint + telegraph) → active (impact, projectiles, lunges, combos) → recover.
-import { DEG, angleDiff, circleHit, clamp, dist, turnToward } from '../../engine/math';
+import { DEG, angleDiff, circleHit, clamp, dist, lineHit, turnToward } from '../../engine/math';
 import { emptySpec, hitPlayer } from '../combat/damage';
 import { ENEMY_PROJECTILE_RANGE } from '../combat/formulas';
 import { spawnShapeTelegraph, spawnTelegraphs } from '../combat/telegraph';
@@ -7,12 +7,13 @@ import { behindGap, resolvePattern, waveFair, type PatternCtx } from '../combat/
 import { speedMult } from '../combat/state';
 import { runEffects } from '../effects/run';
 import { attackDamage } from './spawn';
-import { DAMAGE_TYPES, type AttackDef, type DamageType, type PatternDef } from '../types';
+import { DAMAGE_TYPES, type AttackDef, type AttackMove, type DamageType, type PatternDef } from '../types';
 import { ELEMENTS } from '../elements';
 import type { DamageSpec, Entity, World } from '../world';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y } from '../combat/patterns';
 import { ROOM_CX, ROOM_CY, escapeReach } from '../combat/patterns';
 import { ROOM_W, ROOM_Y0, T, TILE, tileCenter, worldToTile } from '../room';
+import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
 
 export function enemyAttackSpec(e: Entity, atk: AttackDef, mult = 1): DamageSpec {
   const en = e.en!;
@@ -167,6 +168,7 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
       dmgType: atk.type,
     });
     en.attack.teleIds.push(...teles.map((t) => t.id));
+    if (mv?.kind === 'charge' || mv?.kind === 'lunge') fitMoveLane(w, e, mv, teles);
     // single-shape melee/anchor-self shapes follow the enemy until 60% of the windup, then lock;
     // multi-shape patterns (random circles, lanes, line fans) stay where they were placed
     if (teles.length === 1 && teles[0]!.tg!.shapes.length === 1 && isSelfAnchored(atk.pattern) && FOLLOW_KINDS.has(atk.pattern.kind)) teles[0]!.tg!.follow = true;
@@ -218,7 +220,7 @@ function activeMove(w: World, e: Entity, dt: number): void {
     const dist0 = mv.distance ?? 160;
     const sp = dist0 / Math.max(0.05, a.active);
     w.room.moveCircle(e, Math.cos(a.angle) * sp * dt, Math.sin(a.angle) * sp * dt, e.flying);
-    bodyHits(w, e, 18);
+    laneHits(w, e, LUNGE_REACH);
   } else if (mv.kind === 'leap') {
     const sp = dist(e.x, e.y, a.aimX, a.aimY) / Math.max(0.02, a.active - a.t);
     const ang = Math.atan2(a.aimY - e.y, a.aimX - e.x);
@@ -238,7 +240,7 @@ function activeMove(w: World, e: Entity, dt: number): void {
     }
     const sp = mv.speed ?? 620;
     const hit = w.room.moveCircle(e, Math.cos(a.angle) * sp * dt, Math.sin(a.angle) * sp * dt, false);
-    bodyHits(w, e, 22);
+    laneHits(w, e, CHARGE_REACH);
     if (hit || (!mv.untilWall && a.t * sp >= (mv.distance ?? 400))) {
       if (hit && (mv.bounces ?? 0) > a.comboIdx) {
         a.comboIdx++;
@@ -294,6 +296,7 @@ function reaimCharge(w: World, e: Entity, gapS: number): void {
   if (a.def.pattern) {
     const teles = spawnTelegraphs(w, a.def.pattern, { ownerId: e.id, team: 1, kind: a.def.kind, windupS: gapS, spec: null, ctx: patternCtx(w, e, a.aimX, a.aimY, gapS), trackTargetId: a.targetId, minActiveS: 1.2, dmgType: a.def.type });
     a.teleIds.push(...teles.map((x) => x.id));
+    if (a.def.move) fitMoveLane(w, e, a.def.move, teles);
   }
 }
 
@@ -349,6 +352,74 @@ function breakPropAhead(w: World, e: Entity, angle: number): boolean {
     w.fx('dust', cx, cy, { n: 8 });
   }
   return true;
+}
+
+/** How far past its radius a lunging or charging body reaches (px). */
+export const LUNGE_REACH = 18;
+export const CHARGE_REACH = 22;
+
+type Lane = { x: number; y: number; a: number; w: number; l: number };
+
+/**
+ * The red bar of a lunge or charge is its whole hit area: it runs from where the attacker starts (from the wall behind
+ * it, for a charge that bounces back) over the full travel plus the body's reach past its centre, cut at a wall. The
+ * hit test below uses this same bar, so standing outside it is always safe.
+ */
+export function fitLaneShape(w: World, e: Entity, mv: AttackMove, s: Lane): void {
+  const reach = e.radius + (mv.kind === 'charge' ? CHARGE_REACH : LUNGE_REACH);
+  const fwd = w.room.rayToWall(s.x, s.y, s.a);
+  let l = mv.kind === 'charge' && mv.untilWall ? fwd : Math.min(fwd, (mv.distance ?? (mv.kind === 'charge' ? 400 : 160)) + reach);
+  if (mv.kind === 'charge' && (mv.bounces ?? 0) > 0) {
+    // it comes back the other way, past where it started, to the wall behind
+    const back = w.room.rayToWall(s.x, s.y, s.a + Math.PI);
+    s.x -= Math.cos(s.a) * back;
+    s.y -= Math.sin(s.a) * back;
+    l += back;
+  }
+  s.l = Math.max(1, l);
+}
+
+function fitMoveLane(w: World, e: Entity, mv: AttackMove, teles: Entity[]): void {
+  const a = e.en!.attack;
+  if (!a) return;
+  for (const t of teles) {
+    const s = t.tg?.shapes[0];
+    if (t.tg?.shapes.length !== 1 || s?.k !== 'line') continue;
+    fitLaneShape(w, e, mv, s);
+    a.laneTeleId = t.id;
+    a.lane = { x: s.x, y: s.y, a: s.a, w: s.w, l: s.l };
+    return;
+  }
+}
+
+/**
+ * A charging body at (cx, cy) reaching `reach` px hits a target circle only where that circle is inside the bar and
+ * level with the body along it: the bar's width and length are the hit area exactly.
+ */
+export function laneBodyHit(lane: Lane, cx: number, cy: number, reach: number, px: number, py: number, pr: number): boolean {
+  if (!lineHit(lane.x, lane.y, lane.a, lane.w, lane.l, px, py, pr)) return false;
+  const along = (px - cx) * Math.cos(lane.a) + (py - cy) * Math.sin(lane.a);
+  return Math.abs(along) <= reach + pr;
+}
+
+/** Lunge / charge hits: inside its bar, tested at the dot at a player's feet (D262), like an area. */
+function laneHits(w: World, e: Entity, extra: number): void {
+  const a = e.en!.attack!;
+  const t = a.laneTeleId ? w.get(a.laneTeleId) : undefined;
+  const s = t && !t.removed ? t.tg?.shapes[0] : undefined;
+  if (s?.k === 'line') a.lane = { x: s.x, y: s.y, a: s.a, w: s.w, l: s.l };
+  if (!a.lane) {
+    bodyHits(w, e, extra);
+    return;
+  }
+  const spec = enemyAttackSpec(e, a.def);
+  const reach = e.radius + extra;
+  for (const p of w.livingPlayers()) {
+    if (a.hit.has(p.id)) continue;
+    if (!laneBodyHit(a.lane, e.x, e.y, reach, p.x, p.y + PLAYER_DOT_DY, PLAYER_DOT_R)) continue;
+    a.hit.add(p.id);
+    hitPlayer(w, e.id, p, spec, e.x, e.y);
+  }
 }
 
 function bodyHits(w: World, e: Entity, extra: number): void {
@@ -480,7 +551,10 @@ export function updateEnemyAttack(w: World, e: Entity, dt: number): void {
     for (const id of a.teleIds) {
       const t = w.get(id);
       if (!t?.tg || !t.tg.follow || now >= t.tg.impact) continue;
-      if (a.t < a.windup * 0.6) followShapes(t, e, a.angle);
+      if (a.t < a.windup * 0.6) {
+        followShapes(t, e, a.angle);
+        if (id === a.laneTeleId && a.def.move) fitMoveLane(w, e, a.def.move, [t]);
+      }
     }
     if (a.def.move?.kind === 'converge') {
       const d = dist(e.x, e.y, en.wanderX, en.wanderY);

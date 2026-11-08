@@ -10,11 +10,11 @@ import { RINGS } from '../../data/rings';
 import { AFFIXES, type AffixDef, type AffixSlotGroup } from '../../data/affixes';
 import { LEGENDARY_NAMES, powersFor, type PowerSlot } from '../../data/legendaries';
 import { RARITY_ORDER, RARITY_WEIGHTS, SLOT_WEIGHTS, type LootSource } from '../../data/lootTables';
-import { GEM_FAMILIES, GEMS, familiesOfKind, rollGemQuality, type GemKind } from '../../data/gems';
+import { GEM_FAMILIES, GEMS, familiesOfKind, gemQualityRolls, rollGemQuality, type GemKind } from '../../data/gems';
 import { baseInfo } from './bases';
 import { rollSkillCount } from '../combat/formulas';
 import { makeItem, newId, socketCount } from './make';
-import type { Gem, GemPerk, GemTier, Item, Rarity, StatId } from '../types';
+import type { Gem, GemPerk, Item, Rarity, StatId } from '../types';
 
 export const AFFIX_COUNT: Record<Rarity, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 3 };
 
@@ -211,12 +211,14 @@ export function gemPerkCountChances(cycle: number): { two: number; three: number
 }
 
 /**
- * A random gem with every perk at `tier` and `level`, each perk with its own quality roll (D197). The first perk is
+ * A random gem with every perk at `level`, each perk with its own quality roll (D197), the best of
+ * `gemQualityRolls(level, bonusRolls)` rolls (D284: treasure, bosses and Gary pass a bonus; tiers are gone). The first perk is
  * any family (or one of `kind`); NG+ adds a chance of more perks of the same kind (distinct families).
  */
-export function randomGem(rng: Rng, tier: GemTier = 1, cycle = 0, kind?: GemKind, level = 1): Gem {
+export function randomGem(rng: Rng, cycle = 0, kind?: GemKind, level = 1, bonusRolls = 0): Gem {
+  const rolls = gemQualityRolls(level, bonusRolls);
   const first = rng.pick(kind ? familiesOfKind(kind) : GEM_FAMILIES);
-  const perks: GemPerk[] = [{ family: first, tier, level, q: rollGemQuality(rng) }];
+  const perks: GemPerk[] = [{ family: first, level, q: rollGemQuality(rng, rolls) }];
   const ch = gemPerkCountChances(cycle);
   if (ch.two + ch.three > 0) {
     const r = rng.next();
@@ -224,7 +226,7 @@ export function randomGem(rng: Rng, tier: GemTier = 1, cycle = 0, kind?: GemKind
     const pool = familiesOfKind(GEMS[first].armorOnly ? 'armor' : 'weapon').filter((f) => f !== first);
     for (let i = 1; i < n && pool.length; i++) {
       const f = pool.splice(rng.int(0, pool.length - 1), 1)[0]!;
-      perks.push({ family: f, tier, level, q: rollGemQuality(rng) });
+      perks.push({ family: f, level, q: rollGemQuality(rng, rolls) });
     }
   }
   return { perks };

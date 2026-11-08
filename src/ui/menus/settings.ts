@@ -1,6 +1,7 @@
 // Settings (GAME_DESIGN §17): video, audio, controls (keyboard + gamepad rebinding: every action, Hold bindings,
 // menu confirm/back, conflicts swap instead of unbinding), the button-prompt style, accessibility, aim assist,
-// hold/toggle block, and the offline download for a Steam library (Game tab). Saved globally in `dj.settings`.
+// hold/toggle block, and the offline download for a Steam library (Game tab). Saved globally in `dj.settings`,
+// except the controller layout (gamepad buttons, menu confirm / back, aim assist), which each character keeps for itself.
 import '../controls.css';
 import { connectSteamController, steamControllerConnected, steamControllerSupported, steamDiag, steamGamepad } from '../../engine/input/steamController';
 import { app } from '../../app';
@@ -18,6 +19,7 @@ import {
 } from '../../engine/input/bindings';
 import { HOLD_S } from '../../engine/input/input';
 import { FRIENDLY_FIRE_MAX, FRIENDLY_FIRE_STEP, PROMPT_SETTINGS, normalizeFriendlyFire, type PromptSetting, type TouchMode } from '../../engine/settings';
+import { adoptGlobalPad, padOwnerName, shareAsGlobalPad } from '../../engine/padProfile';
 import { refreshTouchControls } from '../touchControls';
 import { btn, chosenFocus, clearEl, focusContentStart, h, layer } from '../dom';
 import { canPromptInstall, installSteps, isInstalledApp, onInstallChange, promptInstall } from '../install';
@@ -466,6 +468,40 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
     if (!pad) {
       el.appendChild(select('Block', [['hold', 'Hold to block'], ['toggle', 'Toggle block']], () => (s.controls.holdToBlock ? 'hold' : 'toggle'), (v) => (s.controls.holdToBlock = v === 'hold')));
     } else {
+      // whose controller layout this is: the playing character's own, or the default new characters copy
+      const who = padOwnerName();
+      el.appendChild(
+        h(
+          'div',
+          { class: 'pad-owner', 'data-testid': 'pad-owner' },
+          who ? h('b', null, `Controller layout of ${who}`) : h('b', null, 'Default controller layout'),
+          h(
+            'div',
+            { class: 'small dim-text', style: 'max-width:760px' },
+            who
+              ? 'Each character keeps its own buttons, menu confirm / back and aim assist. Changes here are saved with this character only.'
+              : 'Characters keep their own controller layout. A character that has none yet copies this one when it next plays. Open Settings while playing to change that character’s layout.',
+          ),
+          who
+            ? h(
+                'div',
+                { class: 'row' },
+                btn('Use the default layout', () => {
+                  cancelCapture();
+                  if (adoptGlobalPad(s)) notice = `${who} now uses the default controller layout.`;
+                  save();
+                  render();
+                }),
+                btn('Make this the default', () => {
+                  cancelCapture();
+                  if (shareAsGlobalPad(s)) notice = `The default controller layout is now ${who}’s.`;
+                  save();
+                  render();
+                }),
+              )
+            : null,
+        ),
+      );
       el.appendChild(slider('Aim assist strength', () => s.controls.aimAssist, (v) => (s.controls.aimAssist = v)));
       el.appendChild(padStatus());
       el.appendChild(steamBox());

@@ -113,6 +113,7 @@ input[type=range] { padding: 0; }
 .tooltip .tt-rows .note { grid-column: 1 / -1; font-size: 11px; color: var(--dim); margin: -1px 0 1px 10px; }
 .tooltip .tt-rows .skill.locked { color: var(--dim); text-decoration: line-through; }
 .tooltip .tt-text { padding-left: 14px; }
+.tooltip .tt-skill { display: flex; flex-direction: column; gap: 1px; margin: 2px 0; }
 .tt-up { color: var(--good); } .tt-same { color: var(--text); } .tt-down { color: var(--bad); }
 .tooltip .tt-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
 .tooltip .tt-foot .flavor { margin: 0; }

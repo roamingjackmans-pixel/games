@@ -21,7 +21,7 @@ Revive value of any damaging spell hit on a ghost: **0.25** (D12). *Last Rites* 
 | **Blink** | 12 | 0.1 s | 10 s | 10 | Teleport 240 px toward the cursor. Instant reposition; it is **not** i-frames, so it *does* escape Piercing areas if the destination is outside them. |
 | **Chain Lightning** | 16 | 0.5 s | 7 s | 18 | proj(900) 36 Lightning, chains to 4 enemies within 180 px (−15% per jump), Shock 40. |
 | **Void Rift** | 15 | 0.7 s | 9 s | 22 | circle(120) at the cursor for 4 s: 12 Void per 0.5 s, enemies inside −20% speed. |
-| **Gravity Well** | 20 | 0.6 s | 12 s | 22 | circle(160) for 3 s pulling non-boss enemies to its center (bosses −20% speed), then bursts 50 Void. |
+| **Gravity Well** | 20 | 0.6 s | 12 s | 22 | circle(160) for 3 s pulling non-boss enemies (flyers and Saint Aurelia's ice mirrors too) to its center (bosses −20% speed). No damage, no end burst. |
 | **Arcane Beam** | 22 | channel 2 s | 11 s | 30 | line(26, 700) beam following the cursor, 18 per 0.2 s. You can walk at 40% while channeling. |
 | **Mirror Images** | 24 | 0.5 s | 18 s | 20 | 2 decoys (1 HP, 6 s) that taunt enemies within 250 px. |
 | **Time Dilation** | 28 | 0.6 s | 20 s | 26 | circle(200) at the cursor 5 s: enemies inside act at 60% speed (bosses 80%). Telegraph timers inside slow accordingly. |

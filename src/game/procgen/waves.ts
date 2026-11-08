@@ -1,8 +1,9 @@
 // Threat budgets and waves (PROCGEN §4). Deterministic from (seed, zone, cycle, room).
 import { stream } from '../../engine/rng';
-import { ENEMIES } from '../../data/enemies';
+import { ENEMIES, rosterOf } from '../../data/enemies';
 import { ROLE_STATS } from '../../data/roles';
 import { rollElite } from './elite';
+import { bonusBossFor } from './bonusBoss';
 import type { EliteAffix, EnemyDef, Role } from '../types';
 import type { RoomNode, ZoneLayout } from './zone';
 
@@ -17,6 +18,8 @@ export interface RoomPlan {
   baseWaves?: number;
   /** what each enemy's Shards and drop chances are divided by, so a player earns the same per room in any party */
   share?: number;
+  /** New Game+ (D278): this room's fight is this boss, in its second phase, instead of waves */
+  bonusBoss?: string;
 }
 
 /**
@@ -51,6 +54,16 @@ export function threatBudget(depth: number, zone: number): number {
   return (6 + 2 * depth) * (1 + 0.15 * (zone - 1));
 }
 
+/** New Game+ (D276): every zone's rooms are budgeted like zone 8's, so they hold as many enemies as zone 8's rooms. */
+export const NG_BUDGET_ZONE = 8;
+export function budgetZone(zone: number, cycle: number): number {
+  return cycle >= 1 ? Math.max(zone, NG_BUDGET_ZONE) : zone;
+}
+
+function avgUnitCost(defs: EnemyDef[]): number {
+  return defs.length ? defs.reduce((a, d) => a + unitCost(d), 0) / defs.length : 1;
+}
+
 export function waveCount(depth: number): number {
   return depth <= 2 ? 1 : depth <= 5 ? 2 : 3;
 }
@@ -69,12 +82,19 @@ export function planRoom(layout: ZoneLayout, node: RoomNode, players = 1): RoomP
   const rng = stream(layout.seed, `waves:${layout.zone}:${layout.cycle}:${node.id}${p > 1 ? `:p${p}` : ''}`);
   const ambush = node.kind === 'ambush';
   if (node.kind !== 'combat' && node.kind !== 'ambush') return { waves: [], ambush: false };
+  const bonus = bonusBossFor(layout);
+  if (bonus && bonus.roomId === node.id) return { waves: [], ambush: false, baseWaves: 1, share: 1, bonusBoss: bonus.bossId };
   const mix = layout.mix.map((id) => ENEMIES[id]).filter((d): d is EnemyDef => !!d);
   if (mix.length === 0) return { waves: [], ambush };
   const depth = Math.max(1, node.depth);
   // every wave the solo size; the party adds whole waves (D159)
   const base = waveCount(depth);
-  const per = (threatBudget(depth, layout.zone) * ROOM_ENEMY_MULT) / base;
+  // New Game+ (D276): a room holds as many enemies as a zone 8 room of its depth: zone 8's budget, priced in this
+  // zone's units (a cheap mix would otherwise buy more bodies than zone 8's). The share grows with it, so a room still
+  // pays the same Shards and loot. Never fewer than the zone's own budget buys.
+  const bz = budgetZone(layout.zone, layout.cycle);
+  const ngMore = bz === layout.zone ? 1 : Math.max(1, (threatBudget(depth, bz) / threatBudget(depth, layout.zone)) * (avgUnitCost(mix) / avgUnitCost(rosterOf(bz))));
+  const per = (threatBudget(depth, layout.zone) * ngMore * ROOM_ENEMY_MULT) / base;
   const cap = maxPerWave(p);
   const roleCap = 2;
   const n = waveCountFor(depth, p);
@@ -110,7 +130,7 @@ export function planRoom(layout: ZoneLayout, node: RoomNode, players = 1): RoomP
     if (wave.length === 0) wave.push({ defId: mix[0]!.id, elite: null });
     waves.push(wave);
   }
-  return { waves, ambush, baseWaves: base, share: (ROOM_ENEMY_MULT * n) / base };
+  return { waves, ambush, baseWaves: base, share: (ROOM_ENEMY_MULT * n * ngMore) / base };
 }
 
 /** Shards one player gets from a full clear of the room (no elites), for the tuning test. */

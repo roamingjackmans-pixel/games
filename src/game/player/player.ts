@@ -4,7 +4,7 @@ import { emptyInput, held, pressed } from '../../engine/input/actions';
 import { T } from '../room';
 import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
 import { attackStaminaCost, flaskHeal, MAX_PROJECTILE_RANGE, STAMINA_COST_MULT } from '../combat/formulas';
-import { addRevive, applyControl, cleanse, emptySpec, ffVictims, heal, hitAlly, hitEnemy, rawDamage, typeColor } from '../combat/damage';
+import { addRevive, applyControl, cleanse, emptySpec, ffVictims, heal, hitAlly, hitEnemy, rawDamage, STUN_IMMUNE_S, typeColor } from '../combat/damage';
 import { buffSum, hasControl, speedMult } from '../combat/state';
 import { terrainWalkMult } from '../systems/terrain';
 import { computeDerived } from './derived';
@@ -223,11 +223,11 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   const d = pl.derived;
   const now = w.time;
   const base = d.weaponPower * mult * (1 + d.dmgPct);
-  // a hybrid weapon's base damage is its own type (D80); conversion gems take their share from it
+  // a hybrid weapon's base damage is its own type (D80); a weapon's holy share comes out of it
   const own: DamageType = d.weapon.element ?? 'physical';
   const dmg: Partial<Record<DamageType, number>> = {};
   let ownLeft = base;
-  // conversions never take more than all of it (D197: high-level gems can add past 100%)
+  // conversions never take more than all of it
   const convTotal = d.convert.reduce((t, c) => t + c.pct, 0);
   const convScale = convTotal > 1 ? 1 / convTotal : 1;
   for (const c of d.convert) {
@@ -236,6 +236,8 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
     dmg[c.type] = (dmg[c.type] ?? 0) + amt;
   }
   dmg[own] = (dmg[own] ?? 0) + Math.max(0, ownLeft);
+  // D283: Ember, Rime, Storm, Dawn and Dusk add their share on top as their own type (they used to take it from the base)
+  for (const a of d.addDmg) dmg[a.type] = (dmg[a.type] ?? 0) + base * a.pct;
   const holyPct = buffSum(e, 'holyConvertPct', now);
   if (holyPct > 0) dmg.holy = (dmg.holy ?? 0) + base * holyPct;
   for (const t of DAMAGE_TYPES) {
@@ -697,6 +699,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
         }
         w.emit({ t: 'shake', amount: 8 });
       }
+      // the grace after a grab runs from when it let go: its end, or now if it was cut short (holder gone, mimic opened)
+      pl.stunImmuneUntil = (pl.holdUntil > 0 && pl.holdUntil <= now ? pl.holdUntil : now) + STUN_IMMUNE_S;
       pl.state = 'idle';
       pl.holdDmg = 0;
       e.st!.controls.hold = 0;

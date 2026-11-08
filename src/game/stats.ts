@@ -277,7 +277,8 @@ export class StatsTracker {
     switch (ev.t) {
       case 'death': {
         if (ev.isPlayer || !ev.defId) return;
-        const boss = BOSSES[ev.defId];
+        // a New Game+ bonus fight (D278) is not a boss kill (nor a boss time)
+        const boss = ev.bonus ? undefined : BOSSES[ev.defId];
         if (boss) {
           // a split boss dies in pieces: one kill
           const lb = this.lastBossDown;
@@ -348,7 +349,7 @@ export class StatsTracker {
     if (this.fight?.id === bid) return;
     const b = w.get(bid);
     // the clock starts when the intro ends
-    if (!b?.en || b.en.state === 'spawning') return;
+    if (!b?.en || b.en.state === 'spawning' || b.en.bonusBoss) return;
     const def = BOSSES[b.en.def.id];
     if (def) this.fight = { id: bid, defId: def.id, start: this.clock };
   }

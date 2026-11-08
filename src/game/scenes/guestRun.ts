@@ -20,13 +20,14 @@ import { openStatistics } from '../../ui/statistics';
 import { achievements } from '../achievements';
 import { stats } from '../stats';
 import { drawInteractable, nearestInteractable } from '../../render/interactables';
-import { buyConsumable, buyGem, fuseGems, levelUp, respec, sellAll, sellConsumable, sellGem, sellItem, socketGem, unsocketGem, upgradeGem } from '../items/inventory';
+import { buyConsumable, buyGem, fuseGems, levelUp, respec, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
 import { upgradeRarity } from '../items/proficiency';
-import { reinforceItem } from '../items/reinforce';
+import { breakDownEssence, reinforceItem } from '../items/reinforce';
 import { shopGem, shopGemPrice } from '../bonfire/shop';
 import { refreshDerived } from '../player/player';
 import { writeSave } from '../save/storage';
 import { getStore } from '../../engine/settings';
+import { releasePad, usePadOf } from '../../engine/padProfile';
 import { WorldScene } from './worldScene';
 import type { NetGuest } from '../net/guest';
 import type { NetEvent } from '../net/protocol';
@@ -89,12 +90,17 @@ export class GuestRunScene extends WorldScene {
     };
     this.view.drawInteract = (ctx, e, now) => drawInteractable(ctx, e, now, { bonfireUsed: (k) => this.rested.has(k), stationDone: () => false });
     super.enter();
+    // the guest's own character's controller layout goes live
+    usePadOf(app().settings, this.save.character, () => this.persist());
+    app().applySettings();
     // a death to The Instructor does not spoil a clean zone (D207)
     achievements().begin({ clean: this.save.stats.deaths - (this.save.stats.instructorDeaths ?? 0) <= 0 });
   }
 
   override exit(): void {
     super.exit();
+    releasePad(app().settings, this.save.character);
+    app().applySettings();
     this.persist();
     this.closeOverlay();
     music.stop();
@@ -308,7 +314,10 @@ export class GuestRunScene extends WorldScene {
           raiseRarity: (it) => r(upgradeRarity(c, it)),
           // Soul Essence and Glowen, +1 on a weapon, shield or armour piece (D198); a guest reinforces its own
           reinforce: (it) => r(reinforceItem(c, it)),
-          upgradeGem: (loc, pi) => r(stats().count(upgradeGem(c, loc, pi), 'gemsUpgraded')),
+          // D282: lock a gem; Sell all gems keeps locked ones. D285: break Soul Essence down 1 → 3 of the tier below
+          toggleGemLock: (loc) => r(toggleGemLock(c, loc)),
+          sellAllGems: () => r(sellAllGems(c)),
+          breakEssence: (tier, all) => r(breakDownEssence(c, tier, all)),
           fuseGem: (o, d, picks) => r(stats().count(fuseGems(c, o, d, picks), 'gemsFused')),
           sellAll: (f) => r(sellAll(c, f)),
           sellItem: (it) => r(sellItem(c, it)),

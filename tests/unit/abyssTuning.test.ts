@@ -34,7 +34,7 @@ describe('zone 8 tuning (D172)', () => {
     expect(pockets(atk('landlords_clerk', 'audit')?.pattern)).toBe(4);
     expect(pockets(atk('star_eater', 'supernova')?.pattern)).toBe(5);
     const boss = THE_LANDLORD!.phases.map((ph) => ph.attacks.filter((a) => a.pattern?.kind === 'pockets').map((a) => pockets(a.pattern)));
-    expect(boss).toEqual([[5], [4, 4], [3]]);
+    expect(boss).toEqual([[5], [4, 4], [3], []]); // phase 4 (D279) has no safe-spot attack
     // the extra pockets are spread: no two closer than their own diameter in these rolls
     for (let s = 0; s < 30; s++) {
       const ps = placePockets(5, 100, ctx(`p${s}`));

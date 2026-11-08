@@ -1,10 +1,10 @@
 // Inventory operations on a Character (bag of 60, equipment, gems, consumables). Pure and validated:
 // the co-op host runs the same functions to check guests' commands (NETCODE §6).
-import { GEMS, gemKind, gemKindLabel, gemTitle } from '../../data/gems';
+import { GEMS, gemKind, gemKindLabel, gemOrigin, gemTitle } from '../../data/gems';
 import { CONSUMABLES, MAX_CONSUMABLE } from '../../data/consumables';
-import { gearSellValue, gemFuseCost, gemSellTotal, gemUpgradeCost, levelCost } from '../combat/formulas';
+import { gearSellValue, gemFuseCost, gemSellTotal, levelCost } from '../combat/formulas';
 import { canRaise, levelFromStats, respecStats } from '../player/character';
-import type { Character, ConsumableId, Gem, GemPerk, GemTier, Item, Rarity, StatId } from '../types';
+import type { Character, ConsumableId, Gem, GemFamily, GemPerk, Item, Rarity, StatId } from '../types';
 import { newId } from './make';
 
 export const BAG_SIZE = 60;
@@ -184,19 +184,6 @@ export function unsocketGem(c: Character, itemId: string, socketIdx: number): Op
   return ok('Gem removed.');
 }
 
-/** Upgrade one perk of a gem by a tier, loose or socketed (no need to unsocket). Each perk pays its own way. */
-export function upgradeGem(c: Character, loc: GemLoc, perkIdx = 0): OpResult {
-  const gem = gemAt(c, loc);
-  const perk = gem?.perks[perkIdx];
-  if (!gem || !perk) return no('No gem.');
-  if (perk.tier >= 5) return no(`${GEMS[perk.family].name} is already T5.`);
-  const cost = gemUpgradeCost(perk.tier);
-  if (c.glowen < cost) return no(`Needs ${cost} Glowen.`);
-  c.glowen -= cost;
-  perk.tier = (perk.tier + 1) as GemTier;
-  return ok(`${GEMS[perk.family].name} upgraded to T${perk.tier}.`);
-}
-
 /** A perk chosen for a fused gem: from the original gem or the donor gem, by index. */
 export interface FusePick {
   from: 'orig' | 'donor';
@@ -204,7 +191,7 @@ export interface FusePick {
 }
 
 /** Check a fuse and work out the resulting perks (or why it cannot be done). */
-export function fusePreview(orig: Gem | null, donor: Gem | null, picks: FusePick[]): { perks: GemPerk[]; cost: number } | { error: string } {
+export function fusePreview(orig: Gem | null, donor: Gem | null, picks: FusePick[]): { perks: GemPerk[]; cost: number; origin: GemFamily[] } | { error: string } {
   if (!orig || !donor) return { error: 'Pick two gems.' };
   if (orig === donor) return { error: 'A gem cannot fuse with itself.' };
   if (orig.perks.length < 2) return { error: 'Only gems with two or more perks can be fused.' };
@@ -219,9 +206,12 @@ export function fusePreview(orig: Gem | null, donor: Gem | null, picks: FusePick
     seen.add(perk.family);
     perks.push({ ...perk });
   }
-  if (!picks.some((p) => p.from === 'orig')) return { error: 'Keep at least one perk of the original gem.' };
+  // D286: at least one of the gem's original perks stays, through every fuse; the kept ones are its new origin
+  const origin = gemOrigin(orig);
+  const keptOrigin = picks.filter((p) => p.from === 'orig').map((p) => orig.perks[p.idx]!.family).filter((f) => origin.includes(f));
+  if (!keptOrigin.length) return { error: `Keep at least one original perk: ${origin.map((f) => GEMS[f].name).join(', ')}.` };
   if (!picks.some((p) => p.from === 'donor')) return { error: 'Take at least one perk from the other gem.' };
-  return { perks, cost: gemFuseCost(perks) };
+  return { perks, cost: gemFuseCost(perks), origin: keptOrigin };
 }
 
 /**
@@ -236,6 +226,7 @@ export function fuseGems(c: Character, orig: GemLoc, donorIdx: number, picks: Fu
   if (c.glowen < res.cost) return no(`Needs ${res.cost} Glowen.`);
   c.glowen -= res.cost;
   o!.perks = res.perks;
+  o!.origin = res.origin;
   c.gems.splice(c.gems.indexOf(d!), 1);
   return ok(`Fused: ${gemTitle(o!)}.`);
 }
@@ -316,6 +307,30 @@ export function sellItem(c: Character, itemId: string): OpResult {
   return ok(`Sold ${item.name} for ${v} Glowen.`);
 }
 
+/** Lock or unlock a loose or socketed gem (D282): "Sell all gems" never takes a locked one. */
+export function toggleGemLock(c: Character, loc: GemLoc): OpResult {
+  const g = gemAt(c, loc);
+  if (!g) return no('No gem.');
+  if (g.locked) delete g.locked;
+  else g.locked = true;
+  return ok(g.locked ? `Locked ${gemTitle(g)}: Sell all gems will keep it.` : `Unlocked ${gemTitle(g)}.`);
+}
+
+/** What "Sell all gems" would take (D282): every loose gem that is not locked (socketed gems are never sold by it). */
+export function sellAllGemsPreview(c: Character): { count: number; glowen: number; locked: number } {
+  const picks = c.gems.filter((g) => !g.locked);
+  return { count: picks.length, glowen: picks.reduce((s, g) => s + gemSellTotal(g), 0), locked: c.gems.length - picks.length };
+}
+
+export function sellAllGems(c: Character): OpResult {
+  const picks = c.gems.filter((g) => !g.locked);
+  if (picks.length === 0) return no('No unlocked loose gems to sell.');
+  const v = picks.reduce((s, g) => s + gemSellTotal(g), 0);
+  c.gems = c.gems.filter((g) => g.locked);
+  c.glowen += v;
+  return ok(`Sold ${picks.length} gem${picks.length === 1 ? '' : 's'} for ${v} Glowen.`);
+}
+
 export function sellGem(c: Character, gemIdx: number): OpResult {
   const gem = c.gems[gemIdx];
   if (!gem) return no('No gem.');
@@ -357,7 +372,7 @@ export function buyItem(c: Character, item: Item, price: number): OpResult {
 export function buyGem(c: Character, gem: Gem, price: number): OpResult {
   if (c.glowen < price) return no(`Needs ${price} Glowen.`);
   c.glowen -= price;
-  c.gems.push({ perks: gem.perks.map((p) => ({ ...p })) });
+  c.gems.push({ perks: gem.perks.map((p) => ({ ...p })), ...(gem.origin ? { origin: [...gem.origin] } : {}) });
   return ok(`Bought ${gemTitle(gem)}.`);
 }
 

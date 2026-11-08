@@ -148,13 +148,13 @@ describe('unlocking', () => {
     expect(t.view.count('clean:2')).toBe(0);
   });
 
-  it('polls the character: legendary, full set, a Tier 5 gem, Glowen, party size', () => {
+  it('polls the character: legendary, full set, an Orange gem, Glowen, party size', () => {
     const { t, w, c } = setup();
     t.begin();
     // the Knight starts in a full zone-1 set: that is not finding one
     expect(wearsFullSet(c)).toBe(false);
     c.glowen = 10000;
-    c.gems.push({ perks: [{ family: 'quicksilver', tier: 5 }] });
+    c.gems.push({ perks: [{ family: 'quicksilver', q: 0.45 }] });
     c.equipment.head = { id: 'h', baseId: 'mycelial_head', slot: 'head', kind: 'armor', rarity: 'common', ilvl: 1, name: 'h', affixes: [], sockets: [] };
     c.equipment.body = { id: 'b', baseId: 'mycelial_body', slot: 'body', kind: 'armor', rarity: 'common', ilvl: 1, name: 'b', affixes: [], sockets: [] };
     c.equipment.legs = { id: 'l', baseId: 'mycelial_legs', slot: 'legs', kind: 'armor', rarity: 'legendary', ilvl: 1, name: 'l', affixes: [], sockets: [] };

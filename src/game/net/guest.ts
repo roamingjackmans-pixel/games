@@ -392,6 +392,8 @@ export class NetGuest {
     if (e.en) {
       const en = e.en;
       en.state = ENEMY_STATES[r.state] ?? 'alert';
+      // when a new phase began, for the transition's animation (a scripted one plays over its own length, D279)
+      if (r.extra !== en.phase || (r.flags & F.transition && en.phaseTransitionUntil <= t)) en.extrasUsed.__phaseAt = t;
       en.phase = r.extra;
       en.phaseTransitionUntil = r.flags & F.transition ? t + 0.3 : 0;
       en.fadeUntil = r.flags & F.faded ? t + 0.2 : 0;

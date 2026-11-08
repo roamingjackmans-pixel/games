@@ -123,7 +123,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   // ---- loot
   once('legendary', 'Glows Orange', 'Find a legendary item.', 'star', 'legendary'),
   once('full_set', 'Matching Outfit', 'Wear a full armor set from below the Crypt: head, body and legs of one set. The starter rags do not count.', 'armor', 'fullSet'),
-  once('gem_max', 'Hard Pressed', 'Own a Tier 5 gem: a gem perk at its maximum.', 'gem', 'gemMax'),
+  once('gem_max', 'Hard Pressed', 'Own a gem with an Orange roll: a perk at the top of its range.', 'gem', 'gemMax'),
   once('gem_perfect', 'Freshly Squeezed', 'Own a level 50 gem with three perks, every one of them an Orange roll.', 'gem', 'gemPerfect'),
   once('plus_max', 'Built to Code', 'Reinforce a weapon, shield or piece of armor to +15 with Soul Essence.', 'shield', 'plusMax'),
   once('raised_legendary', 'Grown Into It', 'Use a weapon until it is ready, then raise it to Legendary at a bonfire.', 'star', 'raisedLegendary'),

@@ -450,40 +450,45 @@ defense per type, max HP/stamina, Shard find, Glowen find, gem find, revive valu
 ### 8.5 Gems (V Rising)
 
 Gems slot into sockets and **change how the weapon works, mostly its speed**. A gem carries one to three
-**perks**; each perk is one family below with **its own tier** (the perk has the tier, not the gem). Every
-perk on a gem is a different family, and a gem is either a **weapon gem** (weapon perks, weapon sockets)
-or an **armor gem** (armor perks, armor sockets); the bench, tooltips, pickups and shops show a
-"Weapon gem" / "Armor gem" tag.
+**perks**; each perk is one family below with its own **level** (1–50, from where it dropped) and its own
+**quality roll** (−50% … +50%: Green, Blue, Purple, Orange). There are no tiers (D284): a perk's strength is its
+family's baseline × its level (×0.25 at 1, ×1 at about 14, ×3 at 50) × (1 + roll). Every perk on a gem is a
+different family, and a gem is either a **weapon gem** (weapon perks, weapon sockets) or an **armor gem**
+(armor perks, armor sockets); the bench, tooltips, pickups and shops show a "Weapon gem" / "Armor gem" tag.
 
-| Perk | Effect per tier (T1 → T5) |
+| Perk | Baseline (the old T1–T5 average) |
 |---|---|
-| Quicksilver | +6/9/12/15/18% attack and cast speed |
-| Tempo | −6/9/12/15/18% skill cooldowns |
-| Fleetfoot | −0.3/0.45/0.6/0.75/0.9 s dodge recharge (respects the 3 s floor) |
-| Brutal | +5/8/11/14/17% damage |
-| Ember / Rime / Storm / Dawn / Dusk | converts 20/25/30/35/40% of physical damage to Fire / Magic (frost) / Magic (lightning) / Holy / Void and adds status buildup |
-| Leech | 2/3/4/5/6% lifesteal |
-| Vigor | −8/12/16/20/24% stamina costs |
-| Bulwark (armor) | +8/12/16/20/24 defense to all types |
-| Hearth (armor) | +15/22/30/38/45 max HP |
-| Zephyr (armor) | +8/12/16/20/24% stamina regeneration |
-| Gilt (armor) | +5/8/11/14/17% Glowen found |
+| Quicksilver | +12% attack and cast speed |
+| Tempo | −12% skill cooldowns |
+| Fleetfoot | −0.6 s dodge recharge (respects the 3 s floor) |
+| Brutal | +11% damage |
+| Ember / Rime / Storm / Dawn / Dusk | **adds** 42% of the hit as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of the physical (D283: they used to convert 20–40%), plus status buildup |
+| Leech | 4% lifesteal |
+| Vigor | −16% stamina costs |
+| Bulwark (armor) | +16 defense to all types |
+| Hearth (armor) | +8% max HP |
+| Zephyr (armor) | +16% stamina regeneration |
+| Gilt (armor) | +11% Glowen found |
 
 **Perk count by cycle**: in the first playthrough every gem has one perk. In NG+ (cycle 1) a gem has a
-35% chance of two perks; from NG+2 on, 40% two perks and 25% three (all perks at the drop's tier). The
-bonfire shop's gem is always one T1 perk.
+35% chance of two perks; from NG+2 on, 40% two perks and 25% three (all perks at the drop's level, each with
+its own roll). The bonfire shop's gem is always one perk. Gems of level 25 and up roll their quality twice and
+keep the best; treasure chests and bosses add a roll, Gary one or two (any roll still lands in −50% … +50%).
 
-Gems drop from enemies (2%), chests (12%), bosses (100%, one), the wandering merchant, and the bonfire
-shop (one T1 per zone). **Glowen**: a perk is worth 40 × 3^(tier−1) Glowen and a gem sells for the sum of
-its perks; **each perk is upgraded on its own** for 10× its value (T1→T2: 400, T2→T3: 1200, T3→T4: 3600,
-T4→T5: 10800), at the gem bench, loose or still socketed in gear you carry. Glowen also comes from selling
-gear (10–400 by rarity/ilvl) and rare "Glowen Wisps" drops (better-made gear holds more Glowen, §19).
-Gems can be unsocketed for free at a bonfire. There is no re-rolling.
+Gems drop from enemies (1.3%), chests (7.8%), bosses (65%, one) (D281: 35% fewer than before), the wandering
+merchant, and the bonfire shop (one per zone). **Glowen**: a perk sells for 80 × its level's strength × (1 +
+roll) (at least 5) and a gem for the sum of its perks. Gems are not upgraded (D284). Glowen also comes from
+selling gear (10–400 by rarity/ilvl) and rare "Glowen Wisps" drops (better-made gear holds more Glowen, §19).
+Gems can be unsocketed for free. There is no re-rolling. Picking an empty socket at the gem bench lists only
+the gems that fit it (D280). A gem can be **locked** (the padlock, Y on a pad, L); **Sell all gems** sells every
+loose gem that is not locked (D282).
 
 **Fusing**: a gem with two or more perks can be fused with a loose gem of the same kind. You choose which
 perks the original gem ends up with from both gems' perks — exactly as many as it had, no family twice, at
-least one from each gem (two 3-perk gems: pick any three of the six) — and the other gem is destroyed. Tiers
-travel with their perks. Fusing costs the value of the best perk kept (40 × 3^(tier−1)).
+least one from the other gem — and the other gem is destroyed. Levels and rolls travel with their perks.
+**At least one of the gem's original perks must stay** (D286): a gem remembers the families it was made with,
+only the ones kept stay original, and every later fuse must keep one of those. Fusing costs the sale price of
+the best perk kept (at least 40).
 
 ## 9. Bonfires, flask, death
 
@@ -661,7 +666,7 @@ it is. That is why the game deals in it:
 
 - **Monsters** are full of Glowen scraped off something else; hit one hard enough and it seeps out.
 - **Gear** sells by rarity and item level because rarer, harder-worked things soaked up more of their maker.
-- **Gems** are Glowen that set hard under pressure; pouring more in grows them a tier.
+- **Gems** are Glowen that set hard under pressure; the deeper they set, the harder they are.
 - **Bonfires** were lit by the Joes who came down before. Someone always opens a stall by a fire, and down
   here stalls take only Glowen, the one thing the Landlord wants. **Gary** pays no rent and never says where
   anything came from.
@@ -704,7 +709,7 @@ if missing or corrupt, and unknown ids are kept for newer builds.
   bosses, The Instructor, seeing the credits, The Landlord on Cycle 2 (NG+) and Cycle 3 (NG+2), every class
   finishing a zone (any boss kill as that class), deaths (1 / 25 / 100; a death is a solo death or a party
   wipe), being killed by a mimic and killing one, a legendary item, a full armor set from zone 2 or deeper
-  (every starting kit is a zone-1 set), a Tier 5 gem, 50 parries, 10 riposte kills, a boss without the
+  (every starting kit is a zone-1 set), a gem with an Orange roll, 50 parries, 10 riposte kills, a boss without the
   Thermos, a boss with nothing in the weapon hand, a zone cleared without dying (from arriving by the stairs
   to its boss; a character that has never died counts its current zone) and each of the 8 that way, reviving
   a friend, downing a friend with friendly fire and letting a friend you downed bleed out (D115), a four-player

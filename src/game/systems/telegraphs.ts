@@ -48,23 +48,44 @@ function applyHit(w: World, t: Entity, target: Entity): void {
   }
 }
 
-function impactTest(w: World, t: Entity, tau: number, onceSet: Set<number> | null): void {
+/** A sweep that was struck on a pass cannot strike the same target again for this long (s). */
+export const SWEEP_REHIT_S = 0.75;
+/** The swept arc between frames is sampled at least this finely, so a fast beam cannot jump over a target. */
+const SWEEP_STEP = 1.5 * DEG;
+
+/** The moments to test a sweep at between the last frame (tau0) and this one (tau1): enough that no step turns more than SWEEP_STEP. */
+export function sweepSamples(shapes: Shape[], tau0: number, tau1: number): number[] {
+  let rate = 0;
+  for (const s of shapes) if (s.k === 'sweep') rate = Math.max(rate, Math.abs(s.arc) / Math.max(0.01, s.dur));
+  const n = Math.max(1, Math.min(32, Math.ceil((rate * Math.max(0, tau1 - tau0)) / SWEEP_STEP)));
+  const out: number[] = [];
+  for (let i = 1; i <= n; i++) out.push(tau0 + ((tau1 - tau0) * i) / n);
+  return out;
+}
+
+function impactTest(w: World, t: Entity, tauOrTaus: number | number[], onceSet: Set<number> | null, rehit?: { until: Map<number, number>; s: number }): void {
   const tg = t.tg!;
+  const taus = typeof tauOrTaus === 'number' ? [tauOrTaus] : tauOrTaus;
   for (const target of targetsFor(w, t)) {
     if (onceSet && onceSet.has(target.id)) continue;
+    if (rehit && (rehit.until.get(target.id) ?? -1) > w.time) continue;
     let hitAny = false;
     // an area attack catches a player only where the dot at their feet is (D262); melee swings still take the body
     const dot = !!target.pl && tg.area;
     const r = dot ? PLAYER_DOT_R : target.radius;
     const ty = dot ? target.y + PLAYER_DOT_DY : target.y;
-    for (const s of tg.shapes) {
-      if (shapeHit(s, tau, target.x, ty, r, w.room)) {
-        hitAny = true;
-        break;
+    for (const tau of taus) {
+      for (const s of tg.shapes) {
+        if (shapeHit(s, tau, target.x, ty, r, w.room)) {
+          hitAny = true;
+          break;
+        }
       }
+      if (hitAny) break;
     }
     if (!hitAny) continue;
     onceSet?.add(target.id);
+    rehit?.until.set(target.id, w.time + rehit.s);
     applyHit(w, t, target);
   }
   // player skill areas also revive ghosts a little (spell value 0.25 is applied by the effect system)
@@ -73,7 +94,7 @@ function impactTest(w: World, t: Entity, tau: number, onceSet: Set<number> | nul
     for (const g of w.players) {
       if (!g.pl!.downed || !owner || g === owner) continue;
       if (onceSet?.has(g.id)) continue;
-      if (tg.shapes.some((s) => shapeHit(s, tau, g.x, g.y, g.radius, w.room))) {
+      if (tg.shapes.some((s) => shapeHit(s, taus[taus.length - 1]!, g.x, g.y, g.radius, w.room))) {
         onceSet?.add(g.id);
         addRevive(w, g, owner, tg.spec.isSpell ? 0.25 : tg.spec.reviveValue);
       }
@@ -162,7 +183,12 @@ export function updateTelegraphs(w: World, dt: number): void {
         tg.fired = true;
         impactFx(w, t);
       }
-      if (tg.mode === 'once') impactTest(w, t, tau, tg.hit);
+      // a sweep is tested over the whole arc it turned through since the last frame, every frame: a ticking beam
+      // used to be tested only on its ticks, so it jumped over anyone it swung past and hit only at its start
+      const sweeping = tg.shapes.some((s) => s.k === 'sweep');
+      const taus = sweeping ? sweepSamples(tg.shapes, Math.max(0, tau - dt), tau) : tau;
+      if (tg.mode === 'once') impactTest(w, t, taus, tg.hit);
+      else if (sweeping) impactTest(w, t, taus, null, { until: (tg.rehitUntil ??= new Map()), s: Math.max(tg.tickS, SWEEP_REHIT_S) });
       else if (now >= tg.nextTick) {
         tg.nextTick = now + tg.tickS;
         impactTest(w, t, tau, null);

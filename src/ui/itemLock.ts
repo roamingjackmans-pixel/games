@@ -1,6 +1,6 @@
 // The item lock (D265): one lock button, the same in the inventory and the shop. A locked item is never taken by
 // "Sell all". The padlock is drawn as inline SVG (no fonts or images).
-import type { Item } from '../game/types';
+import type { Gem, Item } from '../game/types';
 import { playSfx } from '../engine/audio/sfx';
 import { h } from './dom';
 
@@ -68,5 +68,17 @@ export function lockButton(item: Item, toggle: () => void, inCell = false): HTML
   }
   const b = h('button', { class: `tiny lock-btn${item.locked ? ' on' : ''}`, title: lockTitle(item), 'aria-label': item.locked ? 'Unlock' : 'Lock', 'aria-pressed': item.locked ? 'true' : 'false', 'data-testid': `lock-${item.id}` }, lockIcon(!!item.locked, 13));
   b.addEventListener('click', press);
+  return b;
+}
+
+/** The same lock for a gem (D282): "Sell all gems" keeps a locked gem. A small real button. */
+export function gemLockButton(g: Gem, testid: string, toggle: () => void): HTMLElement {
+  const b = h('button', { class: `tiny lock-btn${g.locked ? ' on' : ''}`, title: g.locked ? 'Locked: Sell all gems keeps it. Click to unlock.' : 'Lock it so Sell all gems keeps it.', 'aria-label': g.locked ? 'Unlock' : 'Lock', 'aria-pressed': g.locked ? 'true' : 'false', 'data-testid': testid }, lockIcon(!!g.locked, 13));
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    playSfx('uiClick');
+    toggle();
+  });
   return b;
 }

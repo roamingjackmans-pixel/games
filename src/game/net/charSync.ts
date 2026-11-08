@@ -6,6 +6,7 @@
 import type { Character, ConsumableId, Gem, Item } from '../types';
 import { addBestiaryKill, addBestiarySeen } from '../../data/bestiary';
 import { uniqueItemId } from '../items/inventory';
+import { untierGem } from '../../data/gems';
 
 export type CharOp =
   | { op: 'add'; key: 'shards' | 'glowen' | 'tears' | 'bossesBeaten'; n: number }
@@ -70,6 +71,7 @@ export function applyCharOp(c: Character, o: CharOp): void {
       if (!c.bag.some((i) => i.id === o.item.id && i.name === o.item.name && i.rarity === o.item.rarity && i.ilvl === o.item.ilvl)) c.bag.push(uniqueItemId(c, o.item));
       break;
     case 'gem':
+      untierGem(o.gem);
       c.gems.push(o.gem);
       break;
     case 'bestiary':

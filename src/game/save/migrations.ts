@@ -1,5 +1,6 @@
 // Save migrations: each entry upgrades a save from `from` to `from + 1`. Version 3 is current.
 import { SAVE_VERSION } from './schema';
+import { untierGem } from '../../data/gems';
 
 type Migration = { from: number; up: (s: Record<string, unknown>) => Record<string, unknown> };
 
@@ -101,5 +102,33 @@ export function migrate(raw: unknown): unknown {
     s = m.up(s);
     v = typeof s.version === 'number' ? s.version : v + 1;
   }
+  untierSave(s);
   return s;
+}
+
+/**
+ * D284: gems lost their tiers. Every perk that still has one (any save from before) folds it into its quality roll. Runs
+ * on every load (it leaves tier-less perks alone), so it needs no save version of its own.
+ */
+export function untierSave(s: Record<string, unknown>): void {
+  const c = (s.character ?? {}) as Record<string, unknown>;
+  const fixItem = (it: unknown): void => {
+    if (!it || typeof it !== 'object') return;
+    const o = it as { sockets?: unknown[] };
+    if (Array.isArray(o.sockets)) for (const g of o.sockets) untierGem(g);
+  };
+  if (Array.isArray(c.gems)) for (const g of c.gems) untierGem(g);
+  for (const it of Object.values((c.equipment ?? {}) as Record<string, unknown>)) fixItem(it);
+  fixItem(c.altMain);
+  fixItem(c.altOff);
+  for (const it of (c.bag as unknown[] | undefined) ?? []) fixItem(it);
+  const w = (s.world ?? {}) as Record<string, unknown>;
+  for (const list of Object.values((w.leftBehind ?? {}) as Record<string, { item?: unknown }[]>)) for (const e of list ?? []) fixItem(e?.item);
+  for (const list of Object.values((w.garyStock ?? {}) as Record<string, { item?: unknown; gem?: unknown }[]>)) {
+    for (const e of list ?? []) {
+      fixItem(e?.item);
+      untierGem(e?.gem);
+    }
+  }
+  for (const e of Object.values((w.shopStock ?? {}) as Record<string, { item?: unknown }>)) fixItem(e?.item);
 }

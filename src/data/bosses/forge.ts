@@ -198,6 +198,8 @@ export const FOREMAN_IGNATIUS: BossDef = {
   zone: 5,
   name: 'Foreman Ignatius',
   role: 'boss',
+  // his second phase is a split body on foot round the widened lava channel (D278)
+  arenaBound: true,
   radius: 58,
   speed: 85,
   resist: {},
