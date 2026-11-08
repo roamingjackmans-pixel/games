@@ -394,7 +394,7 @@ Piercing attacks cannot be parried (blocking them works). A parried melee attack
 your next light hit on it deals **×2** (Riposte Master ×3; D88). A parried projectile flies back with the same damage.
 Bosses can be parried only on attacks marked *parryable*, and need two parries within 6 s to stagger.
 
-**Two-handing** (Shift): the off hand is set aside (a tool in the weapon hand still casts, D117). Bonk counts ×1.5
+**Two-handing** (Shift): the off hand is set aside, its gems too (D316) (a tool in the weapon hand still casts, D117). Bonk counts ×1.5
 (§3.1). Holding block is a **weapon guard**: 45% physical, 15% other types, stability 12, no parry.
 
 **Being hit**: your **Poise** (D312) is the share of your max HP a hit must deal to stagger you: **8%**, plus armour
@@ -660,7 +660,8 @@ what is in use counts (weight, effects). Swapping works any time outside an atta
 - **Staffs, talismans and crossbows go in any of the four weapon slots** (D117, D228, D291); choosing one in the bag
   asks "Which hand?". A staff or talisman in the weapon hand swings a weak bash (D128) and casts on Q/E/R (§10). A
   **crossbow in the off hand fires on the block button** with its own power and stamina, while the weapon keeps its
-  combo; with it there you cannot block or parry. Two-handing sets the off hand aside.
+  combo; with it there you cannot block or parry. **Its skills sit on the spell keys** (1 / 2 / 3, the D-pad) and in
+  the HUD's spell slots, with the crossbow's own power and unlocks (D316). Two-handing sets the off hand aside.
 - The bag holds 60 items. An empty armor slot shows the character bare (D176).
 
 ### 8.2 Rarity

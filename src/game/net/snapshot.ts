@@ -92,7 +92,8 @@ export function recordOf(e: Entity, now: number): Rec {
     } else if (pl.action?.kind === 'skill') {
       // a weapon skill playing (D234): 200 + its key, then the windup (0–127) or the strike after it fires (128–255)
       const a = pl.action;
-      cIdx = 200 + a.index;
+      // an off-hand crossbow skill (D316) is 203 + its key
+      cIdx = 200 + (a.offHand ? 3 : 0) + a.index;
       cK = a.fired ? 128 + q(Math.min(1, (a.t - a.castS) / SKILL_RECOVER_S) * 127, 0, 127) : q(Math.min(1, a.t / Math.max(0.001, a.castS)) * 127, 0, 127);
     }
     extra = q(pl.reviveProgress * 100, 0, 65535);

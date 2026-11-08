@@ -26,6 +26,8 @@ export interface EffectCtx {
   isSkill: boolean;
   /** the base damage that `mult` multiplies (weapon power for skills, role hit for enemies) */
   baseDamage: number;
+  /** a skill of the off-hand crossbow (D316): its damage is that weapon's */
+  offHand?: boolean;
   /** telegraph time for pattern damage effects (0 = instant) */
   windupS: number;
   tag: string;
@@ -33,7 +35,7 @@ export interface EffectCtx {
 
 /** Hooks the game layer provides (weapon spec for skills, summons into the room's wave tracking). */
 export interface EffectHooks {
-  weaponSpec?(w: World, p: Entity, mult: number, opts: { skill: boolean; ignoreFrontGuard?: boolean }): DamageSpec;
+  weaponSpec?(w: World, p: Entity, mult: number, opts: { skill: boolean; ignoreFrontGuard?: boolean; offHand?: boolean }): DamageSpec;
   spawnSummon?(w: World, source: Entity, def: EnemyDef, x: number, y: number, lifetimeS?: number): Entity | null;
   spawnPlayerProjectile?(w: World, p: Entity, a: number, speed: number, r: number, spec: DamageSpec, pierce: number, drawId: string, o: { range?: number; isSpell?: boolean; returns?: boolean; color?: string; homing?: number }): Entity;
 }
@@ -68,10 +70,10 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
   const mult = (e.mult ?? 1) * ctx.powerMult;
   let spec: DamageSpec;
   if (src?.pl && !ctx.isSpell && e.base === undefined && effectHooks.weaponSpec && e.type === 'physical') {
-    spec = effectHooks.weaponSpec(w, src, mult, { skill: ctx.isSkill, ...(e.ignoreFrontGuard ? { ignoreFrontGuard: true } : {}) });
+    spec = effectHooks.weaponSpec(w, src, mult, { skill: ctx.isSkill, ...(e.ignoreFrontGuard ? { ignoreFrontGuard: true } : {}), ...(ctx.offHand ? { offHand: true } : {}) });
   } else if (src?.pl && !ctx.isSpell && e.base === undefined && effectHooks.weaponSpec) {
     // elemental skill: the weapon's damage becomes the listed type
-    spec = effectHooks.weaponSpec(w, src, mult, { skill: ctx.isSkill });
+    spec = effectHooks.weaponSpec(w, src, mult, { skill: ctx.isSkill, ...(ctx.offHand ? { offHand: true } : {}) });
     const total = Object.values(spec.dmg).reduce((a, b) => a + (b ?? 0), 0);
     spec.dmg = { [e.type]: total };
   } else {

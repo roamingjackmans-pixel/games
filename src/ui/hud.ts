@@ -15,6 +15,7 @@ import type { ControlId, StatusId } from '../game/types';
 import { buffSum } from '../game/combat/state';
 import { flaskCap } from '../game/combat/formulas';
 import { toolForSchool } from '../game/player/derived';
+import { offSkillsUnlocked, spellKeysAreOffSkills } from '../game/skills/use';
 
 const STATUS_COLOR: Record<StatusId, string> = { burn: '#ff7a1a', chill: '#9ad0ff', shock: '#ffe14a', bleed: '#c01828', poison: '#7ad040' };
 const CONTROL_LABEL: Record<ControlId, string> = { freeze: 'FROZEN', blind: 'BLIND', hexed: 'HEXED', silence: 'SILENCED', root: 'ROOTED', hold: 'HELD' };
@@ -173,8 +174,17 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       cdIcon(ctx, pad + i * 46, by, def?.name ?? '—', action, frac, locked, '#ffd27a', ready > now ? `${Math.ceil(ready - now)}` : '');
     }
   }
-  // spells (1/2/3, or the D-pad): the off-hand tool's school
-  spellRow(d.spellKeys, ['spell1', 'spell2', 'spell3'], pl.spellReadyAt, pad + 160);
+  // spells (1/2/3, or the D-pad): the off-hand tool's school, or the off-hand crossbow's skills (D316)
+  if (spellKeysAreOffSkills(d)) {
+    const unlocked = offSkillsUnlocked(d);
+    for (let i = 0; i < 3; i++) {
+      const def = SKILLS[d.offWeapon!.def.skills[i] ?? ''];
+      const ready = pl.spellReadyAt[i]!;
+      const total = def ? def.cooldownS * (1 - d.cdr) : 1;
+      const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
+      cdIcon(ctx, pad + 160 + i * 46, by, def?.name ?? '—', (['spell1', 'spell2', 'spell3'] as const)[i]!, frac, !def || i >= unlocked, '#ffd27a', ready > now ? `${Math.ceil(ready - now)}` : '');
+    }
+  } else spellRow(d.spellKeys, ['spell1', 'spell2', 'spell3'], pl.spellReadyAt, pad + 160);
   // quick-use, and the "next item" button when there is more than one kind to cycle through
   const q = ch.quickSlot;
   const qn = q ? (ch.consumables[q] ?? 0) : 0;

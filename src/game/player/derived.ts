@@ -350,7 +350,9 @@ export function computeDerived(c: Character): Derived {
       }
     }
     // every perk of every socketed gem counts; armor perks work in armor, weapon perks in weapons
-    for (const g of it.sockets) for (const pk of g?.perks ?? []) {
+    // D316: the off hand is set aside while two-handing, and its gems with it
+    const offHandStowed = c.twoHanded && it === c.equipment.off;
+    for (const g of offHandStowed ? [] : it.sockets) for (const pk of g?.perks ?? []) {
       const gd = GEMS[pk.family];
       if (!gd) continue;
       const v = perkValue(pk);

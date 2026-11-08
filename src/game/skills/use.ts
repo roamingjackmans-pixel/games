@@ -4,7 +4,7 @@ import { reinforceDmgMult } from '../../data/essence';
 import { SKILLS } from '../../data/skills';
 import { SPELLS } from '../../data/spells';
 import { runEffects } from '../effects/run';
-import { attackStaminaCost, GRADE_MULT, itemLevelFor, scalingCurve, toolMult } from '../combat/formulas';
+import { attackStaminaCost, GRADE_MULT, itemLevelFor, itemSkillCount, scalingCurve, toolMult } from '../combat/formulas';
 import { CASTING_TOOLS } from '../../data/castingTools';
 import { RARITY_POWER } from '../../data/proficiency';
 import { buffSum } from '../combat/state';
@@ -33,6 +33,22 @@ export function castSpeedFor(w: World, e: Entity): number {
 
 export function skillOf(e: Entity, i: number): SkillDef | null {
   return SKILLS[e.pl!.derived.weapon.skills[i] ?? ''] ?? null;
+}
+
+/** A skill of the crossbow in the off hand (D316): on the spell keys, 1/2/3 or the D-pad. */
+export function offSkillOf(e: Entity, i: number): SkillDef | null {
+  const ow = e.pl!.derived.offWeapon;
+  return ow ? (SKILLS[ow.def.skills[i] ?? ''] ?? null) : null;
+}
+
+/** How many of the off-hand weapon's skills it has unlocked (none below its requirement). */
+export function offSkillsUnlocked(d: Derived): number {
+  return d.offWeapon && d.offWeapon.meetsReq ? itemSkillCount(d.offWeapon.item) : 0;
+}
+
+/** The spell keys use the off-hand crossbow's skills when there is no off-hand casting tool for them (D316). */
+export function spellKeysAreOffSkills(d: Derived): boolean {
+  return !!d.offWeapon && !d.spellKeys;
 }
 
 /**
@@ -119,19 +135,23 @@ function spendAttack(w: World, e: Entity, amount: number): boolean {
   return true;
 }
 
-export function tryUseSkill(w: World, e: Entity, i: number): boolean {
+export function tryUseSkill(w: World, e: Entity, i: number, offHand = false): boolean {
   const pl = e.pl!;
   const d = pl.derived;
-  const s = skillOf(e, i);
+  const s = offHand ? offSkillOf(e, i) : skillOf(e, i);
   const now = w.time;
   if (!s) return false;
-  if (i >= d.skillsUnlocked) {
-    msg(w, e, d.weaponMeetsReq ? `${s.name} is locked (better item tier needed).` : 'Skills are locked: weapon below requirement.');
+  const unlocked = offHand ? offSkillsUnlocked(d) : d.skillsUnlocked;
+  const meets = offHand ? !!d.offWeapon?.meetsReq : d.weaponMeetsReq;
+  if (i >= unlocked) {
+    msg(w, e, meets ? `${s.name} is locked (better item tier needed).` : 'Skills are locked: weapon below requirement.');
     return false;
   }
-  if (pl.skillReadyAt[i]! > now) return false;
+  // an off-hand skill keeps its cooldown on the spell keys' timers (D316: there is no off-hand spell then)
+  const ready = offHand ? pl.spellReadyAt : pl.skillReadyAt;
+  if (ready[i]! > now) return false;
   if (!spendAttack(w, e, s.stamina)) return false;
-  pl.skillReadyAt[i] = now + s.cooldownS * (1 - cooldownReduction(w, e));
+  ready[i] = now + s.cooldownS * (1 - cooldownReduction(w, e));
   let ax = pl.aimX;
   let ay = pl.aimY;
   if (s.range) {
@@ -156,6 +176,7 @@ export function tryUseSkill(w: World, e: Entity, i: number): boolean {
     aimY: ay,
     powerMult: 1,
     hyperArmor: !!s.castHyperArmor,
+    ...(offHand ? { offHand: true } : {}),
   };
   e.anim.pose = 'windup';
   e.anim.poseT = 0;
@@ -248,9 +269,10 @@ function fire(w: World, e: Entity): void {
     powerMult: a.powerMult,
     isSpell,
     isSkill: !isSpell,
-    baseDamage: pl.derived.weaponPower,
+    baseDamage: a.offHand && pl.derived.offWeapon ? pl.derived.offWeapon.power : pl.derived.weaponPower,
     windupS: 0,
-    tag: `${isSpell ? 'spell' : 'skill'}:${a.index}`,
+    tag: `${isSpell ? 'spell' : a.offHand ? 'offskill' : 'skill'}:${a.index}`,
+    ...(a.offHand ? { offHand: true } : {}),
   };
   runEffects(w, a.effects, ctx);
   if (isSpell) {

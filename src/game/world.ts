@@ -98,6 +98,8 @@ export interface ActionRun {
   aimY: number;
   powerMult: number;
   hyperArmor: boolean;
+  /** a skill of the off-hand crossbow (D316), on the spell keys */
+  offHand?: boolean;
 }
 
 export interface ChannelRun {

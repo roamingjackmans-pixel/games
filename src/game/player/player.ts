@@ -8,7 +8,7 @@ import { addRevive, applyControl, cleanse, emptySpec, ffVictims, heal, hitAlly, 
 import { buffSum, hasControl, speedMult } from '../combat/state';
 import { terrainWalkMult } from '../systems/terrain';
 import { computeDerived, weaponHitByType } from './derived';
-import { tryCastSpell, tryUseConsumable, tryUseSkill, updatePlayerAction } from '../skills/use';
+import { tryCastSpell, tryUseConsumable, spellKeysAreOffSkills, tryUseSkill, updatePlayerAction } from '../skills/use';
 import type { Character, SwingDef, WeaponDef } from '../types';
 import { newStatus, type DamageSpec, type Entity, type PlayerC, type World } from '../world';
 
@@ -619,7 +619,8 @@ export function holdSpellCooldowns(w: World, e: Entity, dt: number): void {
   if (w.hostilesPresent()) return;
   const pl = e.pl!;
   const now = w.time;
-  for (let i = 0; i < 3; i++) if (pl.spellReadyAt[i]! > now) pl.spellReadyAt[i]! += dt;
+  // an off-hand crossbow's skills on these timers run on like weapon skills (D316)
+  if (!spellKeysAreOffSkills(pl.derived)) for (let i = 0; i < 3; i++) if (pl.spellReadyAt[i]! > now) pl.spellReadyAt[i]! += dt;
   if (pl.derived.skillKeySchool) for (let i = 0; i < 3; i++) if (pl.skillReadyAt[i]! > now) pl.skillReadyAt[i]! += dt;
 }
 
@@ -783,7 +784,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
           if (pl.derived.skillKeySchool ? tryCastSpell(w, e, i, 'skill') : tryUseSkill(w, e, i)) break;
         }
         if (pressed(inp, (['spell1', 'spell2', 'spell3'] as const)[i]!)) {
-          if (tryCastSpell(w, e, i)) break;
+          // a crossbow in the off hand puts its skills on the spell keys (D316)
+          if (spellKeysAreOffSkills(pl.derived) ? tryUseSkill(w, e, i, true) : tryCastSpell(w, e, i)) break;
         }
       }
     } else if ([...(['skill1', 'skill2', 'skill3', 'spell1', 'spell2', 'spell3'] as const)].some((a) => pressed(inp, a))) {
