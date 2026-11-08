@@ -28,7 +28,7 @@ import { SKILLS } from '../../src/data/skills';
 import { CLASSES } from '../../src/data/classes';
 import { ROLE_STATS, SHARD_SCALE, zoneShardFactor } from '../../src/data/roles';
 import { ARMOR_GEM_FAMILIES, GEMS, WEAPON_GEM_FAMILIES, gemDropLevel, makeGem } from '../../src/data/gems';
-import { essenceTierFor, reinforceGlowen, reinforceMult, MAX_REINFORCE } from '../../src/data/essence';
+import { expectedReinforce, reinforceGlowen, reinforceDmgMult as reinforceMult, MAX_REINFORCE } from '../../src/data/essence';
 import { RARITY_POWER } from '../../src/data/proficiency';
 import { makeItem } from '../../src/game/items/make';
 import type { BossDef, ClassId, DamageType, EffectDef, Gem, Item, Rarity, StatId, WeaponDef } from '../../src/game/types';
@@ -88,15 +88,9 @@ function rarityFor(zone: number, cycle: number): Rarity {
   if (cycle >= 1) return 'epic';
   return zone <= 2 ? 'uncommon' : zone <= 5 ? 'rare' : 'epic';
 }
-/** Reinforcement the Essence found by then allows: Tier 1 from zone 4 pays to +3; each NG+ tier three more (D198). */
+/** Reinforcement the Essence found by then allows (the game's own rule, D303). */
 function plusFor(zone: number, cycle: number): number {
-  const cap = (c: number): number => {
-    const tier = Math.max(...[1, 2, 3, 4, 5, 6, 7, 8].map((z) => essenceTierFor(z, c)));
-    return Math.min(MAX_REINFORCE, 3 * tier);
-  };
-  if (cycle <= 0) return zone >= 4 ? Math.min(cap(0), zone - 3) : 0;
-  const prev = cap(cycle - 1);
-  return Math.min(cap(cycle), prev + zone);
+  return expectedReinforce(zone, cycle);
 }
 
 // ------------------------------------------------------------------ the world's side

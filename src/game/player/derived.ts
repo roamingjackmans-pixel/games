@@ -15,7 +15,7 @@ import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatId, St
 import { statBoosts } from '../../data/classes';
 import { DAMAGE_TYPES } from '../types';
 import { RARITY_POWER } from '../../data/proficiency';
-import { reinforceMult } from '../../data/essence';
+import { reinforceDmgMult } from '../../data/essence';
 import { profBonuses } from '../items/proficiency';
 
 export interface Derived {
@@ -180,7 +180,7 @@ function offWeaponOf(off: Item | null | undefined, twoHanded: boolean, stats: St
   const def = off && off.kind === 'weapon' ? WEAPONS[off.baseId] : undefined;
   if (!off || !def?.eitherHand || twoHanded) return null;
   const meetsReq = meetsRequirements(itemRequirements(off), stats, false);
-  const power = weaponBase(def.base1, off.ilvl) * scalingMult(def.grades, stats, false, boost) * (meetsReq ? 1 : 0.4) * RARITY_POWER[off.rarity] * reinforceMult(off.plus);
+  const power = weaponBase(def.base1, off.ilvl) * scalingMult(def.grades, stats, false, boost) * (meetsReq ? 1 : 0.4) * RARITY_POWER[off.rarity] * reinforceDmgMult(off.plus);
   return { def, item: off, power, meetsReq };
 }
 
@@ -223,7 +223,7 @@ export function computeDerived(c: Character): Derived {
   const twoHanded = c.twoHanded;
   const weaponMeetsReq = main ? meetsRequirements(itemRequirements(main), stats, twoHanded) : true;
   const held = (def: CastingToolDef | null, item: Item | null, hand: 'main' | 'off'): HeldTool | null =>
-    def && item ? { def, item, hand, ilvl: item.ilvl, meetsReq: meetsRequirements(itemRequirements(item), stats, false), mult: toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceMult(item.plus) } : null; // D227: reinforcement too
+    def && item ? { def, item, hand, ilvl: item.ilvl, meetsReq: meetsRequirements(itemRequirements(item), stats, false), mult: toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus) } : null; // D227: reinforcement too
   // two-handing sets the off hand aside but a tool in the weapon hand still casts (held in both hands)
   const mainTool = held(mainToolDef, main, 'main');
   const offTool = twoHanded ? null : held(tool, off, 'off');
@@ -473,7 +473,7 @@ export function computeDerived(c: Character): Derived {
     skillsUnlocked: main && weaponMeetsReq ? itemSkillCount(main) : 0,
     // rarity sets the damage tier (D178)
     offWeapon: offWeaponOf(off, twoHanded, stats, boost),
-    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceMult(main?.plus),
+    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceDmgMult(main?.plus),
     dmgPct,
     flat,
     convert,

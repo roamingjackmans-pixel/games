@@ -1,6 +1,6 @@
 // Weapon skills (Q/E/R), spells (1/2/3) and consumables (G) — GAME_DESIGN §5.8, §8.3, §10.
 import { CONSUMABLES } from '../../data/consumables';
-import { reinforceMult } from '../../data/essence';
+import { reinforceDmgMult } from '../../data/essence';
 import { SKILLS } from '../../data/skills';
 import { SPELLS } from '../../data/spells';
 import { runEffects } from '../effects/run';
@@ -78,7 +78,7 @@ export function toolSpellSkill(item: Item, stats: Pick<Stats, 'brain' | 'prayer'
   const def = CASTING_TOOLS[item.baseId];
   if (!def) return 0;
   const stat = def.school === 'brain' ? stats.brain : stats.prayer;
-  return Math.round(100 * toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceMult(item.plus) * (1 + GRADE_MULT[def.gradeLetter] * scalingCurve(stat) * (boost[def.school] ?? 1)));
+  return Math.round(100 * toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus) * (1 + GRADE_MULT[def.gradeLetter] * scalingCurve(stat) * (boost[def.school] ?? 1)));
 }
 
 /** The power multiplier of a spell for this caster: Brain/Prayer curve × casting tool (GAME_DESIGN §3.1). */

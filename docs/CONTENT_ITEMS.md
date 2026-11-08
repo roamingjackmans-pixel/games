@@ -38,12 +38,12 @@ Combo timings in ms (windup / active / recovery) at base attack speed, the swing
 | **Greataxe** | A / - | 12 / 0 | slow | 450/140/400 ×1 arc(130°, 115); 450/140/400 ×1 arc(130°, 115); 600/160/550 ×1.4 arc(130°, 115) | 54 | 24 | 50 | 3.5 | 11 | hyper armor (last). *"Pure Bonk. The edge is mostly a formality."* |
 | **Colossal Sword** | A / E | 13 / 8 | slow | 480/150/420 ×1 arc(150°, 130); 480/150/420 ×1.1 arc(150°, 130); 620/160/560 ×1.5 arc(150°, 130) | 56 | 25 | 50 | 3.5 | 16 | hyper armor (all). *"Not so much swung as committed to."* |
 | **Crossbow** | B / - | 10 / 0 | slow | 120/60/700 ×1.4 proj(620) | 40 | 24 | 4 | 1.5 | 6.5 | either hand; in the off hand the block button shoots it (D291); volley of 3, 5° apart, each target hit once (D205, D264); pierces 1 with Bonk ≥ 30. *"Reloading is a lifestyle."* |
-| **Club** | E / - | 8 / 0 | mediumslow | 380/120/360 ×1 arc(110°, 95); 450/130/420 ×1.2 arc(110°, 95) | 46 | 18 | 40 | 3 | 3 | hyper armor (all). *"Wood. It doesn't care how strong you are."* |
+| **Club** | E / - | 8 / 0 | mediumslow | 380/120/360 ×1 arc(110°, 95); 450/130/420 ×1.2 arc(110°, 95) | 80 (D302) | 18 | 40 | 3 | 3 | hyper armor (all). *"Wood. It doesn't care how strong you are."* |
 | **Twin Daggers** | - / S | 0 / 14 | veryfast | 150/80/150 ×0.5 arc(80°, 70); 150/80/150 ×0.5 arc(80°, 70); 150/80/150 ×0.5 arc(80°, 70); 150/80/190 ×0.7 arc(80°, 70) | 26 | 8 | 8 | 0.8 | 1.5 | Bleed 15 per hit; backstab ×1.5. *"Two is company. Three is a backstab."* |
 | **Rapier** | - / A | 0 / 10 | fast | 200/90/200 ×0.8 thrust(28, 120); 200/90/200 ×0.8 thrust(28, 120); 300/100/320 ×1.2 thrust(28, 120) | 30 | 11 | 12 | 1.2 | 2.5 | ×1.5 on riposte-staggered. *"Pointy. Polite. Very rude after a parry."* |
 | **Katana** | D / A | 7 / 12 | fast | 230/100/220 ×0.9 arc(120°, 110); 230/100/220 ×0.9 arc(120°, 110); 330/110/340 ×1.3 arc(120°, 110) | 34 | 12 | 15 | 1.5 | 5.5 | Bleed 20 per hit. *"Folded a thousand times. Like Joe."* |
 | **Bow** | - / B | 0 / 10 | fast | 200/60/260 ×1 proj(700) | 28 | 20 | 2 | 0.6 | 3 | two hands only (D88); volley of 3, 5° apart, each target hit once (D205, D264); hold 0.6 s: ×1.8 charged, pierces 1. *"Never misses. Rarely hits."* |
-| **Whip** | - / E | 0 / 9 | medium | 280/120/300 ×0.9 thrust(26, 220); 340/140/360 ×1.1 thrust(26, 220) | 40 | 12 | 10 | 1 | 2 | ignores front guards. *"Goes over shields. And under skin."* |
+| **Whip** | - / E | 0 / 9 | medium | 280/120/300 ×0.9 thrust(26, 220); 340/140/360 ×1.1 thrust(26, 220) | 65 (D302) | 12 | 10 | 1 | 2 | ignores front guards. *"Goes over shields. And under skin."* |
 | **Longsword** | B / B | 9 / 9 | medium | 300/110/280 ×1 arc(110°, 105); 300/110/280 ×1 arc(110°, 105); 400/120/380 ×1.3 arc(110°, 105) | 38 | 15 | 25 | 2 | 6 | . *"A sword. Long."* |
 | **Spear** | C / B | 8 / 10 | medium | 260/100/260 ×0.9 thrust(30, 150); 260/100/260 ×0.9 thrust(30, 150); 380/120/360 ×1.3 thrust(30, 150) | 38 | 14 | 20 | 2 | 5 | . *"Keeps a polite distance."* |
 | **Battleaxe** | A / D | 11 / 7 | mediumslow | 340/120/320 ×1 arc(120°, 100); 340/120/320 ×1.1 arc(120°, 100); 450/140/430 ×1.4 arc(120°, 100) | 44 | 18 | 35 | 2.5 | 8 | hyper armor (all). *"Mostly Bonk, a pinch of Slicey. Gran’s recipe."* |
@@ -386,7 +386,8 @@ per ilvl above 1)).
 
 Soul Essence drops from zone 4 of the first playthrough (Tier 1), then one tier higher each New Game+ cycle (Tier 5 from
 NG+4). It cannot be sold. At a bonfire it reinforces weapons, shields, casting tools and armour from +0 to +15; each
-+1 is +20% (+15 is ×4).
++1 is +15% damage for weapons, staffs and talismans (+15 is ×3.25, D303) and +20% for armour and shields (+15 is ×4).
+Enemies carry less HP to match the weapon change (D303).
 
 | Tier | Name | Blurb |
 |---|---|---|
@@ -396,23 +397,23 @@ NG+4). It cannot be sold. At a bonfire it reinforces weapons, shields, casting t
 | 4 | **Superintendent’s Blaze** | Kept the whole building running for years. The Landlord sent three staff to collect it. None came back. |
 | 5 | **Freeholder’s Soul** | Owned outright. No lease, no rent, no Landlord. It does not glow; everything near it does. |
 
-| Step | Essence | Glowen | Item strength after |
+| Step | Essence | Glowen | Strength after (weapon, staff, talisman / armour, shield) |
 |---|---|---|---|
-| +0 → +1 | 1 × Tier 1 | 100 | ×1.2 |
-| +1 → +2 | 2 × Tier 1 | 145 | ×1.4 |
-| +2 → +3 | 3 × Tier 1 | 210 | ×1.6 |
-| +3 → +4 | 1 × Tier 2 | 305 | ×1.8 |
-| +4 → +5 | 2 × Tier 2 | 442 | ×2 |
-| +5 → +6 | 3 × Tier 2 | 641 | ×2.2 |
-| +6 → +7 | 1 × Tier 3 | 929 | ×2.4 |
-| +7 → +8 | 2 × Tier 3 | 1348 | ×2.6 |
-| +8 → +9 | 3 × Tier 3 | 1954 | ×2.8 |
-| +9 → +10 | 1 × Tier 4 | 2833 | ×3 |
-| +10 → +11 | 2 × Tier 4 | 4108 | ×3.2 |
-| +11 → +12 | 3 × Tier 4 | 5957 | ×3.4 |
-| +12 → +13 | 1 × Tier 5 | 8638 | ×3.6 |
-| +13 → +14 | 2 × Tier 5 | 12525 | ×3.8 |
-| +14 → +15 | 3 × Tier 5 | 18162 | ×4 |
+| +0 → +1 | 1 × Tier 1 | 100 | ×1.15 / ×1.2 |
+| +1 → +2 | 2 × Tier 1 | 145 | ×1.3 / ×1.4 |
+| +2 → +3 | 3 × Tier 1 | 210 | ×1.45 / ×1.6 |
+| +3 → +4 | 1 × Tier 2 | 305 | ×1.6 / ×1.8 |
+| +4 → +5 | 2 × Tier 2 | 442 | ×1.75 / ×2 |
+| +5 → +6 | 3 × Tier 2 | 641 | ×1.9 / ×2.2 |
+| +6 → +7 | 1 × Tier 3 | 929 | ×2.05 / ×2.4 |
+| +7 → +8 | 2 × Tier 3 | 1348 | ×2.2 / ×2.6 |
+| +8 → +9 | 3 × Tier 3 | 1954 | ×2.35 / ×2.8 |
+| +9 → +10 | 1 × Tier 4 | 2833 | ×2.5 / ×3 |
+| +10 → +11 | 2 × Tier 4 | 4108 | ×2.65 / ×3.2 |
+| +11 → +12 | 3 × Tier 4 | 5957 | ×2.8 / ×3.4 |
+| +12 → +13 | 1 × Tier 5 | 8638 | ×2.95 / ×3.6 |
+| +13 → +14 | 2 × Tier 5 | 12525 | ×3.1 / ×3.8 |
+| +14 → +15 | 3 × Tier 5 | 18162 | ×3.25 / ×4 |
 
 When short of a tier, a reinforcement breaks higher tiers 3:1 by itself. The Reinforce tab's **Break down Essence**
 panel also converts by hand: one Essence becomes three of the tier below, with **Convert 1** and **Convert all** for

@@ -47,7 +47,7 @@ describe('gear fixes (D227)', () => {
     expect(reinforceItem(c, staff.id).ok).toBe(true);
     expect(staff.plus).toBe(1);
     expect(toolSpellSkill(staff, c.stats)).toBeGreaterThan(s0);
-    expect(computeDerived(c).offTool!.mult).toBeCloseTo(p0 * 1.2, 6);
+    expect(computeDerived(c).offTool!.mult).toBeCloseTo(p0 * 1.15, 6); // D303: a casting tool gains 15% a step
   });
 
   it('two of the same ring both count: two Slumlord’s Signets give +30% damage and ×0.7225 HP', () => {

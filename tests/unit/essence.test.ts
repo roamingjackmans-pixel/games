@@ -81,7 +81,7 @@ describe('Soul Essence (D198)', () => {
     const s0 = computeDerived(c);
     c.equipment.off.plus = 15;
     const after = computeDerived(c);
-    expect(after.weaponPower / before.weaponPower).toBeCloseTo(4, 5);
+    expect(after.weaponPower / before.weaponPower).toBeCloseTo(3.25, 5); // D303: weapons 15% a step
     expect(after.defense.physical).toBeGreaterThan(before.defense.physical);
     expect(1 - after.shieldVals.physical).toBeCloseTo((1 - s0.shieldVals.physical) / 4, 5);
     expect(after.shieldStability).toBeCloseTo(s0.shieldStability / 4, 5);

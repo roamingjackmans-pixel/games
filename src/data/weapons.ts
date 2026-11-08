@@ -94,7 +94,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     req: { bonk: 8, slicey: 0 },
     speedClass: 'mediumslow',
     combo: [sw(380, 120, 360, 1.0, arc(110, 95), 14), sw(450, 130, 420, 1.2, arc(110, 95), 16)],
-    base1: 46,
+    base1: 80, // D302: was 46 (0.55× the median weapon's damage per second)
     stamina: 18,
     poiseDmg: 40,
     reviveValue: 3.0,
@@ -186,7 +186,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     req: { bonk: 0, slicey: 9 },
     speedClass: 'medium',
     combo: [sw(280, 120, 300, 0.9, thrust(26, 220), 8), sw(340, 140, 360, 1.1, thrust(26, 220), 8)],
-    base1: 40,
+    base1: 65, // D302: was 40 (0.59× the median weapon's damage per second)
     stamina: 12,
     poiseDmg: 10,
     reviveValue: 1.0,

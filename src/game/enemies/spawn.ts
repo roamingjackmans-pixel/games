@@ -1,4 +1,5 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
+import { reinforceHpFactor } from '../../data/essence';
 import { ROLE_STATS, SHARD_SCALE, ngBossHpMult, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
 import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
@@ -46,6 +47,8 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   // co-op adds bodies to rooms instead of HP to each body (D79); bosses alone still grow with the party
   let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, 1) * (o.hpMult ?? 1);
   if (elite) hp *= 3;
+  // weapon reinforcement gives 15% a step, not 20%: enemies lose the matching share of HP for the zone (D303)
+  hp *= reinforceHpFactor(zone, cycle);
   // a boss lighter on the first playthrough (D211)
   if (isBoss && cycle <= 0) hp *= (def as BossDef).firstCycleHpMult ?? 1;
   // New Game+ bosses sized to a target fight length (D301)

@@ -1,6 +1,7 @@
 // Boss 6 (Saint Aurelia the Unthawed) and Boss 7 (Archmagister Tock): data, arenas, a minute of fighting,
 // the 50% phase change and their special mechanics (CONTENT_ENEMIES §11, §13).
 import { describe, expect, it } from 'vitest';
+import { reinforceHpFactor } from '../../src/data/essence';
 import { BOSSES } from '../../src/data/bosses';
 import { SAINT_AURELIA, SAINT_AURELIA_ARENA } from '../../src/data/bosses/reliquary';
 import { ARCHMAGISTER_TOCK, ARCHMAGISTER_TOCK_ARENA } from '../../src/data/bosses/citadel';
@@ -111,7 +112,7 @@ describe('Saint Aurelia the Unthawed', () => {
     expect(b.en!.phase).toBe(0);
     const max = b.hp!.max;
     bigHit(s, b, max * 10);
-    expect(b.hp!.hp).toBe(max * 0.75);
+    expect(b.hp!.hp).toBeCloseTo(max * 0.75, 6);
     expect(b.en!.phase).toBe(1);
     expect(b.en!.phaseAttacks.some((a) => a.id === 'aurelia_judgment')).toBe(true);
     run(s, 40);
@@ -133,7 +134,7 @@ describe('Saint Aurelia the Unthawed', () => {
     // D222: real enemies (they were 1 HP): a health bar's worth, two attacks of their own
     expect(mirrors.every((m) => m.hp!.max > 300)).toBe(true);
     // D222: ×1.2 on the hazard role in zone 6 (D224 gave the 40% to Aurelia, not to them)
-    expect(mirrors[0]!.hp!.max).toBeCloseTo(80 * 1.2 * (1 + 0.55 * 5), 0);
+    expect(mirrors[0]!.hp!.max).toBeCloseTo(80 * 1.2 * (1 + 0.55 * 5) * reinforceHpFactor(6, 0), 0); // D303
     expect(SAINT_AURELIA.baseHp).toBe(5544); // D224 +40%, D226 +10% more
     expect((mirrors[0]!.en!.def as { attacks: { id: string }[] }).attacks.map((a) => a.id)).toEqual(['mirror_glint', 'mirror_shatter']);
     expect(mirrors[0]!.en!.def.traits?.hideHpBar).toBeFalsy();

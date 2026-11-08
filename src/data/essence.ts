@@ -34,9 +34,38 @@ export function essenceTierFor(zone: number, cycle: number): 0 | EssenceTier {
 
 export const MAX_REINFORCE = 15;
 
-/** +1 is 20% stronger: +15 is four times the item (D198). */
+/** Armour and shields: +1 is 20% stronger, +15 is four times the item (D198). */
 export function reinforceMult(plus: number | undefined): number {
   return 1 + 0.2 * Math.max(0, Math.min(MAX_REINFORCE, plus ?? 0));
+}
+
+/** Weapons, staffs and talismans: +1 is 15% more damage, +15 is ×3.25 (D303; was 20% like armour). */
+export const REINFORCE_DMG_STEP = 0.15;
+export function reinforceDmgMult(plus: number | undefined): number {
+  return 1 + REINFORCE_DMG_STEP * Math.max(0, Math.min(MAX_REINFORCE, plus ?? 0));
+}
+
+/**
+ * The reinforcement a player can have reached by a zone (D303): Tier 1 Essence from zone 4 pays to +3 in the first
+ * playthrough; each New Game+ cycle's new tier pays three more, reached over its first zones.
+ */
+export function expectedReinforce(zone: number, cycle: number): number {
+  const cap = (c: number): number => {
+    const tier = Math.max(...[1, 2, 3, 4, 5, 6, 7, 8].map((z) => essenceTierFor(z, c)));
+    return Math.min(MAX_REINFORCE, 3 * tier);
+  };
+  if (cycle <= 0) return zone >= 4 ? Math.min(cap(0), zone - 3) : 0;
+  return Math.min(cap(cycle), cap(cycle - 1) + zone);
+}
+
+/**
+ * Enemy HP × this (D303): weapon reinforcement was cut from 20% to 15% a step, so enemies lose the same share of HP a
+ * player at the expected reinforcement for that zone lost in damage (about 9% by the end of the first playthrough,
+ * about 19% once +15 is reachable). Time to kill stays as it was.
+ */
+export function reinforceHpFactor(zone: number, cycle: number): number {
+  const p = expectedReinforce(zone, cycle);
+  return reinforceDmgMult(p) / reinforceMult(p);
 }
 
 /** Going from `plus` to `plus + 1`: 1, then 2, then 3 Essence of one tier, a new tier every three levels. */

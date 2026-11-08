@@ -26,7 +26,7 @@ import { DAMAGE_TYPES, type Character, type DamageType, type Gem, type Grade, ty
 import { fmt, h } from './dom';
 import { shieldSpecials, weaponSpecials } from './itemSpecials';
 import { RARITY_POWER } from '../data/proficiency';
-import { plusName, reinforceMult } from '../data/essence';
+import { plusName, reinforceDmgMult } from '../data/essence';
 
 export const RARITY_LABEL: Record<string, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 export const RARITY_BORDER: Record<string, string> = { common: '#6a6a6a', uncommon: '#58d66a', rare: '#4aa3ff', epic: '#b06bff', legendary: '#ff9b2e' };
@@ -90,7 +90,7 @@ function weaponDamageByType(item: Item, stats: Stats, twoH: boolean, boost: Part
   const w = WEAPONS[item.baseId];
   if (!w) return {};
   const meets = meetsRequirements(reqsFor(item), stats, twoH);
-  const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH, boost) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity] * reinforceMult(item.plus);
+  const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH, boost) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus);
   const holy = w.holyPct ?? 0;
   const out: Partial<Record<DamageType, number>> = {};
   const el = weaponElement(w);
@@ -110,7 +110,7 @@ export function itemScore(item: Item | null, stats: Stats, twoHanded: boolean): 
     return v.physical * 100 + v.elemental * 50;
   }
   const t = CASTING_TOOLS[item.baseId];
-  if (t) return toolMult(t.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceMult(item.plus) * 100;
+  if (t) return toolMult(t.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus) * 100;
   if (item.kind === 'armor') {
     const d = armorPieceDefense(item.baseId, item.ilvl, item.plus);
     return DAMAGE_TYPES.reduce((a, k) => a + d[k], 0);

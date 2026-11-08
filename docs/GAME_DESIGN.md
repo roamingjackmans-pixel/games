@@ -124,6 +124,7 @@ So NG+ zone 1 starts 5% above the first zone 8 and climbs to 35% above it by zon
 
 ```
 enemyHP     = role HP × enemy's own mult × curve(z, min(c,1), 0.55) × NG1_HP × ngGrowth(c) × co-op HP (D159)
+              × reinforcement factor (D303: (1 + 0.15p) / (1 + 0.2p), p = the reinforcement expected by that zone)
 enemyDamage = role hit × enemy's own mult × curve(z, min(c,1), 0.35) × NG1_DMG × ngGrowth(c)
               × zone damage factor × NG+ zone factor (room enemies only)
 enemyShards = role Shards × 5 × zone Shard factor × curve(z, c, 1.1)          (per player, instanced)
@@ -711,8 +712,9 @@ Soul) is a counter on the character; it cannot be sold. **Where:** none in zones
 from zone 4; NG+1 Tier 2 only, NG+2 Tier 3, NG+3 Tier 4, NG+4 and later Tier 5. **Drops:** enemies 1%, Elites 17.5%,
 small chests 12.5%, mimics 25%, treasure chests 0.75 on average, bosses 1.5 on average.
 
-**Reinforce** (bonfire tab): weapons, shields, armor, staffs and talismans go **+0 … +15**. Each step is **+20%**
-(×4 at +15): weapon damage, armor defense, spell power, and a shield's leak and block stamina shrink. Step `k` costs
+**Reinforce** (bonfire tab): weapons, shields, armor, staffs and talismans go **+0 … +15**. Each step gives weapons,
+staffs and talismans **+15%** damage / spell power (×3.25 at +15, D303), and armor and shields **+20%** (×4 at +15:
+armor defense, and a shield's leak and block stamina shrink). Step `k` costs
 1, 2, then 3 Essence of tier ⌊k / 3⌋ + 1 (six a tier) plus **100 × 1.45^k Glowen**. A higher tier pays for a lower
 one 3:1 automatically; the tab's **Break down Essence** panel turns one of tier 2–5 into three of the tier below
 (Convert 1 / Convert all). Reinforce shows before → after and asks first (D216, D220).

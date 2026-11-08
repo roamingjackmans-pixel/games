@@ -3,7 +3,7 @@ import { CONSUMABLES } from '../../data/consumables';
 import { renderBestiary } from '../bestiary';
 import { CASTING_TOOLS } from '../../data/castingTools';
 import { statBoosts } from '../../data/classes';
-import { ESSENCES, MAX_REINFORCE, canPayEssence, essenceCounts, essenceDef, plusName, reinforceMult } from '../../data/essence';
+import { ESSENCES, MAX_REINFORCE, canPayEssence, essenceCounts, essenceDef, plusName, reinforceDmgMult, reinforceMult } from '../../data/essence';
 import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { armorPieceDefense } from '../../data/armor';
 import { canReinforce, reinforceInfo } from '../../game/items/reinforce';
@@ -497,7 +497,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const help = h('div', { class: 'small dim-text', style: 'max-width:420px' },
       'Soul Essence is what is left of somebody once the Landlord’s staff have taken all their Glowen: the stubborn part that never paid rent. The fires take it; nobody else will, so it cannot be sold.',
       h('br'), h('br'),
-      'Each +1 makes a weapon hit, a shield block or a piece of armour defend 20% better: +15 is four times the item. A step costs 1, then 2, then 3 Essence of one tier (6 a tier), a new tier every three levels, plus Glowen. One Essence of a higher tier pays for three of the tier below.',
+      'Each +1 makes a weapon, staff or talisman hit 15% harder (+15 is ×3.25), and a shield block or a piece of armour defend 20% better (+15 is ×4). A step costs 1, then 2, then 3 Essence of one tier (6 a tier), a new tier every three levels, plus Glowen. One Essence of a higher tier pays for three of the tier below.',
       h('br'), h('br'),
       'None below zone 4 of the first descent; Tier 1 from zone 4, then one tier more each New Game+ (Tier 5 from New Game+4).');
     // D285: break Essence down by hand, one into three of the tier below
@@ -567,7 +567,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
       const b = armorPieceDefense(it.baseId, it.ilvl, to);
       for (const t of DAMAGE_TYPES) add(`${t[0]!.toUpperCase()}${t.slice(1)} defense`, a[t], b[t], (x) => x.toFixed(1));
     }
-    rows.push({ label: 'Strength', before: `×${reinforceMult(from).toFixed(1)}`, after: `×${reinforceMult(to).toFixed(1)}` });
+    // weapons, staffs and talismans gain 15% a step, armour and shields 20% (D303)
+    const rm = it.kind === 'armor' || it.kind === 'shield' ? reinforceMult : reinforceDmgMult;
+    rows.push({ label: 'Strength', before: `×${rm(from).toFixed(2)}`, after: `×${rm(to).toFixed(2)}` });
     return rows;
   }
 
