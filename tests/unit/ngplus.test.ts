@@ -43,7 +43,10 @@ describe('New Game+ (GAME_DESIGN §13)', () => {
     const e1 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 1, zone: 1 });
     const e8 = spawnEnemy(s.w, ENEMIES.shambler!, 640, 300, { cycle: 0, zone: 8 });
     expect(e1.hp!.max / e8.hp!.max).toBeCloseTo(1.05 * 4.5, 5);
-    expect(itemLevelFor(1, 1)).toBe(2);
+    // D299: each cycle adds 8, so NG+1 zone 1 (9) beats the first playthrough's zone 8 (8)
+    expect(itemLevelFor(1, 1)).toBe(9);
+    expect(itemLevelFor(8, 0)).toBe(8);
+    expect(itemLevelFor(1, 2)).toBeGreaterThan(itemLevelFor(8, 1));
   });
 });
 

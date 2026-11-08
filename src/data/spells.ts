@@ -32,7 +32,7 @@ const P = (id: string, name: string, req: number, castS: number, cooldownS: numb
 });
 
 const BRAIN: SpellDef[] = [
-  B('arcane_bolt', 'Arcane Bolt', 8, 0.3, 1.2, 8, [dmg(proj(700, 7), 24, 'void')], 'A bolt of arcane force: 24 (counts as Void). The bread and butter.', 'void'),
+  B('arcane_bolt', 'Arcane Bolt', 8, 0.3, 1.2, 8, [dmg(proj(700, 7), 19.2, 'void')], 'A bolt of arcane force: 19.2 (counts as Void). The bread and butter.', 'void'),
   B('scatter_shards', 'Scatter Shards', 10, 0.4, 4, 14, [dmg(proj(600, 6, { count: 5, spreadDeg: 50 }), 14, 'void')], '5 shards in a 50° fan, 14 each.', 'void'),
   B('frost_lance', 'Frost Lance', 12, 0.5, 5, 16, [dmg({ kind: 'line', w: 30, l: 420, anchor: 'self', vfx: 'ice_lance' }, 40, 'magic', { status: { id: 'chill', buildup: 50 } })], 'line(30,420) 40 Magic, Chill 50.', 'magic'),
   B('fireball', 'Fireball', 14, 0.6, 6, 18, [dmg(proj(520, 10, { onImpact: { kind: 'circle', r: 100, anchor: 'point', persist: { hazard: 'firePuddle', durationS: 2 }, vfx: 'fire_burst' } }), 48, 'fire', { status: { id: 'burn', buildup: 50 } })], 'A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s.', 'fire'),

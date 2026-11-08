@@ -7,11 +7,11 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
 
 ## 1. Item levels, scaling and rarity
 
-- **Item level** = zone + New Game+ cycle (zone 1 of the first playthrough is ilvl 1; zone 8 is 8; NG+1 zone 1 is 2).
+- **Item level** = zone + 8 × New Game+ cycle (D299: the first playthrough is ilvl 1–8, NG+1 9–16, NG+2 17–24).
   The bonfire shop sells at the zone's ilvl (Rare or better in NG+); Gary sells at +1 (half his stock Legendary in
   NG+).
 - **Weapon base damage** = `base1 × (1 + 0.45 × (ilvl − 1))`. **Armour defense** = `def1 × slot × (1 + 0.6 × (ilvl −
-  1))`. **Requirements** grow `+2 per ilvl` on the primary stat only.
+  1))`. **Requirements** grow `+2 per ilvl` to ilvl 8, then +0.5 per ilvl, on the primary stat only, never past 90 (D299).
 - **Damage per hit** = base × (1 + Σ grade × f(stat)) × the swing's multiplier × rarity × reinforcement × your bonuses,
   40% below requirement. f(s) = 1 − 0.982^s; grade weights S 1.9, A 1.55, B 1.15, C 0.8, D 0.45, E 0.2. Two-handing
   counts Bonk ×1.5 (cap 99) for scaling and requirements (D72). Classes get ×1.25 from their primary stat and ×1.15

@@ -168,7 +168,7 @@ const foreclosure: AttackDef = {
   gazeTurnDeg: 120,
   windupMs: 1200,
   recoverMs: 1000,
-  dmgMult: 3.0,
+  dmgMult: 2.1, // D300: 30% less (was 3.0; it one-shot most builds)
   type: 'void',
   cooldownS: 9,
   range: [0, 500],

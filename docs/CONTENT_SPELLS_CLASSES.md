@@ -24,7 +24,7 @@ The current catalogue of the 28 spells and 10 classes, generated from `src/data/
 
 | Spell | Req Brain | Cast | Cooldown | Stamina | Element | Effect |
 |---|---|---|---|---|---|---|
-| **Arcane Bolt** | 8 | 0.3 s | 1.2 s | 8 | void | A bolt of arcane force: 24 (counts as Void). The bread and butter. |
+| **Arcane Bolt** | 8 | 0.3 s | 1.2 s | 8 | void | A bolt of arcane force: 19.2 (counts as Void; D300: was 24). The bread and butter. |
 | **Scatter Shards** | 10 | 0.4 s | 4 s | 14 | void | 5 shards in a 50° fan, 14 each. |
 | **Frost Lance** | 12 | 0.5 s | 5 s | 16 | magic | line(30,420) 40 Magic, Chill 50. |
 | **Fireball** | 14 | 0.6 s | 6 s | 18 | fire | A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s. |

@@ -147,8 +147,16 @@ export function weaponDamage(
 }
 
 /** Requirement on the primary stat: req1 + 2 × (ilvl − 1). Secondary stays. */
+/** a requirement never climbs past this (D299: deep New Game+ gear stays wearable under the 99 stat cap) */
+export const REQ_CAP = 90;
+/**
+ * The main stat a weapon or tool asks for at an item level: +2 a level to level 8 (the first playthrough), then +0.5
+ * a level (D299: New Game+ drops are 8 levels a cycle higher, and asked for about what they did before that).
+ */
 export function reqAtIlvl(req1: number, ilvl: number, primary: boolean): number {
-  return primary ? req1 + 2 * (ilvl - 1) : req1;
+  if (!primary) return req1;
+  const climb = 2 * (Math.min(ilvl, 8) - 1) + Math.round(0.5 * Math.max(0, ilvl - 8));
+  return Math.min(req1 + climb, Math.max(req1, REQ_CAP));
 }
 
 /**
@@ -265,8 +273,11 @@ export function enemyDmgMult(zone: number, cycle: number): number {
 export function enemyShardMult(zone: number, cycle: number): number {
   return cycleZoneCurve(zone, cycle, 1.1);
 }
+/** Item level of drops, the shop and Gary (D299): zone 1–8 is level 1–8, and each New Game+ cycle adds 8, so every
+ * zone of a playthrough drops better gear than the whole playthrough before it (NG+1: 9–16, NG+2: 17–24…). */
+export const ILVL_PER_CYCLE = 8;
 export function itemLevelFor(zone: number, cycle: number): number {
-  return Math.max(1, zone + cycle);
+  return Math.max(1, zone + ILVL_PER_CYCLE * Math.max(0, cycle));
 }
 
 /** Skill tiers (GAME_DESIGN §8.3): Worn 0, Fine 1, Masterwork 2, Mythic 3; Legendary +1, cap 3. */

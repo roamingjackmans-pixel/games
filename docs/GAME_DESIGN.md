@@ -127,7 +127,8 @@ enemyHP     = role HP × enemy's own mult × curve(z, min(c,1), 0.55) × NG1_HP 
 enemyDamage = role hit × enemy's own mult × curve(z, min(c,1), 0.35) × NG1_DMG × ngGrowth(c)
               × zone damage factor × NG+ zone factor (room enemies only)
 enemyShards = role Shards × 5 × zone Shard factor × curve(z, c, 1.1)          (per player, instanced)
-itemLevel   = z + c
+bossHP      = the same × NG+ boss factor (D301: NG_BOSS_HP, by the boss's zone; NG+2's column from NG+2 on)
+itemLevel   = z + 8c                                                         (D299)
 ```
 
 | Cycle | HP ×(on the NG+1 curve) | Damage × | Notes |
@@ -137,6 +138,15 @@ itemLevel   = z + c
 | NG+3 | ×2 on NG+2 | ×2 | |
 | NG+4 | ×2 on NG+3 | ×2 | |
 | NG+5 on | ×1.15 a cycle | ×1.15 a cycle | `NG_LATE_STEP` |
+
+**NG+ boss HP** is also sized to a fight length (D301, `NG_BOSS_HP`): the balance report's median build, hitting
+nonstop, needs about **5 minutes** for a zone 1–7 boss and **8** for the Landlord at NG+1, and about **8** and **11**
+minutes from NG+2 on.
+
+| Boss zone | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| NG+1 × | 1.54 | 1.88 | 2.21 | 2.04 | 1.55 | 1.69 | 1.81 | 1.29 |
+| NG+2 on × | 2.7 | 2.98 | 3.27 | 2.89 | 2.11 | 2.22 | 2.32 | 1.39 |
 
 **Zone damage factor** (every cycle, bosses too, D231): zone 4 ×1.1, zones 5–6 ×1.15, zone 7 ×1.35, the rest ×1.
 
@@ -188,8 +198,8 @@ thermosHeal = 40% maxHP × (1 + 0.003 × Prayer × m) × (1 + heal bonuses)
 castSpeed   × (1 + 0.25 f(Slicey) m)       castMove = 50% + 0.25 f(Bonk) m of walking speed   (D106)
 ```
 
-`m` is the class boost for that stat (§3.2). Requirements on a weapon's primary stat rise 2 per item level above 1
-(`reqAtIlvl`); secondary requirements stay.
+`m` is the class boost for that stat (§3.2). Requirements on a weapon's primary stat rise 2 per item level up to level 8, then 0.5 per level, never past 90
+(`reqAtIlvl`, D299); secondary requirements stay.
 
 ### 3.2 Primary and secondary stats (D184)
 
@@ -629,7 +639,8 @@ Every item has its own id; duplicate ids are repaired on load and pickup (D232).
 
 ### 8.3 Item level and weapon skills
 
-Item level = zone + cycle (Gary's +1). Base damage, defense and tool power rise with it (§3.1, §10).
+Item level = zone + 8 × cycle (Gary's +1): 1–8 on the first playthrough, 9–16 at NG+1, 17–24 at NG+2, so every
+zone of a playthrough drops better gear than the playthrough before (D299). Base damage, defense and tool power rise with it (§3.1, §10).
 
 Each weapon class has **three fixed skills** (CONTENT_ITEMS §4) on Q / E / R with cooldowns and stamina. **How many a
 weapon has unlocked is rolled when it drops** (D89):

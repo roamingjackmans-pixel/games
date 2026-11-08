@@ -57,6 +57,21 @@ export function zoneDmgFactor(zone: number): number {
  */
 export const NG_ZONE_ENEMY_DMG: Record<number, number> = { 2: 2, 3: 1.64, 4: 1.61, 5: 1.5, 6: 1.43, 7: 1.36, 8: 1.65 };
 
+/**
+ * New Game+ boss HP, by the boss's own zone (D301): sized so the median build of the balance report
+ * (docs/balance/report.md, nonstop light attacks) takes about 5 minutes on a zone boss and 8 on the Landlord in NG+1,
+ * and about 8 and 11 minutes from NG+2 on. Later cycles use the NG+2 column on top of the usual cycle growth.
+ */
+export const NG_BOSS_HP: Record<1 | 2, Record<number, number>> = {
+  1: { 1: 1.54, 2: 1.88, 3: 2.21, 4: 2.04, 5: 1.55, 6: 1.69, 7: 1.81, 8: 1.29 },
+  2: { 1: 2.7, 2: 2.98, 3: 3.27, 4: 2.89, 5: 2.11, 6: 2.22, 7: 2.32, 8: 1.39 },
+};
+
+export function ngBossHpMult(zone: number, cycle: number): number {
+  if (cycle < 1) return 1;
+  return NG_BOSS_HP[cycle >= 2 ? 2 : 1][Math.max(1, Math.min(8, zone))] ?? 1;
+}
+
 export function ngZoneEnemyDmg(zone: number, cycle: number): number {
   return cycle >= 1 ? (NG_ZONE_ENEMY_DMG[Math.max(1, Math.min(8, zone))] ?? 1) : 1;
 }

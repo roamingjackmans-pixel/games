@@ -1,5 +1,5 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
-import { ROLE_STATS, SHARD_SCALE, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
+import { ROLE_STATS, SHARD_SCALE, ngBossHpMult, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
 import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
@@ -48,6 +48,8 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   if (elite) hp *= 3;
   // a boss lighter on the first playthrough (D211)
   if (isBoss && cycle <= 0) hp *= (def as BossDef).firstCycleHpMult ?? 1;
+  // New Game+ bosses sized to a target fight length (D301)
+  if (isBoss && !def.special) hp *= ngBossHpMult((def as BossDef).zone, cycle);
   // co-op: more HP for each extra player, more for bosses and Elites (D159); special NPCs and illusions keep theirs
   const coop = def.special || o.illusion ? 1 : coopHpMult(players, isBoss || !!elite);
   hp *= coop;
