@@ -63,8 +63,8 @@ export const NG_ZONE_ENEMY_DMG: Record<number, number> = { 2: 2, 3: 1.64, 4: 1.5
  * and about 8 and 11 minutes from NG+2 on. Later cycles use the NG+2 column on top of the usual cycle growth.
  */
 export const NG_BOSS_HP: Record<1 | 2, Record<number, number>> = {
-  1: { 1: 1.61, 2: 1.98, 3: 2.27, 4: 2.14, 5: 1.65, 6: 1.84, 7: 1.98, 8: 1.42 },
-  2: { 1: 2.87, 2: 3.1, 3: 3.33, 4: 2.88, 5: 2.04, 6: 2.1, 7: 2.13, 8: 1.25 },
+  1: { 1: 1.52, 2: 1.88, 3: 2.16, 4: 2.03, 5: 1.56, 6: 1.73, 7: 1.9, 8: 1.34 },
+  2: { 1: 2.7, 2: 2.89, 3: 3.1, 4: 2.67, 5: 1.89, 6: 1.94, 7: 1.97, 8: 1.15 },
 };
 
 export function ngBossHpMult(zone: number, cycle: number): number {
@@ -121,6 +121,12 @@ export function statCurveComp(kind: 'hp' | 'dmg', zone: number, cycle: number): 
   const keys = Object.keys(NG_LATE).map(Number).filter((k) => k <= cycle);
   if (keys.length === 0) return 1;
   return NG_LATE[Math.max(...keys)]![kind];
+}
+
+/** D314: bosses hit 75% harder from NG+1 on (they had fallen behind); every later cycle grows from there. */
+export const NG_BOSS_DMG_MULT = 1.75;
+export function ngBossDmgMult(cycle: number): number {
+  return cycle >= 1 ? NG_BOSS_DMG_MULT : 1;
 }
 
 export function ngZoneEnemyDmg(zone: number, cycle: number): number {

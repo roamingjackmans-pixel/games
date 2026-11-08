@@ -1,5 +1,6 @@
 // CONTENT_ENEMIES §11 Boss 1 — The Caretaker (Mossy Crypt). Damage multipliers are of the boss hit (45 at zone 1).
 import type { AttackDef, BossDef } from '../../game/types';
+import { NG_BOSS_DMG_MULT } from '../roles';
 
 const shovelSwing: AttackDef = {
   id: 'caretaker_shovel',
@@ -124,7 +125,8 @@ const lastRites = (mult: number): AttackDef => ({
   pattern: { kind: 'ring', rIn: 0, rOut: 'edge', anchor: 'self' },
   windupMs: 2200,
   recoverMs: 1400,
-  dmgMult: mult,
+  // the owner's "about 600 at NG+1" stays: boss damage ×1.75 from NG+1 (D314) is taken back out of this one
+  dmgMult: mult / NG_BOSS_DMG_MULT,
   type: 'physical',
   cooldownS: 22,
   range: [0, 2000],

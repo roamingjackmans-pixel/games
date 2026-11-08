@@ -40,10 +40,12 @@ export function maxEquipLoad(endurance: number, m = 1): number {
   return 26 + m * piecewise(endurance, [[30, 1.5], [60, 1.0], [STAT_SOFT_CAP, 0.5], [STAT_CAP, 0.1]]);
 }
 
-/** Stamina regen (D311): +0.25 a point to 150, then +0.02 a point. */
+/** Stamina regen (D314): +0.165 a point to 200, so 200 Endurance gives 55 a second, then +0.02 a point (was 0.25). */
+export const REGEN_PER_POINT = 0.165;
+export const REGEN_FULL_AT = 200;
 export function staminaRegen(stamStat: number, m = 1): number {
   const s = Math.max(0, stamStat);
-  return 22 + (0.25 * Math.min(s, STAT_SOFT_CAP) + 0.02 * Math.max(0, s - STAT_SOFT_CAP)) * m;
+  return 22 + (REGEN_PER_POINT * Math.min(s, REGEN_FULL_AT) + 0.02 * Math.max(0, s - REGEN_FULL_AT)) * m;
 }
 export const STAMINA_REGEN_DELAY = 0.6;
 

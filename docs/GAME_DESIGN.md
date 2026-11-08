@@ -147,8 +147,11 @@ minutes from NG+2 on.
 
 | Boss zone | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |---|---|---|---|---|---|---|---|---|
-| NG+1 × | 1.61 | 1.98 | 2.27 | 2.14 | 1.65 | 1.84 | 1.98 | 1.42 |
-| NG+2 on × | 2.87 | 3.1 | 3.33 | 2.88 | 2.04 | 2.1 | 2.13 | 1.25 |
+| NG+1 × | 1.52 | 1.88 | 2.16 | 2.03 | 1.56 | 1.73 | 1.9 | 1.34 |
+| NG+2 on × | 2.7 | 2.89 | 3.1 | 2.67 | 1.89 | 1.94 | 1.97 | 1.15 |
+
+**NG+ boss damage** (D314): every boss hits **×1.75** from NG+1 on (they had fallen behind the players' gear and
+levels); every later cycle's growth builds on it. The Caretaker's Last Rites stays about 600 at NG+1 (D277).
 
 **NG+ level growth** (D307): New Game+ levels now go much further (about level 300 by the end of NG+2), so every enemy
 and boss grows by 70% of what those levels give a player (`NG_LEVEL_COMP`, by zone; NG+3 on uses NG+2's column):
@@ -208,7 +211,8 @@ them.
 maxHP        = 100 + m × P(HP),  P = Σ 1–30: 14 · 31–50: 8 a point (680 at 50); past 50 P(50) × statGrowth(HP) (D311)
                (HP 50: 680 · 100: 1,260 · 150: 1,695 · 300: 2,793 · 999: 4,885, before m)
 maxStamina   = 70  + m × Σ per Endurance point: 1–30: 3.5 · 31–60: 2 · 61–150: 0.8 · 151–999: 0.3
-staminaRegen = 22 + (0.25 per Endurance point to 150, 0.02 past it) × m per second, 0.6 s after any spend
+staminaRegen = 22 + (0.165 per Endurance point to 200, 0.02 past it) × m per second, 0.6 s after any spend
+               (D314: 55 a second at 200 Endurance)
 maxEquipLoad = 26 + m × Σ per Endurance point:  1–30: 1.5 · 31–60: 1.0 · 61–150: 0.5 · 151–999: 0.1
 
 f(s): 1 − 0.982^s up to 50 (f(10) .17 · f(30) .42 · f(50) .60); 50–100 straight up so an S weapon doubles
