@@ -6,6 +6,7 @@ import { ARMOR_SETS, armorPieceName, parseArmorBase } from '../../data/armor';
 import { RINGS } from '../../data/rings';
 import { reqAtIlvl } from '../combat/formulas';
 import type { Item, ItemKind, Slot } from '../types';
+import { weaponOf } from './weaponOf';
 
 export interface BaseInfo {
   baseId: string;
@@ -44,9 +45,10 @@ export interface Requirements {
 }
 
 /** Requirements at the item's level: the primary stat rises +2 per ilvl (CONTENT_ITEMS §1). */
-export function itemRequirements(item: Pick<Item, 'baseId' | 'ilvl'>): Requirements {
+export function itemRequirements(item: Pick<Item, 'baseId' | 'ilvl' | 'variant'>): Requirements {
   const r: Requirements = { bonk: 0, slicey: 0, brain: 0, prayer: 0 };
-  const w = WEAPONS[item.baseId];
+  // a scaling variant (D319) has its own requirements
+  const w = weaponOf(item);
   const s = SHIELDS[item.baseId];
   if (w || s) {
     const req = (w ?? s)!.req;

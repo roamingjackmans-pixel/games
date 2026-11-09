@@ -12,6 +12,8 @@ import { LEGENDARY_NAMES, powersFor, type PowerSlot } from '../../data/legendari
 import { RARITY_ORDER, RARITY_WEIGHTS, SLOT_WEIGHTS, type LootSource } from '../../data/lootTables';
 import { GEM_FAMILIES, GEMS, familiesOfKind, gemQualityRolls, rollGemQuality, type GemKind } from '../../data/gems';
 import { baseInfo } from './bases';
+import { variantOf } from './weaponOf';
+import { VARIANT_CHANCE, WEAPON_VARIANTS, type WeaponVariantDef } from '../../data/weaponVariants';
 import { rollSkillCount } from '../combat/formulas';
 import { makeItem, newId, socketCount } from './make';
 import type { Gem, GemPerk, Item, Rarity, StatId } from '../types';
@@ -149,10 +151,12 @@ export function itemName(rng: Rng | null, item: Item): string {
     if (list && list.length) return rng ? rng.pick(list) : list[0]!;
     return base;
   }
-  if (item.rarity === 'common') return base;
+  // a scaling variant (D319) puts its word before the class: "Keen Blessed Katana of Haste"
+  const vw = variantOf(item)?.word;
+  if (item.rarity === 'common') return vw ? `${vw} ${base}` : base;
   const pre = item.affixes.map((a) => AFFIXES[a.id]).find((a) => a?.pos === 'prefix');
   const suf = item.affixes.map((a) => AFFIXES[a.id]).find((a) => a?.pos === 'suffix');
-  return [pre?.name, base, suf?.name].filter(Boolean).join(' ');
+  return [pre?.name, vw, base, suf?.name].filter(Boolean).join(' ');
 }
 
 export interface GenOpts {
@@ -193,9 +197,24 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
       if (list.length) item.legendaryPower = rng.pick(list);
     }
   }
+  if (item.kind === 'weapon') rollVariant(item, o.favor);
   item.name = itemName(rng, item);
   rollSetPerk(item);
   return item;
+}
+
+/**
+ * A scaling variant on a fresh weapon (D319): VARIANT_CHANCE when its class has any, the variants that suit the
+ * player's class weighted up as the classes themselves are (favorMult). Its own stream, seeded by the item's id, so
+ * every other roll stays where it was.
+ */
+export function rollVariant(item: Item, favor?: DropFavor): void {
+  const list = WEAPON_VARIANTS[item.baseId];
+  if (!list?.length) return;
+  const r = new Rng(`variant|${item.id}`);
+  if (r.next() >= VARIANT_CHANCE) return;
+  const stats = (g: WeaponVariantDef['grades']): StatId[] => (Object.entries(g) as [StatId, string | undefined][]).filter(([, x]) => !!x && x !== '-').map(([k]) => k);
+  item.variant = list[Math.max(0, r.weighted(list.map((v) => favorMult(stats(v.grades), favor))))]!.id;
 }
 
 /**

@@ -282,7 +282,9 @@ function lightDps(w: World, p: Entity, wpn: WeaponDef = p.pl!.derived.weapon): D
   const n = wpn.combo.length;
   wpn.combo.forEach((s, i) => {
     const spec = weaponSpec(w, p, s.mult);
-    dmg += Object.values(spec.dmg).reduce((a, b) => a + (b ?? 0), 0);
+    // a thrown ring that comes back (Chakrams, D320) hits the same target twice
+    const passes = s.hitbox.shape === 'proj' && s.hitbox.returns ? 2 : 1;
+    dmg += Object.values(spec.dmg).reduce((a, b) => a + (b ?? 0), 0) * passes;
     const last = i === n - 1;
     // a queued swing starts 45% into the recovery; the last one's recovery is 15% longer and runs out (player.ts)
     time += (s.windupMs + s.activeMs + s.recoverMs * (last ? 1.15 : 0.45)) / 1000 / spd;

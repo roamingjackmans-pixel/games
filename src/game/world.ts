@@ -82,6 +82,8 @@ export interface ComboState {
   fired: boolean;
   /** a shot of the weapon in the off hand (D291), on the block button */
   offHand?: boolean;
+  /** an overhead has landed (its dust and shake are out, D320) */
+  landed?: boolean;
 }
 
 export type PlayerState = 'idle' | 'attack' | 'dodge' | 'skill' | 'cast' | 'flask' | 'stagger' | 'held' | 'falling' | 'consumable' | 'channel' | 'charge' | 'dashing';

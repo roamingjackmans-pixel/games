@@ -595,13 +595,26 @@ export interface BossDef extends Omit<EnemyDef, 'attacks' | 'role'> {
 
 export type SpeedClass = 'veryslow' | 'slow' | 'mediumslow' | 'medium' | 'fast' | 'veryfast';
 
+/**
+ * How a combo step moves (D320), for its animation: a slash left to right or back, a thrust, a full spin round the
+ * player, an overhead chop that lands in front, a whip's lash (the whip stretches, the arm stays) or sideways crack,
+ * a thrown ring. Unset: an arc alternates slash / backslash by its place in the combo, a thrust thrusts.
+ */
+export type SwingMove = 'slash' | 'backslash' | 'thrust' | 'spin' | 'overhead' | 'lash' | 'lashSweep' | 'throw';
+
 export interface SwingDef {
   windupMs: number;
   activeMs: number;
   recoverMs: number;
   mult: number;
-  hitbox: { shape: 'arc'; angleDeg: number; r: number } | { shape: 'thrust'; w: number; l: number } | { shape: 'proj'; speed: number; r: number; pierce?: number };
+  /** circle: a slam `d` px in front, radius `r` (overheads, D320); proj returns: a thrown ring that comes back */
+  hitbox:
+    | { shape: 'arc'; angleDeg: number; r: number }
+    | { shape: 'thrust'; w: number; l: number }
+    | { shape: 'circle'; r: number; d: number }
+    | { shape: 'proj'; speed: number; r: number; pierce?: number; returns?: boolean; range?: number };
   step?: number;
+  move?: SwingMove;
 }
 
 export interface WeaponDef {
@@ -628,7 +641,7 @@ export interface WeaponDef {
   reviveValue: number;
   skills: [string, string, string];
   /** volley (D205): shots per attack, all at once, fanned `spreadDeg` apart either side of the aim */
-  ranged?: { speed: number; chargeS?: number; chargeMult?: number; chargePierce?: number; pierceBonk?: number; volley?: { count: number; spreadDeg: number } };
+  ranged?: { speed: number; drawId?: string; sfx?: string; chargeS?: number; chargeMult?: number; chargePierce?: number; pierceBonk?: number; volley?: { count: number; spreadDeg: number } };
   hyperArmor?: 'all' | 'last' | 'none';
   holyPct?: number;
   bleed?: number;
@@ -786,6 +799,8 @@ export interface Item {
   setPerk?: string;
   /** locked by the player (D265): "Sell all" never takes it; absent when unlocked */
   locked?: boolean;
+  /** weapons: a scaling variant of its class (D319, data/weaponVariants.ts), e.g. "blessed"; absent on most */
+  variant?: string;
 }
 
 export type ConsumableId =

@@ -639,11 +639,11 @@ export class RunScene extends WorldScene {
     if (this.signText) {
       ctx.save();
       ctx.fillStyle = 'rgba(10,8,14,0.85)';
-      ctx.fillRect(240, 600, 800, 52);
+      ctx.fillRect(240, 548, 800, 52);
       ctx.strokeStyle = '#8a6a3a';
-      ctx.strokeRect(240, 600, 800, 52);
+      ctx.strokeRect(240, 548, 800, 52);
       ctx.restore();
-      drawPromptText(ctx, this.signText, 640, 627, { size: 15, maxWidth: 780, weight: 'normal' });
+      drawPromptText(ctx, this.signText, 640, 575, { size: 15, maxWidth: 780, weight: 'normal' });
     }
     // locked boss door hint
     const node = this.session.node;

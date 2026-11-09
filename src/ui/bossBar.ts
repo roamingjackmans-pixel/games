@@ -30,7 +30,8 @@ export function drawBossBar(ctx: CanvasRenderingContext2D, w: World, st: BossBar
   const W = 460;
   const H = 14;
   const x = 640 - W / 2;
-  const y = 676;
+  // above the skill circles at the bottom middle (hud.ts)
+  const y = 600;
   // fade in during the intro, then the bar fills up as the boss gets going (souls style)
   const spawning = e.en.state === 'spawning';
   const k = spawning ? Math.max(0, 1 - (e.en.spawnUntil - w.time) / 1.5) : 1;

@@ -1,6 +1,7 @@
 // Item tooltips (GAME_DESIGN §16): one organised, stacked layout for every item kind, side-by-side compare
 // against what is worn in that slot (green better, white same, red worse), and small item icons.
 import { WEAPONS } from '../data/weapons';
+import { variantOf, weaponOf } from '../game/items/weaponOf';
 import { SHIELDS, SHIELD_POISE, shieldStability, shieldValues } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
@@ -76,7 +77,7 @@ export function itemMeetsReqs(item: Item, c: Character, stats: Stats = computeDe
 /** Requirements at the item's level, including a hybrid weapon's Brain / Prayer requirement. */
 function reqsFor(item: Item): Requirements {
   const r = itemRequirements(item);
-  const w = WEAPONS[item.baseId];
+  const w = weaponOf(item);
   if (w) {
     const req = w.req as HybridReq;
     if (req.brain && !r.brain) r.brain = reqAtIlvl(req.brain, item.ilvl, false);
@@ -87,7 +88,7 @@ function reqsFor(item: Item): Requirements {
 
 /** Damage of one hit at ×1, split by damage type (holyPct converts part of it, as in combat). */
 function weaponDamageByType(item: Item, stats: Stats, twoH: boolean, boost: Partial<Record<StatId, number>> = {}): Partial<Record<DamageType, number>> {
-  const w = WEAPONS[item.baseId];
+  const w = weaponOf(item);
   if (!w) return {};
   const meets = meetsRequirements(reqsFor(item), stats, twoH);
   const total = weaponBase(w.base1, item.ilvl) * scalingMult(w.grades, stats, twoH, boost) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus);
@@ -231,7 +232,8 @@ export function itemSummary(item: Item): string {
   const w = WEAPONS[item.baseId];
   const s = SHIELDS[item.baseId];
   const t = CASTING_TOOLS[item.baseId];
-  const cls = w?.name ?? s?.name ?? t?.name ?? (item.kind === 'armor' ? (ARMOR_SLOT_LABEL[item.slot] ?? 'Armor') : item.kind === 'ring' ? 'Ring' : (baseInfo(item.baseId)?.name ?? item.kind));
+  const vw = variantOf(item)?.word;
+  const cls = (w && vw ? `${vw} ${w.name}` : undefined) ?? w?.name ?? s?.name ?? t?.name ?? (item.kind === 'armor' ? (ARMOR_SLOT_LABEL[item.slot] ?? 'Armor') : item.kind === 'ring' ? 'Ring' : (baseInfo(item.baseId)?.name ?? item.kind));
   const sub = w ? (SPEED_LABEL[w.speedClass] ?? w.speedClass) : s ? (SHIELD_SIZE_LABEL[s.size] ?? 'Shield') : t ? (t.school === 'brain' ? 'Staff' : 'Talisman') : item.kind === 'armor' ? (parseArmorBase(item.baseId)?.set?.weight ?? 'cloth') : '';
   const parts = [`${RARITY_LABEL[item.rarity]} ${cls}`, `Level ${item.ilvl}`];
   if (sub) parts.push(sub[0]!.toUpperCase() + sub.slice(1));
@@ -271,12 +273,13 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
 
   // ---- name and title line
   out.push(h('div', { class: `name r-${item.rarity}` }, plusName(item)));
-  const w = WEAPONS[item.baseId];
+  const w = weaponOf(item);
+  const vnt = variantOf(item);
   const s = SHIELDS[item.baseId];
   const t = CASTING_TOOLS[item.baseId];
   const ring = RINGS[item.baseId];
   const armor = item.kind === 'armor' ? parseArmorBase(item.baseId) : null;
-  const cls = w?.name ?? s?.name ?? t?.name ?? (item.kind === 'armor' ? (ARMOR_SLOT_LABEL[item.slot] ?? 'Armor') : item.kind === 'ring' ? 'Ring' : (info?.name ?? item.kind));
+  const cls = (w ? `${vnt ? `${vnt.word} ` : ''}${w.name}` : undefined) ?? s?.name ?? t?.name ?? (item.kind === 'armor' ? (ARMOR_SLOT_LABEL[item.slot] ?? 'Armor') : item.kind === 'ring' ? 'Ring' : (info?.name ?? item.kind));
   out.push(h('div', { class: 'tt-title' }, `${RARITY_LABEL[item.rarity]} ${cls} - Level ${item.ilvl}`));
   if (cmp) out.push(h('div', { class: 'tt-vs' }, other ? ['Compared with your ', h('span', { class: `r-${other.rarity}` }, other.name)] : 'Nothing worn in this slot'));
 
@@ -302,7 +305,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
 
   // ---- per kind
   if (w) {
-    const ow = other ? WEAPONS[other.baseId] : undefined;
+    const ow = other ? weaponOf(other) : undefined;
     // D294: what it would really deal in your hands, every perk counted (equipped on a copy of you)
     const mineHit = effectiveWeaponHit(c, item);
     const theirsHit = ow && other ? effectiveWeaponHit(c, other) : null;
@@ -327,6 +330,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
       gradeRows.push({ label: STAT_LABEL[k], cur: gradeNum(mineG), prev: og ? gradeNum(theirsG) : null, better: 'higher', fmt: gradeOf });
     }
     out.push(section('Scaling', rowsEl(gradeRows, cmp)));
+    // D319: a scaling variant says what changed from its class
+    if (vnt) out.push(h('div', { class: 'small dim-text' }, `${vnt.word}: a ${w.name} that scales differently${vnt.element ? ` and deals ${ELEMENTS[vnt.element].name}` : ''}.`));
 
     const reqEl = requirementsEl(req, stats, twoH, true);
     if (reqEl) out.push(reqEl);
@@ -529,7 +534,7 @@ export function gemTooltip(g: Gem): HTMLElement {
 
 /** Draw a small icon for an item into a canvas. */
 /** Rough drawn length of each weapon (grip at 0 → tip), for fitting icons. */
-const WEAPON_ICON_LEN: Record<string, number> = { w_bow: 60, w_crossbow: 56, w_spear: 120, w_halberd: 118, w_dawn_glaive: 118, w_colossal: 88, w_greathammer: 66, w_hollow_maul: 66, w_whip: 90, w_greataxe: 66, w_longsword: 78, w_spellblade: 78, w_katana: 76, w_rapier: 74 };
+const WEAPON_ICON_LEN: Record<string, number> = { w_bow: 60, w_crossbow: 56, w_spear: 120, w_halberd: 118, w_dawn_glaive: 118, w_colossal: 88, w_greathammer: 66, w_hollow_maul: 66, w_whip: 90, w_greataxe: 66, w_longsword: 78, w_spellblade: 78, w_katana: 76, w_rapier: 74, w_chakram: 30 };
 
 export function itemIcon(item: Item | null, size = 40): HTMLCanvasElement {
   const c = h('canvas', { width: size, height: size });

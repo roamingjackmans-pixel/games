@@ -6,7 +6,7 @@ import { DEFAULT_LOOK, drawJoe, type BodyGear, type HeadGear, type JoeLook } fro
 import type { Beard, Emblem, HairStyle, HandPose } from '../engine/draw/players';
 import { ARMOR_LOOKS, HEAD_OVERRIDE } from '../data/armorLooks';
 import { FLASK_DRINK_S, PLAYER_DOT_DY, PLAYER_DOT_R } from '../game/player/player';
-import { drawShield, drawTool, drawWeapon, isPairedWeapon } from '../engine/draw/weapons';
+import { chakramRing, drawShield, drawTool, drawWeapon, isPairedWeapon } from '../engine/draw/weapons';
 import { cacheable, drawCachedEnemy } from './spriteCache';
 import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/parts';
 import { CLASSES } from '../data/classes';
@@ -20,7 +20,7 @@ import { shapeHit, type Shape } from '../game/combat/patterns';
 import { drawAttackIcon } from './telegraphs';
 import { ELEMENTS, enemyElement } from '../game/elements';
 import { drawElementOver, drawElementUnder, drawGolden, isImmuneNow } from './elementFx';
-import type { BossDef, Character, DamageType } from '../game/types';
+import type { BossDef, Character, DamageType, SwingDef, SwingMove } from '../game/types';
 import { PHASE_TRANSITION_S } from '../game/combat/bossPhase';
 import { essenceDef } from '../data/essence';
 import type { Entity, World } from '../game/world';
@@ -252,8 +252,20 @@ function skillPose(e: Entity, now: number, rest: { rot: number; ext: number }): 
   return { rot: lerp(memo.rot, rest.rot, s), ext: lerp(memo.ext, rest.ext, s), flip: false };
 }
 
+/**
+ * A weapon's pose relative to facing: its angle and how far it is pushed out; an overhead's foreshortening (`len`, the
+ * weapon raised toward the camera looks shorter), a whip's stretch to its lash, and a spin's hand that orbits all the way round.
+ */
+interface WeaponPose {
+  rot: number;
+  ext: number;
+  len?: number;
+  stretch?: number;
+  orbit?: boolean;
+}
+
 /** Weapon angle relative to facing for the current swing phase. */
-function weaponPose(e: Entity): { rot: number; ext: number } {
+function weaponPose(e: Entity): WeaponPose {
   const pl = e.pl!;
   // an off-hand shot (D291) leaves the main weapon at rest
   const c = pl.combo?.offHand ? null : pl.combo;
@@ -269,17 +281,64 @@ function weaponPose(e: Entity): { rot: number; ext: number } {
   }
   const hb = c.swing.hitbox;
   const k = Math.min(1, c.t / Math.max(0.001, c.dur));
+  const move = moveOf(c);
+  const reach = e.pl!.derived.reachMult;
+  // a whip's lash (D320): the arm stays put and the whip itself runs out to the hit's length, then coils back
+  if (move === 'lash' && hb.shape === 'thrust') {
+    const full = (hb.l * reach) / WHIP_LEN;
+    if (c.phase === 'windup') return { rot: lerp(0.7, -0.25, k), ext: -4 * k, stretch: 1 };
+    if (c.phase === 'active') return { rot: lerp(-0.25, 0, k), ext: 0, stretch: lerp(1, full, Math.min(1, k * 2.5)) };
+    return { rot: lerp(0, 0.7, k), ext: 0, stretch: lerp(full, 1, Math.min(1, k * 1.6)) };
+  }
   if (hb.shape === 'thrust') {
     if (c.phase === 'windup') return { rot: 0, ext: -10 * k };
     if (c.phase === 'active') return { rot: 0, ext: lerp(-10, hb.l * 0.35, k) };
     return { rot: 0, ext: lerp(hb.l * 0.35, 0, k) };
   }
-  if (hb.shape === 'proj') return { rot: 0, ext: 0 };
+  if (hb.shape === 'proj') {
+    // a thrown ring (D320): drawn back across the body, flung out on the release
+    if (move !== 'throw') return { rot: 0, ext: 0 };
+    if (c.phase === 'windup') return { rot: lerp(0.7, 1.9, k), ext: -4 * k };
+    if (c.phase === 'active') return { rot: lerp(1.9, -0.4, k), ext: 8 };
+    return { rot: lerp(-0.4, 0.7, k), ext: lerp(8, 0, k) };
+  }
+  // an overhead (D320): raised high (foreshortened, seen from above) in the windup, brought down to full length
+  if (hb.shape === 'circle') {
+    if (c.phase === 'windup') return { rot: lerp(0.7, 0, k), ext: lerp(0, -8, k), len: lerp(1, 0.35, k) };
+    if (c.phase === 'active') return { rot: 0, ext: lerp(-8, 6, k), len: lerp(0.35, 1.12, Math.min(1, k * 1.4)) };
+    return { rot: lerp(0, 0.7, k), ext: lerp(6, 0, k), len: lerp(1.12, 1, k) };
+  }
+  const dir = swingDir(c);
+  // a spin (D320): wound back, then the blade goes all the way round the player
+  if (move === 'spin') {
+    if (c.phase === 'windup') return { rot: lerp(0.7 * dir, 1.4 * dir, k), ext: 0, orbit: true };
+    if (c.phase === 'active') return { rot: (1.4 - Math.PI * 2 * k) * dir, ext: 6, orbit: true };
+    return { rot: lerp((1.4 - Math.PI * 2) * dir, 0.7 * dir - Math.PI * 2 * dir, k), ext: lerp(6, 0, k), orbit: true };
+  }
   const half = (hb.angleDeg * DEG) / 2;
-  const dir = c.idx % 2 === 0 ? 1 : -1;
-  if (c.phase === 'windup') return { rot: lerp(0.7 * dir, -half * dir - 0.3 * dir, k), ext: 0 };
-  if (c.phase === 'active') return { rot: lerp(-half * dir - 0.3 * dir, half * dir, k), ext: 4 };
-  return { rot: lerp(half * dir, 0.7 * dir, k), ext: 0 };
+  // a whip's sideways crack runs out to its full length too
+  const sweepStretch = move === 'lashSweep' ? (hb.r * reach) / WHIP_LEN : 0;
+  if (c.phase === 'windup') return { rot: lerp(0.7 * dir, -half * dir - 0.3 * dir, k), ext: 0, ...(sweepStretch ? { stretch: lerp(1, 1.4, k) } : {}) };
+  if (c.phase === 'active') return { rot: lerp(-half * dir - 0.3 * dir, half * dir, k), ext: sweepStretch ? 0 : 4, ...(sweepStretch ? { stretch: lerp(1.4, sweepStretch, Math.min(1, k * 3)) } : {}) };
+  return { rot: lerp(half * dir, 0.7 * dir, k), ext: 0, ...(sweepStretch ? { stretch: lerp(sweepStretch, 1, Math.min(1, k * 1.6)) } : {}) };
+}
+
+/** A plain whip's drawn length at rest (engine/draw/weapons.ts whip()), for stretching it to a lash's reach. */
+const WHIP_LEN = 60;
+
+/** How a combo step moves (D320): its own `move`, else an arc slashes by its place in the combo and a thrust thrusts. */
+function moveOf(c: { swing: SwingDef; idx: number }): SwingMove {
+  if (c.swing.move) return c.swing.move;
+  const hb = c.swing.hitbox;
+  return hb.shape === 'thrust' ? 'thrust' : hb.shape === 'circle' ? 'overhead' : hb.shape === 'proj' ? 'throw' : c.idx % 2 === 0 ? 'slash' : 'backslash';
+}
+
+/** Which way an arc swing turns: +1 a slash, −1 a backslash; a whip's crack and a spin alternate by place. */
+function swingDir(c: { swing: SwingDef; idx: number }): 1 | -1 {
+  const m = moveOf(c);
+  if (m === 'slash') return 1;
+  if (m === 'backslash') return -1;
+  return c.idx % 2 === 0 ? 1 : -1;
 }
 
 /**
@@ -362,10 +421,13 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   // the shield (raised when blocking), the staff (thrust forward while casting) or the second weapon
   const f = e.facing;
   const rot = sk ? sk.rot : restRot;
-  const ha = f + 0.9 + (rot - 0.7) * 0.55;
+  // a spin (D320) carries the hand all the way round the body
+  const ha = !sk && basePose.orbit ? f + rot : f + 0.9 + (rot - 0.7) * 0.55;
   const wa = f + rot;
   // which way the current arc swing turns: increasing angle moves the blade toward its local +y (D104)
-  const edgeFlip = sk ? sk.flip : !!pl.combo && pl.combo.swing.hitbox.shape === 'arc' && pl.combo.idx % 2 === 0;
+  const edgeFlip = sk ? sk.flip : !!pl.combo && pl.combo.swing.hitbox.shape === 'arc' && swingDir(pl.combo) === 1;
+  const len = sk ? 1 : (basePose.len ?? 1);
+  const stretch = sk ? 1 : (basePose.stretch ?? 1);
   const main: HandPose | undefined = ghost
     ? undefined
     : {
@@ -377,8 +439,10 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
           // edge leads the swing (D104)
           if (edgeFlip) c.scale(1, -1);
           // proficiency reach (D178): the weapon itself grows a little longer (a whip slowly gets bigger)
-          if (pl.derived.reachMult > 1) c.scale(pl.derived.reachMult, 1);
-          drawWeapon(c, wDraw, now, legendName, charging);
+          if (pl.derived.reachMult > 1 && stretch === 1) c.scale(pl.derived.reachMult, 1);
+          // an overhead raised toward the camera looks shorter (D320)
+          if (len !== 1) c.scale(len, 1);
+          drawWeapon(c, wDraw, now, legendName, charging, stretch);
           if (buffEl) drawBuffGlow(c, buffEl, now, e.id);
         },
       };
@@ -457,22 +521,50 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   });
   // slash arc: the swing drawn as a fading wedge while the hit is live (ART_AUDIO §4)
   const sw = pl.combo;
+  const swingGlow = ELEMENTS[pl.derived.weapon.element ?? 'physical'].glow; // the swing shows the weapon's damage type (D81)
   if (!ghost && sw && sw.phase === 'active' && sw.swing.hitbox.shape === 'arc') {
     const hb = sw.swing.hitbox;
     const half = (hb.angleDeg * DEG) / 2;
-    const dir = sw.idx % 2 === 0 ? 1 : -1;
+    const dir = swingDir(sw);
     const k = Math.min(1, sw.t / Math.max(0.001, sw.dur));
-    const a0 = e.facing - half * dir;
-    const a1 = e.facing + (-half + 2 * half * k) * dir;
+    const move = moveOf(sw);
+    // a spin (D320) leaves a ring behind the blade as it goes round; a slash a wedge across its arc
+    const a0 = move === 'spin' ? e.facing + 1.4 * dir : e.facing - half * dir;
+    const a1 = move === 'spin' ? e.facing + (1.4 - Math.PI * 2 * k) * dir : e.facing + (-half + 2 * half * k) * dir;
+    // a whip's crack reaches its full length; a blade's trail stays near the body
+    const r = move === 'lashSweep' ? hb.r * pl.derived.reachMult * 0.95 : Math.min(hb.r * pl.derived.reachMult, 130) * 0.85;
     ctx.save();
     ctx.globalAlpha = 0.4 * (1 - k * 0.5);
-    ctx.strokeStyle = ELEMENTS[pl.derived.weapon.element ?? 'physical'].glow; // the swing shows the weapon's damage type (D81)
-    ctx.lineWidth = 9;
+    ctx.strokeStyle = swingGlow;
+    ctx.lineWidth = move === 'lashSweep' ? 4 : 9;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(x, y, Math.min(hb.r * pl.derived.reachMult, 130) * 0.85, Math.min(a0, a1), Math.max(a0, a1));
+    ctx.arc(x, y, r, Math.min(a0, a1), Math.max(a0, a1));
     ctx.stroke();
     ctx.restore();
+  }
+  // an overhead's landing (D320): a ring bursts out where it strikes, the size of its hit
+  if (!ghost && sw && sw.phase !== 'windup' && sw.swing.hitbox.shape === 'circle') {
+    const hb = sw.swing.hitbox;
+    const k = Math.min(1, sw.t / Math.max(0.001, sw.dur));
+    const t = sw.phase === 'active' ? Math.max(0, k * 1.4 - 0.4) : 1;
+    const fade = sw.phase === 'active' ? 1 : 1 - k;
+    if (t > 0 && fade > 0) {
+      const d = hb.d * pl.derived.reachMult;
+      const cx = x + Math.cos(e.facing) * d;
+      const cy = y + Math.sin(e.facing) * d;
+      ctx.save();
+      ctx.globalAlpha = 0.5 * fade;
+      ctx.strokeStyle = swingGlow;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, hb.r * (0.4 + 0.6 * t), hb.r * (0.4 + 0.6 * t) * 0.7, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 0.18 * fade;
+      ctx.fillStyle = swingGlow;
+      ctx.fill();
+      ctx.restore();
+    }
   }
   // held in place (D252): grabbed, rooted or frozen. Grey stones bounce round you, tied by a ring, so being stuck
   // never looks like the controls stopped working
@@ -735,6 +827,10 @@ export function drawProjectile(ctx: CanvasRenderingContext2D, e: Entity, x: numb
       break;
     case 'p_knife':
       poly(ctx, [-6, -2, 8, -1, 10, 0, 8, 1, -6, 2], '#dfe4ea', OUTLINE, 1);
+      break;
+    case 'p_chakram':
+      // a thrown ring (D320) whirls flat as it flies
+      chakramRing(ctx, 0, Math.max(7, e.radius * 0.85), now * 22);
       break;
     case 'p_axe':
       ctx.rotate(now * 18);
@@ -1149,6 +1245,12 @@ export function debugHitboxes(ctx: CanvasRenderingContext2D, w: World): void {
     ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
     ctx.stroke();
     const c = e.pl?.combo;
+    if (c && c.phase === 'active' && c.swing.hitbox.shape === 'circle') {
+      ctx.strokeStyle = '#ff0';
+      ctx.beginPath();
+      ctx.arc(e.x + Math.cos(e.facing) * c.swing.hitbox.d, e.y + Math.sin(e.facing) * c.swing.hitbox.d, c.swing.hitbox.r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     if (c && c.phase === 'active' && c.swing.hitbox.shape === 'arc') {
       ctx.strokeStyle = '#ff0';
       ctx.beginPath();

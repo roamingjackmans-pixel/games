@@ -299,11 +299,16 @@ function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number
   const volleyHit = n > 1 ? new Set<number>() : undefined;
   for (let i = 0; i < n; i++) {
     const off = (i - (n - 1) / 2) * step;
-    const shot = spawnPlayerProjectile(w, e, a + off, swing.hitbox.speed, swing.hitbox.r, { ...spec, dmg: { ...spec.dmg }, status: spec.status.map((s) => ({ ...s })) }, pierce + bonkPierce, wpn.id === 'bow' ? 'p_arrow' : 'p_bolt');
-    shot.pr!.falloffFrom = { x: e.x, y: e.y };
+    const hb = swing.hitbox;
+    const shot = spawnPlayerProjectile(w, e, a + off, hb.speed, hb.r, { ...spec, dmg: { ...spec.dmg }, status: spec.status.map((s) => ({ ...s })) }, pierce + bonkPierce + (hb.pierce ?? 0), wpn.ranged?.drawId ?? 'p_bolt', {
+      ...(hb.returns ? { returns: true } : {}),
+      ...(hb.range ? { range: hb.range } : {}),
+    });
+    // a thrown ring that comes back (D320) loses nothing with distance; arrows and bolts do
+    if (!hb.returns) shot.pr!.falloffFrom = { x: e.x, y: e.y };
     if (volleyHit) shot.pr!.volleyHit = volleyHit;
   }
-  w.sfx(wpn.id === 'bow' ? 'shootArrow' : 'shootBolt', e.x);
+  w.sfx(wpn.ranged?.sfx ?? 'shootBolt', e.x);
 }
 
 export function spawnPlayerProjectile(w: World, e: Entity, a: number, speed: number, r: number, spec: DamageSpec, pierce: number, drawId: string, opts: { range?: number; isSpell?: boolean; returns?: boolean; color?: string; homing?: number } = {}): Entity {
@@ -358,8 +363,21 @@ function swingHits(w: World, e: Entity): void {
   let any = false;
   // proficiency reach (D178) lengthens every swing
   const reach = pl.derived.reachMult;
+  // an overhead (D320) lands a circle in front: reach carries it further out
+  const slamX = hb.shape === 'circle' ? e.x + Math.cos(e.facing) * hb.d * reach : 0;
+  const slamY = hb.shape === 'circle' ? e.y + Math.sin(e.facing) * hb.d * reach : 0;
   const test = (t: Entity): boolean =>
-    hb.shape === 'arc' ? coneHit(e.x, e.y, e.facing, (hb.angleDeg * DEG) / 2, hb.r * reach, t.x, t.y, t.radius) : lineHit(e.x, e.y, e.facing, hb.w, hb.l * reach, t.x, t.y, t.radius);
+    hb.shape === 'arc'
+      ? coneHit(e.x, e.y, e.facing, (hb.angleDeg * DEG) / 2, hb.r * reach, t.x, t.y, t.radius)
+      : hb.shape === 'circle'
+        ? Math.hypot(t.x - slamX, t.y - slamY) <= hb.r + t.radius
+        : lineHit(e.x, e.y, e.facing, hb.w, hb.l * reach, t.x, t.y, t.radius);
+  // the overhead's landing kicks up dust and shakes the screen once, as it starts to land
+  if (hb.shape === 'circle' && c.hit.size === 0 && !c.landed) {
+    c.landed = true;
+    w.fx('dust', slamX, slamY, { n: 8 });
+    w.emit({ t: 'shake', amount: heavy ? 4 : 2 });
+  }
   for (const en of w.enemies) {
     if (en.hp?.dead || c.hit.has(en.id)) continue;
     if (en.en?.state === 'ceiling') continue;

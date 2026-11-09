@@ -71,6 +71,7 @@ export const PROF_CLASSES: Record<string, ProfClass> = {
   dawn_glaive: { id: 'dawn_glaive', name: 'Dawn Glaives', blurb: 'The arc of the blade follows the sun.', perks: [p('damage', 0.008, 'Damage'), p('reach', 0.006, 'Reach')] },
   whip: { id: 'whip', name: 'Whips', blurb: 'Every crack reaches a little further.', perks: [p('reach', 0.012, 'Reach'), p('attackSpeed', 0.005, 'Attack speed')] },
   bow: { id: 'bow', name: 'Bows', blurb: 'Breathe out. Let go.', perks: [p('damage', 0.01, 'Damage'), p('skillCooldown', 0.008, 'Skill cooldowns')] },
+  chakram: { id: 'chakram', name: 'Chakrams', blurb: 'Catch it. Every time. Mostly.', perks: [p('damage', 0.008, 'Damage'), p('attackSpeed', 0.005, 'Throw speed')] },
   crossbow: { id: 'crossbow', name: 'Crossbows', blurb: 'Point. Click. Problem solved.', perks: [p('damage', 0.01, 'Damage'), p('attackSpeed', 0.006, 'Reload speed')] },
   staff: { id: 'staff', name: 'Staffs', blurb: 'The words come quicker once you stop reading them.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('spellPower', 0.008, 'Spell power')] },
   talisman: { id: 'talisman', name: 'Talismans', blurb: 'Faith is a muscle. Use it.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('castSpeed', 0.006, 'Cast speed')] },

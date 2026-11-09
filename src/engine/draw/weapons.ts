@@ -606,12 +606,15 @@ function bow(ctx: Ctx, charge: number): void {
   bowString(ctx, charge);
 }
 
-function whip(ctx: Ctx, t: number): void {
+/** `stretch` (D320): a lash runs the whip out to its hit's length (×1 at rest); stretched, it pulls taut. */
+function whip(ctx: Ctx, t: number, stretch = 1): void {
   pommel(ctx, -1.5, 3, '#6a4a2a');
   grip(ctx, 0, 10, 5, '#4a3020', '#2a1a10');
   band(ctx, 10.5, 2, 5.6, BRASS);
   const pts: number[] = [];
-  for (let i = 0; i <= 8; i++) pts.push(11 + i * 6, Math.sin(i * 0.9 + t * 2.5) * (1 + i * 0.6));
+  const seg = (6 * (60 * stretch - 11)) / 49;
+  const slack = 1 / Math.max(1, stretch);
+  for (let i = 0; i <= 8; i++) pts.push(11 + i * seg, Math.sin(i * 0.9 + t * 2.5) * (1 + i * 0.6) * slack);
   ctx.save();
   ctx.lineCap = 'round';
   ctx.strokeStyle = OUTLINE;
@@ -756,6 +759,41 @@ function twinaxes(ctx: Ctx): void {
   plate(ctx, [23.5, -3.6, 34.5, -3.6, 34.5, 3.6, 23.5, 3.6], '#5d626b', { ow: 1.8 });
   rivet(ctx, 29, 0, 0.9);
   spec(ctx, 28, -12, 0.9);
+}
+
+/**
+ * A chakram (D320): a steel ring with a cutting rim and a leather-wrapped grip bar across it. Drawn round (cx, 0);
+ * `spin` turns its teeth (a thrown one whirls).
+ */
+export function chakramRing(ctx: Ctx, cx: number, r: number, spin = 0): void {
+  ctx.save();
+  ctx.translate(cx, 0);
+  ctx.rotate(spin);
+  // the rim's teeth
+  const n = 10;
+  const pts: number[] = [];
+  for (let i = 0; i < n * 2; i++) {
+    const a = (i / (n * 2)) * Math.PI * 2;
+    const rr = i % 2 === 0 ? r * 1.16 : r * 0.98;
+    pts.push(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  poly(ctx, pts, '#e4e8ee', OUTLINE, 1.6);
+  blob(ctx, 0, 0, r, r, { fill: STEEL, outlineW: 1.4 });
+  blob(ctx, 0, 0, r * 0.66, r * 0.66, { fill: '#2a2430', outlineW: 1.4 });
+  // the grip across the hole
+  poly(ctx, [-r * 0.7, -r * 0.16, r * 0.7, -r * 0.16, r * 0.7, r * 0.16, -r * 0.7, r * 0.16], LEATHER, OUTLINE, 1);
+  ctx.strokeStyle = BRASS;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.83, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  spec(ctx, cx - r * 0.5, -r * 0.6, 0.9);
+}
+
+function chakram(ctx: Ctx): void {
+  // held by its grip bar, the ring out past the knuckles
+  chakramRing(ctx, 9, 10);
 }
 
 function fists(ctx: Ctx): void {
@@ -1003,7 +1041,7 @@ function dawnGlaive(ctx: Ctx, t: number): void {
   glint(ctx, sx + Math.cos(ha + Math.PI) * 4.5, Math.sin(ha + Math.PI) * 15, 1.6, GL, 0.7);
 }
 
-type BaseDraw = (ctx: Ctx, t: number, charge: number) => void;
+type BaseDraw = (ctx: Ctx, t: number, charge: number, stretch: number) => void;
 
 const BASE: Record<string, BaseDraw> = {
   w_greathammer: (c) => greathammer(c),
@@ -1015,7 +1053,8 @@ const BASE: Record<string, BaseDraw> = {
   w_rapier: (c) => rapier(c),
   w_katana: (c) => katana(c),
   w_bow: (c, _t, ch) => bow(c, ch),
-  w_whip: (c, t) => whip(c, t),
+  w_whip: (c, t, _ch, st) => whip(c, t, st),
+  w_chakram: (c) => chakram(c),
   w_longsword: (c) => longsword(c),
   w_spear: (c, t) => spear(c, t),
   w_battleaxe: (c) => battleaxe(c),
@@ -1033,10 +1072,10 @@ const BASE: Record<string, BaseDraw> = {
 export const WEAPON_DRAW_IDS: string[] = Object.keys(BASE);
 
 /** Draw a base weapon by draw id, ignoring legendary designs. */
-export function drawBaseWeapon(ctx: Ctx, id: string, t = 0, charge = 0): void {
+export function drawBaseWeapon(ctx: Ctx, id: string, t = 0, charge = 0, stretch = 1): void {
   // a staff or talisman held in the weapon hand (D117) draws as itself
   if (!BASE[id] && id.startsWith('t_')) return drawTool(ctx, id, t);
-  (BASE[id] ?? fists)(ctx, t, charge);
+  (BASE[id] ?? fists)(ctx, t, charge, stretch);
 }
 
 /**
@@ -1053,13 +1092,21 @@ export function weaponGripBack(id: string): number {
   return GRIP_BACK[id] ?? 0;
 }
 
-export function drawWeapon(ctx: Ctx, id: string, t = 0, legendaryName?: string, charge = 0): void {
+export function drawWeapon(ctx: Ctx, id: string, t = 0, legendaryName?: string, charge = 0, stretch = 1): void {
   const back = GRIP_BACK[id] ?? 0;
   if (back) {
     ctx.save();
     ctx.translate(-back, 0);
   }
-  if (!legendaryName || !drawLegendaryWeapon(ctx, legendaryName, t, charge)) drawBaseWeapon(ctx, id, t, charge);
+  let drawn = false;
+  if (legendaryName) {
+    // a legendary whip's own design has no stretch of its own: it is drawn longer instead (D320)
+    ctx.save();
+    if (stretch !== 1) ctx.scale(stretch, 1);
+    drawn = drawLegendaryWeapon(ctx, legendaryName, t, charge);
+    ctx.restore();
+  }
+  if (!drawn) drawBaseWeapon(ctx, id, t, charge, stretch);
   if (back) ctx.restore();
 }
 

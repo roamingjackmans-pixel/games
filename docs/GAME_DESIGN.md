@@ -966,11 +966,20 @@ face marks and per-limb features, with Randomize and a preview you turn with the
 
 ## 16. UI and HUD
 
-- **HUD**: HP and stamina bars top-left with status meters; Thermos count; Shards and Glowen; Q/E/R and 1/2/3 icons
-  with radial cooldowns (‖ while a spell cooldown is held, D177); the quick-use item; the dodge ring round the player;
-  minimap; the boss bar bottom-centre; co-op cards (name, HP, status, downed timer) along the left.
-- **In the world**: an eye-coloured dot at every player's feet (D262); door torches (D263); gold immune enemies (§6.7);
-  grey stones round a stuck player (D252); gold sparkles on a Thermos drink (D271).
+- **HUD**: HP and stamina bars top-left, with held-in-place controls (FROZEN, ROOTED…) and buffs under them; Thermos
+  count; Shards and Glowen; minimap; co-op cards (name, HP, status, downed timer) along the left.
+- **Skill circles** (Nightreign style, D321): at the bottom middle, the three weapon skills (Q/E/R) as big circles, the three
+  spells (1/2/3, or an off-hand crossbow's skills) smaller to their right and the quick-use item to their left. A circle
+  on cooldown is greyed and fills from the bottom up like a rising liquid, with the seconds left in the middle (‖ before
+  them while a spell cooldown is held, D177); once full it takes the slot's colour, glows and pulses, flaring the moment
+  it fills. Its name sits inside, its button glyph at its top left; locked slots show a lock. They fade while the player
+  walks under them. The boss bar sits just above them.
+- **In the world**: status buildup bars over the player's head (D321): one wide, see-through bar per status that is building
+  or running, a small drawn picture of it (flame, snowflake, bolt, blood drop, bubbles) in a dark box at its left and
+  the bar filled in its colour; once it goes off the bar runs down over the status's length, flashing (a meter building
+  again under it shows as a thin white line). Near the top of the room they hang under the feet. Also an eye-coloured dot
+  at every player's feet (D262); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
+  stones round a stuck player (D252); gold sparkles on a Thermos drink (D271).
 - **Menus** are HTML overlays over the canvas: Title · Load Character · Character creation · Co-op play · Lobby ·
   Pause · Inventory (Items, Spells, Proficiency tabs; stats, paper doll, bag, gems in your gear, set perks worn) ·
   Bonfire (§9.1) · Map · Settings · Achievements · Statistics · Death screen · Credits. Menus keep their focus across

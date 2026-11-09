@@ -1,6 +1,6 @@
 // Derived player numbers from stats + equipment + affixes + gems + rings + legendary powers.
 // Recomputed on every equipment, stat or two-hand change. Never stored.
-import { WEAPONS } from '../../data/weapons';
+import { weaponOf } from '../items/weaponOf';
 import { armorPiecePoise } from '../../data/armor';
 import { SHIELD_POISE } from '../../data/shields';
 import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
@@ -187,7 +187,7 @@ function itemsOf(c: Character): Item[] {
 
 /** A weapon in the off hand (D291): its own damage, from its own base, scaling, rarity and reinforcement. */
 function offWeaponOf(off: Item | null | undefined, twoHanded: boolean, stats: Stats, boost: ReturnType<typeof statBoosts>): Derived['offWeapon'] {
-  const def = off && off.kind === 'weapon' ? WEAPONS[off.baseId] : undefined;
+  const def = off && off.kind === 'weapon' ? weaponOf(off) : undefined;
   if (!off || !def?.eitherHand || twoHanded) return null;
   const meetsReq = meetsRequirements(itemRequirements(off), stats, false);
   const power = weaponBase(def.base1, off.ilvl) * scalingMult(def.grades, stats, false, boost) * (meetsReq ? 1 : 0.4) * RARITY_POWER[off.rarity] * reinforceDmgMult(off.plus);
@@ -225,7 +225,7 @@ export function computeDerived(c: Character): Derived {
   const main = c.equipment.main;
   // a staff or talisman may be held in the weapon hand (D117): it swings as a bash and still casts
   const mainToolDef = main ? (CASTING_TOOLS[main.baseId] ?? null) : null;
-  const weapon = main ? (WEAPONS[main.baseId] ?? (mainToolDef ? toolBash(mainToolDef) : FIST)) : FIST;
+  const weapon = main ? (weaponOf(main) ?? (mainToolDef ? toolBash(mainToolDef) : FIST)) : FIST;
   const weaponIlvl = main?.ilvl ?? 1;
   const off = c.equipment.off;
   const shield = off ? (SHIELDS[off.baseId] ?? null) : null;

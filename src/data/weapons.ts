@@ -1,15 +1,25 @@
-// CONTENT_ITEMS §4: the 16 weapon classes plus 4 hybrids (D80). Grades are spread from E to S on purpose (D40).
-import type { SwingDef, WeaponDef } from '../game/types';
+// CONTENT_ITEMS §4: the 17 weapon classes plus 4 hybrids (D80, Chakrams D320). Grades are spread from E to S on purpose (D40).
+// Movesets (D320): fast weapons have long combos, heavy ones at least three steps; spins circle the player, overheads
+// land a slam in front, whips lash out to their full length. A combo that covers more ground hits a little softer:
+// its damage per second is the old one × (old average area / new)^0.25 (docs/CONTENT_ITEMS §4).
+import type { SwingDef, SwingMove, WeaponDef } from '../game/types';
 
 const arc = (angleDeg: number, r: number) => ({ shape: 'arc' as const, angleDeg, r });
 const thrust = (w: number, l: number) => ({ shape: 'thrust' as const, w, l });
-const sw = (windupMs: number, activeMs: number, recoverMs: number, mult: number, hitbox: SwingDef['hitbox'], step = 14): SwingDef => ({
+/** a full circle round the player */
+const spin = (r: number) => arc(360, r);
+/** an overhead's landing: a circle of radius r, d px in front */
+const slam = (r: number, d: number) => ({ shape: 'circle' as const, r, d });
+/** a thrown ring that flies out `range` px, cutting through everything, and comes back to the hand (Chakrams) */
+const ring = (r: number, range: number) => ({ shape: 'proj' as const, speed: 560, r, pierce: 99, returns: true, range });
+const sw = (windupMs: number, activeMs: number, recoverMs: number, mult: number, hitbox: SwingDef['hitbox'], step = 14, move?: SwingMove): SwingDef => ({
   windupMs,
   activeMs,
   recoverMs,
   mult,
   hitbox,
   step,
+  ...(move ? { move } : {}),
 });
 
 export const WEAPONS: Record<string, WeaponDef> = {
@@ -20,7 +30,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'S', slicey: '-' },
     req: { bonk: 14, slicey: 0 },
     speedClass: 'veryslow',
-    combo: [sw(550, 150, 500, 1.0, arc(100, 120), 18), sw(650, 150, 600, 1.3, thrust(70, 140), 22)],
+    combo: [sw(520, 150, 480, 0.88, arc(110, 120), 18, 'slash'), sw(520, 150, 480, 0.88, arc(110, 120), 18, 'backslash'), sw(700, 160, 620, 1.32, slam(75, 100), 24, 'overhead')],
     base1: 62,
     stamina: 28,
     poiseDmg: 60,
@@ -38,7 +48,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'A', slicey: '-' },
     req: { bonk: 12, slicey: 0 },
     speedClass: 'slow',
-    combo: [sw(450, 140, 400, 1.0, arc(130, 115), 16), sw(450, 140, 400, 1.0, arc(130, 115), 16), sw(600, 160, 550, 1.4, arc(130, 115), 22)],
+    combo: [sw(450, 140, 400, 0.92, arc(130, 115), 16, 'slash'), sw(450, 140, 400, 0.92, arc(130, 115), 16, 'backslash'), sw(450, 140, 400, 0.96, arc(130, 115), 16, 'slash'), sw(520, 200, 520, 1.19, spin(110), 16, 'spin')],
     base1: 54,
     stamina: 24,
     poiseDmg: 50,
@@ -56,7 +66,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'A', slicey: 'E' },
     req: { bonk: 13, slicey: 8 },
     speedClass: 'slow',
-    combo: [sw(480, 150, 420, 1.0, arc(150, 130), 16), sw(480, 150, 420, 1.1, arc(150, 130), 16), sw(620, 160, 560, 1.5, arc(150, 130), 22)],
+    combo: [sw(480, 150, 420, 1, arc(150, 130), 16, 'slash'), sw(480, 150, 420, 1.1, arc(150, 130), 16, 'backslash'), sw(640, 160, 560, 1.51, slam(85, 115), 24, 'overhead')],
     base1: 56,
     stamina: 25,
     poiseDmg: 50,
@@ -93,7 +103,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'E', slicey: '-' },
     req: { bonk: 8, slicey: 0 },
     speedClass: 'mediumslow',
-    combo: [sw(380, 120, 360, 1.0, arc(110, 95), 14), sw(450, 130, 420, 1.2, arc(110, 95), 16)],
+    combo: [sw(380, 120, 360, 0.98, arc(110, 95), 14, 'slash'), sw(380, 120, 360, 0.98, arc(110, 95), 14, 'backslash'), sw(480, 130, 440, 1.27, slam(55, 80), 18, 'overhead')],
     base1: 80, // D302: was 46 (0.55× the median weapon's damage per second)
     stamina: 18,
     poiseDmg: 40,
@@ -112,7 +122,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: '-', slicey: 'S' },
     req: { bonk: 0, slicey: 14 },
     speedClass: 'veryfast',
-    combo: [sw(150, 80, 150, 0.5, arc(80, 70), 10), sw(150, 80, 150, 0.5, arc(80, 70), 10), sw(150, 80, 150, 0.5, arc(80, 70), 10), sw(150, 80, 190, 0.7, arc(80, 70), 14)],
+    combo: [sw(150, 80, 150, 0.45, arc(80, 70), 10, 'slash'), sw(150, 80, 150, 0.45, arc(80, 70), 10, 'backslash'), sw(150, 80, 150, 0.45, arc(80, 70), 10, 'slash'), sw(150, 80, 150, 0.45, arc(80, 70), 10, 'backslash'), sw(170, 110, 190, 0.54, spin(75), 8, 'spin'), sw(170, 90, 210, 0.68, thrust(30, 105), 16, 'thrust')],
     base1: 26,
     stamina: 8,
     poiseDmg: 8,
@@ -131,7 +141,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: '-', slicey: 'A' },
     req: { bonk: 0, slicey: 10 },
     speedClass: 'fast',
-    combo: [sw(200, 90, 200, 0.8, thrust(28, 120), 14), sw(200, 90, 200, 0.8, thrust(28, 120), 14), sw(300, 100, 320, 1.2, thrust(28, 120), 18)],
+    combo: [sw(200, 90, 200, 0.75, thrust(28, 120), 14, 'thrust'), sw(200, 90, 200, 0.75, thrust(28, 120), 14, 'thrust'), sw(210, 90, 210, 0.75, arc(90, 100), 12, 'slash'), sw(200, 90, 200, 0.75, thrust(28, 120), 14, 'thrust'), sw(300, 100, 320, 1.12, thrust(28, 150), 30, 'thrust')],
     base1: 30,
     stamina: 11,
     poiseDmg: 12,
@@ -149,7 +159,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'D', slicey: 'A' },
     req: { bonk: 7, slicey: 12 },
     speedClass: 'fast',
-    combo: [sw(230, 100, 220, 0.9, arc(120, 110), 14), sw(230, 100, 220, 0.9, arc(120, 110), 14), sw(330, 110, 340, 1.3, arc(120, 110), 18)],
+    combo: [sw(230, 100, 220, 0.84, arc(120, 110), 14, 'slash'), sw(230, 100, 220, 0.84, arc(120, 110), 14, 'backslash'), sw(230, 90, 220, 0.84, thrust(30, 130), 16, 'thrust'), sw(260, 140, 260, 0.93, spin(105), 12, 'spin'), sw(340, 110, 340, 1.21, arc(170, 125), 18, 'slash')],
     base1: 34,
     stamina: 12,
     poiseDmg: 15,
@@ -174,7 +184,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     poiseDmg: 2,
     reviveValue: 0.6,
     skills: ['bow_volley', 'bow_piercing_shot', 'bow_rain'],
-    ranged: { speed: 700, chargeS: 0.6, chargeMult: 1.8, chargePierce: 1, volley: { count: 3, spreadDeg: 5 } }, // D205: three arrows at once
+    ranged: { speed: 700, drawId: 'p_arrow', sfx: 'shootArrow', chargeS: 0.6, chargeMult: 1.8, chargePierce: 1, volley: { count: 3, spreadDeg: 5 } }, // D205: three arrows at once
     flavor: 'Never misses. Rarely hits.',
     draw: 'w_bow',
     legendaryNames: ['Long Distance Relationship', 'Return to Sender', 'Cupid Retired'],
@@ -186,7 +196,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: '-', slicey: 'E' },
     req: { bonk: 0, slicey: 9 },
     speedClass: 'medium',
-    combo: [sw(280, 120, 300, 0.9, thrust(26, 220), 8), sw(340, 140, 360, 1.1, thrust(26, 220), 8)],
+    combo: [sw(280, 120, 300, 0.75, thrust(26, 220), 8, 'lash'), sw(300, 130, 300, 0.75, arc(50, 200), 8, 'lashSweep'), sw(300, 130, 300, 0.75, arc(50, 200), 8, 'lashSweep'), sw(360, 140, 380, 0.96, thrust(32, 240), 8, 'lash')],
     base1: 65, // D302: was 40 (0.59× the median weapon's damage per second)
     stamina: 12,
     poiseDmg: 10,
@@ -204,7 +214,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'B', slicey: 'B' },
     req: { bonk: 9, slicey: 9 },
     speedClass: 'medium',
-    combo: [sw(300, 110, 280, 1.0, arc(110, 105), 14), sw(300, 110, 280, 1.0, arc(110, 105), 14), sw(400, 120, 380, 1.3, arc(110, 105), 20)],
+    combo: [sw(300, 110, 280, 1, arc(110, 105), 14, 'slash'), sw(300, 110, 280, 1, arc(110, 105), 14, 'backslash'), sw(300, 110, 280, 1, thrust(32, 140), 16, 'thrust'), sw(420, 120, 400, 1.35, slam(55, 90), 20, 'overhead')],
     base1: 38,
     stamina: 15,
     poiseDmg: 25,
@@ -221,7 +231,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'C', slicey: 'B' },
     req: { bonk: 8, slicey: 10 },
     speedClass: 'medium',
-    combo: [sw(260, 100, 260, 0.9, thrust(30, 150), 14), sw(260, 100, 260, 0.9, thrust(30, 150), 14), sw(380, 120, 360, 1.3, thrust(30, 150), 20)],
+    combo: [sw(260, 100, 260, 0.81, thrust(30, 150), 14, 'thrust'), sw(260, 100, 260, 0.81, thrust(30, 150), 14, 'thrust'), sw(300, 110, 300, 0.81, arc(100, 140), 12, 'slash'), sw(380, 120, 360, 1.16, thrust(30, 180), 30, 'thrust')],
     base1: 38,
     stamina: 14,
     poiseDmg: 20,
@@ -238,7 +248,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'A', slicey: 'D' },
     req: { bonk: 11, slicey: 7 },
     speedClass: 'mediumslow',
-    combo: [sw(340, 120, 320, 1.0, arc(120, 100), 14), sw(340, 120, 320, 1.1, arc(120, 100), 14), sw(450, 140, 430, 1.4, arc(120, 100), 18)],
+    combo: [sw(340, 120, 320, 0.99, arc(120, 100), 14, 'slash'), sw(340, 120, 320, 1.09, arc(120, 100), 14, 'backslash'), sw(460, 140, 440, 1.43, slam(60, 90), 18, 'overhead')],
     base1: 44,
     stamina: 18,
     poiseDmg: 35,
@@ -256,7 +266,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'B', slicey: 'E' },
     req: { bonk: 11, slicey: 3 },
     speedClass: 'mediumslow',
-    combo: [sw(360, 120, 340, 1.1, arc(100, 95), 14), sw(460, 140, 440, 1.4, arc(100, 95), 18)],
+    combo: [sw(360, 120, 340, 1.06, arc(100, 95), 14, 'slash'), sw(360, 120, 340, 1.06, arc(100, 95), 14, 'backslash'), sw(460, 140, 440, 1.39, slam(55, 85), 18, 'overhead')],
     base1: 46,
     stamina: 18,
     poiseDmg: 45,
@@ -275,7 +285,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'A', slicey: 'C' },
     req: { bonk: 10, slicey: 10 },
     speedClass: 'mediumslow',
-    combo: [sw(340, 130, 340, 1.0, arc(140, 135), 12), sw(340, 130, 340, 1.0, thrust(30, 160), 16), sw(480, 150, 460, 1.4, arc(140, 135), 18)],
+    combo: [sw(340, 130, 340, 0.91, arc(140, 135), 12, 'slash'), sw(340, 130, 340, 0.91, thrust(30, 160), 16, 'thrust'), sw(340, 130, 340, 0.91, arc(140, 135), 12, 'backslash'), sw(420, 190, 460, 1.18, spin(130), 12, 'spin')],
     base1: 44,
     stamina: 17,
     poiseDmg: 30,
@@ -294,7 +304,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     grades: { bonk: 'C', slicey: 'B' },
     req: { bonk: 10, slicey: 10 },
     speedClass: 'fast',
-    combo: [sw(220, 100, 210, 0.8, arc(100, 90), 12), sw(220, 100, 210, 0.8, arc(100, 90), 12), sw(320, 110, 320, 1.2, arc(100, 90), 16)],
+    combo: [sw(220, 100, 210, 0.72, arc(100, 90), 12, 'slash'), sw(220, 100, 210, 0.72, arc(100, 90), 12, 'backslash'), sw(220, 100, 210, 0.72, arc(100, 90), 12, 'slash'), sw(260, 140, 260, 0.81, spin(95), 10, 'spin'), sw(320, 110, 320, 1.08, slam(50, 70), 16, 'overhead')],
     base1: 34,
     stamina: 12,
     poiseDmg: 18,
@@ -313,7 +323,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     req: { bonk: 12, slicey: 0, brain: 12 },
     element: 'void',
     speedClass: 'slow',
-    combo: [sw(500, 150, 450, 1.0, arc(110, 115), 18), sw(500, 150, 450, 1.0, arc(110, 115), 18), sw(620, 160, 580, 1.4, thrust(70, 140), 22)],
+    combo: [sw(500, 150, 450, 0.96, arc(110, 115), 18, 'slash'), sw(500, 150, 450, 0.96, arc(110, 115), 18, 'backslash'), sw(620, 160, 580, 1.35, slam(70, 100), 22, 'overhead')],
     base1: 52,
     stamina: 24,
     poiseDmg: 50,
@@ -332,7 +342,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     req: { bonk: 0, slicey: 10, brain: 12 },
     element: 'magic',
     speedClass: 'medium',
-    combo: [sw(290, 110, 270, 1.0, arc(110, 105), 14), sw(290, 110, 270, 1.0, arc(110, 105), 14), sw(380, 120, 360, 1.3, thrust(34, 150), 20)],
+    combo: [sw(290, 110, 270, 0.9, arc(110, 105), 14, 'slash'), sw(290, 110, 270, 0.9, arc(110, 105), 14, 'backslash'), sw(320, 150, 320, 0.95, spin(100), 12, 'spin'), sw(380, 120, 360, 1.18, thrust(34, 150), 20, 'thrust')],
     base1: 36,
     stamina: 14,
     poiseDmg: 22,
@@ -350,7 +360,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     req: { bonk: 11, slicey: 0, prayer: 11 },
     element: 'fire',
     speedClass: 'mediumslow',
-    combo: [sw(340, 130, 330, 1.0, arc(140, 110), 14), sw(340, 130, 330, 1.05, arc(140, 110), 14), sw(460, 150, 440, 1.35, arc(300, 115), 18)],
+    combo: [sw(340, 130, 330, 1.02, arc(140, 110), 14, 'slash'), sw(340, 130, 330, 1.02, arc(140, 110), 14, 'backslash'), sw(420, 140, 420, 1.22, slam(60, 90), 16, 'overhead'), sw(460, 150, 440, 1.37, spin(115), 18, 'spin')],
     base1: 44,
     stamina: 18,
     poiseDmg: 35,
@@ -369,7 +379,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     req: { bonk: 0, slicey: 11, prayer: 11 },
     element: 'holy',
     speedClass: 'mediumslow',
-    combo: [sw(320, 120, 320, 1.0, arc(140, 130), 12), sw(320, 120, 320, 1.0, thrust(30, 165), 16), sw(460, 140, 440, 1.35, arc(160, 135), 18)],
+    combo: [sw(320, 120, 320, 0.89, arc(140, 130), 12, 'slash'), sw(320, 120, 320, 0.89, arc(140, 130), 12, 'backslash'), sw(320, 120, 320, 0.89, thrust(30, 165), 16, 'thrust'), sw(460, 140, 440, 1.21, spin(135), 18, 'spin')],
     base1: 42,
     stamina: 16,
     poiseDmg: 28,
@@ -378,6 +388,25 @@ export const WEAPONS: Record<string, WeaponDef> = {
     flavor: 'A morning person. On a stick.',
     draw: 'w_dawn_glaive',
     legendaryNames: ['Morning Person', 'Sunday Service', 'Rise and Shine'],
+  },
+  chakram: {
+    id: 'chakram',
+    name: 'Chakrams',
+    weight: 2.5,
+    grades: { bonk: 'E', slicey: 'B' },
+    req: { bonk: 6, slicey: 11 },
+    speedClass: 'medium',
+    // D320: each ring cuts everything it passes, out and back, so it hits a whole group twice; it hits softly for that
+    combo: [sw(240, 60, 300, 0.4, ring(12, 300), 0, 'throw'), sw(240, 60, 300, 0.4, ring(12, 300), 0, 'throw'), sw(320, 60, 380, 0.56, ring(16, 380), 0, 'throw')],
+    base1: 36,
+    stamina: 14,
+    poiseDmg: 6,
+    reviveValue: 1.0,
+    skills: ['chakram_orbit', 'chakram_ring_storm', 'chakram_grand_ring'],
+    ranged: { speed: 560, drawId: 'p_chakram', sfx: 'swingLight' },
+    flavor: 'What goes around comes around. Then goes around again.',
+    draw: 'w_chakram',
+    legendaryNames: ['Return Policy', 'Full Circle', 'The Halo Effect'],
   },
 };
 

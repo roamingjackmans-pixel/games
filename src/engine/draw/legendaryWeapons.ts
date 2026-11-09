@@ -3,7 +3,7 @@
 // length and grip of its class, so swings still read. `t` (seconds) drives glows, particles and shimmer;
 // every design also carries a travelling warm legendary glint (#ff9b2e).
 import { OUTLINE, blob, glow, limb, poly, shade, spec } from './parts';
-import { GOLD, IRON, LEATHER, STEEL, WOOD, band, bowString, cord, crossguard, dot, drift, flame, glint, grip, haft, hash, line, plate, pommel, rivet, runes, sheen, swordBlade, trace, worldUp } from './weapons';
+import { GOLD, IRON, LEATHER, STEEL, WOOD, chakramRing, band, bowString, cord, crossguard, dot, drift, flame, glint, grip, haft, hash, line, plate, pommel, rivet, runes, sheen, swordBlade, trace, worldUp } from './weapons';
 
 type Ctx = CanvasRenderingContext2D;
 type Vec = readonly [number, number];
@@ -2590,6 +2590,75 @@ function sundayService(ctx: Ctx, t: number): void {
   ctx.stroke();
 }
 
+// ---- Chakrams (D320): a ring held by its grip bar, out past the knuckles
+
+/** Return Policy: a gilt ring stamped with a receipt's serrations, a paper tag tied to its grip. */
+function returnPolicy(ctx: Ctx, t: number): void {
+  glow(ctx, 9, 0, 16, GOLD, 0.25);
+  chakramRing(ctx, 9, 10, t * 0.6);
+  ctx.save();
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(9, 0, 10.4, 0, TAU);
+  ctx.stroke();
+  ctx.restore();
+  line(ctx, [2, 3, -2, 8], '#efe6d2', 0.8);
+  poly(ctx, [-5, 7, 0, 7, 0, 13, -5, 13], '#efe6d2', OUTLINE, 1);
+  line(ctx, [-4, 9, -1, 9], '#8a8070', 0.6);
+  line(ctx, [-4, 11, -1.5, 11], '#8a8070', 0.6);
+}
+
+/** Full Circle: two rings nested, the inner one turning the other way, a blue sheen between. */
+function fullCircle(ctx: Ctx, t: number): void {
+  glow(ctx, 9, 0, 17, '#7ad0ff', 0.3);
+  chakramRing(ctx, 9, 11, t * 0.8);
+  ctx.save();
+  ctx.translate(9, 0);
+  ctx.rotate(-t * 1.6);
+  ctx.strokeStyle = '#7ad0ff';
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TAU;
+    ctx.beginPath();
+    ctx.arc(0, 0, 8.2, a, a + 0.6);
+    ctx.stroke();
+  }
+  ctx.restore();
+  blob(ctx, 9, 0, 1.8, 1.8, { fill: '#dff4ff', outlineW: 0.8 });
+}
+
+/** The Halo Effect: a white-gold halo ring with rays, too holy to hold comfortably. */
+function haloEffect(ctx: Ctx, t: number): void {
+  const p = 0.5 + 0.5 * Math.sin(t * 3);
+  glow(ctx, 9, 0, 18 + p * 3, '#fff3b0', 0.45);
+  ctx.save();
+  ctx.translate(9, 0);
+  ctx.strokeStyle = withA('#fff3b0', 0.6);
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * TAU + t * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * 12.5, Math.sin(a) * 12.5);
+    ctx.lineTo(Math.cos(a) * (15 + p * 2), Math.sin(a) * (15 + p * 2));
+    ctx.stroke();
+  }
+  ctx.restore();
+  chakramRing(ctx, 9, 10, t * 0.5);
+  ctx.save();
+  ctx.strokeStyle = '#ffe9a0';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(9, 0, 10.6, 0, TAU);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function withA(hex: string, a: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
 function riseAndShine(ctx: Ctx, t: number): void {
   glaiveShaft(ctx, '#6a1a1a', '#3a0a0a', GOLD);
   const up = worldUp(ctx);
@@ -2687,6 +2756,9 @@ const DESIGNS: Record<string, Design> = {
   'Morning Person': { len: 104, draw: morningPerson },
   'Sunday Service': { len: 107, draw: sundayService },
   'Rise and Shine': { len: 107, draw: riseAndShine },
+  'Return Policy': { len: 20, draw: returnPolicy },
+  'Full Circle': { len: 20, draw: fullCircle },
+  'The Halo Effect': { len: 20, draw: haloEffect },
 };
 
 /** Every legendary name with its own design. */

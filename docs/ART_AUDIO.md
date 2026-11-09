@@ -24,7 +24,8 @@ Contents: [1 Rendering](#1-rendering) · [2 Style](#2-style) · [3 Telegraphs an
   markers, D129) → spell walls → bodies sorted by `y` (players, enemies, pickups, interactables, decoys), bosses always first, underneath (D315) →
   projectiles → status particles → skill / spell animations over the bodies → **Thermos sparkles** (D271) → **each
   player's foot dot** (D262) → zone ambience (particles, vignette) → darkness (Blind, dark phases) → phase flash →
-  banners and messages. The HUD is drawn after the world.
+  banners and messages. The HUD is drawn after the world, in the same room coordinates, so the local player's status
+  buildup bars (over the head, `ui/hud.ts drawStatusBars`) and the skill circles at the bottom middle sit over every body.
 - Performance rules: no `shadowBlur` per entity per frame (glow sprites are pre-rendered and blitted); enemies are
   cached as sprites (`spriteCache.ts`, D152); many-area telegraphs paint their footprint once (D162); the particle pool
   never allocates per frame.
@@ -84,7 +85,9 @@ Contents: [1 Rendering](#1-rendering) · [2 Style](#2-style) · [3 Telegraphs an
 
 ## 4. VFX
 
-- Hit sparks by damage type, slash arcs as fading wedges in the weapon's damage colour, block and parry flashes, dodge
+- Hit sparks by damage type, slash arcs as fading wedges in the weapon's damage colour (a spin leaves a ring round the
+  player, an overhead a burst ring where it lands, a whip's crack an arc at its full length; D320), thrown Chakram rings
+  whirling flat as they fly, block and parry flashes, dodge
   dust, status particles (embers, frost motes, sparks, red drips, green bubbles), screen shake scaled by Settings,
   hitstop, floating damage numbers, the boss intro card, the phase-transition flash, level-up ring, Shard motes that
   fly to the HUD counter, loot beams by rarity. Deaths burst into grey smoke and dust; no gore.

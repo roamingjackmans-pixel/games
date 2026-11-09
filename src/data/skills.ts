@@ -109,6 +109,10 @@ const LIST: SkillDef[] = [
   S('twinaxes_whirlwind', 'twin_axes', 0, 'Whirlwind', 12, 26, [{ op: 'channel', durationS: 2, tickS: 0.3, moveSpeedPct: 0.8, tick: [hit(V(circle(110), 'spin'), 0.6)] }], '2 s spin: 360° r110 ×0.6 every 0.3 s, moving at 80%.'),
   S('twinaxes_throw', 'twin_axes', 1, 'Throw', 8, 14, [{ op: 'damage', pattern: { kind: 'projectile', speed: 560, r: 10, count: 2, spreadDeg: 14, returns: true, range: 420, drawId: 'p_axe' }, mult: 1.2, type: 'physical' }], 'Two axes ×1.2 that come back (hit twice).', { castMs: 150 }),
   S('twinaxes_rampage', 'twin_axes', 2, 'Rampage', 22, 10, [{ op: 'buff', stat: 'attackSpeedPct', amount: 0.05, durationS: 10, maxStacks: 5, stackOn: 'kill', id: 'rampage', onStack: [{ op: 'resetCooldown', skill: 'twinaxes_throw' }] }], '10 s: kills reset Throw and grant +5% attack speed (max 5).'),
+  // Chakrams (D320): rings that fly out and come back, hitting everything twice
+  S('chakram_orbit', 'chakram', 0, 'Orbit', 12, 22, [{ op: 'channel', durationS: 3, tickS: 0.3, moveSpeedPct: 1, tick: [hit(V(circle(95), 'spin'), 0.32)] }], '3 s of rings circling you: 360° r95 ×0.32 every 0.3 s, moving at full speed.'),
+  S('chakram_ring_storm', 'chakram', 1, 'Ring Storm', 10, 20, [{ op: 'damage', pattern: { kind: 'projectile', speed: 520, r: 12, count: 6, spreadDeg: 24, pierce: 99, returns: true, range: 340, drawId: 'p_chakram' }, mult: 0.5, type: 'physical' }], 'Six rings in a wide fan ×0.5, through everything, out and back.', { castMs: 180 }),
+  S('chakram_grand_ring', 'chakram', 2, 'Grand Ring', 14, 26, [{ op: 'damage', pattern: { kind: 'projectile', speed: 420, r: 26, pierce: 99, returns: true, range: 520, drawId: 'p_chakram' }, mult: 1.3, type: 'physical', poiseDmg: 40 }], 'One huge ring ×1.3 through everything, out and back.', { castMs: 260 }),
   // Hollow Maul (Bonk + Brain, Void)
   S(
     'hollowmaul_singularity',

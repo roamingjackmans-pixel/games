@@ -67,7 +67,7 @@ export class ArenaScene extends WorldScene {
   }
 
   protected override renderTop(ctx: CanvasRenderingContext2D): void {
-    drawText(ctx, 'TEST ARENA — the dummy swings (block or parry it), stomps (Red: dodge through) and rings (Piercing: step out)', 640, 712, {
+    drawText(ctx, 'TEST ARENA — the dummy swings (block or parry it), stomps (Red: dodge through) and rings (Piercing: step out)', 640, 40, {
       size: 13,
       align: 'center',
       color: '#a59c8a',

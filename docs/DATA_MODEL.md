@@ -116,6 +116,7 @@ interface Item {
   raised?: number;                         // times raised a rarity (D239)
   setPerk?: string;                        // set perk id (D243)
   locked?: boolean;                        // Sell all keeps it (D265)
+  variant?: string;                        // weapons: a scaling variant of its class, e.g. 'blessed' (D319)
 }
 
 interface GemPerk { family: GemFamily; level?: number /* 1–50, D197; absent = 14 */; q?: number /* −0.5 … +0.5 roll; absent = 0 */ }
@@ -195,7 +196,12 @@ The shapes are in `src/game/types.ts`; the main ones:
 - **`WeaponDef`:** `grades` (E–S on purpose, D40), `req`, `speedClass`, `combo: SwingDef[]`, `base1, stamina,
   poiseDmg, reviveValue`, `skills` (three), `weight`, and optionally `ranged` (speed, charge, volley, D205),
   `twoHandOnly` (bows), `eitherHand` (crossbows, D291), `element` (hybrids), `holyPct`, `bleed`, `hyperArmor`,
-  backstab / riposte multipliers, `legendaryNames`.
+  backstab / riposte multipliers, `legendaryNames`; `ranged.drawId` / `ranged.sfx` name its shot's look and sound.
+  A **`SwingDef`** has windup / active / recovery ms, `mult`, `step` and a `hitbox`: `arc` (a 360° arc is a spin),
+  `thrust`, `circle` (an overhead's landing `d` px ahead) or `proj` (`returns` and `range` for a thrown ring), plus a
+  `move` for its animation (`slash, backslash, thrust, spin, overhead, lash, lashSweep, throw`; D320).
+  **Scaling variants** (`data/weaponVariants.ts`, D319) lay other grades and a damage type over a class; anything that
+  reads a weapon item's grades, requirements or element goes through `weaponOf(item)` (`game/items/weaponOf.ts`).
 - **`SpellDef`** (`school, req, castS, cooldownS, stamina, effect, aimed?, element?, weaponBuff?`), **`SkillDef`**,
   **`ShieldDef`**, **`CastingToolDef`**, **`ArmorSetDef`**, **`RingDef`**, **`ClassId`** (10 classes).
 
