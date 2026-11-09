@@ -33,6 +33,30 @@ export function roleOf(def: EnemyDef | BossDef): Role | 'boss' {
   return def.role;
 }
 
+/**
+ * An enemy's full HP for one player at a zone and cycle, before co-op scaling and a boss's first-bar share (D289): what
+ * spawnEnemy starts from (its hpScaleBase). A bonus boss takes a share of its room's zone boss's (D322).
+ */
+export function enemyFullHp(def: EnemyDef | BossDef, zone: number, cycle: number, o: { elite?: string | null; hpMult?: number } = {}): number {
+  const isBoss = def.role === 'boss';
+  const rs = isBoss ? ROLE_STATS.boss : def.traits?.mimic ? ROLE_STATS.mimic : ROLE_STATS[def.role as Role];
+  const baseHp = isBoss ? ((def as BossDef).baseHp ?? rs.hp) : rs.hp;
+  // co-op adds bodies to rooms instead of HP to each body (D79); bosses alone still grow with the party
+  let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, 1) * (o.hpMult ?? 1);
+  if (o.elite) hp *= 3;
+  // weapon reinforcement gives 15% a step, not 20%: enemies lose the matching share of HP for the zone (D303)
+  hp *= reinforceHpFactor(zone, cycle);
+  // New Game+ levels go much further now (D307): enemies grow by 70% of what those levels give a player
+  hp *= ngLevelComp('hp', zone, cycle);
+  // the longer stat curve (D311): enemies grow by 70% of what it gives a player, then by the late-cycle table
+  hp *= statCurveComp('hp', zone, cycle);
+  // a boss lighter on the first playthrough (D211)
+  if (isBoss && cycle <= 0) hp *= (def as BossDef).firstCycleHpMult ?? 1;
+  // New Game+ bosses sized to a target fight length (D301)
+  if (isBoss && !def.special) hp *= ngBossHpMult((def as BossDef).zone, cycle);
+  return hp;
+}
+
 export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: number, o: SpawnOpts = {}): Entity {
   const isBoss = def0.role === 'boss';
   const isMimic = !!def0.traits?.mimic;
@@ -44,19 +68,7 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   const players = o.players ?? w.playerCount;
   const elite = o.elite ?? null;
   const baseHp = isBoss ? ((def as BossDef).baseHp ?? rs.hp) : rs.hp;
-  // co-op adds bodies to rooms instead of HP to each body (D79); bosses alone still grow with the party
-  let hp = baseHp * (def.mult?.hp ?? 1) * enemyHpMult(zone, cycle, 1) * (o.hpMult ?? 1);
-  if (elite) hp *= 3;
-  // weapon reinforcement gives 15% a step, not 20%: enemies lose the matching share of HP for the zone (D303)
-  hp *= reinforceHpFactor(zone, cycle);
-  // New Game+ levels go much further now (D307): enemies grow by 70% of what those levels give a player
-  hp *= ngLevelComp('hp', zone, cycle);
-  // the longer stat curve (D311): enemies grow by 70% of what it gives a player, then by the late-cycle table
-  hp *= statCurveComp('hp', zone, cycle);
-  // a boss lighter on the first playthrough (D211)
-  if (isBoss && cycle <= 0) hp *= (def as BossDef).firstCycleHpMult ?? 1;
-  // New Game+ bosses sized to a target fight length (D301)
-  if (isBoss && !def.special) hp *= ngBossHpMult((def as BossDef).zone, cycle);
+  let hp = enemyFullHp(def, zone, cycle, { elite, hpMult: o.hpMult ?? 1 });
   // co-op: more HP for each extra player, more for bosses and Elites (D159); special NPCs and illusions keep theirs
   const coop = def.special || o.illusion ? 1 : coopHpMult(players, isBoss || !!elite);
   hp *= coop;

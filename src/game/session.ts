@@ -16,7 +16,7 @@ import { generateZone, neighbourId, type RoomNode, type ZoneLayout } from './pro
 import { buildRoom, type RoomMarkers } from './procgen/rooms';
 import { planRoom, roomCountMult, type RoomPlan } from './procgen/waves';
 import { smallChest, treasureChest } from './procgen/chests';
-import { spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
+import { enemyFullHp, spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
 import { spawnPlayer, refreshDerived, resetSpellCooldowns } from './player/player';
 import { installRules } from './rules';
 import { lootHooks } from './lootHooks';
@@ -24,7 +24,7 @@ import './loot';
 import { rollShopPiece } from './bonfire/shop';
 import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, resetPlayerStun } from './combat/damage';
-import { enemyDmgMult, reviveRequirement } from './combat/formulas';
+import { coopHpMult, enemyDmgMult, reviveRequirement } from './combat/formulas';
 import { zoneDmgFactor } from '../data/roles';
 import { BONUS_BOSS_HP_PCT, BONUS_BOSS_PHASE, BONUS_BOSS_SHARD_MULT } from './procgen/bonusBoss';
 import { BOSSES } from '../data/bosses';
@@ -776,8 +776,8 @@ export class GameSession {
   }
 
   /**
-   * A New Game+ bonus fight (D278): a boss from any zone, in its second phase, at 30% of the HP it has in this
-   * playthrough (its own zone's, this cycle's, the party's). It hits as hard as a boss of the room's zone would (not
+   * A New Game+ bonus fight (D278): a boss from any zone, in its second phase, with a bar of 30% of the room's
+   * zone boss's full HP in this playthrough (D322: this cycle's, the party's; was 30% of its own). It hits as hard as a boss of the room's zone would (not
    * its own zone's), and its arena's changes and timed summons stay in its arena: it brings its phase's attacks. Its
    * Shards are cut like its HP. The room clears when it (and anything it called) is down.
    */
@@ -805,10 +805,12 @@ export class GameSession {
     ph.attacks.forEach((a, k) => {
       en.cooldowns[a.id] = w.time + 2.2 + k * 0.4;
     });
-    // a full bar whose total is 30% of that phase's bar (D290; D289 bar shares): a party rescale keeps it
-    const full = e.hp!.max / (en.barMult ?? 1);
-    en.barMult = (ph.barMult ?? 1) * BONUS_BOSS_HP_PCT;
-    e.hp!.max = Math.max(1, full * en.barMult);
+    // D322: a full bar of 30% of this zone's own boss's full HP (this cycle; co-op on top), whoever the bonus boss is,
+    // so an Archmagister met in zone 1 is sized like zone 1's boss, not like itself. A party rescale keeps it.
+    const zoneBoss = BOSSES[zd.boss];
+    if (zoneBoss && !def.traits?.fixedHp && !def.traits?.invincible) en.hpScaleBase = enemyFullHp(zoneBoss, here, cyc);
+    en.barMult = BONUS_BOSS_HP_PCT;
+    e.hp!.max = Math.max(1, en.hpScaleBase * coopHpMult(w.playerCount, true) * en.barMult);
     e.hp!.hp = e.hp!.max;
     en.shards = Math.max(1, Math.round(en.shards * BONUS_BOSS_SHARD_MULT));
     w.bossId = e.id;

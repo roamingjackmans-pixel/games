@@ -13,6 +13,7 @@ import { NG_ZONE_ENEMY_DMG, ngLevelComp, statCurveComp, ngZoneEnemyDmg, zoneDmgF
 import { enemyDmgMult } from '../../src/game/combat/formulas';
 import { generateZone } from '../../src/game/procgen/zone';
 import { planRoom } from '../../src/game/procgen/waves';
+import { zoneDef } from '../../src/data/zones';
 import { BONUS_BOSS_HP_PCT, bonusBossFor, bonusBossPool } from '../../src/game/procgen/bonusBoss';
 import { checkDeath } from '../../src/game/combat/damage';
 import { validateAttack } from '../../src/data/validate';
@@ -173,7 +174,7 @@ describe('New Game+ bonus boss rooms (D278)', () => {
     expect(picks.size).toBeGreaterThanOrEqual(3);
   });
 
-  it('spawns the boss in its second phase at 30% of its HP this playthrough, and clears the room when it falls', () => {
+  it('spawns the boss in its second phase at 30% of the zone boss HP this playthrough, and clears the room when it falls', () => {
     const s = ngSession('BONUSROOM');
     const bb = bonusBossFor(s.layout)!;
     const node = s.layout.byId[bb.roomId]!;
@@ -190,9 +191,11 @@ describe('New Game+ bonus boss rooms (D278)', () => {
     expect(boss.en!.def.id).toBe(bb.bossId);
     expect(boss.en!.phase).toBe(1);
     expect(boss.en!.phaseAttacks).toBe(BOSSES[bb.bossId]!.phases[1]!.attacks);
-    const full = spawnEnemy(new World('ref'), BOSSES[bb.bossId]!, 0, 0, { cycle: 1, zone: BOSSES[bb.bossId]!.zone, players: 1 });
-    // a full bar whose total is 30% of the boss's HP in this playthrough (D290)
-    const fullHp = (full.hp!.max / (full.en!.barMult ?? 1)) * (BOSSES[bb.bossId]!.phases[1]!.barMult ?? 1);
+    // D322: a full bar of 30% of the room's zone boss's full HP this playthrough, not of its own
+    const zb = BOSSES[zoneDef(s.layout.zone).boss]!;
+    const full = spawnEnemy(new World('ref'), zb, 0, 0, { cycle: 1, zone: s.layout.zone, players: 1 });
+    const fullHp = full.hp!.max / (full.en!.barMult ?? 1);
+    expect(bb.bossId).not.toBe(zb.id);
     expect(boss.hp!.max).toBeCloseTo(fullHp * BONUS_BOSS_HP_PCT, 3);
     expect(boss.hp!.hp).toBe(boss.hp!.max);
     // only the waves are replaced: nothing else spawned

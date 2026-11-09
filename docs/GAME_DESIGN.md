@@ -634,10 +634,11 @@ parryable three-cut combo), Repossession (three Red charges), Hostile Takeover (
 circles round the target), Total Eviction (a Piercing burst with 1 s to walk out) and eviction notices. He dies, and
 the credits roll, only when phase 4's bar is empty. His earlier phases shrink the void platform (D69).
 
-### 7.5 NG+ bonus boss rooms (D278, D290)
+### 7.5 NG+ bonus boss rooms (D278, D290, D322)
 
 From NG+1 one combat room per zone (seeded) holds a random boss from any zone in its **second phase**, on a **full bar
-worth 30%** of the HP it has in this playthrough, instead of the room's waves ("… waits here, weakened."). It hits as
+worth 30% of the room's zone boss's** full HP in this playthrough (D322: an Archmagister met in zone 1 has 30% of the
+Caretaker's HP, not of its own), instead of the room's waves ("… waits here, weakened."). It hits as
 hard as a boss of the room's zone and stays in that phase. Bosses whose phase 2 needs their own arena (`arenaBound`:
 the Bloatking, Ignatius, the Landlord) are never picked. Rewards: Shards ×0.3 and a boss chest's loot. It is not the
 zone's boss: boss kills, best times and boss achievements ignore it.

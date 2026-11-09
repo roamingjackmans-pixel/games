@@ -235,8 +235,8 @@ Common rules (GAME_DESIGN §7):
   phase&gt;: Overtime", is the last phase again with speed ×1.15, damage ×1.15 and cooldowns ×0.8, **plus at least two
   attacks of its own** (D309, `BossDef.overtimeAttacks`; listed under each boss); its arena changes are already in place. Ignatius keeps his split and refilled bar and starts Overtime at 50% of the refilled bar. The
   Landlord is unchanged in NG+.
-- **NG+ bonus boss rooms (D278, D290):** from NG+1 one combat room per zone holds a random boss from any zone,
-  fighting in its phase 2 for the whole fight, on a full bar worth 30% of that boss's HP for the playthrough. It hits
+- **NG+ bonus boss rooms (D278, D290, D322):** from NG+1 one combat room per zone holds a random boss from any zone,
+  fighting in its phase 2 for the whole fight, on a full bar worth 30% of the room's zone boss's full HP for the playthrough (not its own). It hits
   like a boss of the room's zone. Arena-bound bosses (the Bloatking, Ignatius, the Landlord) are never picked. It
   pays 30% of the Shards and a boss chest; it is not the zone's boss.
 
