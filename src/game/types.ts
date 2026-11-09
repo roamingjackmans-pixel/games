@@ -616,6 +616,8 @@ export interface WeaponDef {
   twoHandOnly?: boolean;
   /** may be held in either hand, like a staff or talisman (D291): in the off hand it shoots on the block button */
   eitherHand?: boolean;
+  /** a pair (twin daggers, twin axes): two-handing wields both, for DUAL_WIELD_MULT damage (D318) */
+  paired?: boolean;
   /** the weapon's own damage type (hybrids: Bonk+Brain Void, Slicey+Brain Magic, Bonk+Prayer Fire, Slicey+Prayer Holy) */
   element?: DamageType;
   speedClass: SpeedClass;

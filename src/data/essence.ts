@@ -74,8 +74,8 @@ export function reinforceNeed(plus: number): { tier: EssenceTier; count: number 
 }
 
 /** The Glowen paid alongside: 100 for +1, ×1.45 a level (about 18,000 for the last step). */
-/** Reinforcing costs 4× the Glowen it did (D309): the main thing Glowen is for. */
-export const REINFORCE_GLOWEN_MULT = 4;
+/** Reinforcing costs 3.2× the Glowen it did before D309 (4×, then 20% less, D317): the main thing Glowen is for. */
+export const REINFORCE_GLOWEN_MULT = 3.2;
 export function reinforceGlowen(plus: number): number {
   return Math.round(100 * REINFORCE_GLOWEN_MULT * Math.pow(1.45, plus));
 }

@@ -26,6 +26,14 @@ function favorOf(c: Character): DropFavor | undefined {
   return cl ? { primary: cl.primary, secondary: cl.secondary } : undefined;
 }
 
+/** How much likelier a reliquary spell of this school is for a class (D317): ×3 if it is the primary stat, ×2 the secondary. */
+export const SPELL_FAVOR_PRIMARY = 3;
+export const SPELL_FAVOR_SECONDARY = 2;
+export function spellSchoolFavor(school: string, f: DropFavor | undefined): number {
+  if (!f) return 1;
+  return f.primary === school ? SPELL_FAVOR_PRIMARY : f.secondary === school ? SPELL_FAVOR_SECONDARY : 1;
+}
+
 function lootRng(c: DropContext, playerId: string, tag = ''): Rng {
   // the zone and cycle in the label: the counter starts again with every world, so zone 2 rolled zone 1's drops (D232)
   return stream(c.seed, `loot:${playerId}:z${c.zone}c${c.cycle}:${tag}${c.w.nextLootIndex(playerId)}`);
@@ -161,7 +169,13 @@ export function reliquaryDrops(c: DropContext, roomId: string, x: number, y: num
     const rng = stream(c.seed, `loot:${pl.playerId}:reliquary:${roomId}:${c.cycle}`);
     const unknown = Object.keys(SPELLS).filter((id) => !pl.char.knownSpells.includes(id));
     if (rng.chance(TEAR_CHANCE.reliquary) || unknown.length === 0) spawnPickup(w, x, y + 30, { kind: 'tear', forPlayer: pl.playerId, amount: 1, rarity: 'legendary' });
-    else spawnPickup(w, x, y + 30, { kind: 'spell', forPlayer: pl.playerId, spellId: rng.pick(unknown), amount: 1, rarity: 'epic' });
+    else {
+      // D317: a class whose primary (or secondary) stat is Brain or Prayer finds that school's spells more often
+      const f = favorOf(pl.char);
+      const weight = (id: string): number => spellSchoolFavor(SPELLS[id]!.school, f);
+      const spellId = unknown[Math.max(0, rng.weighted(unknown.map(weight)))]!;
+      spawnPickup(w, x, y + 30, { kind: 'spell', forPlayer: pl.playerId, spellId, amount: 1, rarity: 'epic' });
+    }
   }
 }
 

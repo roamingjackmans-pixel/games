@@ -40,7 +40,7 @@ Combo timings in ms (windup / active / recovery) at base attack speed, the swing
 | **Colossal Sword** | A / E | 13 / 8 | slow | 480/150/420 ×1 arc(150°, 130); 480/150/420 ×1.1 arc(150°, 130); 620/160/560 ×1.5 arc(150°, 130) | 56 | 25 | 50 | 3.5 | 16 | hyper armor (all). *"Not so much swung as committed to."* |
 | **Crossbow** | B / - | 10 / 0 | slow | 120/60/700 ×1.4 proj(620) | 40 | 24 | 4 | 1.5 | 6.5 | either hand; its skills on the spell keys from the off hand (D316); in the off hand the block button shoots it (D291); volley of 3, 5° apart, each target hit once (D205, D264); pierces 1 with Bonk ≥ 30. *"Reloading is a lifestyle."* |
 | **Club** | E / - | 8 / 0 | mediumslow | 380/120/360 ×1 arc(110°, 95); 450/130/420 ×1.2 arc(110°, 95) | 80 (D302) | 18 | 40 | 3 | 3 | hyper armor (all). *"Wood. It doesn't care how strong you are."* |
-| **Twin Daggers** | - / S | 0 / 14 | veryfast | 150/80/150 ×0.5 arc(80°, 70); 150/80/150 ×0.5 arc(80°, 70); 150/80/150 ×0.5 arc(80°, 70); 150/80/190 ×0.7 arc(80°, 70) | 26 | 8 | 8 | 0.8 | 1.5 | Bleed 15 per hit; backstab ×1.5. *"Two is company. Three is a backstab."* |
+| **Twin Daggers** | - / S | 0 / 14 | veryfast | 150/80/150 ×0.5 arc(80°, 70); 150/80/150 ×0.5 arc(80°, 70); 150/80/150 ×0.5 arc(80°, 70); 150/80/190 ×0.7 arc(80°, 70) | 26 | 8 | 8 | 0.8 | 1.5 | Bleed 15 per hit; backstab ×1.5; dual-wielded (two-handed) ×1.5 damage (D318). *"Two is company. Three is a backstab."* |
 | **Rapier** | - / A | 0 / 10 | fast | 200/90/200 ×0.8 thrust(28, 120); 200/90/200 ×0.8 thrust(28, 120); 300/100/320 ×1.2 thrust(28, 120) | 30 | 11 | 12 | 1.2 | 2.5 | ×1.5 on riposte-staggered. *"Pointy. Polite. Very rude after a parry."* |
 | **Katana** | D / A | 7 / 12 | fast | 230/100/220 ×0.9 arc(120°, 110); 230/100/220 ×0.9 arc(120°, 110); 330/110/340 ×1.3 arc(120°, 110) | 34 | 12 | 15 | 1.5 | 5.5 | Bleed 20 per hit. *"Folded a thousand times. Like Joe."* |
 | **Bow** | - / B | 0 / 10 | fast | 200/60/260 ×1 proj(700) | 28 | 20 | 2 | 0.6 | 3 | two hands only (D88); volley of 3, 5° apart, each target hit once (D205, D264); hold 0.6 s: ×1.8 charged, pierces 1. *"Never misses. Rarely hits."* |
@@ -50,7 +50,7 @@ Combo timings in ms (windup / active / recovery) at base attack speed, the swing
 | **Battleaxe** | A / D | 11 / 7 | mediumslow | 340/120/320 ×1 arc(120°, 100); 340/120/320 ×1.1 arc(120°, 100); 450/140/430 ×1.4 arc(120°, 100) | 44 | 18 | 35 | 2.5 | 8 | hyper armor (all). *"Mostly Bonk, a pinch of Slicey. Gran’s recipe."* |
 | **Mace** | B / E | 11 / 3 | mediumslow | 360/120/340 ×1.1 arc(100°, 95); 460/140/440 ×1.4 arc(100°, 95) | 46 | 18 | 45 | 3 | 5 | hyper armor (all); 20% Holy. *"Blessed by a priest who was in a hurry."* |
 | **Halberd** | A / C | 10 / 10 | mediumslow | 340/130/340 ×1 arc(140°, 135); 340/130/340 ×1 thrust(30, 160); 480/150/460 ×1.4 arc(140°, 135) | 44 | 17 | 30 | 2.5 | 10 | hyper armor (all). *"An axe, a spear and a hook walked into a bar."* |
-| **Twin Axes** | C / B | 10 / 10 | fast | 220/100/210 ×0.8 arc(100°, 90); 220/100/210 ×0.8 arc(100°, 90); 320/110/320 ×1.2 arc(100°, 90) | 34 | 12 | 18 | 1.5 | 6.5 | . *"Has two of everything except plans."* |
+| **Twin Axes** | C / B | 10 / 10 | fast | 220/100/210 ×0.8 arc(100°, 90); 220/100/210 ×0.8 arc(100°, 90); 320/110/320 ×1.2 arc(100°, 90) | 34 | 12 | 18 | 1.5 | 6.5 | . Dual-wielded (two-handed) ×1.5 damage (D318). *"Has two of everything except plans."* |
 | **Hollow Maul** | B / - / Brain B | 12 / 0 / Brain 12 | slow | 500/150/450 ×1 arc(110°, 115); 500/150/450 ×1 arc(110°, 115); 620/160/580 ×1.4 thrust(70, 140) | 52 | 24 | 50 | 3.5 | 12 | void damage (hybrid, D80); hyper armor (last). *"There is nothing inside. It is very heavy anyway."* |
 | **Spellblade** | - / B / Brain B | 0 / 10 / Brain 12 | medium | 290/110/270 ×1 arc(110°, 105); 290/110/270 ×1 arc(110°, 105); 380/120/360 ×1.3 thrust(34, 150) | 36 | 14 | 22 | 2 | 5.5 | magic damage (hybrid, D80). *"Sharp on one edge, smug on the other."* |
 | **Censer Flail** | B / - / Prayer B | 11 / 0 / Prayer 11 | mediumslow | 340/130/330 ×1 arc(140°, 110); 340/130/330 ×1.05 arc(140°, 110); 460/150/440 ×1.35 arc(300°, 115) | 44 | 18 | 35 | 2.5 | 7.5 | fire damage (hybrid, D80); hyper armor (last). *"Smells like church. Hits like the fire that took the church."* |
@@ -404,23 +404,23 @@ Enemies carry less HP to match the weapon change (D303).
 | 4 | **Superintendent’s Blaze** | Kept the whole building running for years. The Landlord sent three staff to collect it. None came back. |
 | 5 | **Freeholder’s Soul** | Owned outright. No lease, no rent, no Landlord. It does not glow; everything near it does. |
 
-| Step | Essence | Glowen (D309: ×4) | Strength after (weapon, staff, talisman / armour, shield) |
+| Step | Essence | Glowen (D309, D317: ×3.2) | Strength after (weapon, staff, talisman / armour, shield) |
 |---|---|---|---|
-| +0 → +1 | 1 × Tier 1 | 400 | ×1.15 / ×1.2 |
-| +1 → +2 | 2 × Tier 1 | 580 | ×1.3 / ×1.4 |
-| +2 → +3 | 3 × Tier 1 | 841 | ×1.45 / ×1.6 |
-| +3 → +4 | 1 × Tier 2 | 1219 | ×1.6 / ×1.8 |
-| +4 → +5 | 2 × Tier 2 | 1768 | ×1.75 / ×2 |
-| +5 → +6 | 3 × Tier 2 | 2564 | ×1.9 / ×2.2 |
-| +6 → +7 | 1 × Tier 3 | 3718 | ×2.05 / ×2.4 |
-| +7 → +8 | 2 × Tier 3 | 5391 | ×2.2 / ×2.6 |
-| +8 → +9 | 3 × Tier 3 | 7816 | ×2.35 / ×2.8 |
-| +9 → +10 | 1 × Tier 4 | 11334 | ×2.5 / ×3 |
-| +10 → +11 | 2 × Tier 4 | 16434 | ×2.65 / ×3.2 |
-| +11 → +12 | 3 × Tier 4 | 23829 | ×2.8 / ×3.4 |
-| +12 → +13 | 1 × Tier 5 | 34552 | ×2.95 / ×3.6 |
-| +13 → +14 | 2 × Tier 5 | 50101 | ×3.1 / ×3.8 |
-| +14 → +15 | 3 × Tier 5 | 72646 | ×3.25 / ×4 |
+| +0 → +1 | 1 × Tier 1 | 320 | ×1.15 / ×1.2 |
+| +1 → +2 | 2 × Tier 1 | 464 | ×1.3 / ×1.4 |
+| +2 → +3 | 3 × Tier 1 | 673 | ×1.45 / ×1.6 |
+| +3 → +4 | 1 × Tier 2 | 976 | ×1.6 / ×1.8 |
+| +4 → +5 | 2 × Tier 2 | 1415 | ×1.75 / ×2 |
+| +5 → +6 | 3 × Tier 2 | 2051 | ×1.9 / ×2.2 |
+| +6 → +7 | 1 × Tier 3 | 2974 | ×2.05 / ×2.4 |
+| +7 → +8 | 2 × Tier 3 | 4312 | ×2.2 / ×2.6 |
+| +8 → +9 | 3 × Tier 3 | 6253 | ×2.35 / ×2.8 |
+| +9 → +10 | 1 × Tier 4 | 9067 | ×2.5 / ×3 |
+| +10 → +11 | 2 × Tier 4 | 13147 | ×2.65 / ×3.2 |
+| +11 → +12 | 3 × Tier 4 | 19063 | ×2.8 / ×3.4 |
+| +12 → +13 | 1 × Tier 5 | 27642 | ×2.95 / ×3.6 |
+| +13 → +14 | 2 × Tier 5 | 40081 | ×3.1 / ×3.8 |
+| +14 → +15 | 3 × Tier 5 | 58117 | ×3.25 / ×4 |
 
 When short of a tier, a reinforcement breaks higher tiers 3:1 by itself. The Reinforce tab's **Break down Essence**
 panel also converts by hand: one Essence becomes three of the tier below, with **Convert 1** and **Convert all** for

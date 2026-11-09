@@ -272,7 +272,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
 
     // ---- bag
     // scrolls when a long gem list (D168) would run past the panel
-    const bag = h('div', { class: 'col', style: 'gap:6px;max-height:566px;overflow-y:auto;padding-right:6px' }, h('h3', { style: 'margin:0' }, `Bag ${c.bag.length}/${BAG_SIZE}`));
+    const bag = h('div', { class: 'col', style: 'gap:6px;max-height:566px;overflow-y:auto;padding-right:6px;padding-left:4px;margin-left:-4px' }, h('h3', { style: 'margin:0' }, `Bag ${c.bag.length}/${BAG_SIZE}`));
     const bagGrid = h('div', { class: 'grid-bag' });
     for (let i = 0; i < BAG_SIZE; i++) {
       const item = c.bag[i] ?? null;

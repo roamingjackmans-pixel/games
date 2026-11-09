@@ -177,6 +177,9 @@ const FIST: WeaponDef = {
 /** Everyone's poise before gear (D312): a hit of 8% of your max HP staggers you. */
 export const BASE_POISE = 8;
 
+/** Twin daggers and twin axes dual-wielded (two-handed) hit this much harder than one blade (D318). */
+export const DUAL_WIELD_MULT = 1.5;
+
 function itemsOf(c: Character): Item[] {
   const e = c.equipment;
   return [e.main, e.off, e.head, e.body, e.legs, e.ring1, e.ring2, e.ring3, e.ring4].filter((x): x is Item => !!x);
@@ -495,7 +498,8 @@ export function computeDerived(c: Character): Derived {
     skillsUnlocked: main && weaponMeetsReq ? itemSkillCount(main) : 0,
     // rarity sets the damage tier (D178)
     offWeapon: offWeaponOf(off, twoHanded, stats, boost),
-    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceDmgMult(main?.plus),
+    // D318: a pair dual-wielded (two-handed) hits 50% harder than one blade
+    weaponPower: weaponBase(weapon.base1, weaponIlvl) * scalingMult(weapon.grades, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceDmgMult(main?.plus) * (weapon.paired && twoHanded ? DUAL_WIELD_MULT : 1),
     dmgPct,
     flat,
     convert,

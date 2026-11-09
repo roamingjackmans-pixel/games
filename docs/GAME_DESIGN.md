@@ -394,7 +394,8 @@ Piercing attacks cannot be parried (blocking them works). A parried melee attack
 your next light hit on it deals **×2** (Riposte Master ×3; D88). A parried projectile flies back with the same damage.
 Bosses can be parried only on attacks marked *parryable*, and need two parries within 6 s to stagger.
 
-**Two-handing** (Shift): the off hand is set aside, its gems too (D316) (a tool in the weapon hand still casts, D117). Bonk counts ×1.5
+**Two-handing** (Shift): the off hand is set aside, its gems too (D316) (a tool in the weapon hand still casts, D117).
+Twin daggers and twin axes two-handed are **dual-wielded** and hit **50% harder** (D318). Bonk counts ×1.5
 (§3.1). Holding block is a **weapon guard**: 45% physical, 15% other types, stability 12, no parry.
 
 **Being hit**: your **Poise** (D312) is the share of your max HP a hit must deal to stagger you: **8%**, plus armour
@@ -679,8 +680,8 @@ Rarity power (D178, D221) multiplies weapon and casting-tool damage and tightens
 **Drops** (D84, D98): an item drops from **6%** of standard kills (swarm pieces 1.5%) at 70 / 22 / 5 / 2.5 / 0.5;
 **Elites 15%** at 45 / 35 / 12.5 / 6 / 1.5; **bosses 2–5 items** at 20 / 35 / 30 / 11 / 4. Small chests 25 / 40 / 25
 / 8 / 2, treasure chests (two items) as bosses, mimics 0 / 20 / 45 / 27 / 8. Loot is instanced per player. A player's
-own drops favour weapons that scale with their class's primary stat (×1.2) and secondary (×1.1); staffs count as
-Brain, talismans as Prayer (D254). Most kills also shed a puff of Glowen (35%, D83).
+own drops favour weapons that scale with their class's primary stat (+30%), secondary (+15%) or both (+55%); staffs
+count as Brain, talismans as Prayer; HP and Endurance give nothing (D254, D317). Most kills also shed a puff of Glowen (35%, D83).
 
 Every item has its own id; duplicate ids are repaired on load and pickup (D232).
 
@@ -761,7 +762,7 @@ small chests 12.5%, mimics 25%, treasure chests 0.75 on average, bosses 1.5 on a
 **Reinforce** (bonfire tab): weapons, shields, armor, staffs and talismans go **+0 … +15**. Each step gives weapons,
 staffs and talismans **+15%** damage / spell power (×3.25 at +15, D303), and armor and shields **+20%** (×4 at +15:
 armor defense, and a shield's leak and block stamina shrink). Step `k` costs
-1, 2, then 3 Essence of tier ⌊k / 3⌋ + 1 (six a tier) plus **400 × 1.45^k Glowen** (D309: 4× what it was). A higher tier pays for a lower
+1, 2, then 3 Essence of tier ⌊k / 3⌋ + 1 (six a tier) plus **320 × 1.45^k Glowen** (D309, D317: 3.2× what it once was). A higher tier pays for a lower
 one 3:1 automatically; the tab's **Break down Essence** panel turns one of tier 2–5 into three of the tier below
 (Convert 1 / Convert all). Reinforce shows before → after and asks first (D216, D220).
 
@@ -874,7 +875,8 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
   a rest or a death.
 - Healing spells are slow: Heal 25% over 20 s (cooldown 50 s), and it cannot be interrupted (D128, D250).
 - Weapon buffs (Bless Weapon) need a weapon in the weapon hand (D131); a buffed weapon glows its element (D129).
-- Spells are **learned** from spell reliquaries, sometimes bosses and The Instructor; never sold; known forever.
+- Spells are **learned** from spell reliquaries, sometimes bosses and The Instructor; never sold; known forever. A
+  reliquary favours the school of your class's primary stat (×3) or secondary (×2) when it is Brain or Prayer (D317).
   14 Brain and 14 Prayer spells (CONTENT_SPELLS_CLASSES §1–2). Gravity Well pulls hovering enemies too, including
   Aurelia's ice mirrors, and deals no damage (D269, D270).
 - Spells revive poorly (0.25 per hit), except Last Rites.

@@ -28,16 +28,18 @@ function rarityIndex(r: Rarity): number {
 }
 
 /**
- * Whose drop it is, for its weapons (D254): a weapon (or staff, or talisman) that scales with the class's primary stat
- * drops 20% more often, with its secondary 10% more (both: ×1.32). A stat no weapon scales with (HP, Endurance) does
- * nothing.
+ * Whose drop it is, for its weapons (D254, D317): a weapon (or staff, or talisman) that scales with the class's primary
+ * stat drops 30% more often, with its secondary 15% more, and with both 55% more (the two plus 10%). A stat no weapon
+ * scales with (HP, Endurance) does nothing, so a Brute (Bonk / HP) gets only the Bonk boost and a Knight none.
  */
 export interface DropFavor {
   primary: StatId;
   secondary: StatId;
 }
-export const FAVOR_PRIMARY = 1.2;
-export const FAVOR_SECONDARY = 1.1;
+export const FAVOR_PRIMARY = 1.3;
+export const FAVOR_SECONDARY = 1.15;
+/** on top of both, for a weapon that scales with the primary and the secondary stat (D317) */
+export const FAVOR_BOTH_EXTRA = 0.1;
 
 /** The stats a weapon base scales with (grade other than "-"); a staff Brain, a talisman Prayer. */
 export function scalingStatsOf(baseId: string): StatId[] {
@@ -49,7 +51,9 @@ export function scalingStatsOf(baseId: string): StatId[] {
 
 export function favorMult(stats: readonly StatId[], f: DropFavor | undefined): number {
   if (!f) return 1;
-  return (stats.includes(f.primary) ? FAVOR_PRIMARY : 1) * (stats.includes(f.secondary) ? FAVOR_SECONDARY : 1);
+  const p = stats.includes(f.primary);
+  const s = stats.includes(f.secondary);
+  return 1 + (p ? FAVOR_PRIMARY - 1 : 0) + (s ? FAVOR_SECONDARY - 1 : 0) + (p && s ? FAVOR_BOTH_EXTRA : 0);
 }
 
 const pickFavored = (rng: Rng, ids: readonly string[], f: DropFavor | undefined): string => (f ? ids[Math.max(0, rng.weighted(ids.map((id) => favorMult(scalingStatsOf(id), f))))]! : rng.pick(ids));
