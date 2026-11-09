@@ -24,7 +24,8 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
   counted.
 - **Weapon skills (D89):** each weapon rolls how many of its three skills it has when it drops. Before zone 4 none;
   from zone 4 some have skill 1 (Q); from NG+1 some also have skill 2 (E); from NG+2 some have all three (R).
-  Legendaries roll a little better. A weapon card lists only the skills its item has unlocked (D267).
+  Legendaries roll a little better, within the same caps: never E before NG+1, never R before NG+2 (D324). A weapon card
+  lists only the skills its item has unlocked (D267).
 - **Locks (D265):** any item (and any gem, D282) can be locked; Sell all never sells a locked one.
 - **Scaling variants (D319):** a dropped weapon has a 35% chance of another scaling profile of its class
   (`data/weaponVariants.ts`), its word in front of the name. Blessed (Slicey + Prayer, Holy), Fervent (Bonk + Prayer,

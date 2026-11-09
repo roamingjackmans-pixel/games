@@ -38,17 +38,22 @@ describe('spell cooldowns (D177)', () => {
     expect(left(w, p.pl!.spellReadyAt[0])).toBeLessThan(7.6);
   });
 
-  it('weapon skills are not held', () => {
+  it('weapon skills are held too (D324)', () => {
     const { w, p } = setup();
     p.pl!.skillReadyAt[0] = w.time + 10;
+    run(w, 3);
+    expect(left(w, p.pl!.skillReadyAt[0])).toBeCloseTo(10, 1);
+    spawnEnemy(w, ENEMIES.hollow_wolf!, 1100, 600);
     run(w, 3);
     expect(left(w, p.pl!.skillReadyAt[0])).toBeLessThan(7.6);
   });
 
-  it('a rest or a real death readies every spell', () => {
+  it('a rest or a real death readies every spell and skill (D324)', () => {
     const { w, p } = setup();
     p.pl!.spellReadyAt = [w.time + 30, w.time + 12, w.time + 5];
+    p.pl!.skillReadyAt = [w.time + 9, w.time + 14, 0];
     resetSpellCooldowns(p);
     expect(p.pl!.spellReadyAt).toEqual([0, 0, 0]);
+    expect(p.pl!.skillReadyAt).toEqual([0, 0, 0]);
   });
 });

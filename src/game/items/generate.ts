@@ -14,7 +14,7 @@ import { GEM_FAMILIES, GEMS, familiesOfKind, gemQualityRolls, rollGemQuality, ty
 import { baseInfo } from './bases';
 import { variantOf } from './weaponOf';
 import { VARIANT_CHANCE, WEAPON_VARIANTS, type WeaponVariantDef } from '../../data/weaponVariants';
-import { rollSkillCount } from '../combat/formulas';
+import { ILVL_PER_CYCLE, rollSkillCount } from '../combat/formulas';
 import { makeItem, newId, socketCount } from './make';
 import type { Gem, GemPerk, Item, Rarity, StatId } from '../types';
 
@@ -189,7 +189,9 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
   item.id = newId(rng);
   item.sockets = new Array(socketCount(item.kind, rarity, rng)).fill(null);
   item.affixes = rollAffixes(rng, item, AFFIX_COUNT[rarity]);
-  if (item.kind === 'weapon') item.skills = rollSkillCount(() => rng.next(), o.zone, o.cycle ?? Math.max(0, o.ilvl - o.zone), rarity === 'legendary');
+  // D324: the cycle comes from the item level (zone + 8 a cycle, D299); it used to be read as ilvl − zone, so an NG+1
+  // drop rolled as if it were NG+8 and could have all three skills
+  if (item.kind === 'weapon') item.skills = rollSkillCount(() => rng.next(), o.zone, o.cycle ?? Math.max(0, Math.floor((o.ilvl - o.zone) / ILVL_PER_CYCLE)), rarity === 'legendary');
   if (rarity === 'legendary') {
     const ps = powerSlotOf(item);
     if (ps) {

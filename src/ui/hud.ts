@@ -41,6 +41,9 @@ function bar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: 
  * is when it came (or comes) off cooldown, for a short flash the moment it fills. The button glyph sits at its top
  * left, the name under it, the seconds left in the middle.
  */
+/** a paused cooldown's glow and rim (D324) */
+const PAUSED_RED = '#ff4a4a';
+
 function skillCircle(
   ctx: CanvasRenderingContext2D,
   cx: number,
@@ -53,7 +56,7 @@ function skillCircle(
   color: string,
   now: number,
   readyAt: number,
-  o: { sub?: string; alpha?: number; badge?: string; quiet?: boolean } = {},
+  o: { sub?: string; alpha?: number; badge?: string; quiet?: boolean; paused?: boolean } = {},
 ): void {
   const sub = o.sub ?? '';
   const alpha = o.alpha ?? 1;
@@ -66,6 +69,9 @@ function skillCircle(
     const flash = Math.max(0, 1 - (now - readyAt) / 0.6);
     glow(ctx, cx, cy, r * (1.55 + 0.5 * flash), color, 0.22 + 0.06 * Math.sin(now * 4) + 0.5 * flash);
   }
+  // a cooldown paused with nothing to fight (D177, D324) glows a soft red
+  const paused = !!o.paused && !ready && !locked;
+  if (paused) glow(ctx, cx, cy, r * 1.5, PAUSED_RED, 0.3 + 0.05 * Math.sin(now * 2.5));
   // the dark disc
   ctx.fillStyle = locked ? 'rgba(14,12,18,0.72)' : 'rgba(18,15,24,0.8)';
   ctx.beginPath();
@@ -96,7 +102,7 @@ function skillCircle(
   }
   // the rim: dim and grey while charging, the slot's colour and pulsing when ready
   ctx.lineWidth = ready ? 3 : 2;
-  ctx.strokeStyle = locked ? '#3a3447' : ready ? withAlpha(color, o.quiet ? 0.7 : 0.75 + 0.25 * Math.sin(now * 4)) : 'rgba(120,114,132,0.85)';
+  ctx.strokeStyle = locked ? '#3a3447' : paused ? withAlpha(PAUSED_RED, 0.85) : ready ? withAlpha(color, o.quiet ? 0.7 : 0.75 + 0.25 * Math.sin(now * 4)) : 'rgba(120,114,132,0.85)';
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.stroke();
@@ -114,7 +120,7 @@ function skillCircle(
     ctx.font = `bold ${Math.round(r * 0.6)}px ${FONT}`;
     ctx.fillText('🔒︎', cx, cy + 1);
   } else if (sub) {
-    // seconds left, big in the middle (held with nothing to fight: a pause mark before them)
+    // seconds left, big in the middle
     ctx.font = `bold ${Math.round(r * 0.62)}px ${MONO}`;
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'rgba(0,0,0,0.8)';
@@ -382,8 +388,8 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       const ready = readyAt[i]!;
       const total = def ? def.cooldownS : 1;
       const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-      // held with nothing to fight (D177): a pause mark before the seconds left
-      skillCircle(ctx, xs[i]!, cy, r, def?.name ?? '—', keys[i]!, frac, locked, SPELL_COLOR, now, ready, { sub: ready > now ? `${held ? '‖' : ''}${Math.ceil(ready - now)}` : '', alpha });
+      // held with nothing to fight (D177): a red glow while it waits (D324)
+      skillCircle(ctx, xs[i]!, cy, r, def?.name ?? '—', keys[i]!, frac, locked, SPELL_COLOR, now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha, paused: held });
     }
   };
   const skillKeys = ['skill1', 'skill2', 'skill3'] as const;
@@ -396,7 +402,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       const ready = pl.skillReadyAt[i]!;
       const total = def ? def.cooldownS * (1 - d.cdr) : 1;
       const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-      skillCircle(ctx, SKILL_X[i]!, HUD_Y, SKILL_R, def?.name ?? '—', skillKeys[i]!, frac, locked, '#ffd27a', now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha });
+      skillCircle(ctx, SKILL_X[i]!, HUD_Y, SKILL_R, def?.name ?? '—', skillKeys[i]!, frac, locked, '#ffd27a', now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha, paused: held });
     }
   }
   // a short line between the skills and the spells
@@ -419,7 +425,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       const ready = pl.spellReadyAt[i]!;
       const total = def ? def.cooldownS * (1 - d.cdr) : 1;
       const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-      skillCircle(ctx, SPELL_X[i]!, spellY, SPELL_R, def?.name ?? '—', (['spell1', 'spell2', 'spell3'] as const)[i]!, frac, !def || i >= unlocked, SPELL_COLOR, now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha });
+      skillCircle(ctx, SPELL_X[i]!, spellY, SPELL_R, def?.name ?? '—', (['spell1', 'spell2', 'spell3'] as const)[i]!, frac, !def || i >= unlocked, SPELL_COLOR, now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha, paused: held });
     }
   } else spellRow(d.spellKeys, ['spell1', 'spell2', 'spell3'], pl.spellReadyAt, SPELL_X, SPELL_R, spellY);
   // quick-use, and the "next item" button when there is more than one kind to cycle through

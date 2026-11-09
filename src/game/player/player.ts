@@ -630,24 +630,25 @@ function updateGhost(w: World, e: Entity, dt: number): void {
 
 /** One simulation tick for one player. */
 /**
- * Spell cooldowns only run while there is something to fight (D177): in an empty room they hold where they are, so
- * nobody waits out a Heal between fights. Weapon skills are not held; the skill keys are when they cast spells.
+ * Cooldowns only run while there is something to fight (D177): in an empty room they hold where they are, so nobody
+ * waits out a Heal between fights. Weapon skills (and an off-hand crossbow's) hold the same way since D324.
  */
 export function holdSpellCooldowns(w: World, e: Entity, dt: number): void {
   if (w.hostilesPresent()) return;
   const pl = e.pl!;
   const now = w.time;
-  // an off-hand crossbow's skills on these timers run on like weapon skills (D316)
-  if (!spellKeysAreOffSkills(pl.derived)) for (let i = 0; i < 3; i++) if (pl.spellReadyAt[i]! > now) pl.spellReadyAt[i]! += dt;
-  if (pl.derived.skillKeySchool) for (let i = 0; i < 3; i++) if (pl.skillReadyAt[i]! > now) pl.skillReadyAt[i]! += dt;
+  for (let i = 0; i < 3; i++) {
+    if (pl.spellReadyAt[i]! > now) pl.spellReadyAt[i]! += dt;
+    if (pl.skillReadyAt[i]! > now) pl.skillReadyAt[i]! += dt;
+  }
 }
 
-/** Every spell is ready again (D177): a bonfire rest, or a real death (not being downed in co-op). */
+/** Every spell and skill is ready again (D177, D324): a bonfire rest, or a real death (not being downed in co-op). */
 export function resetSpellCooldowns(e: Entity): void {
   const pl = e.pl;
   if (!pl) return;
   pl.spellReadyAt = [0, 0, 0];
-  if (pl.derived.skillKeySchool) pl.skillReadyAt = [0, 0, 0];
+  pl.skillReadyAt = [0, 0, 0];
 }
 
 export function updatePlayer(w: World, e: Entity, dt: number): void {

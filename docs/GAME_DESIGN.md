@@ -692,7 +692,8 @@ Item level = zone + 8 × cycle (Gary's +1): 1–8 on the first playthrough, 9–
 zone of a playthrough drops better gear than the playthrough before (D299). Base damage, defense and tool power rise with it (§3.1, §10).
 
 Each weapon class has **three fixed skills** (CONTENT_ITEMS §4) on Q / E / R with cooldowns and stamina. **How many a
-weapon has unlocked is rolled when it drops** (D89):
+weapon has unlocked is rolled when it drops** (D89; D324: the cycle is read from the item level, so skill 2 never drops
+before NG+1 and skill 3 never before NG+2):
 
 | Where | Skill 1 (Q) | Skill 2 (E) | Skill 3 (R) |
 |---|---|---|---|
@@ -830,8 +831,8 @@ Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost �
 Tabs, in order: **Level up** (with Respec) · **Gem bench** · **Weapons** (rarity bars) · **Reinforce** · **Shop** ·
 **Warp** (to any discovered bonfire of this playthrough) · **Bestiary** · **Spells** · **Inventory**.
 
-**Resting** (D150, D152, D153, D177): **every rest heals, refills the Thermos and clears statuses for the whole
-party**, resets every player's revive downs and spell cooldowns, respawns the zone's enemies, autosaves and sets the
+**Resting** (D150, D152, D153, D177, D324): **every rest heals, refills the Thermos and clears statuses for the whole
+party**, resets every player's revive downs and spell and weapon skill cooldowns, respawns the zone's enemies, autosaves and sets the
 respawn point. A used fire burns down to embers on the map as a record of where you have been.
 
 **Shop**: sell gear and gems (one by one, Sell all, all Commons, all below Rare); buy consumables, the zone's one-perk
@@ -873,7 +874,7 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
   Spells tab.
 - Spells have a cast time (cast speed scales it; you walk slower while casting, §3.1), a cooldown and a stamina cost
   (§5.2). **Cooldowns only run while there is something to fight** in the room (D177), and every spell is ready after
-  a rest or a death.
+  a rest or a death. Since D324 weapon skills (and an off-hand crossbow's) hold and reset the same way.
 - Healing spells are slow: Heal 25% over 20 s (cooldown 50 s), and it cannot be interrupted (D128, D250).
 - Weapon buffs (Bless Weapon) need a weapon in the weapon hand (D131); a buffed weapon glows its element (D129).
 - Spells are **learned** from spell reliquaries, sometimes bosses and The Instructor; never sold; known forever. A
@@ -972,8 +973,8 @@ face marks and per-limb features, with Randomize and a preview you turn with the
 - **Skill circles** (Nightreign style, D321, D323): at the bottom middle, the three weapon skills (Q/E/R) and, past a short
   divider line, the three spells (1/2/3, or an off-hand crossbow's skills) as circles of the same size, the spells in
   pinkish purple; the quick-use item, smaller, to the skills' left. A circle
-  on cooldown is greyed and fills from the bottom up like a rising liquid, with the seconds left in the middle (‖ before
-  them while a spell cooldown is held, D177); once full it takes the slot's colour, glows and pulses, flaring the moment
+  on cooldown is greyed and fills from the bottom up like a rising liquid, with the seconds left in the middle; a cooldown
+  paused with nothing to fight (D177) has a red rim and a soft red glow (D324); once full it takes the slot's colour, glows and pulses, flaring the moment
   it fills. Its name sits inside, its button glyph at its top left; locked slots show a lock. They fade while the player
   walks under them. The boss bar sits just above them.
 - **In the world**: status buildup bars over the player's head (D321): one wide, see-through bar per status that is building
