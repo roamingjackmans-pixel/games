@@ -969,8 +969,9 @@ face marks and per-limb features, with Randomize and a preview you turn with the
 
 - **HUD**: HP and stamina bars top-left, with held-in-place controls (FROZEN, ROOTED…) and buffs under them; Thermos
   count; Shards and Glowen; minimap; co-op cards (name, HP, status, downed timer) along the left.
-- **Skill circles** (Nightreign style, D321): at the bottom middle, the three weapon skills (Q/E/R) as big circles, the three
-  spells (1/2/3, or an off-hand crossbow's skills) smaller to their right and the quick-use item to their left. A circle
+- **Skill circles** (Nightreign style, D321, D323): at the bottom middle, the three weapon skills (Q/E/R) and, past a short
+  divider line, the three spells (1/2/3, or an off-hand crossbow's skills) as circles of the same size, the spells in
+  pinkish purple; the quick-use item, smaller, to the skills' left. A circle
   on cooldown is greyed and fills from the bottom up like a rising liquid, with the seconds left in the middle (‖ before
   them while a spell cooldown is held, D177); once full it takes the slot's colour, glows and pulses, flaring the moment
   it fills. Its name sits inside, its button glyph at its top left; locked slots show a lock. They fade while the player

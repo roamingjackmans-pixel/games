@@ -295,13 +295,20 @@ export function drawStatusBars(ctx: CanvasRenderingContext2D, p: Entity, now: nu
 /** HUD glyph height in logical px */
 const GLYPH = 19;
 
-/** the skill circles' row (centre y), their radius and centres; the spells' and the quick item's, smaller, either side */
+/**
+ * The circles' row (centre y) and radius. The three skills and three spells are the same size, either side of a short
+ * divider at the middle of the screen (D323); the quick item, smaller, to the skills' left.
+ */
 export const HUD_Y = 678;
 const SKILL_R = 30;
-const SKILL_X = [568, 640, 712] as const;
-const SPELL_R = 23;
-const SPELL_X = [782, 836, 890] as const;
-const QUICK_X = 498;
+const DIVIDER_X = 640;
+const SKILL_X = [454, 526, 598] as const;
+const SPELL_R = SKILL_R;
+const SPELL_X = [682, 754, 826] as const;
+const QUICK_R = 23;
+const QUICK_X = 386;
+/** spells' circles (both schools, and an off-hand crossbow's skills on the spell keys): pinkish purple (D323) */
+const SPELL_COLOR = '#e08aff';
 
 export interface HudExtras {
   ghostHp: number;
@@ -361,7 +368,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   // skills and spells as circles at the bottom middle (Nightreign style): the three weapon skills big in the centre
   // (Q/E/R on a keyboard, LB/RB/Y on an Xbox pad… whatever is bound), the three spells smaller to their right, the
   // quick item to their left. They fade while the player walks under them.
-  const under = p.y > HUD_Y - 64 && Math.abs(p.x - 680) < 270;
+  const under = p.y > HUD_Y - 64 && Math.abs(p.x - 606) < 260;
   const alpha = under ? 0.35 : 1;
   // a spell loadout drawn on three keys (Q/E/R for a weapon-hand staff or talisman, 1/2/3 for the off hand's: D201)
   const held = !w.hostilesPresent();
@@ -376,7 +383,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       const total = def ? def.cooldownS : 1;
       const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
       // held with nothing to fight (D177): a pause mark before the seconds left
-      skillCircle(ctx, xs[i]!, cy, r, def?.name ?? '—', keys[i]!, frac, locked, school === 'brain' ? '#8fd3ff' : '#fff3b0', now, ready, { sub: ready > now ? `${held ? '‖' : ''}${Math.ceil(ready - now)}` : '', alpha });
+      skillCircle(ctx, xs[i]!, cy, r, def?.name ?? '—', keys[i]!, frac, locked, SPELL_COLOR, now, ready, { sub: ready > now ? `${held ? '‖' : ''}${Math.ceil(ready - now)}` : '', alpha });
     }
   };
   const skillKeys = ['skill1', 'skill2', 'skill3'] as const;
@@ -392,8 +399,19 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       skillCircle(ctx, SKILL_X[i]!, HUD_Y, SKILL_R, def?.name ?? '—', skillKeys[i]!, frac, locked, '#ffd27a', now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha });
     }
   }
+  // a short line between the skills and the spells
+  ctx.save();
+  ctx.globalAlpha = 0.55 * alpha;
+  ctx.strokeStyle = '#efe6d2';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(DIVIDER_X, HUD_Y - SKILL_R * 0.7);
+  ctx.lineTo(DIVIDER_X, HUD_Y + SKILL_R * 0.7);
+  ctx.stroke();
+  ctx.restore();
   // spells (1/2/3, or the D-pad): the off-hand tool's school, or the off-hand crossbow's skills (D316)
-  const spellY = HUD_Y + SKILL_R - SPELL_R;
+  const spellY = HUD_Y;
   if (spellKeysAreOffSkills(d)) {
     const unlocked = offSkillsUnlocked(d);
     for (let i = 0; i < 3; i++) {
@@ -401,15 +419,15 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
       const ready = pl.spellReadyAt[i]!;
       const total = def ? def.cooldownS * (1 - d.cdr) : 1;
       const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
-      skillCircle(ctx, SPELL_X[i]!, spellY, SPELL_R, def?.name ?? '—', (['spell1', 'spell2', 'spell3'] as const)[i]!, frac, !def || i >= unlocked, '#ffd27a', now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha });
+      skillCircle(ctx, SPELL_X[i]!, spellY, SPELL_R, def?.name ?? '—', (['spell1', 'spell2', 'spell3'] as const)[i]!, frac, !def || i >= unlocked, SPELL_COLOR, now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha });
     }
   } else spellRow(d.spellKeys, ['spell1', 'spell2', 'spell3'], pl.spellReadyAt, SPELL_X, SPELL_R, spellY);
   // quick-use, and the "next item" button when there is more than one kind to cycle through
   const q = ch.quickSlot;
   const qn = q ? (ch.consumables[q] ?? 0) : 0;
-  skillCircle(ctx, QUICK_X, spellY, SPELL_R, q ? (CONSUMABLES[q]?.short ?? q) : '—', 'quick', 0, !q || qn <= 0, '#c9b98a', now, 0, { badge: qn ? `${qn}` : '', alpha, quiet: true });
+  skillCircle(ctx, QUICK_X, HUD_Y + SKILL_R - QUICK_R, QUICK_R, q ? (CONSUMABLES[q]?.short ?? q) : '—', 'quick', 0, !q || qn <= 0, '#c9b98a', now, 0, { badge: qn ? `${qn}` : '', alpha, quiet: true });
   if (Object.values(ch.consumables).filter((n) => (n ?? 0) > 0).length > 1) {
-    drawPromptText(ctx, '{cycleQuick} next', QUICK_X - SPELL_R - 10, spellY, { size: 11, align: 'right', weight: 'normal', color: '#a59c8a', alpha });
+    drawPromptText(ctx, '{cycleQuick} next', QUICK_X - QUICK_R - 10, HUD_Y + SKILL_R - QUICK_R, { size: 11, align: 'right', weight: 'normal', color: '#a59c8a', alpha });
   }
 
   // parry/riposte hint, over the circles (and over a boss bar's name)
