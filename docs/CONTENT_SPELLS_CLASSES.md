@@ -70,8 +70,8 @@ stronger but never restores a Thermos charge (D38, D150).
 
 Level 1. Starting gear is ilvl 1 Common; tools come with their spells already known. Every class starts with one
 Thermos charge, 0 Shards, 0 Glowen and 3 Throwing Knives. **Primary and secondary stats** give ×1.25 and ×1.15 from
-each point (D184). Every class has 48 stat points except the Hunter (46), whose kit carries a bow, two casting tools and
-four spells (D184).
+each point (D184); the **Nobody** has no primary and every stat secondary (×1.15 each, D334). Every class has 48 stat
+points (D334: the Hunter too).
 
 | Class (id) | HP | End | Bonk | Slicey | Brain | Prayer | Total | Primary / secondary | Weapon hand | Off hand | 2nd weapon | Armour | Spells | Bag | Blurb |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -81,15 +81,14 @@ four spells (D184).
 | **Scholar** (`scholar`) | 7 | 7 | 3 | 10 | 15 | 6 | 48 | brain / slicey | Rapier | Apprentice Staff | — | Rag Hood, Crypt Rags, Rag Wraps | Arcane Bolt, Frost Lance | — | "Read about dungeons once." |
 | **Pyre Priest** (`cleric`) | 10 | 7 | 11 | 3 | 4 | 13 | 48 | prayer / bonk | Censer Flail | Wooden Talisman | — | Sexton's Mail, Sexton's Chausses | Heal, Bless Weapon | — | "Heals the faithful. Cremates the rest. Same sermon either way." |
 | **Battlemage** (`spearman`) | 7 | 7 | 13 | 8 | 10 | 3 | 48 | bonk / brain | Colossal Sword | Round Shield (D326) | Apprentice Staff | Crypt Rags, Rag Wraps | Arcane Bolt, Scatter Shards | — | "Read one book on magic. Hit the librarian with a sword the size of the shelf." |
-| **Hunter** (`hunter`) | 7 | 4 | 5 | 12 | 9 | 9 | 46 | slicey / brain | Bow (two-handed) | Wooden Talisman | Apprentice Staff | Rag Hood, Crypt Rags, Rag Wraps | Arcane Bolt, Scatter Shards, Heal, Bless Weapon | Whip | "Can track anything. Mostly tracks in mud." |
-| **Zealot** (`occultist`) | 8 | 8 | 3 | 12 | 3 | 14 | 48 | prayer / slicey | Dawn Glaive | Silver Talisman | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | Sunray, Bless Weapon | — | "Up at five to pray. Up at five past to stab whoever was not." |
-| **Berserker** (`berserker`) | 9 | 7 | 13 | 14 | 2 | 3 | 48 | slicey / bonk | Twin Axes (two-handed) | — | — | Sexton's Mail, Sexton's Chausses | — | — | "Was asked to calm down once. Once. Has never been asked to count." |
-| **Nobody** (`nobody`) | 8 | 8 | 8 | 8 | 8 | 8 | 48 | bonk / slicey | Club | — | — | Loincloth | — | 1 gem | "Joe." |
+| **Hunter** (`hunter`) | 7 | 9 | 10 | 14 | 5 | 3 | 48 | slicey / bonk | Halberd (two-handed, D334) | — | — | Rag Hood, Crypt Rags, Rag Wraps | — | Bow, Whip | "Can track anything. Mostly tracks in mud." |
+| **Zealot** (`occultist`) | 8 | 8 | 3 | 12 | 3 | 14 | 48 | prayer / slicey | Rapier (D334) | Silver Talisman | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | Sunray, Bless Weapon | — | "Up at five to pray. Up at five past to stab whoever was not." |
+| **Berserker** (`berserker`) | 10 | 8 | 12 | 11 | 3 | 4 | 48 | bonk / slicey (D334) | Twin Axes (two-handed) | — | — | Sexton's Mail, Sexton's Chausses | — | — | "Was asked to calm down once. Once. Has never been asked to count." |
+| **Nobody** (`nobody`) | 8 | 8 | 8 | 8 | 8 | 8 | 48 | none / all six (D334) | Club | — | — | Loincloth | — | 1 gem | "Joe." |
 
 - Every kit meets its own requirements at level 1, its 2nd weapon included, and no kit starts encumbered.
-- The **Hunter**'s bow needs two hands (D88): shooting one-handed takes it in both hands (D203). A talisman sits in the
-  off hand and a staff on the swap, two spells each; the second of each school (Scatter Shards, Bless Weapon) is
-  learnt ahead of its requirement (D184). The Whip waits in the bag.
+- The **Hunter** fights with a Halberd, Slicey first and Bonk second; its Bow and Whip wait in the bag, and it knows no
+  spells (D334; it was a bow-and-spells kit, D184).
 - The **Battlemage** starts two-handing its Colossal Sword (Bonk 19 needed, D329), the shield waiting for more Bonk, with the staff on the swap (D117, D119).
 - The **Berserker** dual-wields the Twin Axes (two-handed) (D120, D123, D140).
 - **Nobody** starts with one random level-1 gem in the gem pouch.
@@ -101,4 +100,4 @@ four spells (D184).
 
 1. Every spell has a school and a requirement ≥ 8; no spell is in both lists.
 2. Every class's starting items meet its own starting stats (`tests/unit` class kit tests); its starting spells are
-   known from the start, the Hunter's two higher ones ahead of their requirement.
+   known from the start.

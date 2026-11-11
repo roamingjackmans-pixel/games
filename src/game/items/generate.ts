@@ -61,8 +61,13 @@ function rarityIndex(r: Rarity): number {
  * scales with (HP, Endurance) does nothing, so a Brute (Bonk / HP) gets only the Bonk boost and a Knight none.
  */
 export interface DropFavor {
-  primary: StatId;
-  secondary: StatId;
+  /** none for the Nobody (D334) */
+  primary: StatId | null;
+  /** one stat, or several (the Nobody: all six, D334) */
+  secondary: StatId | readonly StatId[];
+}
+export function favorSecondaries(f: DropFavor): readonly StatId[] {
+  return typeof f.secondary === 'string' ? [f.secondary] : f.secondary;
 }
 export const FAVOR_PRIMARY = 1.3;
 export const FAVOR_SECONDARY = 1.15;
@@ -79,8 +84,9 @@ export function scalingStatsOf(baseId: string): StatId[] {
 
 export function favorMult(stats: readonly StatId[], f: DropFavor | undefined): number {
   if (!f) return 1;
-  const p = stats.includes(f.primary);
-  const s = stats.includes(f.secondary);
+  const p = !!f.primary && stats.includes(f.primary);
+  const sec = favorSecondaries(f);
+  const s = stats.some((k) => k !== f.primary && sec.includes(k));
   return 1 + (p ? FAVOR_PRIMARY - 1 : 0) + (s ? FAVOR_SECONDARY - 1 : 0) + (p && s ? FAVOR_BOTH_EXTRA : 0);
 }
 

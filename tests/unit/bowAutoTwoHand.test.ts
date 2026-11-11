@@ -14,6 +14,7 @@ import { CRYPT } from '../../src/data/enemies/crypt';
 describe('bow auto two-hand (D203)', () => {
   it('attack with a one-handed bow: two-hands it and shoots', () => {
     const c = newCharacter('hunter', 'Joe', 'p1', new Rng(1));
+    c.equipment.main = makeItem('bow', 'common', 1); // D334: the Hunter starts with a halberd now, its bow in the bag
     c.twoHanded = false;
     const w = new World('BOW', Room.empty());
     const p = spawnPlayer(w, c, 0, true, 600, 368);
@@ -31,7 +32,7 @@ describe('bow auto two-hand (D203)', () => {
 describe('bow and crossbow volleys (D205)', () => {
   const shoot = (classId: 'hunter' | 'knight', weapon?: string): number[] => {
     const c = newCharacter(classId, 'Joe', 'p1', new Rng(1));
-    if (weapon) c.equipment.main = makeItem(weapon, 'common', 1);
+    c.equipment.main = makeItem(weapon ?? 'bow', 'common', 1);
     c.twoHanded = true;
     const w = new World('VOLLEY', Room.empty());
     const p = spawnPlayer(w, c, 0, true, 400, 368);
@@ -56,7 +57,7 @@ describe('a volley hits each target once (D264)', () => {
   // shoots once and counts the arrow hits each enemy takes
   const hitsOn = (weapon: string | null, ys: number[], dist: number): number[] => {
     const c = newCharacter(weapon ? 'knight' : 'hunter', 'Joe', 'p1', new Rng(1));
-    if (weapon) c.equipment.main = makeItem(weapon, 'common', 1);
+    c.equipment.main = makeItem(weapon ?? 'bow', 'common', 1);
     c.twoHanded = true;
     const w = new World('VOLLEY1', Room.empty());
     const p = spawnPlayer(w, c, 0, true, 400, 368);

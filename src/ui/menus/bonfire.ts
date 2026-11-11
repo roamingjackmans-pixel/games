@@ -7,7 +7,7 @@ import { ESSENCES, MAX_REINFORCE, canPayEssence, essenceCounts, essenceDef, plus
 import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { armorPieceDefense } from '../../data/armor';
 import { canReinforce, reinforceInfo } from '../../game/items/reinforce';
-import { CLASSES } from '../../data/classes';
+import { isPrimaryStat, isSecondaryStat } from '../../data/classes';
 import { GEMS, gemColor, gemKind, gemKindLabel, gemOrigin, gemTitle, perkName } from '../../data/gems';
 import { flaskHeal, levelCost, gemSellTotal } from '../../game/combat/formulas';
 import { computeDerived } from '../../game/player/derived';
@@ -260,7 +260,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
           'div',
           { class: 'row', 'data-testid': `lvl-row-${s.id}`, 'data-focus-group': `lvl-${s.id}` },
           // the class's primary (+25%) and secondary (+15%) stats are marked (D184)
-          h('div', { style: 'width:100px', title: CLASSES[c.classId]?.primary === s.id ? 'Primary: every point gives 25% more' : CLASSES[c.classId]?.secondary === s.id ? 'Secondary: every point gives 15% more' : '' }, s.label, CLASSES[c.classId]?.primary === s.id ? ' (P)' : CLASSES[c.classId]?.secondary === s.id ? ' (S)' : ''),
+          h('div', { style: 'width:100px', title: isPrimaryStat(c.classId, s.id) ? 'Primary: every point gives 25% more' : isSecondaryStat(c.classId, s.id) ? 'Secondary: every point gives 15% more' : '' }, s.label, isPrimaryStat(c.classId, s.id) ? ' (P)' : isSecondaryStat(c.classId, s.id) ? ' (S)' : ''),
           h('div', { class: 'mono', style: 'width:76px' }, p ? h('span', null, `${c.stats[s.id]} → `, h('b', { class: 'good' }, String(after.stats[s.id]))) : String(c.stats[s.id])),
           minus,
           plus,

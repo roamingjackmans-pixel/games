@@ -5,9 +5,12 @@ export interface ClassDef {
   id: ClassId;
   name: string;
   stats: Stats;
-  /** the class's primary and secondary stats (D184): every point in them does 25% / 15% more */
-  primary: StatId;
-  secondary: StatId;
+  /**
+   * the class's primary and secondary stats (D184): every point in them does 25% / 15% more. D334: the Nobody has no
+   * primary and every stat secondary (a list)
+   */
+  primary: StatId | null;
+  secondary: StatId | readonly StatId[];
   /** `alt` is the 2nd (quick-swap) weapon slot: a weapon, staff or talisman (D117) */
   start: { main: string; off?: string; alt?: string; armor: string[]; spells: string[]; bag?: string[]; gems?: number };
   twoHanded?: boolean;
@@ -39,10 +42,22 @@ export function statBoosts(classId: ClassId): Record<StatId, number> {
   const cl = CLASSES[classId];
   const out: Record<StatId, number> = { hp: 1, endurance: 1, bonk: 1, slicey: 1, brain: 1, prayer: 1 };
   if (cl) {
-    out[cl.secondary] = SECONDARY_BOOST;
-    out[cl.primary] = PRIMARY_BOOST;
+    for (const k of secondaryStats(classId)) out[k] = SECONDARY_BOOST;
+    if (cl.primary) out[cl.primary] = PRIMARY_BOOST;
   }
   return out;
+}
+
+/** A class's secondary stats as a list (one for most classes, all six for the Nobody, D334). */
+export function secondaryStats(classId: ClassId): StatId[] {
+  const s = CLASSES[classId]?.secondary;
+  return s === undefined ? [] : typeof s === 'string' ? [s] : [...s];
+}
+export function isPrimaryStat(classId: ClassId, k: StatId): boolean {
+  return CLASSES[classId]?.primary === k;
+}
+export function isSecondaryStat(classId: ClassId, k: StatId): boolean {
+  return !isPrimaryStat(classId, k) && secondaryStats(classId).includes(k);
 }
 
 export const CLASSES: Record<ClassId, ClassDef> = {
@@ -115,12 +130,12 @@ export const CLASSES: Record<ClassId, ClassDef> = {
   hunter: {
     id: 'hunter',
     name: 'Hunter',
-    // D184: a bow, a talisman in the off hand and a staff as the 2nd weapon, two spells each (the second of each school is learnt
-    // ahead of its requirement: Scatter Shards at Brain 10, Bless Weapon at Prayer 12); 46 points
-    stats: S(7, 4, 5, 12, 9, 9),
+    // D334: a halberd fighter, Slicey then Bonk, the bow and whip in the bag (no staff, talisman or spells: Brain 5 and
+    // Prayer 3 cast nothing); 48 points
+    stats: S(7, 9, 10, 14, 5, 3),
     primary: 'slicey',
-    secondary: 'brain',
-    start: { main: 'bow', off: 'wooden_talisman', alt: 'apprentice_staff', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: ['arcane_bolt', 'scatter_shards', 'heal', 'bless_weapon'], bag: ['whip'] },
+    secondary: 'bonk',
+    start: { main: 'halberd', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [], bag: ['bow', 'whip'] },
     twoHanded: true,
     blurb: 'Can track anything. Mostly tracks in mud.',
     look: { skin: '#e0b890', hair: '#6a3a1a', shirt: '#3a5a2a', legs: '#3a3020', head: 'hood', trim: '#a0803a', hairStyle: 'short', beard: 'stubble', hat: '#3a5a2a', belt: '#3a2a1a', emblem: 'leaf' },
@@ -132,7 +147,8 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(8, 8, 3, 12, 3, 14),
     primary: 'prayer',
     secondary: 'slicey',
-    start: { main: 'dawn_glaive', off: 'silver_talisman', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: ['sunray', 'bless_weapon'] },
+    // D334: a Rapier (was the Dawn Glaive)
+    start: { main: 'rapier', off: 'silver_talisman', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: ['sunray', 'bless_weapon'] },
     blurb: 'Up at five to pray. Up at five past to stab whoever was not.',
     look: { skin: '#d8c0b0', hair: '#e8d8a0', shirt: '#efe6d2', legs: '#5a4a2a', head: 'hood', trim: '#e6b84a', hairStyle: 'long', beard: 'none', hat: '#d8c8a0', belt: '#e6b84a', emblem: 'sun' },
   },
@@ -140,9 +156,9 @@ export const CLASSES: Record<ClassId, ClassDef> = {
   berserker: {
     id: 'berserker',
     name: 'Berserker',
-    stats: S(9, 7, 13, 14, 2, 3), // D140: HP 9, Prayer 3; Bonk 13 and Slicey 14 (D123) clear the axes' 10 / 10
-    primary: 'slicey',
-    secondary: 'bonk',
+    stats: S(10, 8, 12, 11, 3, 4), // D334 (was 9 / 7 / 13 / 14 / 2 / 3); Bonk 12 and Slicey 11 clear the axes' 10 / 10
+    primary: 'bonk',
+    secondary: 'slicey',
     start: { main: 'twin_axes', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
     twoHanded: true,
     blurb: 'Was asked to calm down once. Once. Has never been asked to count.',
@@ -153,8 +169,9 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     id: 'nobody',
     name: 'Nobody',
     stats: S(8, 8, 8, 8, 8, 8),
-    primary: 'bonk',
-    secondary: 'slicey',
+    // D334: no primary; every stat is secondary (+15% from every point)
+    primary: null,
+    secondary: ['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'],
     start: { main: 'club', armor: ['loincloth_legs'], spells: [], gems: 1 },
     blurb: 'Joe.',
     look: { skin: '#e8c9a0', hair: '#4a3626', shirt: '#9a8a7a', legs: '#8a6a3a', head: 'none', trim: '#c9b98a', hairStyle: 'messy', beard: 'stubble' },

@@ -8,9 +8,9 @@ import { SPELLS } from '../../data/spells';
 import { WEAPON_IDS } from '../../data/weapons';
 import { itemLevelFor } from '../combat/formulas';
 import { ROOM_ENEMY_MULT } from '../procgen/waves';
-import { generateItem, randomGem, type DropFavor } from './generate';
-import { CLASSES } from '../../data/classes';
-import type { Character, ConsumableId, Item, Role } from '../types';
+import { favorSecondaries, generateItem, randomGem, type DropFavor } from './generate';
+import { CLASSES, secondaryStats } from '../../data/classes';
+import type { Character, ConsumableId, Item, Role, StatId } from '../types';
 import type { Entity, PickupC, World } from '../world';
 
 export interface DropContext {
@@ -23,7 +23,7 @@ export interface DropContext {
 /** The class's primary and secondary stats, which weapon drops lean toward (D254). */
 function favorOf(c: Character): DropFavor | undefined {
   const cl = CLASSES[c.classId];
-  return cl ? { primary: cl.primary, secondary: cl.secondary } : undefined;
+  return cl ? { primary: cl.primary, secondary: secondaryStats(c.classId) } : undefined;
 }
 
 /** How much likelier a reliquary spell of this school is for a class (D317): ×3 if it is the primary stat, ×2 the secondary. */
@@ -31,7 +31,7 @@ export const SPELL_FAVOR_PRIMARY = 3;
 export const SPELL_FAVOR_SECONDARY = 2;
 export function spellSchoolFavor(school: string, f: DropFavor | undefined): number {
   if (!f) return 1;
-  return f.primary === school ? SPELL_FAVOR_PRIMARY : f.secondary === school ? SPELL_FAVOR_SECONDARY : 1;
+  return f.primary === school ? SPELL_FAVOR_PRIMARY : favorSecondaries(f).includes(school as StatId) ? SPELL_FAVOR_SECONDARY : 1;
 }
 
 function lootRng(c: DropContext, playerId: string, tag = ''): Rng {

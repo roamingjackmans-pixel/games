@@ -196,8 +196,7 @@ zone's end, solo, first playthrough (`EXPECTED_LEVEL`): 10 · 20 · 32 · 42 · 
 
 ## 3. Stats
 
-Six stats, 1–**999** each (D311; most of a stat's worth comes by 150, the soft cap): **HP, Endurance, Bonk, Slicey, Brain, Prayer**. Level-1 characters have 48 points (the Hunter
-46; class tables in CONTENT_SPELLS_CLASSES §3). Each level adds one point; level = points − 47.
+Six stats, 1–**999** each (D311; most of a stat's worth comes by 150, the soft cap): **HP, Endurance, Bonk, Slicey, Brain, Prayer**. Level-1 characters have 48 points (class tables in CONTENT_SPELLS_CLASSES §3). Each level adds one point; level = points − 47.
 
 | Stat | Governs |
 |---|---|
@@ -970,10 +969,10 @@ Ten classes (CONTENT_SPELLS_CLASSES §3 is the source of truth; every kit meets 
 | Scholar | 7 / 7 / 3 / 10 / 15 / 6 | Brain / Slicey | Rapier, Apprentice Staff; Arcane Bolt, Frost Lance |
 | Pyre Priest | 10 / 7 / 11 / 3 / 4 / 13 | Prayer / Bonk | Censer Flail, Wooden Talisman; Heal, Bless Weapon |
 | Battlemage | 7 / 7 / 13 / 8 / 10 / 3 | Bonk / Brain | Colossal Sword two-handed (D329), Round Shield (D326), Apprentice Staff as 2nd weapon; Arcane Bolt, Scatter Shards |
-| Hunter | 7 / 4 / 5 / 12 / 9 / 9 | Slicey / Brain | Bow (two-handed), Wooden Talisman, Apprentice Staff as 2nd weapon, a Whip in the bag; Arcane Bolt, Scatter Shards, Heal, Bless Weapon |
-| Zealot | 8 / 8 / 3 / 12 / 3 / 14 | Prayer / Slicey | Dawn Glaive, Silver Talisman; Sunray, Bless Weapon |
-| Berserker | 9 / 7 / 13 / 14 / 2 / 3 | Slicey / Bonk | Twin Axes (dual-wielded) |
-| Nobody | 8 / 8 / 8 / 8 / 8 / 8 | Bonk / Slicey | Club, a loincloth, one random gem |
+| Hunter | 7 / 9 / 10 / 14 / 5 / 3 | Slicey / Bonk | Halberd (two-handed), a Bow and a Whip in the bag (D334) |
+| Zealot | 8 / 8 / 3 / 12 / 3 / 14 | Prayer / Slicey | Rapier (D334), Silver Talisman; Sunray, Bless Weapon |
+| Berserker | 10 / 8 / 12 / 11 / 3 / 4 | Bonk / Slicey (D334) | Twin Axes (dual-wielded) |
+| Nobody | 8 / 8 / 8 / 8 / 8 / 8 | none / every stat (D334) | Club, a loincloth, one random gem |
 
 **Character creation**: name (blank = Joe, D200), class (a fixed-layout card, D188), optional seed, and an
 **Appearance** panel (D100, D183): body (male / female), skin, hair, facial hair, eyes and eye colour, nose, brows,

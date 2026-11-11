@@ -10,7 +10,7 @@ import { drawJoe } from '../../engine/draw/players';
 import { drawShield, drawTool, drawWeapon, isPairedWeapon } from '../../engine/draw/weapons';
 import { getStore } from '../../engine/settings';
 import { randomSeedString, Rng } from '../../engine/rng';
-import { CLASSES, CLASS_IDS } from '../../data/classes';
+import { CLASSES, CLASS_IDS, isPrimaryStat, isSecondaryStat, secondaryStats } from '../../data/classes';
 import { WEAPONS } from '../../data/weapons';
 import { SHIELDS } from '../../data/shields';
 import { CASTING_TOOLS } from '../../data/castingTools';
@@ -356,7 +356,7 @@ export class TitleScene implements Scene {
       for (const k of STAT_IDS) {
         const v = cls.stats[k];
         // primary and secondary stats (D184): every point counts 25% / 15% more
-        const tag = k === cls.primary ? h('span', { class: 'cc-tag', title: 'Primary: every point gives 25% more', style: 'margin-left:4px;padding:0 4px;border-radius:3px;background:#e8c25a;color:#1a1408;font-size:10px;font-weight:bold' }, 'P') : k === cls.secondary ? h('span', { class: 'cc-tag', title: 'Secondary: every point gives 15% more', style: 'margin-left:4px;padding:0 4px;border-radius:3px;background:#9ad0ff;color:#0a1a28;font-size:10px;font-weight:bold' }, 'S') : null;
+        const tag = isPrimaryStat(cls.id, k) ? h('span', { class: 'cc-tag', title: 'Primary: every point gives 25% more', style: 'margin-left:4px;padding:0 4px;border-radius:3px;background:#e8c25a;color:#1a1408;font-size:10px;font-weight:bold' }, 'P') : isSecondaryStat(cls.id, k) ? h('span', { class: 'cc-tag', title: 'Secondary: every point gives 15% more', style: 'margin-left:4px;padding:0 4px;border-radius:3px;background:#9ad0ff;color:#0a1a28;font-size:10px;font-weight:bold' }, 'S') : null;
         stats.append(
           h('div', { class: 'lbl', title: STAT_HINT[k] }, STAT_LABEL[k], tag),
           h('div', { class: 'sep' }, '-'),
@@ -364,7 +364,7 @@ export class TitleScene implements Scene {
           h('div', { class: 'cc-bar', title: STAT_HINT[k] }, h('i', { style: `width:${Math.round((v / 16) * 100)}%` })),
         );
       }
-      card.append(h('div', { class: 'cc-sec' }, 'Stats'), stats, h('div', { class: 'small dim-text cc-fix2', 'data-testid': 'class-primary' }, `Primary ${STAT_LABEL[cls.primary]} (+25% from every point) · Secondary ${STAT_LABEL[cls.secondary]} (+15%)`));
+      card.append(h('div', { class: 'cc-sec' }, 'Stats'), stats, h('div', { class: 'small dim-text cc-fix2', 'data-testid': 'class-primary' }, cls.primary ? `Primary ${STAT_LABEL[cls.primary]} (+25% from every point) · Secondary ${secondaryStats(cls.id).map((k) => STAT_LABEL[k]).join(', ')} (+15%)` : 'No primary stat · every stat secondary (+15% from every point, D334)'));
       const kit = h('div', { class: 'cc-rows' });
       const kitRow = (label: string, value: string, dim = false): void => {
         kit.append(h('div', { class: 'lbl' }, label), h('div', { class: 'sep' }, label ? '-' : ''), h('div', { class: `wide cc-one${dim ? ' dim-text' : ''}`, title: value }, value));

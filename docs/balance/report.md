@@ -397,7 +397,7 @@ Each build at the zone's expected level, with points split as listed, wearing th
 | Bonk: greathammer (2H) | 37 dps · 2.5s / 69s · 17.7 / 3.7 hits | 59 dps · 2.1s / 95s · 23.2 / 3.1 hits | 89 dps · 1.9s / 85s · 19.4 / 3.9 hits | 137 dps · 1.6s / 77s · 17.8 / 3.2 hits | 215 dps · 1.2s / 79s · 15.4 / 2.2 hits | 344 dps · 1s / 55s · 16.6 / 2.8 hits | 444 dps · 0.8s / 47s · 17.6 / 3 hits | 564 dps · 0.9s / 100s · 18.2 / 1.4 hits |
 | Slicey: twin daggers | 27 dps · 3.3s / 92s · 13 / 2.7 hits | 44 dps · 2.8s / 127s · 17.4 / 2.4 hits | 68 dps · 2.4s / 111s · 14.8 / 3 hits | 107 dps · 2s / 98s · 13.8 / 2.5 hits | 154 dps · 1.6s / 111s · 12.1 / 1.7 hits | 228 dps · 1.6s / 83s · 13.2 / 2.2 hits | 276 dps · 1.3s / 76s · 14.2 / 2.4 hits | 332 dps · 1.6s / 170s · 15.2 / 1.1 hits |
 | Quality: longsword + shield | 44 dps · 2s / 57s · 16.8 / 3.5 hits | 69 dps · 1.8s / 81s · 22.4 / 3 hits | 103 dps · 1.6s / 73s · 19 / 3.8 hits | 158 dps · 1.4s / 67s · 17.7 / 3.2 hits | 226 dps · 1.1s / 76s · 15.5 / 2.2 hits | 330 dps · 1.1s / 57s · 16.7 / 2.8 hits | 394 dps · 0.9s / 53s · 18 / 3 hits | 462 dps · 1.1s / 122s · 18.9 / 1.4 hits |
-| Bow (Slicey) | 26 dps · 3.5s / 97s · 12.2 / 2.5 hits | 40 dps · 3s / 138s · 16.5 / 2.2 hits | 60 dps · 2.8s / 126s · 14.1 / 2.8 hits | 95 dps · 2.3s / 111s · 13.3 / 2.4 hits | 134 dps · 1.9s / 128s · 11.7 / 1.7 hits | 195 dps · 1.8s / 97s · 12.7 / 2.1 hits | 231 dps · 1.5s / 91s · 13.8 / 2.3 hits | 267 dps · 2s / 211s · 14.8 / 1.1 hits |
+| Bow (Slicey) | 28 dps · 3.2s / 89s · 12.2 / 2.5 hits | 44 dps · 2.8s / 127s · 16.5 / 2.2 hits | 65 dps · 2.6s / 117s · 14.1 / 2.8 hits | 98 dps · 2.2s / 107s · 13.3 / 2.4 hits | 139 dps · 1.8s / 123s · 11.7 / 1.7 hits | 205 dps · 1.7s / 92s · 12.7 / 2.1 hits | 243 dps · 1.4s / 87s · 13.8 / 2.3 hits | 287 dps · 1.8s / 196s · 14.8 / 1.1 hits |
 | Crossbow (Bonk) | 27 dps · 3.3s / 94s · 17.7 / 3.7 hits | 42 dps · 2.9s / 134s · 23.2 / 3.1 hits | 62 dps · 2.7s / 122s · 19.4 / 3.9 hits | 94 dps · 2.3s / 112s · 17.8 / 3.2 hits | 137 dps · 1.8s / 125s · 15.4 / 2.2 hits | 199 dps · 1.8s / 95s · 16.6 / 2.8 hits | 236 dps · 1.5s / 89s · 17.6 / 3 hits | 279 dps · 1.9s / 202s · 18.2 / 1.4 hits |
 | Brain caster: staff spells | 37 dps · 2.5s / 69s · 12.2 / 2.5 hits | 63 dps · 1.9s / 89s · 16.5 / 2.2 hits | 95 dps · 1.7s / 80s · 14.1 / 2.8 hits | 138 dps · 1.6s / 76s · 13.3 / 2.4 hits | 189 dps · 1.3s / 91s · 11.7 / 1.7 hits | 266 dps · 1.3s / 71s · 12.7 / 2.1 hits | 316 dps · 1.1s / 67s · 13.8 / 2.3 hits | 371 dps · 1.4s / 152s · 14.8 / 1.1 hits |
 | Prayer caster: talisman spells | 33 dps · 2.7s / 75s · 13 / 2.7 hits | 31 dps · 3.9s / 178s · 17.4 / 2.4 hits | 46 dps · 3.6s / 166s · 14.8 / 3 hits | 68 dps · 3.2s / 154s · 13.8 / 2.5 hits | 95 dps · 2.7s / 180s · 12.1 / 1.7 hits | 136 dps · 2.6s / 138s · 13.2 / 2.2 hits | 163 dps · 2.2s / 129s · 14.2 / 2.4 hits | 195 dps · 2.7s / 289s · 15.2 / 1.1 hits |
@@ -409,7 +409,7 @@ Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 75 | 57 | 97 | 1.7 |
+| 1 | 75 | 57 | 94 | 1.6 |
 | 2 | 127 | 81 | 178 | 2.2 |
 | 3 | 111 | 73 | 166 | 2.3 |
 | 4 | 98 | 67 | 154 | 2.3 |
@@ -425,7 +425,7 @@ Boss time-to-kill across the builds (seconds):
 | Bonk: greathammer (2H) | 763 dps · 2.6s / 156s · 18.2 / 2 hits | 971 dps · 1.8s / 155s · 15.3 / 2.1 hits | 1,197 dps · 1.5s / 145s · 17.9 / 3 hits | 1,366 dps · 1.5s / 145s · 15.9 / 2.4 hits | 1,538 dps · 1.3s / 145s · 13.5 / 1.4 hits | 1,729 dps · 1.6s / 146s · 14.8 / 1.7 hits | 1,918 dps · 1.3s / 147s · 17.9 / 2 hits | 2,153 dps · 1.6s / 237s · 13.9 / 1 hits ⚠1-shot |
 | Slicey: twin daggers | 455 dps · 4.3s / 261s · 15.3 / 1.7 hits | 585 dps · 3s / 257s · 12.8 / 1.8 hits | 725 dps · 2.4s / 239s · 15 / 2.5 hits | 832 dps · 2.4s / 238s · 13.4 / 2 hits | 950 dps · 2.2s / 235s · 11.3 / 1.2 hits | 1,090 dps · 2.5s / 231s · 12.5 / 1.4 hits | 1,226 dps · 2s / 229s · 15.1 / 1.7 hits | 1,405 dps · 2.5s / 362s · 11.7 / 0.8 hits ⚠1-shot |
 | Quality: longsword + shield | 586 dps · 3.3s / 203s · 18.9 / 2.1 hits | 720 dps · 2.4s / 209s · 15.9 / 2.2 hits | 874 dps · 2s / 198s · 18.6 / 3.1 hits | 966 dps · 2.1s / 205s · 16.7 / 2.5 hits | 1,060 dps · 1.9s / 210s · 14.1 / 1.5 hits | 1,163 dps · 2.4s / 217s · 15.5 / 1.8 hits | 1,268 dps · 1.9s / 222s · 18.7 / 2.1 hits | 1,383 dps · 2.5s / 368s · 14.6 / 1 hits |
-| Bow (Slicey) | 364 dps · 5.4s / 327s · 15 / 1.7 hits | 459 dps · 3.8s / 328s · 12.7 / 1.7 hits | 563 dps · 3.1s / 307s · 14.8 / 2.5 hits | 639 dps · 3.1s / 310s · 13.3 / 2 hits | 719 dps · 2.9s / 310s · 11.2 / 1.2 hits | 814 dps · 3.4s / 309s · 12.3 / 1.4 hits | 907 dps · 2.7s / 310s · 14.9 / 1.7 hits | 1,026 dps · 3.4s / 496s · 11.6 / 0.8 hits ⚠1-shot |
+| Bow (Slicey) | 382 dps · 5.1s / 311s · 15 / 1.7 hits | 481 dps · 3.7s / 313s · 12.7 / 1.7 hits | 590 dps · 3s / 293s · 14.8 / 2.5 hits | 668 dps · 3s / 297s · 13.3 / 2 hits | 760 dps · 2.7s / 293s · 11.2 / 1.2 hits | 860 dps · 3.2s / 293s · 12.3 / 1.4 hits | 957 dps · 2.6s / 294s · 14.9 / 1.7 hits | 1,081 dps · 3.2s / 471s · 11.6 / 0.8 hits ⚠1-shot |
 | Crossbow (Bonk) | 371 dps · 5.3s / 320s · 18.2 / 2 hits | 468 dps · 3.8s / 322s · 15.3 / 2.1 hits | 573 dps · 3.1s / 302s · 17.9 / 3 hits | 661 dps · 3s / 300s · 15.9 / 2.4 hits | 743 dps · 2.8s / 300s · 13.5 / 1.4 hits | 841 dps · 3.3s / 300s · 14.8 / 1.7 hits | 936 dps · 2.6s / 300s · 17.9 / 2 hits | 1,058 dps · 3.3s / 481s · 13.9 / 1 hits ⚠1-shot |
 | Brain caster: staff spells | 478 dps · 4.1s / 249s · 15 / 1.7 hits | 591 dps · 3s / 255s · 12.7 / 1.7 hits | 720 dps · 2.4s / 240s · 14.8 / 2.5 hits | 802 dps · 2.5s / 247s · 13.3 / 2 hits | 887 dps · 2.3s / 251s · 11.2 / 1.2 hits | 985 dps · 2.8s / 256s · 12.3 / 1.4 hits | 1,088 dps · 2.3s / 258s · 14.9 / 1.7 hits | 1,207 dps · 2.9s / 422s · 11.6 / 0.8 hits ⚠1-shot |
 | Prayer caster: talisman spells | 258 dps · 7.6s / 460s · 15.3 / 1.7 hits | 323 dps · 5.5s / 467s · 12.8 / 1.8 hits | 397 dps · 4.4s / 436s · 15 / 2.5 hits | 447 dps · 4.4s / 444s · 13.4 / 2 hits | 499 dps · 4.1s / 447s · 11.3 / 1.2 hits | 560 dps · 4.9s / 450s · 12.5 / 1.4 hits | 625 dps · 3.9s / 450s · 15.1 / 1.7 hits | 700 dps · 5s / 727s · 11.7 / 0.8 hits ⚠1-shot |
@@ -453,7 +453,7 @@ Boss time-to-kill across the builds (seconds):
 | Bonk: greathammer (2H) | 2,550 dps · 2.2s / 237s · 18.3 / 2.1 hits | 2,982 dps · 1.8s / 238s · 15.1 / 2.1 hits | 3,492 dps · 1.7s / 238s · 16.8 / 2.8 hits | 3,757 dps · 1.8s / 239s · 14.2 / 2.2 hits | 4,160 dps · 1.8s / 235s · 11.2 / 1.2 hits | 4,476 dps · 2.3s / 236s · 12.2 / 1.4 hits | 4,699 dps · 2s / 237s · 14.6 / 1.7 hits | 4,924 dps · 2.6s / 325s · 10.8 / 0.7 hits ⚠1-shot |
 | Slicey: twin daggers | 1,691 dps · 3.3s / 357s · 15.3 / 1.7 hits | 1,999 dps · 2.6s / 355s · 12.6 / 1.7 hits | 2,371 dps · 2.5s / 351s · 13.9 / 2.3 hits | 2,569 dps · 2.7s / 349s · 11.8 / 1.8 hits | 2,839 dps · 2.7s / 345s · 9.4 / 1 hits ⚠1-shot | 3,080 dps · 3.3s / 343s · 10.2 / 1.2 hits | 3,237 dps · 2.9s / 344s · 12.2 / 1.4 hits | 3,396 dps · 3.8s / 471s · 9 / 0.6 hits ⚠1-shot |
 | Quality: longsword + shield | 1,620 dps · 3.4s / 372s · 19 / 2.1 hits | 1,864 dps · 2.8s / 380s · 15.8 / 2.2 hits | 2,154 dps · 2.8s / 386s · 17.5 / 2.9 hits | 2,313 dps · 3s / 388s · 14.8 / 2.3 hits | 2,506 dps · 3s / 390s · 11.8 / 1.2 hits | 2,728 dps · 3.7s / 388s · 12.6 / 1.4 hits | 2,958 dps · 3.2s / 376s · 15.2 / 1.7 hits | 3,245 dps · 4s / 492s · 11.2 / 0.8 hits ⚠1-shot |
-| Bow (Slicey) | 1,236 dps · 4.5s / 488s · 15.1 / 1.7 hits | 1,451 dps · 3.6s / 488s · 12.4 / 1.7 hits | 1,708 dps · 3.5s / 487s · 13.7 / 2.3 hits | 1,842 dps · 3.8s / 487s · 11.6 / 1.8 hits | 2,014 dps · 3.8s / 486s · 9.2 / 1 hits ⚠1-shot | 2,194 dps · 4.6s / 482s · 9.9 / 1.1 hits | 2,325 dps · 4.1s / 478s · 12.1 / 1.4 hits | 2,436 dps · 5.3s / 656s · 8.9 / 0.6 hits ⚠1-shot |
+| Bow (Slicey) | 1,285 dps · 4.3s / 470s · 15.1 / 1.7 hits | 1,507 dps · 3.5s / 470s · 12.4 / 1.7 hits | 1,771 dps · 3.4s / 470s · 13.7 / 2.3 hits | 1,909 dps · 3.6s / 470s · 11.6 / 1.8 hits | 2,085 dps · 3.6s / 469s · 9.2 / 1 hits ⚠1-shot | 2,249 dps · 4.5s / 470s · 10 / 1.1 hits | 2,360 dps · 4s / 471s · 12.1 / 1.4 hits | 2,494 dps · 5.2s / 641s · 8.9 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 1,258 dps · 4.4s / 480s · 18.3 / 2.1 hits | 1,476 dps · 3.6s / 480s · 15.1 / 2.1 hits | 1,735 dps · 3.4s / 480s · 16.8 / 2.8 hits | 1,871 dps · 3.7s / 479s · 14.2 / 2.2 hits | 2,044 dps · 3.7s / 479s · 11.2 / 1.2 hits | 2,205 dps · 4.6s / 479s · 12.2 / 1.4 hits | 2,315 dps · 4.1s / 480s · 14.6 / 1.7 hits | 2,426 dps · 5.3s / 659s · 10.8 / 0.7 hits ⚠1-shot |
 | Brain caster: staff spells | 1,425 dps · 3.9s / 423s · 15.1 / 1.7 hits | 1,653 dps · 3.2s / 429s · 12.4 / 1.7 hits | 1,918 dps · 3.1s / 434s · 13.7 / 2.3 hits | 2,027 dps · 3.4s / 442s · 11.8 / 1.8 hits | 2,121 dps · 3.6s / 461s · 9.4 / 1 hits ⚠1-shot | 2,215 dps · 4.6s / 477s · 10.2 / 1.2 hits | 2,309 dps · 4.1s / 482s · 12.1 / 1.4 hits | 2,404 dps · 5.4s / 665s · 9 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 838 dps · 6.7s / 720s · 15.3 / 1.7 hits | 978 dps · 5.4s / 725s · 12.6 / 1.7 hits | 1,144 dps · 5.2s / 728s · 13.9 / 2.3 hits | 1,224 dps · 5.7s / 732s · 12 / 1.8 hits | 1,285 dps · 5.9s / 762s · 9.5 / 1 hits | 1,345 dps · 7.5s / 786s · 10.3 / 1.2 hits | 1,406 dps · 6.7s / 791s · 12.2 / 1.4 hits | 1,467 dps · 8.8s / 1,090s · 9.1 / 0.6 hits ⚠1-shot |
@@ -470,9 +470,9 @@ Boss time-to-kill across the builds (seconds):
 | 3 | 434 | 238 | 728 | 3.1 |
 | 4 | 442 | 239 | 732 | 3.1 |
 | 5 | 461 | 235 | 762 | 3.2 |
-| 6 | 477 | 236 | 786 | 3.3 |
-| 7 | 478 | 237 | 791 | 3.3 |
-| 8 | 656 | 325 | 1,090 | 3.4 |
+| 6 | 470 | 236 | 786 | 3.3 |
+| 7 | 471 | 237 | 791 | 3.3 |
+| 8 | 641 | 325 | 1,090 | 3.4 |
 
 ### NG+3
 
@@ -481,7 +481,7 @@ Boss time-to-kill across the builds (seconds):
 | Bonk: greathammer (2H) | 5,464 dps · 2.3s / 246s · 21.8 / 2.5 hits | 6,050 dps · 1.8s / 244s · 17.1 / 2.3 hits | 6,648 dps · 1.7s / 246s · 18.4 / 3.1 hits | 6,904 dps · 1.8s / 241s · 15.3 / 2.3 hits | 7,184 dps · 1.9s / 236s · 11.6 / 1.2 hits | 7,444 dps · 2.3s / 232s · 12.2 / 1.4 hits | 7,727 dps · 2s / 228s · 13.8 / 1.6 hits | 8,014 dps · 2.5s / 308s · 9.8 / 0.7 hits ⚠1-shot |
 | Slicey: twin daggers | 3,769 dps · 3.3s / 357s · 18.3 / 2.1 hits | 4,190 dps · 2.6s / 352s · 14.4 / 2 hits | 4,606 dps · 2.5s / 355s · 15.4 / 2.6 hits | 4,786 dps · 2.6s / 348s · 12.8 / 2 hits | 4,984 dps · 2.7s / 340s · 9.8 / 1 hits | 5,181 dps · 3.3s / 334s · 10.3 / 1.2 hits | 5,383 dps · 2.8s / 327s · 11.7 / 1.3 hits | 5,587 dps · 3.6s / 441s · 8.3 / 0.6 hits ⚠1-shot |
 | Quality: longsword + shield | 3,747 dps · 3.3s / 359s · 22.6 / 2.6 hits | 4,271 dps · 2.6s / 345s · 18 / 2.5 hits | 4,872 dps · 2.4s / 336s · 19.1 / 3.2 hits | 5,246 dps · 2.4s / 318s · 15.9 / 2.4 hits | 5,603 dps · 2.4s / 302s · 12.1 / 1.3 hits | 6,055 dps · 2.8s / 286s · 12.6 / 1.4 hits | 6,517 dps · 2.3s / 270s · 14.5 / 1.7 hits | 6,975 dps · 2.9s / 353s · 10.2 / 0.7 hits ⚠1-shot |
-| Bow (Slicey) | 2,702 dps · 4.6s / 497s · 18 / 2 hits | 2,991 dps · 3.7s / 493s · 14.2 / 1.9 hits | 3,286 dps · 3.5s / 498s · 15.2 / 2.5 hits | 3,443 dps · 3.7s / 484s · 12.7 / 1.9 hits | 3,581 dps · 3.7s / 473s · 9.7 / 1 hits | 3,711 dps · 4.5s / 466s · 10.2 / 1.2 hits | 3,851 dps · 3.9s / 457s · 11.5 / 1.3 hits | 3,993 dps · 5s / 617s · 8.2 / 0.6 hits ⚠1-shot |
+| Bow (Slicey) | 2,767 dps · 4.5s / 486s · 18 / 2 hits | 3,062 dps · 3.6s / 482s · 14.2 / 1.9 hits | 3,364 dps · 3.4s / 487s · 15.2 / 2.5 hits | 3,493 dps · 3.6s / 477s · 12.7 / 1.9 hits | 3,632 dps · 3.7s / 466s · 9.7 / 1 hits | 3,763 dps · 4.5s / 460s · 10.2 / 1.2 hits | 3,904 dps · 3.9s / 451s · 11.5 / 1.3 hits | 4,047 dps · 5s / 609s · 8.2 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 2,723 dps · 4.5s / 494s · 21.8 / 2.5 hits | 3,015 dps · 3.6s / 489s · 17.1 / 2.3 hits | 3,313 dps · 3.5s / 494s · 18.4 / 3.1 hits | 3,441 dps · 3.7s / 484s · 15.3 / 2.3 hits | 3,580 dps · 3.7s / 473s · 11.6 / 1.2 hits | 3,709 dps · 4.5s / 466s · 12.2 / 1.4 hits | 3,851 dps · 3.9s / 457s · 13.8 / 1.6 hits | 3,993 dps · 5s / 617s · 9.8 / 0.7 hits ⚠1-shot |
 | Brain caster: staff spells | 2,658 dps · 4.6s / 506s · 18.3 / 2.1 hits | 2,925 dps · 3.7s / 504s · 14.2 / 1.9 hits | 3,204 dps · 3.6s / 511s · 15.2 / 2.5 hits | 3,317 dps · 3.8s / 502s · 12.7 / 1.9 hits | 3,430 dps · 3.9s / 494s · 9.7 / 1 hits | 3,543 dps · 4.8s / 488s · 10.2 / 1.2 hits | 3,656 dps · 4.2s / 481s · 11.7 / 1.3 hits | 3,770 dps · 5.3s / 654s · 8.3 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 1,625 dps · 7.6s / 827s · 18.5 / 2.1 hits | 1,797 dps · 6.1s / 821s · 14.4 / 2 hits | 1,972 dps · 5.9s / 830s · 15.4 / 2.6 hits | 2,054 dps · 6.2s / 811s · 12.8 / 2 hits | 2,129 dps · 6.3s / 796s · 9.8 / 1 hits | 2,204 dps · 7.6s / 785s · 10.3 / 1.2 hits | 2,279 dps · 6.7s / 772s · 11.8 / 1.4 hits | 2,355 dps · 8.5s / 1,047s · 8.4 / 0.6 hits ⚠1-shot |
@@ -493,14 +493,14 @@ Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 494 | 246 | 827 | 3.4 |
-| 2 | 489 | 244 | 821 | 3.4 |
-| 3 | 494 | 246 | 830 | 3.4 |
-| 4 | 484 | 241 | 811 | 3.4 |
-| 5 | 473 | 236 | 796 | 3.4 |
-| 6 | 466 | 232 | 785 | 3.4 |
-| 7 | 457 | 228 | 772 | 3.4 |
-| 8 | 617 | 308 | 1,047 | 3.4 |
+| 1 | 486 | 246 | 827 | 3.4 |
+| 2 | 482 | 244 | 821 | 3.4 |
+| 3 | 487 | 246 | 830 | 3.4 |
+| 4 | 477 | 241 | 811 | 3.4 |
+| 5 | 466 | 236 | 796 | 3.4 |
+| 6 | 460 | 232 | 785 | 3.4 |
+| 7 | 451 | 228 | 772 | 3.4 |
+| 8 | 609 | 308 | 1,047 | 3.4 |
 
 ### NG+4
 
@@ -509,7 +509,7 @@ Boss time-to-kill across the builds (seconds):
 | Bonk: greathammer (2H) | 8,722 dps · 2.2s / 237s · 23.9 / 2.7 hits | 9,487 dps · 1.8s / 241s · 18.4 / 2.5 hits | 10,257 dps · 1.7s / 246s · 19.3 / 3.2 hits | 10,599 dps · 1.9s / 246s · 15.8 / 2.4 hits | 10,914 dps · 1.9s / 244s · 11.9 / 1.3 hits | 11,291 dps · 2.4s / 242s · 12.3 / 1.4 hits | 11,770 dps · 2s / 238s · 13.8 / 1.6 hits | 12,127 dps · 2.6s / 326s · 9.7 / 0.7 hits ⚠1-shot |
 | Slicey: twin daggers | 6,084 dps · 3.2s / 339s · 20.1 / 2.3 hits | 6,639 dps · 2.6s / 344s · 15.5 / 2.1 hits | 7,181 dps · 2.5s / 351s · 16.3 / 2.7 hits | 7,427 dps · 2.7s / 351s · 13.4 / 2.1 hits | 7,650 dps · 2.7s / 347s · 10.1 / 1.1 hits | 7,900 dps · 3.4s / 346s · 10.5 / 1.2 hits | 8,151 dps · 2.9s / 344s · 12.1 / 1.4 hits | 8,429 dps · 3.8s / 469s · 8.5 / 0.6 hits ⚠1-shot |
 | Quality: longsword + shield | 7,827 dps · 2.5s / 264s · 25 / 2.8 hits | 8,769 dps · 2s / 261s · 19.3 / 2.6 hits | 9,757 dps · 1.8s / 259s · 20.1 / 3.4 hits | 10,296 dps · 1.9s / 253s · 16.6 / 2.5 hits | 10,896 dps · 1.9s / 244s · 12.5 / 1.3 hits | 11,545 dps · 2.3s / 237s · 13 / 1.5 hits | 12,215 dps · 1.9s / 230s · 14.9 / 1.7 hits | 13,029 dps · 2.4s / 304s · 10.5 / 0.7 hits ⚠1-shot |
-| Bow (Slicey) | 4,345 dps · 4.4s / 475s · 19.9 / 2.3 hits | 4,725 dps · 3.7s / 484s · 15.4 / 2.1 hits | 5,108 dps · 3.5s / 494s · 16.2 / 2.7 hits | 5,277 dps · 3.8s / 494s · 13.2 / 2 hits | 5,433 dps · 3.8s / 489s · 10 / 1.1 hits | 5,604 dps · 4.8s / 488s · 10.4 / 1.2 hits | 5,777 dps · 4.1s / 486s · 12 / 1.4 hits | 5,965 dps · 5.4s / 663s · 8.5 / 0.6 hits ⚠1-shot |
+| Bow (Slicey) | 4,404 dps · 4.4s / 469s · 19.9 / 2.3 hits | 4,788 dps · 3.6s / 477s · 15.4 / 2.1 hits | 5,176 dps · 3.4s / 488s · 16.2 / 2.7 hits | 5,346 dps · 3.7s / 487s · 13.2 / 2 hits | 5,503 dps · 3.8s / 483s · 10 / 1.1 hits | 5,676 dps · 4.7s / 482s · 10.4 / 1.2 hits | 5,889 dps · 4s / 477s · 12 / 1.4 hits | 6,080 dps · 5.2s / 651s · 8.5 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 4,346 dps · 4.4s / 475s · 23.9 / 2.7 hits | 4,727 dps · 3.7s / 484s · 18.4 / 2.5 hits | 5,111 dps · 3.5s / 494s · 19.3 / 3.2 hits | 5,281 dps · 3.8s / 493s · 15.8 / 2.4 hits | 5,437 dps · 3.8s / 489s · 11.9 / 1.3 hits | 5,625 dps · 4.7s / 487s · 12.3 / 1.4 hits | 5,799 dps · 4.1s / 484s · 13.8 / 1.6 hits | 5,974 dps · 5.3s / 662s · 9.7 / 0.7 hits ⚠1-shot |
 | Brain caster: staff spells | 4,093 dps · 4.7s / 504s · 19.9 / 2.3 hits | 4,427 dps · 3.9s / 516s · 15.4 / 2.1 hits | 4,775 dps · 3.7s / 529s · 16.2 / 2.7 hits | 4,907 dps · 4.1s / 531s · 13.2 / 2 hits | 5,039 dps · 4.1s / 528s · 10 / 1.1 hits | 5,171 dps · 5.2s / 529s · 10.5 / 1.2 hits | 5,307 dps · 4.4s / 529s · 12 / 1.4 hits | 5,442 dps · 5.9s / 727s · 8.5 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 2,567 dps · 7.5s / 804s · 20.1 / 2.3 hits | 2,783 dps · 6.2s / 821s · 15.5 / 2.1 hits | 3,006 dps · 5.9s / 840s · 16.3 / 2.7 hits | 3,096 dps · 6.5s / 841s · 13.4 / 2.1 hits | 3,185 dps · 6.5s / 835s · 10.1 / 1.1 hits | 3,276 dps · 8.2s / 835s · 10.6 / 1.2 hits | 3,384 dps · 6.9s / 829s · 12.1 / 1.4 hits | 3,483 dps · 9.2s / 1,136s · 8.5 / 0.6 hits ⚠1-shot |
@@ -521,14 +521,14 @@ Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 475 | 237 | 804 | 3.4 |
-| 2 | 484 | 241 | 821 | 3.4 |
-| 3 | 494 | 246 | 840 | 3.4 |
-| 4 | 493 | 246 | 841 | 3.4 |
-| 5 | 489 | 244 | 835 | 3.4 |
-| 6 | 487 | 237 | 835 | 3.5 |
-| 7 | 484 | 230 | 829 | 3.6 |
-| 8 | 662 | 304 | 1,136 | 3.7 |
+| 1 | 469 | 237 | 804 | 3.4 |
+| 2 | 477 | 241 | 821 | 3.4 |
+| 3 | 488 | 246 | 840 | 3.4 |
+| 4 | 487 | 246 | 841 | 3.4 |
+| 5 | 483 | 244 | 835 | 3.4 |
+| 6 | 482 | 237 | 835 | 3.5 |
+| 7 | 477 | 230 | 829 | 3.6 |
+| 8 | 651 | 304 | 1,136 | 3.7 |
 
 ### NG+5
 
@@ -537,7 +537,7 @@ Boss time-to-kill across the builds (seconds):
 | Bonk: greathammer (2H) | 12,454 dps · 1.9s / 203s · 26.8 / 3.1 hits | 12,815 dps · 1.7s / 222s · 19.6 / 2.7 hits | 13,179 dps · 1.7s / 241s · 19.5 / 3.3 hits | 13,511 dps · 1.9s / 244s · 16 / 2.5 hits | 13,879 dps · 1.9s / 242s · 12 / 1.3 hits | 14,214 dps · 2.3s / 243s · 12.5 / 1.4 hits | 14,587 dps · 2s / 242s · 14.3 / 1.7 hits | 14,961 dps · 2.7s / 333s · 10 / 0.7 hits ⚠1-shot |
 | Slicey: twin daggers | 8,659 dps · 2.7s / 293s · 23.5 / 2.7 hits | 8,916 dps · 2.4s / 320s · 17.2 / 2.4 hits | 9,197 dps · 2.5s / 346s · 17.2 / 2.9 hits | 9,432 dps · 2.7s / 349s · 14.1 / 2.2 hits | 9,695 dps · 2.7s / 347s · 10.5 / 1.1 hits | 9,933 dps · 3.3s / 347s · 11 / 1.2 hits | 10,199 dps · 2.9s / 346s · 12.6 / 1.5 hits | 10,468 dps · 3.8s / 475s · 8.7 / 0.6 hits ⚠1-shot |
 | Quality: longsword + shield | 13,746 dps · 1.7s / 184s · 29 / 3.3 hits | 14,535 dps · 1.5s / 196s · 21.2 / 2.9 hits | 15,297 dps · 1.5s / 208s · 21.1 / 3.5 hits | 16,042 dps · 1.6s / 205s · 17.3 / 2.7 hits | 16,755 dps · 1.6s / 201s · 13 / 1.4 hits | 17,295 dps · 1.9s / 199s · 13.5 / 1.5 hits | 17,787 dps · 1.7s / 198s · 15.4 / 1.8 hits | 18,198 dps · 2.2s / 273s · 10.8 / 0.7 hits ⚠1-shot |
-| Bow (Slicey) | 6,125 dps · 3.8s / 414s · 23.5 / 2.7 hits | 6,344 dps · 3.4s / 449s · 17.2 / 2.4 hits | 6,522 dps · 3.5s / 488s · 17.2 / 2.9 hits | 6,686 dps · 3.8s / 492s · 14.1 / 2.2 hits | 6,866 dps · 3.8s / 490s · 10.5 / 1.1 hits | 7,031 dps · 4.7s / 490s · 11 / 1.2 hits | 7,213 dps · 4.1s / 489s · 12.6 / 1.5 hits | 7,397 dps · 5.4s / 673s · 8.7 / 0.6 hits ⚠1-shot |
+| Bow (Slicey) | 6,242 dps · 3.7s / 406s · 23.5 / 2.7 hits | 6,420 dps · 3.4s / 444s · 17.2 / 2.4 hits | 6,600 dps · 3.4s / 482s · 17.2 / 2.9 hits | 6,765 dps · 3.8s / 487s · 14.1 / 2.2 hits | 6,946 dps · 3.8s / 484s · 10.5 / 1.1 hits | 7,112 dps · 4.6s / 485s · 11 / 1.2 hits | 7,295 dps · 4.1s / 484s · 12.6 / 1.5 hits | 7,480 dps · 5.3s / 665s · 8.7 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 6,134 dps · 3.8s / 413s · 26.8 / 3.1 hits | 6,312 dps · 3.4s / 452s · 19.6 / 2.7 hits | 6,490 dps · 3.5s / 490s · 19.5 / 3.3 hits | 6,712 dps · 3.8s / 490s · 16 / 2.5 hits | 6,894 dps · 3.8s / 488s · 12 / 1.3 hits | 7,061 dps · 4.7s / 488s · 12.5 / 1.4 hits | 7,245 dps · 4.1s / 487s · 14.3 / 1.7 hits | 7,431 dps · 5.4s / 670s · 10 / 0.7 hits ⚠1-shot |
 | Brain caster: staff spells | 5,575 dps · 4.2s / 454s · 23.5 / 2.7 hits | 5,712 dps · 3.8s / 499s · 17.2 / 2.4 hits | 5,848 dps · 3.9s / 544s · 17.2 / 2.9 hits | 5,979 dps · 4.2s / 550s · 14.1 / 2.2 hits | 6,112 dps · 4.3s / 550s · 10.5 / 1.1 hits | 6,246 dps · 5.3s / 552s · 11 / 1.2 hits | 6,383 dps · 4.7s / 553s · 12.6 / 1.5 hits | 6,516 dps · 6.1s / 764s · 8.7 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 3,575 dps · 6.5s / 709s · 23.5 / 2.7 hits | 3,675 dps · 5.9s / 776s · 17.2 / 2.4 hits | 3,776 dps · 6s / 843s · 17.2 / 2.9 hits | 3,861 dps · 6.6s / 853s · 14.1 / 2.2 hits | 3,954 dps · 6.6s / 851s · 10.5 / 1.1 hits | 4,048 dps · 8.1s / 852s · 11 / 1.2 hits | 4,150 dps · 7.2s / 850s · 12.6 / 1.5 hits | 4,245 dps · 9.4s / 1,172s · 8.7 / 0.6 hits ⚠1-shot |
@@ -549,14 +549,14 @@ Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 413 | 184 | 709 | 3.8 |
-| 2 | 449 | 196 | 776 | 4 |
-| 3 | 488 | 208 | 843 | 4.1 |
-| 4 | 490 | 205 | 853 | 4.2 |
-| 5 | 488 | 201 | 851 | 4.2 |
-| 6 | 488 | 199 | 852 | 4.3 |
-| 7 | 487 | 198 | 850 | 4.3 |
-| 8 | 670 | 273 | 1,172 | 4.3 |
+| 1 | 406 | 184 | 709 | 3.8 |
+| 2 | 444 | 196 | 776 | 4 |
+| 3 | 482 | 208 | 843 | 4.1 |
+| 4 | 487 | 205 | 853 | 4.2 |
+| 5 | 484 | 201 | 851 | 4.2 |
+| 6 | 485 | 199 | 852 | 4.3 |
+| 7 | 484 | 198 | 850 | 4.3 |
+| 8 | 665 | 273 | 1,172 | 4.3 |
 
 ### NG+6
 
@@ -565,7 +565,7 @@ Boss time-to-kill across the builds (seconds):
 | Bonk: greathammer (2H) | 15,374 dps · 1.8s / 202s · 27.9 / 3.2 hits | 15,717 dps · 1.7s / 219s · 20.3 / 2.8 hits | 16,099 dps · 1.7s / 240s · 20.2 / 3.4 hits | 16,482 dps · 1.9s / 241s · 16.5 / 2.5 hits | 16,830 dps · 1.9s / 241s · 12.3 / 1.3 hits | 17,256 dps · 2.3s / 242s · 12.8 / 1.5 hits | 17,607 dps · 2s / 242s · 14.6 / 1.7 hits | 17,999 dps · 2.7s / 334s · 10.1 / 0.7 hits ⚠1-shot |
 | Slicey: twin daggers | 10,767 dps · 2.6s / 288s · 24.5 / 2.8 hits | 11,010 dps · 2.4s / 313s · 17.9 / 2.5 hits | 11,309 dps · 2.4s / 341s · 17.8 / 3 hits | 11,585 dps · 2.7s / 343s · 14.5 / 2.2 hits | 11,833 dps · 2.7s / 343s · 10.8 / 1.1 hits | 12,143 dps · 3.3s / 344s · 11.3 / 1.3 hits | 12,363 dps · 2.9s / 345s · 12.8 / 1.5 hits | 12,583 dps · 3.8s / 478s · 8.9 / 0.6 hits ⚠1-shot |
 | Quality: longsword + shield | 18,696 dps · 1.5s / 166s · 30.2 / 3.4 hits | 19,155 dps · 1.4s / 180s · 22 / 3 hits | 19,672 dps · 1.4s / 196s · 21.9 / 3.7 hits | 20,137 dps · 1.6s / 197s · 17.9 / 2.8 hits | 20,515 dps · 1.5s / 198s · 13.3 / 1.4 hits | 21,029 dps · 1.9s / 199s · 13.8 / 1.6 hits | 21,455 dps · 1.7s / 199s · 15.8 / 1.8 hits | 21,837 dps · 2.2s / 275s · 10.9 / 0.8 hits ⚠1-shot |
-| Bow (Slicey) | 7,598 dps · 3.7s / 408s · 24.5 / 2.8 hits | 7,766 dps · 3.5s / 444s · 17.9 / 2.5 hits | 7,953 dps · 3.4s / 486s · 17.8 / 3 hits | 8,140 dps · 3.8s / 488s · 14.5 / 2.2 hits | 8,311 dps · 3.8s / 489s · 10.8 / 1.1 hits | 8,518 dps · 4.7s / 491s · 11.3 / 1.3 hits | 8,690 dps · 4.1s / 491s · 12.8 / 1.5 hits | 8,881 dps · 5.5s / 677s · 8.9 / 0.6 hits ⚠1-shot |
+| Bow (Slicey) | 7,681 dps · 3.6s / 403s · 24.5 / 2.8 hits | 7,851 dps · 3.4s / 439s · 17.9 / 2.5 hits | 8,038 dps · 3.4s / 480s · 17.8 / 3 hits | 8,226 dps · 3.8s / 483s · 14.5 / 2.2 hits | 8,398 dps · 3.7s / 484s · 10.8 / 1.1 hits | 8,606 dps · 4.6s / 486s · 11.3 / 1.3 hits | 8,779 dps · 4s / 486s · 12.8 / 1.5 hits | 8,953 dps · 5.4s / 672s · 8.9 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 7,635 dps · 3.7s / 406s · 27.9 / 3.2 hits | 7,805 dps · 3.4s / 442s · 20.3 / 2.8 hits | 7,994 dps · 3.4s / 483s · 20.2 / 3.4 hits | 8,184 dps · 3.8s / 486s · 16.5 / 2.5 hits | 8,357 dps · 3.8s / 486s · 12.3 / 1.3 hits | 8,568 dps · 4.7s / 488s · 12.8 / 1.5 hits | 8,742 dps · 4.1s / 488s · 14.6 / 1.7 hits | 8,936 dps · 5.4s / 673s · 10.1 / 0.7 hits ⚠1-shot |
 | Brain caster: staff spells | 6,657 dps · 4.2s / 466s · 24.5 / 2.8 hits | 6,791 dps · 4s / 508s · 17.9 / 2.5 hits | 6,925 dps · 3.9s / 558s · 17.8 / 3 hits | 7,059 dps · 4.4s / 563s · 14.5 / 2.2 hits | 7,194 dps · 4.4s / 565s · 10.8 / 1.1 hits | 7,332 dps · 5.5s / 570s · 11.3 / 1.3 hits | 7,467 dps · 4.8s / 572s · 12.8 / 1.5 hits | 7,607 dps · 6.4s / 790s · 8.9 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 4,357 dps · 6.4s / 711s · 24.5 / 2.8 hits | 4,452 dps · 6s / 774s · 17.9 / 2.5 hits | 4,548 dps · 6s / 849s · 17.8 / 3 hits | 4,644 dps · 6.7s / 856s · 14.5 / 2.2 hits | 4,740 dps · 6.6s / 857s · 10.8 / 1.1 hits | 4,846 dps · 8.3s / 863s · 11.3 / 1.3 hits | 4,943 dps · 7.2s / 863s · 12.8 / 1.5 hits | 5,064 dps · 9.6s / 1,187s · 8.9 / 0.6 hits ⚠1-shot |
@@ -577,14 +577,14 @@ Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 406 | 166 | 711 | 4.3 |
-| 2 | 442 | 180 | 774 | 4.3 |
-| 3 | 483 | 196 | 849 | 4.3 |
-| 4 | 486 | 197 | 856 | 4.3 |
-| 5 | 486 | 198 | 857 | 4.3 |
-| 6 | 488 | 199 | 863 | 4.3 |
-| 7 | 488 | 199 | 863 | 4.3 |
-| 8 | 673 | 275 | 1,187 | 4.3 |
+| 1 | 403 | 166 | 711 | 4.3 |
+| 2 | 439 | 180 | 774 | 4.3 |
+| 3 | 480 | 196 | 849 | 4.3 |
+| 4 | 483 | 197 | 856 | 4.3 |
+| 5 | 484 | 198 | 857 | 4.3 |
+| 6 | 486 | 199 | 863 | 4.3 |
+| 7 | 486 | 199 | 863 | 4.3 |
+| 8 | 672 | 275 | 1,187 | 4.3 |
 
 ### NG+7
 
@@ -593,7 +593,7 @@ Boss time-to-kill across the builds (seconds):
 | Bonk: greathammer (2H) | 18,314 dps · 1.8s / 202s · 29.6 / 3.4 hits | 18,628 dps · 1.7s / 221s · 21.6 / 3 hits | 18,943 dps · 1.7s / 241s · 21.4 / 3.6 hits | 19,257 dps · 1.9s / 244s · 17.4 / 2.7 hits | 19,572 dps · 1.9s / 244s · 13 / 1.4 hits | 19,886 dps · 2.4s / 246s · 13.4 / 1.5 hits | 20,201 dps · 2.1s / 246s · 15.3 / 1.8 hits | 20,515 dps · 2.7s / 340s · 10.6 / 0.7 hits ⚠1-shot |
 | Slicey: twin daggers | 12,803 dps · 2.6s / 288s · 26 / 3 hits | 13,022 dps · 2.4s / 316s · 18.9 / 2.6 hits | 13,242 dps · 2.4s / 345s · 18.8 / 3.1 hits | 13,462 dps · 2.7s / 348s · 15.3 / 2.4 hits | 13,682 dps · 2.7s / 349s · 11.4 / 1.2 hits | 13,902 dps · 3.4s / 352s · 11.8 / 1.3 hits | 14,122 dps · 3s / 353s · 13.4 / 1.6 hits | 14,342 dps · 3.9s / 487s · 9.3 / 0.6 hits ⚠1-shot |
 | Quality: longsword + shield | 22,219 dps · 1.5s / 166s · 32 / 3.7 hits | 22,600 dps · 1.4s / 182s · 23.3 / 3.2 hits | 22,982 dps · 1.4s / 199s · 23.1 / 3.9 hits | 23,364 dps · 1.5s / 201s · 18.8 / 2.9 hits | 23,745 dps · 1.6s / 201s · 14 / 1.5 hits | 24,127 dps · 2s / 203s · 14.5 / 1.6 hits | 24,508 dps · 1.7s / 203s · 16.6 / 1.9 hits | 24,890 dps · 2.3s / 281s · 11.4 / 0.8 hits ⚠1-shot |
-| Bow (Slicey) | 9,091 dps · 3.7s / 406s · 26 / 3 hits | 9,266 dps · 3.4s / 444s · 18.9 / 2.6 hits | 9,423 dps · 3.4s / 485s · 18.8 / 3.1 hits | 9,579 dps · 3.8s / 490s · 15.3 / 2.4 hits | 9,735 dps · 3.8s / 491s · 11.4 / 1.2 hits | 9,892 dps · 4.8s / 494s · 11.8 / 1.3 hits | 10,048 dps · 4.2s / 495s · 13.4 / 1.6 hits | 10,205 dps · 5.5s / 684s · 9.3 / 0.6 hits ⚠1-shot |
+| Bow (Slicey) | 9,110 dps · 3.7s / 405s · 26 / 3 hits | 9,266 dps · 3.4s / 444s · 18.9 / 2.6 hits | 9,423 dps · 3.4s / 485s · 18.8 / 3.1 hits | 9,579 dps · 3.8s / 490s · 15.3 / 2.4 hits | 9,735 dps · 3.8s / 491s · 11.4 / 1.2 hits | 9,892 dps · 4.8s / 494s · 11.8 / 1.3 hits | 10,048 dps · 4.2s / 495s · 13.4 / 1.6 hits | 10,205 dps · 5.5s / 684s · 9.3 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 9,092 dps · 3.7s / 406s · 29.6 / 3.4 hits | 9,248 dps · 3.4s / 444s · 21.6 / 3 hits | 9,404 dps · 3.4s / 486s · 21.4 / 3.6 hits | 9,560 dps · 3.8s / 491s · 17.4 / 2.7 hits | 9,717 dps · 3.8s / 492s · 13 / 1.4 hits | 9,873 dps · 4.8s / 495s · 13.4 / 1.5 hits | 10,029 dps · 4.2s / 496s · 15.3 / 1.8 hits | 10,185 dps · 5.5s / 686s · 10.6 / 0.7 hits ⚠1-shot |
 | Brain caster: staff spells | 7,745 dps · 4.3s / 476s · 26 / 3 hits | 7,881 dps · 4s / 522s · 18.9 / 2.6 hits | 8,016 dps · 4s / 570s · 18.8 / 3.1 hits | 8,155 dps · 4.4s / 575s · 15.3 / 2.4 hits | 8,290 dps · 4.5s / 576s · 11.4 / 1.2 hits | 8,426 dps · 5.6s / 580s · 11.8 / 1.3 hits | 8,566 dps · 4.9s / 581s · 13.4 / 1.6 hits | 8,705 dps · 6.4s / 802s · 9.3 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 5,172 dps · 6.4s / 714s · 26 / 3 hits | 5,270 dps · 5.9s / 780s · 18.9 / 2.6 hits | 5,369 dps · 6s / 852s · 18.8 / 3.1 hits | 5,478 dps · 6.6s / 856s · 15.3 / 2.4 hits | 5,577 dps · 6.7s / 857s · 11.4 / 1.2 hits | 5,677 dps · 8.3s / 861s · 11.8 / 1.3 hits | 5,787 dps · 7.3s / 860s · 13.4 / 1.6 hits | 5,898 dps · 9.5s / 1,184s · 9.3 / 0.6 hits ⚠1-shot |
@@ -605,7 +605,7 @@ Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 406 | 166 | 714 | 4.3 |
+| 1 | 405 | 166 | 714 | 4.3 |
 | 2 | 444 | 182 | 780 | 4.3 |
 | 3 | 485 | 199 | 852 | 4.3 |
 | 4 | 490 | 201 | 856 | 4.3 |

@@ -7,7 +7,7 @@ import { lockButton } from '../itemLock';
 import { PROF_CLASSES, PROF_MAX_LEVEL, perkPoints, profLevel } from '../../data/proficiency';
 import { activeClasses, profXp } from '../../game/items/proficiency';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
-import { CLASSES } from '../../data/classes';
+import { CLASSES, isPrimaryStat, isSecondaryStat } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
 import { BAG_SIZE, allItems, equip, isEitherHandItem, placeLabel, toggleItemLock, unequip, unsocketGem, type EquipSlot, slotItem } from '../../game/items/inventory';
 import { STAT_CAP, levelCost } from '../../game/combat/formulas';
@@ -172,7 +172,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     const d = host.derived();
     const kv = (k: string, v: string | number | Node, cls = ''): HTMLElement[] => [h('div', { class: 'k' }, k), h('div', { class: `mono ${cls}` }, v instanceof Node ? v : String(v))];
     const head = (t: string): HTMLElement => h('div', { class: 'kv-head' }, t);
-    const pTag = (k: StatId): string => (CLASSES[c.classId]?.primary === k ? ' (P)' : CLASSES[c.classId]?.secondary === k ? ' (S)' : '');
+    const pTag = (k: StatId): string => (isPrimaryStat(c.classId, k) ? ' (P)' : isSecondaryStat(c.classId, k) ? ' (S)' : '');
     return h(
       'div',
       { class: 'col', style: 'width:250px;gap:6px' },

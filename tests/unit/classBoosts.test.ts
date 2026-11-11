@@ -10,14 +10,17 @@ import type { ClassId } from '../../src/game/types';
 
 describe('primary and secondary stats (D184)', () => {
   it('the classes have the asked-for pairs', () => {
-    const want: Record<ClassId, [string, string]> = {
+    const want: Partial<Record<ClassId, [string, string]>> = {
       knight: ['hp', 'endurance'], brute: ['bonk', 'hp'], duelist: ['slicey', 'endurance'], scholar: ['brain', 'slicey'], cleric: ['prayer', 'bonk'],
-      spearman: ['bonk', 'brain'], hunter: ['slicey', 'brain'], occultist: ['prayer', 'slicey'], berserker: ['slicey', 'bonk'], nobody: ['bonk', 'slicey'],
+      spearman: ['bonk', 'brain'], hunter: ['slicey', 'bonk'], occultist: ['prayer', 'slicey'], berserker: ['bonk', 'slicey'],
     };
     for (const [id, [p, s]] of Object.entries(want)) {
       expect(CLASSES[id as ClassId].primary, id).toBe(p);
       expect(CLASSES[id as ClassId].secondary, id).toBe(s);
     }
+    // D334: the Nobody has no primary and every stat secondary (+15% each)
+    expect(CLASSES.nobody.primary).toBeNull();
+    expect(Object.values(statBoosts('nobody'))).toEqual([1.15, 1.15, 1.15, 1.15, 1.15, 1.15]);
   });
 
   it('a primary stat gives 25% more from its points, a secondary 15% (the base is untouched)', () => {
@@ -38,14 +41,13 @@ describe('primary and secondary stats (D184)', () => {
     expect(spellSkill(d, 'brain')).toBeGreaterThan(plain);
   });
 
-  it('the Knight and the Hunter have their new stats; the Hunter carries a bow, a talisman and a staff with two spells each', () => {
+  it('the Knight and the Hunter have their new stats; the Hunter carries a halberd, its bow and whip in the bag (D334)', () => {
     expect(CLASSES.knight.stats).toEqual({ hp: 10, endurance: 10, bonk: 12, slicey: 9, brain: 3, prayer: 4 });
-    expect(CLASSES.hunter.stats).toEqual({ hp: 7, endurance: 4, bonk: 5, slicey: 12, brain: 9, prayer: 9 });
+    expect(CLASSES.hunter.stats).toEqual({ hp: 7, endurance: 9, bonk: 10, slicey: 14, brain: 5, prayer: 3 });
     const h = newCharacter('hunter', 'H', 'h', new Rng(1));
-    expect(h.equipment.main?.baseId).toBe('bow');
-    expect(h.equipment.off?.baseId).toBe('wooden_talisman');
-    expect(h.altMain?.baseId).toBe('apprentice_staff');
-    expect(h.spellLoadout.brain.filter(Boolean).length).toBe(2);
-    expect(h.spellLoadout.prayer.filter(Boolean).length).toBe(2);
+    expect(h.equipment.main?.baseId).toBe('halberd');
+    expect(h.equipment.off).toBeNull();
+    expect(h.bag.map((i) => i.baseId)).toEqual(expect.arrayContaining(['bow', 'whip']));
+    expect(h.knownSpells).toEqual([]);
   });
 });
