@@ -28,6 +28,7 @@ describe('scaling variants (D319)', () => {
     for (const [id, list] of Object.entries(WEAPON_VARIANTS)) {
       const base = total(WEAPONS[id]!.grades);
       for (const v of list) {
+        if (v.upgrade) continue; // D328: an owner-asked upgrade (the B / A Keen Longsword)
         const t = total(v.grades);
         expect(Math.abs(t - base), `${id} ${v.id}`).toBeLessThanOrEqual(0.31);
         expect(t - base, `${id} ${v.id}`).toBeLessThanOrEqual(0.1 + 1e-9);
@@ -184,5 +185,23 @@ describe('movesets (D320)', () => {
     for (const e of en) expect(hits.get(e.id) ?? 0, `foe at ${e.x}`).toBeGreaterThanOrEqual(2);
     // and the ring came home
     expect([...w.entities.values()].some((e) => e.type === 'projectile' && !e.removed && e.pr?.ownerId === p.id)).toBe(false);
+  });
+});
+
+describe('D328 weapon tuning', () => {
+  it('Twin Axes keep equal Bonk and Slicey requirements at every item level', () => {
+    for (const ilvl of [1, 5, 8, 20]) {
+      const r = itemRequirements(makeItem('twin_axes', 'common', ilvl));
+      expect(r.bonk, `ilvl ${ilvl}`).toBe(r.slicey);
+    }
+    // a longsword (also 9 / 9) still raises only one
+    const l = itemRequirements(makeItem('longsword', 'common', 8));
+    expect(l.bonk).not.toBe(l.slicey);
+  });
+
+  it('a Keen Longsword scales B Bonk / A Slicey', () => {
+    const it0 = makeItem('longsword', 'rare', 3);
+    it0.variant = 'keen';
+    expect(weaponOf(it0)!.grades).toEqual({ bonk: 'B', slicey: 'A' });
   });
 });

@@ -53,8 +53,10 @@ export function itemRequirements(item: Pick<Item, 'baseId' | 'ilvl' | 'variant'>
   if (w || s) {
     const req = (w ?? s)!.req;
     const bonkPrimary = req.bonk >= req.slicey;
-    r.bonk = req.bonk > 0 ? reqAtIlvl(req.bonk, item.ilvl, bonkPrimary) : 0;
-    r.slicey = req.slicey > 0 ? reqAtIlvl(req.slicey, item.ilvl, !bonkPrimary) : 0;
+    // D328: a weapon with even requirements (Twin Axes) raises both with item level
+    const even = !!w?.reqEven;
+    r.bonk = req.bonk > 0 ? reqAtIlvl(req.bonk, item.ilvl, bonkPrimary || even) : 0;
+    r.slicey = req.slicey > 0 ? reqAtIlvl(req.slicey, item.ilvl, !bonkPrimary || even) : 0;
     // hybrid weapons (D80): the Brain / Prayer requirement stays at its base value like a secondary stat
     if (w?.req.brain) r.brain = w.req.brain;
     if (w?.req.prayer) r.prayer = w.req.prayer;
