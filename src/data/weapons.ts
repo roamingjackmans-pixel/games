@@ -124,6 +124,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     weight: 1.5,
     grades: { bonk: '-', slicey: 'S' },
     req: { bonk: 0, slicey: 14 },
+    scalingBoost: 1.25, // D331
     speedClass: 'veryfast',
     combo: [sw(115, 62, 115, 0.45, arc(80, 70), 10, 'slash'), sw(115, 62, 115, 0.45, arc(80, 70), 10, 'backslash'), sw(115, 62, 115, 0.45, arc(80, 70), 10, 'slash'), sw(115, 62, 115, 0.45, arc(80, 70), 10, 'backslash'), sw(131, 85, 146, 0.54, spin(75), 8, 'spin'), sw(131, 69, 162, 0.68, thrust(30, 105), 16, 'thrust')],
     base1: 26,
@@ -161,6 +162,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     weight: 5.5,
     grades: { bonk: 'D', slicey: 'A' },
     req: { bonk: 7, slicey: 12 },
+    scalingBoost: 1.25, // D331
     speedClass: 'fast',
     combo: [sw(200, 87, 191, 0.84, arc(120, 110), 14, 'slash'), sw(200, 87, 191, 0.84, arc(120, 110), 14, 'backslash'), sw(200, 78, 191, 0.84, thrust(30, 130), 16, 'thrust'), sw(226, 122, 226, 0.93, spin(105), 12, 'spin'), sw(296, 96, 296, 1.21, arc(170, 125), 18, 'slash')],
     base1: 34,
@@ -216,6 +218,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     weight: 6,
     grades: { bonk: 'B', slicey: 'B' },
     req: { bonk: 9, slicey: 9 },
+    scalingBoost: 1.25, // D331
     speedClass: 'medium',
     combo: [sw(261, 96, 243, 1, arc(110, 105), 14, 'slash'), sw(261, 96, 243, 1, arc(110, 105), 14, 'backslash'), sw(261, 96, 243, 1, thrust(32, 140), 16, 'thrust'), sw(365, 104, 348, 1.35, slam(55, 90), 20, 'overhead')],
     base1: 38,

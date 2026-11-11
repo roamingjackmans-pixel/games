@@ -205,3 +205,16 @@ describe('D328 weapon tuning', () => {
     expect(weaponOf(it0)!.grades).toEqual({ bonk: 'B', slicey: 'A' });
   });
 });
+
+describe('scaling boost (D331)', () => {
+  it('Longsword, Katana and Twin Daggers get 25% more from their scaling; others as their grades give', async () => {
+    const { weaponScaling, scalingMult } = await import('../../src/game/combat/formulas');
+    const st = { bonk: 40, slicey: 40, brain: 10, prayer: 10 };
+    for (const id of ['longsword', 'katana', 'twin_daggers']) {
+      const d = WEAPONS[id]!;
+      expect(weaponScaling(d, st, false) - 1, id).toBeCloseTo((scalingMult(d.grades, st, false) - 1) * 1.25, 9);
+    }
+    const r = WEAPONS.rapier!;
+    expect(weaponScaling(r, st, false)).toBeCloseTo(scalingMult(r.grades, st, false), 9);
+  });
+});

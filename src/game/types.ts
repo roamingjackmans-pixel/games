@@ -629,6 +629,8 @@ export interface WeaponDef {
   twoHandOnly?: boolean;
   /** may be held in either hand, like a staff or talisman (D291): in the off hand it shoots on the block button */
   eitherHand?: boolean;
+  /** how much more the weapon gets from its scaling than its grades alone give (D331: ×1.25 Longsword, Katana, Twin Daggers) */
+  scalingBoost?: number;
   /** a big Bonk weapon (D329): no scaling variant needs less Bonk than this */
   bonkFloor?: number;
   /** both requirements rise with item level, so they stay equal (D328: Twin Axes); else only the higher one does */
