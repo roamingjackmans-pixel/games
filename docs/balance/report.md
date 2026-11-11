@@ -17,13 +17,14 @@ Written by `npm run balance:report` (tests/sim/report.sim.ts) from the live data
 11. **Weapon skills** (severity 4.1): Greathammer's skills deal 273 damage per second of cooldown, 2.04× the median weapon's (134). *Suggested:* Lower the skill multipliers or lengthen the cooldowns.
 12. **Enemy curve** (severity 3.8): First playthrough: zone 8 room enemies hit for 100 on average, below zone 7's 108. *Suggested:* Make the per-zone damage table climb (zoneDmgFactor / NG_ZONE_ENEMY_DMG).
 13. **Weapons** (severity 3.7): Chakrams: 104 sustained light-attack DPS, 0.67× the median weapon (155) at equal fitting stats. *Suggested:* Raise its base damage / combo multipliers (D40: poor scaling should mean higher base, not lower DPS).
-14. **Spells** (severity 3.5): Arcane Beam (brain): 16.4 damage per busy second at Spell Skill 100, 2.05× the brain median (8). *Suggested:* Lengthen its cooldown or lower its base.
-15. **Weapons** (severity 3.5): Twin Axes: 219 sustained light-attack DPS, 1.41× the median weapon (155) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
-16. **Enemy curve** (severity 3.4): NG+4: zone 7 room enemies have 23,519 HP on average, below zone 6's 26,699. *Suggested:* Check the zone roster mix and the HP curve.
-17. **Weapons** (severity 3.3): Longsword: 209 sustained light-attack DPS, 1.35× the median weapon (155) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
-18. **Enemy curve** (severity 3.3): NG+6: zone 7 room enemies have 35,545 HP on average, below zone 6's 39,993. *Suggested:* Check the zone roster mix and the HP curve.
-19. **Enemy curve** (severity 3.2): NG+3: zone 2 room enemies have 10,968 HP on average, below zone 1's 12,318. *Suggested:* Check the zone roster mix and the HP curve.
-20. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
+14. **Weapons** (severity 3.6): Katana: 222 sustained light-attack DPS, 1.44× the median weapon (155) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
+15. **Spells** (severity 3.5): Arcane Beam (brain): 16.4 damage per busy second at Spell Skill 100, 2.05× the brain median (8). *Suggested:* Lengthen its cooldown or lower its base.
+16. **Weapons** (severity 3.5): Twin Axes: 219 sustained light-attack DPS, 1.41× the median weapon (155) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
+17. **Enemy curve** (severity 3.4): NG+4: zone 7 room enemies have 23,519 HP on average, below zone 6's 26,699. *Suggested:* Check the zone roster mix and the HP curve.
+18. **Weapons** (severity 3.3): Longsword: 209 sustained light-attack DPS, 1.35× the median weapon (155) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
+19. **Enemy curve** (severity 3.3): NG+6: zone 7 room enemies have 35,545 HP on average, below zone 6's 39,993. *Suggested:* Check the zone roster mix and the HP curve.
+20. **Enemy curve** (severity 3.2): NG+3: zone 2 room enemies have 10,968 HP on average, below zone 1's 12,318. *Suggested:* Check the zone roster mix and the HP curve.
+21. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
 
 (121 more findings of the same kinds are in the tables below.)
 
@@ -678,7 +679,7 @@ Every weapon at item level 5, rare, +0, held by a knight whose points (10 in eac
 | Club | E/- | 2H | 420 | 148 | 342 | 31.1 | Bonk 79, Wild Swing 38, Tantrum 0 |  |
 | Twin Daggers | -/S | 2H | 626 | 178 | 165 | 13.8 | Shadow Step 88, Fan of Knives 23, Flurry 98 |  |
 | Rapier | -/A | 1H | 459 | 128 | 163 | 19 | Lunge 51, Riposte Stance 0, Thousand Cuts 55 |  |
-| Katana | D/A | 2H | 503 | 193 | 230 | 15.5 | Iai Slash 59, Crescent 36, Blood Moon 0 |  |
+| Katana | D/A | 2H | 578 | 222 | 265 | 15.5 | Iai Slash 68, Crescent 41, Blood Moon 0 | ⚠ 1.44× median DPS |
 | Bow | -/B | 2H | 299 | 110 | 287 | 34.5 | Volley 79, Piercing Shot 40, Rain 15 |  |
 | Whip | -/E | 1H | 287 | 114 | 187 | 20.7 | Lash 53, Crack 28, Serpent Coil 55 |  |
 | Longsword | B/B | 2H | 571 | 209 | 324 | 20.7 | Shield Breaker 67, Spin Slash 38, Battle Cry 0 | ⚠ 1.35× median DPS |

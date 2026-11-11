@@ -165,7 +165,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     scalingBoost: 1.25, // D331
     speedClass: 'fast',
     combo: [sw(200, 87, 191, 0.84, arc(120, 110), 14, 'slash'), sw(200, 87, 191, 0.84, arc(120, 110), 14, 'backslash'), sw(200, 78, 191, 0.84, thrust(30, 130), 16, 'thrust'), sw(226, 122, 226, 0.93, spin(105), 12, 'spin'), sw(296, 96, 296, 1.21, arc(170, 125), 18, 'slash')],
-    base1: 34,
+    base1: 39.1, // D333: +15% (was 34)
     stamina: 9, // D332: was 12
     poiseDmg: 13,
     reviveValue: 1.5,
