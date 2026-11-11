@@ -227,6 +227,7 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   const dmg = weaponHitByType(d, mult, !!opts.offHand, buffSum(e, 'holyConvertPct', now));
   const spec = emptySpec('player');
   spec.dmg = dmg;
+  spec.lifestealScale = mult;
   spec.status = d.statusBuild.map((s) => ({ ...s }));
   // harder swings (combo finishers, charged shots, skills) hit poise harder in proportion (D78)
   spec.poiseDmg = wdef.poiseDmg * Math.max(1, mult) * (opts.poiseMult ?? 1);
@@ -275,6 +276,7 @@ function startSwing(w: World, e: Entity, idx: number, offHand = false): void {
     chargeT: 0,
     speed: spd,
     fired: false,
+    attackId: w.newAttackId(),
     ...(offHand ? { offHand: true } : {}),
   };
   pl.state = 'attack';
@@ -290,6 +292,8 @@ function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number
   const a = aimAngle(w, e, true);
   e.facing = a;
   const spec = weaponSpec(w, e, swing.mult * mult, { offHand });
+  // a whole volley (or a thrown ring, out and back) is one attack for lifesteal (D325)
+  spec.attackId = w.newAttackId();
   const wpn = comboWeapon(e, offHand);
   const bonkPierce = wpn.ranged?.pierceBonk && pl.derived.stats.bonk >= wpn.ranged.pierceBonk ? 1 : 0;
   // a volley (D205): one shot down the aim and the rest fanned out either side, all at once
@@ -338,6 +342,8 @@ export function spawnPlayerProjectile(w: World, e: Entity, a: number, speed: num
       parryable: false,
       reflected: false,
       returns: !!opts.returns,
+      ...(spec.attackId !== undefined ? { attackId: spec.attackId } : {}),
+      ...(spec.lifestealScale !== undefined ? { lifestealScale: spec.lifestealScale } : {}),
       returning: false,
       drawId,
       color: opts.color ?? '#efe6d2',
@@ -359,6 +365,8 @@ function swingHits(w: World, e: Entity): void {
   const hb = c.swing.hitbox;
   if (hb.shape === 'proj') return;
   const spec = weaponSpec(w, e, c.swing.mult);
+  // the whole swing is one attack for lifesteal (D325)
+  if (c.attackId !== undefined) spec.attackId = c.attackId;
   const heavy = ['veryslow', 'slow'].includes(pl.derived.weapon.speedClass);
   let any = false;
   // proficiency reach (D178) lengthens every swing

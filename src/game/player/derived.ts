@@ -412,7 +412,7 @@ export function computeDerived(c: Character): Derived {
   for (const it of items) if (it.kind === 'ring' && it.baseId === 'ballast_ring') poiseBonus += ballastPoise(it.rarity);
   // legendary powers that are plain numbers
   if (powers.has('hungering')) {
-    lifesteal += 0.04;
+    lifesteal += 0.004;
     maxHpMult *= 0.9;
   }
   if (powers.has('timekeeper')) dodgeRed += 1.0;

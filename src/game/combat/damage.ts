@@ -834,8 +834,19 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
 
   // aggro
   if (attacker) en.aggro[attacker.id] = (en.aggro[attacker.id] ?? 0) + total;
-  // lifesteal
-  if (pl && !o.noLifesteal && pl.derived.lifesteal > 0) heal(w, attacker!, total * pl.derived.lifesteal, false);
+  // lifesteal (D325): a share of your max HP for each hit, scaled by how hard the hit is (×1 a plain swing), not of the damage
+  // once an attack: a swing that hits ten enemies heals once, not ten times
+  if (pl && !o.noLifesteal && pl.derived.lifesteal > 0 && total > 0) {
+    const id = spec.attackId;
+    const done = (pl.lifestealAttacks ??= []);
+    if (id === undefined || !done.includes(id)) {
+      if (id !== undefined) {
+        done.push(id);
+        if (done.length > 24) done.shift();
+      }
+      heal(w, attacker!, attacker!.hp!.max * pl.derived.lifesteal * Math.max(0, spec.lifestealScale ?? 1), false);
+    }
+  }
   if (pl) {
     pl.momentum = Math.min(10, pl.momentum + 1);
     pl.hitCounter++;

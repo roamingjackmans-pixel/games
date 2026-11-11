@@ -22,6 +22,7 @@ export interface SetEffect {
   /** less stamina for everything */
   staminaCostPct?: number;
   staminaRegenPct?: number;
+  /** a share of max HP healed a hit (D325) */
   lifestealPct?: number;
   poiseDamagePct?: number;
   maxHpPct?: number;
@@ -87,8 +88,8 @@ export const SET_PERKS: Record<string, SetPerkDef> = {
     flavor: 'Out. Now. Everything. Everyone.',
     steps: [
       { damagePct: 0.06, attackSpeedPct: 0.03 },
-      { damagePct: 0.12, attackSpeedPct: 0.06, lifestealPct: 0.01 },
-      { damagePct: 0.2, attackSpeedPct: 0.1, lifestealPct: 0.025 },
+      { damagePct: 0.12, attackSpeedPct: 0.06, lifestealPct: 0.001 },
+      { damagePct: 0.2, attackSpeedPct: 0.1, lifestealPct: 0.0025 },
     ],
   }),
   squatters_rights: S({
@@ -123,8 +124,8 @@ export const SET_PERKS: Record<string, SetPerkDef> = {
     flavor: 'They add up. Then they add up some more.',
     steps: [
       { statusBuildupPct: 0.15 },
-      { statusBuildupPct: 0.35, lifestealPct: 0.01 },
-      { statusBuildupPct: 0.6, lifestealPct: 0.02, damagePct: 0.05 },
+      { statusBuildupPct: 0.35, lifestealPct: 0.001 },
+      { statusBuildupPct: 0.6, lifestealPct: 0.002, damagePct: 0.05 },
     ],
   }),
   handyman: S({
@@ -172,8 +173,8 @@ export const SET_PERKS: Record<string, SetPerkDef> = {
     flavor: 'Nothing is so urgent it cannot wait for the kettle.',
     steps: [
       { flaskPct: 0.1, staminaRegenPct: 0.08 },
-      { flaskPct: 0.2, staminaRegenPct: 0.15, lifestealPct: 0.01 },
-      { flaskPct: 0.35, staminaRegenPct: 0.25, lifestealPct: 0.02 },
+      { flaskPct: 0.2, staminaRegenPct: 0.15, lifestealPct: 0.001 },
+      { flaskPct: 0.35, staminaRegenPct: 0.25, lifestealPct: 0.002 },
     ],
   }),
 };
@@ -211,7 +212,7 @@ export function setEffectText(e: SetEffect): string {
   if (e.dodgeS) out.push(`−${e.dodgeS.toFixed(1)} s dodge recharge`);
   if (e.staminaCostPct) out.push(`−${pct(e.staminaCostPct)} stamina costs`);
   if (e.staminaRegenPct) out.push(`+${pct(e.staminaRegenPct)} stamina regen`);
-  if (e.lifestealPct) out.push(`${(e.lifestealPct * 100).toFixed(1).replace(/\.0$/, '')}% life steal`);
+  if (e.lifestealPct) out.push(`${String(Math.round(e.lifestealPct * 10000) / 100)}% of max HP healed a hit (lifesteal)`);
   if (e.poiseDamagePct) out.push(`+${pct(e.poiseDamagePct)} poise damage`);
   if (e.maxHpPct) out.push(`+${pct(e.maxHpPct)} max HP`);
   if (e.defense) out.push(`+${e.defense} defense (all)`);

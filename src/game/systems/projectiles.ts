@@ -24,6 +24,8 @@ function specOf(e: Entity): DamageSpec {
   s.isSkill = pr.isSkill;
   s.reviveValue = pr.reviveValue;
   s.sourceTag = pr.sourceTag;
+  if (pr.attackId !== undefined) s.attackId = pr.attackId;
+  if (pr.lifestealScale !== undefined) s.lifestealScale = pr.lifestealScale;
   return s;
 }
 

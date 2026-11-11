@@ -111,11 +111,26 @@ export function migrate(raw: unknown): unknown {
  * on every load (it leaves tier-less perks alone), so it needs no save version of its own.
  */
 export function untierSave(s: Record<string, unknown>): void {
+  untierAndRescale(s);
+}
+
+/**
+ * D325: Leeching is a share of max HP a hit, 0.1–0.3 (it was 1–3% of the damage, whole numbers). An older roll (1 or
+ * more) is a tenth of what it was; a new one is never 1 or more, so this runs on every load and never twice.
+ */
+export function rescaleLeeching(it: unknown): void {
+  const affixes = (it as { affixes?: { id?: string; value?: number }[] } | null)?.affixes;
+  if (!Array.isArray(affixes)) return;
+  for (const a of affixes) if (a?.id === 'leeching' && typeof a.value === 'number' && a.value >= 1) a.value = Math.round(a.value * 10) / 100;
+}
+
+function untierAndRescale(s: Record<string, unknown>): void {
   const c = (s.character ?? {}) as Record<string, unknown>;
   const fixItem = (it: unknown): void => {
     if (!it || typeof it !== 'object') return;
     const o = it as { sockets?: unknown[] };
     if (Array.isArray(o.sockets)) for (const g of o.sockets) untierGem(g);
+    rescaleLeeching(it);
   };
   if (Array.isArray(c.gems)) for (const g of c.gems) untierGem(g);
   for (const it of Object.values((c.equipment ?? {}) as Record<string, unknown>)) fixItem(it);

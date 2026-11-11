@@ -57,7 +57,7 @@ export const PROF_CLASSES: Record<string, ProfClass> = {
   colossal_sword: { id: 'colossal_sword', name: 'Colossal Swords', blurb: 'You stop feeling the weight. Your back does not.', perks: [p('damage', 0.01, 'Damage'), p('stamina', 0.006, 'Swing stamina')] },
   hollow_maul: { id: 'hollow_maul', name: 'Hollow Mauls', blurb: 'It rings when it lands. You learn the note.', perks: [p('damage', 0.01, 'Damage'), p('poise', 0.015, 'Poise damage')] },
   battleaxe: { id: 'battleaxe', name: 'Battleaxes', blurb: 'One good chop deserves another.', perks: [p('damage', 0.01, 'Damage'), p('poise', 0.01, 'Poise damage')] },
-  twin_axes: { id: 'twin_axes', name: 'Twin Axes', blurb: 'Two axes, one bad mood.', perks: [p('attackSpeed', 0.005, 'Attack speed'), p('lifesteal', 0.0006, 'Lifesteal')] },
+  twin_axes: { id: 'twin_axes', name: 'Twin Axes', blurb: 'Two axes, one bad mood.', perks: [p('attackSpeed', 0.005, 'Attack speed'), p('lifesteal', 0.00006, 'Lifesteal (max HP a hit)')] },
   club: { id: 'club', name: 'Clubs', blurb: 'The oldest tool. Still works.', perks: [p('poise', 0.015, 'Poise damage'), p('stamina', 0.008, 'Swing stamina')] },
   mace: { id: 'mace', name: 'Maces', blurb: 'Armor is just a suggestion.', perks: [p('poise', 0.015, 'Poise damage'), p('damage', 0.008, 'Damage')] },
   censer_flail: { id: 'censer_flail', name: 'Censer Flails', blurb: 'Swing the smoke, not just the iron.', perks: [p('damage', 0.008, 'Damage'), p('reach', 0.008, 'Reach')] },

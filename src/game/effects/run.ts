@@ -108,6 +108,8 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
   if (e.onlyUndead) spec.onlyUndead = true;
   if (e.onKill) spec.onKillEffects = e.onKill;
   spec.reviveValue = ctx.isSpell ? 0.25 : spec.reviveValue;
+  // each run of a damage effect (a skill, a spell, one tick of a channel) is one attack for lifesteal (D325)
+  spec.attackId = w.newAttackId();
   spec.sourceTag = ctx.tag;
   return spec;
 }

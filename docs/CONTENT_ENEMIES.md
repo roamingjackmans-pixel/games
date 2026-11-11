@@ -260,7 +260,7 @@ Common rules (GAME_DESIGN §7):
 
 *THE CARETAKER: "Fixes nothing. Buries everything. Keeps your deposit."* Buries the dead, keeps their Glowen. Has buried everyone down here at least once.
 
-HP solo (its first bar): **2520** first playthrough (×0.7 on the first playthrough, D211), 114856 at NG+1, 517164 at NG+2 (D301, D307). Radius 50. Boss hit ×1.0 = 45 first playthrough. undead. Can appear as an NG+ bonus boss (D278).
+HP solo (its first bar): **2520** first playthrough (×0.7 on the first playthrough, D211), 118787 at NG+1, 603314 at NG+2 (D301, D307, D325). Radius 50. Boss hit ×1.0 = 45 first playthrough. undead. Can appear as an NG+ bonus boss (D278).
 
 Phase 1 (100% → 50%; speed ×1, damage ×1):
 - **Shovel Swing**: arc(120°, 140), ×1.2 physical (54), windup 0.9 s, cd 2.5, parryable
@@ -288,7 +288,7 @@ Phase 2 — **The lantern breaks** (50% → 0%; speed ×1.2, damage ×1.25, aren
 
 *MOTHER SPORE: "Everything down here is her child. You are about to be adopted."* A cathedral-sized mushroom with a face in the stalk. Farms Glowen. Calls it family.
 
-HP solo (its first bar): **5580** first playthrough, 145225 at NG+1, 585042 at NG+2 (D301, D307). Radius 66. Boss hit ×1.0 = 61 first playthrough. immune poison. Can appear as an NG+ bonus boss (D278).
+HP solo (its first bar): **5580** first playthrough, 150626 at NG+1, 708756 at NG+2 (D301, D307, D325). Radius 66. Boss hit ×1.0 = 61 first playthrough. immune poison. Can appear as an NG+ bonus boss (D278).
 
 Phase 1 (100% → 50%; speed ×1, damage ×1):
 - **Stalk Slam**: circle(110) at targetPast(1.0), ×1.3 physical (79), windup 0.8 s, cd 3
@@ -314,7 +314,7 @@ Phase 2 — **The cap splits open** (50% → 0%; speed ×1.2, damage ×1.25, are
 
 *THE BLOATKING: "Skims the rent. Drinks the runoff. Long may he float."* A drowned monarch on a floating throne of debris, fat on skimmed rent.
 
-HP solo (its first bar): **7560** first playthrough, 179832 at NG+1, 662077 at NG+2 (D301, D307). Radius 60. Boss hit ×1.0 = 77 first playthrough. immune poison. Arena-bound: never a bonus boss (D278).
+HP solo (its first bar): **7560** first playthrough, 173037 at NG+1, 832271 at NG+2 (D301, D307, D325). Radius 60. Boss hit ×1.0 = 77 first playthrough. immune poison. Arena-bound: never a bonus boss (D278).
 
 Phase 1 (100% → 50%; speed ×1, damage ×1):
 - **Scepter Swing**: arc(100°, 130), ×1.2 physical (92), windup 0.7 s, cd 2.4, parryable
@@ -339,7 +339,7 @@ Phase 2 — **The throne sinks** (50% → 0%; speed ×1.2, damage ×1.25, arena:
 
 *VEXTHORN, THE HOLLOW STAG: "The forest has a heart. He is wearing it, and he will not give it back."* A fey stag with antlers of thorn, and the forest’s last Glowen in a lantern for a heart.
 
-HP solo (its first bar): **10514** first playthrough, 200595 at NG+1, 703031 at NG+2 (D301, D307). Radius 46. Boss hit ×1.0 = 101 first playthrough. Can appear as an NG+ bonus boss (D278).
+HP solo (its first bar): **10514** first playthrough, 198137 at NG+1, 896868 at NG+2 (D301, D307, D325). Radius 46. Boss hit ×1.0 = 101 first playthrough. Can appear as an NG+ bonus boss (D278).
 
 Phase 1 (100% → 50%; speed ×1, damage ×1, summons 1 Stag Sentinel (max 1, every 15 s)):
 - **Antler Gore**: arc(90°, 150), ×1.3 physical (132), bleed 30, windup 0.6 s, cd 2.4, parryable
@@ -365,7 +365,7 @@ Phase 2 — **The heart-lantern flares** (50% → 0%; speed ×1.2, damage ×1.25
 
 *FOREMAN IGNATIUS: "Twelve-hour shifts. No breaks. You are the break."* A fire-cult blacksmith riding an Anvil Golem’s shoulders. The Golem does not get a say.
 
-HP solo (its first bar): **6418** first playthrough, 84328 at NG+1, 278311 at NG+2 (D301, D307). Radius 58. Boss hit ×1.0 = 124 first playthrough. construct. Arena-bound: never a bonus boss (D278).
+HP solo (its first bar): **6418** first playthrough, 83553 at NG+1, 366965 at NG+2 (D301, D307, D325). Radius 58. Boss hit ×1.0 = 124 first playthrough. construct. Arena-bound: never a bonus boss (D278).
 
 Phase 1 (100% → 0%; speed ×1, damage ×1, bar 60% of full HP, arena: hazardTiles):
 - **Golem Slam**: circle(120) at self, ×1.4 physical (174), windup 0.9 s, cd 3
@@ -392,7 +392,7 @@ Phase 2 — **The Golem goes molten** (fresh bar → 0%; speed ×1.2, damage ×1
 
 *SAINT AURELIA THE UNTHAWED: "Four hundred years on guard duty. Nobody told her she could stop."* Froze at her post to keep the collectors out. The ice was a blessing, once.
 
-HP solo (its first bar): **18841** first playthrough, 247558 at NG+1, 782501 at NG+2 (D301, D307). Radius 46. Boss hit ×1.0 = 142 first playthrough. Can appear as an NG+ bonus boss (D278).
+HP solo (its first bar): **18841** first playthrough, 251879 at NG+1, 1057161 at NG+2 (D301, D307, D325). Radius 46. Boss hit ×1.0 = 142 first playthrough. Can appear as an NG+ bonus boss (D278).
 
 Phase 1 (100% → 75%; speed ×1, damage ×1):
 - **Blessed Blade**: arc(110°, 190), ×1/×1/×1.4 magic (199), chill 20, windup 0.75 s, cd 3, parryable
@@ -418,7 +418,7 @@ Phase 2 — **The ice shatters** (75% → 0%; speed ×1.2, damage ×1.25, arena:
 
 *ARCHMAGISTER TOCK: "Your appointment was at the start of time. You are late. He is billing you."* Keeps the Landlord’s ledger. Wound himself up to do it, and has never once run down.
 
-HP solo (its first bar): **21043** first playthrough, 266316 at NG+1, 824875 at NG+2 (D301, D307). Radius 48. Boss hit ×1.0 = 188 first playthrough. construct. Can appear as an NG+ bonus boss (D278).
+HP solo (its first bar): **21043** first playthrough, 281126 at NG+1, 1112060 at NG+2 (D301, D307, D325). Radius 48. Boss hit ×1.0 = 188 first playthrough. construct. Can appear as an NG+ bonus boss (D278).
 
 Phase 1 (100% → 40%; speed ×1, damage ×1.2, summons 4 Corner Turret (max 4, every 1 s, in the corners)):
 - **Arcane Volley**: 5× proj(360) in a 72° fan, ×0.8 void (181), windup 0.7 s, cd 2.6
@@ -444,7 +444,7 @@ Phase 2 — **The clock runs backward** (40% → 0%; speed ×1.2, damage ×1.69,
 
 *THE LANDLORD: "Rent is due. It has always been due. Clause nine says the rent is you."* Owns everything under the stairs. Every room you cleared was his. You were subletting.
 
-HP solo (its first bar): **39558** first playthrough, 322772 at NG+1, 858790 at NG+2 (D301, D307). Radius 46. Boss hit ×1.0 = 233 first playthrough. Arena-bound: never a bonus boss (D278).
+HP solo (its first bar): **40389** first playthrough, 364867 at NG+1, 1144858 at NG+2 (D301, D307, D325). Radius 46. Boss hit ×1.0 = 233 first playthrough. Arena-bound: never a bonus boss (D278).
 
 Phase 1 — **The Interview** (100% → 66%; speed ×1, damage ×1):
 - **Briefcase Swing**: arc(110°, 160), ×1.3 physical (303), windup 0.8 s, cd 2.6, parryable

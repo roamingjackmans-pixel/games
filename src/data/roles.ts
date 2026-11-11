@@ -123,6 +123,41 @@ export function statCurveComp(kind: 'hp' | 'dmg', zone: number, cycle: number): 
   return NG_LATE[Math.max(...keys)]![kind];
 }
 
+/**
+ * D325: New Game+ levels cost twice the Shards (about L245 at the end of NG+3 on one clear of each zone, was about L411),
+ * so players there are weaker than every table above assumed. These factors take back what the slower levels take away:
+ * fitted on the balance report so its builds, at their new levels, see the same room and boss kill times and the same
+ * hits to die as before. By cycle (cycles past the table use its last row, 8 and 9 the step between 7 and 10), then
+ * zone 1–8.
+ */
+// LEVEL_PACE_COMP:BEGIN
+export const LEVEL_PACE_COMP: Record<number, { hp: number[]; dmg: number[]; bossHp: number[] }> = {
+  1: { hp: [0.981, 0.927, 0.861, 0.833, 0.8, 0.805, 0.765, 0.786], dmg: [0.986, 0.953, 0.933, 0.91, 0.886, 0.864, 0.808, 0.788], bossHp: [1, 0.998, 0.999, 1.014, 1.022, 0.994, 1.003, 1.009] },
+  2: { hp: [0.815, 0.818, 0.872, 0.881, 0.902, 0.92, 0.932, 0.93], dmg: [0.758, 0.73, 0.722, 0.725, 0.716, 0.718, 0.691, 0.695], bossHp: [0.998, 1.019, 0.988, 0.998, 1.011, 1.015, 1, 0.994] },
+  3: { hp: [0.92, 0.902, 0.921, 0.902, 0.925, 0.918, 0.929, 0.926], dmg: [0.703, 0.715, 0.74, 0.758, 0.776, 0.806, 0.831, 0.855], bossHp: [1.008, 1.021, 1.003, 1.016, 0.989, 0.995, 0.982, 0.984] },
+  4: { hp: [0.917, 0.902, 0.897, 0.905, 0.905, 0.922, 0.911, 0.93], dmg: [0.866, 0.884, 0.914, 0.94, 0.959, 0.981, 1, 1], bossHp: [0.987, 1.004, 1.006, 1.003, 1.005, 0.993, 1.012, 0.996] },
+  5: { hp: [0.927, 0.944, 0.946, 0.95, 0.95, 0.94, 0.953, 0.964], dmg: [1, 1, 1, 1, 1, 1, 1, 1], bossHp: [1.001, 0.995, 0.996, 1, 1.003, 1.016, 1.007, 1.001] },
+  6: { hp: [0.949, 1, 0.971, 1, 0.974, 0.979, 0.976, 1], dmg: [1, 1, 1, 1, 1, 1, 1, 1], bossHp: [1.024, 0.972, 1.008, 0.982, 1.012, 1.013, 1.018, 0.998] },
+  7: { hp: [0.974, 1, 1, 1, 1, 1, 1, 1], dmg: [1, 1, 1, 1, 1, 1, 1, 1], bossHp: [1.025, 1, 1, 1, 1, 1, 1, 1] },
+  10: { hp: [1, 1, 1, 1, 1, 1, 1, 1], dmg: [1, 1, 1, 1, 1, 1, 1, 1], bossHp: [1, 1, 1, 1, 1, 1, 1, 1] },
+};
+// LEVEL_PACE_COMP:END
+
+export function levelPaceComp(kind: 'hp' | 'dmg' | 'bossHp', zone: number, cycle: number): number {
+  if (cycle < 1) return 1;
+  const z = Math.max(1, Math.min(8, zone)) - 1;
+  const row = (c: number): number => LEVEL_PACE_COMP[c]?.[kind][z] ?? 1;
+  const keys = Object.keys(LEVEL_PACE_COMP).map(Number);
+  if (!keys.length) return 1;
+  const last = Math.max(...keys);
+  if (cycle >= last) return row(last);
+  if (LEVEL_PACE_COMP[cycle]) return row(cycle);
+  // between rows (NG+8, NG+9): the geometric step
+  const lo = Math.max(...keys.filter((k) => k < cycle));
+  const hi = Math.min(...keys.filter((k) => k > cycle));
+  return row(lo) * Math.pow(row(hi) / row(lo), (cycle - lo) / (hi - lo));
+}
+
 /** D314: bosses hit 75% harder from NG+1 on (they had fallen behind); every later cycle grows from there. */
 export const NG_BOSS_DMG_MULT = 1.75;
 export function ngBossDmgMult(cycle: number): number {

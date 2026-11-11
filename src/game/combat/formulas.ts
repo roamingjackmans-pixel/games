@@ -219,8 +219,8 @@ export const EARLY_LEVEL_END = 21;
  * playthrough's costs are unchanged.
  */
 export const LATE_LEVEL_FROM = 80;
-export const LATE_LEVEL_BASE = 2750;
-export const LATE_LEVEL_STEP = 1.5;
+export const LATE_LEVEL_BASE = 5500;
+export const LATE_LEVEL_STEP = 3;
 export function levelCost(level: number): number {
   if (level >= LATE_LEVEL_FROM) return Math.floor(LATE_LEVEL_BASE + LATE_LEVEL_STEP * (level - LATE_LEVEL_FROM));
   const early = 1 + EARLY_LEVEL_SURCHARGE * Math.max(0, (EARLY_LEVEL_END - level) / (EARLY_LEVEL_END - 1));

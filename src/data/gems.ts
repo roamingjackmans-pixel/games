@@ -28,7 +28,8 @@ export const GEMS: Record<GemFamily, GemDef> = {
   storm: { family: 'storm', name: 'Storm', color: '#6f8dff', value: 13.2, text: '+{v}% of the hit as Magic (lightning), Shock buildup', weaponOnly: true, adds: { type: 'magic', status: 'shock' } },
   dawn: { family: 'dawn', name: 'Dawn', color: '#ffe98a', value: 13.2, text: '+{v}% of the hit as Holy', weaponOnly: true, adds: { type: 'holy' } },
   dusk: { family: 'dusk', name: 'Dusk', color: '#8a8396', value: 13.2, text: '+{v}% of the hit as Void', weaponOnly: true, adds: { type: 'void' } },
-  leech: { family: 'leech', name: 'Leech', color: '#8a1020', value: 4, text: '{v}% lifesteal', weaponOnly: true },
+  // D325: lifesteal is a share of max HP a hit (was 4% of the damage)
+  leech: { family: 'leech', name: 'Leech', color: '#8a1020', value: 0.4, text: '{v}% of max HP healed a hit (lifesteal)', weaponOnly: true },
   vigor: { family: 'vigor', name: 'Vigor', color: '#2aa198', value: 16, text: '−{v}% stamina costs', weaponOnly: true },
   bulwark: { family: 'bulwark', name: 'Bulwark', color: '#9a9aa6', value: 16, text: '+{v} defense to all types', armorOnly: true },
   // D260: a share of max HP (was +15 … +45 flat)
@@ -48,7 +49,7 @@ const LEGACY_TIER_VALUES: Record<GemFamily, readonly number[]> = {
   storm: [20, 25, 30, 35, 40],
   dawn: [20, 25, 30, 35, 40],
   dusk: [20, 25, 30, 35, 40],
-  leech: [2, 3, 4, 5, 6],
+  leech: [0.2, 0.3, 0.4, 0.5, 0.6],
   vigor: [8, 12, 16, 20, 24],
   bulwark: [8, 12, 16, 20, 24],
   hearth: [4, 6, 8, 10, 12],

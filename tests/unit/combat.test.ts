@@ -86,9 +86,9 @@ describe('formulas (GAME_DESIGN §3)', () => {
     expect(levelCost(50)).toBe(1291); // floor; the doc rounded to 1292
     // D307: from level 80 the cost barely climbs: 2,750 + 1.5 a level
     expect(levelCost(79)).toBe(Math.floor(60 * Math.pow(1.045, 79) + 15 * 79));
-    expect(levelCost(80)).toBe(2750);
-    expect(levelCost(200)).toBe(2930);
-    expect(levelCost(300)).toBe(3080);
+    expect(levelCost(80)).toBe(5500); // D325: twice D307's
+    expect(levelCost(200)).toBe(5860);
+    expect(levelCost(300)).toBe(6160);
   });
   it('flask, dodge floor, revive requirement, flask max, gem costs, enemy scaling', () => {
     expect(flaskHeal(500, 0)).toBe(200);

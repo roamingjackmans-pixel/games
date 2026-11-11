@@ -234,7 +234,7 @@ carry no extra power).
 | **Thunderclap** | weapon | Every 4th hit chains Lightning to 3 enemies ×0.8. |
 | **Sunder** | weapon | Skills ignore 30% of enemy defense. |
 | **Second Wind** | weapon | A kill refunds 20 stamina. |
-| **Hungering** | weapon | +4% lifesteal, −10% max HP. |
+| **Hungering** | weapon | Heal 0.4% of max HP a hit (lifesteal, D325), −10% max HP. |
 | **Momentum** | weapon | Each consecutive hit without being hit: +3% damage (max 10). |
 | **Riposte Master** | weapon | Ripostes deal ×4 and heal 5%. |
 | **Spellsword** | weapon | Spells cast within 2 s after a light attack cost no stamina. |
@@ -264,7 +264,7 @@ percentages are fixed.
 | **Fleet** | prefix | legs, ring | −0.3–0.6 s dodge recharge | no |
 | **Ballasted** | prefix | ring | +2–5 poise (D313) | no |
 | **Frugal** | prefix | weapon, body | −5–12% stamina costs | no |
-| **Leeching** | prefix | weapon | 1–3% lifesteal | no |
+| **Leeching** | prefix | weapon | 0.1–0.3% of max HP a hit (lifesteal, D325) | no |
 | **Crushing** | prefix | weapon | +10–30% poise damage | no |
 | **Warded** | prefix | armor | +3–9 defense to all types | yes |
 | **Fireproof** | prefix | armor | +40% fire defense | no |
@@ -295,13 +295,13 @@ the one before. Chance a piece rolls one (D245): common 0%, uncommon 7.8%, rare 
 |---|---|---|---|---|
 | **Counteroffer** | Parry and block | −10% stamina lost blocking, +0.03 s parry window | +5% damage, −20% stamina lost blocking, +0.06 s parry window | +12% damage, −35% stamina lost blocking, +0.10 s parry window |
 | **Moonlight Flit** | Dodging | −0.3 s dodge recharge, −5% stamina costs | +4% attack speed, −0.6 s dodge recharge, −10% stamina costs | +8% attack speed, −1.0 s dodge recharge, −15% stamina costs |
-| **Eviction** | All-out attack | +6% damage, +3% attack speed | +12% damage, +6% attack speed, 1% life steal | +20% damage, +10% attack speed, 2.5% life steal |
+| **Eviction** | All-out attack | +6% damage, +3% attack speed | +12% damage, +6% attack speed, 0.1% lifesteal | +20% damage, +10% attack speed, 0.25% lifesteal |
 | **Squatter's Rights** | Tanking | +5% max HP, +3 defense (all) | +5% poise damage, +12% max HP, +7 defense (all) | +10% poise damage, +20% max HP, +12 defense (all) |
 | **Fine Print** | Spellcasting | +4% cast speed, +6% spell power | +8% cast speed, +12% spell power, −5% spell cooldowns | +12% cast speed, +20% spell power, −12% spell cooldowns |
-| **Late Fees** | Bleed, burn and other ailments | +15% status buildup | 1% life steal, +35% status buildup | +5% damage, 2% life steal, +60% status buildup |
+| **Late Fees** | Bleed, burn and other ailments | +15% status buildup | 0.1% lifesteal, +35% status buildup | +5% damage, 0.2% lifesteal, +60% status buildup |
 | **Handyman** | Weapon skills | −6% skill cooldowns | −12% skill cooldowns, −5% stamina costs | +5% damage, −20% skill cooldowns, −10% stamina costs |
 | **Demolition** | Heavy hits and staggers | +10% poise damage | +4% damage, +25% poise damage | +10% damage, +40% poise damage, +5% max HP |
-| **Tea Break** | Healing and staying power | +8% stamina regen, Thermos heals +10% | +15% stamina regen, 1% life steal, Thermos heals +20% | +25% stamina regen, 2% life steal, Thermos heals +35% |
+| **Tea Break** | Healing and staying power | +8% stamina regen, Thermos heals +10% | +15% stamina regen, 0.1% lifesteal, Thermos heals +20% | +25% stamina regen, 0.2% lifesteal, Thermos heals +35% |
 | **Load-Bearing Wall** | Standing your ground (poise, D313) | +5 poise, +4 defense (all) | +10 poise, +8 defense (all), +4% max HP | +18 poise, +14 defense (all), +8% max HP |
 
 ## 10. Gems
@@ -338,7 +338,7 @@ weapons, staffs and talismans; armor gems in armour and shields (D227). Each per
 | **Storm** | weapon | 13.2 | +13.2% of the hit as Magic (lightning), Shock buildup (added on top, D283) | `#6f8dff` |
 | **Dawn** | weapon | 13.2 | +13.2% of the hit as Holy (added on top, D283) | `#ffe98a` |
 | **Dusk** | weapon | 13.2 | +13.2% of the hit as Void (added on top, D283) | `#8a8396` |
-| **Leech** | weapon | 4 | 4% lifesteal | `#8a1020` |
+| **Leech** | weapon | 0.4 | 0.4% of max HP a hit (lifesteal, D325) | `#8a1020` |
 | **Vigor** | weapon | 16 | −16% stamina costs | `#2aa198` |
 | **Bulwark** | armor | 16 | +16 defense to all types | `#9a9aa6` |
 | **Hearth** | armor | 8 | +8% max HP | `#e0705a` |
@@ -404,7 +404,7 @@ that class is out.
 | Colossal Swords | Damage 1% | Swing stamina 0.6% |
 | Hollow Mauls | Damage 1% | Poise damage 1.5% |
 | Battleaxes | Damage 1% | Poise damage 1% |
-| Twin Axes | Attack speed 0.5% | Lifesteal 0.06% |
+| Twin Axes | Attack speed 0.5% | Lifesteal 0.006% of max HP a hit (D325) |
 | Clubs | Poise damage 1.5% | Swing stamina 0.8% |
 | Maces | Poise damage 1.5% | Damage 0.8% |
 | Censer Flails | Damage 0.8% | Reach 0.8% |

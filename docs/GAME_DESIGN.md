@@ -125,7 +125,7 @@ So NG+ zone 1 starts 5% above the first zone 8 and climbs to 35% above it by zon
 ```
 enemyHP     = role HP × enemy's own mult × curve(z, min(c,1), 0.55) × NG1_HP × ngGrowth(c) × co-op HP (D159)
               × reinforcement factor (D303: (1 + 0.15p) / (1 + 0.2p), p = the reinforcement expected by that zone)
-              × NG+ level growth (D307, below)                    (enemy damage × its damage column too)
+              × NG+ level growth (D307, below) × level pace (D325, below)  (enemy damage × its damage columns too)
 enemyDamage = role hit × enemy's own mult × curve(z, min(c,1), 0.35) × NG1_DMG × ngGrowth(c)
               × zone damage factor × NG+ zone factor (room enemies only)
 enemyShards = role Shards × 5 × zone Shard factor × curve(z, c, 1.1)          (per player, instanced)
@@ -153,7 +153,13 @@ minutes from NG+2 on.
 **NG+ boss damage** (D314): every boss hits **×1.75** from NG+1 on (they had fallen behind the players' gear and
 levels); every later cycle's growth builds on it. The Caretaker's Last Rites stays about 600 at NG+1 (D277).
 
-**NG+ level growth** (D307): New Game+ levels now go much further (about level 300 by the end of NG+2), so every enemy
+**Level pace** (D325): New Game+ levels cost twice what D307 set, so every enemy and boss takes a factor by cycle and
+zone (`LEVEL_PACE_COMP` in `data/roles.ts`; HP, damage, and a boss HP adjustment), fitted on the balance report so its
+builds, at their new levels, see the same kill times and hits to die as before. NG+1 enemies are about 2–23% lighter
+and hit 1–21% softer by zone, NG+2–4 about 10% lighter and 5–30% softer; from NG+5 the report's builds sit at the stat
+soft cap either way, so the factors go to 1.
+
+**NG+ level growth** (D307): New Game+ levels go further than the first playthrough's, so every enemy
 and boss grows by 70% of what those levels give a player (`NG_LEVEL_COMP`, by zone; NG+3 on uses NG+2's column):
 
 | Zone | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
@@ -261,12 +267,14 @@ Enemies drop **Shards**; spend them at a bonfire's **Level up** tab. Cost from l
 
 ```
 cost(L) = floor((60 × 1.045^L + 15 L) × early(L)),   early(L) = 1 + 0.6 × max(0, (21 − L) / 20)   for L < 80
-cost(L) = floor(2,750 + 1.5 × (L − 80))                                                for L ≥ 80 (D307)
-L=1: 124 · L=10: 323 · L=20: 458 · L=30: 674 · L=50: 1,291 · L=79: 3,127 · L=80: 2,750 · L=200: 2,930 · L=300: 3,080
+cost(L) = floor(5,500 + 3 × (L − 80))                                                  for L ≥ 80 (D307, D325)
+L=1: 124 · L=10: 323 · L=20: 458 · L=30: 674 · L=50: 1,291 · L=79: 3,127 · L=80: 5,500 · L=200: 5,860 · L=300: 6,160
 ```
 
-The first playthrough ends near level 80; past it a level costs nearly the same, so NG+1 reaches about 185 and the
-end of NG+2 about 300 (D307; it was about 136).
+The first playthrough ends near level 80; past it a level costs nearly the same, twice what D307 set (D325): one clear
+of each zone reaches about 130 by the end of NG+1, 186 by the end of NG+2 and 247 by the end of NG+3. A thorough player
+(about a third more Shards, as measured) is near 300 at the end of NG+3. Enemies give back what the slower levels take
+away (`LEVEL_PACE_COMP`, below).
 
 The tab plans points with **+1 / −1** (free points first, then Shards), shows every affected number **now → after**,
 and spends only on **Confirm**; leaving with unconfirmed points asks Lock in / Discard / Keep editing (D142).
@@ -707,7 +715,7 @@ Legendaries add 20% to each step within the caps. Items from saves before D89 ke
 ### 8.4 Affixes, legendary powers, set perks
 
 **Affixes** (CONTENT_ITEMS §6): flat and percent damage, elemental damage (Burning, Freezing, Shocking, Radiant,
-Dusky), attack speed, cooldown reduction, Fleet (dodge recharge), stamina cost, lifesteal, status buildup, poise
+Dusky), attack speed, cooldown reduction, Fleet (dodge recharge), stamina cost, lifesteal (D325: a share of max HP, × the hit's multiplier, once an attack however many it hits; not a share of the damage), status buildup, poise
 damage, defense per type, max HP / stamina, Shard / Glowen / gem find, revive value, +stat.
 
 **Legendary powers** (`data/legendaries.ts`) are unique effects on Legendary items (e.g. Joe's Lucky Socks: +1
@@ -787,7 +795,7 @@ roll bands    = Green −50…−15% (55%) · Blue −15…+10% (30%) · Purple 
 | Fleetfoot | −0.6 s dodge recharge (3 s floor) | weapon |
 | Brutal | +11% damage | weapon |
 | Ember / Rime / Storm / Dawn / Dusk | **adds** 13.2% of the hit as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of it, with Burn / Chill / Shock buildup (D283, D292) | weapon |
-| Leech | 4% lifesteal | weapon |
+| Leech | 0.4% of max HP healed a hit (lifesteal, D325) | weapon |
 | Vigor | −16% stamina costs | weapon |
 | Bulwark | +16 defense to all types | armor |
 | Hearth | +8% max HP, applied after everything else (D260) | armor |

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../../src/engine/rng';
+import { rescaleLeeching } from '../../src/game/save/migrations';
 import { generateItem, rollRarity, eligibleAffixes, AFFIX_COUNT } from '../../src/game/items/generate';
 import { RARITY_WEIGHTS, RARITY_ORDER, type LootSource } from '../../src/data/lootTables';
 import { makeItem } from '../../src/game/items/make';
@@ -144,7 +145,7 @@ describe('inventory, gems, Glowen, levels', () => {
     const d = computeDerived(c);
     expect(d.dmgPct).toBeCloseTo(0.088, 5);
     expect(d.cdr).toBeCloseTo(0.15, 5);
-    expect(d.lifesteal).toBeCloseTo(0.04, 5);
+    expect(d.lifesteal).toBeCloseTo(0.004, 5);
     // armor perks in armor
     c.equipment.body = makeItem('crypt_rags_body', 'epic', 1, { sockets: 1, gems: [{ perks: [{ family: 'hearth', q: -0.5 }, { family: 'bulwark' }] }] });
     const d2 = computeDerived(c);
@@ -257,5 +258,17 @@ describe('save round-trip of items', () => {
     expect(back.character.bag).toEqual(c.bag);
     expect(back.character.gems).toEqual(c.gems);
     expect(back.character.equipment).toEqual(c.equipment);
+  });
+});
+
+// D325: lifesteal heals a share of max HP a hit, scaled by the hit's multiplier, not a share of the damage.
+describe('lifesteal as max HP (D325)', () => {
+  it('older Leeching rolls (1–3) are rescaled to 0.1–0.3 once, never twice', () => {
+    const it0 = { affixes: [{ id: 'leeching', value: 3 }, { id: 'brutal', value: 8 }] };
+    rescaleLeeching(it0);
+    expect(it0.affixes[0]!.value).toBeCloseTo(0.3, 9);
+    expect(it0.affixes[1]!.value).toBe(8);
+    rescaleLeeching(it0);
+    expect(it0.affixes[0]!.value).toBeCloseTo(0.3, 9);
   });
 });

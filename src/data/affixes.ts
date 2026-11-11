@@ -40,7 +40,8 @@ export const AFFIXES: Record<string, AffixDef> = {
   hasty: A({ id: 'hasty', name: 'Hasty', pos: 'prefix', slots: ['weapon', 'ring'], lo: 4, hi: 12, flat: false, text: '−{v}% skill cooldowns', integer: true }),
   fleet: A({ id: 'fleet', name: 'Fleet', pos: 'prefix', slots: ['legs', 'ring'], lo: 0.3, hi: 0.6, flat: false, text: '−{v} s dodge recharge' }),
   frugal: A({ id: 'frugal', name: 'Frugal', pos: 'prefix', slots: ['weapon', 'body'], lo: 5, hi: 12, flat: false, text: '−{v}% stamina costs', integer: true }),
-  leeching: A({ id: 'leeching', name: 'Leeching', pos: 'prefix', slots: ['weapon'], lo: 1, hi: 3, flat: false, text: '{v}% lifesteal', integer: true }),
+  // D325: a share of max HP a hit (was 1–3% of the damage); older rolls are rescaled on load (rescaleLeeching)
+  leeching: A({ id: 'leeching', name: 'Leeching', pos: 'prefix', slots: ['weapon'], lo: 0.1, hi: 0.3, flat: false, text: '{v}% of max HP healed a hit (lifesteal)' }),
   crushing: A({ id: 'crushing', name: 'Crushing', pos: 'prefix', slots: ['weapon'], lo: 10, hi: 30, flat: false, text: '+{v}% poise damage', integer: true }),
   warded: A({ id: 'warded', name: 'Warded', pos: 'prefix', slots: ['armor'], lo: 3, hi: 9, flat: true, text: '+{v} defense to all types', integer: true }),
   fireproof: A({ id: 'fireproof', name: 'Fireproof', pos: 'prefix', slots: ['armor'], lo: 40, hi: 40, flat: false, text: '+{v}% fire defense', defType: 'fire', integer: true }),
@@ -67,7 +68,7 @@ export const AFFIX_IDS = Object.keys(AFFIXES);
 export function affixText(id: string, v: number): string {
   const a = AFFIXES[id];
   if (!a) return id;
-  const val = a.integer ? String(Math.round(v)) : v.toFixed(1).replace(/\.0$/, '');
+  const val = a.integer ? String(Math.round(v)) : v < 1 ? String(Math.round(v * 100) / 100) : v.toFixed(1).replace(/\.0$/, '');
   return a.text.replace('{v}', val);
 }
 

@@ -46,12 +46,12 @@ describe('gem levels (D197)', () => {
   it('level 1 is a quarter of the baseline, level 50 three times it', () => {
     expect(gemLevelMult(1)).toBeCloseTo(0.25, 5);
     expect(gemLevelMult(50)).toBeCloseTo(3, 5);
-    // Leech (4% baseline, D284): level 1 runs 0.5% … 1.5% from −50% to +50%; level 50 6% … 18%
+    // Leech (0.4% of max HP a hit baseline, D284, D325): level 1 runs 0.05% … 0.15% from −50% to +50%; level 50 0.6% … 1.8%
     const at = (level: number, q: number): number => perkValue(makeGem('leech', { level, q }).perks[0]!);
-    expect(at(1, -0.5)).toBeCloseTo(0.5, 5);
-    expect(at(1, 0.5)).toBeCloseTo(1.5, 5);
-    expect(at(50, -0.5)).toBeCloseTo(6, 5);
-    expect(at(50, 0.5)).toBeCloseTo(18, 5);
+    expect(at(1, -0.5)).toBeCloseTo(0.05, 5);
+    expect(at(1, 0.5)).toBeCloseTo(0.15, 5);
+    expect(at(50, -0.5)).toBeCloseTo(0.6, 5);
+    expect(at(50, 0.5)).toBeCloseTo(1.8, 5);
   });
 
   it('gems drop at level 1–3 in the first zone and reach 50 by the start of New Game+3', () => {

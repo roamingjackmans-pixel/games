@@ -84,6 +84,8 @@ export interface ComboState {
   offHand?: boolean;
   /** an overhead has landed (its dust and shake are out, D320) */
   landed?: boolean;
+  /** this swing's attack id (D325): lifesteal heals once for it, however many it hits */
+  attackId?: number;
 }
 
 export type PlayerState = 'idle' | 'attack' | 'dodge' | 'skill' | 'cast' | 'flask' | 'stagger' | 'held' | 'falling' | 'consumable' | 'channel' | 'charge' | 'dashing';
@@ -127,6 +129,8 @@ export interface ChargeRun {
 }
 
 export interface PlayerC {
+  /** the last attacks that healed through lifesteal (D325): one heal an attack, however many it hits */
+  lifestealAttacks?: number[];
   /** a block pressed with no parrying shield: its parry-timing window (only the tutorial cares, D96) */
   bareParryUntil: number;
   slot: number;
@@ -357,10 +361,17 @@ export interface ProjC {
   sourceTag: string;
   /** bow and crossbow shots lose damage past 250 px from where they were loosed (D88) */
   falloffFrom?: { x: number; y: number };
+  /** the attack it belongs to and how hard it hits, for lifesteal (D325) */
+  attackId?: number;
+  lifestealScale?: number;
 }
 
 export interface DamageSpec {
   dmg: Partial<Record<DamageType, number>>;
+  /** how hard the hit is for lifesteal (D325): the swing's or skill's multiplier; absent counts as ×1 */
+  lifestealScale?: number;
+  /** one swing, volley, throw, skill or spell effect (D325): lifesteal heals once an attack; absent heals each hit */
+  attackId?: number;
   status: { id: StatusId; buildup: number }[];
   control: { id: ControlId; durationS: number } | null;
   poiseDmg: number;
@@ -623,6 +634,11 @@ export class World {
   time = 0;
   entities = new Map<number, Entity>();
   private nextId = 1;
+  private attackSeq = 0;
+  /** a fresh attack id (D325) */
+  newAttackId(): number {
+    return ++this.attackSeq;
+  }
   private freeIds: number[] = [];
   events: GameEvent[] = [];
   combat: Rng;
