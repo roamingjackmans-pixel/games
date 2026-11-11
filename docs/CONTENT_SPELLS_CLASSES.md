@@ -47,10 +47,10 @@ i-frames: it escapes a Piercing area only if you land outside it.
 
 | Spell | Req Prayer | Cast | Cooldown | Stamina | Element | Effect |
 |---|---|---|---|---|---|---|
-| **Heal** | 8 | 1 s | 50 s | 20 | — | Heal yourself 25% of max HP over 20 s. Nothing interrupts it. |
+| **Heal** | 8 | 1 s | 50 s | 20 | — | Heal yourself 12.5% of max HP over 10 s. Nothing interrupts it. (D335) |
 | **Purify** | 10 | 0.5 s | 10 s | 12 | holy | You and allies within 140 px: clear all statuses; undead and void within 140 px take 30 Holy. |
 | **Bless Weapon** | 12 | 0.6 s | 25 s | 14 | holy | 20 s: your weapon deals +20% as Holy; undead and void take +15% more. Needs a weapon in the weapon hand (D131). |
-| **Regen Aura** | 12 | 0.8 s | 36 s | 18 | — | circle(180) around you for 50 s: allies inside heal 0.3% per second. |
+| **Regen Aura** | 12 | 0.8 s | 36 s | 18 | — | circle(180) around you for 20 s: allies inside heal 0.3% per second. (D335) |
 | **Sunray** | 14 | 0.5 s | 6 s | 14 | holy | line(60,450) 36 Holy, reveals hidden and invisible enemies for 4 s. |
 | **Ward of Steel** | 14 | 0.6 s | 20 s | 16 | — | 10 s: +30 defense to all types for you; allies within 140 px get +15. |
 | **Last Rites** | 16 | 0.8 s | 6 s | 18 | — | On a ghost within 120 px: 3.0 revive value (6.0 with a Ghost Lantern). On a living ally: heals 10%. |

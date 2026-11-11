@@ -884,7 +884,7 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - Spells have a cast time (cast speed scales it; you walk slower while casting, §3.1), a cooldown and a stamina cost
   (§5.2). **Cooldowns only run while there is something to fight** in the room (D177), and every spell is ready after
   a rest or a death. Since D324 weapon skills (and an off-hand crossbow's) hold and reset the same way.
-- Healing spells are slow: Heal 25% over 20 s (cooldown 50 s), and it cannot be interrupted (D128, D250).
+- Healing spells are slow: Heal 12.5% over 10 s (cooldown 50 s; D335), and it cannot be interrupted (D128, D250).
 - Weapon buffs (Bless Weapon) need a weapon in the weapon hand (D131); a buffed weapon glows its element (D129).
 - Spells are **learned** from spell reliquaries, sometimes bosses and The Instructor; never sold; known forever. A
   reliquary favours the school of your class's primary stat (×3) or secondary (×2) when it is Brain or Prayer (D317).
