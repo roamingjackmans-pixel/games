@@ -4,6 +4,12 @@ import { DEG, circleHit, dist, turnToward } from '../../engine/math';
 import { addRevive, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer } from '../combat/damage';
 import { runEffects } from '../effects/run';
 import type { DamageSpec, Entity, World } from '../world';
+import type { HitArea } from '../net/acts';
+
+/** Where a shot is when it lands, for the guest who decides a hit on its own body (D338). */
+function circleArea(x: number, y: number, r: number): HitArea {
+  return { s: { k: 'circle', x, y, r }, tau: 0 };
+}
 
 function specOf(e: Entity): DamageSpec {
   const pr = e.pr!;
@@ -96,11 +102,11 @@ export function updateProjectiles(w: World, dt: number): void {
         if (pr.onImpact) {
           /* the blast below deals the damage */
         } else if (pr.team === 1) {
-          for (const p of w.livingPlayers()) if (circleHit(e.x, e.y, e.radius + 14, p.x, p.y, p.radius)) hitPlayer(w, pr.ownerId, p, specOf(e), e.x, e.y);
+          for (const p of w.livingPlayers()) if (circleHit(e.x, e.y, e.radius + 14, p.x, p.y, p.radius)) hitPlayer(w, pr.ownerId, p, specOf(e), e.x, e.y, undefined, circleArea(e.x, e.y, e.radius + 14));
         } else {
           const owner = w.get(pr.ownerId) ?? null;
           for (const en of w.livingEnemies()) if (circleHit(e.x, e.y, e.radius + 14, en.x, en.y, en.radius)) hitEnemy(w, owner, en, specOf(e), e.x, e.y);
-          for (const a of ffVictims(w, owner)) if (circleHit(e.x, e.y, e.radius + 14, a.x, a.y, a.radius)) hitAlly(w, owner, a, specOf(e), e.x, e.y);
+          for (const a of ffVictims(w, owner)) if (circleHit(e.x, e.y, e.radius + 14, a.x, a.y, a.radius)) hitAlly(w, owner, a, specOf(e), e.x, e.y, undefined, circleArea(e.x, e.y, e.radius + 14));
         }
         impact(w, e);
       }
@@ -190,7 +196,7 @@ export function updateProjectiles(w: World, dt: number): void {
           impact(w, e);
           break;
         }
-        const res = hitPlayer(w, pr.ownerId, p, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e);
+        const res = hitPlayer(w, pr.ownerId, p, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e, circleArea(e.x, e.y, e.radius));
         if (res === 'parried') break; // reflected: keeps flying as a player projectile
         if (res === 'dodged') continue;
         impact(w, e);
@@ -247,7 +253,7 @@ export function updateProjectiles(w: World, dt: number): void {
             impact(w, e);
             break;
           }
-          const res = hitAlly(w, owner, a, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e);
+          const res = hitAlly(w, owner, a, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e, circleArea(e.x, e.y, e.radius));
           if (res === 'dodged' || res === 'none') continue;
           pr.volleyHit?.add(a.id);
           if (pr.pierce > 0) {

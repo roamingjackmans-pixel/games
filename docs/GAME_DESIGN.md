@@ -913,8 +913,9 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - **Lobby** (D31, D74, D134): Title → **Co-op play** → Host / Join, or the Host / Join buttons on a character card.
   The host gets a **6-digit room code** (D76). **Joining happens only in the lobby**; Start puts everyone in the host's
   world at the host's last bonfire; "Return to lobby" brings the party back so more can join. Up to 4 players.
-- **Authority** (NETCODE): the host simulates the world; guests send inputs, predict their own movement, swings and
-  dodges, and own their inventory.
+- **Authority** (NETCODE, D338): the host simulates the world (enemies, loot, rooms, revives, bonfires) and runs every
+  player's skills, spells and consumables; each guest's own screen runs that guest's body (movement, dodges, blocks,
+  parries, swings and the hits they land) and decides every enemy hit on it; guests own their inventory.
 - **Scaling** (D159, D194): every extra player adds one full wave to every room; HP per extra player +75% for room
   enemies, +125% for Elites and bosses; boss poise +150%; damage unchanged. Elites come more often (§6.5). Shards and
   loot are instanced and divided so each player earns what they would solo.

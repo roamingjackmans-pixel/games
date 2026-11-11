@@ -4,7 +4,7 @@ import { rawDamage } from '../combat/damage';
 import { HAZARDS } from './hazards';
 import { carryOnMovingFloors } from './movingFloor';
 import { T } from '../room';
-import type { Entity, World } from '../world';
+import { netHostDriven, type Entity, type World } from '../world';
 
 export const FALL_PIT_PCT = 0.3;
 /** Off a platform's edge into the void (CONTENT_ENEMIES §11 The Landlord's arena). */
@@ -24,12 +24,23 @@ export function startFall(w: World, e: Entity, pct: number, climbS: number): voi
   w.hooks.onFall?.(w, e);
 }
 
-export function updateMovement(w: World, dt: number): void {
+/** A co-op guest's player in the host's world, while its own screen moves it (D338). */
+function puppetFree(e: Entity): boolean {
+  return e.pl?.net === 'puppet' && !netHostDriven(e.pl);
+}
+
+/**
+ * Forced motion, moving floors, holes, solid hazards and body separation for everyone; with `only`, just that one
+ * body (a co-op guest moving its own on its own screen, D338).
+ */
+export function updateMovement(w: World, dt: number, only?: Entity): void {
   const now = w.time;
-  for (const e of w.entities.values()) {
+  for (const e of only ? [only] : w.entities.values()) {
     if (e.removed) continue;
     if (e.type !== 'player' && e.type !== 'enemy') continue;
     if (w.frozen(e)) continue;
+    // its own screen moves it: knockbacks, floors and falls happen there
+    if (puppetFree(e)) continue;
     // forced motion
     if (e.forced) {
       if (now >= e.forced.until) e.forced = null;
@@ -74,11 +85,15 @@ export function updateMovement(w: World, dt: number): void {
         if (s.k !== 'line') continue;
         const x2 = s.x + Math.cos(s.a) * s.l;
         const y2 = s.y + Math.sin(s.a) * s.l;
-        for (const b of [...w.players, ...w.enemies]) if (!b.hp?.dead && !b.flying && !b.en?.isBoss && b.pl?.state !== 'dodge') pushOut(w, b, s.x, s.y, x2, y2, s.w / 2);
+        for (const b of only ? [only] : [...w.players, ...w.enemies]) if (!puppetFree(b) && !b.hp?.dead && !b.flying && !b.en?.isBoss && b.pl?.state !== 'dodge') pushOut(w, b, s.x, s.y, x2, y2, s.w / 2);
       }
     } else if (h.type === 'wall' && h.wl?.blocksEnemies) {
-      for (const b of w.enemies) if (!b.hp?.dead && !b.en?.isBoss) pushOut(w, b, h.wl.x1, h.wl.y1, h.wl.x2, h.wl.y2, h.wl.w / 2);
+      if (!only) for (const b of w.enemies) if (!b.hp?.dead && !b.en?.isBoss) pushOut(w, b, h.wl.x1, h.wl.y1, h.wl.x2, h.wl.y2, h.wl.w / 2);
     }
+  }
+  if (only) {
+    if (only.pl) only.pl.timeSlow = 1;
+    return;
   }
   // soft separation between bodies (players and enemies push each other apart)
   const bodies: Entity[] = [];
@@ -100,7 +115,11 @@ export function updateMovement(w: World, dt: number): void {
       const ny = dy / d;
       // heavier bodies move less; players dodging pass through
       if (a.pl?.state === 'dodge' || b.pl?.state === 'dodge') continue;
-      const wa = a.en?.isBoss ? 0.05 : b.en?.isBoss ? 1 : a.radius < b.radius ? 0.7 : 0.3;
+      // a guest's body stands where its own screen put it (D338): whoever it bumps does all the moving
+      const pa = puppetFree(a);
+      const pb = puppetFree(b);
+      if (pa && pb) continue;
+      const wa = pa ? 0 : pb ? 1 : a.en?.isBoss ? 0.05 : b.en?.isBoss ? 1 : a.radius < b.radius ? 0.7 : 0.3;
       const wb = 1 - wa;
       w.room.moveCircle(a, -nx * push * 2 * wa, -ny * push * 2 * wa, a.flying);
       w.room.moveCircle(b, nx * push * 2 * wb, ny * push * 2 * wb, b.flying);

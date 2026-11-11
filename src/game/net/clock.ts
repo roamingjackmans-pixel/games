@@ -16,7 +16,7 @@ export class HostClock {
 
   constructor(
     private readonly snapInterval: number,
-    readonly minDelay = 0.06,
+    readonly minDelay = 0.05,
     readonly maxDelay = 0.25,
   ) {
     this.delayS = clamp(snapInterval * 2, minDelay, maxDelay);
@@ -48,9 +48,12 @@ export class HostClock {
     return localT + (this.offset ?? 0);
   }
 
-  /** How far behind the newest snapshot to draw: a snapshot and a half plus room for the measured jitter. */
+  /**
+   * How far behind the newest snapshot to draw: a snapshot and a quarter plus room for the measured jitter (D338: was a
+   * snapshot and a half and at least 60 ms; a guest's own body no longer waits on this, so the world can sit closer).
+   */
   targetDelay(): number {
-    return clamp(this.snapInterval * 1.5 + this.jitter * 2.5, this.minDelay, this.maxDelay);
+    return clamp(this.snapInterval * 1.25 + this.jitter * 2.5, this.minDelay, this.maxDelay);
   }
 
   /** Ease the drawing delay toward its target (call once a frame) and return it. */

@@ -131,6 +131,12 @@ export class CharLog {
     return { rev: this.rev, ops };
   }
 
+  /** A value the guest owns and reported (its Thermos, D338): take it as is, with no op back for it. */
+  observe(host: Character, key: 'flaskCur', v: number): void {
+    host[key] = v;
+    this.base[key] = v;
+  }
+
   /** The guest sent its own character having applied ops up to `ack`: adopt it plus anything newer. */
   adopt(host: Character, guest: Character, ack: number): void {
     const next = cloneChar(guest);

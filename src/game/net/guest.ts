@@ -1,23 +1,27 @@
-// The guest (NETCODE §2, §5, §6): sends inputs at 60 Hz, mirrors the host's world from snapshots for the
-// normal renderer (everything 100 ms behind, interpolated), predicts its own walking and reconciles
-// against the host, and keeps its own character in sync (ops in, whole character out).
+// The guest (NETCODE §2, §5, §6). Its own body is its own (D338): it runs on this screen at full speed (walking,
+// dodges and their i-frames, blocks, parries, swings and their hits on enemies, the Thermos, statuses) and is sent
+// to the host every frame. Enemies' hits on it are found by the host and decided here, at the moment this screen
+// shows them land. Everything else is the host's world, mirrored from snapshots for the normal renderer (drawn a
+// little behind the host, interpolated; walking enemies are led a little toward now). The guest keeps its own
+// character in sync (ops in, whole character out).
 import { BOSSES } from '../../data/bosses';
 import { ENEMIES } from '../../data/enemies';
 import { dist } from '../../engine/math';
-import { ACTION_BIT, type InputFrame } from '../../engine/input/actions';
+import type { InputFrame } from '../../engine/input/actions';
 import { spawnEnemy } from '../enemies/spawn';
-import { ATTACK_MOVE, DODGE_DIST, DODGE_S, refreshDerived, spawnPlayer } from '../player/player';
-import { attackStaminaCost } from '../combat/formulas';
+import { PLAYER_DOT_DY, PLAYER_DOT_R, refreshDerived, spawnPlayer } from '../player/player';
+import { hitPlayer } from '../combat/damage';
+import { shapeHit } from '../combat/patterns';
 import { guestZoneBeaten } from '../save/coopProgress';
 import { generateZone, type ZoneLayout } from '../procgen/zone';
 import { Room } from '../room';
-import { terrainWalkMult } from '../systems/terrain';
-import { World, type Entity, type EType } from '../world';
-import { SKILL_RECOVER_S, offSkillOf, skillOf } from '../skills/use';
+import { HOST_RUN_STATES, World, type Entity, type EType, type PlayerState } from '../world';
 import { applyCharOp, cloneChar, type CharOp } from './charSync';
 import { CH, SNAP_HZ, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
 import { HostClock } from './clock';
 import { CONTROL_BITS, ENEMY_STATES, F, PLAYER_STATES, POSES, STATUS_BITS, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
+import { applyDelta, bodyReportOf, comboFromWire, encodeBody, stepBody } from './body';
+import type { IncomingHit, NetAct } from './acts';
 import type { NetChannel, Transport } from './transport';
 import type { AttackDef, BossDef, Character, EliteAffix, EnemyDef, SaveFile } from '../types';
 
@@ -47,7 +51,12 @@ export function findAttack(def: EnemyDef | BossDef, id: string): AttackDef | nul
   return null;
 }
 
-const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
+/** How far ahead of the interpolated time a walking enemy is drawn, at most (D338): closer to where it really is. */
+export const ENEMY_LEAD_S = 0.05;
+/** A hit on this body that arrives early waits for this screen to show it land, but never longer than this (D338). */
+export const HIT_HOLD_MAX_S = 0.6;
+/** A little room around a hit's area when this screen checks it against the body (rounding, one frame). */
+export const HIT_AREA_SLACK = 4;
 
 interface Sample {
   t: number;
@@ -61,7 +70,7 @@ export class NetGuest {
   lobby: LobbyState | null = null;
   welcome: Welcome | null = null;
   rejectReason = '';
-  /** the mirror world the guest draws */
+  /** the mirror world the guest draws, where its own body runs */
   cw = new World('mirror');
   layout: ZoneLayout | null = null;
   me: Entity | null = null;
@@ -84,24 +93,29 @@ export class NetGuest {
   private rev = 0;
   private seq = 0;
   private tick = 0;
-  /** inputs the host has not acknowledged yet, each with the speed this screen walked it at (D154) */
-  private pending: { seq: number; dt: number; mx: number; my: number; sp: number; fx: number; fy: number }[] = [];
-  /** this guest's own swing, started locally the moment attack is pressed (D154): its end, combo step, start,
-   *  windup length, forward step (px) and the direction of that step */
-  private atk: { until: number; idx: number; start: number; windup: number; active: number; recover: number; step: number; dir: [number, number]; queued: boolean; last: boolean } | null = null;
-  /** the combo step the next swing continues with, until when (as the host's nextComboIdx / comboResetAt) */
-  private nextSwing: { idx: number; until: number } | null = null;
   private samples = new Map<number, Sample[]>();
   private meta = new Map<number, EntityMeta>();
   /** the host's clock, smoothed against network jitter (D149) */
   private hostClock = new HostClock(1 / SNAP_HZ);
-  /** a dodge this guest started locally before the host confirmed it (D149) */
-  private lastWalkSpeed = 0;
-  /** when the host last started reporting that this guest cannot walk (0 while it can) */
-  private zeroSince = 0;
-  private dodgePred: { until: number; holdUntil: number; dir: [number, number]; mult: number; t: number } | null = null;
-  private self: SelfState | null = null;
-  private correction = { x: 0, y: 0 };
+  /** the host's last word on this body (SelfState); its epoch is quoted back in every body packet (D338) */
+  self: SelfState | null = null;
+  private epoch = 0;
+  /** where the host has this body while it runs one of its skills (the body follows) */
+  private followTo: { x: number; y: number } | null = null;
+  /** the input seq when a skill was asked of the host: once the host has seen it and is not running it, stop waiting */
+  private awaitSeq = -1;
+  /** hits on this body waiting for this screen's clock to reach them (D338) */
+  private inbox: (IncomingHit & { by: number })[] = [];
+  /** damage this screen dealt to an enemy that the host has not shown yet, so its bar does not jump back (D338) */
+  private hpDebt = new Map<number, { amt: number; at: number }>();
+  private lastRecHp = new Map<number, number>();
+  /** how far ahead each walking enemy is drawn now (eased) */
+  private lead = new Map<number, number>();
+  /** a knockback this screen gave an enemy, shown until the host's own arrives (D338) */
+  private nudge = new Map<number, { x: number; y: number }>();
+  /** enemy shots that hit this body: hidden here until the host removes them */
+  private spent = new Set<number>();
+  private gearKey = '';
   private roomKey = '';
   private ch: {
     hello: NetChannel<Hello & Record<string, unknown>>;
@@ -109,6 +123,8 @@ export class NetGuest {
     cmd: NetChannel<Cmd & Record<string, unknown>>;
     char: NetChannel<{ ack: number; char: Character }>;
     ping: NetChannel<{ t: number }>;
+    body: NetChannel<ArrayBuffer>;
+    act: NetChannel<{ a: NetAct[] }>;
   };
 
   constructor(
@@ -116,7 +132,7 @@ export class NetGuest {
     public save: SaveFile,
     private clock: () => number = () => performance.now() / 1000,
   ) {
-    this.ch = { hello: t.channel(CH.hello), input: t.channel(CH.input), cmd: t.channel(CH.cmd), char: t.channel(CH.char), ping: t.channel(CH.ping) };
+    this.ch = { hello: t.channel(CH.hello), input: t.channel(CH.input), cmd: t.channel(CH.cmd), char: t.channel(CH.char), ping: t.channel(CH.ping), body: t.channel(CH.body), act: t.channel(CH.act) };
     t.channel<LobbyState & Record<string, unknown>>(CH.lobby).onMessage((l, from) => {
       // the host's lobby goes to everyone on the channel: a turned-away guest is not in it (D156: it used to wipe the
       // rejection off the screen and look like a normal lobby, just without them)
@@ -167,11 +183,12 @@ export class NetGuest {
     this.ch.hello.send(h as Hello & Record<string, unknown>, this.hostId);
   }
 
-  /** Tell the host about a change made on this side (equip, level up, gems, spells). */
+  /** Tell the host about a change made on this side (equip, level up, gems, spells, two-handing, a weapon swap). */
   syncChar(): void {
     if (!this.hostId) return;
     this.ch.char.send({ ack: this.rev, char: cloneChar(this.save.character) }, this.hostId);
     if (this.me?.pl) refreshDerived(this.me);
+    this.gearKey = this.gearOf();
   }
 
   command(c: Cmd): void {
@@ -202,12 +219,21 @@ export class NetGuest {
 
   private resetWorld(): void {
     this.cw = new World('mirror');
+    // this world's own body sends what it does to the host (D338)
+    this.cw.netGuest = { out: [] };
     if (this.hostFriendlyFire !== null) this.cw.friendlyFire = this.hostFriendlyFire / 100;
     this.me = null;
     this.samples.clear();
     this.meta.clear();
-    this.pending = [];
     this.self = null;
+    this.epoch = 0;
+    this.followTo = null;
+    this.inbox = [];
+    this.hpDebt.clear();
+    this.lastRecHp.clear();
+    this.lead.clear();
+    this.nudge.clear();
+    this.spent.clear();
     this.roomKey = '';
   }
 
@@ -238,6 +264,7 @@ export class NetGuest {
     for (const o of ops) applyCharOp(c, o);
     this.rev = rev;
     if (this.me?.pl && ops.some((o) => o.op === 'gear' || o.op === 'set' || o.op === 'prof')) refreshDerived(this.me);
+    this.gearKey = this.gearOf();
     this.onCharChanged();
   }
 
@@ -253,13 +280,18 @@ export class NetGuest {
     for (const r of s.recs) this.applyRec(r, s.time);
     for (const id of s.removed) {
       const e = this.cw.entities.get(id);
+      if (e === this.me) this.me = null;
       if (e) {
         e.removed = true;
         this.cw.entities.delete(id);
       }
       this.samples.delete(id);
       this.meta.delete(id);
-      if (e === this.me) this.me = null;
+      this.lead.delete(id);
+      this.nudge.delete(id);
+      this.spent.delete(id);
+      this.hpDebt.delete(id);
+      this.lastRecHp.delete(id);
     }
     this.cw.refreshLists();
     this.cw.bossId = j.bossId ?? 0;
@@ -269,7 +301,7 @@ export class NetGuest {
     }
     this.setFriendlyFire(j.ff);
     if (j.ev) this.cw.events.push(...j.ev);
-    if (j.self) this.applySelf(j.self);
+    if (j.self) this.applySelf(j.self, s.time);
   }
 
   /** The host's friendly fire, as sent (a missing or broken value leaves the last one). */
@@ -296,6 +328,7 @@ export class NetGuest {
       // a new room: everything from the old one is gone
       this.roomKey = r.key;
       for (const [id, e] of this.cw.entities) if (e !== this.me) this.cw.entities.delete(id);
+      this.inbox = [];
     }
     this.cw.room = room;
     this.nodeId = r.nodeId;
@@ -313,8 +346,14 @@ export class NetGuest {
       const mine = m.pid === this.save.character.playerId;
       const char = mine ? this.save.character : (m.char as Character);
       e = spawnPlayer(w, char, m.slot, mine, x, y);
-      e.pl!.remote = true;
-      if (mine) this.me = e;
+      e.pl!.remote = !mine;
+      if (mine) {
+        // this screen's own body (D338); a body the host replaced goes
+        if (this.me && this.me !== e) this.cw.entities.delete(this.me.id);
+        e.pl!.net = 'body';
+        this.me = e;
+        this.gearKey = this.gearOf();
+      }
     } else if (m.t === 'enemy') {
       const def = ENEMIES[m.def] ?? BOSSES[m.def];
       if (!def) return null;
@@ -361,6 +400,20 @@ export class NetGuest {
     } else this.refreshMeta(e, m);
     const x = r.x / 2;
     const y = r.y / 2;
+    if (e === this.me) {
+      // this body is this screen's own (D338): from the host only what the host decides, the revive ring
+      const pl = e.pl!;
+      pl.reviveProgress = r.extra / 100;
+      pl.reviveNeed = Math.max(1, r.extra2 / 100);
+      // while the host runs one of its skills, the host's picture of it is the one to draw
+      if (pl.netFollow) {
+        e.facing = (r.facing / 256) * Math.PI * 2;
+        e.anim.pose = POSES[r.pose] ?? 'idle';
+        e.anim.poseT = r.poseT / 50;
+        comboFromWire(e, r.cIdx, r.cPhase, r.cK, (r.flags & F.charging) !== 0);
+      }
+      return;
+    }
     const list = this.samples.get(r.id) ?? [];
     list.push({ t, x, y });
     if (list.length > 12) list.shift();
@@ -369,19 +422,29 @@ export class NetGuest {
     const a = e.anim;
     a.pose = POSES[r.pose] ?? 'idle';
     a.poseT = r.poseT / 50;
-    a.alpha = r.alpha / 255;
+    a.alpha = this.spent.has(r.id) ? 0 : r.alpha / 255;
     a.scale = r.scale / 64;
     a.squash = r.squash / 100;
     a.tint = r.flags & F.red ? 'red' : r.flags & F.blue ? 'blue' : null;
-    a.flashUntil = r.flags & F.flash ? t + 0.08 : 0;
-    if (e.hp && e !== this.me) {
-      e.hp.hp = (e.hp.max * r.hp) / 1000;
+    // a flash this screen started (its own hit) runs its course
+    if (r.flags & F.flash) a.flashUntil = Math.max(a.flashUntil, t + 0.08);
+    if (e.hp) {
+      const hpNow = (e.hp.max * r.hp) / 1000;
+      // damage this screen dealt and the host has not shown yet stays off the bar (D338)
+      const prev = this.lastRecHp.get(r.id);
+      const debt = this.hpDebt.get(r.id);
+      if (debt) {
+        if (prev !== undefined && hpNow < prev) debt.amt -= prev - hpNow;
+        if (debt.amt <= 0 || this.cw.time - debt.at > 1.2) this.hpDebt.delete(r.id);
+      }
+      this.lastRecHp.set(r.id, hpNow);
+      e.hp.hp = Math.max(0, hpNow - (this.hpDebt.get(r.id)?.amt ?? 0));
       e.hp.dead = (r.flags & F.dead) !== 0;
       e.hp.invulnUntil = r.flags & F.invuln ? t + 0.2 : 0;
       e.hp.staggerUntil = r.flags & F.stagger ? t + 0.2 : 0;
     }
-    // statuses and controls for the particles and icons (the guest's own come exactly from its self state)
-    if (e.st && e !== this.me) {
+    // statuses and controls for the particles and icons
+    if (e.st) {
       STATUS_BITS.forEach((k, i) => {
         e.st!.active[k] = r.status & (1 << i) ? t + 0.3 : 0;
       });
@@ -404,133 +467,22 @@ export class NetGuest {
     }
     if (e.pl) {
       const pl = e.pl;
-      // the guest's own locally started dodge keeps its look until it has played out (D149)
-      const predicting = e === this.me && this.dodgePred !== null && this.dodgePred.t < DODGE_S;
-      if (!predicting) pl.state = PLAYER_STATES[r.state] ?? 'idle';
+      pl.state = PLAYER_STATES[r.state] ?? 'idle';
       pl.downed = (r.flags & F.downed) !== 0;
       pl.deadUntilRest = (r.flags & F.deadUntilRest) !== 0;
       pl.blocking = (r.flags & F.blocking) !== 0;
       pl.parryUntil = r.flags & F.parry ? t + 0.1 : 0;
       pl.reviveProgress = r.extra / 100;
       pl.reviveNeed = Math.max(1, r.extra2 / 100);
-      // D329: another player's downed countdown (the guest's own comes with its HUD state, which also sets it)
-      if (pl.downed && e !== this.me) {
+      // D329: another player's downed countdown
+      if (pl.downed) {
         pl.ghostUntil = t + (r.ghost & 127);
         pl.ghostPauseUntil = r.ghost & 128 ? t + 0.25 : 0;
       }
-      const ph = COMBO_PHASES[r.cPhase] ?? '';
-      // 100 + index: a shot of the off-hand weapon (D291)
-      const offShot = r.cIdx >= 100 && r.cIdx < 200 && !!pl.derived.offWeapon;
-      const idx = offShot ? r.cIdx - 100 : r.cIdx;
-      const combo = offShot ? pl.derived.offWeapon!.def.combo : pl.derived.weapon.combo;
-      if (ph && combo.length) {
-        const swing = combo[idx % combo.length]!;
-        pl.combo = { idx, phase: ph, t: r.cK / 255, dur: 1, swing, hit: new Set(), queued: false, charging: (r.flags & F.charging) !== 0, chargeT: 0, speed: 1, fired: false, ...(offShot ? { offHand: true } : {}) };
-      } else pl.combo = null;
-      // another player's weapon skill, for its weapon's motion (D234): only drawn, never run here
-      if (!ph && r.cIdx >= 200 && pl.state === 'skill') {
-        const k = r.cIdx - 200;
-        const off = k >= 3;
-        const sk = off ? offSkillOf(e, k - 3) : skillOf(e, k);
-        const fired = r.cK >= 128;
-        const t = fired ? 1 + ((r.cK - 128) / 127) * SKILL_RECOVER_S : r.cK / 127;
-        if (sk) pl.action = { kind: 'skill', index: k % 3, id: sk.id, t, castS: 1, fired, effects: [], aimX: e.x, aimY: e.y, powerMult: 1, hyperArmor: false, ...(off ? { offHand: true } : {}) };
-      } else if (pl.action?.kind === 'skill') pl.action = null;
+      comboFromWire(e, r.cIdx, r.cPhase, r.cK, (r.flags & F.charging) !== 0);
     }
     if (e.pr?.lob) e.pr.lob.t = (r.extra / 1000) * e.pr.lob.dur;
     if (e.it) e.it.used = (r.flags & F.used) !== 0;
-  }
-
-  /**
-   * This guest's own swing, predicted (D154): it starts when attack is pressed (or held, for melee) while free, and
-   * lasts as long as that combo step does at the current attack speed, chaining into the next step while held.
-   * Only movement uses it; the host still decides every hit.
-   */
-  private predictSwing(me: Entity, input: InputFrame, speed: number): boolean {
-    const d = me.pl!.derived;
-    const combo = d.weapon.combo;
-    const now = this.clock();
-    if (!combo.length) return false;
-    const pressed = (input.pressed & ACTION_BIT.attack) !== 0;
-    const held = (input.buttons & ACTION_BIT.attack) !== 0;
-    // a swing starts only with the stamina for all of it (D193); the host's buffs are not known here, it still decides
-    const stam = !!this.self && this.self.stam >= attackStaminaCost(d.weapon.stamina, d.stamCost, 0, this.self.stamMax) - 1e-6;
-    const as = Math.max(0.3, d.attackSpeed);
-    const start = (idx: number): void => {
-      const sw = combo[idx % combo.length]!;
-      const last = idx % combo.length === combo.length - 1;
-      // the host turns to the aim at the swing's start; a neutral pad stick keeps the current facing
-      const ax = input.aimX - me.x;
-      const ay = input.aimY - me.y;
-      const a = input.aimNeutral || Math.hypot(ax, ay) < 1 ? me.facing : Math.atan2(ay, ax);
-      const windup = sw.windupMs / 1000 / as;
-      const active = sw.activeMs / 1000 / as;
-      const recover = (sw.recoverMs / 1000 / as) * (last ? 1.15 : 1);
-      this.atk = { idx: idx % combo.length, start: now, windup, active, recover, step: sw.step ?? 0, dir: [Math.cos(a), Math.sin(a)], until: now + windup + active + recover, queued: false, last };
-    };
-    // the same rules as the host's combo (player.ts updateCombo): presses queue in the recovery, a queued swing
-    // starts at 45% of it (the last swing waits for the end), and a new swing within 0.5 s continues the combo
-    const a = this.atk;
-    if (a && now < a.until) {
-      const tr = now - a.start - a.windup - a.active;
-      if (tr >= 0) {
-        if (pressed || (held && tr > a.recover * 0.3)) a.queued = true;
-        if (a.queued && !a.last && tr >= a.recover * 0.45 && stam) start(a.idx + 1);
-      }
-      return true;
-    }
-    if (a && now >= a.until) {
-      this.nextSwing = { idx: a.last ? 0 : a.idx + 1, until: a.until + 0.5 };
-      const chain = a.queued && a.last && stam;
-      this.atk = null;
-      if (chain) {
-        start(0);
-        return true;
-      }
-    }
-    // a one-handed bow is taken in both hands and shot on the same press (D203), so it is not held back here
-    const free = speed > 0 && !this.dodgePred && stam;
-    if (free && (pressed || (held && !d.weapon.ranged))) {
-      start(this.nextSwing && now <= this.nextSwing.until ? this.nextSwing.idx : 0);
-      return true;
-    }
-    return false;
-  }
-
-  /** The predicted swing's step velocity right now (the last 40% of its windup), or null. */
-  private swingStep(): [number, number] | null {
-    const a = this.atk;
-    if (!a || !a.step) return null;
-    const t = this.clock() - a.start;
-    if (t < a.windup * 0.6 || t >= a.windup) return null;
-    const sp = a.step / Math.max(0.05, a.windup * 0.4);
-    return [a.dir[0] * sp, a.dir[1] * sp];
-  }
-
-  /**
-   * Start the dodge on this screen the moment it is pressed (D149), on the same rules the host checks (free to act,
-   * recharged, stamina left); the host runs the real one and the two meet when it confirms. A refused dodge is put
-   * right by the next reconcile.
-   */
-  private maybePredictDodge(me: Entity, input: InputFrame, speed: number): void {
-    if (this.dodgePred || !(input.pressed & ACTION_BIT.dodge) || !me.pl || !this.self) return;
-    const free = speed > 0 && this.self.stam > 0 && this.hostNow() >= this.self.dodgeReadyAt;
-    if (!free) return;
-    let dx = input.moveX;
-    let dy = input.moveY;
-    const m = Math.hypot(dx, dy);
-    if (m < 0.2) {
-      dx = Math.cos(me.facing);
-      dy = Math.sin(me.facing);
-    } else {
-      dx /= m;
-      dy /= m;
-    }
-    const now = this.clock();
-    // hold off reconciling until the host has run its own dodge and reported back: the dodge, a round trip and a margin
-    this.dodgePred = { until: now + DODGE_S, holdUntil: now + DODGE_S + this.rtt + 0.12, dir: [dx, dy], mult: me.pl.derived.load.effects.dodge, t: 0 };
-    me.pl.state = 'dodge';
-    me.pl.dodgeUntil = this.cw.time + DODGE_S;
   }
 
   /**
@@ -543,186 +495,228 @@ export class NetGuest {
     const phase = en.state === 'windup' ? 'windup' : en.state === 'attack' ? 'active' : en.state === 'recover' ? 'recover' : null;
     const id = m.t === 'enemy' ? m.atk : undefined;
     const def = id ? findAttack(en.def, id) : null;
+    // the parts of a running attack this screen's own hits may touch (a stagger or a parry cancels it, D338)
+    const run = { targetId: 0, aimX: e.x, aimY: e.y, teleIds: [] as number[], fired: false, comboIdx: 0, moveDone: false, hit: new Set<number>(), usedBudget: false };
     if (!phase || !def) {
       // no attack id (an old host): keep the Red / Blue windup icon with a plain element
       const kind = r.flags & F.windRed ? 'red' : r.flags & F.windPierce ? 'pierce' : null;
-      return kind ? ({ phase: 'windup', t: 0, windup: 1, active: 0.1, recover: 0.3, def: { id: '', kind, type: 'physical', windupMs: 1000, recoverMs: 300 } } as unknown as NonNullable<typeof en.attack>) : null;
+      return kind ? ({ ...run, phase: 'windup', t: 0, windup: 1, active: 0.1, recover: 0.3, angle: e.facing, def: { id: '', kind, type: 'physical', windupMs: 1000, recoverMs: 300 } } as unknown as NonNullable<typeof en.attack>) : null;
     }
     const cur = en.attack;
     if (cur && cur.def === def && cur.phase === phase) return cur;
-    return { def, phase, t: 0, windup: def.windupMs / 1000, active: (def.activeMs ?? 100) / 1000, recover: def.recoverMs / 1000, angle: e.facing } as unknown as NonNullable<typeof en.attack>;
+    return { ...run, def, phase, t: 0, windup: def.windupMs / 1000, active: (def.activeMs ?? 100) / 1000, recover: def.recoverMs / 1000, angle: e.facing } as unknown as NonNullable<typeof en.attack>;
   }
 
-  private applySelf(s: SelfState): void {
+  /** The host's word on this body (D338): its overrides, cooldowns, the skill it is running, changes, and hits. */
+  private applySelf(s: SelfState, snapTime: number): void {
     this.self = s;
     const e = this.me;
     if (!e?.pl || !e.hp) return;
-    e.hp.hp = s.hp;
-    e.hp.max = s.max;
-    e.hp.barrier = s.barrier;
-    e.hp.invulnUntil = s.invulnUntil;
-    if (e.stam) {
-      e.stam.cur = s.stam;
-      e.stam.max = s.stamMax;
-    }
-    if (e.st) {
-      Object.assign(e.st.meters, s.meters);
-      Object.assign(e.st.active, s.active);
-      Object.assign(e.st.controls, s.controls);
-    }
     const pl = e.pl;
-    pl.skillReadyAt = [s.skillReadyAt[0] ?? 0, s.skillReadyAt[1] ?? 0, s.skillReadyAt[2] ?? 0];
-    pl.spellReadyAt = [s.spellReadyAt[0] ?? 0, s.spellReadyAt[1] ?? 0, s.spellReadyAt[2] ?? 0];
-    pl.dodgeReadyAt = s.dodgeReadyAt;
-    pl.dodgeRechargeTotal = s.dodgeRechargeTotal;
-    pl.guardBrokenUntil = s.guardBrokenUntil;
-    pl.riposteBuffUntil = s.riposteBuffUntil;
-    pl.ghostUntil = s.ghostUntil;
-    pl.ghostPauseUntil = s.ghostPauseUntil ?? 0;
-    pl.stateUntil = s.stateUntil;
-    // reconcile the prediction (NETCODE §5): replay unacknowledged inputs from the host's position
-    this.pending = this.pending.filter((p) => seqNewer(p.seq, s.lastSeq));
-    // a locally started dodge runs on its own until the host has caught up with it (D149)
-    if (this.dodgePred && this.clock() < this.dodgePred.holdUntil) return;
-    this.dodgePred = null;
-    let px = s.x;
-    let py = s.y;
-    if (s.speed > 0) {
-      const probe = { ...e, x: px, y: py };
-      for (const p of this.pending) {
-        // each input at the speed it was walked at here (D154); Slow terrain where each step starts, as the host does
-        const sp = p.sp * terrainWalkMult(this.cw.room, probe.x, probe.y);
-        this.cw.room.moveCircle(probe, p.mx * sp * p.dt + p.fx, p.my * sp * p.dt + p.fy);
+    const w = this.cw;
+    // the host's times, as this screen's: what was left of them when the snapshot was sent
+    const off = w.time - snapTime;
+    const conv = (v: number): number => (v > 0 ? v + off : v);
+    if (s.epoch !== this.epoch) {
+      // the host overrode the body (a down, a revive, a respawn, a teleport): its place and HP are the host's
+      this.epoch = s.epoch;
+      e.x = e.px = s.x;
+      e.y = e.py = s.y;
+      e.forced = null;
+      e.hp.hp = Math.max(0, Math.min(e.hp.max, s.hp));
+      e.hp.dead = false;
+      if (s.downed && !pl.downed) {
+        pl.combo = null;
+        pl.action = null;
+        pl.channel = null;
+        pl.charge = null;
+        pl.falling = null;
+        pl.healOver = [];
       }
-      px = probe.x;
-      py = probe.y;
+      pl.state = 'idle';
+      pl.netFollow = false;
+      this.inbox = [];
     }
-    const err = dist(px, py, e.x, e.y);
-    if (s.speed <= 0) {
-      // a brief stop (a swing's step forward, a flinch): hold where we are and settle once walking resumes, rather
-      // than snapping back to the host's older position on every swing (D150)
-      if (this.zeroSince === 0) this.zeroSince = this.clock();
-      if (e.pl?.state === 'attack' && this.clock() - this.zeroSince < 0.3 && err < 64) return;
-      // knocked back, staggered, grabbed: the frame glides to the host's newest position (D154: this used to snap,
-      // so every knockback on a guest was a teleport); only a real teleport (a room change, a warp) snaps
-      if (err < 160) return;
-    } else this.zeroSince = 0;
-    // ease anything short of a real teleport (D154: it used to snap at 24 px, which read as blinking back)
-    if (err >= 64 || s.speed <= 0) {
-      e.x = e.px = px;
-      e.y = e.py = py;
-      this.correction = { x: 0, y: 0 };
-    } else {
-      // smooth small errors over ~100 ms
-      this.correction = { x: px - e.x, y: py - e.y };
+    pl.downed = s.downed;
+    pl.deadUntilRest = s.dead;
+    pl.ghostUntil = conv(s.ghostUntil);
+    pl.ghostPauseUntil = conv(s.ghostPauseUntil);
+    pl.skillReadyAt = [conv(s.skillReadyAt[0] ?? 0), conv(s.skillReadyAt[1] ?? 0), conv(s.skillReadyAt[2] ?? 0)];
+    pl.spellReadyAt = [conv(s.spellReadyAt[0] ?? 0), conv(s.spellReadyAt[1] ?? 0), conv(s.spellReadyAt[2] ?? 0)];
+    // the host is running one of this body's skills, spells or consumables: the body follows the host until it ends
+    if (s.follow && !pl.downed) {
+      if (!pl.netFollow) {
+        pl.combo = null;
+        pl.blocking = false;
+      }
+      pl.netFollow = true;
+      pl.netAwaitUntil = 0;
+      pl.state = (HOST_RUN_STATES.has(s.state as PlayerState) ? s.state : 'skill') as PlayerState;
+      this.followTo = { x: s.x, y: s.y };
+    } else if (pl.netFollow) {
+      pl.netFollow = false;
+      pl.state = 'idle';
+      pl.action = null;
+      this.followTo = null;
+    } else if ((pl.netAwaitUntil ?? 0) > w.time && this.awaitSeq >= 0 && !seqNewer(this.awaitSeq, s.lastSeq)) {
+      // the host has seen the press and is not running it (on cooldown there, out of stamina…): stop waiting
+      pl.netAwaitUntil = 0;
+      this.awaitSeq = -1;
     }
+    if (s.delta) applyDelta(w, e, s.delta, off);
+    for (const h of s.hits ?? []) this.inbox.push({ ...h, by: w.time });
   }
 
   // ------------------------------------------------------------------ per frame
 
-  /** Host time estimate for "now" and the time the mirror is drawn at (100 ms behind). */
+  /** Host time estimate for "now". */
   hostNow(): number {
     return this.hostClock.now(this.clock());
   }
 
-  /** Send this frame's input and move the mirror: interpolate others, predict self. */
+  /**
+   * One frame: send this frame's input, move the mirror (others interpolated), decide the hits on this body that
+   * this screen now shows landing, step this body, and send it and what it did to the host.
+   */
   frame(input: InputFrame, dt: number): void {
     if (this.state !== 'game' || !this.hostId) return;
     this.seq = (this.seq + 1) & 0xffff;
     this.tick++;
     this.ch.input.send(encodeInput({ seq: this.seq, tick: this.tick, frame: input }), this.hostId);
-    // draw a little behind the newest snapshot: how far depends on how jittery this connection is (D149)
+    const w = this.cw;
+    // draw a little behind the newest snapshot: how far depends on how jittery this connection is (D149). This
+    // screen's own body lives on the same clock, so what it does lines up with what it sees.
     const renderT = this.hostNow() - this.hostClock.delay(dt);
-    this.cw.time = renderT;
+    w.time = renderT < w.time - 1 ? renderT : Math.max(w.time, renderT);
     // mirrored enemy attacks run their own clock between snapshots (windup glow and motes)
-    for (const e of this.cw.entities.values()) if (e.en?.attack) e.en.attack.t += dt;
-    // others: interpolate between the two samples around renderT (extrapolate at most 100 ms)
+    for (const e of w.entities.values()) if (e.en?.attack) e.en.attack.t += dt;
+    this.interpolate(dt);
+    const me = this.me;
+    if (!me?.pl) return;
+    this.decideHits(me);
+    // this body, at full speed on this screen (D338)
+    me.pl.input = input;
+    const awaitBefore = me.pl.netAwaitUntil ?? 0;
+    if (me.pl.netFollow && this.followTo) {
+      const k = Math.min(1, dt / 0.08);
+      me.x += (this.followTo.x - me.x) * k;
+      me.y += (this.followTo.y - me.y) * k;
+    }
+    const mx0 = me.x;
+    const my0 = me.y;
+    stepBody(w, me, dt);
+    if (me.pl.netFollow) walkAnim(me, dist(mx0, my0, me.x, me.y), dt);
+    if ((me.pl.netAwaitUntil ?? 0) > awaitBefore) this.awaitSeq = this.seq;
+    // two-handing or a weapon swap done on this screen: the host's copy of the character follows
+    const gk = this.gearOf();
+    if (gk !== this.gearKey) this.syncChar();
+    const out = w.netGuest?.out ?? [];
+    for (const a of out) {
+      if (a.t !== 'hit' || a.dmg <= 0) continue;
+      const d = this.hpDebt.get(a.id) ?? { amt: 0, at: w.time };
+      d.amt += a.dmg;
+      d.at = w.time;
+      this.hpDebt.set(a.id, d);
+    }
+    this.ch.body.send(encodeBody(bodyReportOf(me, w.time, this.seq, this.epoch)), this.hostId);
+    if (out.length) {
+      this.ch.act.send({ a: out.splice(0, out.length) }, this.hostId);
+    }
+  }
+
+  /** Others: interpolate between the two samples around the drawn time; walking enemies are led toward now (D338). */
+  private interpolate(dt: number): void {
+    const w = this.cw;
+    const renderT = w.time;
     for (const [id, list] of this.samples) {
-      const e = this.cw.entities.get(id);
+      const e = w.entities.get(id);
       if (!e || e === this.me || !list.length) continue;
+      // an enemy that is not winding up or attacking is drawn a little ahead, where it is more nearly now; one
+      // attacking is drawn exactly as the host ran it, so its swing lines up with its telegraph
+      let lead = this.lead.get(id) ?? 0;
+      const want = e.en && !e.en.attack && e.en.state !== 'windup' && e.en.state !== 'attack' && e.en.state !== 'recover' ? ENEMY_LEAD_S : 0;
+      lead += (want - lead) * Math.min(1, dt * 8);
+      this.lead.set(id, lead);
+      const at = renderT + lead;
       let a = list[0]!;
       let b = list[list.length - 1]!;
       for (let i = 0; i < list.length - 1; i++) {
-        if (list[i]!.t <= renderT && list[i + 1]!.t >= renderT) {
+        if (list[i]!.t <= at && list[i + 1]!.t >= at) {
           a = list[i]!;
           b = list[i + 1]!;
           break;
         }
       }
+      if (at > b.t && list.length >= 2) a = list[list.length - 2]!;
       let x = b.x;
       let y = b.y;
       if (b.t > a.t) {
-        const k = Math.max(0, Math.min(1 + 0.1 / Math.max(0.01, b.t - a.t), (renderT - a.t) / (b.t - a.t)));
+        // past the newest sample: carry on along its last step for at most 100 ms
+        const k = Math.max(0, Math.min(1 + 0.1 / Math.max(0.01, b.t - a.t), (at - a.t) / (b.t - a.t)));
         x = a.x + (b.x - a.x) * k;
         y = a.y + (b.y - a.y) * k;
+      }
+      // a knockback this screen gave: shown at once, fading out as the host's own arrives
+      const n = this.nudge.get(id);
+      if (e.forced && e.forced.until > renderT && e.en) {
+        const nn = n ?? { x: 0, y: 0 };
+        nn.x += e.forced.vx * dt;
+        nn.y += e.forced.vy * dt;
+        this.nudge.set(id, nn);
+      } else if (e.forced) e.forced = null;
+      const nd = this.nudge.get(id);
+      if (nd) {
+        x += nd.x;
+        y += nd.y;
+        const fade = Math.exp(-dt / 0.25);
+        nd.x *= fade;
+        nd.y *= fade;
+        if (Math.abs(nd.x) + Math.abs(nd.y) < 0.2) this.nudge.delete(id);
       }
       walkAnim(e, dist(x, y, e.x, e.y), dt);
       e.px = e.x = x;
       e.py = e.y = y;
     }
-    // self: predict walking with the host's current walk speed, and start a dodge at once (D149)
-    const me = this.me;
-    if (me) {
-      const mx0 = me.x;
-      const my0 = me.y;
-      const speed = this.self?.speed ?? 0;
-      this.maybePredictDodge(me, input, speed);
-      const dp = this.dodgePred;
-      // asked once a frame: the clock moves between calls, so asking twice could get two answers (D155)
-      const stepV = this.swingStep();
-      // right after a predicted dodge the host may still report 0 (it is finishing its own): keep walking at the last speed
-      if (speed > 0) this.lastWalkSpeed = speed;
-      let walk = speed > 0 ? speed : dp ? this.lastWalkSpeed : 0;
-      // swings slow walking from the moment they start (D88): predict that here instead of waiting for the host's
-      // word, which arrives a round trip late and used to snap the guest back at every swing's start and end (D154)
-      const base = this.self?.base ?? 0;
-      const swinging = this.predictSwing(me, input, speed);
-      if (base > 0 && walk > 0) {
-        if (swinging) walk = base * (ATTACK_MOVE[me.pl!.derived.weapon.speedClass] ?? 0.4) * (me.pl!.blocking ? 0.75 : 1);
-        else if (me.pl!.state === 'attack') walk = base;
-      }
-      if (dp && dp.t < DODGE_S) {
-        // the same path the host's dodge takes (player.ts): fast at first, easing out
-        const step = Math.min(dt, DODGE_S - dp.t);
-        const k = dp.t / DODGE_S;
-        const sp = (DODGE_DIST / DODGE_S) * 1.6 * Math.max(0.1, 1 - k) * dp.mult;
-        this.cw.room.moveCircle(me, dp.dir[0] * sp * step, dp.dir[1] * sp * step, false);
-        dp.t += step;
-        this.pending = [];
-        this.correction = { x: 0, y: 0 };
-      } else if (stepV) {
-        // the swing's step forward, as the host takes it (player.ts): a short slide toward the aim, no walking (D154)
-        const v = stepV;
-        const fx = v[0] * dt;
-        const fy = v[1] * dt;
-        this.pending.push({ seq: this.seq, dt, mx: 0, my: 0, sp: 0, fx, fy });
-        if (this.pending.length > 120) this.pending.shift();
-        this.cw.room.moveCircle(me, fx, fy);
-      } else if (walk > 0) {
-        this.pending.push({ seq: this.seq, dt, mx: input.moveX, my: input.moveY, sp: walk, fx: 0, fy: 0 });
-        if (this.pending.length > 120) this.pending.shift();
-        const sp = walk * terrainWalkMult(this.cw.room, me.x, me.y);
-        this.cw.room.moveCircle(me, input.moveX * sp * dt, input.moveY * sp * dt);
-        const k = Math.min(1, dt / 0.1);
-        me.x += this.correction.x * k;
-        me.y += this.correction.y * k;
-        this.correction.x *= 1 - k;
-        this.correction.y *= 1 - k;
-      } else if (this.zeroSince !== 0 && this.clock() - this.zeroSince < 0.3 && me.pl?.state === 'attack') {
-        // a swing's step forward: stand still until walking resumes (D150)
-      } else {
-        // staggered, held, knocked back: follow the host's newest position
-        const list = this.samples.get(me.id);
-        const last = list?.[list.length - 1];
-        if (last) {
-          me.x += (last.x - me.x) * Math.min(1, dt / 0.08);
-          me.y += (last.y - me.y) * Math.min(1, dt / 0.08);
+  }
+
+  /**
+   * The hits on this body that this screen now shows landing (D338): each is decided here, with this body's own dodge,
+   * block, parry and place at that moment, and the outcome goes back to the host.
+   */
+  private decideHits(me: Entity): void {
+    const w = this.cw;
+    if (!this.inbox.length) return;
+    const due = this.inbox.filter((h) => h.at <= w.time || w.time - h.by >= HIT_HOLD_MAX_S);
+    if (!due.length) return;
+    this.inbox = this.inbox.filter((h) => !due.includes(h));
+    const out = w.netGuest!.out;
+    for (const h of due) {
+      let res = 'none';
+      let dmg = 0;
+      let grab = false;
+      const pl = me.pl!;
+      if (!pl.downed && !pl.deadUntilRest && me.hp!.hp > 0) {
+        const ar = h.area;
+        const dot = !!ar?.dot;
+        const inside = !ar || shapeHit(ar.s, ar.tau, me.x, me.y + (dot ? PLAYER_DOT_DY : 0), (dot ? PLAYER_DOT_R : me.radius) + HIT_AREA_SLACK, w.room);
+        if (!inside) res = 'miss';
+        else {
+          const before = me.hp!.hp + (me.hp!.barrierUntil > w.time ? me.hp!.barrier : 0);
+          const held = pl.state === 'held';
+          const proj = h.projId ? w.get(h.projId) : undefined;
+          res = hitPlayer(w, h.attackerId, me, h.spec, h.fx, h.fy, proj);
+          dmg = Math.max(0, before - (me.hp!.hp + (me.hp!.barrierUntil > w.time ? me.hp!.barrier : 0)));
+          grab = !held && pl.state === 'held';
+          if (proj && (res === 'hit' || res === 'blocked')) this.spent.add(proj.id);
         }
       }
-      walkAnim(me, dist(mx0, my0, me.x, me.y), dt);
-      me.px = me.x;
-      me.py = me.y;
-      if (me.pl && me.pl.state !== 'attack' && me.pl.state !== 'dodge') me.facing = Math.atan2(input.aimY - me.y, input.aimX - me.x);
+      out.push({ t: 'took', h: h.h, res, dmg, ...(grab ? { grab: true } : {}) });
     }
+  }
+
+  /** What this screen changes about the weapons in hand (two-handing, swaps), to sync with the host. */
+  private gearOf(): string {
+    const c = this.save.character;
+    return `${c.twoHanded}|${c.equipment.main?.id ?? ''}|${c.equipment.off?.id ?? ''}|${c.altMain?.id ?? ''}|${c.altOff?.id ?? ''}`;
   }
 }

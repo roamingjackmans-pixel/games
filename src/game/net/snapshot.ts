@@ -2,9 +2,9 @@
 // permille, combo progress…) plus a JSON "meta" block that is only sent when it changes (what the entity
 // is: enemy type, player gear, telegraph shapes, pickup contents). Room tiles travel the same way. The guest
 // rebuilds real Entity objects from these so the normal renderer and HUD draw them unchanged.
-import { walkSpeedFor } from '../player/player';
-import { speedMult } from '../combat/state';
-import type { Entity, EType, World, GameEvent } from '../world';
+import { netHostDriven, type Entity, type EType, type World, type GameEvent } from '../world';
+import type { BodyDelta } from './body';
+import type { IncomingHit } from './acts';
 import { SKILL_RECOVER_S } from '../skills/use';
 import type { MovingFloorDef } from '../types';
 
@@ -12,7 +12,7 @@ export const ETYPES: EType[] = ['player', 'enemy', 'projectile', 'telegraph', 'h
 export const POSES = ['idle', 'windup', 'attack', 'recover', 'swing', 'cast', 'open', 'parry', 'stagger', 'hurt', 'devour'];
 export const ENEMY_STATES = ['spawning', 'idle', 'alert', 'approach', 'kite', 'windup', 'attack', 'recover', 'stagger', 'reposition', 'held', 'channel', 'dormant', 'ceiling', 'submerged', 'stealth', 'invisible', 'dead'] as const;
 export const PLAYER_STATES = ['idle', 'attack', 'dodge', 'skill', 'cast', 'flask', 'stagger', 'held', 'falling', 'consumable', 'channel', 'charge', 'dashing'] as const;
-const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
+export const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
 const REC = 28;
 /** statusMask bits: the five statuses, then the six controls (NETCODE §4) */
 export const STATUS_BITS = ['burn', 'chill', 'shock', 'bleed', 'poison'] as const;
@@ -386,68 +386,54 @@ export function roomSync(w: World, nodeId: string, kind: string, zone: number, v
   return { key: `${r.id}`, version: r.version, kind, nodeId, zone, tiles: toB64(r.tiles), overlay: toB64(r.overlay), ...(r.terrain.some((v) => v !== 0) ? { terrain: toB64(r.terrain) } : {}), doors, hazardKind: r.hazardKind, rotFloor: r.rotFloor ? { ...r.rotFloor } : null, movers: r.movers.map((m) => ({ ...m })), visited: [...visited], cleared: [...cleared] };
 }
 
-// ---------------------------------------------------------------- the guest's own HUD state
+// ---------------------------------------------------------------- the guest's own body: what the host says (D338)
 
+/**
+ * What the host tells a guest about its own body each snapshot. The guest owns that body (D338), so this is only
+ * what the host decides: whether it is down or out, its ghost's countdown, its cooldowns (the host runs its skills
+ * and spells), whether the host is running one of them now (the body follows), what the host's world did to it,
+ * and the hits on it for the guest to decide.
+ */
 export interface SelfState {
-  hp: number;
-  max: number;
-  stam: number;
-  stamMax: number;
-  barrier: number;
-  meters: Record<string, number>;
-  active: Record<string, number>;
-  controls: Record<string, number>;
-  skillReadyAt: number[];
-  spellReadyAt: number[];
-  dodgeReadyAt: number;
-  dodgeRechargeTotal: number;
-  guardBrokenUntil: number;
-  riposteBuffUntil: number;
-  ghostUntil: number;
-  ghostPauseUntil: number;
-  stateUntil: number;
-  invulnUntil: number;
-  lastSeq: number;
-  /** server position for prediction */
+  /** bumped whenever the host overrides the body (a down, a revive, a respawn, a teleport): x, y and hp then apply */
+  epoch: number;
   x: number;
   y: number;
-  speed: number;
-  /** walking speed with no swing, cast or block slowing it (the guest predicts its own swings from here, D154) */
-  base?: number;
+  hp: number;
+  max: number;
+  downed: boolean;
+  dead: boolean;
+  /** the host is running one of this body's skills, spells or consumables: its state, and the body follows x, y */
+  follow: boolean;
+  state: string;
+  skillReadyAt: number[];
+  spellReadyAt: number[];
+  ghostUntil: number;
+  ghostPauseUntil: number;
+  /** the guest's last input the host applied */
+  lastSeq: number;
+  /** what the host's world did to the body since the last snapshot */
+  delta?: BodyDelta;
+  /** hits on the body for the guest to decide (D338) */
+  hits?: IncomingHit[];
 }
 
-/** The speed the guest's own prediction should walk at right now (0 when the player cannot walk). */
-function walkSpeedOf(w: World, e: Entity): number {
-  if (e.pl!.downed) return 90;
-  // exactly the host's own walking speed (D150): swinging slows, it does not root
-  return walkSpeedFor(w, e);
-}
-
-export function selfStateOf(w: World, e: Entity, lastSeq: number): SelfState {
+export function selfStateOf(e: Entity, lastSeq: number, epoch: number): SelfState {
   const pl = e.pl!;
   return {
-    hp: e.hp!.hp,
-    max: e.hp!.max,
-    stam: e.stam?.cur ?? 0,
-    stamMax: e.stam?.max ?? 0,
-    barrier: e.hp!.barrier,
-    meters: { ...e.st!.meters },
-    active: { ...e.st!.active },
-    controls: { ...e.st!.controls },
-    skillReadyAt: [...pl.skillReadyAt],
-    spellReadyAt: [...pl.spellReadyAt],
-    dodgeReadyAt: pl.dodgeReadyAt,
-    dodgeRechargeTotal: pl.dodgeRechargeTotal,
-    guardBrokenUntil: pl.guardBrokenUntil,
-    riposteBuffUntil: pl.riposteBuffUntil,
-    ghostUntil: pl.ghostUntil,
-    ghostPauseUntil: pl.ghostPauseUntil,
-    stateUntil: pl.stateUntil,
-    invulnUntil: e.hp!.invulnUntil,
-    lastSeq,
+    epoch: epoch & 0xffff,
     x: e.x,
     y: e.y,
-    speed: walkSpeedOf(w, e),
-    base: e.pl!.downed ? 90 : e.pl!.derived.walk * speedMult(e, w),
+    hp: e.hp!.hp,
+    max: e.hp!.max,
+    downed: pl.downed,
+    dead: pl.deadUntilRest,
+    follow: netHostDriven(pl),
+    state: pl.state,
+    skillReadyAt: [...pl.skillReadyAt],
+    spellReadyAt: [...pl.spellReadyAt],
+    ghostUntil: pl.ghostUntil,
+    ghostPauseUntil: pl.ghostPauseUntil,
+    lastSeq,
   };
 }

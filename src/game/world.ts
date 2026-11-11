@@ -23,6 +23,7 @@ import type {
 import type { Derived } from './player/derived';
 import type { Shape } from './combat/patterns';
 import { Room } from './room';
+import type { NetGuestLink, NetHostLink } from './net/acts';
 
 export type EType = 'player' | 'enemy' | 'projectile' | 'telegraph' | 'hazard' | 'pickup' | 'interact' | 'decoy' | 'wall' | 'corpse';
 
@@ -214,6 +215,15 @@ export interface PlayerC {
   pendingConsumables: { id: ConsumableId; n: number }[];
   /** true on guests' mirror entity: do not simulate locally */
   remote: boolean;
+  /**
+   * Guest-owned bodies (D338): 'body' is a co-op guest's own player on its own screen (simulated there at full speed);
+   * 'puppet' is that player in the host's world (shown where the guest says, never walked, swung or hit here).
+   */
+  net?: 'body' | 'puppet';
+  /** a guest's own body: the host is running one of its skills, spells or consumables, so the body follows the host */
+  netFollow?: boolean;
+  /** a guest's own body: a skill, spell or consumable was pressed and the host has not answered yet (until then) */
+  netAwaitUntil?: number;
 }
 
 export interface AttackRun {
@@ -553,9 +563,10 @@ export interface FxExtra {
 }
 
 export type GameEvent =
-  | { t: 'sfx'; id: string; x?: number; vol?: number; rate?: number }
-  | ({ t: 'fx'; kind: string; x: number; y: number } & FxExtra)
-  | { t: 'dmg'; x: number; y: number; amount: number; type: DamageType; crit: boolean; toPlayer: boolean; heal?: boolean; targetId?: number; affinity?: 'weak' | 'resist'; src?: number }
+  /** echo: the playerId of the guest who already showed this on its own screen (D338): the host never sends it back */
+  | { t: 'sfx'; id: string; x?: number; vol?: number; rate?: number; echo?: string }
+  | ({ t: 'fx'; kind: string; x: number; y: number; echo?: string } & FxExtra)
+  | { t: 'dmg'; x: number; y: number; amount: number; type: DamageType; crit: boolean; toPlayer: boolean; heal?: boolean; targetId?: number; affinity?: 'weak' | 'resist'; src?: number; echo?: string }
   | { t: 'shake'; amount: number }
   | { t: 'hitstop'; ms: number; ids: number[] }
   | { t: 'msg'; text: string; forPlayer?: string | undefined; color?: string }
@@ -592,6 +603,14 @@ export function newStatus(immune: Iterable<string> = []): StatusC {
     poisonTickAt: 0,
     immune: new Set(immune),
   };
+}
+
+/** A guest's player states the host runs (D338): its skills, spells and consumables. */
+export const HOST_RUN_STATES: ReadonlySet<PlayerState> = new Set<PlayerState>(['skill', 'cast', 'consumable', 'channel', 'charge', 'dashing']);
+
+/** Is the host running one of this player's skills, spells or consumables right now (D338)? */
+export function netHostDriven(pl: PlayerC): boolean {
+  return HOST_RUN_STATES.has(pl.state) || !!pl.action || !!pl.channel || !!pl.charge;
 }
 
 export function newAnim(): AnimC {
@@ -658,6 +677,10 @@ export class World {
   friendlyFire = 1;
   /** host simulates; guests only mirror */
   authoritative = true;
+  /** a co-op guest's copy of the host's world, where its own body runs (D338): what that body did goes out here */
+  netGuest: NetGuestLink | null = null;
+  /** the co-op host's world (D338): hits on guests' bodies go to those guests to decide */
+  netHost: NetHostLink | null = null;
   /** special budget per room (GAME_DESIGN §6.2) */
   specialBudget = 2;
   /** frozen while a menu pauses a solo game */

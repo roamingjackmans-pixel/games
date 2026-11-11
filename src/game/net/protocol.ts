@@ -8,7 +8,6 @@ export const MAX_GUESTS = 3;
 export const SNAP_HZ = 30;
 export const FULL_EVERY_S = 2;
 export const GUEST_TIMEOUT_S = 10;
-export const INTERP_DELAY_S = 0.1;
 
 /** Channel names (short: Trystero namespaces travel with every packet). */
 export const CH = {
@@ -24,6 +23,10 @@ export const CH = {
   charop: 'charop',
   ping: 'ping',
   pong: 'pong',
+  /** a guest's own body, every frame (D338) */
+  body: 'body',
+  /** what a guest's own body did to the shared world (D338) */
+  act: 'act',
 } as const;
 
 /** Room codes are 6 digits (D76): easy to read out loud and to type on any keyboard. */

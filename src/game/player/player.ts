@@ -1,5 +1,6 @@
 // The player controller (GAME_DESIGN §4–5): input → movement, light combos, dodge, block, parry,
-// two-hand toggle, flask, skills/spells hooks. Runs on the host for every player (guests send inputs).
+// two-hand toggle, flask, skills/spells hooks. Runs for the host's own player and, on each co-op guest's screen, for
+// that guest's own body; a guest's copy in the host's world runs only what the host runs (updatePuppet, D338).
 import { emptyInput, held, pressed } from '../../engine/input/actions';
 import { T } from '../room';
 import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
@@ -10,7 +11,7 @@ import { terrainWalkMult } from '../systems/terrain';
 import { computeDerived, weaponHitByType } from './derived';
 import { tryCastSpell, tryUseConsumable, spellKeysAreOffSkills, tryUseSkill, updatePlayerAction } from '../skills/use';
 import type { Character, SwingDef, WeaponDef } from '../types';
-import { newStatus, type DamageSpec, type Entity, type PlayerC, type World } from '../world';
+import { netHostDriven, newStatus, type DamageSpec, type Entity, type PlayerC, type World } from '../world';
 
 /** walking speed while swinging, by weapon speed class (D88) */
 export const ATTACK_MOVE: Record<string, number> = { veryfast: 0.6, fast: 0.52, medium: 0.42, mediumslow: 0.33, slow: 0.25, veryslow: 0.18 };
@@ -286,11 +287,17 @@ function startSwing(w: World, e: Entity, idx: number, offHand = false): void {
   e.anim.poseT = 0;
 }
 
-function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number, pierce: number, offHand = false): void {
+function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number, pierce: number, offHand = false, angle?: number): void {
   const pl = e.pl!;
   if (swing.hitbox.shape !== 'proj') return;
-  const a = aimAngle(w, e, true);
+  const a = angle ?? aimAngle(w, e, true);
   e.facing = a;
+  // D338: a co-op guest's own shot: its swing plays on its screen, the arrow itself is the host's (and so are its hits)
+  if (pl.net === 'body' && w.netGuest) {
+    w.netGuest.out.push({ t: 'shot', idx: pl.combo?.idx ?? 0, ...(offHand ? { off: true } : {}), mult, pierce, a, x: e.x, y: e.y });
+    w.sfx(comboWeapon(e, offHand).ranged?.sfx ?? 'shootBolt', e.x);
+    return;
+  }
   const spec = weaponSpec(w, e, swing.mult * mult, { offHand });
   // a whole volley (or a thrown ring, out and back) is one attack for lifesteal (D325)
   spec.attackId = w.newAttackId();
@@ -313,6 +320,20 @@ function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number
     if (volleyHit) shot.pr!.volleyHit = volleyHit;
   }
   w.sfx(wpn.ranged?.sfx ?? 'shootBolt', e.x);
+}
+
+/** The host fires a co-op guest's ranged swing where that guest's screen aimed it (D338). */
+export function remoteShot(w: World, e: Entity, idx: number, offHand: boolean, mult: number, pierce: number, angle: number): void {
+  const wpn = comboWeapon(e, offHand);
+  const swing = wpn.combo[idx % Math.max(1, wpn.combo.length)];
+  if (!swing || swing.hitbox.shape !== 'proj' || !Number.isFinite(angle)) return;
+  const from = w.events.length;
+  fireWeaponProjectile(w, e, swing, Number.isFinite(mult) ? Math.max(0, Math.min(4, mult)) : 1, Number.isFinite(pierce) ? Math.max(0, Math.min(8, Math.round(pierce))) : 0, offHand, angle);
+  // that guest heard its own shot already
+  for (let i = from; i < w.events.length; i++) {
+    const ev = w.events[i]!;
+    if (ev.t === 'sfx') ev.echo = e.pl!.playerId;
+  }
 }
 
 export function spawnPlayerProjectile(w: World, e: Entity, a: number, speed: number, r: number, spec: DamageSpec, pierce: number, drawId: string, opts: { range?: number; isSpell?: boolean; returns?: boolean; color?: string; homing?: number } = {}): Entity {
@@ -412,8 +433,7 @@ function swingHits(w: World, e: Entity): void {
   }
   // destructible things (tendril lines, mirrors) are enemies too; props are not
   if (any) {
-    // a co-op guest's own swing never freezes its body on the host: its screen cannot know of the freeze and would
-    // rubber-band (D150); the guest still sees the enemy's hit flash and the shake
+    // the swinging body freezes where it is simulated (the host's own player, or a guest's body on its own screen, D338)
     if (w.hitstopEnabled && pl.local) e.hitstopUntil = w.time + hitstopMs(e) / 1000;
     w.emit({ t: 'hitstop', ms: hitstopMs(e), ids: [e.id] });
     w.emit({ t: 'shake', amount: heavy ? 5 : 2 });
@@ -622,11 +642,13 @@ export function swapOffhand(w: World, e: Entity): void {
   w.emit({ t: 'msg', text: `Off hand: ${ch.equipment.off?.name ?? 'empty'}`, forPlayer: pl.playerId });
 }
 
-function updateGhost(w: World, e: Entity, dt: number): void {
+function updateGhost(w: World, e: Entity, dt: number, walk = true): void {
   const pl = e.pl!;
   const inp = pl.input;
   const sp = GHOST_SPEED;
-  w.room.moveCircle(e, inp.moveX * sp * dt, inp.moveY * sp * dt, false);
+  if (walk) w.room.moveCircle(e, inp.moveX * sp * dt, inp.moveY * sp * dt, false);
+  // a co-op guest's own ghost walks on its screen; the countdown, the revive and the bleed-out are the host's (D338)
+  if (pl.net === 'body') return;
   // an ally hitting you holds the countdown (D202): it stands still until 3 s after their last hit
   if (w.time < pl.ghostPauseUntil) pl.ghostUntil += dt;
   if (w.time >= pl.ghostUntil && !pl.deadUntilRest) {
@@ -662,6 +684,13 @@ export function resetSpellCooldowns(e: Entity): void {
 export function updatePlayer(w: World, e: Entity, dt: number): void {
   const pl = e.pl!;
   if (pl.remote) return;
+  if (pl.net === 'puppet') {
+    updatePuppet(w, e, dt);
+    return;
+  }
+  // a co-op guest's own body on its own screen (D338): everything runs here at once except what the host runs (its
+  // skills, spells and consumables, the ghost's countdown); the host shows the body where this screen says
+  const body = pl.net === 'body';
   const now = w.time;
   holdSpellCooldowns(w, e, dt);
   const inp = pl.input;
@@ -670,6 +699,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     return;
   }
   if (pl.deadUntilRest) return;
+  // out of HP: the host decides what happens next (downed, the Training Hall's second chance) and says so
+  if (body && e.hp!.hp <= 0) return;
   // heal over time (Heal, the Thermos) runs on whatever else is happening: frozen, held, falling or staggered (D250)
   if (pl.healOver.length) {
     for (const h of pl.healOver) if (h.until > now) heal(w, e, h.perS * dt, false);
@@ -726,6 +757,13 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
       pl.holdDmg = 0;
       e.st!.controls.hold = 0;
     } else return;
+  }
+
+  // the host is running one of this body's skills, spells or consumables: the body follows it until it is done
+  if (body && pl.netFollow) {
+    regenStamina(w, e, dt);
+    pl.prevButtons = inp.buttons;
+    return;
   }
 
   // timed states
@@ -794,7 +832,13 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   pl.blocking = !offShot && wantBlock && (pl.state === 'idle' || (phalanx && pl.state === 'attack')) && pl.derived.canBlock && !pl.channel && !pl.charge;
 
   // actions from idle
-  if (pl.state === 'idle' && !pl.channel && !pl.charge) {
+  // a skill, spell or consumable asked of the host: no swing or drink starts until it answers (D338)
+  const free = pl.state === 'idle' && !pl.channel && !pl.charge;
+  if (free && body && (pl.netAwaitUntil ?? 0) > now) {
+    /* waiting on the host */
+  } else if (free && body && !silenced && hostRunPressed(e, now)) {
+    pl.netAwaitUntil = now + NET_AWAIT_S;
+  } else if (free) {
     if (pressed(inp, 'attack') && pl.derived.weapon.twoHandOnly && !pl.derived.twoHanded) {
       // a bow needs both hands to draw (D88): shooting one-handed takes it in both hands and shoots (D203)
       toggleTwoHand(w, e);
@@ -862,7 +906,14 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     w.sfx(wet ? 'stepWater' : soft ? 'stepGrass' : 'stepStone', e.x, 0.6, 0.9 + (w.tick % 3) * 0.1);
   }
 
-  // stamina regen: after a delay; paused during active frames; slower while blocking
+  regenStamina(w, e, dt);
+  pl.prevButtons = inp.buttons;
+}
+
+/** Stamina regen: after a delay; paused during active frames; slower while blocking. */
+function regenStamina(w: World, e: Entity, dt: number): void {
+  const pl = e.pl!;
+  const now = w.time;
   const s = e.stam!;
   const activeFrames = pl.combo?.phase === 'active';
   if (now >= pl.stamDelayUntil && !activeFrames && pl.state !== 'dodge') {
@@ -870,7 +921,80 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     if (pl.blocking) regen *= 0.3;
     s.cur = Math.min(s.max, s.cur + regen * dt);
   }
-  pl.prevButtons = inp.buttons;
+}
+
+/** How long a guest's body waits for the host to start a skill, spell or consumable it asked for (D338). */
+export const NET_AWAIT_S = 0.5;
+
+const SKILL_KEYS = ['skill1', 'skill2', 'skill3'] as const;
+const SPELL_KEYS = ['spell1', 'spell2', 'spell3'] as const;
+
+/** A guest's body pressed something the host runs that looks ready on this screen (D338). */
+function hostRunPressed(e: Entity, now: number): boolean {
+  const pl = e.pl!;
+  const inp = pl.input;
+  if (pressed(inp, 'quick')) return true;
+  for (let i = 0; i < 3; i++) {
+    // the weapon-hand keys cast a staff's spells (D201); the spell keys an off-hand crossbow's skills (D316)
+    const skillReady = (pl.derived.skillKeySchool ? pl.spellReadyAt[i]! : pl.skillReadyAt[i]!) <= now;
+    const spellReady = (spellKeysAreOffSkills(pl.derived) ? pl.skillReadyAt[i]! : pl.spellReadyAt[i]!) <= now;
+    if (pressed(inp, SKILL_KEYS[i]!) && skillReady) return true;
+    if (pressed(inp, SPELL_KEYS[i]!) && spellReady) return true;
+  }
+  return false;
+}
+
+/**
+ * A co-op guest's player in the host's world (D338). The guest's own screen walks it, dodges, blocks and swings,
+ * and decides every hit on it; the host shows it where that screen says. Here only what the host runs happens: its
+ * skills, spells and consumables (started from its button presses, timed and fired here, walking as they allow) and
+ * its ghost's countdown.
+ */
+export function updatePuppet(w: World, e: Entity, dt: number): void {
+  const pl = e.pl!;
+  const now = w.time;
+  const inp = pl.input;
+  holdSpellCooldowns(w, e, dt);
+  if (pl.downed) {
+    updateGhost(w, e, dt, false);
+    return;
+  }
+  if (pl.deadUntilRest) return;
+  // heals over time someone gave it here (a Heal, an aura): they reach the guest as HP it gained
+  if (pl.healOver.length) {
+    for (const h of pl.healOver) if (h.until > now) heal(w, e, h.perS * dt, false);
+    pl.healOver = pl.healOver.filter((h) => h.until > now);
+  }
+  if (w.frozen(e)) return;
+  pl.aimX = inp.aimX;
+  pl.aimY = inp.aimY;
+  pl.aimNeutral = inp.aimNeutral;
+  if (pl.pastPos.length === 0 || now - pl.pastPos[pl.pastPos.length - 1]!.t >= 0.1) {
+    pl.pastPos.push({ t: now, x: e.x, y: e.y });
+    if (pl.pastPos.length > 16) pl.pastPos.shift();
+  }
+  if (!netHostDriven(pl)) {
+    if (pl.state !== 'idle' || hasControl(e, 'freeze', now) || hasControl(e, 'hold', now) || w.inputLock > now) return;
+    const silenced = hasControl(e, 'silence', now) || buffSum(e, 'silence', now) > 0;
+    if (pressed(inp, 'quick')) tryUseConsumable(w, e);
+    else if (!silenced) {
+      for (let i = 0; i < 3; i++) {
+        if (pressed(inp, SKILL_KEYS[i]!) && (pl.derived.skillKeySchool ? tryCastSpell(w, e, i, 'skill') : tryUseSkill(w, e, i))) break;
+        if (pressed(inp, SPELL_KEYS[i]!) && (spellKeysAreOffSkills(pl.derived) ? tryUseSkill(w, e, i, true) : tryCastSpell(w, e, i))) break;
+      }
+    }
+    if (!netHostDriven(pl)) return;
+  }
+  // a skill, spell or consumable the host runs: its timeline, and walking as it allows, as for any player
+  updatePlayerAction(w, e, dt);
+  if (e.st!.controls.root <= now && !e.forced) {
+    const speed = walkSpeedFor(w, e) * terrainWalkMult(w.room, e.x, e.y);
+    const mv = Math.min(1, Math.hypot(inp.moveX, inp.moveY));
+    if (speed > 0 && mv > 0.05) w.room.moveCircle(e, inp.moveX * speed * dt, inp.moveY * speed * dt, false);
+    (e.anim as { moving?: number }).moving = speed > 0 ? mv : 0;
+  }
+  if (pl.state !== 'attack' && pl.state !== 'dodge') e.facing = Math.atan2(pl.aimY - e.y, pl.aimX - e.x);
+  e.anim.poseT += dt;
 }
 
 /** Throwables and other player-side projectiles reuse this colour lookup. */

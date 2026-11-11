@@ -5,8 +5,9 @@ import { bestiaryDealMult, bestiaryTakenMult } from '../../data/bestiary';
 import { STAMINA_COST_MULT, damageAfterDefense, reviveRequirement } from './formulas';
 import { bossPhaseCheck } from './bossPhase';
 import { addBuff, behind, buffSum, frontOf, hasControl, statusActive } from './state';
-import { DAMAGE_TYPES, type ControlId, type DamageType, type StatusId } from '../types';
+import { DAMAGE_TYPES, type ControlId, type DamageType, type EffectDef, type StatusId } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
+import type { HitArea, NetAct } from '../net/acts';
 
 export const STATUS_DECAY = 15;
 export const GUARD_BREAK_S = 1.5;
@@ -248,6 +249,11 @@ export function heal(w: World, e: Entity, amount: number, show = true): number {
 
 export function checkDeath(w: World, e: Entity, killerId: number): void {
   if (!e.hp || e.hp.dead || e.hp.hp > 0) return;
+  // D338: on a co-op guest's screen only the host kills enemies (its death event and the snapshot bring it)
+  if (w.netGuest && !e.pl) {
+    e.hp.hp = 0;
+    return;
+  }
   if (e.pl) {
     e.hp.hp = 0;
     w.hooks.onPlayerDowned?.(w, e);
@@ -287,13 +293,23 @@ function guardValues(w: World, p: Entity, type: DamageType): { pct: number; stab
  * An enemy attack (or hazard/projectile) hits a player.
  * fromX/fromY is where the hit comes from (attacker or projectile position) for block facing.
  */
-export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageSpec, fromX: number, fromY: number, projectile?: Entity): HitResult {
+export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageSpec, fromX: number, fromY: number, projectile?: Entity, area?: HitArea): HitResult {
   const pl = p.pl!;
   const hp = p.hp!;
   const now = w.time;
   if (pl.downed || pl.deadUntilRest || hp.dead) return 'none';
   // D329: nothing hurts a player out of combat (a stray shot or hazard left over after the last enemy)
   if (!w.hostilesPresent()) return 'none';
+  // D338: a co-op guest's body is decided on that guest's screen, against what it saw and did at that moment (its
+  // dodge, block, parry and where it stood). The hit goes there with the attacker's own multipliers already in it;
+  // here it is as good as dodged (a shot flies on) until the guest says how it went.
+  if (pl.net === 'puppet' && w.netHost) {
+    const atk = w.get(attackerId);
+    let k = 1;
+    if (atk?.en) k = 1 + buffSum(atk, 'damagePct', now) + (w.roomMods.lateFeeUntil > now ? 0.2 : 0) + (w.roomMods.enrageUntil > now ? 0.25 : 0);
+    w.netHost.divert(p, { attackerId, spec: k === 1 ? spec : scaleSpec(spec, k), fx: fromX, fy: fromY, ...(projectile ? { projId: projectile.id } : {}), ...(area ? { area } : {}) });
+    return 'dodged';
+  }
   // off the edge, climbing back: out of reach until you are back on the floor
   if (pl.falling) return 'none';
   if (hp.invulnUntil > now) return 'immune';
@@ -491,12 +507,17 @@ export function ffVictims(w: World, attacker: Entity | null | undefined): Entity
  * is of kind 'player', so it is never parried or riposted and never staggers the attacker; grabs, pulls and
  * enemy on-hit effects do not carry over. Attacks that deal no damage (pure control, buffs) never hit allies.
  */
-export function hitAlly(w: World, attacker: Entity | null | undefined, p: Entity, spec: DamageSpec, fromX: number, fromY: number, projectile?: Entity): HitResult {
+export function hitAlly(w: World, attacker: Entity | null | undefined, p: Entity, spec: DamageSpec, fromX: number, fromY: number, projectile?: Entity, area?: HitArea): HitResult {
   const k = w.friendlyFire;
   if (!attacker?.pl || !p.pl || p === attacker || !(k > 0) || w.players.length < 2) return 'none';
   if (specTotal(spec) <= 0) return 'none';
   // D329: no friendly fire out of combat
   if (!w.hostilesPresent()) return 'none';
+  // D338: a co-op guest's own swing caught an ally on its screen: the host passes it to whoever owns that body
+  if (w.netGuest && attacker.pl.net === 'body') {
+    w.netGuest.out.push({ t: 'ff', id: p.id, spec: JSON.parse(JSON.stringify(spec)) as DamageSpec, fx: fromX, fy: fromY });
+    return 'hit';
+  }
   const s: DamageSpec = {
     ...scaleSpec(spec, k),
     kind: 'player',
@@ -507,7 +528,7 @@ export function hitAlly(w: World, attacker: Entity | null | undefined, p: Entity
     staminaDrain: 0,
   };
   delete s.onHitEffects;
-  return hitPlayer(w, attacker.id, p, s, fromX, fromY, projectile);
+  return hitPlayer(w, attacker.id, p, s, fromX, fromY, projectile, area);
 }
 
 function sanctuaryEnemyMult(w: World, p: Entity): number {
@@ -640,7 +661,7 @@ function dominantType(spec: DamageSpec): DamageType {
   return best;
 }
 
-function parryEnemy(w: World, p: Entity, attacker: Entity): void {
+export function parryEnemy(w: World, p: Entity, attacker: Entity): void {
   const en = attacker.en!;
   const hp = attacker.hp!;
   const now = w.time;
@@ -664,7 +685,7 @@ function parryEnemy(w: World, p: Entity, attacker: Entity): void {
   w.hooks.onPlayerParried?.(w, p, attacker);
 }
 
-function reflectProjectile(w: World, proj: Entity, p: Entity): void {
+export function reflectProjectile(w: World, proj: Entity, p: Entity): void {
   const pr = proj.pr!;
   const owner = w.get(pr.ownerId);
   const tx = owner ? owner.x : proj.x - proj.vx;
@@ -721,14 +742,19 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
     w.fx('immune', e.x, e.y - e.radius);
     return 0;
   }
+  // D338: a co-op guest's own body hit this enemy on the guest's screen: everything is shown here at once and the
+  // outcome goes to the host, which applies it to the real enemy
+  const sink = w.netGuest && attacker?.pl?.net === 'body' ? w.netGuest : null;
   if (en.gary) {
     en.garyHits++;
     w.hooks.onGaryHit?.(w, e, attacker);
+    sink?.out.push({ t: 'gary', id: e.id });
     return 0;
   }
   if (en.isIllusion) {
     hp.hp = 0;
     checkDeath(w, e, attacker?.id ?? 0);
+    sink?.out.push({ t: 'hit', id: e.id, dmg: 0, type: 'physical', crit: false, poise: 0, ill: true, fx: fromX, fy: fromY });
     return 0;
   }
   const traits = en.def.traits ?? {};
@@ -822,6 +848,8 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   }
   total *= mult;
   if (total <= 0) return 0;
+  // what the host is told (D338): the damage before the enemy's barrier, which only the host knows
+  const sent = total;
   if (hp.barrier > 0 && hp.barrierUntil > now) {
     const a = Math.min(hp.barrier, total);
     hp.barrier -= a;
@@ -895,45 +923,136 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   // is making, only when that hit's poise damage reaches its poise: a greathammer staggers a brute, daggers
   // only stagger rats. Bosses instead have a poise pool that hits wear down (and that regenerates).
   // a staggered enemy gets a couple of seconds of grace after it recovers, so it cannot be stun-locked (D103)
-  const staggerGrace = (en.staggerImmuneUntil ?? 0) > now;
-  if ((!en.isBoss || spec.poiseDmg > 0) && !staggerGrace) {
-    let poise = spec.poiseDmg * (en.isBoss ? (spec.bossPoiseMult ?? 1) : 1);
-    if (attacker) poise *= 1 + buffSum(attacker, 'poiseDamagePct', now);
-    if (pl) poise *= pl.derived.poiseDmgMult;
-    // hyper armor (heavy swings): a boss cannot be staggered out of it; anyone else's poise counts double
-    const hyper = !!(en.def.hyperArmor || en.attack?.def.hyperArmor) && !!en.attack && en.attack.phase !== 'recover';
-    let broken: boolean;
-    if (en.isBoss) {
-      hp.poise -= poise;
-      hp.poiseRegenAt = now + 3;
-      broken = hp.poise <= 0 && !hyper;
-    } else broken = poise > 0 && poise >= hp.poiseMax * (hyper ? 2 : 1);
-    if ((broken || (spec.guaranteedStagger && !hyper)) && !traits.noFlinch) {
-      const heavy = o.heavy ?? false;
-      hp.poise = hp.poiseMax;
-      const staggerS = en.isBoss ? 1.2 : heavy ? 0.9 : 0.6;
-      interrupt(w, e, staggerS);
-      en.staggerImmuneUntil = now + staggerS + STAGGER_GRACE_S;
-      if (traits.shell) en.flippedUntil = now + traits.shell.flipS;
-      w.sfx('stagger', e.x);
-    }
-  }
-  for (const s of spec.status) applyStatusBuild(w, e, s.id, s.buildup * (1 + (s.id === 'bleed' && attacker ? buffSum(attacker, 'bleedBuildupPct', now) : 0)));
+  const poiseOut = attackerPoise(w, attacker, e, spec);
+  poiseHit(w, e, poiseOut, !!spec.guaranteedStagger, o.heavy ?? false);
+  const builds: [StatusId, number][] = spec.status.map((s) => [s.id, s.buildup * (1 + (s.id === 'bleed' && attacker ? buffSum(attacker, 'bleedBuildupPct', now) : 0))]);
+  for (const [id, b] of builds) applyStatusBuild(w, e, id, b);
   if (spec.control) applyControl(w, e, spec.control.id, en.isBoss && spec.control.id === 'freeze' ? spec.control.durationS : spec.control.durationS);
   if (spec.root && !en.isBoss) en.rootUntil = Math.max(en.rootUntil, now + spec.root);
   if (spec.knockback > 0) knockback(w, e, fromX, fromY, spec.knockback);
-  if (spec.pullToSource && attacker && !en.isBoss) {
-    const dx = attacker.x - e.x;
-    const dy = attacker.y - e.y;
-    const d = Math.hypot(dx, dy);
-    if (d > 50) e.forced = { vx: (dx / d) * (d - 40) / 0.25, vy: (dy / d) * (d - 40) / 0.25, until: now + 0.25, kind: 'pull' };
-  }
+  if (spec.pullToSource && attacker && !en.isBoss) pullToward(w, e, attacker);
   // elite Shielded and others react; Will-o-Wisp blinks when hit twice in 1 s (data: extras with trigger onHitTwice)
   en.hitTimes = en.hitTimes.filter((t) => t > now - 1).concat(now);
   w.hooks.onEnemyHurt?.(w, e, attacker);
   checkDeath(w, e, attacker?.id ?? 0);
   if (hp.dead && attacker && spec.onKillEffects) w.hooks.onSpecKill?.(w, attacker, e, spec.onKillEffects, spec.sourceTag ?? '');
   if (pl && attacker) w.hooks.onPlayerHitEnemy?.(w, attacker, e, total, spec);
+  if (sink) {
+    const act: Extract<NetAct, { t: 'hit' }> = { t: 'hit', id: e.id, dmg: sent, type: dominantTypeOf(spec), crit, poise: poiseOut, fx: fromX, fy: fromY };
+    if (affinity) act.aff = affinity;
+    if (spec.guaranteedStagger) act.gs = true;
+    if (o.heavy) act.heavy = true;
+    if (builds.length) act.status = builds;
+    if (spec.control) act.control = { ...spec.control };
+    if (spec.root) act.root = spec.root;
+    if (spec.knockback > 0) act.kb = spec.knockback;
+    if (spec.pullToSource) act.pull = true;
+    if ((spec.dmg.holy ?? 0) > 0) act.holy = true;
+    if (spec.onKillEffects?.length) act.kill = JSON.parse(JSON.stringify(spec.onKillEffects)) as EffectDef[];
+    if (spec.sourceTag) act.tag = spec.sourceTag;
+    sink.out.push(act);
+  }
+  return total;
+}
+
+/** The poise damage of a hit after the attacker's own multipliers (a boss's pool multiplier too). */
+function attackerPoise(w: World, attacker: Entity | null, e: Entity, spec: DamageSpec): number {
+  let poise = spec.poiseDmg * (e.en!.isBoss ? (spec.bossPoiseMult ?? 1) : 1);
+  if (attacker) poise *= 1 + buffSum(attacker, 'poiseDamagePct', w.time);
+  if (attacker?.pl) poise *= attacker.pl.derived.poiseDmgMult;
+  return poise;
+}
+
+function pullToward(w: World, e: Entity, to: Entity): void {
+  const dx = to.x - e.x;
+  const dy = to.y - e.y;
+  const d = Math.hypot(dx, dy);
+  if (d > 50) e.forced = { vx: (dx / d) * (d - 40) / 0.25, vy: (dy / d) * (d - 40) / 0.25, until: w.time + 0.25, kind: 'pull' };
+}
+
+/** Poise and stagger on an enemy from a hit of `poise` (D78, D103): a boss's pool, anyone else's one-hit threshold. */
+function poiseHit(w: World, e: Entity, poise: number, guaranteed: boolean, heavy: boolean): void {
+  const en = e.en!;
+  const hp = e.hp!;
+  const now = w.time;
+  const traits = en.def.traits ?? {};
+  if ((en.staggerImmuneUntil ?? 0) > now || (en.isBoss && poise <= 0)) return;
+  const hyper = !!(en.def.hyperArmor || en.attack?.def.hyperArmor) && !!en.attack && en.attack.phase !== 'recover';
+  let broken: boolean;
+  if (en.isBoss) {
+    hp.poise -= poise;
+    hp.poiseRegenAt = now + 3;
+    broken = hp.poise <= 0 && !hyper;
+  } else broken = poise > 0 && poise >= hp.poiseMax * (hyper ? 2 : 1);
+  if ((broken || (guaranteed && !hyper)) && !traits.noFlinch) {
+    hp.poise = hp.poiseMax;
+    const staggerS = en.isBoss ? 1.2 : heavy ? 0.9 : 0.6;
+    interrupt(w, e, staggerS);
+    en.staggerImmuneUntil = now + staggerS + STAGGER_GRACE_S;
+    if (traits.shell) en.flippedUntil = now + traits.shell.flipS;
+    w.sfx('stagger', e.x);
+  }
+}
+
+/** How far from a guest's body (where the host last heard it was) its reported hit may land: a long reach plus lag (D338). */
+export const REMOTE_HIT_REACH = 420;
+
+/**
+ * A co-op guest's own hit on an enemy, resolved on the guest's screen (D338): the host applies the outcome to the
+ * real enemy and stays the judge of its HP, death, phases, loot and Shards. Refused (0) when that enemy is already
+ * dead or gone, far out of the guest's reach, or cannot be hurt right now in the host's world.
+ */
+export function applyRemoteHit(w: World, attacker: Entity, e: Entity | undefined, h: Extract<NetAct, { t: 'hit' }>): number {
+  if (!e?.en || !e.hp || e.hp.dead || e.removed) return 0;
+  const en = e.en;
+  const hp = e.hp;
+  const now = w.time;
+  if (Math.hypot(e.x - attacker.x, e.y - attacker.y) > REMOTE_HIT_REACH + e.radius) return 0;
+  if (en.state === 'spawning' || en.state === 'ceiling' || en.phaseTransitionUntil > now || hp.invulnUntil > now || en.fadeUntil > now || (en.devour && w.livingPlayers().length <= 1)) return 0;
+  const host = barHost(w, e);
+  if (host && host.en!.phaseTransitionUntil > now) return 0;
+  if (en.isIllusion) {
+    hp.hp = 0;
+    checkDeath(w, e, attacker.id);
+    return 0;
+  }
+  let total = Number.isFinite(h.dmg) ? Math.max(0, h.dmg) : 0;
+  if (total <= 0) return 0;
+  if (en.state === 'dormant') wakeMimic(w, e);
+  const traits = en.def.traits ?? {};
+  if (hp.barrier > 0 && hp.barrierUntil > now) {
+    const a = Math.min(hp.barrier, total);
+    hp.barrier -= a;
+    total -= a;
+    w.fx('barrier', e.x, e.y);
+  }
+  if (host) {
+    rawDamage(w, host, total, h.type, attacker.id, false);
+    host.hp!.lastHitAt = now;
+    host.en!.aggro[attacker.id] = (host.en!.aggro[attacker.id] ?? 0) + total;
+  } else hp.hp -= total;
+  hp.lastHitAt = now;
+  hp.lastHitBy = attacker.id;
+  if (en.isBoss) bossPhaseCheck(w, e);
+  e.anim.flashUntil = now + 0.08;
+  if (traits.revealedByHoly && h.holy) en.revealedUntil = now + traits.revealedByHoly;
+  if (traits.teleportOnHit && now - (en.extrasUsed.__hitTp ?? -99) >= traits.teleportOnHit.cooldownS) en.extrasUsed.__hitAt = now;
+  // the guest showed its number, sound and sparks already: everyone else sees them from here
+  const echo = attacker.pl?.playerId ?? '';
+  w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius - 4, amount: total, type: h.type, crit: h.crit, toPlayer: false, targetId: e.id, src: attacker.id, echo, ...(h.aff ? { affinity: h.aff } : {}) });
+  w.emit({ t: 'sfx', id: en.def.hitSound ?? 'hitFlesh', x: e.x, vol: 0.8, rate: 1, echo });
+  w.emit({ t: 'fx', kind: 'hit', x: e.x, y: e.y, color: typeColor(h.type), n: h.crit ? 14 : 7, a: Math.atan2(e.y - h.fy, e.x - h.fx), echo });
+  en.aggro[attacker.id] = (en.aggro[attacker.id] ?? 0) + total;
+  poiseHit(w, e, Number.isFinite(h.poise) ? h.poise : 0, !!h.gs, !!h.heavy);
+  for (const [id, b] of h.status ?? []) applyStatusBuild(w, e, id, b);
+  if (h.control) applyControl(w, e, h.control.id, h.control.durationS);
+  if (h.root && !en.isBoss) en.rootUntil = Math.max(en.rootUntil, now + h.root);
+  if (h.kb && h.kb > 0) knockback(w, e, h.fx, h.fy, h.kb);
+  if (h.pull && !en.isBoss) pullToward(w, e, attacker);
+  en.hitTimes = en.hitTimes.filter((t) => t > now - 1).concat(now);
+  w.hooks.onEnemyHurt?.(w, e, attacker);
+  checkDeath(w, e, attacker.id);
+  if (hp.dead && h.kill?.length) w.hooks.onSpecKill?.(w, attacker, e, h.kill, h.tag ?? '');
   return total;
 }
 
@@ -956,6 +1075,13 @@ export const GHOST_HIT_PAUSE_S = 3;
 export function addRevive(w: World, ghost: Entity, attacker: Entity, value: number): void {
   const gp = ghost.pl!;
   if (!gp.downed) return;
+  // D338: a co-op guest's own hit on a ghost: the host owns revives
+  if (w.netGuest && attacker.pl?.net === 'body') {
+    w.netGuest.out.push({ t: 'revive', id: ghost.id, v: value });
+    w.sfx('reviveTick', ghost.x);
+    w.fx('revive', ghost.x, ghost.y);
+    return;
+  }
   let v = value;
   if (attacker.pl?.derived.rings.has('ghost_lantern')) v *= Math.pow(2, attacker.pl.derived.ringCounts.ghost_lantern ?? 1);
   gp.reviveProgress += v;

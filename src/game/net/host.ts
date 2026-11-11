@@ -23,6 +23,10 @@ import {
   type Welcome,
 } from './protocol';
 import { encodeSnap, metaOf, recEqual, recordOf, roomSync, selfStateOf, type EntityMeta, type Rec, type SnapJson } from './snapshot';
+import { applyBodyReport, decodeBody, diffBody, isOverride, mergeDelta, snapBody, type BodyDelta, type BodyReport, type BodySnap } from './body';
+import type { IncomingHit, NetAct } from './acts';
+import { addRevive, applyRemoteHit, checkDeath, heal, hitAlly, parryEnemy, reflectProjectile, VAMPIRIC_HEAL_PCT } from '../combat/damage';
+import { remoteShot } from '../player/player';
 import type { Transport, NetChannel } from './transport';
 import type { GameSession, SessionPlayer } from '../session';
 import type { Character, SaveFile } from '../types';
@@ -44,6 +48,20 @@ export interface HostGuest {
   zoneSent: string;
   lastFullAt: number;
   events: GameEvent[];
+  // guest-owned bodies (D338)
+  /** the newest body packet from this guest */
+  body: BodyReport | null;
+  /** bumped when the host overrides the body (a down, a revive, a respawn, a teleport) */
+  epoch: number;
+  /** the puppet as it was after the last body packet was applied, to catch what the host's world did to it */
+  base: BodySnap | null;
+  /** what the host's world did to the body since the last snapshot */
+  delta: BodyDelta | null;
+  /** hits on the body for the guest to decide, not yet sent */
+  inbox: IncomingHit[];
+  /** hits sent and not yet answered, by id */
+  pendingHits: Map<number, IncomingHit>;
+  hitSeq: number;
 }
 
 /** Sessions whose boss kills are already relayed to guests (D195). */
@@ -71,6 +89,8 @@ export class NetHost {
     charop: NetChannel<{ rev: number; ops: unknown[] }>;
     ping: NetChannel<{ t: number }>;
     pong: NetChannel<{ t: number }>;
+    body: NetChannel<ArrayBuffer>;
+    act: NetChannel<{ a: NetAct[] }>;
   };
   private snapAcc = 0;
 
@@ -93,11 +113,15 @@ export class NetHost {
       charop: t.channel(CH.charop),
       ping: t.channel(CH.ping),
       pong: t.channel(CH.pong),
+      body: t.channel(CH.body),
+      act: t.channel(CH.act),
     };
     this.ch.hello.onMessage((h, from) => this.onHello(h, from));
     this.ch.input.onMessage((b, from) => this.onInput(b, from));
     this.ch.char.onMessage((m, from) => this.onChar(m, from));
     this.ch.cmd.onMessage((c, from) => this.onCmd(c, from));
+    this.ch.body.onMessage((b, from) => this.onBody(b, from));
+    this.ch.act.onMessage((m, from) => this.onAct(m, from));
     this.ch.ping.onMessage((p, from) => {
       this.touch(from);
       this.ch.pong.send({ t: p.t }, from);
@@ -147,6 +171,13 @@ export class NetHost {
       zoneSent: '',
       lastFullAt: -99,
       events: [],
+      body: null,
+      epoch: 0,
+      base: null,
+      delta: null,
+      inbox: [],
+      pendingHits: new Map(),
+      hitSeq: 0,
     });
     this.sendLobby();
   }
@@ -155,6 +186,17 @@ export class NetHost {
   start(session: GameSession): void {
     this.session = session;
     this.inGame = true;
+    // a hit on a guest's body goes to that guest to decide (D338)
+    session.w.netHost = {
+      divert: (p, hit) => {
+        const g = this.guestByEntity(p);
+        if (!g || this.session?.w !== session.w) return;
+        const h: IncomingHit = { ...JSON.parse(JSON.stringify(hit)) as Omit<IncomingHit, 'h' | 'at'>, h: ++g.hitSeq, at: session.w.time };
+        g.inbox.push(h);
+        g.pendingHits.set(h.h, h);
+        if (g.pendingHits.size > 200) g.pendingHits.delete(g.pendingHits.keys().next().value!);
+      },
+    };
     // every guest hears when a zone's boss falls; each guest's own world decides what it keeps (D195)
     if (!HOOKED.has(session)) {
       HOOKED.add(session);
@@ -173,6 +215,13 @@ export class NetHost {
     const s = this.session!;
     g.log = new CharLog(g.char);
     g.sp = s.joinPlayer(g.char);
+    g.sp.entity!.pl!.net = 'puppet';
+    g.body = null;
+    g.epoch = 0;
+    g.base = null;
+    g.delta = null;
+    g.inbox = [];
+    g.pendingHits.clear();
     g.sentRecs.clear();
     g.sentMeta.clear();
     g.roomSent = '';
@@ -201,6 +250,7 @@ export class NetHost {
       g.sp = null;
     }
     this.inGame = false;
+    if (this.session) this.session.w.netHost = null;
     this.session = null;
     this.broadcastEvent({ t: 'toLobby' });
     this.sendLobby();
@@ -267,9 +317,99 @@ export class NetHost {
     return null;
   }
 
+  // ------------------------------------------------------------------ guest-owned bodies (D338)
+
+  private onBody(b: ArrayBuffer, from: string): void {
+    const g = this.touch(from);
+    if (!g) return;
+    const r = decodeBody(b);
+    if (!r) return;
+    if (g.body && !seqNewer(r.seq, g.body.seq)) return;
+    g.body = r;
+  }
+
+  /** What a guest's own body did to the shared world: the host applies it to the real world (D338). */
+  private onAct(m: { a: NetAct[] }, from: string): void {
+    const g = this.touch(from);
+    const s = this.session;
+    const p = g?.sp?.entity;
+    if (!g || !s || !this.inGame || !p?.pl || !Array.isArray(m?.a)) return;
+    const w = s.w;
+    for (const a of m.a.slice(0, 200)) {
+      if (!a || typeof a !== 'object') continue;
+      if (a.t === 'took') {
+        this.took(g, p, a);
+        continue;
+      }
+      // a ghost or a player out until the rest strikes nothing
+      if (p.pl.downed || p.pl.deadUntilRest) continue;
+      if (a.t === 'hit') applyRemoteHit(w, p, w.get(a.id), a);
+      else if (a.t === 'gary') {
+        const e = w.get(a.id);
+        if (e?.en?.gary && Math.hypot(e.x - p.x, e.y - p.y) < 420) {
+          e.en.garyHits++;
+          w.hooks.onGaryHit?.(w, e, p);
+        }
+      } else if (a.t === 'revive') {
+        const ghost = w.get(a.id);
+        if (ghost?.pl?.downed && ghost !== p && Math.hypot(ghost.x - p.x, ghost.y - p.y) < 420) addRevive(w, ghost, p, Math.max(0, Math.min(50, Number(a.v) || 0)));
+      } else if (a.t === 'ff') {
+        const v = w.get(a.id);
+        if (v?.pl && v !== p && a.spec?.dmg) hitAlly(w, p, v, a.spec, a.fx, a.fy);
+      } else if (a.t === 'shot') remoteShot(w, p, a.idx, !!a.off, a.mult, a.pierce, a.a);
+    }
+  }
+
+  /** How an enemy's hit went on the guest's screen: what follows from it in the host's world (D338). */
+  private took(g: HostGuest, p: Entity, a: Extract<NetAct, { t: 'took' }>): void {
+    const h = g.pendingHits.get(a.h);
+    const w = this.session!.w;
+    if (!h) return;
+    g.pendingHits.delete(a.h);
+    const attacker = w.get(h.attackerId);
+    const proj = h.projId ? w.get(h.projId) : undefined;
+    const dmg = Number.isFinite(a.dmg) ? Math.max(0, a.dmg) : 0;
+    if (a.res === 'parried') {
+      if (proj?.pr && proj.pr.team === 1) reflectProjectile(w, proj, p);
+      else if (attacker?.en) {
+        parryEnemy(w, p, attacker);
+        w.hooks.onPlayerParried?.(w, p, attacker);
+      }
+      return;
+    }
+    if (a.res !== 'hit' && a.res !== 'blocked') return;
+    // a shot that struck the body ends here as it did on the guest's screen
+    if (proj?.pr && proj.pr.team === 1 && !proj.pr.onImpact) {
+      w.fx('projHit', proj.x, proj.y, { color: proj.pr.color });
+      w.remove(proj);
+    }
+    if (a.res === 'blocked') w.hooks.onPlayerBlocked?.(w, p, attacker ?? null);
+    if (dmg > 0) {
+      p.hp!.lastHitAt = w.time;
+      p.hp!.lastHitBy = h.attackerId;
+      w.emit({ t: 'dmg', x: p.x, y: p.y - 20, amount: dmg, type: 'physical', crit: false, toPlayer: true, targetId: p.id, src: h.attackerId, echo: g.char.playerId });
+      // D336: a Vampiric Elite heals for each hit that lands
+      if (attacker?.en?.elite === 'vampiric' && attacker.hp) heal(w, attacker, attacker.hp.max * VAMPIRIC_HEAL_PCT);
+    }
+    if (h.spec.onHitEffects?.length && attacker) w.hooks.onEnemyHitEffects?.(w, attacker, p, h.spec.onHitEffects);
+    if (a.grab && attacker?.en) attacker.en.holdingId = p.id;
+  }
+
+  /** Catch what the host's world did to a guest's body since it was last shown as the guest says (D338). */
+  private collect(g: HostGuest, e: Entity): void {
+    if (!g.base) {
+      g.base = snapBody(e);
+      return;
+    }
+    if (isOverride(g.base, e)) g.epoch = (g.epoch + 1) & 0xffff;
+    const d = diffBody(g.base, e);
+    if (d) g.delta = mergeDelta(g.delta, d);
+    g.base = snapBody(e);
+  }
+
   // ------------------------------------------------------------------ the world loop
 
-  /** Before each simulation tick: guests' latest inputs drive their bodies. */
+  /** Before each simulation tick: guests' bodies stand where their screens say; their inputs start their skills. */
   beforeTick(): void {
     if (!this.inGame) return;
     const now = this.clock();
@@ -280,8 +420,20 @@ export class NetHost {
       }
       const e = g.sp?.entity;
       if (!e?.pl) continue;
+      e.pl.net = 'puppet';
       e.pl.input = { ...g.input, pressed: g.pressed };
       g.pressed = 0;
+      const w = this.session?.w;
+      if (!w) continue;
+      this.collect(g, e);
+      if (g.body) {
+        applyBodyReport(w, e, g.body, g.epoch);
+        // the Thermos is drunk on the guest's screen: the host's copy follows without an op back
+        if (g.body.flask !== g.char.flaskCur && g.body.epoch === g.epoch) g.log.observe(g.char, 'flaskCur', g.body.flask);
+      }
+      g.base = snapBody(e);
+      // out of HP on its own screen: the host decides what that means (downed, the Training Hall's second chance)
+      if (e.hp!.hp <= 0 && !e.pl.downed && !e.pl.deadUntilRest && !e.hp!.dead) checkDeath(w, e, e.hp!.lastHitBy);
     }
   }
 
@@ -291,6 +443,7 @@ export class NetHost {
     for (const g of this.guests.values()) {
       for (const ev of events) if (this.eventFor(ev, g)) g.events.push(ev);
       if (g.events.length > 200) g.events.splice(0, g.events.length - 200);
+      if (g.sp?.entity?.pl) this.collect(g, g.sp.entity);
       const ops = g.log.collect(g.char);
       if (ops) this.ch.charop.send(ops, g.peerId);
     }
@@ -302,6 +455,8 @@ export class NetHost {
 
   private eventFor(ev: GameEvent, g: HostGuest): boolean {
     const pid = g.char.playerId;
+    // the guest already showed this on its own screen (D338)
+    if ((ev.t === 'dmg' || ev.t === 'sfx' || ev.t === 'fx') && ev.echo === pid) return false;
     if (ev.t === 'msg') return !ev.forPlayer || ev.forPlayer === pid;
     if (ev.t === 'loot' || ev.t === 'shardGain') return ev.playerId === pid || ev.playerId === '';
     if (ev.t === 'hitstop') return false;
@@ -359,7 +514,14 @@ export class NetHost {
       json.ev = g.events;
       g.events = [];
     }
-    if (g.sp?.entity) json.self = selfStateOf(w, g.sp.entity, g.lastSeq);
+    if (g.sp?.entity) {
+      const self = selfStateOf(g.sp.entity, g.lastSeq, g.epoch);
+      if (g.delta) self.delta = g.delta;
+      if (g.inbox.length) self.hits = g.inbox;
+      g.delta = null;
+      g.inbox = [];
+      json.self = self;
+    }
     this.ch.snap.send(encodeSnap({ full, tick: w.tick, time: w.time, ackSeq: g.lastSeq, recs, removed, json }), g.peerId);
   }
 }

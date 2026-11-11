@@ -6,6 +6,7 @@ import { runEffects } from '../effects/run';
 import { spawnHazard } from './hazards';
 import { attackDamage } from '../enemies/spawn';
 import type { Entity, World } from '../world';
+import type { HitArea } from '../net/acts';
 import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
 
 function targetsFor(w: World, t: Entity): Entity[] {
@@ -20,7 +21,7 @@ function targetsFor(w: World, t: Entity): Entity[] {
   return [...w.livingEnemies(), ...ffVictims(w, w.get(tg.ownerId))];
 }
 
-function applyHit(w: World, t: Entity, target: Entity): void {
+function applyHit(w: World, t: Entity, target: Entity, area?: HitArea): void {
   const tg = t.tg!;
   const spec = tg.spec;
   const owner = w.get(tg.ownerId);
@@ -30,8 +31,8 @@ function applyHit(w: World, t: Entity, target: Entity): void {
   const fromX = tg.area ? target.x + Math.cos(target.facing) * 10 : ox;
   const fromY = tg.area ? target.y + Math.sin(target.facing) * 10 : oy;
   if (!spec) return;
-  if (target.pl && tg.team === 0) hitAlly(w, owner, target, spec, ox, oy);
-  else if (target.pl) hitPlayer(w, tg.ownerId, target, spec, tg.area && tg.kind === 'pierce' ? fromX : ox, tg.area && tg.kind === 'pierce' ? fromY : oy);
+  if (target.pl && tg.team === 0) hitAlly(w, owner, target, spec, ox, oy, undefined, area);
+  else if (target.pl) hitPlayer(w, tg.ownerId, target, spec, tg.area && tg.kind === 'pierce' ? fromX : ox, tg.area && tg.kind === 'pierce' ? fromY : oy, undefined, area);
   else if (target.en) {
     if (tg.team === 1) {
       if (target.en.isBoss) return;
@@ -69,7 +70,7 @@ function impactTest(w: World, t: Entity, tauOrTaus: number | number[], onceSet: 
   for (const target of targetsFor(w, t)) {
     if (onceSet && onceSet.has(target.id)) continue;
     if (rehit && (rehit.until.get(target.id) ?? -1) > w.time) continue;
-    let hitAny = false;
+    let hitAny: HitArea | null = null;
     // an area attack catches a player only where the dot at their feet is (D262); melee swings still take the body
     const dot = !!target.pl && tg.area;
     const r = dot ? PLAYER_DOT_R : target.radius;
@@ -77,7 +78,7 @@ function impactTest(w: World, t: Entity, tauOrTaus: number | number[], onceSet: 
     for (const tau of taus) {
       for (const s of tg.shapes) {
         if (shapeHit(s, tau, target.x, ty, r, w.room)) {
-          hitAny = true;
+          hitAny = { s: JSON.parse(JSON.stringify(s)) as Shape, tau, ...(dot ? { dot: true } : {}) };
           break;
         }
       }
@@ -86,7 +87,7 @@ function impactTest(w: World, t: Entity, tauOrTaus: number | number[], onceSet: 
     if (!hitAny) continue;
     onceSet?.add(target.id);
     rehit?.until.set(target.id, w.time + rehit.s);
-    applyHit(w, t, target);
+    applyHit(w, t, target, hitAny);
   }
   // player skill areas also revive ghosts a little (spell value 0.25 is applied by the effect system)
   if (tg.team === 0 && tg.spec && tg.spec.reviveValue > 0) {

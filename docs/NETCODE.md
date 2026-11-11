@@ -1,19 +1,24 @@
 # Dungeon Joe — Online Co-op Netcode
 
 How four-player co-op works today. Source: `src/game/net/*` (`protocol.ts`, `transport.ts`, `trystero.ts`,
-`loopback.ts`, `broadcast.ts`, `host.ts`, `guest.ts`, `snapshot.ts`, `charSync.ts`, `clock.ts`, `lobbyGear.ts`),
+`loopback.ts`, `broadcast.ts`, `host.ts`, `guest.ts`, `snapshot.ts`, `body.ts`, `acts.ts`, `charSync.ts`, `clock.ts`, `lobbyGear.ts`),
 the scenes `game/scenes/lobby.ts`, `run.ts` (host) and `guestRun.ts` (guest), and `game/save/coopProgress.ts`.
 Design rules are in GAME_DESIGN §12; decision ids point to `docs/DECISIONS.md`.
 
 Contents: [1 Model and transport](#1-model-and-transport) · [2 Session flow](#2-session-flow) ·
-[3 Channels](#3-channels) · [4 Snapshots](#4-snapshots) · [5 Guest prediction](#5-guest-prediction-and-interpolation) ·
+[3 Channels](#3-channels) · [4 Snapshots](#4-snapshots) · [5 The guest's own body](#5-the-guests-own-body-and-the-mirror) ·
 [6 Authority and character sync](#6-authority-and-character-sync) · [7 Host rules](#7-rules-the-host-applies) ·
 [8 Transports for tests](#8-transports-for-tests) · [9 Limits](#9-known-limits)
 
 ## 1. Model and transport
 
-- **Host-authoritative** (D4): the host's browser runs the only simulation. Guests send inputs, mirror the host's
+- **Distributed authority** (D338; was fully host-authoritative, D4): the host's browser runs the world (rooms,
+  enemies and their AI, bosses, projectiles, telegraphs, hazards, loot, revives, bonfires). **Each guest's own browser
+  runs that guest's own body** (walking, dodges, blocks, parries, swings and the hits they land) at full speed and
+  decides every enemy hit on it; the host shows that body where the guest says. Guests mirror the rest of the host's
   world from snapshots for the normal renderer, and own their own characters. Up to 3 guests (`MAX_GUESTS`).
+- Not lockstep or rollback (rejected, D338): Chrome and Firefox need not compute `Math.sin`, `Math.cos` and
+  `Math.atan2` identically, so two copies of one simulation would drift apart.
 - **Trystero** over WebRTC data channels (D5). `appId` `dungeon-joe-v1`. Strategies load on demand (solo play never
   downloads them): **Nostr** relays first; the host also listens on **MQTT**; a guest that finds no peer within 8 s
   adds MQTT and then sticks to whichever network a peer turned up on (D158). The room id is the **6-digit room code**
@@ -46,7 +51,9 @@ Guest: Title → character → Join → code → lobby → waits for Start
 | `hello` | guest → host | joining | `{ version, playerId, name, classId, level, char }` (the whole character) |
 | `lobby` | host → all | lobby changes | `{ code, players: PublicPlayer[], zone, ff? }`: each player's name, class, level, cycle, look and worn gear (`LobbyGear`), the host's friendly-fire percent |
 | `welcome` / `reject` | host → guest | on Start / refused | `Welcome { you, seed, cycle, zone, layoutOpts, time, slot }` / `{ reason }` |
-| `input` | guest → host | every frame | 17-byte packet: `seq u16, moveX i8, moveY i8, aimX i16, aimY i16, buttons u16, pressed u16, tick u32, flags u8` (aim neutral, aim assist 0–7) |
+| `input` | guest → host | every frame | 17-byte packet: `seq u16, moveX i8, moveY i8, aimX i16, aimY i16, buttons u16, pressed u16, tick u32, flags u8` (aim neutral, aim assist 0–7). Starts the guest's skills, spells and consumables and drives them (§6), and its interactions |
+| `body` | guest → host | every frame | 36-byte body packet (§5, `body.ts`): `seq u16, epoch u16, x i16, y i16` (half pixels), `facing, state, pose, poseT, squash, alpha, scale, moving u8, flags u16` (blocking, parry, i-frames, following, charging, flash), `hp f32, barrier f32, stamina f32, combo index / phase / progress u8, status u16, Thermos u8` |
+| `act` | guest → host | each frame something happened | `{ a: NetAct[] }` (`acts.ts`): what the guest's own body did to the shared world: `hit` (an enemy hit, resolved), `gary`, `revive` (a hit on a ghost), `ff` (friendly fire on another player), `took` (how an enemy's hit went), `shot` (a ranged swing fired) |
 | `snap` | host → each guest | 30 Hz (`SNAP_HZ`, D149); a keyframe every 2 s or on request | snapshot (§4), built per guest |
 | `event` | host → all or one | reliable | `NetEvent`: `bonfire { id, first }`, `zone { zone, seed, cycle, layoutOpts }`, `died`, `wipe`, `toLobby`, `hostLeft`, `chat`, `credits`, `zoneBeaten { zone, cycle }` (D195) |
 | `cmd` | guest → host | reliable | `leave`, `fullPlease` (send a keyframe), `chat` |
@@ -57,7 +64,9 @@ Guest: Title → character → Join → code → lobby → waits for Start
 Everything that happens in the world (hits, deaths, sounds, effects, messages, loot, Shards, level banners, feats)
 travels as **world events inside the snapshot** (`json.ev`, the sim's `GameEvent`s: `dmg, death, downed, revived,
 parry, guardBreak, bossPhase, loot, shardGain, msg, sfx, fx, shake, telegraph, levelBanner, stat, feat`). The host
-filters them per guest: personal messages, `loot` and `shardGain` only to their player; `hitstop` never.
+filters them per guest: personal messages, `loot` and `shardGain` only to their player; `hitstop` never; a `dmg`,
+`sfx` or `fx` marked `echo` with a guest's player id (its own hit, which its screen already showed, D338) never to
+that guest.
 
 ## 4. Snapshots
 
@@ -87,46 +96,94 @@ and a JSON block.
   decoy, wall). **Instanced loot** (a pickup for another player) is never sent to anyone else (D33).
 - **Room** (`json.room`, when it changes): tiles, overlay and terrain (base64), doors (exists, open, locked), hazard
   kind, rotating floor, moving floors (D95), and the visited / cleared lists for the minimap.
-- **Self** (`json.self`): the guest's own HUD state (HP, stamina, barrier, meters, statuses, controls, cooldowns,
-  dodge, guard break, ghost timers) plus the host's position and walking speeds for prediction.
+- **Self** (`json.self`, `SelfState`): the host's word on the guest's own body (D338), only what the host decides:
+  `epoch` with `x, y, hp` (applied when the epoch changes: a down, a revive, a respawn, a teleport), `downed`, `dead`
+  (out until the rest), the ghost countdown, skill and spell cooldowns, `follow` and `state` (the host is running one
+  of its skills, spells or consumables), the last input applied, **`delta`** (what the host's world did to the body
+  since the last snapshot, §6) and **`hits`** (enemy hits on the body for the guest to decide, §5). The guest's own
+  record in the snapshot is ignored except for its revive ring (and its look while it follows the host).
 - Also: `bossId` (the boss bar; guests start a boss intro when it turns to a boss still in its spawn tell),
   `roomMods` (darkness, flooding) and `ff` (the host's friendly-fire percent, D115).
 - Telegraphs are entities, so their shapes travel in meta and the guest draws them from its own clock; particles are
   never sent. A charge's fitted bar (D272) and a two-set pattern's late `start` (D261) are part of the telegraph.
 
-## 5. Guest prediction and interpolation
+## 5. The guest's own body and the mirror
 
-- **Own movement is predicted** from local input with the host's own walking code (`walkSpeedFor`). Every
-  unacknowledged input keeps the speed and forced step it was predicted with; on each snapshot the guest replays
-  them from the host's position. An error under 64 px eases over about 100 ms, a larger one snaps. While the host
-  reports that the guest cannot walk (a swing's step, a stagger, a grab), errors under 160 px are held rather than
-  snapped, so a knockback does not look like a teleport (D150, D154).
-- **Dodges start locally** the moment they are pressed (D149) on the host's dodge path; reconciling waits until the
-  host has run the same dodge (dodge length + a round trip + 120 ms).
-- **Swings start locally** for movement (D154): the guest runs its own swing on the host's combo rules (queue in the
-  recovery, a queued swing at 45% of it, the last waits for the end, a swing within 0.5 s continues the combo), slows
-  its walk by the weapon's swing factor and takes the windup's step. Hits, damage and loot come only from the host.
+**The guest's own body is its own (D338).** It is a real player entity in the guest's mirror world
+(`PlayerC.net = 'body'`), and every frame `stepBody` (`body.ts`) runs it there with the same code the host runs for
+its own player: `updatePlayer`, then forced motion, holes and moving floors for that one body
+(`updateMovement(w, dt, only)`), then its statuses (`updateStatuses(w, dt, only)`). Nothing is predicted and nothing is
+reconciled: walking, dodges and their i-frames, blocks and the parry window, swings and combo chaining, the swing's
+step, stamina, hitstop, the Thermos and its heal, status buildup and ticks, falls into pits, staggers and knockbacks
+all happen on the guest's screen at once. The body's clock is the mirror's clock (below), so what it does lines up
+with what it sees.
+
+- **Its hits on enemies** (`hitEnemy` with the guest's body as attacker, D338) are resolved on the guest's screen
+  against its copy of the enemies: front guards, resistances, crits, ripostes, lifesteal, Thunderclap, the number, the
+  flash, hitstop and the knockback (a short nudge that fades as the host's own arrives) show at once, and the enemy's
+  bar drops at once (the damage stays off the mirrored bar until the host's snapshot shows it). The outcome goes to the
+  host as a `hit` act: the damage before the enemy's barrier, its type and crit, poise damage after the attacker's own
+  multipliers, status buildups, control, root, knockback and pull, on-kill effects. On a guest's screen enemies never
+  die: the host's death event and snapshot do that. Hits on Gary, on an illusion and on a ghost (`revive`) go the same
+  way; friendly fire on another player (D115) goes as `ff` with the unscaled hit, and the host passes it on to whoever
+  owns that body.
+- **Enemy hits on it are decided on its screen.** The host's world finds them as always (telegraph areas, shots,
+  lunges, body and contact hits, Elite orbs, hazards, friendly fire), but `hitPlayer` on a guest's puppet does not
+  apply them: it hands the hit to that guest (`NetHostLink.divert`) with the attacker's own multipliers already in it
+  (its buffs, the late fee, the enrage), where it came from, the shot that made it and, where there is one, **the area
+  it landed in** (the shape and its moment, at the feet's dot for areas, D262). The hit travels in `SelfState.hits`
+  stamped with the host's time. The guest holds it until its own clock reaches that time (at most 0.6 s), the moment
+  its screen shows it land, then checks the area against where its body is (4 px of slack) and runs the normal
+  `hitPlayer` on its body: its own i-frames, block, parry, Riposte Stance, guard break, barrier, defense, statuses,
+  stagger, knockback and grab. It answers with a `took` act (result, damage, grabbed); the host then reflects a
+  parried shot or parries the attacker, ends a shot that struck, heals a Vampiric Elite (D336), runs the attack's
+  on-hit effects, holds a grabbing enemy, and shows the damage number to everyone else. A guest that has left the area
+  on its screen is missed; the host's copy, being a little behind, can miss a hit the guest would have taken (the lag
+  favours the defender).
+- **What the host runs:** skills, spells and consumables (§6). A press of one that looks ready holds the body's other
+  actions for up to 0.5 s (`NET_AWAIT_S`) or until a snapshot shows the host saw the press; while the host runs it
+  (`SelfState.follow`) the body follows the host's position and look and walks nowhere of its own. A ranged weapon
+  swing plays on the guest's screen, but the arrow is the host's (`shot`).
+- **The body packet** goes to the host every frame (§3): position, facing, state, look, combo, blocking / parry /
+  i-frame flags, HP, barrier, stamina, status bits and the Thermos count, with the last host `epoch` the guest applied.
 - **Everything else is interpolated** between the two snapshots around a time behind the host's clock. `HostClock`
   keeps a smoothed offset (follows the fastest snapshots, eases at most 2 ms a snapshot), measures jitter, and draws
-  1.5 snapshot intervals + 2.5 × jitter behind it, 60–250 ms (D149). Walking animation is measured from each body's
-  movement on the mirror (D151).
+  1.25 snapshot intervals + 2.5 × jitter behind it, 50–250 ms (D338; was 1.5 intervals and at least 60 ms, D149).
+  An enemy that is not winding up, attacking or recovering is drawn up to 50 ms further ahead (`ENEMY_LEAD_S`, eased
+  in and out), carrying on along its last step if that is past the newest snapshot (at most 100 ms); an attacking
+  enemy is drawn exactly as the host ran it, so its swing lines up with its telegraph. Walking animation is measured
+  from each body's movement on the mirror (D151).
 - The host applies guest inputs on arrival and keeps the last one if a packet is late; `pressed` buttons accumulate
   until the next tick so no tap is lost.
 
 ## 6. Authority and character sync
 
-| The host owns | Each guest owns (its own save) |
+| The host owns | Each guest owns |
 |---|---|
-| the world: rooms, enemies, bosses, projectiles, telegraphs, hazards, loot rolls, Shard drops, revives, bonfires, shop and Gary stock | its character: inventory, equipment, gems, spells, consumables, Glowen, Shards, level and stats, Soul Essence, proficiency, Bestiary, its controller layout |
+| the world: rooms, enemies and their AI, bosses, projectiles, telegraphs, hazards, enemy HP, deaths, phases, loot rolls, Shard drops, revives, the downed countdown and bleed-out, bonfires, shop and Gary stock; every player's skills, spells and consumables; character ops | its body (D338): position, movement, dodges and i-frames, blocks, parries, swings and the hits they land, stamina, HP, barrier, statuses, the Thermos; whether each enemy hit on it lands. Its character (its own save): inventory, equipment, gems, spells, consumables, Glowen, Shards, level and stats, Soul Essence, proficiency, Bestiary, its controller layout |
 
+- **The puppet** (`PlayerC.net = 'puppet'`): the host's copy of a guest's player. Before each tick the host applies the
+  guest's newest body packet (`applyBodyReport`: position eased, a jump of 48 px snaps; state, look, combo, blocking,
+  HP, barrier, stamina, status bits), takes the Thermos count without an op back (`CharLog.observe`), and downs it if
+  the guest reported 0 HP. `updatePuppet` replaces the player controller for it: only the guest's skill, spell and
+  consumable presses start here (from its inputs, when it stands idle), and while one runs the host drives the body
+  (its timeline, its walking, its dash, `netHostDriven`), as for any player. Movement, falls and statuses skip a free
+  puppet; in body separation it does not move (whoever it bumps does).
+- **What the host's world does to a guest's body by itself** (a heal or aura, a buff, a barrier, a status from a puddle,
+  a control, a stagger, i-frames from a dash skill, a pull, a knockback, a bonfire rest) is caught each tick by
+  comparing the puppet with how it stood after the last packet (`snapBody` / `diffBody`) and sent as `SelfState.delta`;
+  the guest applies it to its body (`applyDelta`, the host's times turned into its own). A **down, revive, respawn or
+  teleport** (a room change) bumps the guest's **epoch**: the guest takes `x, y, hp` and the down state from the host,
+  and the host ignores body packets carrying an older epoch, so nothing in flight undoes it.
 - The host simulates with a **copy** of each guest's character (it needs stats and gear). What the simulation changes
   on that copy becomes numbered **`CharOp`s** (`charSync.ts`): `add` (Shards, Glowen, tears, bosses beaten), `set`
   (Thermos, highest zone, two-handing, quick slot), `bag`, `gem`, `consumable`, `spell`, `gear` (a weapon swap), `prof`,
   `essence`, `bestiary`, `seen`. They go to the guest on `charop` with a revision number.
 - When the guest changes its character itself (equipping, levelling, gems, reinforcing, breaking down Essence,
-  locking items or gems, selling), it does so **locally**, at its own bonfire menus, and sends the whole character on
-  `char` with the last revision it applied. The host adopts it and replays any newer ops on top, so nothing granted in
-  flight is lost. Gems arriving this way are cleaned (`untierGem`, origin checks).
+  locking items or gems, selling, and since D338 two-handing and weapon swaps on its own screen), it does so
+  **locally** and sends the whole character on `char` with the last revision it applied. The host adopts it and
+  replays any newer ops on top, so nothing granted in flight is lost. Gems arriving this way are cleaned (`untierGem`,
+  origin checks).
 - Each guest writes its own save. Loot is rolled on the host from `loot:<playerId>:…` streams and dropped for that
   player only (D33); Shards per kill go to every player in full.
 - **Zone progress** (D195, `coopProgress.ts`): when a boss falls the host sends `zoneBeaten { zone, cycle }`. A guest's
@@ -141,11 +198,17 @@ and a JSON block.
   ×(1 + 1.25 × (players − 1)), every other enemy ×(1 + 0.75 × (players − 1)); a boss's current bar share is kept
   (`barMult`, D289). Boss poise +150% per extra player (D194). Rooms add one solo-size wave per extra player; Shards
   and drop chances are divided so each player earns the same per room (PROCGEN §4).
-- **Downed and revive** (D12): hits on a ghost add the attacker's weapon revive value; while a ghost waits, the host
-  refuses door and stairs transitions.
+- **Downed and revive** (D12): hits on a ghost add the attacker's weapon revive value (a guest's own hits arrive as
+  `revive` acts, within 420 px); the countdown runs on the host and reaches everyone in the record's 28th byte (D329);
+  while a ghost waits, the host refuses door and stairs transitions.
 - **Friendly fire** (D115) with the host's percent (0–200), sent in the lobby and every snapshot; guests show it
-  read-only.
-- **The stun rule** (D293), grabs and every other hit are decided on the host; guests only see the result.
+  read-only. A guest's swing on an ally goes to the host (`ff`), and a hit on a guest's body is decided by that guest.
+- **Out of combat** (D329) nobody takes damage: the host checks before it hands a guest a hit, and the guest's own
+  screen checks again (its copy of the room's enemies).
+- **A guest's reported hits** are applied unless the enemy is dead or gone, cannot be hurt right now (spawning, a phase
+  change, faded, invulnerable), or is more than 420 px (`REMOTE_HIT_REACH`) from the guest's body; the host stays the
+  judge of enemy HP, deaths, phases, loot and Shards.
+- **The stun rule** (D293) and grabs on a guest are decided on its own screen, with the same code.
 
 ## 8. Transports for tests
 
@@ -157,5 +220,11 @@ and a JSON block.
 
 ## 9. Known limits
 
-Friends-only play, no anti-cheat; the host's upload carries everyone; public relays can be slow to connect (the UI
+Friends-only play, no anti-cheat (a guest's screen decides its own hits and the ones it takes; the host only refuses
+the impossible); the host's upload carries everyone; public relays can be slow to connect (the UI
 shows "finding your friend…" and lets you retry); everyone must run the same version; no drop-in join mid-run.
+
+Of D338's split: a guest's skills, spells and consumables still start a round trip late (the host runs them), and its
+arrows and bolts appear from the host; the host's copy of a guest is a little behind it, so a hit it misses there
+never reaches the guest; pushes and pulls the host applies to the copy arrive as nudges a snapshot late, and a hazard's
+attack slow does not reach the guest; Martyr's Chain does not split damage a guest takes on its own screen.

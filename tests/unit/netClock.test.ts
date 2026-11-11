@@ -51,6 +51,6 @@ describe('guest host clock (D149)', () => {
   });
   it('a steady link draws closer to now than a jittery one', () => {
     expect(run(2).delay).toBeLessThan(run(25).delay);
-    expect(run(2).delay).toBeGreaterThanOrEqual(0.06);
+    expect(run(2).delay).toBeGreaterThanOrEqual(0.05);
   });
 });

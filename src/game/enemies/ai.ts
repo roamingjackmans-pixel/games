@@ -271,7 +271,7 @@ function contactDamage(w: World, e: Entity): void {
     spec.parryable = false;
     spec.dmg[e.en!.phaseAttacks[0]?.type ?? 'physical'] = attackDamage(e, c.mult);
     if (c.status) spec.status = [c.status];
-    hitPlayer(w, e.id, p, spec, e.x, e.y);
+    hitPlayer(w, e.id, p, spec, e.x, e.y, undefined, { s: { k: 'circle', x: e.x, y: e.y, r: e.radius + 4 }, tau: 0 });
     const drain = e.en!.def.traits?.attachDrain;
     if (drain && !p.pl!.attached.includes(e.id)) {
       p.pl!.attached.push(e.id);
@@ -296,7 +296,7 @@ function eliteUpdate(w: World, e: Entity, dt: number): void {
           en.lastContact[p.id + 100000] = now + 0.8;
           const spec = emptySpec('pierce');
           spec.dmg.void = attackDamage(e, 0.5);
-          hitPlayer(w, e.id, p, spec, ox, oy);
+          hitPlayer(w, e.id, p, spec, ox, oy, undefined, { s: { k: 'circle', x: ox, y: oy, r: 9 }, tau: 0 });
         }
       }
       break;

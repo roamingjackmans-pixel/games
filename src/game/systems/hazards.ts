@@ -164,9 +164,9 @@ export function updateHazards(w: World, _dt: number): void {
     if (hitPlayers || hz.alliesOnly || hz.team === 0) for (const p of w.livingPlayers()) victims.push(p);
     if (hitEnemies) for (const e of w.livingEnemies()) victims.push(e);
     for (const v of victims) {
-      let inside = false;
+      let inside: Shape | null = null;
       for (const s of hz.shapes) if (shapeHit(s, 0, v.x, v.y, v.radius * 0.6, w.room)) {
-        inside = true;
+        inside = s;
         break;
       }
       if (!inside) continue;
@@ -234,12 +234,12 @@ export function updateHazards(w: World, _dt: number): void {
       // friendly fire (D115): a player's harmful ground (fire puddles, fire walls) burns allies too; zones that do
       // something for allies (allyEffects, alliesOnly) never hurt them
       if (friendly && v.pl && hz.team === 0 && hz.spec && def.dmg > 0 && !hz.alliesOnly && !hz.allyEffects.length) {
-        hitAlly(w, w.get(hz.ownerId), v, hz.spec, h.x, h.y);
+        hitAlly(w, w.get(hz.ownerId), v, hz.spec, h.x, h.y, undefined, { s: inside, tau: 0 });
         continue;
       }
       if (!hz.spec || friendly) continue;
       if (v.pl) {
-        if (def.dmg > 0) hitPlayer(w, hz.ownerId, v, hz.spec, h.x, h.y);
+        if (def.dmg > 0) hitPlayer(w, hz.ownerId, v, hz.spec, h.x, h.y, undefined, { s: inside, tau: 0 });
         else for (const s of hz.spec.status) applyStatusBuild(w, v, s.id, s.buildup);
       } else if (v.en) {
         if (hz.team === 0) hitEnemy(w, w.get(hz.ownerId) ?? null, v, hz.spec, h.x, h.y, { noLifesteal: true });

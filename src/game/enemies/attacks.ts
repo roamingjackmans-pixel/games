@@ -421,7 +421,7 @@ function laneHits(w: World, e: Entity, extra: number): void {
     if (a.hit.has(p.id)) continue;
     if (!laneBodyHit(a.lane, e.x, e.y, reach, p.x, p.y + PLAYER_DOT_DY, PLAYER_DOT_R)) continue;
     a.hit.add(p.id);
-    hitPlayer(w, e.id, p, spec, e.x, e.y);
+    hitPlayer(w, e.id, p, spec, e.x, e.y, undefined, { s: { k: 'line', x: a.lane.x, y: a.lane.y, a: a.lane.a, w: a.lane.w, l: a.lane.l }, tau: 0, dot: true });
   }
 }
 
@@ -432,7 +432,7 @@ function bodyHits(w: World, e: Entity, extra: number): void {
     if (a.hit.has(p.id)) continue;
     if (circleHit(e.x, e.y, e.radius + extra, p.x, p.y, p.radius)) {
       a.hit.add(p.id);
-      hitPlayer(w, e.id, p, spec, e.x, e.y);
+      hitPlayer(w, e.id, p, spec, e.x, e.y, undefined, { s: { k: 'circle', x: e.x, y: e.y, r: e.radius + extra }, tau: 0 });
     }
   }
 }
