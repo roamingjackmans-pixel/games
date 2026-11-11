@@ -23,6 +23,18 @@ export const RARITY_WEIGHTS: Record<LootSource, [number, number, number, number,
 export const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
 /**
+ * D327: the best rarity a random roll can give on the first playthrough, by zone: zones 1–2 Rare (no purple or orange),
+ * zones 3–4 Epic (no orange), zone 5 on anything. New Game+ has no cap.
+ */
+export function maxRolledRarity(zone: number, cycle: number): Rarity {
+  if (cycle > 0) return 'legendary';
+  return zone <= 2 ? 'rare' : zone <= 4 ? 'epic' : 'legendary';
+}
+
+/** D327: each New Game+ cycle makes a Legendary 20% likelier than the cycle before (×1.2 a cycle, compounding). */
+export const LEGENDARY_PER_CYCLE = 1.2;
+
+/**
  * Item drop chance per kill (D84): standard enemies rarely drop anything, Elites a little more often (swarm pieces
  * count as a fraction of a body). Bosses drop 2–5 items per player.
  */

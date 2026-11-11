@@ -380,6 +380,13 @@ charge except resting at a bonfire or dying (D150, D38).**
 | shop | 0 | 40 | 45 | 15 | 0 |
 | gary | 0 | 0 | 0 | 70 | 30 |
 
+**By zone and cycle (D327):** on the first playthrough a random roll is capped by zone: zones 1–2 never give Epic
+(purple) or Legendary (orange), zones 3–4 never Legendary; what is left rolls in the same proportions, and a source
+with nothing left under the cap (Gary) gives the cap. From NG+1 every source's Legendary share is ×1.2 a cycle
+(compounding, at most 100%) and the other rarities shrink in proportion (30 / 30 / 15 / 15 / 10 → 29.33 / 29.33 /
+14.67 / 14.67 / 12 → … 14.4 the cycle after). A set reward is not a roll and keeps its rarity: the tutorial
+Instructor's Legendary, Gary's NG+ Legendaries.
+
 - **Item drop chance per kill** (D84): standard enemies 6% (a swarm piece 1.5%), Elites 15%; bosses drop 2–5 items per
   player.
 - **Slot roll**: weapon 35, shield 15, staff 5, talisman 5, head 12, body 14, legs 10, ring 4.

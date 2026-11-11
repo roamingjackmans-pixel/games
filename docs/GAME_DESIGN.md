@@ -688,7 +688,9 @@ Rarity power (D178, D221) multiplies weapon and casting-tool damage and tightens
 
 **Drops** (D84, D98): an item drops from **6%** of standard kills (swarm pieces 1.5%) at 70 / 22 / 5 / 2.5 / 0.5;
 **Elites 15%** at 45 / 35 / 12.5 / 6 / 1.5; **bosses 2–5 items** at 20 / 35 / 30 / 11 / 4. Small chests 25 / 40 / 25
-/ 8 / 2, treasure chests (two items) as bosses, mimics 0 / 20 / 45 / 27 / 8. Loot is instanced per player. A player's
+/ 8 / 2, treasure chests (two items) as bosses, mimics 0 / 20 / 45 / 27 / 8. First playthrough zones 1–2 never roll Epic or Legendary and zones 3–4 never Legendary;
+from NG+1 every source's Legendary share is ×1.2 a cycle, the rest shrinking in proportion (D327, CONTENT_ITEMS §12).
+Loot is instanced per player. A player's
 own drops favour weapons that scale with their class's primary stat (+30%), secondary (+15%) or both (+55%); staffs
 count as Brain, talismans as Prayer; HP and Endurance give nothing (D254, D317). Most kills also shed a puff of Glowen (35%, D83).
 

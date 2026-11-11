@@ -9,7 +9,7 @@ import { ARMOR_SETS } from '../../data/armor';
 import { RINGS } from '../../data/rings';
 import { AFFIXES, type AffixDef, type AffixSlotGroup } from '../../data/affixes';
 import { LEGENDARY_NAMES, powersFor, type PowerSlot } from '../../data/legendaries';
-import { RARITY_ORDER, RARITY_WEIGHTS, SLOT_WEIGHTS, type LootSource } from '../../data/lootTables';
+import { LEGENDARY_PER_CYCLE, RARITY_ORDER, RARITY_WEIGHTS, SLOT_WEIGHTS, maxRolledRarity, type LootSource } from '../../data/lootTables';
 import { GEM_FAMILIES, GEMS, familiesOfKind, gemQualityRolls, rollGemQuality, type GemKind } from '../../data/gems';
 import { baseInfo } from './bases';
 import { variantOf } from './weaponOf';
@@ -20,8 +20,34 @@ import type { Gem, GemPerk, Item, Rarity, StatId } from '../types';
 
 export const AFFIX_COUNT: Record<Rarity, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 3 };
 
-export function rollRarity(rng: Rng, source: LootSource): Rarity {
-  const i = rng.weighted(RARITY_WEIGHTS[source]);
+/**
+ * A source's rarity chances at a zone and cycle (D327), in percent. From NG+1 the Legendary share is ×1.2 a cycle
+ * (compounding, never past 100%) and every other rarity shrinks in proportion to make room (30 / 30 / 15 / 15 / 10 →
+ * 29.25 / 29.25 / 14.625 / 14.625 / 12). On the first playthrough nothing above the zone's cap rolls (maxRolledRarity);
+ * what was left rolls in the same proportions.
+ */
+export function rarityChances(source: LootSource, zone: number, cycle: number): number[] {
+  const w = [...RARITY_WEIGHTS[source]];
+  const total = w.reduce((a, b) => a + b, 0);
+  if (cycle > 0 && total > 0) {
+    const l = w[4]! / total;
+    const l2 = Math.min(1, l * Math.pow(LEGENDARY_PER_CYCLE, cycle));
+    const k = l < 1 ? (1 - l2) / (1 - l) : 0;
+    for (let i = 0; i < 4; i++) w[i] = w[i]! * k;
+    w[4] = l2 * total;
+  }
+  const cap = RARITY_ORDER.indexOf(maxRolledRarity(zone, cycle));
+  for (let i = cap + 1; i < w.length; i++) w[i] = 0;
+  const left = w.reduce((a, b) => a + b, 0);
+  // a source that only has rarities above the cap (Gary's purple and orange) gives the cap instead
+  if (left <= 0) w[cap] = 1;
+  const sum = w.reduce((a, b) => a + b, 0);
+  return w.map((x) => (x / sum) * 100);
+}
+
+/** Defaults: the plain table (zone 8 of the first playthrough: no cap, no New Game+ boost). */
+export function rollRarity(rng: Rng, source: LootSource, zone = 8, cycle = 0): Rarity {
+  const i = rng.weighted(rarityChances(source, zone, cycle));
   return RARITY_ORDER[Math.max(0, i)]!;
 }
 
@@ -91,8 +117,12 @@ export function rollBase(rng: Rng, slot: (typeof SLOT_WEIGHTS)[number]['slot'], 
       return `${rng.pick(sets.length ? sets : ARMOR_SETS).id}_${slot}`;
     }
     case 'ring': {
-      const ok = Object.values(RINGS).filter((r) => rarityIndex(r.floor) <= rarityIndex(rarity));
-      return rng.pick(ok.length ? ok : Object.values(RINGS)).id;
+      // a ring is lifted to its rarity floor; with none at or below this rarity, the lowest-floor rings (D327: a common
+      // roll in zone 1 must not turn into an Epic ring)
+      const all = Object.values(RINGS);
+      const ok = all.filter((r) => rarityIndex(r.floor) <= rarityIndex(rarity));
+      const lowest = Math.min(...all.map((r) => rarityIndex(r.floor)));
+      return rng.pick(ok.length ? ok : all.filter((r) => rarityIndex(r.floor) === lowest)).id;
     }
   }
 }
@@ -175,7 +205,10 @@ export interface GenOpts {
 }
 
 export function generateItem(rng: Rng, o: GenOpts): Item {
-  let rarity = o.rarity ?? rollRarity(rng, o.source);
+  // the cycle is read from the item level (zone + 8 a cycle, D299, D324) when the caller gives none
+  const cycle = o.cycle ?? Math.max(0, Math.floor((o.ilvl - o.zone) / ILVL_PER_CYCLE));
+  // a set rarity (the Instructor's legendary prize, Gary's NG+ legendaries) is a reward, not a roll: it is kept (D327)
+  let rarity = o.rarity ?? rollRarity(rng, o.source, o.zone, cycle);
   if (o.minRarity && rarityIndex(rarity) < rarityIndex(o.minRarity)) rarity = o.minRarity;
   let baseId = o.baseId;
   if (!baseId) {
@@ -191,7 +224,7 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
   item.affixes = rollAffixes(rng, item, AFFIX_COUNT[rarity]);
   // D324: the cycle comes from the item level (zone + 8 a cycle, D299); it used to be read as ilvl − zone, so an NG+1
   // drop rolled as if it were NG+8 and could have all three skills
-  if (item.kind === 'weapon') item.skills = rollSkillCount(() => rng.next(), o.zone, o.cycle ?? Math.max(0, Math.floor((o.ilvl - o.zone) / ILVL_PER_CYCLE)), rarity === 'legendary');
+  if (item.kind === 'weapon') item.skills = rollSkillCount(() => rng.next(), o.zone, cycle, rarity === 'legendary');
   if (rarity === 'legendary') {
     const ps = powerSlotOf(item);
     if (ps) {

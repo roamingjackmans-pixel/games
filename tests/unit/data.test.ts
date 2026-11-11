@@ -60,7 +60,9 @@ describe('Gary (GAME_DESIGN §11)', () => {
       expect(a.length).toBeLessThanOrEqual(6);
       expect(a.every((e) => e.price > 0 && !e.sold)).toBe(true);
       const first = a.find((e) => e.kind === 'item');
-      expect(first?.item && ['epic', 'legendary'].includes(first.item.rarity)).toBe(true);
+      // D327: the first playthrough caps zones 1–2 at Rare and 3–4 at Epic, even for Gary
+      const allowed = z <= 2 ? ['rare'] : z <= 4 ? ['epic'] : ['epic', 'legendary'];
+      expect(first?.item && allowed.includes(first.item.rarity)).toBe(true);
       expect(garyStock(ws, z, 0)).toBe(a);
       const ws2 = newWorldState(`GARYSEED${z}`);
       expect(JSON.stringify(garyStock(ws2, z, 0))).toBe(JSON.stringify(a));

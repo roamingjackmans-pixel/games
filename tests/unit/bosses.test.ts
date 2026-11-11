@@ -107,9 +107,11 @@ describe('bosses: the room', () => {
     expect(c.bossesBeaten).toBe(1);
     expect(c.flaskMax).toBe(1);
     expect(s.save.world.bossesBeatenThisCycle).toEqual([1]);
-    // drops: a Rare+ item and a gem for the player
+    // drops: items (zone 1: never purple or orange, D327) and a gem for the player
     const mine = [...s.w.entities.values()].filter((e) => e.type === 'pickup' && e.pk?.forPlayer === 'p1');
-    expect(mine.some((e) => e.pk!.kind === 'item' && ['rare', 'epic', 'legendary'].includes(e.pk!.item!.rarity))).toBe(true);
+    const items = mine.filter((e) => e.pk!.kind === 'item');
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.every((e) => ['common', 'uncommon', 'rare'].includes(e.pk!.item!.rarity))).toBe(true);
     expect(mine.some((e) => e.pk!.kind === 'gem')).toBe(true);
     run(s, 2.2);
     const stairs = [...s.w.entities.values()].find((e) => e.it?.kind === 'stairs');
