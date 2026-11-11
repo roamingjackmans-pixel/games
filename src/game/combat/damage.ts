@@ -50,6 +50,9 @@ export type HitResult = 'none' | 'hit' | 'blocked' | 'parried' | 'dodged' | 'gua
 /** How fast each status builds, on everyone (D330: frost twice as fast as it was). */
 export const STATUS_BUILD_MULT: Partial<Record<StatusId, number>> = { chill: 2 };
 
+/** D336: a Vampiric Elite's heal for each hit that lands, as a share of its own max HP. */
+export const VAMPIRIC_HEAL_PCT = 0.3;
+
 export function applyStatusBuild(w: World, e: Entity, id: StatusId, amount: number): void {
   const st = e.st;
   if (!st || amount <= 0) return;
@@ -444,7 +447,8 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   }
   // momentum resets when hit
   pl.momentum = 0;
-  if (attacker?.en?.elite === 'vampiric' && total > 0) heal(w, attacker, total * 0.2);
+  // D336: a Vampiric Elite heals 30% of its own max HP for each hit that lands (it was 20% of the damage)
+  if (attacker?.en?.elite === 'vampiric' && total > 0 && attacker.hp) heal(w, attacker, attacker.hp.max * VAMPIRIC_HEAL_PCT);
 
   // interrupt: a hit of at least your poise (D312: 8% of max HP + armour + shield, + poise buffs) staggers you unless
   // hyper armor; a projectile needs twice that; grabs always

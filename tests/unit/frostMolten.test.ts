@@ -37,3 +37,19 @@ describe('frost and molten (D330)', () => {
     expect(shape.r).toBeGreaterThan(26);
   });
 });
+
+describe('Vampiric Elites (D336)', () => {
+  it('a hit that lands heals it 30% of its max HP', async () => {
+    const { emptySpec, hitPlayer } = await import('../../src/game/combat/damage');
+    const { inCombat } = await import('./inCombat');
+    const w = new World('VA', Room.empty());
+    const p = spawnPlayer(w, newCharacter('knight', 'Joe', 'p1', new Rng(1)), 0, true, 400, 368);
+    const e = spawnEnemy(w, ENEMIES.shambler!, 600, 368, { tellS: 0, elite: 'vampiric' });
+    inCombat(w);
+    e.hp!.hp = e.hp!.max * 0.5;
+    const spec = emptySpec('normal');
+    spec.dmg.physical = 20;
+    hitPlayer(w, e.id, p, spec, e.x, e.y);
+    expect(e.hp!.hp).toBeCloseTo(e.hp!.max * 0.8, 3);
+  });
+});

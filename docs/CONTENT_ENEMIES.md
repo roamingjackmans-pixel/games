@@ -491,7 +491,7 @@ never a swarm piece, a special enemy or a boss. **From NG+1 every combat room ha
 |---|---|---|
 | Frenzied | ×1.4 move speed | red speed lines |
 | Armored | takes 40% less physical damage | grey plates |
-| Vampiric | heals 20% of the damage it deals | dark red aura, heal numbers |
+| Vampiric | heals 30% of its max HP for each hit that lands on a player (D336) | dark red aura, heal numbers |
 | Arcane | three orbs orbit it; touching one is a Piercing ×0.5 Void hit (once per 0.8 s) | violet orbs |
 | Molten | a pool of fire every 3 s where it stands, radius twice its own (at least 26 px), lasting 4 s (D330) | orange pools |
 | Frostbound | Chill 20 per second to players within 120 px | blue aura |

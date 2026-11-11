@@ -563,7 +563,7 @@ staggered.
 **8%** of eligible spawns solo, 12% / 16% / 20% with 2–4 players, up to 2 per player per room (D79); never bosses,
 swarm pieces or special enemies. In NG+ **every combat room has at least one** (D296). An Elite has **×3 HP, ×1.5
 damage**, is 30% bigger, glows and shows its affix, gives **3× Shards**, and drops an item **15%** of the time from the
-Elite rarity row (D84). Affixes: Frenzied (+40% speed), Armored (−40% physical taken), Vampiric (heals 20% of damage
+Elite rarity row (D84). Affixes: Frenzied (+40% speed), Armored (−40% physical taken), Vampiric (heals 30% of its max HP each hit that lands, D336; was 20% of damage
 dealt), Arcane (orbiting Piercing orbs), Molten (a pool of fire every 3 s, twice its radius, D330), Frostbound (chill aura), Shielded (a barrier of 25% max
 HP that comes back full **5 s after it is broken**, D213), Summoner (spawns fodder).
 
