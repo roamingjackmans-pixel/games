@@ -49,10 +49,10 @@ export const CLASSES: Record<ClassId, ClassDef> = {
   knight: {
     id: 'knight',
     name: 'Knight',
-    stats: S(10, 10, 10, 9, 3, 6), // D184
+    stats: S(10, 10, 12, 9, 3, 4), // D184; D326: 2 points from Prayer to Bonk for its Round Shield
     primary: 'hp',
     secondary: 'endurance',
-    start: { main: 'longsword', off: 'kite_shield', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: [] },
+    start: { main: 'longsword', off: 'round_shield', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: [] },
     blurb: 'Took the job for the armour. The job came with stairs.',
     look: { skin: '#e8c9a0', hair: '#5a3a22', shirt: '#4a6aa0', legs: '#3d3a4a', head: 'none', trim: '#c9b98a', hairStyle: 'short', beard: 'stubble', belt: '#5a3a22', emblem: 'cross' },
   },
@@ -106,7 +106,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(7, 7, 13, 8, 10, 3),
     primary: 'bonk',
     secondary: 'brain',
-    start: { main: 'colossal_sword', off: 'targe', alt: 'apprentice_staff', armor: ['crypt_rags_body', 'crypt_rags_legs'], spells: ['arcane_bolt', 'scatter_shards'] },
+    start: { main: 'colossal_sword', off: 'round_shield', alt: 'apprentice_staff', armor: ['crypt_rags_body', 'crypt_rags_legs'], spells: ['arcane_bolt', 'scatter_shards'] },
     blurb: 'Read one book on magic. Hit the librarian with a sword the size of the shelf.',
     look: { skin: '#d8b090', hair: '#3a2a1a', shirt: '#34508a', legs: '#2a2a3a', head: 'wizard', trim: '#8fd3ff', hairStyle: 'topknot', beard: 'full', hat: '#2a3a6a', belt: '#5a4a2a', emblem: 'star' },
   },

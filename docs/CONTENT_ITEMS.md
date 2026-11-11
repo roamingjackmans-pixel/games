@@ -138,14 +138,14 @@ Stability = stamina lost per 100 damage blocked. A shield with no parry window c
 
 | Shield | Size | Req Bonk / Slicey | Physical | Elemental | Stability | Parry | Weight | Notes |
 |---|---|---|---|---|---|---|---|---|
-| **Buckler** | small | 0 / 8 | 60% | 20% | 45 | 0.18 s | 1.5 |  *"Best parry. Worst everything else."* |
-| **Targe** | small | 6 / 6 | 70% | 30% | 40 | 0.16 s | 2.5 |  *"A buckler that went to the gym."* |
-| **Round Shield** | medium | 8 / 0 | 80% | 35% | 30 | 0.12 s | 4 |  *"Round. As advertised."* |
-| **Kite Shield** | medium | 10 / 0 | 88% | 45% | 28 | 0.1 s | 5 |  *"Does not fly. Was asked."* |
-| **Heater Shield** | medium | 12 / 0 | 90% | 50% | 26 | — | 5.5 |  *"Not a heater. Do not ask again."* |
-| **Tower Greatshield** | great | 18 / 0 | 100% | 55% | 18 | — | 13 | walk ×0.9 while raised *"A wall with a handle."* |
-| **Spiked Greatshield** | great | 20 / 0 | 100% | 65% | 20 | — | 12 | blocking a melee hit returns ×0.5 *"Hugging it is a mistake."* |
-| **Holy Bulwark** | great | 22 / 0 | 100% | 60% (Holy/Void 80%) | 16 | — | 12 | blocking heals 1%; Legendary only *"Every blow it stops does you a little good. Saintly, if smug."* |
+| **Buckler** | small | 3 / 10 | 60% | 20% | 45 | 0.18 s | 1.5 |  *"Best parry. Worst everything else."* |
+| **Targe** | small | 8 / 16 | 70% | 30% | 40 | 0.16 s | 2.5 |  *"A buckler that went to the gym."* |
+| **Round Shield** | medium | 12 / 6 | 80% | 35% | 30 | 0.12 s | 4 |  *"Round. As advertised."* |
+| **Kite Shield** | medium | 17 / 9 | 88% | 45% | 28 | 0.1 s | 5 |  *"Does not fly. Was asked."* |
+| **Heater Shield** | medium | 22 / 11 | 90% | 50% | 26 | — | 5.5 |  *"Not a heater. Do not ask again."* |
+| **Tower Greatshield** | great | 28 / 5 | 100% | 55% | 18 | — | 13 | walk ×0.9 while raised *"A wall with a handle."* |
+| **Spiked Greatshield** | great | 20 / 3 | 100% | 65% | 20 | — | 12 | blocking a melee hit returns ×0.5 *"Hugging it is a mistake."* |
+| **Holy Bulwark** | great | 36 / 8 | 100% | 60% (Holy/Void 80%) | 16 | — | 12 | blocking heals 1%; Legendary only *"Every blow it stops does you a little good. Saintly, if smug."* |
 
 ## 4. Casting tools
 

@@ -20,7 +20,7 @@ function mage(): { w: World; p: Entity; c: Character } {
   const c = newCharacter('scholar', 'Joe', 'p1', new Rng(2));
   c.equipment.main = makeItem('apprentice_staff', 'common', 1);
   c.equipment.off = makeItem('kite_shield', 'common', 1);
-  c.stats.bonk = 12;
+  c.stats.bonk = 17; // the Kite Shield needs Bonk 17 / Slicey 9 (D326)
   c.knownSpells = ['arcane_bolt', 'heal'];
   c.spellLoadout.brain = ['arcane_bolt', null, null];
   c.spellLoadout.prayer = ['heal', null, null];

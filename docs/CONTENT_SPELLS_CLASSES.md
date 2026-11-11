@@ -75,12 +75,12 @@ four spells (D184).
 
 | Class (id) | HP | End | Bonk | Slicey | Brain | Prayer | Total | Primary / secondary | Weapon hand | Off hand | 2nd weapon | Armour | Spells | Bag | Blurb |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Knight** (`knight`) | 10 | 10 | 10 | 9 | 3 | 6 | 48 | hp / endurance | Longsword | Kite Shield | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | — | — | "Took the job for the armour. The job came with stairs." |
+| **Knight** (`knight`) | 10 | 10 | 12 | 9 | 3 | 4 | 48 | hp / endurance | Longsword | Round Shield (D326) | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | — | — | "Took the job for the armour. The job came with stairs." |
 | **Brute** (`brute`) | 12 | 8 | 14 | 5 | 4 | 5 | 48 | bonk / hp | Greathammer (two-handed) | — | — | Caretaker's Plate | — | — | "Solves things." |
 | **Duelist** (`duelist`) | 8 | 11 | 5 | 14 | 5 | 5 | 48 | slicey / endurance | Twin Daggers | Buckler | — | Rag Hood, Crypt Rags, Rag Wraps | — | — | "Has never been hit. Says so." |
 | **Scholar** (`scholar`) | 7 | 7 | 3 | 10 | 15 | 6 | 48 | brain / slicey | Rapier | Apprentice Staff | — | Rag Hood, Crypt Rags, Rag Wraps | Arcane Bolt, Frost Lance | — | "Read about dungeons once." |
 | **Pyre Priest** (`cleric`) | 10 | 7 | 11 | 3 | 4 | 13 | 48 | prayer / bonk | Censer Flail | Wooden Talisman | — | Sexton's Mail, Sexton's Chausses | Heal, Bless Weapon | — | "Heals the faithful. Cremates the rest. Same sermon either way." |
-| **Battlemage** (`spearman`) | 7 | 7 | 13 | 8 | 10 | 3 | 48 | bonk / brain | Colossal Sword | Targe | Apprentice Staff | Crypt Rags, Rag Wraps | Arcane Bolt, Scatter Shards | — | "Read one book on magic. Hit the librarian with a sword the size of the shelf." |
+| **Battlemage** (`spearman`) | 7 | 7 | 13 | 8 | 10 | 3 | 48 | bonk / brain | Colossal Sword | Round Shield (D326) | Apprentice Staff | Crypt Rags, Rag Wraps | Arcane Bolt, Scatter Shards | — | "Read one book on magic. Hit the librarian with a sword the size of the shelf." |
 | **Hunter** (`hunter`) | 7 | 4 | 5 | 12 | 9 | 9 | 46 | slicey / brain | Bow (two-handed) | Wooden Talisman | Apprentice Staff | Rag Hood, Crypt Rags, Rag Wraps | Arcane Bolt, Scatter Shards, Heal, Bless Weapon | Whip | "Can track anything. Mostly tracks in mud." |
 | **Zealot** (`occultist`) | 8 | 8 | 3 | 12 | 3 | 14 | 48 | prayer / slicey | Dawn Glaive | Silver Talisman | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | Sunray, Bless Weapon | — | "Up at five to pray. Up at five past to stab whoever was not." |
 | **Berserker** (`berserker`) | 9 | 7 | 13 | 14 | 2 | 3 | 48 | slicey / bonk | Twin Axes (two-handed) | — | — | Sexton's Mail, Sexton's Chausses | — | — | "Was asked to calm down once. Once. Has never been asked to count." |

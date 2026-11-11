@@ -959,12 +959,12 @@ Ten classes (CONTENT_SPELLS_CLASSES §3 is the source of truth; every kit meets 
 
 | Class | HP / End / Bonk / Slicey / Brain / Prayer | Primary / secondary | Kit |
 |---|---|---|---|
-| Knight | 10 / 10 / 10 / 9 / 3 / 6 | HP / Endurance | Longsword, Kite Shield |
+| Knight | 10 / 10 / 12 / 9 / 3 / 4 | HP / Endurance | Longsword, Round Shield (D326) |
 | Brute | 12 / 8 / 14 / 5 / 4 / 5 | Bonk / HP | Greathammer (two-handed) |
 | Duelist | 8 / 11 / 5 / 14 / 5 / 5 | Slicey / Endurance | Twin Daggers, Buckler |
 | Scholar | 7 / 7 / 3 / 10 / 15 / 6 | Brain / Slicey | Rapier, Apprentice Staff; Arcane Bolt, Frost Lance |
 | Pyre Priest | 10 / 7 / 11 / 3 / 4 / 13 | Prayer / Bonk | Censer Flail, Wooden Talisman; Heal, Bless Weapon |
-| Battlemage | 7 / 7 / 13 / 8 / 10 / 3 | Bonk / Brain | Colossal Sword, Targe, Apprentice Staff as 2nd weapon; Arcane Bolt, Scatter Shards |
+| Battlemage | 7 / 7 / 13 / 8 / 10 / 3 | Bonk / Brain | Colossal Sword, Round Shield (D326), Apprentice Staff as 2nd weapon; Arcane Bolt, Scatter Shards |
 | Hunter | 7 / 4 / 5 / 12 / 9 / 9 | Slicey / Brain | Bow (two-handed), Wooden Talisman, Apprentice Staff as 2nd weapon, a Whip in the bag; Arcane Bolt, Scatter Shards, Heal, Bless Weapon |
 | Zealot | 8 / 8 / 3 / 12 / 3 / 14 | Prayer / Slicey | Dawn Glaive, Silver Talisman; Sunray, Bless Weapon |
 | Berserker | 9 / 7 / 13 / 14 / 2 / 3 | Slicey / Bonk | Twin Axes (dual-wielded) |

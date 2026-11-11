@@ -15,16 +15,16 @@ import { Rng } from '../../src/engine/rng';
 describe('off-hand gems while two-handing (D316)', () => {
   it("a shield's Bulwark gem counts one-handed and not two-handed", () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
-    c.equipment.off = makeItem('kite_shield', 'rare', 1, { sockets: 1, gems: [makeGem('bulwark', { q: 0 })] });
+    c.equipment.off = makeItem('round_shield', 'rare', 1, { sockets: 1, gems: [makeGem('bulwark', { q: 0 })] });
     c.twoHanded = false;
     const one = computeDerived(c);
-    c.equipment.off = makeItem('kite_shield', 'rare', 1, { sockets: 0 });
+    c.equipment.off = makeItem('round_shield', 'rare', 1, { sockets: 0 });
     const none = computeDerived(c);
     expect(one.defense.physical).toBeGreaterThan(none.defense.physical);
-    c.equipment.off = makeItem('kite_shield', 'rare', 1, { sockets: 1, gems: [makeGem('bulwark', { q: 0 })] });
+    c.equipment.off = makeItem('round_shield', 'rare', 1, { sockets: 1, gems: [makeGem('bulwark', { q: 0 })] });
     c.twoHanded = true;
     const two = computeDerived(c);
-    c.equipment.off = makeItem('kite_shield', 'rare', 1, { sockets: 0 });
+    c.equipment.off = makeItem('round_shield', 'rare', 1, { sockets: 0 });
     expect(two.defense.physical).toBeCloseTo(computeDerived(c).defense.physical, 6);
   });
 });

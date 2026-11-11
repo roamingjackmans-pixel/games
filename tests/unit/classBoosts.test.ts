@@ -39,7 +39,7 @@ describe('primary and secondary stats (D184)', () => {
   });
 
   it('the Knight and the Hunter have their new stats; the Hunter carries a bow, a talisman and a staff with two spells each', () => {
-    expect(CLASSES.knight.stats).toEqual({ hp: 10, endurance: 10, bonk: 10, slicey: 9, brain: 3, prayer: 6 });
+    expect(CLASSES.knight.stats).toEqual({ hp: 10, endurance: 10, bonk: 12, slicey: 9, brain: 3, prayer: 4 });
     expect(CLASSES.hunter.stats).toEqual({ hp: 7, endurance: 4, bonk: 5, slicey: 12, brain: 9, prayer: 9 });
     const h = newCharacter('hunter', 'H', 'h', new Rng(1));
     expect(h.equipment.main?.baseId).toBe('bow');

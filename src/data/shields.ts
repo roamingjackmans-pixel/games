@@ -6,20 +6,24 @@ import { reinforceMult } from './essence';
 /** Poise a held shield adds (D312), by size: small 0, medium +2, great +5. Not while two-handing. */
 export const SHIELD_POISE: Record<string, number> = { small: 0, medium: 2, great: 5 };
 
+/**
+ * Requirements by size (D326): small shields lean Slicey (Bonk 3–10, Slicey 10–18), medium ones lean Bonk (12–22 / 6–11),
+ * greatshields need a lot of Bonk and a little Slicey (20–36 / 3–8); heavier ones ask more.
+ */
 export const SHIELDS: Record<string, ShieldDef> = {
-  buckler: { id: 'buckler', name: 'Buckler', weight: 1.5, size: 'small', req: { bonk: 0, slicey: 8 }, physical: 0.6, elemental: 0.2, stability: 45, parryS: 0.18, flavor: 'Best parry. Worst everything else.', draw: 's_buckler' },
-  targe: { id: 'targe', name: 'Targe', weight: 2.5, size: 'small', req: { bonk: 6, slicey: 6 }, physical: 0.7, elemental: 0.3, stability: 40, parryS: 0.16, flavor: 'A buckler that went to the gym.', draw: 's_targe' },
-  round_shield: { id: 'round_shield', name: 'Round Shield', weight: 4, size: 'medium', req: { bonk: 8, slicey: 0 }, physical: 0.8, elemental: 0.35, stability: 30, parryS: 0.12, flavor: 'Round. As advertised.', draw: 's_round' },
-  kite_shield: { id: 'kite_shield', name: 'Kite Shield', weight: 5, size: 'medium', req: { bonk: 10, slicey: 0 }, physical: 0.88, elemental: 0.45, stability: 28, parryS: 0.1, flavor: 'Does not fly. Was asked.', draw: 's_kite' },
-  heater_shield: { id: 'heater_shield', name: 'Heater Shield', weight: 5.5, size: 'medium', req: { bonk: 12, slicey: 0 }, physical: 0.9, elemental: 0.5, stability: 26, parryS: null, flavor: 'Not a heater. Do not ask again.', draw: 's_heater' },
-  tower_greatshield: { id: 'tower_greatshield', name: 'Tower Greatshield', weight: 13, size: 'great', req: { bonk: 18, slicey: 0 }, physical: 1.0, elemental: 0.55, stability: 18, parryS: null, walkMult: 0.9, flavor: 'A wall with a handle.', draw: 's_tower' },
-  spiked_greatshield: { id: 'spiked_greatshield', name: 'Spiked Greatshield', weight: 12, size: 'great', req: { bonk: 20, slicey: 0 }, physical: 1.0, elemental: 0.65, stability: 20, parryS: null, thorns: 0.5, flavor: 'Hugging it is a mistake.', draw: 's_spiked' },
+  buckler: { id: 'buckler', name: 'Buckler', weight: 1.5, size: 'small', req: { bonk: 3, slicey: 10 }, physical: 0.6, elemental: 0.2, stability: 45, parryS: 0.18, flavor: 'Best parry. Worst everything else.', draw: 's_buckler' },
+  targe: { id: 'targe', name: 'Targe', weight: 2.5, size: 'small', req: { bonk: 8, slicey: 16 }, physical: 0.7, elemental: 0.3, stability: 40, parryS: 0.16, flavor: 'A buckler that went to the gym.', draw: 's_targe' },
+  round_shield: { id: 'round_shield', name: 'Round Shield', weight: 4, size: 'medium', req: { bonk: 12, slicey: 6 }, physical: 0.8, elemental: 0.35, stability: 30, parryS: 0.12, flavor: 'Round. As advertised.', draw: 's_round' },
+  kite_shield: { id: 'kite_shield', name: 'Kite Shield', weight: 5, size: 'medium', req: { bonk: 17, slicey: 9 }, physical: 0.88, elemental: 0.45, stability: 28, parryS: 0.1, flavor: 'Does not fly. Was asked.', draw: 's_kite' },
+  heater_shield: { id: 'heater_shield', name: 'Heater Shield', weight: 5.5, size: 'medium', req: { bonk: 22, slicey: 11 }, physical: 0.9, elemental: 0.5, stability: 26, parryS: null, flavor: 'Not a heater. Do not ask again.', draw: 's_heater' },
+  tower_greatshield: { id: 'tower_greatshield', name: 'Tower Greatshield', weight: 13, size: 'great', req: { bonk: 28, slicey: 5 }, physical: 1.0, elemental: 0.55, stability: 18, parryS: null, walkMult: 0.9, flavor: 'A wall with a handle.', draw: 's_tower' },
+  spiked_greatshield: { id: 'spiked_greatshield', name: 'Spiked Greatshield', weight: 12, size: 'great', req: { bonk: 20, slicey: 3 }, physical: 1.0, elemental: 0.65, stability: 20, parryS: null, thorns: 0.5, flavor: 'Hugging it is a mistake.', draw: 's_spiked' },
   holy_bulwark: {
     id: 'holy_bulwark',
     weight: 12,
     name: 'Holy Bulwark',
     size: 'great',
-    req: { bonk: 22, slicey: 0 },
+    req: { bonk: 36, slicey: 8 },
     physical: 1.0,
     elemental: 0.6,
     holyVoidBlock: 0.8,
