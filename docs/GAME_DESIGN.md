@@ -716,7 +716,7 @@ Legendaries add 20% to each step within the caps. Items from saves before D89 ke
 ### 8.4 Affixes, legendary powers, set perks
 
 **Affixes** (CONTENT_ITEMS §6): flat and percent damage, elemental damage (Burning, Freezing, Shocking, Radiant,
-Dusky), attack speed, cooldown reduction, Fleet (dodge recharge), stamina cost, lifesteal (D325: a share of max HP, × the hit's multiplier, once an attack however many it hits; not a share of the damage), status buildup, poise
+Dusky), attack speed, cooldown reduction, Fleet (dodge recharge), stamina cost, lifesteal (D325: a share of max HP, × the hit's multiplier, once an attack however many it hits, rounded up and at least 1 HP (D337); not a share of the damage), status buildup, poise
 damage, defense per type, max HP / stamina, Shard / Glowen / gem find, revive value, +stat.
 
 **Legendary powers** (`data/legendaries.ts`) are unique effects on Legendary items (e.g. Joe's Lucky Socks: +1

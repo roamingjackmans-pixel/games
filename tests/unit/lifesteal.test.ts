@@ -43,9 +43,29 @@ describe('lifesteal (D325)', () => {
     }
     expect(en.every((e) => e.hp!.hp < 1e9)).toBe(true);
     // enemies hit back in that time, so allow for their hits: never two heals' worth
-    const one = p.hp!.max * 0.01 * mult;
+    const one = Math.max(1, Math.ceil(p.hp!.max * 0.01 * mult)); // D337: rounded up
     const gained = p.hp!.hp - hp0;
     expect(gained).toBeLessThanOrEqual(one + 1e-6);
     expect(p.pl!.lifestealAttacks?.length).toBe(1);
+  });
+});
+
+describe('lifesteal rounds up (D337)', () => {
+  it('a tiny share still heals 1 HP, and a fraction rounds up', async () => {
+    const { hitEnemy, emptySpec } = await import('../../src/game/combat/damage');
+    const { inCombat } = await import('./inCombat');
+    const c = newCharacter('knight', 'Joe', 'p1', new Rng(1));
+    const w = new World('LS2', Room.empty());
+    const p = spawnPlayer(w, c, 0, true, 400, 368);
+    const e = spawnEnemy(w, ENEMIES.shambler!, 450, 368, { tellS: 0 });
+    e.hp!.hp = e.hp!.max = 1e9;
+    e.en!.state = 'idle';
+    inCombat(w);
+    p.pl!.derived.lifesteal = 0.00001;
+    p.hp!.hp = 10;
+    const spec = emptySpec('player');
+    spec.dmg.physical = 5;
+    hitEnemy(w, p, e, spec, p.x, p.y);
+    expect(p.hp!.hp).toBe(11);
   });
 });

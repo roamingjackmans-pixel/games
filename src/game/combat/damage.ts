@@ -858,7 +858,8 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
         done.push(id);
         if (done.length > 24) done.shift();
       }
-      heal(w, attacker!, attacker!.hp!.max * pl.derived.lifesteal * Math.max(0, spec.lifestealScale ?? 1), false);
+      // D337: rounded up to a whole number, never less than 1
+      heal(w, attacker!, Math.max(1, Math.ceil(attacker!.hp!.max * pl.derived.lifesteal * Math.max(0, spec.lifestealScale ?? 1))), false);
     }
   }
   if (pl) {
