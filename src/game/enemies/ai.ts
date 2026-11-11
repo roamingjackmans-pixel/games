@@ -16,6 +16,13 @@ import { tickBossTransition } from '../combat/bossPhase';
 import { stepToward } from './pathing';
 import { attackDamage } from './spawn';
 import type { AttackDef, EnemyDef } from '../types';
+
+/** D330: a Molten Elite leaves a pool of fire every 3 s, lasting 4 s, its radius twice the enemy's (at least 26 px). */
+export const MOLTEN_POOL_EVERY_S = 3;
+export const MOLTEN_POOL_LAST_S = 4;
+export function moltenPoolR(radius: number): number {
+  return Math.max(26, radius * 2);
+}
 import type { Entity, World } from '../world';
 
 /** A Shielded Elite's barrier returns this long after it breaks (D213). */
@@ -295,9 +302,12 @@ function eliteUpdate(w: World, e: Entity, dt: number): void {
       break;
     }
     case 'molten':
-      if (now >= en.eliteTimerAt && Math.hypot(e.x - e.px, e.y - e.py) > 0.5) {
-        en.eliteTimerAt = now + 0.35;
-        spawnHazard(w, 'firePuddle', [{ k: 'circle', x: e.x, y: e.y, r: 26 }], 3, 1, e.id);
+      // D330: a pool of fire every 3 s where it stands (it used to trail small puddles as it moved), sized to the enemy
+      // the first comes 3 s in (the shared elite timer starts at 10)
+      if (en.eliteTimerAt - now > MOLTEN_POOL_EVERY_S) en.eliteTimerAt = now + MOLTEN_POOL_EVERY_S;
+      if (now >= en.eliteTimerAt) {
+        en.eliteTimerAt = now + MOLTEN_POOL_EVERY_S;
+        spawnHazard(w, 'firePuddle', [{ k: 'circle', x: e.x, y: e.y, r: moltenPoolR(e.radius) }], MOLTEN_POOL_LAST_S, 1, e.id);
       }
       break;
     case 'frostbound':

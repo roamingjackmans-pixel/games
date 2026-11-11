@@ -531,6 +531,7 @@ export class GameSession {
     }
     w.bossId = 0;
     this.roomPhase = 'cleared';
+    this.reviveDowned();
     if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
     w.emit({ t: 'stat', key: 'roomsCleared', playerId: '' });
     lootHooks.boss(this, e.x, e.y, def.id);
@@ -844,6 +845,7 @@ export class GameSession {
     const w = this.w;
     const ws = this.save.world;
     this.roomPhase = 'cleared';
+    this.reviveDowned();
     if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
     w.emit({ t: 'stat', key: 'roomsCleared', playerId: '' });
     this.applyDoorLocks();
@@ -1184,6 +1186,11 @@ export class GameSession {
     }
     this.w.sfx('downed', p.x);
     if (this.w.players.every((x) => x.pl!.downed || x.pl!.deadUntilRest)) this.wipe();
+  }
+
+  /** D329: the whole room is cleared (not just a wave): every downed player gets up, as a teammate's revive would. */
+  private reviveDowned(): void {
+    for (const p of this.w.players) if (p.pl!.downed) this.revive(p);
   }
 
   /** A teammate's hits filled a ghost's revive ring: back at 40% HP with 2 s of i-frames (D12). */

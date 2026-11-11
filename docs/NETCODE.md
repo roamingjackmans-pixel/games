@@ -62,7 +62,7 @@ filters them per guest: personal messages, `loot` and `shardGain` only to their 
 ## 4. Snapshots
 
 `encodeSnap` / `decodeSnap` (`snapshot.ts`). Header: `full u8, tick u32, time f64, ackSeq u16` (the guest's last
-input the host applied), record count, removed count, JSON length. Then fixed **27-byte records**, removed ids (u16),
+input the host applied), record count, removed count, JSON length. Then fixed **28-byte records** (the last byte a downed player's countdown, D329), removed ids (u16),
 and a JSON block.
 
 | Record field | Encoding |

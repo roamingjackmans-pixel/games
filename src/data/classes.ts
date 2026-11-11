@@ -107,6 +107,8 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     primary: 'bonk',
     secondary: 'brain',
     start: { main: 'colossal_sword', off: 'round_shield', alt: 'apprentice_staff', armor: ['crypt_rags_body', 'crypt_rags_legs'], spells: ['arcane_bolt', 'scatter_shards'] },
+    // D329: the Colossal Sword needs Bonk 19; Bonk 13 two-handed (×1.5) lifts it. The shield waits for more Bonk
+    twoHanded: true,
     blurb: 'Read one book on magic. Hit the librarian with a sword the size of the shelf.',
     look: { skin: '#d8b090', hair: '#3a2a1a', shirt: '#34508a', legs: '#2a2a3a', head: 'wizard', trim: '#8fd3ff', hairStyle: 'topknot', beard: 'full', hat: '#2a3a6a', belt: '#5a4a2a', emblem: 'star' },
   },

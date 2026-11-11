@@ -413,6 +413,11 @@ export class NetGuest {
       pl.parryUntil = r.flags & F.parry ? t + 0.1 : 0;
       pl.reviveProgress = r.extra / 100;
       pl.reviveNeed = Math.max(1, r.extra2 / 100);
+      // D329: another player's downed countdown (the guest's own comes with its HUD state, which also sets it)
+      if (pl.downed && e !== this.me) {
+        pl.ghostUntil = t + (r.ghost & 127);
+        pl.ghostPauseUntil = r.ghost & 128 ? t + 0.25 : 0;
+      }
       const ph = COMBO_PHASES[r.cPhase] ?? '';
       // 100 + index: a shot of the off-hand weapon (D291)
       const offShot = r.cIdx >= 100 && r.cIdx < 200 && !!pl.derived.offWeapon;

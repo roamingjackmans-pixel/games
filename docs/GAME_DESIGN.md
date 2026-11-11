@@ -440,7 +440,7 @@ colour, and its windups and shots glow in the attack's type.
 | Status | Trigger effect |
 |---|---|
 | Burn | 3% max HP a second for 4 s (bosses take 40% of it) |
-| Chill | −30% attack speed and move speed for 3 s, +1.5 s on the dodge recharge; a second trigger while Chilled **Freezes** (1.5 s listed) |
+| Chill | builds **twice as fast** as the others (D330); −30% attack speed and move speed for 3 s, +1.5 s on the dodge recharge; a second trigger while Chilled **Freezes** (1.5 s listed) |
 | Shock | for 3 s the next hit taken is ×1.2 and interrupts; drains 25 stamina |
 | Bleed | players: 12% of max HP at once. Enemies: 10% of **current** HP (at least 3% of max); bosses 5% of current HP |
 | Poison | 2% max HP a second for 8 s (bosses take 40% of it) |
@@ -565,7 +565,7 @@ staggered.
 swarm pieces or special enemies. In NG+ **every combat room has at least one** (D296). An Elite has **×3 HP, ×1.5
 damage**, is 30% bigger, glows and shows its affix, gives **3× Shards**, and drops an item **15%** of the time from the
 Elite rarity row (D84). Affixes: Frenzied (+40% speed), Armored (−40% physical taken), Vampiric (heals 20% of damage
-dealt), Arcane (orbiting Piercing orbs), Molten (fire trail), Frostbound (chill aura), Shielded (a barrier of 25% max
+dealt), Arcane (orbiting Piercing orbs), Molten (a pool of fire every 3 s, twice its radius, D330), Frostbound (chill aura), Shielded (a barrier of 25% max
 HP that comes back full **5 s after it is broken**, D213), Summoner (spawns fodder).
 
 ### 6.6 Mimics
@@ -923,9 +923,12 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
   revive by **hitting the ghost**; each hit adds the weapon's revive value (greathammer 4 … daggers 0.8; spells 0.25;
   throwables 0.5) and holds the countdown for 3 s. Requirement 10 × 2^(downs − 1), max 40 (downs since the last
   rest). Revived at 40% HP with 2 s of i-frames (no Thermos refill). A ghost that bleeds out is dead until the party
-  rests or wipes. **Everyone down** wipes the party: all wake at the host's bonfire full (the host's death screen moves
+  rests or wipes. Every player sees every ghost's countdown (D329). **Clearing the whole room** (not a wave) gets every
+  ghost up at 40% HP, as a revive does (D329). **Everyone down** wipes the party: all wake at the host's bonfire full (the host's death screen moves
   on by itself after 3 s, D64).
 - **Nobody leaves a ghost behind** (D115): while a player is down, doors and stairs refuse ("Revive *name* first!").
+- **Safe out of combat** (D329): with nothing to fight in the room, a player takes no damage at all: no enemy hits,
+  burn or bleed ticks, falls, harmful ground, or friendly fire.
 - **Friendly fire** (D115): players' damaging attacks hit standing allies at Settings → Co-op → Friendly fire
   damage (0–200%, default 100%); the host's value rules the session. Your own attacks never hit you.
 - **What a guest takes home** (D195): Shards, loot, levels, spells, gems, Glowen and Thermos upgrades always. Zone
@@ -966,7 +969,7 @@ Ten classes (CONTENT_SPELLS_CLASSES §3 is the source of truth; every kit meets 
 | Duelist | 8 / 11 / 5 / 14 / 5 / 5 | Slicey / Endurance | Twin Daggers, Buckler |
 | Scholar | 7 / 7 / 3 / 10 / 15 / 6 | Brain / Slicey | Rapier, Apprentice Staff; Arcane Bolt, Frost Lance |
 | Pyre Priest | 10 / 7 / 11 / 3 / 4 / 13 | Prayer / Bonk | Censer Flail, Wooden Talisman; Heal, Bless Weapon |
-| Battlemage | 7 / 7 / 13 / 8 / 10 / 3 | Bonk / Brain | Colossal Sword, Round Shield (D326), Apprentice Staff as 2nd weapon; Arcane Bolt, Scatter Shards |
+| Battlemage | 7 / 7 / 13 / 8 / 10 / 3 | Bonk / Brain | Colossal Sword two-handed (D329), Round Shield (D326), Apprentice Staff as 2nd weapon; Arcane Bolt, Scatter Shards |
 | Hunter | 7 / 4 / 5 / 12 / 9 / 9 | Slicey / Brain | Bow (two-handed), Wooden Talisman, Apprentice Staff as 2nd weapon, a Whip in the bag; Arcane Bolt, Scatter Shards, Heal, Bless Weapon |
 | Zealot | 8 / 8 / 3 / 12 / 3 / 14 | Prayer / Slicey | Dawn Glaive, Silver Talisman; Sunray, Bless Weapon |
 | Berserker | 9 / 7 / 13 / 14 / 2 / 3 | Slicey / Bonk | Twin Axes (dual-wielded) |

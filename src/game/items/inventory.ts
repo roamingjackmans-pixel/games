@@ -307,6 +307,9 @@ export function sellItem(c: Character, itemId: string): OpResult {
   const i = findInBag(c, itemId);
   if (i < 0) return no('Only items in your bag can be sold.');
   const item = c.bag[i]!;
+  // D329: a locked item, or one holding a locked gem, never sells (not just Sell all)
+  if (item.locked) return no(`${item.name} is locked: unlock it to sell it.`);
+  if (item.sockets.some((g) => g?.locked)) return no(`${item.name} holds a locked gem: take it out or unlock it first.`);
   const v = itemSellValue(item);
   c.bag.splice(i, 1);
   c.glowen += v;
@@ -340,6 +343,8 @@ export function sellAllGems(c: Character): OpResult {
 export function sellGem(c: Character, gemIdx: number): OpResult {
   const gem = c.gems[gemIdx];
   if (!gem) return no('No gem.');
+  // D329: a locked gem never sells
+  if (gem.locked) return no('That gem is locked: unlock it to sell it.');
   const v = gemSellTotal(gem);
   c.gems.splice(gemIdx, 1);
   c.glowen += v;

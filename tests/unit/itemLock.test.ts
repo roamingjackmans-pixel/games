@@ -33,8 +33,10 @@ describe('item lock (D265)', () => {
     // nothing left to sell: only locked items
     expect(sellAll(c, 'all').ok).toBe(false);
   });
-  it('a locked item can still be sold on its own, and a worn one can be locked', () => {
+  it('a locked item cannot be sold on its own either (D329), and a worn one can be locked', () => {
     const c = setup();
+    toggleItemLock(c, 'it0');
+    expect(sellItem(c, 'it0').ok).toBe(false);
     toggleItemLock(c, 'it0');
     expect(sellItem(c, 'it0').ok).toBe(true);
     const worn = c.equipment.main!;

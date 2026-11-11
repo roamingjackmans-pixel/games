@@ -90,7 +90,7 @@ four spells (D184).
 - The **Hunter**'s bow needs two hands (D88): shooting one-handed takes it in both hands (D203). A talisman sits in the
   off hand and a staff on the swap, two spells each; the second of each school (Scatter Shards, Bless Weapon) is
   learnt ahead of its requirement (D184). The Whip waits in the bag.
-- The **Battlemage** fights sword and shield with the staff on the swap (D117, D119).
+- The **Battlemage** starts two-handing its Colossal Sword (Bonk 19 needed, D329), the shield waiting for more Bonk, with the staff on the swap (D117, D119).
 - The **Berserker** dual-wields the Twin Axes (two-handed) (D120, D123, D140).
 - **Nobody** starts with one random level-1 gem in the gem pouch.
 - Old class ids are kept for saves: `cleric` is the Pyre Priest (D118), `spearman` the Battlemage (D119),

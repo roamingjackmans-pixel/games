@@ -106,9 +106,9 @@ describe('formulas (GAME_DESIGN §3)', () => {
   it('requirements rise on the primary stat and two-handing counts Bonk ×1.5 (not Slicey)', () => {
     const gh = makeItem('greathammer', 'common', 3);
     const r = itemRequirements(gh);
-    expect(r.bonk).toBe(18);
-    expect(meetsRequirements(r, { bonk: 12, slicey: 0, brain: 0, prayer: 0 }, false)).toBe(false);
-    expect(meetsRequirements(r, { bonk: 12, slicey: 0, brain: 0, prayer: 0 }, true)).toBe(true);
+    expect(r.bonk).toBe(24); // D329: 20 at ilvl 1, +2 a level;
+    expect(meetsRequirements(r, { bonk: 16, slicey: 0, brain: 0, prayer: 0 }, false)).toBe(false);
+    expect(meetsRequirements(r, { bonk: 16, slicey: 0, brain: 0, prayer: 0 }, true)).toBe(true);
     const slice = { bonk: 0, slicey: 14, brain: 0, prayer: 0 };
     expect(meetsRequirements(slice, { bonk: 0, slicey: 10, brain: 0, prayer: 0 }, true)).toBe(false);
     expect(meetsRequirements(slice, { bonk: 0, slicey: 14, brain: 0, prayer: 0 }, true)).toBe(true);

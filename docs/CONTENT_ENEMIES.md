@@ -493,7 +493,7 @@ never a swarm piece, a special enemy or a boss. **From NG+1 every combat room ha
 | Armored | takes 40% less physical damage | grey plates |
 | Vampiric | heals 20% of the damage it deals | dark red aura, heal numbers |
 | Arcane | three orbs orbit it; touching one is a Piercing ×0.5 Void hit (once per 0.8 s) | violet orbs |
-| Molten | leaves fire puddles (3 s) as it moves | orange trail |
+| Molten | a pool of fire every 3 s where it stands, radius twice its own (at least 26 px), lasting 4 s (D330) | orange pools |
 | Frostbound | Chill 20 per second to players within 120 px | blue aura |
 | Shielded | a barrier worth 25% of its max HP; it comes back 5 s after it breaks (D213) | cyan bubble |
 | Summoner | calls adds every 12 s | green rune circle |

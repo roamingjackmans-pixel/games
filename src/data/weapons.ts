@@ -28,7 +28,8 @@ export const WEAPONS: Record<string, WeaponDef> = {
     name: 'Greathammer',
     weight: 14,
     grades: { bonk: 'S', slicey: '-' },
-    req: { bonk: 14, slicey: 0 },
+    req: { bonk: 20, slicey: 0 }, // D329: a big Bonk weapon; the Brute (Bonk 14) two-hands it
+    bonkFloor: 18,
     speedClass: 'veryslow',
     combo: [sw(520, 150, 480, 0.88, arc(110, 120), 18, 'slash'), sw(520, 150, 480, 0.88, arc(110, 120), 18, 'backslash'), sw(700, 160, 620, 1.32, slam(75, 100), 24, 'overhead')],
     base1: 62,
@@ -46,7 +47,8 @@ export const WEAPONS: Record<string, WeaponDef> = {
     name: 'Greataxe',
     weight: 11,
     grades: { bonk: 'A', slicey: '-' },
-    req: { bonk: 12, slicey: 0 },
+    req: { bonk: 18, slicey: 0 }, // D329
+    bonkFloor: 18,
     speedClass: 'slow',
     combo: [sw(450, 140, 400, 0.92, arc(130, 115), 16, 'slash'), sw(450, 140, 400, 0.92, arc(130, 115), 16, 'backslash'), sw(450, 140, 400, 0.96, arc(130, 115), 16, 'slash'), sw(520, 200, 520, 1.19, spin(110), 16, 'spin')],
     base1: 54,
@@ -64,7 +66,8 @@ export const WEAPONS: Record<string, WeaponDef> = {
     name: 'Colossal Sword',
     weight: 16,
     grades: { bonk: 'A', slicey: 'E' },
-    req: { bonk: 13, slicey: 8 },
+    req: { bonk: 19, slicey: 8 }, // D329
+    bonkFloor: 18,
     speedClass: 'slow',
     combo: [sw(480, 150, 420, 1, arc(150, 130), 16, 'slash'), sw(480, 150, 420, 1.1, arc(150, 130), 16, 'backslash'), sw(640, 160, 560, 1.51, slam(85, 115), 24, 'overhead')],
     base1: 56,
@@ -321,7 +324,8 @@ export const WEAPONS: Record<string, WeaponDef> = {
     name: 'Hollow Maul',
     weight: 12,
     grades: { bonk: 'B', slicey: '-', brain: 'B' },
-    req: { bonk: 12, slicey: 0, brain: 12 },
+    req: { bonk: 18, slicey: 0, brain: 12 }, // D329
+    bonkFloor: 18,
     element: 'void',
     speedClass: 'slow',
     combo: [sw(500, 150, 450, 0.96, arc(110, 115), 18, 'slash'), sw(500, 150, 450, 0.96, arc(110, 115), 18, 'backslash'), sw(620, 160, 580, 1.35, slam(70, 100), 22, 'overhead')],

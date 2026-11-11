@@ -1,6 +1,7 @@
 // Hazardous terrain (PROCGEN §3.2): generation rules across seeds and zones, the Slow and Hurt effects, the dodge
 // keeping its full distance, determinism, and the room sync to guests.
 import { describe, expect, it } from 'vitest';
+import { inCombat } from './inCombat';
 import { generateZone } from '../../src/game/procgen/zone';
 import { buildRoom } from '../../src/game/procgen/rooms';
 import { TERRAIN_HEAVY_COVER, TERRAIN_MAX_COVER, TERRAIN_ROOM_RATE, terrainStream } from '../../src/game/procgen/terrain';
@@ -208,6 +209,7 @@ describe('hazardous terrain effects', () => {
 
   it('Hurt terrain: 3% of max HP every 0.5 s while standing in it; a dodge i-frame skips the tick; enemies are spared', () => {
     const { w, p } = setup(TERRAIN.Hurt);
+    inCombat(w); // D329
     const max = p.hp!.max;
     const hp0 = p.hp!.hp;
     const hit = Math.max(1, Math.round(max * TERRAIN_HURT_PCT));

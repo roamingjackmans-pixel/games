@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { inCombat } from './inCombat';
 import { GameSession } from '../../src/game/session';
 import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
@@ -43,6 +44,7 @@ describe('session: bonfires (D150; D38 for the Thermos)', () => {
     expect(p.hp!.hp).toBe(p.hp!.max);
     expect(c.flaskCur).toBe(c.flaskMax);
     // dying refills (and the respawn heals)
+    inCombat(s.w); // D329: a player only takes damage in a fight
     rawDamage(s.w, p, 9999, 'physical', 0);
     expect(s.dead).toBe(true);
     s.respawn();
@@ -80,6 +82,7 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     s.w.god = false;
     const dx = p.x;
     const dy = p.y;
+    inCombat(s.w); // D329: a player only takes damage in a fight
     rawDamage(s.w, p, 1e9, 'physical', 0);
     expect(s.save.world.shardpile?.amount).toBe(shards);
     expect(s.save.character.shards).toBe(0);
@@ -150,10 +153,12 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     const s = session();
     const p = s.localPlayer!;
     s.save.character.shards = 500;
+    inCombat(s.w); // D329: a player only takes damage in a fight
     rawDamage(s.w, p, 1e9, 'physical', 0);
     s.respawn();
     expect(s.save.world.shardpile?.amount).toBe(500);
     s.save.character.shards = 30;
+    inCombat(s.w); // the respawn left the fight
     rawDamage(s.w, s.localPlayer!, 1e9, 'physical', 0);
     expect(s.save.world.shardpile?.amount).toBe(30);
   });
@@ -196,14 +201,17 @@ describe('session: rooms, waves, death and the Shardpile', () => {
   it('nobody dies in the Training Hall (D73), but they can in the first room after it', () => {
     const s = session(true);
     const p = s.localPlayer!;
+    inCombat(s.w); // D329: a player only takes damage in a fight
     rawDamage(s.w, p, 1e9, 'physical', 0);
     expect(s.dead).toBe(false);
     expect(p.hp!.hp).toBe(1);
     run(s, 2);
+    inCombat(s.w); // D329: a player only takes damage in a fight
     rawDamage(s.w, p, 1e9, 'fire', 0);
     expect(s.dead).toBe(false);
     expect(p.hp!.hp).toBe(1);
     s.enterRoom(s.layout.startId, 'e');
+    inCombat(s.w); // D329: a player only takes damage in a fight
     rawDamage(s.w, p, 1e9, 'physical', 0);
     expect(s.dead).toBe(true);
   });

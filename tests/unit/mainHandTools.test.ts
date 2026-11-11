@@ -1,5 +1,6 @@
 // D117: staffs and talismans in the weapon hand (block with a shield and cast), and two tools at once.
 import { describe, expect, it } from 'vitest';
+import { inCombat } from './inCombat';
 import { World, type Entity } from '../../src/game/world';
 import { Room } from '../../src/game/room';
 import { newCharacter } from '../../src/game/player/character';
@@ -75,6 +76,7 @@ describe('staffs and talismans in either hand (D117)', () => {
 
   it('blocks with the shield between casts', () => {
     const { w, p } = mage();
+    inCombat(w); // D329
     expect(tryCastSpell(w, p, 0, 'skill')).toBe(true);
     run(w, 1);
     hold(p, ACTION_BIT.block);

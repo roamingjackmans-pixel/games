@@ -693,7 +693,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
         sock = btn('Socket', () => say(v.ops.socket(sel.id, free, gi)), 'tiny', !fits);
         sock.title = fits ? `Into socket ${free + 1} of ${sel.name}` : `${sel.name} takes ${socketKind(sel) === 'armor' ? 'armor' : 'weapon'} gems.`;
       }
-      const sell = btn(['Sell ', glowenEl(gemSellTotal(g), '+')], () => say(v.ops.sellGem(gi)), 'tiny');
+      // a locked gem's Sell is greyed out (D329)
+      const sell = btn(['Sell ', glowenEl(gemSellTotal(g), '+')], () => say(v.ops.sellGem(gi)), 'tiny', !!g.locked);
+      if (g.locked) sell.title = 'Locked: unlock it to sell it.';
       gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, sell, fuseBtn(g, loc)], `loose-gem-${gi}`)));
     });
     if (filterKind && sel) {
@@ -833,10 +835,13 @@ export function openBonfire(v: BonfireView): HTMLElement {
       say(v.ops.sellItem(it.id));
     }, 'primary');
     keep.setAttribute('data-testid', 'sell-ask-keep');
+    // a locked gem inside never goes with it (D329)
+    const lockedGem = gems.some((g) => g.locked);
     const all = btn(['Sell with the gems for ', glowenEl(itemSellValue(it), '+')], () => {
       sellAsk = null;
       say(v.ops.sellItem(it.id));
-    }, 'danger');
+    }, 'danger', lockedGem);
+    if (lockedGem) all.title = 'A gem in it is locked: keep the gems, or unlock it.';
     all.setAttribute('data-testid', 'sell-ask-all');
     return h(
       'div',
@@ -947,7 +952,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
           sellAsk = it.id;
           render();
         } else say(v.ops.sellItem(it.id));
-      }, 'tiny');
+      }, 'tiny', !!it.locked);
+      // a locked item's Sell is greyed out (D329)
+      if (it.locked) sb.title = 'Locked: unlock it to sell it.';
       sb.setAttribute('data-testid', `sell-${it.id}`);
       sb.setAttribute('data-focus', `sell-${it.id}`);
       // the same lock as the inventory's (D265): Sell all keeps a locked item

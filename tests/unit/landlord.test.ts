@@ -2,6 +2,7 @@
 // the void fall, two shrinks that spare the door approaches and the boss), the face's pull pausing in the last
 // 0.2 s of its bite, Collapse, Hollow Joes two at a time, and a long fight that does not throw.
 import { describe, expect, it } from 'vitest';
+import { inCombat } from './inCombat';
 import { BOSSES } from '../../src/data/bosses';
 import { THE_LANDLORD } from '../../src/data/bosses/abyss';
 import { BOSS_ARENAS } from '../../src/data/rooms/bosses';
@@ -238,6 +239,7 @@ describe('The Landlord: the fight', () => {
     const b = enterArena(s);
     s.w.remove(b);
     s.w.sweep();
+    inCombat(s.w, b.x, b.y); // D329: the fall only hurts in a fight (a dummy where he stood, on the platform)
     const p = s.localPlayer!;
     const pl = p.pl!;
     // the west edge of the platform, row 6

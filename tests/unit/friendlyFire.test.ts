@@ -1,6 +1,7 @@
 // Friendly fire in co-op (D115): players' attacks hit standing allies at the host's 0–200%, ghosts are still revived
 // by hits (D12), nobody leaves the room while a ghost waits for its revive, and the two achievements that go with it.
 import { describe, expect, it } from 'vitest';
+import { inCombat } from './inCombat';
 import { GameSession } from '../../src/game/session';
 import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
@@ -31,6 +32,7 @@ function party(): { s: GameSession; host: Entity; ally: Entity } {
   host.y = host.py = 400;
   ally.x = ally.px = 660;
   ally.y = ally.py = 400;
+  inCombat(s.w); // D329: hurting anyone needs something to fight
   return { s, host, ally };
 }
 

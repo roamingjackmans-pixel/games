@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { inCombat } from './inCombat';
 import { LoopbackHub } from '../../src/game/net/loopback';
 import { NetHost } from '../../src/game/net/host';
 import { NetGuest } from '../../src/game/net/guest';
@@ -201,6 +202,7 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     p.host.start(p.s);
     p.step(0.5);
     const g = guestEntity(p, 0);
+    inCombat(p.s.w); // D329: a player only takes damage in a fight
     rawDamage(p.s.w, g, 1e9, 'physical', 0);
     expect(g.pl!.downed).toBe(true);
     expect(g.pl!.reviveNeed).toBe(10);
@@ -211,6 +213,7 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     expect(g.pl!.downed).toBe(false);
     expect(g.hp!.hp).toBeCloseTo(g.hp!.max * 0.4, 3);
     // second down needs 20; let the ghost bleed out
+    inCombat(p.s.w); // D329: a player only takes damage in a fight
     rawDamage(p.s.w, g, 1e9, 'physical', 0);
     expect(g.pl!.reviveNeed).toBe(20);
     p.step(31);
@@ -235,6 +238,7 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     const g = guestEntity(p, 0);
     const host = p.s.localPlayer!;
     g.pl!.char.flaskCur = 0;
+    inCombat(p.s.w); // D329: a player only takes damage in a fight
     rawDamage(p.s.w, g, 1e9, 'physical', 0);
     const cast = (): void =>
       runEffects(p.s.w, SPELLS.last_rites!.effect, { sourceId: host.id, team: 0, x: host.x, y: host.y, aimX: g.x, aimY: g.y, targetId: g.id, powerMult: 1, isSpell: true, isSkill: false, baseDamage: 10, windupS: 0, tag: 'lr' });

@@ -47,9 +47,13 @@ export type HitResult = 'none' | 'hit' | 'blocked' | 'parried' | 'dodged' | 'gua
 
 // ---------------------------------------------------------------- statuses
 
+/** How fast each status builds, on everyone (D330: frost twice as fast as it was). */
+export const STATUS_BUILD_MULT: Partial<Record<StatusId, number>> = { chill: 2 };
+
 export function applyStatusBuild(w: World, e: Entity, id: StatusId, amount: number): void {
   const st = e.st;
   if (!st || amount <= 0) return;
+  amount *= STATUS_BUILD_MULT[id] ?? 1;
   if (st.immune.has(id)) return;
   const now = w.time;
   if (e.pl) {
@@ -201,6 +205,8 @@ export function cancelEnemyAttack(w: World, e: Entity): void {
 export function rawDamage(w: World, e: Entity, amount: number, type: DamageType, sourceId: number, showNumber = true): void {
   if (!e.hp || e.hp.dead || amount <= 0) return;
   if (e.pl && (w.god || e.pl.downed || e.pl.deadUntilRest)) return;
+  // D329: nothing hurts a player out of combat: no burn or bleed ticks, falls or harmful ground
+  if (e.pl && !w.hostilesPresent()) return;
   if (e.en?.gary) return;
   if (e.en?.isBoss && e.en.phaseTransitionUntil > w.time) return;
   if (e.en?.def.traits?.invulnerable) return;
@@ -283,6 +289,8 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   const hp = p.hp!;
   const now = w.time;
   if (pl.downed || pl.deadUntilRest || hp.dead) return 'none';
+  // D329: nothing hurts a player out of combat (a stray shot or hazard left over after the last enemy)
+  if (!w.hostilesPresent()) return 'none';
   // off the edge, climbing back: out of reach until you are back on the floor
   if (pl.falling) return 'none';
   if (hp.invulnUntil > now) return 'immune';
@@ -483,6 +491,8 @@ export function hitAlly(w: World, attacker: Entity | null | undefined, p: Entity
   const k = w.friendlyFire;
   if (!attacker?.pl || !p.pl || p === attacker || !(k > 0) || w.players.length < 2) return 'none';
   if (specTotal(spec) <= 0) return 'none';
+  // D329: no friendly fire out of combat
+  if (!w.hostilesPresent()) return 'none';
   const s: DamageSpec = {
     ...scaleSpec(spec, k),
     kind: 'player',

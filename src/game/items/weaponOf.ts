@@ -28,6 +28,8 @@ export function applyVariant(def: WeaponDef, v: WeaponVariantDef): WeaponDef {
     const baseG = def.grades[k] ?? '-';
     req[k] = base > 0 ? (ORDER.indexOf(g) < ORDER.indexOf(baseG) ? Math.min(base, VARIANT_REQ[g]) : base) : VARIANT_REQ[g];
   }
+  // a big Bonk weapon stays heavy whatever its scaling (D329)
+  if (def.bonkFloor && req.bonk > 0) req.bonk = Math.max(req.bonk, def.bonkFloor);
   const out: WeaponDef = { ...def, grades: { ...v.grades }, req };
   if (v.element) out.element = v.element;
   cache.set(key, out);

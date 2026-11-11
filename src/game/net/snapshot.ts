@@ -1,4 +1,4 @@
-// Snapshots (NETCODE §4). Every entity a guest draws is a fixed 27-byte record (position, pose, flags, hp
+// Snapshots (NETCODE §4). Every entity a guest draws is a fixed 28-byte record (position, pose, flags, hp
 // permille, combo progress…) plus a JSON "meta" block that is only sent when it changes (what the entity
 // is: enemy type, player gear, telegraph shapes, pickup contents). Room tiles travel the same way. The guest
 // rebuilds real Entity objects from these so the normal renderer and HUD draw them unchanged.
@@ -13,7 +13,7 @@ export const POSES = ['idle', 'windup', 'attack', 'recover', 'swing', 'cast', 'o
 export const ENEMY_STATES = ['spawning', 'idle', 'alert', 'approach', 'kite', 'windup', 'attack', 'recover', 'stagger', 'reposition', 'held', 'channel', 'dormant', 'ceiling', 'submerged', 'stealth', 'invisible', 'dead'] as const;
 export const PLAYER_STATES = ['idle', 'attack', 'dodge', 'skill', 'cast', 'flask', 'stagger', 'held', 'falling', 'consumable', 'channel', 'charge', 'dashing'] as const;
 const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
-const REC = 27;
+const REC = 28;
 /** statusMask bits: the five statuses, then the six controls (NETCODE §4) */
 export const STATUS_BITS = ['burn', 'chill', 'shock', 'bleed', 'poison'] as const;
 export const CONTROL_BITS = ['freeze', 'blind', 'hexed', 'silence', 'root', 'hold'] as const;
@@ -58,6 +58,8 @@ export interface Rec {
   cPhase: number;
   cK: number;
   status: number;
+  /** a downed player's countdown (D329): seconds left (0–127), +128 while an ally's hit holds it */
+  ghost: number;
 }
 
 const q = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, Math.round(v)));
@@ -76,6 +78,7 @@ export function recordOf(e: Entity, now: number): Rec {
   let cIdx = 0;
   let cPhase = 0;
   let cK = 0;
+  let ghost = 0;
   if (e.pl) {
     const pl = e.pl;
     state = Math.max(0, PLAYER_STATES.indexOf(pl.state));
@@ -98,6 +101,8 @@ export function recordOf(e: Entity, now: number): Rec {
     }
     extra = q(pl.reviveProgress * 100, 0, 65535);
     extra2 = q(pl.reviveNeed * 100, 0, 65535);
+    // D329: every player sees every downed player's countdown (only their own used to reach them, others read 0)
+    if (pl.downed) ghost = q(Math.ceil(pl.ghostUntil - now), 0, 127) + (now < pl.ghostPauseUntil ? 128 : 0);
   } else if (e.en) {
     const en = e.en;
     state = Math.max(0, ENEMY_STATES.indexOf(en.state));
@@ -143,6 +148,7 @@ export function recordOf(e: Entity, now: number): Rec {
     cPhase,
     cK,
     status,
+    ghost,
   };
 }
 
@@ -166,6 +172,7 @@ function writeRec(v: DataView, o: number, r: Rec): void {
   v.setUint8(o + 23, r.cPhase);
   v.setUint8(o + 24, r.cK);
   v.setUint16(o + 25, r.status);
+  v.setUint8(o + 27, r.ghost);
 }
 
 function readRec(v: DataView, o: number): Rec {
@@ -189,6 +196,7 @@ function readRec(v: DataView, o: number): Rec {
     cPhase: v.getUint8(o + 23),
     cK: v.getUint8(o + 24),
     status: v.getUint16(o + 25),
+    ghost: v.getUint8(o + 27),
   };
 }
 
