@@ -166,7 +166,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     speedClass: 'fast',
     combo: [sw(200, 87, 191, 0.84, arc(120, 110), 14, 'slash'), sw(200, 87, 191, 0.84, arc(120, 110), 14, 'backslash'), sw(200, 78, 191, 0.84, thrust(30, 130), 16, 'thrust'), sw(226, 122, 226, 0.93, spin(105), 12, 'spin'), sw(296, 96, 296, 1.21, arc(170, 125), 18, 'slash')],
     base1: 34,
-    stamina: 12,
+    stamina: 9, // D332: was 12
     poiseDmg: 13,
     reviveValue: 1.5,
     skills: ['katana_iai_slash', 'katana_crescent', 'katana_blood_moon'],
@@ -222,7 +222,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     speedClass: 'medium',
     combo: [sw(261, 96, 243, 1, arc(110, 105), 14, 'slash'), sw(261, 96, 243, 1, arc(110, 105), 14, 'backslash'), sw(261, 96, 243, 1, thrust(32, 140), 16, 'thrust'), sw(365, 104, 348, 1.35, slam(55, 90), 20, 'overhead')],
     base1: 38,
-    stamina: 15,
+    stamina: 12, // D332: was 15
     poiseDmg: 21,
     reviveValue: 2.0,
     skills: ['longsword_shield_breaker', 'longsword_spin_slash', 'longsword_battle_cry'],
@@ -352,7 +352,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     speedClass: 'medium',
     combo: [sw(290, 110, 270, 0.9, arc(110, 105), 14, 'slash'), sw(290, 110, 270, 0.9, arc(110, 105), 14, 'backslash'), sw(320, 150, 320, 0.95, spin(100), 12, 'spin'), sw(380, 120, 360, 1.18, thrust(34, 150), 20, 'thrust')],
     base1: 36,
-    stamina: 14,
+    stamina: 11, // D332: was 14
     poiseDmg: 22,
     reviveValue: 2.0,
     skills: ['spellblade_arc_wave', 'spellblade_blink_strike', 'spellblade_runic_edge'],
