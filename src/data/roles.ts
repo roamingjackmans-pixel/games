@@ -168,6 +168,13 @@ export const NG_ENEMY_HP_TRIM: Record<number, Record<number, number>> = {
   2: { 1: 0.85 },
 };
 
+/** D353: bosses in NG+1 and NG+2 have half the HP; NG+3 on goes back to the plain D301 / D311 curve. */
+export const NG_BOSS_HP_TRIM: Record<number, number> = { 1: 0.5, 2: 0.5 };
+
+export function ngBossHpTrim(cycle: number): number {
+  return NG_BOSS_HP_TRIM[cycle] ?? 1;
+}
+
 export function ngEnemyHpTrim(zone: number, cycle: number): number {
   return NG_ENEMY_HP_TRIM[cycle]?.[Math.max(1, Math.min(8, zone))] ?? 1;
 }

@@ -1,6 +1,6 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
 import { reinforceHpFactor } from '../../data/essence';
-import { ROLE_STATS, SHARD_SCALE, levelPaceComp, ngBossDmgMult, ngBossHpMult, ngEnemyHpTrim, ngLevelComp, statCurveComp, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
+import { ROLE_STATS, SHARD_SCALE, levelPaceComp, ngBossDmgMult, ngBossHpMult, ngBossHpTrim, ngEnemyHpTrim, ngLevelComp, statCurveComp, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
 import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
@@ -53,7 +53,7 @@ export function enemyFullHp(def: EnemyDef | BossDef, zone: number, cycle: number
   // a boss lighter on the first playthrough (D211)
   if (isBoss && cycle <= 0) hp *= (def as BossDef).firstCycleHpMult ?? 1;
   // New Game+ bosses sized to a target fight length (D301)
-  if (isBoss && !def.special) hp *= ngBossHpMult((def as BossDef).zone, cycle);
+  if (isBoss && !def.special) hp *= ngBossHpMult((def as BossDef).zone, cycle) * ngBossHpTrim(cycle);
   // the slower New Game+ levels (D325): enemies give back what those levels no longer give a player
   if (!def.special) hp *= levelPaceComp('hp', zone, cycle) * (isBoss ? levelPaceComp('bossHp', zone, cycle) : 1);
   // the early New Game+ zones' room enemies were too tanky (D352)
