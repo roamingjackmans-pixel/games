@@ -174,9 +174,12 @@ export function sliceyLed(def: { grades: { bonk: Grade; slicey: Grade } }): bool
   return GRADE_ORDER.indexOf(def.grades.slicey) > GRADE_ORDER.indexOf(def.grades.bonk);
 }
 
-/** A weapon's damage multiplier from how it scales: ×0.9 for Bonk A or S (D343), ×1.2 when Slicey-based (D347). */
-export function gradeDamageMult(def: { grades: { bonk: Grade; slicey: Grade } }): number {
-  return (def.grades.bonk === 'A' || def.grades.bonk === 'S' ? BONK_HEAVY_MULT : 1) * (sliceyLed(def) ? SLICEY_LED_MULT : 1);
+/**
+ * A weapon's damage multiplier from how it scales: ×0.9 for Bonk A or S (D343), ×1.2 when Slicey-based (D347) unless its
+ * class opts out (D348: Bow, Twin Axes, Spellblade, Dawn Glaive, Chakrams, their variants too).
+ */
+export function gradeDamageMult(def: { grades: { bonk: Grade; slicey: Grade }; noSliceyBoost?: boolean }): number {
+  return (def.grades.bonk === 'A' || def.grades.bonk === 'S' ? BONK_HEAVY_MULT : 1) * (sliceyLed(def) && !def.noSliceyBoost ? SLICEY_LED_MULT : 1);
 }
 
 /** weaponDamage = base × (1 + Σ grade × f(effStat)) × attackMultiplier × mods; 40% below requirement */

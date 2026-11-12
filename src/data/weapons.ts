@@ -179,6 +179,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   },
   bow: {
     id: 'bow',
+    noSliceyBoost: true, // D348: back to its damage before D347's Slicey boost
     name: 'Bow',
     weight: 3,
     twoHandOnly: true,
@@ -306,6 +307,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   },
   twin_axes: {
     id: 'twin_axes',
+    noSliceyBoost: true, // D348: back to its damage before D347's Slicey boost
     paired: true, // D318: dual-wielded (two-handed) they hit 50% harder
     name: 'Twin Axes',
     weight: 6.5,
@@ -346,6 +348,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   },
   spellblade: {
     id: 'spellblade',
+    noSliceyBoost: true, // D348: back to its damage before D347's Slicey boost
     name: 'Spellblade',
     weight: 5.5,
     grades: { bonk: '-', slicey: 'B', brain: 'B' },
@@ -383,6 +386,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   },
   dawn_glaive: {
     id: 'dawn_glaive',
+    noSliceyBoost: true, // D348: back to its damage before D347's Slicey boost
     name: 'Dawn Glaive',
     weight: 9,
     grades: { bonk: '-', slicey: 'B', prayer: 'B' },
@@ -401,6 +405,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   },
   chakram: {
     id: 'chakram',
+    noSliceyBoost: true, // D348: back to its damage before D347's Slicey boost
     name: 'Chakrams',
     weight: 2.5,
     grades: { bonk: 'E', slicey: 'B' },

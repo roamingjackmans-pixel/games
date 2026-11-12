@@ -21,7 +21,7 @@ describe('D343 balance', () => {
   it('a weapon that scales A or S with Bonk, variant included, deals 10% less', () => {
     for (const def of Object.values(WEAPONS)) {
       const heavy = def.grades.bonk === 'A' || def.grades.bonk === 'S';
-      expect(gradeDamageMult(def), def.id).toBeCloseTo((heavy ? BONK_HEAVY_MULT : 1) * (sliceyLed(def) ? SLICEY_LED_MULT : 1), 9);
+      expect(gradeDamageMult(def), def.id).toBeCloseTo((heavy ? BONK_HEAVY_MULT : 1) * (sliceyLed(def) && !def.noSliceyBoost ? SLICEY_LED_MULT : 1), 9);
     }
     expect(['greathammer', 'greataxe', 'colossal_sword', 'battleaxe', 'halberd'].every((id) => gradeDamageMult(WEAPONS[id]!) === 0.9)).toBe(true);
     expect(gradeDamageMult(WEAPONS.longsword!)).toBe(1);
@@ -86,5 +86,17 @@ describe('D347 Slicey-based weapons', () => {
     // a Keen Longsword (B Bonk / A Slicey) counts
     const keen = applyVariant(WEAPONS.longsword!, WEAPON_VARIANTS.longsword!.find((v) => v.grades.slicey === 'A')!);
     expect(gradeDamageMult(keen)).toBeCloseTo(1.2, 9);
+  });
+});
+
+// D348: the Bow, Twin Axes, Spellblade, Dawn Glaive and Chakrams are back where they were before D347
+describe('D348 no Slicey boost for five classes', () => {
+  it('only Twin Daggers, Rapier, Katana, Whip and Spear (and Slicey-tipped variants of others) keep ×1.2', () => {
+    const boosted = Object.values(WEAPONS).filter((d) => gradeDamageMult(d) > 1.0001).map((d) => d.id).sort();
+    expect(boosted).toEqual(['katana', 'rapier', 'spear', 'twin_daggers', 'whip']);
+    for (const id of ['bow', 'twin_axes', 'spellblade', 'dawn_glaive', 'chakram']) {
+      expect(gradeDamageMult(WEAPONS[id]!), id).toBe(1);
+      for (const v of WEAPON_VARIANTS[id] ?? []) expect(gradeDamageMult(applyVariant(WEAPONS[id]!, v)), id + v.id).toBeLessThanOrEqual(1);
+    }
   });
 });
