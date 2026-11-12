@@ -1,6 +1,7 @@
 // The co-op lobby (GAME_DESIGN §12, NETCODE §2). Host: a room code, the party's cards, Start. Guest: type the
 // code, wait while the relays find the host ("finding your friend…" with a retry), see the party, wait for
-// Start. Joining only happens here (D31); the host can come back here from the pause menu to invite more.
+// Start. Joining only happens here (D31); the host can come back here from the pause menu to invite more. The host's
+// panel lists online friends with an Invite button each (D339).
 import { app } from '../../app';
 import { music } from '../../engine/audio/music';
 import { playSfx } from '../../engine/audio/sfx';
@@ -14,7 +15,9 @@ import { btn, clearEl, h, layer, toast } from '../../ui/dom';
 import { gearOf, previewCharacter } from '../net/lobbyGear';
 import { NetHost } from '../net/host';
 import { NetGuest } from '../net/guest';
-import { newRoomCode, parseRoomCode, type PublicPlayer } from '../net/protocol';
+import { MAX_GUESTS, newRoomCode, parseRoomCode, type PublicPlayer } from '../net/protocol';
+import { friends } from '../net/friends';
+import { fillLobbyInvites, openFriends, type LobbyInvite } from '../../ui/friends';
 import { BroadcastTransport } from '../net/broadcast';
 import { joinTrystero } from '../net/trystero';
 import type { Transport } from '../net/transport';
@@ -60,6 +63,10 @@ export class LobbyScene implements Scene {
   guest: NetGuest | null = null;
   private status = '';
   private leaving = false;
+  /** the host's "Invite friends" box, refilled when a friend comes, goes or answers */
+  private friendsBox: HTMLElement | null = null;
+  private unsubFriends: (() => void) | null = null;
+  private overlay: HTMLElement | null = null;
 
   constructor(
     public save: SaveFile,
@@ -77,6 +84,9 @@ export class LobbyScene implements Scene {
     this.root.style.paddingRight = '90px';
     music.play('title', { root: 45, tempo: 50, bright: 0.3, scale: [0, 3, 5, 7, 10], wave: 'triangle' });
     if (this.o.role === 'host') {
+      // hosting brings friends online, so the Invite list can fill (D339)
+      friends().ensureOnline();
+      this.unsubFriends = friends().subscribe(() => this.drawFriends());
       if (this.host) this.wireHost(this.host);
       else void this.openHost();
     } else if (this.guest) {
@@ -86,13 +96,18 @@ export class LobbyScene implements Scene {
   }
 
   exit(): void {
+    this.unsubFriends?.();
+    this.unsubFriends = null;
+    this.overlay?.remove();
+    this.overlay = null;
     this.root?.remove();
     this.root = null;
   }
 
   update(dt: number): void {
     this.t += dt;
-    if (app().input.consumeLocal('pause')) this.cancel();
+    // Esc on the Friends screen closes only that screen
+    if (app().input.consumeLocal('pause') && !this.overlay) this.cancel();
   }
 
   render(ctx: CanvasRenderingContext2D): void {
@@ -158,6 +173,8 @@ export class LobbyScene implements Scene {
   private start(): void {
     if (!this.host || this.leaving) return;
     this.leaving = true;
+    // joining happens only in the lobby: invites still waiting are withdrawn (D339)
+    friends().presence?.cancelInvites();
     playSfx('uiConfirm');
     lobbyHooks.startHost?.(this.save, this.host);
   }
@@ -215,12 +232,47 @@ export class LobbyScene implements Scene {
   // ------------------------------------------------------------------ UI
 
   private cancel(): void {
+    this.leaveForInvite();
+    lobbyHooks.toTitle?.();
+  }
+
+  /** Close this lobby (its room, any invites it sent) without going anywhere: an accepted invite goes on from here. */
+  leaveForInvite(): void {
     this.leaving = true;
+    if (this.host) friends().presence?.cancelInvites();
     if (this.host) this.host.close();
     if (this.guest) this.guest.leave();
     this.host = null;
     this.guest = null;
-    lobbyHooks.toTitle?.();
+  }
+
+  /** As a host with guests already in, an invite to someone else's lobby waits. */
+  get busy(): boolean {
+    return (this.host?.guests.size ?? 0) > 0 || this.guest?.state === 'game';
+  }
+
+  private invites(): LobbyInvite {
+    return {
+      room: () => this.host?.code ?? null,
+      zone: this.save.world.zone,
+      hostName: this.save.character.name,
+      full: () => (this.host?.guests.size ?? 0) >= MAX_GUESTS,
+    };
+  }
+
+  private drawFriends(force = false): void {
+    if (this.friendsBox && this.host) fillLobbyInvites(this.friendsBox, this.invites(), force);
+  }
+
+  private openFriendsScreen(): void {
+    if (!this.root || this.overlay) return;
+    this.root.style.display = 'none';
+    this.overlay = openFriends(() => {
+      this.overlay = null;
+      if (!this.root) return;
+      this.root.style.display = '';
+      this.draw();
+    }, { lobby: this.invites() });
   }
 
   private draw(): void {
@@ -237,6 +289,9 @@ export class LobbyScene implements Scene {
         h('div', { class: 'small dim-text' }, `Your world: ${ZONES[this.save.world.zone - 1]?.name ?? ''}. Everyone starts at your bonfire.`),
         friendlyFireRow({ changed: () => this.host?.sendLobby(false) }),
         btn('Start', () => this.start(), 'primary big'),
+        h('h3', { style: 'margin:8px 0 0' }, 'Invite friends'),
+        (this.friendsBox = h('div', { class: 'col', style: 'gap:6px;max-height:200px;overflow:auto', 'data-testid': 'lobby-friends', 'data-focus-group': 'lobby-friends' })),
+        btn('Friends…', () => this.openFriendsScreen()),
       );
     } else {
       const input = h('input', { type: 'text', inputmode: 'numeric', maxlength: '8', placeholder: '6-digit code', 'data-testid': 'code-input', style: 'font-size:28px;letter-spacing:8px;text-align:center' }) as HTMLInputElement;
@@ -252,6 +307,8 @@ export class LobbyScene implements Scene {
     }
     kids.push(btn('Back', () => this.cancel(), 'big'));
     this.root.appendChild(h('div', { class: 'panel col', 'data-view': 'lobby', style: 'min-width:380px;max-width:520px' }, ...kids.filter((k): k is HTMLElement => !!k)));
+    if (this.o.role === 'host') this.drawFriends(true);
+    else this.friendsBox = null;
   }
 
   private retry(): void {

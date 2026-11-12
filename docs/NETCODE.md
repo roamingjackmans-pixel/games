@@ -1,14 +1,15 @@
 # Dungeon Joe — Online Co-op Netcode
 
 How four-player co-op works today. Source: `src/game/net/*` (`protocol.ts`, `transport.ts`, `trystero.ts`,
-`loopback.ts`, `broadcast.ts`, `host.ts`, `guest.ts`, `snapshot.ts`, `body.ts`, `acts.ts`, `charSync.ts`, `clock.ts`, `lobbyGear.ts`),
-the scenes `game/scenes/lobby.ts`, `run.ts` (host) and `guestRun.ts` (guest), and `game/save/coopProgress.ts`.
+`loopback.ts`, `broadcast.ts`, `host.ts`, `guest.ts`, `snapshot.ts`, `body.ts`, `acts.ts`, `charSync.ts`, `clock.ts`, `lobbyGear.ts`,
+and for friends `friendCode.ts`, `presence.ts`, `friends.ts`), the scenes `game/scenes/lobby.ts`, `run.ts` (host) and
+`guestRun.ts` (guest), `game/save/coopProgress.ts` and `game/save/friends.ts`, and the UI `ui/friends.ts`.
 Design rules are in GAME_DESIGN §12; decision ids point to `docs/DECISIONS.md`.
 
 Contents: [1 Model and transport](#1-model-and-transport) · [2 Session flow](#2-session-flow) ·
 [3 Channels](#3-channels) · [4 Snapshots](#4-snapshots) · [5 The guest's own body](#5-the-guests-own-body-and-the-mirror) ·
 [6 Authority and character sync](#6-authority-and-character-sync) · [7 Host rules](#7-rules-the-host-applies) ·
-[8 Transports for tests](#8-transports-for-tests) · [9 Limits](#9-known-limits)
+[8 Transports for tests](#8-transports-for-tests) · [9 Limits](#9-known-limits) · [10 Friends, presence and invites](#10-friends-presence-and-invites)
 
 ## 1. Model and transport
 
@@ -32,6 +33,7 @@ Contents: [1 Model and transport](#1-model-and-transport) · [2 Session flow](#2
 ```
 Host:  Title → character → Host → lobby (room code, player cards drawn in their gear, D170) → Start
 Guest: Title → character → Join → code → lobby → waits for Start
+Invite: host's lobby → Invite (an online friend, §10) → friend: Join → character → lobby (code filled in) → waits for Start
 ```
 
 - **Joining happens only in the lobby** (D31). Once the game has started, a new `hello` is rejected ("The game has
@@ -228,3 +230,44 @@ Of D338's split: a guest's skills, spells and consumables still start a round tr
 arrows and bolts appear from the host; the host's copy of a guest is a little behind it, so a hit it misses there
 never reaches the guest; pushes and pulls the host applies to the copy arrive as nudges a snapshot late, and a hazard's
 attack slow does not reach the guest; Martyr's Chain does not split damage a guest takes on its own screen.
+
+## 10. Friends, presence and invites
+
+D339. Source: `net/friendCode.ts` (codes, rooms), `net/presence.ts` (the protocol), `net/friends.ts` (the app's
+service), `save/friends.ts` (the list), `ui/friends.ts` (Friends screen, lobby invite list, invite card).
+
+- **Friend code:** each browser has one, made once with `crypto` and kept in `dj.friends` (DATA_MODEL §1.1): 10
+  Crockford base32 characters, 9 random and 1 check, shown `XXXXX-XXXXX`. Typing forgives case, spaces, dashes,
+  O for 0 and I or L for 1; the check character catches a single typo.
+- **One room per friend.** Two friends meet in a Trystero room whose id and password come from
+  `SHA-256("dungeon-joe-friends|" + both codes, sorted)` (`friendRoom`): `f` + 24 hex for the id, the other 40 hex
+  for the password. Only someone who knows **both** codes can find, join or read that room, so a friendship works once
+  **both** players have added each other, and nobody else (not a one-sided adder, not the relays) sees anyone online.
+  Being online is being in the room. Same `appId` as co-op; **Nostr relays only** (no MQTT fallback: one room per
+  friend, kept small); up to 30 friends (`MAX_FRIENDS`).
+- **When presence runs:** at boot if the list has anyone on it, and whenever the Friends screen or a host lobby opens.
+  A player with no friends never downloads the relay code for it (as with co-op, the strategy loads on the first room).
+  "Appear online to friends" off: no rooms at all (so nobody is seen online either). Presence stays up while the game
+  is open, through solo runs and co-op.
+- **Channels** (in each friend room, JSON):
+
+| Channel | Direction | When | Payload |
+|---|---|---|---|
+| `fp` | both | on meeting, and on any change (checked every second) | `{ code, name, st, v }`: the sender's own friend code (so a second tab of your own in the room is not taken for the friend), the online name (Settings → Co-op name), status `menu`, `solo`, `hosting` or `coop`, game version |
+| `fi` | host → friend | Invite | `{ id, room, name, zone, ttl }`: the 6-digit room code, the host character's name and zone, 60 s to answer |
+| `fa` | friend → host | Join / Decline | `{ id, ok, why? }`: `why: 'busy'` when the friend is in a co-op game (answered without asking) or cannot leave where they are |
+| `fx` | host → friend | the lobby closes or Start is pressed | `{ id }`: the invite is withdrawn |
+
+- **Invites:** one waiting invite per friend; the Invite button counts down and says *declined*, *busy* or *no answer*
+  afterwards. Not offered to a friend on another version or in a co-op game, or when the party is full. An invite ends
+  when answered, after 60 s, when the host withdraws it, or when either side goes offline; the friend's card closes
+  with a toast. **Join** does what typing the code would: from the title, a character picker (one character goes
+  straight in; none opens the creator, "Create and join"); from a solo run, the run is saved and left; from a lobby
+  with nobody else in it, that lobby closes. A host whose lobby has guests, or anyone in a running co-op game, answers
+  busy. Joining still happens only in the lobby (D31): a friend who accepts after Start is rejected as usual.
+- **Tests:** the loopback transport runs presence and invites in Vitest; Playwright uses `?net=bc` with
+  `&me=CODE` (this page's own code, its list kept under `dj.friends.CODE`) and `&friends=A,B` (pre-added), which only
+  work on the test transport.
+- **Limits:** a friend code posted publicly can be added by anyone, but they still see nothing unless you add theirs;
+  someone who knows both codes of a pair could pretend to be either. No friend requests or chat; names are what each
+  player announces.

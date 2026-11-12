@@ -46,6 +46,8 @@ export class TrysteroTransport extends BaseTransport {
     private code: string,
     private role: 'host' | 'guest',
     private onStatus: (s: string) => void = () => undefined,
+    /** friend rooms (D339): their own password, and Nostr only (one room per friend, so no second network) */
+    private opts: { password?: string; mqtt?: boolean } = {},
   ) {
     super();
   }
@@ -53,6 +55,7 @@ export class TrysteroTransport extends BaseTransport {
   async connect(): Promise<void> {
     await this.add('nostr', () => import('trystero/nostr') as unknown as Promise<Strategy>);
     this.setStatus(this.role === 'host' ? 'waiting for friends' : 'finding your friend…');
+    if (this.opts.mqtt === false) return;
     if (this.role === 'host') {
       // the host is reachable on both relay networks
       void this.add('mqtt', () => import('@trystero-p2p/mqtt') as unknown as Promise<Strategy>).catch(() => undefined);
@@ -74,7 +77,7 @@ export class TrysteroTransport extends BaseTransport {
     const mod = await load();
     if (this.closed) return;
     this.selfId ||= mod.selfId;
-    const room = mod.joinRoom({ appId: APP_ID, password: passwordFor(this.code) }, this.code);
+    const room = mod.joinRoom({ appId: APP_ID, password: this.opts.password ?? passwordFor(this.code) }, this.code);
     const entry = { name, room, actions: new Map<string, TrysteroAction>(), peers: new Set<string>() };
     this.rooms.push(entry);
     for (const n of this.names) this.wire(entry, n);
@@ -138,6 +141,13 @@ export class TrysteroTransport extends BaseTransport {
 
 export async function joinTrystero(code: string, role: 'host' | 'guest', onStatus?: (s: string) => void): Promise<TrysteroTransport> {
   const t = new TrysteroTransport(code, role, onStatus);
+  await t.connect();
+  return t;
+}
+
+/** A friend room (NETCODE §10, D339): the two friends are equals in it, on the Nostr relays only. */
+export async function joinFriendRoom(room: string, password: string): Promise<TrysteroTransport> {
+  const t = new TrysteroTransport(room, 'host', undefined, { password, mqtt: false });
   await t.connect();
   return t;
 }

@@ -21,6 +21,7 @@ Everything lives in `localStorage` (or an in-memory fallback when storage is blo
 | `dj.settings` | `Settings` (§5); the **default** controller layout only (a character's own is in its save, D266) | `engine/settings.ts`, `engine/padProfile.ts` |
 | `dj.achievements` | `{ v, unlocked: id → time, counters }`, account-wide | `game/achievements.ts` |
 | `dj.stats` | account-wide Statistics counters `{ v, c }` | `game/stats.ts` |
+| `dj.friends` | `{ v: 1, me, appearOnline, list: { code, name, added }[] }`: this browser's friend code and its friends (D339, max 30) | `game/save/friends.ts` |
 
 Export / import: one save as a `<name>-slot<n>.dungeonjoe.json` file (`game/save/exportImport.ts`). Import migrates,
 validates and refuses versions newer than the game.

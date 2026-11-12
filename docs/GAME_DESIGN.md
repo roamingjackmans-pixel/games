@@ -936,6 +936,20 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - Guests who disconnect are dropped after 10 s; the host sends save-relevant changes as they happen. No pause in
   co-op; cutscenes play as local overlays. Players must run the same version (§22).
 
+### 12.1 Friends
+
+- **Friends** (D339; title menu, and **Friends…** in the host's lobby): your **friend code** (`XXXXX-XXXXX`, one per
+  browser, with Copy), a box to add a friend's code, and the list with a green dot for who is online and what they are
+  doing (in the menus, playing solo, hosting a lobby, in a co-op game). Remove takes two presses. No accounts or servers.
+- Friends see each other **once both have added the other's code**; nobody who is not on your list ever sees you
+  online. **Appear online to friends** (on by default) turns it all off.
+- **Invites:** the host's lobby lists online friends under **Invite friends**, each with **Invite**. The friend gets a
+  card on whatever screen they are on: *Host invites you to co-op in their world (zone)*, **Join** / **Decline**, 60 s.
+  Join goes to that lobby as typing the code would (picking or making a character first from the title; a solo run is
+  saved and left). The host sees "on the way", "declined" or "busy"; invites are withdrawn when the lobby closes or
+  the game starts.
+- The list lives in the browser (`dj.friends`), not in a character's save, so every character has the same friends.
+
 ## 13. New Game+
 
 After The Landlord: credits, then a blue fire offers **Begin Cycle N+1** (D70). A new seed, zone 1, everything kept
@@ -996,7 +1010,7 @@ face marks and per-limb features, with Randomize and a preview you turn with the
   again under it shows as a thin white line). Near the top of the room they hang under the feet. Also an eye-coloured dot
   at every player's feet (D262); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
   stones round a stuck player (D252); gold sparkles on a Thermos drink (D271).
-- **Menus** are HTML overlays over the canvas: Title · Load Character · Character creation · Co-op play · Lobby ·
+- **Menus** are HTML overlays over the canvas: Title · Load Character · Character creation · Co-op play · Lobby · Friends (§12.1) ·
   Pause · Inventory (Items, Spells, Proficiency tabs; stats, paper doll, bag, gems in your gear, set perks worn) ·
   Bonfire (§9.1) · Map · Settings · Achievements · Statistics · Death screen · Credits. Menus keep their focus across
   redraws (D144).

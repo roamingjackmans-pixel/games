@@ -2,7 +2,7 @@
 import './ui/theme.css';
 // first, so the browser's one-time install prompt is caught (D135)
 import './ui/install';
-import { createApp } from './app';
+import { app, createApp } from './app';
 import { ArenaScene } from './game/scenes/arena';
 import { RunScene, runHooks } from './game/scenes/run';
 import { TitleScene, titleHooks } from './game/scenes/title';
@@ -13,6 +13,9 @@ import { installDebugMenu } from './ui/menus/debug';
 import { reconnectSteamControllers, watchSteamDisconnects } from './engine/input/steamController';
 import { installAchievementToasts } from './ui/achievements';
 import { installTouchControls } from './ui/touchControls';
+import { installInvitePrompt } from './ui/friends';
+import { friends } from './game/net/friends';
+import type { FriendStatus } from './game/net/presence';
 import { h, uiRoot } from './ui/dom';
 import { newSave } from './game/save/schema';
 import { newCharacter } from './game/player/character';
@@ -46,9 +49,9 @@ function boot(): void {
   installTouchControls();
 
   const toTitle = (): void => a.scenes.go(new TitleScene());
-  titleHooks.start = (save, mode) => {
+  titleHooks.start = (save, mode, code) => {
     if (mode === 'solo') a.scenes.go(new RunScene(save));
-    else a.scenes.go(new LobbyScene(save, { role: mode === 'host' ? 'host' : 'guest' }));
+    else a.scenes.go(new LobbyScene(save, code ? { role: 'guest', code } : { role: mode === 'host' ? 'host' : 'guest' }));
   };
   titleHooks.credits = () => a.scenes.go(new CreditsScene(toTitle));
   runHooks.toTitle = toTitle;
@@ -62,6 +65,8 @@ function boot(): void {
   guestHooks.toTitle = toTitle;
   guestHooks.credits = () => a.scenes.go(new CreditsScene(toTitle));
   guestHooks.toLobby = (save, net) => a.scenes.go(new LobbyScene(save, { role: 'guest', guest: net }));
+
+  installFriends();
 
   const auto = params.get('auto');
   if (params.has('arena')) a.scenes.set(new ArenaScene());
@@ -83,4 +88,40 @@ function boot(): void {
   a.loop.start();
   // Dev server only: expose the app for playtests and Playwright (stripped from production builds).
   if (import.meta.env.DEV) (window as unknown as { __dj: unknown }).__dj = a;
+}
+
+/** Friends (D339): what friends see this player doing, and where an accepted invite takes them. */
+function installFriends(): void {
+  const f = friends();
+  f.nameOf = () => app().settings.net.name;
+  f.statusOf = (): FriendStatus => {
+    const s = app().scenes.current;
+    if (s instanceof LobbyScene) return s.o.role === 'host' ? 'hosting' : s.guest?.state === 'lobby' ? 'coop' : 'menu';
+    if (s instanceof RunScene) return s.net ? 'coop' : 'solo';
+    if (s instanceof GuestRunScene) return 'coop';
+    return 'menu';
+  };
+  f.joinHook = (room) => {
+    const sc = app().scenes;
+    const s = sc.current;
+    if (s instanceof TitleScene) {
+      s.joinInvite(room);
+      return 'ok';
+    }
+    if (s instanceof LobbyScene) {
+      if (s.busy) return 'busy';
+      s.leaveForInvite();
+      sc.go(new LobbyScene(s.save, { role: 'guest', code: room }));
+      return 'ok';
+    }
+    if (s instanceof RunScene && !s.net) {
+      // a solo run is saved first, as "Save and quit" does
+      s.persist();
+      sc.go(new LobbyScene(s.save, { role: 'guest', code: room }));
+      return 'ok';
+    }
+    return 'busy';
+  };
+  installInvitePrompt();
+  f.autoStart();
 }

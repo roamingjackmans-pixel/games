@@ -20,6 +20,8 @@ import { btn, clearEl, focusFirst, h, layer, toast } from '../../ui/dom';
 import { openSettings } from '../../ui/menus/settings';
 import { openAchievements } from '../../ui/achievements';
 import { openStatistics } from '../../ui/statistics';
+import { openFriends } from '../../ui/friends';
+import { friends } from '../net/friends';
 import { achievements } from '../achievements';
 import { newCharacter } from '../player/character';
 import { newSave, SLOT_COUNT } from '../save/schema';
@@ -52,7 +54,7 @@ const STAT_HINT: Record<StatId, string> = {
 export type StartMode = 'solo' | 'host' | 'join';
 
 /** Scene factory hooks so the title does not import the run/lobby scenes directly (no cycles). */
-export const titleHooks: { start?: (save: SaveFile, mode: StartMode) => void; credits?: () => void } = {};
+export const titleHooks: { start?: (save: SaveFile, mode: StartMode, code?: string) => void; credits?: () => void } = {};
 
 function fmtTime(sec: number): string {
   const h0 = Math.floor(sec / 3600);
@@ -70,6 +72,16 @@ export function exportSave(save: SaveFile): void {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+function testId<T extends HTMLElement>(el: T, id: string): T {
+  el.setAttribute('data-testid', id);
+  return el;
+}
+
+function friendsLabel(): string {
+  const f = friends();
+  return f.book.list.length && f.online ? `Friends (${f.views().filter((v) => v.online).length} online)` : 'Friends';
+}
+
 export class TitleScene implements Scene {
   readonly name = 'title';
   private root: HTMLElement | null = null;
@@ -79,6 +91,9 @@ export class TitleScene implements Scene {
   private previewTurn = 0;
   private previewDragX: number | null = null;
   private previewClock = 0;
+  /** an accepted friend's invite (D339): the next Join goes straight to this room code */
+  private inviteCode: string | null = null;
+  private unsubFriends: (() => void) | null = null;
 
   enter(): void {
     this.root = layer('clear');
@@ -87,10 +102,18 @@ export class TitleScene implements Scene {
     this.root.style.justifyContent = 'flex-end';
     this.root.style.paddingRight = '90px';
     this.main();
+    // the main menu's "Friends (N online)" follows friends coming and going
+    this.unsubFriends = friends().subscribe(() => {
+      const b = this.root?.querySelector<HTMLElement>('[data-testid=friends-btn]');
+      const label = friendsLabel();
+      if (b && b.textContent !== label) b.textContent = label;
+    });
     music.play('title', { root: 45, tempo: 50, bright: 0.3, scale: [0, 3, 5, 7, 10], wave: 'triangle' });
   }
 
   exit(): void {
+    this.unsubFriends?.();
+    this.unsubFriends = null;
     this.root?.remove();
     this.root = null;
   }
@@ -139,7 +162,20 @@ export class TitleScene implements Scene {
     setTimeout(() => focusFirst(panel), 0);
   }
 
+  /** Start with a save; a Join carries an accepted invite's room code. */
+  private go(save: SaveFile, mode: StartMode): void {
+    titleHooks.start?.(save, mode, mode === 'join' ? (this.inviteCode ?? undefined) : undefined);
+  }
+
+  /** A friend's invite was accepted here: pick a character to join with (one goes straight in). */
+  joinInvite(code: string): void {
+    this.inviteCode = code;
+    if (this.root) this.root.style.display = '';
+    this.coop('join');
+  }
+
   main(): void {
+    this.inviteCode = null;
     const store = getStore();
     const meta = readMeta(store);
     const saves = listSaves(store);
@@ -149,6 +185,18 @@ export class TitleScene implements Scene {
       h('h2', null, 'Main menu'),
       last ? btn(`Continue — ${last.character.name} (Lv ${last.character.level}${last.character.cycle ? `, Cycle ${last.character.cycle + 1}` : ''})`, () => titleHooks.start?.(last, 'solo'), 'primary big') : null,
       btn('Co-op play', () => this.coopMenu(), 'big'),
+      testId(
+        btn(friendsLabel(), () => {
+          this.root!.style.display = 'none';
+          openFriends(() => {
+            if (!this.root) return;
+            this.root.style.display = '';
+            // an invite accepted on that screen has already moved on
+            if (!this.root.querySelector('[data-view=coop], [data-view=create]')) this.main();
+          });
+        }, 'big'),
+        'friends-btn',
+      ),
       btn('Load Character', () => this.slots(), 'big'),
       btn('New character', () => this.pickEmpty(), 'big'),
       btn('Settings', () => {
@@ -198,7 +246,7 @@ export class TitleScene implements Scene {
       return;
     }
     if (saves.length === 1) {
-      titleHooks.start?.(saves[0]!, mode);
+      this.go(saves[0]!, mode);
       return;
     }
     // the last played character first
@@ -212,7 +260,7 @@ export class TitleScene implements Scene {
           'div',
           { class: 'card row', 'data-testid': `coop-pick-${sv.slot}` },
           h('div', { class: 'grow' }, h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`), h('div', { class: 'small dim-text' }, mode === 'host' ? `Your world: ${ZONES[sv.world.zone - 1]?.name ?? ''}` : 'Keeps everything earned in the host’s world')),
-          btn(mode === 'host' ? 'Host' : 'Join', () => titleHooks.start?.(sv, mode), 'tiny primary'),
+          btn(mode === 'host' ? 'Host' : 'Join', () => this.go(sv, mode), 'tiny primary'),
         ),
       );
     }
@@ -258,7 +306,7 @@ export class TitleScene implements Scene {
         ),
         btn('Play', () => titleHooks.start?.(s, 'solo'), 'tiny primary'),
         btn('Host', () => titleHooks.start?.(s, 'host'), 'tiny'),
-        btn('Join', () => titleHooks.start?.(s, 'join'), 'tiny'),
+        btn('Join', () => this.go(s, 'join'), 'tiny'),
         btn('Export', () => exportSave(s), 'tiny'),
         btn('Delete', () => this.confirmDelete(s), 'tiny danger'),
       );
@@ -509,7 +557,7 @@ export class TitleScene implements Scene {
       writeSave(getStore(), save);
       app().settings.net.name = nm;
       app().saveSettings();
-      titleHooks.start?.(save, mode);
+      this.go(save, mode);
     };
     const startBtn = btn(mode === 'host' ? 'Create and host' : mode === 'join' ? 'Create and join' : 'Start', start, 'primary', false);
     startBtn.setAttribute('data-testid', 'create-start');
