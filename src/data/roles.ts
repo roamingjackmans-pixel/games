@@ -162,9 +162,10 @@ export function levelPaceComp(kind: 'hp' | 'dmg' | 'bossHp', zone: number, cycle
  * D352: the early New Game+ zones were too tanky, so room enemies (not bosses or special NPCs) lose a share of their HP
  * by cycle and zone, on top of every other curve (and kept out of LEVEL_PACE_COMP, which is refitted by script).
  * NG+1: zone 1 −60%, zone 2 −44%, zone 3 −25%, zone 4 −16%. NG+2: zone 1 −15%. Everything else stays 1.
+ * D366: then NG+1 zones 3 and 4 get 15% back (0.75 × 1.15, 0.84 × 1.15), so they read −13.75% and −3.4%.
  */
 export const NG_ENEMY_HP_TRIM: Record<number, Record<number, number>> = {
-  1: { 1: 0.4, 2: 0.56, 3: 0.75, 4: 0.84 },
+  1: { 1: 0.4, 2: 0.56, 3: 0.75 * 1.15, 4: 0.84 * 1.15 },
   2: { 1: 0.85 },
 };
 
