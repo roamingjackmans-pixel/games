@@ -224,6 +224,10 @@ export function openFriends(onClose: () => void, opts: { lobby?: LobbyInvite } =
       rm.setAttribute('data-focus', `remove-${r.code}`);
       list.appendChild(friendRow(r, [opts.lobby ? inviteControl(r, opts.lobby) : null, rm]));
     }
+    // D368: the commonest reason a friend never shows online is that they have not added this code back
+    if (rows.length && f.book.data.appearOnline && rows.every((r) => !r.online)) {
+      list.appendChild(h('div', { class: 'small dim-text', 'data-testid': 'friends-offline-hint' }, 'Nobody online? A friend only shows once they have added your code too (send it to them), and has the game open.'));
+    }
 
     const invites = f.incoming().map((inv) => inviteCard(inv, false, close));
     panel.append(
