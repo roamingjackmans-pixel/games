@@ -64,8 +64,51 @@ const CT_IRON = '#7e858d';
 const CT_WOOD = '#6e4c2c';
 const CT_LAMP = '#ffcf6a';
 const CT_FIRE = '#ff7a3a';
+const CT_SOUL = '#5fd0ff';
 
 // pose arrays (× r): [gripX, gripY, spadeAngle, lampX, lampY, hunch, headTilt, mouth]
+/**
+ * The look of a zone 1–2 boss's New Game+ third phase (D358, s.phase 2): a pulsing aura, two runic rings turning on the
+ * floor in opposite ways, wisps orbiting the body (a short comet tail behind each) and motes rising off it.
+ */
+function overtimeAura(ctx: CanvasRenderingContext2D, s: DrawState, r: number, color: string, core: string, rings: number): void {
+  const t = s.t;
+  glow(ctx, s.x, s.y - r * 0.35, r * 3.3, color, 0.2 + Math.sin(t * 5) * 0.07);
+  glow(ctx, s.x, s.y - r * 0.35, r * 1.7, core, 0.12 + Math.sin(t * 7 + 1) * 0.04);
+  // runic rings on the floor
+  ctx.save();
+  ctx.translate(s.x, s.y + r * 0.72);
+  ctx.scale(1, 0.36);
+  for (let k = 0; k < rings; k++) {
+    const rad = r * (1.5 + k * 0.45);
+    ctx.setLineDash([r * (0.2 + k * 0.05), r * 0.13]);
+    ctx.lineDashOffset = -t * r * (0.7 + k * 0.2) * (k % 2 ? -1 : 1);
+    ctx.strokeStyle = withAlpha(k ? core : color, 0.55 + Math.sin(t * 4 + k) * 0.2);
+    ctx.lineWidth = Math.max(1.5, r * 0.045);
+    ctx.beginPath();
+    ctx.arc(0, 0, rad, 0, TAU);
+    ctx.stroke();
+  }
+  ctx.restore();
+  // wisps orbiting, each trailing a few fading glows
+  for (let i = 0; i < 6; i++) {
+    for (let j = 0; j < 4; j++) {
+      const a = t * 1.35 - j * 0.11 + (i / 6) * TAU;
+      const wx = s.x + Math.cos(a) * r * 1.4;
+      const wy = s.y - r * 0.15 + Math.sin(a) * r * 0.55 + Math.sin(t * 2 + i) * r * 0.06;
+      const k = 1 - j / 4;
+      glow(ctx, wx, wy, r * (0.2 + 0.1 * k), j === 0 ? core : color, 0.8 * k);
+    }
+  }
+  // motes rising
+  for (let i = 0; i < 12; i++) {
+    const k = (t * 0.45 + hash(i * 5)) % 1;
+    const mx = s.x + (hash(i * 3 + 1) - 0.5) * r * 2.2 + Math.sin(t * 2 + i) * r * 0.1;
+    const my = s.y + r * 0.7 - k * r * 2.5;
+    glow(ctx, mx, my, r * 0.1, i % 3 ? color : core, 0.75 * (1 - k));
+  }
+}
+
 const CT_REST = [1.0, -0.2, 1.45, -1.0, 0.1, 1, 0, 0];
 const CT_RAISED = [0.55, -1.05, -2.4, -0.95, 0.05, 0.75, -0.12, 0.45];
 const CT_LAMP_RAISED = [1.0, -0.22, 1.42, -0.62, -1.25, 0.7, -0.15, 0.55];
@@ -75,6 +118,10 @@ const CT_STAGGER = [1.08, 0.05, 1.15, -0.92, 0.32, 1.45, 0.4, 0.35];
 registerDraw('boss_caretaker', (ctx, s) => {
   const r = begin(s);
   const p2 = s.phase >= 1;
+  const p3 = s.phase >= 2; // D358: the third phase burns blue-white
+  const FIRE = p3 ? CT_SOUL : CT_FIRE;
+  const FL_O = p3 ? '#35b6ff' : '#ff5a1a';
+  const FL_I = p3 ? '#eaffff' : '#ffd27a';
   const [side, aL] = mirrored(s);
   const back = Math.sin(s.facing) < -0.6;
   const R = roar(s);
@@ -91,11 +138,12 @@ registerDraw('boss_caretaker', (ctx, s) => {
   mixPose(p, CT_ROAR, R);
   const [gX, gY, spA, lX, lY, hunch, tilt, mouth] = p as [number, number, number, number, number, number, number, number];
   const bob = Math.sin(s.t * 2.2) * r * 0.02;
-  const fire = p2 ? CT_FIRE : CT_LAMP;
+  const fire = p2 ? FIRE : CT_LAMP;
   const up = 1 - hunch; // standing taller (roar), negative = slumped (stagger)
 
   groundShadow(ctx, s.x, s.y + r * 0.72, r * 1.2, r * 0.42, 0.4);
-  if (p2) glow(ctx, s.x, s.y - r * 0.3, r * 2.6, CT_FIRE, 0.28 + Math.sin(s.t * 9) * 0.05);
+  if (p3) overtimeAura(ctx, s, r, CT_SOUL, '#eaffff', 2);
+  if (p2) glow(ctx, s.x, s.y - r * 0.3, r * 2.6, FIRE, 0.28 + Math.sin(s.t * 9) * 0.05);
   if (R > 0) glow(ctx, s.x, s.y - r * 0.5, r * 2.8, fire, 0.22 * R);
 
   ctx.save();
@@ -179,7 +227,7 @@ registerDraw('boss_caretaker', (ctx, s) => {
   oval(ctx, lx, ly, r * 0.14, r * 0.13, f(s, CT_SKIN));
   if (p2) {
     glow(ctx, lx, ly - r * 0.15, r * (lampThrow ? 1.6 : 1.0), lampCol, 0.75);
-    for (let i = 0; i < 3; i++) flame(ctx, lx + (i - 1) * r * 0.09, ly - r * 0.02, r * (0.32 + (i === 1 ? 0.16 : 0)) * (lampThrow ? 1.5 : 1), r * 0.13, s.t, i + 2, lampThrow && ag ? ag : '#ff5a1a', '#ffd27a');
+    for (let i = 0; i < 3; i++) flame(ctx, lx + (i - 1) * r * 0.09, ly - r * 0.02, r * (0.32 + (i === 1 ? 0.16 : 0)) * (lampThrow ? 1.5 : 1), r * 0.13, s.t, i + 2, lampThrow && ag ? ag : FL_O, FL_I);
   }
 
   // boots and the ragged coat skirt (smouldering in phase 1)
@@ -188,7 +236,7 @@ registerDraw('boss_caretaker', (ctx, s) => {
   oval(ctx, 0.4 * r + step, 0.72 * r, r * 0.21, r * 0.12, f(s, '#1f1b16'), { w: 0.8 });
   const skirt = [-0.66 * r, 0.05 * r, -0.92 * r, 0.5 * r, ...raggedEdge(-0.92 * r, 0.9 * r, 0.5 * r, 0.18 * r, 6, 3, s.t), 0.9 * r, 0.5 * r, 0.64 * r, 0.05 * r];
   shape(ctx, skirt, f(s, CT_HEM), { uf: 0.5 });
-  if (p2) for (let i = 0; i < 6; i++) glow(ctx, (-0.82 + i * 0.33) * r, 0.62 * r, r * 0.22, CT_FIRE, 0.35 + 0.25 * Math.sin(s.t * 7 + i * 2));
+  if (p2) for (let i = 0; i < 6; i++) glow(ctx, (-0.82 + i * 0.33) * r, 0.62 * r, r * 0.22, FIRE, 0.35 + 0.25 * Math.sin(s.t * 7 + i * 2));
 
   // the torso: a boulder of a hunched back with the front shoulder rolled forward
   const torso = [
@@ -248,8 +296,8 @@ registerDraw('boss_caretaker', (ctx, s) => {
       shape(ctx, [mx - 0.24 * sz, my, mx - 0.1 * sz, my - 0.1 * sz, mx + 0.16 * sz, my - 0.08 * sz, mx + 0.24 * sz, my + 0.04 * sz, mx + 0.18 * sz, my + 0.2 * sz, mx + 0.08 * sz, my + 0.1 * sz, mx - 0.02 * sz, my + 0.28 * sz, mx - 0.1 * sz, my + 0.1 * sz, mx - 0.2 * sz, my + 0.18 * sz], f(s, CT_MOSS), { smooth: true, under: f(s, '#3f6a2a'), w: 0.8 });
     } else {
       shape(ctx, [mx - 0.22 * sz, my + 0.04 * sz, mx, my - 0.08 * sz, mx + 0.22 * sz, my + 0.06 * sz, mx + 0.1 * sz, my + 0.14 * sz, mx - 0.12 * sz, my + 0.14 * sz], f(s, '#241a12'), { smooth: true, under: null, w: 0.8 });
-      glow(ctx, mx, my - 0.1 * r, r * 0.55 * k, CT_FIRE, 0.6);
-      for (let i = 0; i < 3; i++) flame(ctx, mx + (i - 1) * 0.13 * sz, my + 0.03 * sz, r * (0.26 + hash(i + mx0 * 9) * 0.2) * k, r * 0.13 * k, s.t, i * 3 + mx0 * 7);
+      glow(ctx, mx, my - 0.1 * r, r * 0.55 * k, FIRE, 0.6);
+      for (let i = 0; i < 3; i++) flame(ctx, mx + (i - 1) * 0.13 * sz, my + 0.03 * sz, r * (0.26 + hash(i + mx0 * 9) * 0.2) * k, r * 0.13 * k, s.t, i * 3 + mx0 * 7, FL_O, FL_I);
     }
   }
 
@@ -298,12 +346,12 @@ registerDraw('boss_caretaker', (ctx, s) => {
       shape(ctx, [bx - 0.05 * r, -0.08 * r, bx + 0.05 * r, -0.08 * r, bx + 0.02 * r, -0.06 * r + len, bx - 0.01 * r, -0.04 * r + len * 1.1], f(s, CT_MOSS), { under: null, w: 0.6 });
     }
   } else {
-    for (let i = 0; i < 4; i++) flame(ctx, (-0.5 + i * 0.36) * r, -0.14 * r, r * (0.2 + hash(i + 9) * 0.14), r * 0.11, s.t, i + 20);
+    for (let i = 0; i < 4; i++) flame(ctx, (-0.5 + i * 0.36) * r, -0.14 * r, r * (0.2 + hash(i + 9) * 0.14), r * 0.11, s.t, i + 20, FL_O, FL_I);
   }
   ctx.restore();
   ctx.restore();
 
-  if (R > 0) roarLines(ctx, s.x + side * headX, s.y + headY - r * 0.25, r * 0.75, R, s.t, p2 ? CT_FIRE : '#ffe8b0');
+  if (R > 0) roarLines(ctx, s.x + side * headX, s.y + headY - r * 0.25, r * 0.75, R, s.t, p2 ? FIRE : '#ffe8b0');
   if (s.pose === 'stagger') dizzy(ctx, s.x + side * headX, s.y + headY - r * 0.8, r * 0.45, s.t);
 });
 
@@ -321,6 +369,8 @@ const MS_ROOT = '#5e3c62';
 const MS_SPOT = '#ead6f2';
 const MS_TEAL = '#5fd3c0';
 const MS_TOX = '#c8f06a';
+const MS_BLOOM = '#ff6bd6';
+const MS_GOLD = '#ffe27a';
 const MS_TENDRIL = '#8a5a96';
 
 // pose arrays: [lift, mouth, flare, leadTipX, leadTipY, offTipX, offTipY, tilt] (tips × r, lead side +x)
@@ -366,6 +416,8 @@ function scaled(pts: number[], ox: number, oy: number, r: number): number[] {
 registerDraw('boss_mother_spore', (ctx, s) => {
   const r = begin(s);
   const p2 = s.phase >= 1;
+  const p3 = s.phase >= 2; // D358: the third phase blooms magenta and gold
+  const TOX = p3 ? MS_BLOOM : MS_TOX;
   const R = roar(s);
   const ag = atkGlow(s);
   const ak = atkK(s);
@@ -380,14 +432,15 @@ registerDraw('boss_mother_spore', (ctx, s) => {
   if (s.pose === 'stagger') mixPose(p, MS_STAGGER, 1);
   mixPose(p, MS_ROAR, R);
   const [lift, mouth, flare, ltx, lty, otx, oty, tilt] = p as [number, number, number, number, number, number, number, number];
-  const glowC = p2 ? MS_TOX : MS_TEAL;
+  const glowC = p2 ? TOX : MS_TEAL;
   const sway = Math.sin(s.t * 1.3) * r * 0.03;
   const L = lift * r;
   const ox = s.x + roarShake(s, r);
   const oy = s.y - L;
 
   groundShadow(ctx, s.x, s.y + r * 0.68, r * 1.45, r * 0.5, 0.42);
-  if (p2) glow(ctx, s.x, s.y - r * 0.8, r * 2.8, MS_TOX, 0.22 + Math.sin(s.t * 3) * 0.06);
+  if (p3) overtimeAura(ctx, s, r, MS_BLOOM, MS_GOLD, 3);
+  if (p2) glow(ctx, s.x, s.y - r * 0.8, r * 2.8, TOX, 0.22 + Math.sin(s.t * 3) * 0.06);
   if (R > 0) glow(ctx, s.x, s.y - r * 0.6, r * 3.2 * R, glowC, 0.25 * R);
 
   // roots gripping the floor (they dangle when she lifts)
@@ -474,7 +527,7 @@ registerDraw('boss_mother_spore', (ctx, s) => {
   ctx.rotate(tilt * 0.6);
   oval(ctx, 0, 0.02 * r, 1.3 * r, 0.3 * r, f(s, p2 ? '#4a2a46' : MS_GILL), { under: null });
   ctx.save();
-  ctx.strokeStyle = withAlpha(p2 ? MS_TOX : '#8a5aa0', p2 ? 0.8 : 0.6);
+  ctx.strokeStyle = withAlpha(p2 ? TOX : '#8a5aa0', p2 ? 0.8 : 0.6);
   ctx.lineWidth = Math.max(1, r * 0.018);
   for (let i = 0; i < 18; i++) {
     const a = (i / 18) * TAU;
@@ -484,7 +537,7 @@ registerDraw('boss_mother_spore', (ctx, s) => {
     ctx.stroke();
   }
   ctx.restore();
-  if (p2) glow(ctx, 0, 0.05 * r, r * 1.3, MS_TOX, 0.45 + Math.sin(s.t * 4) * 0.1);
+  if (p2) glow(ctx, 0, 0.05 * r, r * 1.3, TOX, 0.45 + Math.sin(s.t * 4) * 0.1);
   const capFill = f(s, p2 ? '#6a3a6e' : MS_CAP);
   const capUnder = f(s, p2 ? '#4a2450' : MS_CAP_D);
   const spots = (sd: number): void => {
@@ -501,9 +554,9 @@ registerDraw('boss_mother_spore', (ctx, s) => {
   } else {
     // the split: a toothed toxic maw opening between the halves
     const gape = 0.2 + mouth * 0.25 + Math.sin(s.t * 2.5) * 0.03;
-    glow(ctx, 0, -0.4 * r, r * (1.1 + gape), MS_TOX, 0.8);
+    glow(ctx, 0, -0.4 * r, r * (1.1 + gape), TOX, 0.8);
     shape(ctx, [0, 0.0, gape * 0.9 * r, -0.3 * r, gape * 0.7 * r, -0.62 * r, 0, -0.86 * r, -gape * 0.7 * r, -0.62 * r, -gape * 0.9 * r, -0.3 * r], '#1a0a14', { smooth: true, under: null });
-    shape(ctx, [0, -0.1 * r, gape * 0.5 * r, -0.35 * r, 0, -0.72 * r, -gape * 0.5 * r, -0.35 * r], s.flash ? '#ffffff' : MS_TOX, { smooth: true, under: null, w: 0.6 });
+    shape(ctx, [0, -0.1 * r, gape * 0.5 * r, -0.35 * r, 0, -0.72 * r, -gape * 0.5 * r, -0.35 * r], s.flash ? '#ffffff' : TOX, { smooth: true, under: null, w: 0.6 });
     for (const sd of [-1, 1]) {
       ctx.save();
       ctx.translate(sd * gape * 0.75 * r, 0);
@@ -512,7 +565,7 @@ registerDraw('boss_mother_spore', (ctx, s) => {
       spots(sd);
       teeth(ctx, sd * 0.1 * r, -0.04 * r, sd * 0.08 * r, -0.74 * r, 6, 0.1 * r, -sd, '#efe2c8');
       // glowing veins
-      strokePts(ctx, [sd * 0.2 * r, -0.2 * r, sd * 0.55 * r, -0.4 * r, sd * 0.95 * r, -0.3 * r], withAlpha(MS_TOX, 0.7), Math.max(1.5, r * 0.025));
+      strokePts(ctx, [sd * 0.2 * r, -0.2 * r, sd * 0.55 * r, -0.4 * r, sd * 0.95 * r, -0.3 * r], withAlpha(TOX, 0.7), Math.max(1.5, r * 0.025));
       ctx.restore();
     }
   }

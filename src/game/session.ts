@@ -21,7 +21,6 @@ import { spawnPlayer, refreshDerived, resetSpellCooldowns } from './player/playe
 import { installRules } from './rules';
 import { lootHooks } from './lootHooks';
 import './loot';
-import { rollShopPiece } from './bonfire/shop';
 import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, resetPlayerStun } from './combat/damage';
 import { coopHpMult, enemyDmgMult, reviveRequirement } from './combat/formulas';
@@ -1133,7 +1132,6 @@ export class GameSession {
     }
     // every spell is ready again after a rest (D177)
     for (const sp of this.players) if (sp.entity) resetSpellCooldowns(sp.entity);
-    rollShopPiece(ws, bonfireId, this.layout.zone, this.save.character.cycle);
     // zone enemies respawn (bosses, opened chests and killed mimics stay done)
     ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss' || id === this.node.id);
     // a rest wipes everyone's downs, so a friend downed after it is back to the base revive effort (D153)

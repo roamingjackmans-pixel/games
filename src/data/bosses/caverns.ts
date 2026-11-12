@@ -175,6 +175,17 @@ export const MOTHER_SPORE: BossDef = {
   ],
   // New Game+ third phase only (D309)
   overtimeAttacks: [myceliumWeb, capBurst],
+  // D358: the whole bloom opens (drawn as a magenta-and-gold bloom with rippling spore rings)
+  overtimeIntro: {
+    name: 'The Great Bloom',
+    transitionS: 3.4,
+    transitionBeats: [
+      { atS: 0.2, sfx: 'hitSlime', shake: 6, fx: 'dust', n: 14 },
+      { atS: 1.1, sfx: 'unboundCharge', shake: 4, fx: 'status', color: '#ff6bd6', n: 28 },
+      { atS: 2.2, sfx: 'phaseChange', shake: 8, fx: 'burst', color: '#ff6bd6', n: 34, r: 70 },
+      { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#ffe27a', n: 44, r: 100 },
+    ],
+  },
   arenaId: 'caverns_arena',
   introTitle: 'MOTHER SPORE',
   introSub: 'Everything down here is her child. You are about to be adopted.',

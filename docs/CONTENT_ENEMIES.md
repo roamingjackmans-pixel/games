@@ -280,7 +280,9 @@ Phase 2 — **The lantern breaks** (50% → 0%; speed ×1.2, damage ×1.25, aren
 - **Hands of the Dead [PIERCE] [AREA]**: randomCircles(8, 70) within 420, ×0.6 physical (34), root 1.5 s, tell 1 s, cd 11 *(new)*
 - **Last Rites [RED] [AREA]**: ring(0, edge), ×2.1 physical (118), tell 2.2 s, cd 22, only if cycleAtLeast(1), hyper armor
 
-**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The lantern breaks until 37.5%; 3. The lantern breaks: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The lantern breaks until 37.5%; 3. The Last Lantern (D358) until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime arrival (D358):** the third phase is named **The Last Lantern**: a 3.4 s invulnerable change (bone crack, a rising soulfire charge, a blue burst and a white one, shakes between) that clears the field, and the Caretaker is drawn burning blue-white with two turning runic rings, six orbiting wisps and rising motes.
 
 **Overtime attacks (D309):** **Coffin Rows [PIERCE] [AREA]** — lanes(5 vertical, w 64, two sets 1 s apart), ×1.3 physical, tell 1.2 s, cd 11; **Gravedigger's Fury [RED]** — three shovel arcs(140°, 170) ×1.0 / ×1.2 / ×1.6, tell 0.7 s, cd 8, hyper armor.
 
@@ -307,6 +309,8 @@ Phase 2 — **The cap splits open** (50% → 0%; speed ×1.2, damage ×1.25, are
 - **Uproot [RED] [AREA]**: circle(200) at target, leaps, ×2 physical (152), then staggered 3 s, tell 1 s, cd 14 *(new)*
 
 **New Game+ phases (D295):** 1. Phase 1 until 75%; 2. The cap splits open until 37.5%; 3. The cap splits open: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+
+**Overtime arrival (D358):** the third phase is named **The Great Bloom**: the same 3.4 s field-clearing change (a spore charge, a magenta burst, a gold one) and Mother Spore is drawn in magenta and gold with three rippling spore rings, orbiting wisps and rising motes.
 
 **Overtime attacks (D309):** **Mycelium Web [PIERCE] [AREA]** — six root spokes line(50, room) from her, ×1.3 physical, Poison 30, tell 1.1 s, cd 10; **Cap Burst [RED] [AREA]** — ring(150–460) round her, ×1.7 physical, Poison 25, tell 1.3 s, cd 13 (hug the stalk, keep far, or roll).
 

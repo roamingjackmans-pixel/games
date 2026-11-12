@@ -198,6 +198,17 @@ export const THE_CARETAKER: BossDef = {
   ],
   // New Game+ third phase only (D309)
   overtimeAttacks: [coffinRows, gravediggersFury],
+  // D358: the lantern goes out and the soulfire takes over (drawn as a blue-white form with orbiting wisps)
+  overtimeIntro: {
+    name: 'The Last Lantern',
+    transitionS: 3.4,
+    transitionBeats: [
+      { atS: 0.2, sfx: 'hitBone', shake: 6, fx: 'dust', n: 16 },
+      { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#7fe8ff', n: 26 },
+      { atS: 2.2, sfx: 'phaseChange', shake: 7, fx: 'burst', color: '#35b6ff', n: 32, r: 60 },
+      { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#eaffff', n: 44, r: 95 },
+    ],
+  },
   arenaId: 'crypt_arena',
   introTitle: 'THE CARETAKER',
   introSub: 'Fixes nothing. Buries everything. Keeps your deposit.',

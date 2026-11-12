@@ -5,7 +5,7 @@ import { GameSession } from '../../src/game/session';
 import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
 import { Rng } from '../../src/engine/rng';
-import { spawnEnemy } from '../../src/game/enemies/spawn';
+import { enemyFullHp, spawnEnemy } from '../../src/game/enemies/spawn';
 import { ENEMIES } from '../../src/data/enemies';
 import { BOSSES } from '../../src/data/bosses';
 import { THE_CARETAKER } from '../../src/data/bosses/crypt';
@@ -196,6 +196,7 @@ describe('New Game+ bonus boss rooms (D278)', () => {
     const full = spawnEnemy(new World('ref'), zb, 0, 0, { cycle: 1, zone: s.layout.zone, players: 1 });
     const fullHp = full.hp!.max / (full.en!.barMult ?? 1);
     expect(bb.bossId).not.toBe(zb.id);
+    expect(fullHp).toBeCloseTo(enemyFullHp(zb, s.layout.zone, 1), 3); // D353: the boss HP trims reach the bonus boss through it
     expect(boss.hp!.max).toBeCloseTo(fullHp * BONUS_BOSS_HP_PCT, 3);
     expect(boss.hp!.hp).toBe(boss.hp!.max);
     // only the waves are replaced: nothing else spawned

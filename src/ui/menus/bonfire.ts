@@ -53,8 +53,9 @@ export interface BonfireView {
   char: Character;
   bonfireId: string;
   firstRest: boolean;
-  shopGem: Gem;
-  shopPiece: Item | null;
+  /** read each time the shop tab draws, so a bought gem or piece is replaced at once (D357) */
+  shopGem(): Gem;
+  shopPiece(): Item | null;
   discovered: { id: string; label: string; used: boolean }[];
   ops: BonfireOps;
   extraTabs?: { label: string; render: (el: HTMLElement, rerender: () => void) => void }[];
@@ -858,7 +859,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     for (const s of shopConsumables()) {
       buy.appendChild(h('div', { class: 'row' }, h('div', { style: 'width:150px' }, CONSUMABLES[s.id].name), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(s.price)), h('div', { class: 'small dim-text', style: 'width:60px' }, `have ${c.consumables[s.id] ?? 0}`), btn('Buy', () => say(v.ops.buyConsumable(s.id)), 'tiny', c.glowen < s.price)));
     }
-    const sg = v.shopGem;
+    const sg = v.shopGem();
     const gemPrice = shopGemPrice(sg);
     const gemLine = h('div', { class: 'row' }, gemIcon(sg, 22), h('div', { style: `width:150px;color:${gemColor(sg)}` }, gemTitle(sg)), h('div', { class: 'mono', style: 'width:60px' }, glowenEl(gemPrice)), btn('Buy', () => say(v.ops.buyGem()), 'tiny', c.glowen < gemPrice));
     hoverTip(gemLine, () => gemTooltip(sg));
@@ -868,15 +869,16 @@ export function openBonfire(v: BonfireView): HTMLElement {
 
     // the rotating piece: what it is and its full stats, visible without hovering
     const piece = h('div', { class: 'col', style: 'gap:6px;width:340px' }, h('h3', null, 'Rotating piece'));
-    if (v.shopPiece) {
-      const p = v.shopPiece;
+    const shopPieceNow = v.shopPiece();
+    if (shopPieceNow) {
+      const p = shopPieceNow;
       const price = shopItemPrice(p);
       const b = h('div', { class: 'row' }, itemIcon(p, 32), h('div', { class: 'col', style: 'gap:0;flex:1' }, h('div', { class: `r-${p.rarity}` }, p.name), h('div', { class: 'small dim-text' }, itemSummary(p))), btn(['Buy ', glowenEl(price)], () => say(v.ops.buyPiece()), 'tiny', c.glowen < price));
       b.setAttribute('data-testid', 'shop-piece');
       piece.appendChild(b);
-      piece.appendChild(h('div', { class: 'small dim-text' }, 'Changes every rest. Compared with what you wear:'));
+      piece.appendChild(h('div', { class: 'small dim-text' }, 'Changes when you buy it or move to a new zone. Compared with what you wear:'));
       piece.appendChild(staticTip(itemTooltip(p, c, 'auto')));
-    } else piece.appendChild(h('div', { class: 'small dim-text' }, 'The rotating piece is sold. Rest for a new one.'));
+    } else piece.appendChild(h('div', { class: 'small dim-text' }, 'The rotating piece is sold.'));
 
     const sell = h('div', { class: 'col', style: 'gap:3px;flex:1;min-width:0;max-height:560px;overflow:auto' }, h('h3', null, 'Sell from your bag'));
     const allRow = h('div', { class: 'row wrap', style: 'gap:4px;margin-bottom:4px' });

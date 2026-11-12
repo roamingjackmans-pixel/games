@@ -15,7 +15,7 @@ export const NG_PHASE3_COOLDOWN = 0.8;
 const cache = new WeakMap<BossDef, BossDef>();
 
 /** The Overtime phase: the last phase again, harder; its arena changes are already in place, so none are re-applied. */
-function overtime(last: BossPhase, bossName: string, extra: readonly AttackDef[]): BossPhase {
+function overtime(last: BossPhase, bossName: string, extra: readonly AttackDef[], intro?: BossDef['overtimeIntro']): BossPhase {
   const {
     arena: _arena,
     refillHp: _refill,
@@ -29,7 +29,9 @@ function overtime(last: BossPhase, bossName: string, extra: readonly AttackDef[]
   return {
     ...rest,
     untilHpPct: 0,
-    name: `${last.name ?? bossName}: Overtime`,
+    // a boss with its own arrival (D358) names the phase and scripts the change: beats, shakes, bursts, the field cleared
+    name: intro ? intro.name : `${last.name ?? bossName}: Overtime`,
+    ...(intro ? { transitionS: intro.transitionS, transitionBeats: intro.transitionBeats, clearField: true } : {}),
     // the last phase's attacks and at least two of its own (D309)
     attacks: [...last.attacks, ...extra.filter((a) => !last.attacks.some((b) => b.id === a.id))],
     speedMult: last.speedMult * NG_PHASE3_SPEED,
@@ -58,7 +60,7 @@ export function ngBossDef(def: BossDef, cycle: number): BossDef {
   // the new change: halfway from the change before it to 0, or halfway down a refilled bar
   const at = last.refillHp || before <= 0 ? 50 : before / 2;
   ph[n - 1] = { ...last, untilHpPct: at };
-  ph.push(overtime(last, def.name, def.overtimeAttacks ?? []));
+  ph.push(overtime(last, def.name, def.overtimeAttacks ?? [], def.overtimeIntro));
   const out: BossDef = { ...def, phases: ph };
   cache.set(def, out);
   return out;

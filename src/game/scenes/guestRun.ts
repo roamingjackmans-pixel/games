@@ -20,10 +20,10 @@ import { openStatistics } from '../../ui/statistics';
 import { achievements } from '../achievements';
 import { stats } from '../stats';
 import { drawInteractable, nearestInteractable } from '../../render/interactables';
-import { buyConsumable, buyGem, fuseGems, levelUp, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
+import { buyConsumable, buyGem, buyItem, fuseGems, levelUp, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
 import { upgradeRarity } from '../items/proficiency';
 import { breakDownEssence, reinforceItem } from '../items/reinforce';
-import { shopGem, shopGemPrice } from '../bonfire/shop';
+import { noteShopGemBought, rollShopPiece, shopGem, shopGemBuys, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
 import { refreshDerived } from '../player/player';
 import { writeSave } from '../save/storage';
 import { getStore } from '../../engine/settings';
@@ -292,6 +292,7 @@ export class GuestRunScene extends WorldScene {
     const c = this.save.character;
     const seed = this.net.welcome?.seed ?? 'x';
     const zone = this.net.cw.zone;
+    const ws = this.save.world;
     const r = (o: { msg: string }): string => {
       this.changed();
       return o.msg;
@@ -302,8 +303,8 @@ export class GuestRunScene extends WorldScene {
         char: c,
         bonfireId: 'coop',
         firstRest: first,
-        shopGem: shopGem(seed, zone, c.cycle),
-        shopPiece: null,
+        shopGem: () => shopGem(seed, zone, c.cycle, shopGemBuys(ws, zone, c.cycle)),
+        shopPiece: () => shopPiece(ws, zone, c.cycle),
         discovered: [],
         ops: {
           levelUp: (st) => r(levelUp(c, st)),
@@ -323,8 +324,19 @@ export class GuestRunScene extends WorldScene {
           sellGem: (gi) => r(sellGem(c, gi)),
           sellConsumable: (cid) => r(sellConsumable(c, cid)),
           buyConsumable: (cid) => r(buyConsumable(c, cid)),
-          buyGem: () => r(buyGem(c, shopGem(seed, zone, c.cycle), shopGemPrice(shopGem(seed, zone, c.cycle)))),
-          buyPiece: () => 'Only the host can buy from this fire.',
+          // a guest has its own stock (its own save's, rolled from its world seed), as it has its own bag (D357)
+          buyGem: () => {
+            const g = shopGem(seed, zone, c.cycle, shopGemBuys(ws, zone, c.cycle));
+            const o = buyGem(c, g, shopGemPrice(g));
+            if (o.ok) noteShopGemBought(ws, zone, c.cycle);
+            return r(o);
+          },
+          buyPiece: () => {
+            const piece = shopPiece(ws, zone, c.cycle);
+            const o = buyItem(c, piece, shopItemPrice(piece));
+            if (o.ok) rollShopPiece(ws, zone, c.cycle);
+            return r(o);
+          },
           warp: () => 'Only the host can travel between fires.',
         },
         extraTabs: [{ label: 'Spells', render: (el, rr) => renderSpellTab(el, c, () => this.changed(), rr) }],

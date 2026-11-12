@@ -859,8 +859,10 @@ party**, resets every player's revive downs and spell and weapon skill cooldowns
 respawn point. A used fire burns down to embers on the map as a record of where you have been.
 
 **Shop**: sell gear and gems (one by one, Sell all, all Commons, all below Rare); buy consumables, the zone's one-perk
-gem and **one rotating gear piece** at the zone's item level (Rare or better in NG+), re-rolled on each rest and shown
-with full stats against what you wear.
+gem and **one rotating gear piece** at the zone's item level (Rare or better in NG+), shown with full stats against
+what you wear. Each zone and cycle has its own stock (D357), the same at every fire of it and across rests; the gem and
+the piece change only once you buy one (the next is rolled at once) or when you move to another zone. In co-op a guest
+buys from its own stock, rolled the same way and kept in its own save, as it has its own bag.
 
 **Prices** (D309): everything bought with Glowen costs **twice** its listed price (`GLOWEN_PRICE_MULT`): consumables,
 the shop gem (6× its sale value) and gear piece (8× its sale value, at least 200), all of Gary's stock (gear 10× its

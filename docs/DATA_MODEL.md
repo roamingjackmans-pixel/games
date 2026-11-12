@@ -77,7 +77,7 @@ interface SaveFile {
 | `chestsOpened`, `mimicsKilled`, `mimicsAwake`, `reliquariesOpened` | chest ids `<roomId>-c0` |
 | `bossesBeatenThisCycle`, `bossKilled`, `bossReliquary?`, `instructorKilled?` | |
 | `garyGone`, `garyStock` | Gary's stock per merchant room: `GaryStockEntry { kind, item?, gem?, consumable?, count?, price, sold }` |
-| `shopStock` | per bonfire id: `{ item, rolls?, sold? }` (the rotating piece) |
+| `shopStock` | per zone and cycle (`z1c0`, D357): `{ item, rolls?, gemBuys? }` — the rotating piece, and how many shop gems were bought (the shop gem is rolled from the seed, zone, cycle and that count). Older saves keep one entry per bonfire id that is no longer read |
 | `shardpile?`, `guestPiles?` | the dropped-Shards pile; co-op guests' piles by `playerId` |
 | `leftBehind` | items left on the floor, by room: `{ playerId, item, x, y }[]` |
 | `cutscenesSeen?` | story ids already played this cycle |

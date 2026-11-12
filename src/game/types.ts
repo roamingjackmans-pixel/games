@@ -590,6 +590,8 @@ export interface BossDef extends Omit<EnemyDef, 'attacks' | 'role'> {
   arenaBound?: boolean;
   /** attacks only its New Game+ third phase ("Overtime", D295) brings, on top of its last phase's (D309) */
   overtimeAttacks?: AttackDef[];
+  /** how its New Game+ third phase arrives (D358): its name, a scripted field-clearing transition (else the plain one) */
+  overtimeIntro?: { name: string; transitionS: number; transitionBeats: NonNullable<BossPhase['transitionBeats']> };
   music: { root: number; tempo: number; bright: number };
 }
 
@@ -887,7 +889,8 @@ export interface WorldState {
   bossesBeatenThisCycle: number[];
   garyGone: boolean;
   garyStock: Record<string, GaryStockEntry[]>;
-  shopStock: Record<string, { item: Item | null; rolls?: number; sold?: boolean }>;
+  /** per zone and cycle (`z1c0`, D357; older saves have one entry per bonfire id): the rotating piece and how many shop gems were bought */
+  shopStock: Record<string, { item: Item | null; rolls?: number; sold?: boolean; gemBuys?: number }>;
   shardpile?: { zone: number; roomId: string; x: number; y: number; amount: number };
   /** co-op guests' Shardpiles in this world, by playerId (only that player can pick one up) */
   guestPiles?: Record<string, { zone: number; roomId: string; x: number; y: number; amount: number }>;

@@ -35,7 +35,7 @@ import { renderGary } from '../../ui/menus/gary';
 import { buyConsumable, buyGem, buyItem, cycleQuickSlot, fuseGems, levelUp, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
 import { upgradeRarity } from '../items/proficiency';
 import { breakDownEssence, reinforceItem } from '../items/reinforce';
-import { shopGem, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
+import { noteShopGemBought, rollShopPiece, shopGem, shopGemBuys, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
 import { refreshDerived, toggleTwoHand } from '../player/player';
 import { stream } from '../../engine/rng';
 import { toast } from '../../ui/dom';
@@ -404,8 +404,8 @@ export class RunScene extends WorldScene {
         char: c,
         bonfireId: id,
         firstRest: first,
-        shopGem: shopGem(ws.seed, zone, cyc),
-        shopPiece: shopPiece(ws, id, zone, cyc),
+        shopGem: () => shopGem(ws.seed, zone, cyc, shopGemBuys(ws, zone, cyc)),
+        shopPiece: () => shopPiece(ws, zone, cyc),
         discovered: ws.bonfiresDiscovered.map((b) => ({
           id: b,
           label: `${ZONES[Number(b.slice(1, b.indexOf('-'))) - 1]?.name ?? b} — ${b.endsWith('start') ? 'entrance' : 'before the boss'}`,
@@ -437,15 +437,17 @@ export class RunScene extends WorldScene {
           sellGem: (gi) => r(sellGem(c, gi)),
           sellConsumable: (cid) => r(sellConsumable(c, cid)),
           buyConsumable: (cid) => r(buyConsumable(c, cid)),
+          // the gem and the piece stay until bought, then the next ones are rolled (D357)
           buyGem: () => {
-            const g = shopGem(ws.seed, zone, cyc);
-            return r(buyGem(c, g, shopGemPrice(g)));
+            const g = shopGem(ws.seed, zone, cyc, shopGemBuys(ws, zone, cyc));
+            const o = buyGem(c, g, shopGemPrice(g));
+            if (o.ok) noteShopGemBought(ws, zone, cyc);
+            return r(o);
           },
           buyPiece: () => {
-            const piece = shopPiece(ws, id, zone, cyc);
-            if (!piece) return 'Sold out.';
+            const piece = shopPiece(ws, zone, cyc);
             const o = buyItem(c, piece, shopItemPrice(piece));
-            if (o.ok) ws.shopStock[id]!.sold = true;
+            if (o.ok) rollShopPiece(ws, zone, cyc);
             return r(o);
           },
           warp: (b) => {

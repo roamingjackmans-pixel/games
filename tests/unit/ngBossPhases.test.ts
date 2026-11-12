@@ -38,7 +38,7 @@ describe('New Game+ boss phases (D295)', () => {
     expect(ot!.speedMult).toBeCloseTo(last!.speedMult * NG_PHASE3_SPEED, 6);
     expect(ot!.dmgMult).toBeCloseTo(last!.dmgMult * NG_PHASE3_DMG, 6);
     expect(ot!.cooldownMult).toBeCloseTo(NG_PHASE3_COOLDOWN, 6);
-    expect(ot!.name).toBe('The lantern breaks: Overtime');
+    expect(ot!.name).toBe('The Last Lantern'); // D358: the Caretaker's own name for it (others: "<phase>: Overtime")
     // the last phase's arena change is not applied again
     expect(ot!.arena).toBeUndefined();
     // the NG-only Last Rites (D277) is still there
