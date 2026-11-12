@@ -14,6 +14,7 @@ import { stepWorld } from '../../src/game/sim';
 import { ACTION_BIT, emptyInput, type InputFrame } from '../../src/engine/input/actions';
 import { rawDamage, addRevive, applyRemoteHit, emptySpec, heal, hitEnemy, hitPlayer, parryEnemy, REMOTE_HIT_REACH } from '../../src/game/combat/damage';
 import { bodyReportOf, decodeBody, encodeBody } from '../../src/game/net/body';
+import { ARCANE_ORB_SPIN } from '../../src/game/enemies/ai';
 import { runEffects } from '../../src/game/effects/run';
 import { SPELLS } from '../../src/data/spells';
 import { spawnEnemy } from '../../src/game/enemies/spawn';
@@ -404,6 +405,60 @@ describe('net: guest-owned bodies (D338)', () => {
     p.step(0.3);
     expect(sh.hp!.hp).toBeLessThan(sh.hp!.max);
     expect(sh.en!.state).toBe('stagger');
+  });
+
+  it("a guest's own hit measures against the host's co-op HP, so the bar does not drop and bounce back (D340)", () => {
+    const p = party(2);
+    p.host.start(p.s);
+    p.step(0.6);
+    const g = guestEntity(p, 0);
+    inCombat(p.s.w);
+    const sh = spawnEnemy(p.s.w, ENEMIES.shambler!, g.x + 60, g.y, { tellS: 0 });
+    const solo = spawnEnemy(p.s.w, ENEMIES.shambler!, 40, 40, { tellS: 0, players: 1 });
+    p.s.w.remove(solo);
+    p.step(0.4);
+    const gw = p.guests[0]!.cw;
+    const mirror = gw.get(sh.id)!;
+    // three players: the host's enemy has ×2.5 a solo enemy's HP (D159), and so does the guest's copy
+    expect(sh.hp!.max).toBeCloseTo(solo.hp!.max * 2.5, 3);
+    expect(mirror.hp!.max).toBeCloseTo(sh.hp!.max, 1);
+    const me = p.guests[0]!.me!;
+    const spec = emptySpec('player');
+    spec.dmg.physical = solo.hp!.max * 0.9;
+    hitEnemy(gw, me, mirror, spec, me.x, me.y);
+    const shown = mirror.hp!.hp / mirror.hp!.max;
+    expect(shown).toBeGreaterThan(0.5);
+    let lowest = shown;
+    let highest = shown;
+    for (let i = 0; i < 40; i++) {
+      p.step(1 / 60);
+      const k = mirror.hp!.hp / mirror.hp!.max;
+      lowest = Math.min(lowest, k);
+      highest = Math.max(highest, k);
+    }
+    // the guest's bar shows the host's result from the first frame: no dip and no bounce
+    expect(highest - lowest).toBeLessThan(0.03);
+    expect(sh.hp!.hp / sh.hp!.max).toBeCloseTo(mirror.hp!.hp / mirror.hp!.max, 1);
+  });
+
+  it("an Arcane Elite's orbs circle on a guest's screen, where the host has them (D340)", () => {
+    const p = party(1);
+    p.host.start(p.s);
+    p.step(0.6);
+    const g = guestEntity(p, 0);
+    const el = spawnEnemy(p.s.w, ENEMIES.shambler!, g.x + 200, g.y, { tellS: 0, elite: 'arcane' });
+    p.step(0.6);
+    const mirror = p.guests[0]!.cw.get(el.id)!;
+    const a0 = mirror.en!.eliteOrbAngle;
+    p.step(0.5);
+    const a1 = mirror.en!.eliteOrbAngle;
+    // about 2.2 rad a second
+    expect(a1 - a0).toBeGreaterThan(0.6);
+    expect(a1 - a0).toBeLessThan(1.6);
+    // and in step with the host's, at the time this screen shows
+    const want = el.en!.eliteOrbAngle + ARCANE_ORB_SPIN * (p.guests[0]!.cw.time - p.s.w.time);
+    const diff = Math.atan2(Math.sin(a1 - want), Math.cos(a1 - want));
+    expect(Math.abs(diff)).toBeLessThan(0.2);
   });
 
   it('the host refuses a guest hit on an enemy that is dead, gone or far out of reach', () => {

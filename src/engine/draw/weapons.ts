@@ -452,30 +452,35 @@ function rapier(ctx: Ctx): void {
   pommel(ctx, -6.5, 2.7, GOLD);
   grip(ctx, -5, 5, 3.6, '#5a4632', '#d4af37');
   swordBlade(ctx, 7, 62, 4, { color: '#dfe4ea', tip: 7, fuller: null, taper: 0.7, ow: 2 });
-  // swept hilt: knuckle bow, side rings, straight quillons
+  // the hilt (redesigned): a knuckle bow from the pommel to the guard, straight quillons with ball ends and a small
+  // side ring, each its own simple shape (the old hilt was one path of curves and an ellipse, stroked twice)
+  hiltBow(ctx, -5.5, -1.6, 0.5, -10, 6.2, -3);
+  crossguard(ctx, 6.5, 8.5, 2.2, GOLD, 1);
+  dot(ctx, 6.9, -9, 1.7, GOLD);
+  dot(ctx, 6.9, 9, 1.7, GOLD);
+  disc(ctx, 9.6, 3.4, 2.3, GOLD, 1.5);
+  disc(ctx, 9.6, 3.4, 0.9, '#5a4632', 0);
+  spec(ctx, 6.4, -4.5, 0.8);
+}
+
+/** A rapier's knuckle bow: one quadratic curve, outlined then gold, round ends and joins. */
+function hiltBow(ctx: Ctx, x0: number, y0: number, cx: number, cy: number, x1: number, y1: number): void {
   ctx.save();
   ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   for (const [col, w] of [
-    [OUTLINE, 4],
-    [GOLD, 1.8],
+    [OUTLINE, 3.6],
+    [GOLD, 1.6],
   ] as const) {
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.quadraticCurveTo(cx, cy, x1, y1);
     ctx.strokeStyle = col;
     ctx.lineWidth = w;
-    ctx.beginPath();
-    ctx.moveTo(-5.5, -1.5);
-    ctx.bezierCurveTo(-3, -9, 5, -9.5, 7, -2);
-    ctx.moveTo(6.5, 0);
-    ctx.ellipse(7.5, 0, 2.2, 6, 0, 0, TAU);
-    ctx.moveTo(6.5, -8.5);
-    ctx.lineTo(6.5, 8.5);
-    ctx.moveTo(8, 3);
-    ctx.bezierCurveTo(10, 6, 12, 6, 13, 4);
     ctx.stroke();
   }
   ctx.restore();
-  dot(ctx, 6.5, -8.5, 1.5, GOLD);
-  dot(ctx, 6.5, 8.5, 1.5, GOLD);
-  spec(ctx, 7, -4, 0.8);
+  ctx.beginPath();
 }
 
 /** Point on a quadratic Bézier. */

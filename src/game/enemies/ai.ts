@@ -258,6 +258,9 @@ function moveByStyle(w: World, e: Entity, target: Entity, dt: number): void {
   }
 }
 
+/** How fast an Arcane Elite's three orbs circle it, radians a second (guests spin their copies at the same pace, D340). */
+export const ARCANE_ORB_SPIN = 2.2;
+
 /** Contact damage for swarm pieces and bodies with a contact trait. */
 function contactDamage(w: World, e: Entity): void {
   const c = e.en!.def.traits?.contact;
@@ -285,7 +288,7 @@ function eliteUpdate(w: World, e: Entity, dt: number): void {
   const now = w.time;
   switch (en.elite) {
     case 'arcane': {
-      en.eliteOrbAngle += dt * 2.2;
+      en.eliteOrbAngle += dt * ARCANE_ORB_SPIN;
       for (let i = 0; i < 3; i++) {
         const a = en.eliteOrbAngle + (i * Math.PI * 2) / 3;
         const ox = e.x + Math.cos(a) * (e.radius + 34);

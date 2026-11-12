@@ -14,6 +14,9 @@ export const ENEMY_STATES = ['spawning', 'idle', 'alert', 'approach', 'kite', 'w
 export const PLAYER_STATES = ['idle', 'attack', 'dodge', 'skill', 'cast', 'flask', 'stagger', 'held', 'falling', 'consumable', 'channel', 'charge', 'dashing'] as const;
 export const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
 const REC = 28;
+/** An enemy record's extra2 at or above this carries an Arcane Elite's orb angle (D340), in ORB_STEPS steps a turn. */
+export const ORB_BASE = 2000;
+export const ORB_STEPS = 60000;
 /** statusMask bits: the five statuses, then the six controls (NETCODE §4) */
 export const STATUS_BITS = ['burn', 'chill', 'shock', 'bleed', 'poison'] as const;
 export const CONTROL_BITS = ['freeze', 'blind', 'hexed', 'silence', 'root', 'hold'] as const;
@@ -116,6 +119,8 @@ export function recordOf(e: Entity, now: number): Rec {
     }
     extra = en.phase;
     extra2 = en.state === 'spawning' ? q(Math.max(0, Math.min(1, (now - en.spawnedAt) / Math.max(0.01, en.spawnUntil - en.spawnedAt))) * 1000, 0, 1000) : 1000;
+    // an Arcane Elite past its spawn tell: where its orbs are (D340), 2000 + the angle in 60,000 steps
+    if (en.elite === 'arcane' && en.state !== 'spawning') extra2 = ORB_BASE + q(((((en.eliteOrbAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2)) * ORB_STEPS, 0, ORB_STEPS - 1);
   } else if (e.pr?.lob) {
     extra = q((e.pr.lob.t / Math.max(0.01, e.pr.lob.dur)) * 1000, 0, 1000);
   } else if (e.it?.used) flags |= F.used;
@@ -281,7 +286,8 @@ export function decodeSnap(b: ArrayBuffer): Snap {
 
 export type EntityMeta =
   | { t: 'player'; pid: string; slot: number; name: string; char: unknown; r: number }
-  | { t: 'enemy'; def: string; elite: string | null; piece: number; boss: boolean; drawId: string; r: number; illusion: boolean; gaze?: number; linkedTo: number; atk?: string }
+  /** hm: its max HP in the host's world (co-op scaling, D159), so a guest's bar and its own hits measure against it (D340) */
+  | { t: 'enemy'; def: string; elite: string | null; piece: number; boss: boolean; drawId: string; r: number; illusion: boolean; gaze?: number; linkedTo: number; atk?: string; hm?: number }
   | { t: 'other'; type: EType; drawId: string; r: number; team: number; c: Record<string, unknown> };
 
 const DROP_KEYS = new Set(['spec', 'onImpact', 'effects', 'allyEffects', 'nextTick', 'hit']);
@@ -326,6 +332,7 @@ export function metaOf(e: Entity, forPlayerId: string): EntityMeta | null {
   if (e.en) {
     // radius changes with boss phases (The Landlord grows); gaze is the direction arrow of a turning attack
     const m: EntityMeta = { t: 'enemy', def: e.en.def.id, elite: e.en.elite, piece: e.en.pieceIndex, boss: e.en.isBoss, drawId: e.drawId, r: Math.round(e.radius * 10) / 10, illusion: e.en.isIllusion, linkedTo: e.en.linkedTo };
+    if (e.hp) m.hm = Math.round(e.hp.max * 100) / 100;
     if (e.en.gaze !== undefined) m.gaze = Math.round(e.en.gaze * 100) / 100;
     // the attack under way, so guests draw its real windup and element (D149)
     if (e.en.attack) m.atk = e.en.attack.def.id;

@@ -19,7 +19,8 @@ import { HOST_RUN_STATES, World, type Entity, type EType, type PlayerState } fro
 import { applyCharOp, cloneChar, type CharOp } from './charSync';
 import { CH, SNAP_HZ, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
 import { HostClock } from './clock';
-import { CONTROL_BITS, ENEMY_STATES, F, PLAYER_STATES, POSES, STATUS_BITS, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
+import { ARCANE_ORB_SPIN } from '../enemies/ai';
+import { CONTROL_BITS, ENEMY_STATES, F, ORB_BASE, ORB_STEPS, PLAYER_STATES, POSES, STATUS_BITS, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
 import { applyDelta, bodyReportOf, comboFromWire, encodeBody, stepBody } from './body';
 import type { IncomingHit, NetAct } from './acts';
 import type { NetChannel, Transport } from './transport';
@@ -109,6 +110,8 @@ export class NetGuest {
   /** damage this screen dealt to an enemy that the host has not shown yet, so its bar does not jump back (D338) */
   private hpDebt = new Map<number, { amt: number; at: number }>();
   private lastRecHp = new Map<number, number>();
+  /** how much of this frame's outgoing acts noteOwnHits has counted */
+  private outSeen = 0;
   /** how far ahead each walking enemy is drawn now (eased) */
   private lead = new Map<number, number>();
   /** a knockback this screen gave an enemy, shown until the host's own arrives (D338) */
@@ -231,6 +234,7 @@ export class NetGuest {
     this.inbox = [];
     this.hpDebt.clear();
     this.lastRecHp.clear();
+    this.outSeen = 0;
     this.lead.clear();
     this.nudge.clear();
     this.spent.clear();
@@ -273,6 +277,7 @@ export class NetGuest {
   private applySnap(b: ArrayBuffer): void {
     const s = decodeSnap(b);
     const now = this.clock();
+    this.noteOwnHits();
     this.hostClock.sample(s.time, now);
     const j = s.json;
     if (j.room) this.applyRoom(j.room);
@@ -360,6 +365,8 @@ export class NetGuest {
       e = spawnEnemy(w, def, x, y, { tellS: 0, elite: m.elite as EliteAffix | null, pieceIndex: m.piece, illusion: m.illusion });
       e.drawId = m.drawId;
       e.radius = m.r;
+      // the host's max HP (co-op scaling, D159): the mirror's own would be a solo enemy's (D340)
+      if (m.hm && e.hp) e.hp.max = m.hm;
     } else {
       e = w.spawn(m.type as EType, x, y, { drawId: m.drawId, radius: m.r, team: m.team as Entity['team'], ...(m.c as Partial<Entity>) });
     }
@@ -379,6 +386,7 @@ export class NetGuest {
       e.drawId = m.drawId;
       e.en.linkedTo = m.linkedTo;
       if (m.gaze !== undefined) e.en.gaze = m.gaze;
+      if (m.hm && e.hp) e.hp.max = m.hm;
     } else if (m.t === 'other') {
       Object.assign(e, m.c);
       e.drawId = m.drawId;
@@ -460,7 +468,9 @@ export class NetGuest {
       en.phase = r.extra;
       en.phaseTransitionUntil = r.flags & F.transition ? t + 0.3 : 0;
       en.fadeUntil = r.flags & F.faded ? t + 0.2 : 0;
-      const k = r.extra2 / 1000;
+      // an Arcane Elite's orbs (D340): where the host has them, wound back to the time this screen shows
+      if (r.extra2 >= ORB_BASE) en.eliteOrbAngle = ((r.extra2 - ORB_BASE) / ORB_STEPS) * Math.PI * 2 + ARCANE_ORB_SPIN * (this.cw.time - t);
+      const k = r.extra2 >= ORB_BASE ? 1 : r.extra2 / 1000;
       en.spawnedAt = t - k;
       en.spawnUntil = t + (1 - k);
       en.attack = this.mirrorAttack(e, m, r);
@@ -589,7 +599,11 @@ export class NetGuest {
     const renderT = this.hostNow() - this.hostClock.delay(dt);
     w.time = renderT < w.time - 1 ? renderT : Math.max(w.time, renderT);
     // mirrored enemy attacks run their own clock between snapshots (windup glow and motes)
-    for (const e of w.entities.values()) if (e.en?.attack) e.en.attack.t += dt;
+    for (const e of w.entities.values()) {
+      if (e.en?.attack) e.en.attack.t += dt;
+      // an Arcane Elite's orbs keep circling between snapshots (D340)
+      if (e.en?.elite === 'arcane' && e.en.state !== 'spawning') e.en.eliteOrbAngle += dt * ARCANE_ORB_SPIN;
+    }
     this.interpolate(dt);
     const me = this.me;
     if (!me?.pl) return;
@@ -610,18 +624,28 @@ export class NetGuest {
     // two-handing or a weapon swap done on this screen: the host's copy of the character follows
     const gk = this.gearOf();
     if (gk !== this.gearKey) this.syncChar();
+    this.noteOwnHits();
     const out = w.netGuest?.out ?? [];
-    for (const a of out) {
+    this.ch.body.send(encodeBody(bodyReportOf(me, w.time, this.seq, this.epoch)), this.hostId);
+    if (out.length) {
+      this.ch.act.send({ a: out.splice(0, out.length) }, this.hostId);
+    }
+    this.outSeen = 0;
+  }
+
+  /** This screen's own hits not yet counted: their damage stays off the mirrored bars until the host shows it. */
+  private noteOwnHits(): void {
+    const w = this.cw;
+    const out = w.netGuest?.out ?? [];
+    for (let i = this.outSeen; i < out.length; i++) {
+      const a = out[i]!;
       if (a.t !== 'hit' || a.dmg <= 0) continue;
       const d = this.hpDebt.get(a.id) ?? { amt: 0, at: w.time };
       d.amt += a.dmg;
       d.at = w.time;
       this.hpDebt.set(a.id, d);
     }
-    this.ch.body.send(encodeBody(bodyReportOf(me, w.time, this.seq, this.epoch)), this.hostId);
-    if (out.length) {
-      this.ch.act.send({ a: out.splice(0, out.length) }, this.hostId);
-    }
+    this.outSeen = out.length;
   }
 
   /** Others: interpolate between the two samples around the drawn time; walking enemies are led toward now (D338). */
