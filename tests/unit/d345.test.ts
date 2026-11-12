@@ -4,6 +4,7 @@ import { newCharacter } from '../../src/game/player/character';
 import { computeDerived } from '../../src/game/player/derived';
 import { makeItem } from '../../src/game/items/make';
 import { Rng } from '../../src/engine/rng';
+import { ATTACK_MOVE, attackMoveMult } from '../../src/game/player/player';
 
 describe('D345 Twin Daggers stamina regen', () => {
   const regen = (base: string, two: boolean): number => {
@@ -19,5 +20,24 @@ describe('D345 Twin Daggers stamina regen', () => {
   it('Twin Axes and other weapons are unchanged by two-handing', () => {
     expect(regen('twin_axes', true) / regen('twin_axes', false)).toBeCloseTo(1, 6);
     expect(regen('longsword', true) / regen('longsword', false)).toBeCloseTo(1, 6);
+  });
+});
+
+// D346: two-handed Twin Daggers slow you half as much while swinging
+describe('D346 Twin Daggers swing slowdown', () => {
+  const mult = (base: string, two: boolean): number => {
+    const c = newCharacter('duelist', 'Joe', 'p', new Rng(1));
+    c.equipment.main = makeItem(base, 'common', 1);
+    c.equipment.off = null;
+    c.twoHanded = two;
+    return attackMoveMult(computeDerived(c));
+  };
+  it('two-handed: ×0.8 walking while swinging (the 40% slowdown halved); one-handed ×0.6 as before', () => {
+    expect(ATTACK_MOVE.veryfast).toBeCloseTo(0.6, 6);
+    expect(mult('twin_daggers', true)).toBeCloseTo(0.8, 6);
+    expect(mult('twin_daggers', false)).toBeCloseTo(0.6, 6);
+  });
+  it('Twin Axes keep their slowdown', () => {
+    expect(mult('twin_axes', true)).toBeCloseTo(mult('twin_axes', false), 6);
   });
 });

@@ -121,6 +121,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: 'twin_daggers',
     paired: true, // D318: dual-wielded (two-handed) they hit 50% harder
     dualRegenPct: 0.3, // D345: and regain stamina 30% faster (hidden)
+    dualSwingSlowCut: 0.5, // D346: and slow you half as much while swinging (×0.8 walking, was ×0.6)
     name: 'Twin Daggers',
     weight: 1.5,
     grades: { bonk: '-', slicey: 'S' },

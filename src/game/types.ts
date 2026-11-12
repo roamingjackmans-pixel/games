@@ -639,6 +639,8 @@ export interface WeaponDef {
   paired?: boolean;
   /** a pair wielded in both hands regains stamina this much faster (D345: Twin Daggers +30%); not shown anywhere */
   dualRegenPct?: number;
+  /** a pair wielded in both hands is slowed this much less while swinging (D346: Twin Daggers 0.5, half the slowdown) */
+  dualSwingSlowCut?: number;
   /** the weapon's own damage type (hybrids: Bonk+Brain Void, Slicey+Brain Magic, Bonk+Prayer Fire, Slicey+Prayer Holy) */
   element?: DamageType;
   speedClass: SpeedClass;

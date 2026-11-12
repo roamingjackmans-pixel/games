@@ -13,6 +13,13 @@ import { tryCastSpell, tryUseConsumable, spellKeysAreOffSkills, tryUseSkill, upd
 import type { Character, SwingDef, WeaponDef } from '../types';
 import { netHostDriven, newStatus, type DamageSpec, type Entity, type PlayerC, type World } from '../world';
 
+/** Walking speed while swinging (D88), by weapon speed class; a pair in both hands may cut the slowdown (D346). */
+export function attackMoveMult(d: { weapon: WeaponDef; twoHanded: boolean }): number {
+  const m = ATTACK_MOVE[d.weapon.speedClass] ?? 0.4;
+  const cut = d.weapon.paired && d.twoHanded ? (d.weapon.dualSwingSlowCut ?? 0) : 0;
+  return 1 - (1 - m) * (1 - cut);
+}
+
 /** walking speed while swinging, by weapon speed class (D88) */
 export const ATTACK_MOVE: Record<string, number> = { veryfast: 0.6, fast: 0.52, medium: 0.42, mediumslow: 0.33, slow: 0.25, veryslow: 0.18 };
 export const DODGE_S = 0.45;
@@ -527,7 +534,7 @@ export function walkSpeedFor(w: World, e: Entity): number {
   if (pl.channel) speed *= pl.channel.moveMult;
   if (pl.charge) speed *= 0.35;
   // swinging slows you down instead of rooting you; heavier weapon classes slow you more (D88)
-  if (pl.state === 'attack') speed *= ATTACK_MOVE[pl.derived.weapon.speedClass] ?? 0.4;
+  if (pl.state === 'attack') speed *= attackMoveMult(pl.derived);
   if (pl.blocking) speed *= 0.75;
   return speed;
 }

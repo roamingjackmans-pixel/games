@@ -357,7 +357,7 @@ thrust, line or projectile) and a damage multiplier. Holding attack continues th
 longer; the next swing can start in the back 55% of a recovery. Attack speed (gems, affixes, buffs) scales all three
 phases, capped at ×1.6.
 
-- **You walk while swinging** at ×0.6 (very fast weapons) down to ×0.18 (very slow) of normal speed (D88).
+- **You walk while swinging** at ×0.6 (very fast weapons) down to ×0.18 (very slow) of normal speed (D88); Twin Daggers held in both hands walk at ×0.8 (D346).
 - **Hyper armor**: heavy weapons' active frames (every swing or the last of the combo) ignore hit interruptions.
 - **Hitstop** 40–90 ms by weapon weight (Settings can turn it off), screen shake by damage, white flash and floating
   numbers coloured by type (yellow on a weakness, grey when resisted; D88).
