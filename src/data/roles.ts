@@ -168,8 +168,11 @@ export const NG_ENEMY_HP_TRIM: Record<number, Record<number, number>> = {
   2: { 1: 0.85 },
 };
 
-/** D353: bosses in NG+1 and NG+2 have half the HP; NG+3 on goes back to the plain D301 / D311 curve. */
-export const NG_BOSS_HP_TRIM: Record<number, number> = { 1: 0.5, 2: 0.5 };
+/**
+ * D353: bosses in NG+1 and NG+2 have half the HP. D354: the trim then climbs back to 1 over NG+3–NG+6 so the next cycle
+ * is not a jump (a boss went 3–4.5× from NG+2 to NG+3 with the half gone): NG+7 on is the plain D301 / D311 curve.
+ */
+export const NG_BOSS_HP_TRIM: Record<number, number> = { 1: 0.5, 2: 0.5, 3: 0.6, 4: 0.7, 5: 0.8, 6: 0.9 };
 
 export function ngBossHpTrim(cycle: number): number {
   return NG_BOSS_HP_TRIM[cycle] ?? 1;

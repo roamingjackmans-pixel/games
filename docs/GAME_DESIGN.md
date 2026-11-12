@@ -150,10 +150,11 @@ minutes from NG+2 on.
 | NG+1 × | 1.52 | 1.88 | 2.16 | 2.03 | 1.56 | 1.73 | 1.9 | 1.34 |
 | NG+2 on × | 2.7 | 2.89 | 3.1 | 2.67 | 1.89 | 1.94 | 1.97 | 1.15 |
 
-**Boss HP trim** (D353): from the owner, every zone boss has **half** that HP in NG+1 and NG+2 (`NG_BOSS_HP_TRIM` in
-`data/roles.ts`, applied with the table above). NG+3 on goes back to the plain curve (the NG+2 column on its usual cycle
-growth), so a boss there has about 3–4.5× its NG+2 HP. The fight-length targets above are now about half as long at
-NG+1 and NG+2 (the balance report flags them).
+**Boss HP trim** (D353, D354): from the owner, every zone boss has **half** that HP in NG+1 and NG+2 (`NG_BOSS_HP_TRIM` in
+`data/roles.ts`, applied with the table above). The trim then climbs back to 1 so the next cycle is not a jump: ×0.6 at
+NG+3, 0.7, 0.8, 0.9, and NG+7 on is the plain curve. A boss now grows about 1.9–2.7× from NG+2 to NG+3 (it would have been
+3.1–4.5×) and 1.4–1.9× a cycle after that. The fight-length targets above are shorter at NG+1–NG+6 by the same shares
+(the balance report flags them).
 
 **NG+ boss damage** (D314): every boss hits **×1.75** from NG+1 on (they had fallen behind the players' gear and
 levels); every later cycle's growth builds on it. The Caretaker's Last Rites stays about 600 at NG+1 (D277).
