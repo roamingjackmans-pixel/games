@@ -201,6 +201,17 @@ export function ngBossDmgMult(cycle: number): number {
  * D362: a zone's boss hits harder in one cycle than the curve gives it, a factor on top of every other one: zone 2's boss
  * (Mother Spore) ×1.15 in NG+1. By zone, then cycle; anything not listed is 1.
  */
+/**
+ * D363: the room enemies of a zone hit harder than its curve gives them, a factor on top of every other one, in every
+ * cycle (zone 3 ×1.25). Only what the zone's waves spawn: bosses, what they summon in their arena, Mimics and special
+ * NPCs keep the plain curve. Anything not listed is 1.
+ */
+export const ZONE_ROOM_ENEMY_DMG: Record<number, number> = { 3: 1.25 };
+
+export function roomEnemyDmgTrim(zone: number): number {
+  return ZONE_ROOM_ENEMY_DMG[Math.max(1, Math.min(8, zone))] ?? 1;
+}
+
 export const NG_BOSS_DMG_TRIM: Record<number, Record<number, number>> = {
   2: { 1: 1.15 },
 };

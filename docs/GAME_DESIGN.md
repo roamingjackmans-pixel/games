@@ -156,6 +156,10 @@ NG+3, 0.7, 0.8, 0.9, and NG+7 on is the plain curve. A boss now grows about 1.9�
 3.1–4.5×) and 1.4–1.9× a cycle after that. The fight-length targets above are shorter at NG+1–NG+6 by the same shares
 (the balance report flags them).
 
+**Zone 3 room enemies** (D363): the enemies a zone 3 room's waves spawn (Elites too, every cycle) hit **25% harder** than the
+curve gives them (`ZONE_ROOM_ENEMY_DMG` in `data/roles.ts`). The Bloatking, what he summons in his arena, Mimics and
+special NPCs keep the plain curve.
+
 **Zone 2 boss, NG+1** (D362): Mother Spore hits a further **15% harder** in NG+1 only (`NG_BOSS_DMG_TRIM` in `data/roles.ts`, by
 zone and cycle). The random encounter boss (D278) keeps hitting like the boss of the room's zone, so any boss met in zone 2 at
 NG+1 carries it and Mother Spore met elsewhere does not.

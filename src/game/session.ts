@@ -24,7 +24,7 @@ import './loot';
 import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, resetPlayerStun } from './combat/damage';
 import { coopHpMult, enemyDmgMult, reviveRequirement } from './combat/formulas';
-import { ngBossDmgTrim, zoneDmgFactor } from '../data/roles';
+import { ngBossDmgTrim, roomEnemyDmgTrim, zoneDmgFactor } from '../data/roles';
 import { BONUS_BOSS_HP_PCT, BONUS_BOSS_SHARD_MULT, bonusBossPhase } from './procgen/bonusBoss';
 import { BOSSES } from '../data/bosses';
 import { DEATH_TITLES } from '../data/story';
@@ -773,7 +773,7 @@ export class GameSession {
       const jx = base[0] + rng.spread(30 + 22 * lap);
       const jy = base[1] + rng.spread(30 + 22 * lap);
       const [x, y] = w.room.nearestFloor(jx, jy, def.radius);
-      const ents = spawnUnit(w, def, x, y, { elite: u.elite as EliteAffix | null, tellS, zoneResist: zd.resist, zoneImmune: zd.statusImmune, share: this.plan?.share ?? roomCountMult(this.players.length) });
+      const ents = spawnUnit(w, def, x, y, { elite: u.elite as EliteAffix | null, tellS, dmgMult: roomEnemyDmgTrim(this.layout.zone), zoneResist: zd.resist, zoneImmune: zd.statusImmune, share: this.plan?.share ?? roomCountMult(this.players.length) });
       for (const e of ents) this.waveIds.push(e.id);
       this.waveSize += ents.length;
       w.sfx('spawnTell', x, 0.4);
