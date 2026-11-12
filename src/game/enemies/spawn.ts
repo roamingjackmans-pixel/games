@@ -1,6 +1,6 @@
 // Enemy creation with scaling (GAME_DESIGN §2.3, §6.4; CONTENT_ENEMIES §1).
 import { reinforceHpFactor } from '../../data/essence';
-import { ROLE_STATS, SHARD_SCALE, levelPaceComp, ngBossDmgMult, ngBossHpMult, ngBossHpTrim, ngEnemyHpTrim, ngLevelComp, statCurveComp, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
+import { ROLE_STATS, SHARD_SCALE, levelPaceComp, ngBossDmgMult, ngBossDmgTrim, ngBossHpMult, ngBossHpTrim, ngEnemyHpTrim, ngLevelComp, statCurveComp, ngZoneEnemyDmg, zoneDmgFactor, zoneShardFactor } from '../../data/roles';
 import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult, enemyShardMult, poiseForSize } from '../combat/formulas';
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
@@ -80,7 +80,7 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   if (def.traits?.fixedHp) hp = def.traits.fixedHp;
   // New Game+ room enemies hit harder by zone (D275); bosses and special NPCs keep the plain curve
   const ngZone = isBoss || def.special ? 1 : ngZoneEnemyDmg(zone, cycle);
-  const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * zoneDmgFactor(zone) * ngZone * ngLevelComp('dmg', zone, cycle) * statCurveComp('dmg', zone, cycle) * (def.special ? 1 : levelPaceComp('dmg', zone, cycle)) * (isBoss && !def.special ? ngBossDmgMult(cycle) : 1) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
+  const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * zoneDmgFactor(zone) * ngZone * ngLevelComp('dmg', zone, cycle) * statCurveComp('dmg', zone, cycle) * (def.special ? 1 : levelPaceComp('dmg', zone, cycle)) * (isBoss && !def.special ? ngBossDmgMult(cycle) * ngBossDmgTrim(zone, cycle) : 1) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
   const speed = (def.speed ?? rs.speed) * (def.mult?.speed ?? 1) * (elite === 'frenzied' ? 1.4 : 1);
   const share = Math.max(1, o.share ?? 1);
   const rawShards = (rs.shards * SHARD_SCALE * zoneShardFactor(zone) * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1)) / share;

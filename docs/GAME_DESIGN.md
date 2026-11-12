@@ -156,6 +156,10 @@ NG+3, 0.7, 0.8, 0.9, and NG+7 on is the plain curve. A boss now grows about 1.9�
 3.1–4.5×) and 1.4–1.9× a cycle after that. The fight-length targets above are shorter at NG+1–NG+6 by the same shares
 (the balance report flags them).
 
+**Zone 2 boss, NG+1** (D362): Mother Spore hits a further **15% harder** in NG+1 only (`NG_BOSS_DMG_TRIM` in `data/roles.ts`, by
+zone and cycle). The random encounter boss (D278) keeps hitting like the boss of the room's zone, so any boss met in zone 2 at
+NG+1 carries it and Mother Spore met elsewhere does not.
+
 **NG+ boss damage** (D314): every boss hits **×1.75** from NG+1 on (they had fallen behind the players' gear and
 levels); every later cycle's growth builds on it. The Caretaker's Last Rites stays about 600 at NG+1 (D277).
 

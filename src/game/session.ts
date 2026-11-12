@@ -24,7 +24,7 @@ import './loot';
 import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, resetPlayerStun } from './combat/damage';
 import { coopHpMult, enemyDmgMult, reviveRequirement } from './combat/formulas';
-import { zoneDmgFactor } from '../data/roles';
+import { ngBossDmgTrim, zoneDmgFactor } from '../data/roles';
 import { BONUS_BOSS_HP_PCT, BONUS_BOSS_SHARD_MULT, bonusBossPhase } from './procgen/bonusBoss';
 import { BOSSES } from '../data/bosses';
 import { DEATH_TITLES } from '../data/story';
@@ -793,7 +793,8 @@ export class GameSession {
     const zd = zoneDef(this.layout.zone);
     const cyc = this.save.character.cycle;
     const here = this.layout.zone;
-    const dmgFix = (enemyDmgMult(here, cyc) * zoneDmgFactor(here)) / (enemyDmgMult(def.zone, cyc) * zoneDmgFactor(def.zone));
+    // it hits like the room's zone boss, so its own zone's NG+ boss damage trim (D362) is swapped for this room's
+    const dmgFix = ((enemyDmgMult(here, cyc) * zoneDmgFactor(here)) / (enemyDmgMult(def.zone, cyc) * zoneDmgFactor(def.zone))) * (ngBossDmgTrim(here, cyc) / ngBossDmgTrim(def.zone, cyc));
     // the spawn point farthest from the party
     const players = w.livingPlayers();
     const far = (p: [number, number]): number => Math.min(1e9, ...players.map((q) => dist(q.x, q.y, p[0], p[1])));

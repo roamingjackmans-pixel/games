@@ -4,7 +4,8 @@ import { World } from '../../src/game/world';
 import { Room } from '../../src/game/room';
 import { spawnEnemy } from '../../src/game/enemies/spawn';
 import { THE_CARETAKER } from '../../src/data/bosses/crypt';
-import { NG_BOSS_DMG_MULT, levelPaceComp } from '../../src/data/roles';
+import { NG_BOSS_DMG_MULT, ROLE_STATS, levelPaceComp, ngBossDmgTrim, ngLevelComp, statCurveComp, zoneDmgFactor } from '../../src/data/roles';
+import { MOTHER_SPORE } from '../../src/data/bosses/caverns';
 import { enemyDmgMult, staminaRegen } from '../../src/game/combat/formulas';
 
 describe('NG+ boss damage (D314)', () => {
@@ -24,5 +25,19 @@ describe('stamina regen (D314)', () => {
     expect(staminaRegen(200)).toBeCloseTo(55, 6);
     expect(staminaRegen(999)).toBeLessThan(75);
     expect(staminaRegen(60)).toBeCloseTo(22 + 0.165 * 60, 6);
+  });
+});
+
+describe('zone 2 boss NG+1 damage trim (D362)', () => {
+  it('Mother Spore hits 15% harder in NG+1 only, and nothing else changes', () => {
+    expect([1, 2, 3, 8].map((z) => ngBossDmgTrim(z, 1))).toEqual([1, 1.15, 1, 1]);
+    expect([0, 2, 3, 10].map((c) => ngBossDmgTrim(2, c))).toEqual([1, 1, 1, 1]);
+    const w = new World('BD2', Room.empty());
+    const dmg = (cycle: number): number => spawnEnemy(w, MOTHER_SPORE, 300, 300, { zone: 2, cycle, players: 1 }).en!.dmgMult;
+    // the whole formula for a boss (spawn.ts), with the trim as the only factor in question
+    const plain = (cycle: number): number => (ROLE_STATS.boss.dmg / 18) * (MOTHER_SPORE.mult?.dmg ?? 1) * enemyDmgMult(2, cycle) * zoneDmgFactor(2) * ngLevelComp('dmg', 2, cycle) * statCurveComp('dmg', 2, cycle) * levelPaceComp('dmg', 2, cycle) * (cycle >= 1 ? NG_BOSS_DMG_MULT : 1);
+    expect(dmg(1)).toBeCloseTo(plain(1) * 1.15, 6);
+    expect(dmg(0)).toBeCloseTo(plain(0), 6);
+    expect(dmg(2)).toBeCloseTo(plain(2), 6);
   });
 });

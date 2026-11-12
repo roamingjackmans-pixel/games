@@ -9,7 +9,7 @@ import { enemyFullHp, spawnEnemy } from '../../src/game/enemies/spawn';
 import { ENEMIES } from '../../src/data/enemies';
 import { BOSSES } from '../../src/data/bosses';
 import { THE_CARETAKER } from '../../src/data/bosses/crypt';
-import { NG_ZONE_ENEMY_DMG, levelPaceComp, ngLevelComp, statCurveComp, ngZoneEnemyDmg, zoneDmgFactor } from '../../src/data/roles';
+import { NG_ZONE_ENEMY_DMG, ngBossDmgTrim, levelPaceComp, ngLevelComp, statCurveComp, ngZoneEnemyDmg, zoneDmgFactor } from '../../src/data/roles';
 import { enemyDmgMult } from '../../src/game/combat/formulas';
 import { generateZone } from '../../src/game/procgen/zone';
 import { planRoom } from '../../src/game/procgen/waves';
@@ -68,7 +68,7 @@ describe('New Game+ room enemy damage by zone (D275)', () => {
     expect(s1.en!.dmgMult / s0.en!.dmgMult).toBeCloseTo(((2 * level(2)) / level(1)) * lc, 5);
     const b2 = spawnEnemy(w, THE_CARETAKER, 640, 300, { cycle: 1, zone: 2 });
     const b1 = spawnEnemy(w, THE_CARETAKER, 640, 300, { cycle: 1, zone: 1 });
-    expect(b2.en!.dmgMult / b1.en!.dmgMult).toBeCloseTo((level(2) / level(1)) * lc, 5);
+    expect(b2.en!.dmgMult / b1.en!.dmgMult).toBeCloseTo((level(2) / level(1)) * lc * ngBossDmgTrim(2, 1), 5); // D362: zone 2's boss slot hits 15% harder at NG+1
   });
 });
 

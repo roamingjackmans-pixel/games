@@ -197,6 +197,18 @@ export function ngBossDmgMult(cycle: number): number {
   return cycle >= 1 ? NG_BOSS_DMG_MULT : 1;
 }
 
+/**
+ * D362: a zone's boss hits harder in one cycle than the curve gives it, a factor on top of every other one: zone 2's boss
+ * (Mother Spore) ×1.15 in NG+1. By zone, then cycle; anything not listed is 1.
+ */
+export const NG_BOSS_DMG_TRIM: Record<number, Record<number, number>> = {
+  2: { 1: 1.15 },
+};
+
+export function ngBossDmgTrim(zone: number, cycle: number): number {
+  return NG_BOSS_DMG_TRIM[Math.max(1, Math.min(8, zone))]?.[cycle] ?? 1;
+}
+
 export function ngZoneEnemyDmg(zone: number, cycle: number): number {
   return cycle >= 1 ? (NG_ZONE_ENEMY_DMG[Math.max(1, Math.min(8, zone))] ?? 1) : 1;
 }
