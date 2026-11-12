@@ -262,9 +262,13 @@ service), `save/friends.ts` (the list), `ui/friends.ts` (Friends screen, lobby i
 | `fx` | host → friend | the lobby closes or Start is pressed | `{ id }`: the invite is withdrawn |
 
 - **Invites:** one waiting invite per friend; the Invite button counts down and says *declined*, *busy* or *no answer*
-  afterwards. Not offered to a friend on another version or in a co-op game, or when the party is full. An invite ends
-  when answered, after 60 s, when the host withdraws it, or when either side goes offline; the friend's card closes
-  with a toast. **Join** does what typing the code would: from the title, a character picker (one character goes
+  afterwards. Not offered to a friend on another version or in a co-op game, or when the party is full. **Any friend on
+  the list can be invited, online or not** (D351), and **Invite all** invites every friend who can be: the relays keep
+  no messages, so an invite to an offline friend is **queued** in the host's own presence ("Invited · when online") and
+  sent the moment that friend's `fp` arrives in their shared room; its 60 s start then. A friend who drops offline with
+  an invite unanswered gets it again when they return. A queued invite never runs out on its own; it ends when the
+  lobby closes or Start is pressed. A delivered invite ends when answered, after 60 s, or when the host withdraws it or
+  goes offline; the friend's card closes with a toast. **Join** does what typing the code would: from the title, a character picker (one character goes
   straight in; none opens the creator, "Create and join"); from a solo run, the run is saved and left; from a lobby
   with nobody else in it, that lobby closes. A host whose lobby has guests, or anyone in a running co-op game, answers
   busy. Joining still happens only in the lobby (D31): a friend who accepts after Start is rejected as usual.

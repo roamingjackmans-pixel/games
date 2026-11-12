@@ -291,10 +291,79 @@ describe('invites', () => {
     expect(a.answers).toEqual(['busy']);
   });
 
-  it('no invite to a friend who is offline, or with a bad room code', async () => {
+  it('no invite to someone not on the list, or with a bad room code', async () => {
     const { a, b } = await pair();
     expect(a.p.invite(b.code, 'abc', 1, 'Host Ann')).toBe(false);
     expect(a.p.invite(newFriendCode(), '123456', 1, 'Host Ann')).toBe(false);
+  });
+});
+
+describe('invites to offline friends (D351)', () => {
+  it('waits while the friend is offline and reaches them when they come online', async () => {
+    const hub = new LoopbackHub({ latencyMs: 25 });
+    const clock = { t: 1000 };
+    const a = player(hub, clock, 'Host Ann');
+    const b = player(hub, clock, 'Bob');
+    a.status = 'hosting';
+    a.p.setFriends([b.code]);
+    await settle(hub);
+    expect(a.p.view(b.code).online).toBe(false);
+    expect(a.p.invite(b.code, '313131', 4, 'Host Ann')).toBe(true);
+    expect(a.p.view(b.code).invite?.state).toBe('queued');
+    // one at a time, and a queued invite never runs out on its own
+    expect(a.p.invite(b.code, '313131', 4, 'Host Ann')).toBe(false);
+    clock.t += 10 * INVITE_TTL_MS;
+    a.p.pulse();
+    expect(a.p.view(b.code).invite?.state).toBe('queued');
+    // Bob starts the game later
+    b.p.setFriends([a.code]);
+    await settle(hub);
+    expect(b.invites).toHaveLength(1);
+    expect(b.invites[0]).toMatchObject({ room: '313131', zone: 4, name: 'Host Ann' });
+    const out = a.p.view(b.code).invite!;
+    expect(out.state).toBe('sent');
+    // its 60 s start when it is delivered
+    expect(out.expiresAt).toBe(clock.t + INVITE_TTL_MS);
+    b.p.answer(b.invites[0]!.id, true);
+    await settle(hub);
+    expect(a.answers).toEqual(['accepted']);
+  });
+
+  it('a queued invite is dropped when the lobby closes', async () => {
+    const hub = new LoopbackHub({ latencyMs: 25 });
+    const clock = { t: 0 };
+    const a = player(hub, clock, 'Host Ann');
+    const b = player(hub, clock, 'Bob');
+    a.p.setFriends([b.code]);
+    await settle(hub);
+    a.p.invite(b.code, '313131', 1, 'Host Ann');
+    a.p.cancelInvites();
+    expect(a.p.view(b.code).invite?.state).toBe('cancelled');
+    b.p.setFriends([a.code]);
+    await settle(hub);
+    expect(b.p.view(a.code).online).toBe(true);
+    expect(b.invites).toEqual([]);
+  });
+
+  it('a friend who drops offline before answering gets the invite again on return', async () => {
+    const hub = new LoopbackHub({ latencyMs: 25 });
+    const clock = { t: 0 };
+    const a = player(hub, clock, 'Host Ann');
+    const b = player(hub, clock, 'Bob');
+    a.p.setFriends([b.code]);
+    b.p.setFriends([a.code]);
+    await settle(hub);
+    a.p.invite(b.code, '414141', 1, 'Host Ann');
+    await settle(hub);
+    expect(b.invites).toHaveLength(1);
+    b.p.setFriends([]);
+    await settle(hub);
+    expect(a.p.view(b.code).invite?.state).toBe('queued');
+    b.p.setFriends([a.code]);
+    await settle(hub);
+    expect(b.invites).toHaveLength(2);
+    expect(b.invites[1]!.room).toBe('414141');
+    expect(a.p.view(b.code).invite?.state).toBe('sent');
   });
 });
 

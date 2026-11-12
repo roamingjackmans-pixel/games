@@ -949,8 +949,9 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
   doing (in the menus, playing solo, hosting a lobby, in a co-op game). Remove takes two presses. No accounts or servers.
 - Friends see each other **once both have added the other's code**; nobody who is not on your list ever sees you
   online. **Appear online to friends** (on by default) turns it all off.
-- **Invites:** the host's lobby lists online friends under **Invite friends**, each with **Invite**. The friend gets a
-  card on whatever screen they are on: *Host invites you to co-op in their world (zone)*, **Join** / **Decline**, 60 s.
+- **Invites:** the host's lobby lists **every** friend under **Invite friends** (online first), each with **Invite**,
+  and an **Invite all** button (D351). An offline friend's invite waits ("Invited · when online") and reaches them as
+  soon as they open the game while the lobby is still open. The friend gets a card on whatever screen they are on: *Host invites you to co-op in their world (zone)*, **Join** / **Decline**, 60 s.
   Join goes to that lobby as typing the code would (picking or making a character first from the title; a solo run is
   saved and left). The host sees "on the way", "declined" or "busy"; invites are withdrawn when the lobby closes or
   the game starts.

@@ -47,26 +47,40 @@ export interface LobbyInvite {
   full: () => boolean;
 }
 
-function inviteControl(v: Row, lobby: LobbyInvite): HTMLElement | null {
-  if (!v.online) return null;
-  const off = (label: string): HTMLElement => btn(label, () => undefined, 'tiny', true);
-  if (v.version && v.version !== __GAME_VERSION__) return off('Other version');
-  if (v.status === 'coop') return off('In a game');
+/** Why a friend cannot be invited right now (null: they can). Offline friends can be: the invite waits (D351). */
+function cannotInvite(v: Row, lobby: LobbyInvite): string | null {
+  if (v.online && v.version && v.version !== __GAME_VERSION__) return 'Other version';
+  if (v.online && v.status === 'coop') return 'In a game';
   const inv = v.invite;
-  const now = Date.now();
-  if (inv?.state === 'sent' && inv.expiresAt > now) return btn(countdown(inv.expiresAt, 'Invited · '), () => undefined, 'tiny', true);
-  if (inv?.state === 'accepted') return off('Joining…');
-  if (lobby.full()) return off('Party full');
+  if (inv?.state === 'queued') return 'Invited · when online';
+  if (inv?.state === 'sent' && inv.expiresAt > Date.now()) return 'Invited';
+  if (inv?.state === 'accepted') return 'Joining…';
+  if (lobby.full()) return 'Party full';
+  return null;
+}
+
+function sendInvite(v: Row, lobby: LobbyInvite): boolean {
+  const room = lobby.room();
+  const p = friends().presence;
+  return !!room && !!p && p.invite(v.code, room, lobby.zone, lobby.hostName);
+}
+
+function inviteControl(v: Row, lobby: LobbyInvite): HTMLElement | null {
+  const inv = v.invite;
+  const why = cannotInvite(v, lobby);
+  if (why === 'Invited' && inv) return btn(countdown(inv.expiresAt, 'Invited · '), () => undefined, 'tiny', true);
+  if (why) {
+    const off = btn(why, () => undefined, 'tiny', true);
+    off.setAttribute('data-testid', `invite-${v.code}`);
+    return off;
+  }
   const note = inv?.state === 'declined' ? 'declined' : inv?.state === 'busy' ? 'busy' : inv?.state === 'expired' ? 'no answer' : '';
   const b = btn(
     'Invite',
     () => {
-      const room = lobby.room();
-      const p = friends().presence;
-      if (!room || !p) return;
-      if (p.invite(v.code, room, lobby.zone, lobby.hostName)) {
+      if (sendInvite(v, lobby)) {
         playSfx('uiConfirm');
-        toast(`Invited ${friendName(v)}.`);
+        toast(v.online ? `Invited ${friendName(v)}.` : `${friendName(v)} gets the invite when they come online.`, 2600);
       }
     },
     'tiny primary',
@@ -87,7 +101,7 @@ function friendRow(v: Row, extra: (HTMLElement | null)[]): HTMLElement {
   );
 }
 
-/** The lobby's "Invite friends" box: online friends first, each with an Invite button. Refill it on changes. */
+/** The lobby's "Invite friends" box: every friend (online first), each with an Invite button, and Invite all. */
 export function fillLobbyInvites(box: HTMLElement, lobby: LobbyInvite, force = false): void {
   const sig = `${signature()}|${lobby.full()}`;
   if (!force && box.dataset.sig === sig) {
@@ -102,9 +116,22 @@ export function fillLobbyInvites(box: HTMLElement, lobby: LobbyInvite, force = f
   if (!f.book.data.appearOnline) box.appendChild(h('div', { class: 'small dim-text' }, 'You are hidden from friends (Friends → Appear online).'));
   else if (!rows.length) box.appendChild(h('div', { class: 'small dim-text' }, 'No friends yet: add their friend code under Friends.'));
   else {
-    const on = rows.filter((r) => r.online);
-    if (!on.length) box.appendChild(h('div', { class: 'small dim-text' }, 'None of your friends is online.'));
-    for (const r of on) box.appendChild(friendRow(r, [inviteControl(r, lobby)]));
+    const open = rows.filter((r) => !cannotInvite(r, lobby));
+    const all = btn(
+      'Invite all',
+      () => {
+        const n = open.filter((r) => sendInvite(r, lobby)).length;
+        if (!n) return;
+        playSfx('uiConfirm');
+        toast(n === 1 ? 'Invited 1 friend.' : `Invited ${n} friends. Offline friends get it when they come online.`, 2800);
+      },
+      'tiny',
+      open.length === 0,
+    );
+    all.setAttribute('data-testid', 'invite-all');
+    all.setAttribute('data-focus', 'invite-all');
+    box.appendChild(h('div', { class: 'row' }, h('div', { class: 'small dim-text grow' }, rows.some((r) => r.online) ? '' : 'None of your friends is online; an invite waits for them.'), all));
+    for (const r of rows) box.appendChild(friendRow(r, [inviteControl(r, lobby)]));
   }
   restoreFocus(box, mark);
 }

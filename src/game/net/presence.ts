@@ -23,7 +23,7 @@ type HiMsg = {
   st: FriendStatus;
   v: string;
 };
-type InviteMsg = {
+export type InviteMsg = {
   id: string;
   room: string;
   name: string;
@@ -49,11 +49,15 @@ export interface IncomingInvite {
   expiresAt: number;
 }
 
-export type OutState = 'sent' | 'accepted' | 'declined' | 'busy' | 'expired' | 'cancelled';
+/** 'queued': the friend is offline; the invite goes to them the moment they come online (D351) */
+export type OutState = 'queued' | 'sent' | 'accepted' | 'declined' | 'busy' | 'expired' | 'cancelled';
 export interface OutInvite {
   id: string;
+  /** when a sent invite runs out (a queued one waits until the lobby closes) */
   expiresAt: number;
   state: OutState;
+  /** what is sent, kept so a queued invite can go out later */
+  msg: InviteMsg;
 }
 
 export interface FriendView {
@@ -164,7 +168,11 @@ export class Presence {
       const name = str(m.name, 16).trim();
       const was = l.peers.has(from);
       l.peers.set(from, { name, st, v: str(m.v, 32) });
-      if (!was) hi.send(this.hello(), from);
+      if (!was) {
+        hi.send(this.hello(), from);
+        // an invite sent while they were offline reaches them now (D351)
+        if (l.out?.state === 'queued') this.deliver(l, t, [from]);
+      }
       if (name) this.onName(l.code, name);
       this.changed();
     });
@@ -208,7 +216,17 @@ export class Presence {
         this.incoming.delete(id);
         this.onInviteGone(inv, 'offline');
       }
-    if (l.out?.state === 'sent') l.out.state = 'cancelled';
+    // an invite they had not answered waits for them to come back (D351)
+    if (l.out?.state === 'sent') l.out.state = 'queued';
+  }
+
+  private deliver(l: Link, t: Transport, to: string[]): void {
+    const out = l.out;
+    if (!out) return;
+    out.state = 'sent';
+    out.expiresAt = this.o.now() + out.msg.ttl;
+    t.channel<InviteMsg>(FCH.invite).send(out.msg, to);
+    this.changed();
   }
 
   private hello(): HiMsg {
@@ -251,23 +269,27 @@ export class Presence {
     return { code, online: !!p, name: p?.name ?? '', status: p?.st ?? null, version: p?.v ?? null, invite: l?.out ?? null };
   }
 
-  /** Send a friend an invite to the room `room`. False when they are not online or one is already waiting. */
+/**
+   * Invite a friend to the room `room`: sent now if they are online, else queued until they come online (D351;
+   * the relays keep nothing, so the host's own presence holds it while the lobby is open). False when the friend is
+   * not on the list, the code is bad, or an invite to them is already waiting.
+   */
   invite(code: string, room: string, zone: number, name: string, ttl = INVITE_TTL_MS): boolean {
     const l = this.links.get(code);
-    if (!l?.t || !l.peers.size || !parseRoomCode(room)) return false;
-    if (l.out?.state === 'sent' && l.out.expiresAt > this.o.now()) return false;
+    if (!l || !parseRoomCode(room)) return false;
+    if (l.out?.state === 'queued' || (l.out?.state === 'sent' && l.out.expiresAt > this.o.now())) return false;
     const id = randomPeerId();
-    l.out = { id, expiresAt: this.o.now() + ttl, state: 'sent' };
-    l.t.channel<InviteMsg>(FCH.invite).send({ id, room, name: name.slice(0, 16), zone, ttl }, [...l.peers.keys()]);
-    this.changed();
+    l.out = { id, expiresAt: Infinity, state: 'queued', msg: { id, room, name: name.slice(0, 16), zone, ttl } };
+    if (l.t && l.peers.size) this.deliver(l, l.t, [...l.peers.keys()]);
+    else this.changed();
     return true;
   }
 
   /** The lobby closed or the game started: every invite still waiting is withdrawn. */
   cancelInvites(): void {
     for (const l of this.links.values()) {
-      if (l.out?.state !== 'sent') continue;
-      if (l.t && l.peers.size) l.t.channel<CancelMsg>(FCH.cancel).send({ id: l.out.id }, [...l.peers.keys()]);
+      if (l.out?.state !== 'sent' && l.out?.state !== 'queued') continue;
+      if (l.out.state === 'sent' && l.t && l.peers.size) l.t.channel<CancelMsg>(FCH.cancel).send({ id: l.out.id }, [...l.peers.keys()]);
       l.out.state = 'cancelled';
     }
     this.changed();

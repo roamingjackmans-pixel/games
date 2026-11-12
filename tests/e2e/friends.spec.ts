@@ -76,3 +76,27 @@ test('a declined invite tells the host, and a friend can be added and removed on
   await expect(host.getByTestId('lobby-friends')).toContainText('None of your friends is online', { timeout: 10000 });
   expect(errors).toEqual([]);
 });
+
+test('an invite to an offline friend waits and reaches them when they open the game (D351)', async ({ context }) => {
+  const a = newFriendCode();
+  const b = newFriendCode();
+  const host = await context.newPage();
+  const errors: string[] = [];
+  host.on('pageerror', (e) => errors.push(String(e)));
+  await host.goto(`./?net=bc&auto=host&code=636363&me=${a}&friends=${b}`);
+  // the friend is offline: still listed, and Invite all invites them
+  const row = host.getByTestId('lobby-friends').getByTestId(`friend-${b}`);
+  await expect(row).toHaveAttribute('data-online', '0', { timeout: 10000 });
+  await host.getByTestId('invite-all').click();
+  await expect(row).toContainText('when online');
+  // they open the game later and the invite is waiting for them
+  const guest = await context.newPage();
+  guest.on('pageerror', (e) => errors.push(String(e)));
+  await guest.goto(`./?net=bc&me=${b}&friends=${a}`);
+  await expect(guest.getByTestId('invite-prompt')).toBeVisible({ timeout: 10000 });
+  await expect(row).toContainText('Invited', { timeout: 10000 });
+  await guest.getByTestId('invite-join').click();
+  await guest.getByTestId('create-start').click();
+  await expect.poll(() => sceneName(guest), { timeout: 20000 }).toBe('guestRun');
+  expect(errors).toEqual([]);
+});
