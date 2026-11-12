@@ -152,7 +152,7 @@ minutes from NG+2 on.
 
 **Boss HP trim** (D353): from the owner, every zone boss has **half** that HP in NG+1 and NG+2 (`NG_BOSS_HP_TRIM` in
 `data/roles.ts`, applied with the table above). NG+3 on goes back to the plain curve (the NG+2 column on its usual cycle
-growth), so a boss there has more than twice its NG+2 HP. The fight-length targets above are now about half as long at
+growth), so a boss there has about 3–4.5× its NG+2 HP. The fight-length targets above are now about half as long at
 NG+1 and NG+2 (the balance report flags them).
 
 **NG+ boss damage** (D314): every boss hits **×1.75** from NG+1 on (they had fallen behind the players' gear and
