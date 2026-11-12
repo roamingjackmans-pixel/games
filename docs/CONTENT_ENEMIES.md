@@ -448,7 +448,7 @@ Phase 2 — **The clock runs backward** (40% → 0%; speed ×1.2, damage ×1.69,
 - **Rewind Volley [PIERCE] [AREA]**: 8× circle(90) at eachPlayerPast(1.0), ×1.1 void (350), tell 0.9 s, cd 13; repeated 2 more times at once, re-aimed (tell 0.7 s each) *(new)*
 - **Overclock [RED]**: line(110, 380), charges 380 px, ×1.6 physical (508), tell 0.8 s, cd 15, hyper armor; repeated 3 more times at once, re-aimed (tell 0.6 s each) *(new)*
 
-**New Game+ phases (D295):** 1. Phase 1 until 70%; 2. The clock runs backward until 35%; 3. The clock runs backward: Overtime until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
+**New Game+ phases (D295):** 1. Phase 1 until 70%; 2. The clock runs backward until 35%; 3. Time Runs Out (D359) until 0%. The last is the Overtime phase: the last phase's attacks plus its own (below) with speed ×1.15, damage ×1.15, cooldowns ×0.8.
 
 **Overtime arrival (D359):** the third phase is named **Time Runs Out**: the 3.4 s field-clearing change (a metal crack, a lilac charge and burst, a gold roar) and Tock stands on a clock face with gears orbiting him and ticks rising.
 
