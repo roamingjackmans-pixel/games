@@ -503,7 +503,7 @@ export class NetHost {
       g.sentRecs.delete(id);
       g.sentMeta.delete(id);
     }
-    const json: SnapJson = { bossId: w.bossId, roomMods: { dark: w.roomMods.dark, floodUntil: w.roomMods.floodUntil }, ff: Math.round(w.friendlyFire * 100) };
+    const json: SnapJson = { bossId: w.bossId, roomMods: { dark: w.roomMods.dark, floodUntil: w.roomMods.floodUntil, floodSlow: w.roomMods.floodSlow, lightningBonusUntil: w.roomMods.lightningBonusUntil }, ff: Math.round(w.friendlyFire * 100) };
     if (Object.keys(meta).length) json.meta = meta;
     const rk = `${w.room.id}|${w.room.version}|${s.save.world.roomsVisited.length}|${s.save.world.roomsCleared.length}`;
     if (full || rk !== g.roomSent) {

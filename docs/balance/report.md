@@ -24,7 +24,7 @@ Written by `npm run balance:report` (tests/sim/report.sim.ts) from the live data
 18. **Enemy curve** (severity 3.2): NG+3: zone 2 room enemies have 10,968 HP on average, below zone 1's 12,318. *Suggested:* Check the zone roster mix and the HP curve.
 19. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
 
-(108 more findings of the same kinds are in the tables below.)
+(109 more findings of the same kinds are in the tables below.)
 
 ## 1. Enemies and bosses by zone
 
@@ -675,7 +675,7 @@ Every weapon at item level 5, rare, +0, held by a knight whose points (10 in eac
 | Colossal Sword | A/E | 2H | 526 | 173 | 541 | 43.1 | Guillotine 97, Stomp 36, Charged Swing 112 |  |
 | Crossbow | B/- | 2H | 293 | 96 | 288 | 41.4 | Piercing Bolt 51, Explosive Bolt 31, Rapid Fire 57 | ⚠ 0.65× median DPS |
 | Club | E/- | 2H | 420 | 148 | 342 | 31.1 | Bonk 79, Wild Swing 38, Tantrum 0 |  |
-| Twin Daggers | -/S | 2H | 626 | 178 | 165 | 13.8 | Shadow Step 88, Fan of Knives 23, Flurry 98 |  |
+| Twin Daggers | -/S | 2H | 626 | 208 | 165 | 13.8 | Shadow Step 88, Fan of Knives 23, Flurry 98 | ⚠ 1.41× median DPS |
 | Rapier | -/A | 1H | 459 | 128 | 163 | 19 | Lunge 51, Riposte Stance 0, Thousand Cuts 55 |  |
 | Katana | D/A | 2H | 578 | 222 | 265 | 15.5 | Iai Slash 68, Crescent 41, Blood Moon 0 | ⚠ 1.5× median DPS |
 | Bow | -/B | 2H | 299 | 110 | 287 | 34.5 | Volley 79, Piercing Shot 40, Rain 15 |  |

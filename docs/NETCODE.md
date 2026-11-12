@@ -106,7 +106,7 @@ and a JSON block.
   since the last snapshot, §6) and **`hits`** (enemy hits on the body for the guest to decide, §5). The guest's own
   record in the snapshot is ignored except for its revive ring (and its look while it follows the host).
 - Also: `bossId` (the boss bar; guests start a boss intro when it turns to a boss still in its spawn tell),
-  `roomMods` (darkness, flooding) and `ff` (the host's friendly-fire percent, D115).
+  `roomMods` (darkness, flooding and how hard it slows, the Lightning bonus on magic: D345) and `ff` (the host's friendly-fire percent, D115).
 - Telegraphs are entities, so their shapes travel in meta and the guest draws them from its own clock; particles are
   never sent. A charge's fitted bar (D272) and a two-set pattern's late `start` (D261) are part of the telegraph.
 

@@ -488,7 +488,8 @@ export function computeDerived(c: Character): Derived {
     stats,
     maxHp: Math.max(1, Math.round(hp * maxHpMult * (1 + hpPctGem))),
     maxStam: stam,
-    regen: staminaRegen(stats.endurance, boost.endurance) * regenMult,
+    // D345: a pair wielded in both hands (Twin Daggers) regains stamina faster, a bonus no card shows
+    regen: staminaRegen(stats.endurance, boost.endurance) * regenMult * (weapon.paired && twoHanded ? 1 + (weapon.dualRegenPct ?? 0) : 1),
     walk: 260 * (shield?.walkMult ?? 1) * load.effects.speed,
     twoHanded,
     weapon,

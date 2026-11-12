@@ -637,6 +637,8 @@ export interface WeaponDef {
   reqEven?: boolean;
   /** a pair (twin daggers, twin axes): two-handing wields both, for DUAL_WIELD_MULT damage (D318) */
   paired?: boolean;
+  /** a pair wielded in both hands regains stamina this much faster (D345: Twin Daggers +30%); not shown anywhere */
+  dualRegenPct?: number;
   /** the weapon's own damage type (hybrids: Bonk+Brain Void, Slicey+Brain Magic, Bonk+Prayer Fire, Slicey+Prayer Holy) */
   element?: DamageType;
   speedClass: SpeedClass;

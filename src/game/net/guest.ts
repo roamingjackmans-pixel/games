@@ -303,6 +303,9 @@ export class NetGuest {
     if (j.roomMods) {
       this.cw.roomMods.dark = j.roomMods.dark;
       this.cw.roomMods.floodUntil = j.roomMods.floodUntil;
+      // how hard the water slows (the Bloatking's phase-two flood is 30%) and the Lightning bonus on magic (D345)
+      if (typeof j.roomMods.floodSlow === 'number') this.cw.roomMods.floodSlow = j.roomMods.floodSlow;
+      if (typeof j.roomMods.lightningBonusUntil === 'number') this.cw.roomMods.lightningBonusUntil = j.roomMods.lightningBonusUntil;
     }
     this.setFriendlyFire(j.ff);
     if (j.ev) this.cw.events.push(...j.ev);

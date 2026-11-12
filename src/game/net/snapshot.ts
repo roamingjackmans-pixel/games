@@ -221,7 +221,8 @@ export interface SnapJson {
   /** the receiving guest's own HUD state */
   self?: SelfState;
   bossId?: number;
-  roomMods?: { dark: number; floodUntil: number };
+  /** floodSlow and lightningBonusUntil (D345): a guest's own body walks and hits in its copy of the room */
+  roomMods?: { dark: number; floodUntil: number; floodSlow?: number; lightningBonusUntil?: number };
   /** the host's friendly-fire percent (0–200, D115), in every snapshot so a change mid-run reaches guests */
   ff?: number;
 }

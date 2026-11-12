@@ -15,6 +15,7 @@ import { ACTION_BIT, emptyInput, type InputFrame } from '../../src/engine/input/
 import { rawDamage, addRevive, applyRemoteHit, emptySpec, heal, hitEnemy, hitPlayer, parryEnemy, REMOTE_HIT_REACH } from '../../src/game/combat/damage';
 import { bodyReportOf, decodeBody, encodeBody } from '../../src/game/net/body';
 import { ARCANE_ORB_SPIN } from '../../src/game/enemies/ai';
+import { speedMult } from '../../src/game/combat/state';
 import { runEffects } from '../../src/game/effects/run';
 import { SPELLS } from '../../src/data/spells';
 import { spawnEnemy } from '../../src/game/enemies/spawn';
@@ -588,6 +589,18 @@ describe('net: guest-owned bodies (D338)', () => {
     expect(hitPlayer(p.s.w, 0, g, spec, g.x, g.y)).toBe('none');
     p.step(0.3);
     expect(p.guests[0]!.me!.hp!.hp).toBe(p.guests[0]!.me!.hp!.max);
+  });
+
+  it("a guest's own body walks as slowly in the Bloatking's phase-two flood as the host's (D345)", () => {
+    const { p, me } = fight();
+    p.s.w.roomMods.floodUntil = 1e9;
+    p.s.w.roomMods.floodSlow = 0.3;
+    p.s.w.roomMods.lightningBonusUntil = p.s.w.time + 30;
+    p.step(0.3);
+    const gw = p.guests[0]!.cw;
+    expect(gw.roomMods.floodSlow).toBeCloseTo(0.3, 6);
+    expect(gw.roomMods.lightningBonusUntil).toBeGreaterThan(gw.time);
+    expect(speedMult(me(), gw)).toBeCloseTo(0.7, 6);
   });
 
   it('body packets round-trip', () => {

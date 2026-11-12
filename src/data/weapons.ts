@@ -120,6 +120,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   twin_daggers: {
     id: 'twin_daggers',
     paired: true, // D318: dual-wielded (two-handed) they hit 50% harder
+    dualRegenPct: 0.3, // D345: and regain stamina 30% faster (hidden)
     name: 'Twin Daggers',
     weight: 1.5,
     grades: { bonk: '-', slicey: 'S' },
