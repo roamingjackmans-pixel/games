@@ -38,6 +38,7 @@ import {
   trail,
   withAlpha,
 } from '../shapesBoss';
+import { overtimeAura } from './overtime';
 
 const MAGIC = ELEMENTS.magic;
 const HOLY = ELEMENTS.holy;
@@ -168,6 +169,7 @@ const AU_ROAR1 = [0.34, -1.16, -1.42, -0.98, -0.72, -0.15, 1.35];
 registerDraw('boss_aurelia', (ctx, s) => {
   const r = begin(s);
   const p2 = s.phase >= 1;
+  const p3 = s.phase >= 2; // D359: the third phase is absolute zero: a halo of ice shards and falling snow
   const [side, aL] = mirrored(s);
   const back = Math.sin(s.facing) < -0.6;
   const R = roar(s);
@@ -189,6 +191,7 @@ registerDraw('boss_aurelia', (ctx, s) => {
   // floor: shadow (lighter while she hovers) and the cold glow
   groundShadow(ctx, s.x, s.y + r * 0.74, r * (p2 ? 0.8 : 1.05), r * (p2 ? 0.3 : 0.4), p2 ? 0.25 : 0.38);
   glow(ctx, s.x, s.y - r * 0.4 + hover, r * (p2 ? 2.8 : 2.0), MAGIC.glow, (p2 ? 0.35 : 0.2) + Math.sin(s.t * 3) * 0.05 + R * 0.25);
+  if (p3) overtimeAura(ctx, s, r, { color: '#7fd4ff', core: '#ffffff', rings: 3, wisps: 'shard', motes: 'flake', count: 8, lift: 0.3 });
   if (holy && ag) glow(ctx, s.x, s.y - r * 1.3 + hover, r * 1.8, HOLY.glow, 0.5 * ak);
 
   ctx.save();

@@ -41,6 +41,7 @@ import {
   trail,
   withAlpha,
 } from '../shapesBoss';
+import { overtimeAura } from './overtime';
 
 /** Facing in a frame mirrored so the boss always faces +x: [side (±1), local facing angle in [−π/2, π/2]]. */
 function mirrored(s: DrawState): [number, number] {
@@ -67,48 +68,6 @@ const CT_FIRE = '#ff7a3a';
 const CT_SOUL = '#5fd0ff';
 
 // pose arrays (× r): [gripX, gripY, spadeAngle, lampX, lampY, hunch, headTilt, mouth]
-/**
- * The look of a zone 1–2 boss's New Game+ third phase (D358, s.phase 2): a pulsing aura, two runic rings turning on the
- * floor in opposite ways, wisps orbiting the body (a short comet tail behind each) and motes rising off it.
- */
-function overtimeAura(ctx: CanvasRenderingContext2D, s: DrawState, r: number, color: string, core: string, rings: number): void {
-  const t = s.t;
-  glow(ctx, s.x, s.y - r * 0.35, r * 3.3, color, 0.2 + Math.sin(t * 5) * 0.07);
-  glow(ctx, s.x, s.y - r * 0.35, r * 1.7, core, 0.12 + Math.sin(t * 7 + 1) * 0.04);
-  // runic rings on the floor
-  ctx.save();
-  ctx.translate(s.x, s.y + r * 0.72);
-  ctx.scale(1, 0.36);
-  for (let k = 0; k < rings; k++) {
-    const rad = r * (1.5 + k * 0.45);
-    ctx.setLineDash([r * (0.2 + k * 0.05), r * 0.13]);
-    ctx.lineDashOffset = -t * r * (0.7 + k * 0.2) * (k % 2 ? -1 : 1);
-    ctx.strokeStyle = withAlpha(k ? core : color, 0.55 + Math.sin(t * 4 + k) * 0.2);
-    ctx.lineWidth = Math.max(1.5, r * 0.045);
-    ctx.beginPath();
-    ctx.arc(0, 0, rad, 0, TAU);
-    ctx.stroke();
-  }
-  ctx.restore();
-  // wisps orbiting, each trailing a few fading glows
-  for (let i = 0; i < 6; i++) {
-    for (let j = 0; j < 4; j++) {
-      const a = t * 1.35 - j * 0.11 + (i / 6) * TAU;
-      const wx = s.x + Math.cos(a) * r * 1.4;
-      const wy = s.y - r * 0.15 + Math.sin(a) * r * 0.55 + Math.sin(t * 2 + i) * r * 0.06;
-      const k = 1 - j / 4;
-      glow(ctx, wx, wy, r * (0.2 + 0.1 * k), j === 0 ? core : color, 0.8 * k);
-    }
-  }
-  // motes rising
-  for (let i = 0; i < 12; i++) {
-    const k = (t * 0.45 + hash(i * 5)) % 1;
-    const mx = s.x + (hash(i * 3 + 1) - 0.5) * r * 2.2 + Math.sin(t * 2 + i) * r * 0.1;
-    const my = s.y + r * 0.7 - k * r * 2.5;
-    glow(ctx, mx, my, r * 0.1, i % 3 ? color : core, 0.75 * (1 - k));
-  }
-}
-
 const CT_REST = [1.0, -0.2, 1.45, -1.0, 0.1, 1, 0, 0];
 const CT_RAISED = [0.55, -1.05, -2.4, -0.95, 0.05, 0.75, -0.12, 0.45];
 const CT_LAMP_RAISED = [1.0, -0.22, 1.42, -0.62, -1.25, 0.7, -0.15, 0.55];
@@ -142,7 +101,7 @@ registerDraw('boss_caretaker', (ctx, s) => {
   const up = 1 - hunch; // standing taller (roar), negative = slumped (stagger)
 
   groundShadow(ctx, s.x, s.y + r * 0.72, r * 1.2, r * 0.42, 0.4);
-  if (p3) overtimeAura(ctx, s, r, CT_SOUL, '#eaffff', 2);
+  if (p3) overtimeAura(ctx, s, r, { color: CT_SOUL, core: '#eaffff', rings: 2 });
   if (p2) glow(ctx, s.x, s.y - r * 0.3, r * 2.6, FIRE, 0.28 + Math.sin(s.t * 9) * 0.05);
   if (R > 0) glow(ctx, s.x, s.y - r * 0.5, r * 2.8, fire, 0.22 * R);
 
@@ -439,7 +398,7 @@ registerDraw('boss_mother_spore', (ctx, s) => {
   const oy = s.y - L;
 
   groundShadow(ctx, s.x, s.y + r * 0.68, r * 1.45, r * 0.5, 0.42);
-  if (p3) overtimeAura(ctx, s, r, MS_BLOOM, MS_GOLD, 3);
+  if (p3) overtimeAura(ctx, s, r, { color: MS_BLOOM, core: MS_GOLD, rings: 3, motes: 'bubble' });
   if (p2) glow(ctx, s.x, s.y - r * 0.8, r * 2.8, TOX, 0.22 + Math.sin(s.t * 3) * 0.06);
   if (R > 0) glow(ctx, s.x, s.y - r * 0.6, r * 3.2 * R, glowC, 0.25 * R);
 
@@ -619,6 +578,7 @@ const BK_STAGGER = [1.0, 0.25, -0.6, -0.8, 0.35, 0.35, 0.15];
 registerDraw('boss_bloatking', (ctx, s) => {
   const r = begin(s);
   const p2 = s.phase >= 1;
+  const p3 = s.phase >= 2; // D359: the third phase floats drowned treasure and bubbles round a teal-gold glow
   const [side, aL] = mirrored(s);
   const back = Math.sin(s.facing) < -0.6;
   const R = roar(s);
@@ -650,6 +610,7 @@ registerDraw('boss_bloatking', (ctx, s) => {
     }
     ctx.restore();
   }
+  if (p3) overtimeAura(ctx, s, r, { color: '#3fd6c0', core: '#ffd24a', rings: 3, wisps: 'coin', motes: 'bubble' });
   if (R > 0) glow(ctx, s.x, s.y - r * 0.6, r * 3, BK_GOLD, 0.2 * R);
 
   ctx.save();

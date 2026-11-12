@@ -195,6 +195,17 @@ export const VEXTHORN: BossDef = {
   ],
   // New Game+ third phase only (D309)
   overtimeAttacks: [brambleCage, wildHunt],
+  // D359: a fey emerald heart-lantern, leaves and lights circling the stag
+  overtimeIntro: {
+    name: 'The Hunt Without End',
+    transitionS: 3.4,
+    transitionBeats: [
+      { atS: 0.2, sfx: 'hitBone', shake: 6, fx: 'dust', n: 16 },
+      { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#4dffc0', n: 26 },
+      { atS: 2.2, sfx: '', shake: 8, fx: 'burst', color: '#4dffc0', n: 34, r: 65 },
+      { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#e8fff4', n: 44, r: 100 },
+    ],
+  },
   arenaId: 'forest_arena',
   introTitle: 'VEXTHORN, THE HOLLOW STAG',
   introSub: 'The forest has a heart. He is wearing it, and he will not give it back.',

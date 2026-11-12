@@ -3,9 +3,9 @@ import { BOSSES } from '../../src/data/bosses';
 import { ngBossDef } from '../../src/game/boss/ngPhases';
 import { enemyFullHp } from '../../src/game/enemies/spawn';
 
-// D358: the Caretaker's and Mother Spore's New Game+ third phase arrives with its own scripted, field-clearing change
-describe('Overtime arrival for zones 1 and 2 (D358)', () => {
-  it.each(['the_caretaker', 'mother_spore'])('%s: a named, scripted third phase from NG+1, the plain one before', (id) => {
+// D358, D359: every zone 1–7 boss's New Game+ third phase arrives with its own scripted, field-clearing change
+describe('Overtime arrival for zones 1 to 7 (D358, D359)', () => {
+  it.each(['the_caretaker', 'mother_spore', 'bloatking', 'vexthorn', 'foreman_ignatius', 'saint_aurelia', 'archmagister_tock'])('%s: a named, scripted third phase from NG+1, the plain one before', (id) => {
     const def = BOSSES[id]!;
     expect(def.overtimeIntro).toBeDefined();
     const first = ngBossDef(def, 0);
@@ -25,10 +25,8 @@ describe('Overtime arrival for zones 1 and 2 (D358)', () => {
     expect(enemyFullHp(def, def.zone, 1)).toBeGreaterThan(0);
   });
 
-  it('other bosses keep the plain Overtime change', () => {
-    const p3 = ngBossDef(BOSSES.bloatking!, 1).phases[2]!;
-    expect(p3.name).toMatch(/: Overtime$/);
-    expect(p3.transitionBeats).toBeUndefined();
-    expect(p3.clearField).toBeUndefined();
+  it('the Landlord (zone 8, no third phase) is untouched', () => {
+    expect(BOSSES.the_landlord!.overtimeIntro).toBeUndefined();
+    expect(ngBossDef(BOSSES.the_landlord!, 1)).toBe(BOSSES.the_landlord);
   });
 });

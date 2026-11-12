@@ -231,6 +231,17 @@ export const SAINT_AURELIA: BossDef = {
   ],
   // New Game+ third phase only (D309)
   overtimeAttacks: [glacialCross, saintsWrath, shatterstorm],
+  // D359: a halo of ice shards and falling snow
+  overtimeIntro: {
+    name: 'Absolute Zero',
+    transitionS: 3.4,
+    transitionBeats: [
+      { atS: 0.2, sfx: 'guardBreak', shake: 6, fx: 'dust', n: 16 },
+      { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#7fd4ff', n: 26 },
+      { atS: 2.2, sfx: '', shake: 8, fx: 'burst', color: '#7fd4ff', n: 34, r: 65 },
+      { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#ffffff', n: 44, r: 100 },
+    ],
+  },
   arenaId: 'reliquary_arena',
   introTitle: 'SAINT AURELIA THE UNTHAWED',
   introSub: 'Four hundred years on guard duty. Nobody told her she could stop.',

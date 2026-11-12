@@ -170,6 +170,17 @@ export const THE_BLOATKING: BossDef = {
   ],
   // New Game+ third phase only (D309)
   overtimeAttacks: [tidalDecree, undertow],
+  // D359: teal water and gold treasure circle the king (drawn in engine/draw/bosses/zones1to3.ts)
+  overtimeIntro: {
+    name: 'The Drowning Crown',
+    transitionS: 3.4,
+    transitionBeats: [
+      { atS: 0.2, sfx: 'hitSlime', shake: 6, fx: 'dust', n: 16 },
+      { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#3fd6c0', n: 26 },
+      { atS: 2.2, sfx: '', shake: 8, fx: 'burst', color: '#3fd6c0', n: 34, r: 65 },
+      { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#ffd24a', n: 44, r: 100 },
+    ],
+  },
   arenaId: 'sewers_arena',
   introTitle: 'THE BLOATKING',
   introSub: 'Skims the rent. Drinks the runoff. Long may he float.',

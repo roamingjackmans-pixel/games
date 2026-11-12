@@ -37,6 +37,7 @@ import {
   strokePts,
   withAlpha,
 } from '../shapesBoss';
+import { overtimeAura } from './overtime';
 
 const VOID = ELEMENTS.void;
 const MAGIC = ELEMENTS.magic;
@@ -107,6 +108,7 @@ const TK_STAGGER = [0.6, -0.42, -0.85, -0.48, -0.36, 0.35, -0.4];
 registerDraw('boss_tock', (ctx, s) => {
   const r = begin(s);
   const p2 = s.phase >= 1;
+  const p3 = s.phase >= 2; // D359: the third phase runs out of time: a clock face on the floor, gears and ticks round him
   const [side, aL] = mirrored(s);
   const back = Math.sin(s.facing) < -0.6;
   const R = roar(s);
@@ -131,6 +133,7 @@ registerDraw('boss_tock', (ctx, s) => {
   groundShadow(ctx, s.x, s.y + r * 0.66, r * 1.0, r * 0.34, 0.3);
   if (p2) glow(ctx, s.x, s.y - r * 0.9, r * 2.7, REWIND, 0.32 + Math.sin(s.t * 5) * 0.06);
   else glow(ctx, s.x, s.y - r * 0.6, r * 1.9, VOID.glow, 0.28);
+  if (p3) overtimeAura(ctx, s, r, { color: REWIND, core: '#ffd870', rings: 3, ringKind: 'clock', wisps: 'gear', motes: 'tick', count: 7, lift: 0.4 });
   if (R > 0) glow(ctx, s.x, s.y - r * 1.0, r * 2.6, p2 ? REWIND : VOID.glow, 0.35 * R);
 
   ctx.save();

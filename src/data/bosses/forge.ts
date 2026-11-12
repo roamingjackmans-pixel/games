@@ -262,6 +262,17 @@ export const FOREMAN_IGNATIUS: BossDef = {
   ],
   // New Game+ third phase only (D309)
   overtimeAttacks: [slagRain, anvilDrop],
+  // D359: white-hot seams, sparks and embers round the golem
+  overtimeIntro: {
+    name: 'Meltdown',
+    transitionS: 3.4,
+    transitionBeats: [
+      { atS: 0.2, sfx: 'hitMetal', shake: 6, fx: 'dust', n: 16 },
+      { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#ff8a1a', n: 26 },
+      { atS: 2.2, sfx: '', shake: 8, fx: 'burst', color: '#ff8a1a', n: 34, r: 65 },
+      { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#fff2c0', n: 44, r: 100 },
+    ],
+  },
   arenaId: 'forge_arena',
   introTitle: 'FOREMAN IGNATIUS',
   introSub: 'Twelve-hour shifts. No breaks. You are the break.',

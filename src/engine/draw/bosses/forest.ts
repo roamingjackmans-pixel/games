@@ -33,6 +33,7 @@ import {
   taper,
   withAlpha,
 } from '../shapesBoss';
+import { overtimeAura } from './overtime';
 
 const HIDE = '#cfc4a6';
 const HIDE_DARK = '#8a7e62';
@@ -43,6 +44,7 @@ const MOSS = '#3f6a34';
 const LEAF = '#2f5a30';
 const LANTERN = '#ffcf6a';
 const BLAZE = '#ff9b2e';
+const FEY = '#4dffc0';
 
 // ---------------------------------------------------------------- Vexthorn
 // Built as a little 3D model (forward d, lateral l, height h, in units of r) and projected into the 3/4 view
@@ -130,6 +132,7 @@ function horn3(
 registerDraw('boss_vexthorn', (ctx, s) => {
   const r = begin(s);
   const p2 = s.phase >= 1;
+  const p3 = s.phase >= 2; // D359: the third phase burns a fey emerald, leaves and lights circling the Hollow Stag
   const R = roar(s);
   const w = poseWeights(s);
   const stunned = s.pose === 'stagger';
@@ -138,7 +141,7 @@ registerDraw('boss_vexthorn', (ctx, s) => {
   const beat = 0.5 + 0.5 * Math.sin(s.t * (p2 ? 9 : 4));
   const ag = atkGlow(s);
   const ak = atkK(s);
-  const heart = p2 ? BLAZE : LANTERN;
+  const heart = p3 ? FEY : p2 ? BLAZE : LANTERN;
   const fa = s.facing;
   const run = charging ? 1 : 0.1 + s.moving * 0.9;
   const freq = charging ? 16 : 11;
@@ -153,7 +156,8 @@ registerDraw('boss_vexthorn', (ctx, s) => {
   ctx.ellipse(v.x - v.fx * r * 0.05, v.y, r * (0.42 + 0.62 * Math.hypot(v.fx, v.fy * K)), r * 0.36, Math.atan2(v.fy * K, v.fx), 0, TAU);
   ctx.fill();
   ctx.restore();
-  if (p2) glow(ctx, s.x, s.y - r * 0.4, r * 2.5, BLAZE, 0.2 + beat * 0.12);
+  if (p3) overtimeAura(ctx, s, r, { color: FEY, core: '#e8fff4', rings: 3, wisps: 'leaf', motes: 'glow', count: 8 });
+  if (p2) glow(ctx, s.x, s.y - r * 0.4, r * 2.5, p3 ? FEY : BLAZE, 0.2 + beat * 0.12);
   if (R > 0) glow(ctx, s.x, s.y - r * 0.6, r * 2.8, heart, 0.28 * R);
 
   // charge streaks trailing behind

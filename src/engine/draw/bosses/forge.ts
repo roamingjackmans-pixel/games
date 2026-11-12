@@ -38,6 +38,7 @@ import {
   trail,
   withAlpha,
 } from '../shapesBoss';
+import { overtimeAura } from './overtime';
 
 const FIRE = ELEMENTS.fire;
 const IRON = '#4a4852';
@@ -471,6 +472,7 @@ const CRACKS: number[][] = [
 registerDraw('boss_ignatius', (ctx, s) => {
   const r = begin(s);
   const p2 = s.phase >= 1;
+  const p3 = s.phase >= 2; // D359: the third phase is a meltdown: white-hot seams, a sun of sparks and embers
   const [side, aL] = mirrored(s);
   const R = roar(s);
   const ag = atkGlow(s);
@@ -489,10 +491,11 @@ registerDraw('boss_ignatius', (ctx, s) => {
   const stomp = Math.abs(Math.sin(s.t * 4)) * r * 0.05 * s.moving;
   const body = p2 ? MOLTEN_BODY : IRON;
   const bodyLight = p2 ? '#5a2216' : IRON_LIGHT;
-  const seam = p2 ? LAVA_HOT : FIRE.glow;
+  const seam = p3 ? '#fff6d8' : p2 ? LAVA_HOT : FIRE.glow;
 
   groundShadow(ctx, s.x, s.y + r * 0.72, r * 1.25, r * 0.42, 0.42);
-  if (p2) glow(ctx, s.x, s.y - r * 0.3, r * 2.7, LAVA, 0.38 + heat * 0.15);
+  if (p3) overtimeAura(ctx, s, r, { color: '#ff8a1a', core: '#fff2c0', rings: 3, wisps: 'shard', motes: 'ember', count: 8 });
+  if (p2) glow(ctx, s.x, s.y - r * 0.3, r * 2.7, p3 ? '#ffb040' : LAVA, 0.38 + heat * 0.15);
   else glow(ctx, s.x, s.y - r * 0.1, r * 1.4, FIRE.glow, 0.18);
   if (R > 0) glow(ctx, s.x, s.y - r * 0.6, r * 2.8, FIRE.glow, 0.25 * R);
 
