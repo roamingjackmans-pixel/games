@@ -323,7 +323,7 @@ locks the focused item or gem. A button a menu used is swallowed until released,
 nearest enemy within 160 px of the facing cone. Aim assist (strength in Settings) snaps projectiles within ±14° of an
 enemy. On a pad, a small silver **aim arrow** at the local player's feet shows which way they face (D343): two winged
 curves wrap the front half of the eye-coloured dot and meet at an arrow, longer with a bow, crossbow, chakram, staff
-or talisman in either hand.
+or talisman in either hand. The wings are see-through at their back ends and solid toward the arrow (D344).
 
 **Per-character pad layout** (D266): each character saves its own gamepad buttons, menu confirm / back and aim
 assist; keyboard keys, button-picture style, hold/toggle block and touch settings stay global. On the title screen

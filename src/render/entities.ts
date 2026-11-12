@@ -369,6 +369,10 @@ export function drawPlayerDot(ctx: CanvasRenderingContext2D, e: Entity, x: numbe
 
 /** D343: the aim arrow's reach past the dot's wings, px: short, and long with a shooting or casting item in hand. */
 export const AIM_ARROW_LEN = { short: 7, long: 15 };
+/** D344: the whole aim arrow is drawn this much bigger than its numbers (twice the first one, D343). */
+export const AIM_ARROW_SCALE = 2;
+/** D344: how see-through the wings are at their back ends, growing fully solid toward the arrow. */
+export const AIM_ARROW_BACK_ALPHA = 0.12;
 
 /** A shooting or casting item in either hand (bow, crossbow, chakram, staff, talisman): the aim arrow is long (D343). */
 export function aimsFar(e: Entity): boolean {
@@ -379,7 +383,8 @@ export function aimsFar(e: Entity): boolean {
 /**
  * D343: on a controller, a small silver arrow at the local player's feet shows which way they are looking. Two
  * feathered wings wrap half way round the eye-coloured dot (its front half) and meet at an arrow pointing the way the
- * player faces; it reaches further with a bow, crossbow, chakram, staff or talisman in either hand.
+ * player faces; it reaches further with a bow, crossbow, chakram, staff or talisman in either hand. D344: twice the size,
+ * and see-through at the wings' back ends, growing solid toward the arrow.
  */
 export function drawAimArrow(ctx: CanvasRenderingContext2D, e: Entity, x: number, cy: number): void {
   const pl = e.pl;
@@ -392,7 +397,15 @@ export function drawAimArrow(ctx: CanvasRenderingContext2D, e: Entity, x: number
   ctx.globalAlpha = e.anim.alpha * 0.95;
   ctx.translate(x, cy + PLAYER_DOT_DY);
   ctx.rotate(e.facing);
+  ctx.scale(AIM_ARROW_SCALE, AIM_ARROW_SCALE);
   ctx.lineJoin = 'round';
+  // from the wings' back ends (their flanks, x 0) to where they meet the shaft: faint to solid; the shaft and head solid
+  const fade = (color: string): CanvasGradient => {
+    const g = ctx.createLinearGradient(-0.5, 0, R + 2.6, 0);
+    g.addColorStop(0, withAlpha(color, AIM_ARROW_BACK_ALPHA));
+    g.addColorStop(1, withAlpha(color, 1));
+    return g;
+  };
   ctx.lineCap = 'round';
   // the wings: a tapered crescent each side, from the dot's flank (thin) to its front (full), like a swept feather
   const n = 10;
@@ -414,12 +427,12 @@ export function drawAimArrow(ctx: CanvasRenderingContext2D, e: Entity, x: number
     for (const [px, py] of pts) ctx.lineTo(px, py);
     ctx.closePath();
     ctx.lineWidth = 1.6;
-    ctx.strokeStyle = OUTLINE;
+    ctx.strokeStyle = fade(OUTLINE);
     ctx.stroke();
-    ctx.fillStyle = SILVER;
+    ctx.fillStyle = fade(SILVER);
     ctx.fill();
     // two feather notches on each wing
-    ctx.strokeStyle = SHADE;
+    ctx.strokeStyle = fade(SHADE);
     ctx.lineWidth = 0.6;
     for (const t of [0.42, 0.7]) {
       const a = side * (Math.PI / 2) * (1 - t) + side * 0.18 * t;
