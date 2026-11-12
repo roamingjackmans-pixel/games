@@ -4,6 +4,7 @@ import { GEM_FAMILIES, makeGem, rollGemQuality } from '../../data/gems';
 import { SPELLS } from '../../data/spells';
 import type { Rng } from '../../engine/rng';
 import { makeItem } from '../items/make';
+import { itemName } from '../items/generate';
 import type { Character, ClassId, Gem, Item, StatId } from '../types';
 import { STAT_CAP, pointsForLevel } from '../combat/formulas';
 
@@ -11,6 +12,11 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
   const cls = CLASSES[classId];
   const mk = (b: string): Item => (rng ? makeItem(b, 'common', 1, { rng }) : makeItem(b, 'common', 1));
   const equipment: Character['equipment'] = { main: mk(cls.start.main), off: null, head: null, body: null, legs: null, ring1: null, ring2: null, ring3: null, ring4: null };
+  // a starting weapon may be a scaling variant (D349)
+  if (cls.start.mainVariant && equipment.main) {
+    equipment.main.variant = cls.start.mainVariant;
+    equipment.main.name = itemName(null, equipment.main);
+  }
   if (cls.start.off) equipment.off = mk(cls.start.off);
   for (const a of cls.start.armor) {
     const it = mk(a);

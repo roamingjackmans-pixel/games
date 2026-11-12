@@ -991,7 +991,7 @@ Ten classes (CONTENT_SPELLS_CLASSES §3 is the source of truth; every kit meets 
 | Pyre Priest | 10 / 7 / 11 / 3 / 4 / 13 | Prayer / Bonk | Censer Flail, Wooden Talisman; Heal, Bless Weapon |
 | Battlemage | 7 / 7 / 13 / 8 / 10 / 3 | Bonk / Brain | Colossal Sword two-handed (D329), Round Shield (D326), Apprentice Staff as 2nd weapon; Arcane Bolt, Scatter Shards |
 | Hunter | 7 / 9 / 10 / 14 / 5 / 3 | Slicey / Bonk | Halberd (two-handed), a Bow and a Whip in the bag (D334) |
-| Zealot | 8 / 8 / 3 / 12 / 3 / 14 | Prayer / Slicey | Rapier (D334), Silver Talisman; Sunray, Bless Weapon |
+| Zealot | 8 / 8 / 3 / 12 / 3 / 14 | Prayer / Slicey | Blessed Katana (D349), Silver Talisman; Sunray, Bless Weapon |
 | Berserker | 10 / 8 / 12 / 11 / 3 / 4 | Bonk / Slicey (D334) | Twin Axes (dual-wielded) |
 | Nobody | 8 / 8 / 8 / 8 / 8 / 8 | none / every stat (D334) | Club, a loincloth, one random gem |
 

@@ -98,7 +98,10 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
     expect(bz.stats.bonk).toBeGreaterThanOrEqual(WEAPONS.twin_axes!.req.bonk);
     expect(bz.stats.slicey).toBeGreaterThanOrEqual(WEAPONS.twin_axes!.req.slicey);
     const z = CLASSES.occultist;
-    expect(z.start.main).toBe('rapier'); // D334
+    expect(z.start.main).toBe('katana'); // D349: a Blessed Katana (was a Rapier, D334)
+    const zc = newCharacter('occultist', 'Z', 'z', new Rng(1));
+    expect(zc.equipment.main?.variant).toBe('blessed');
+    expect(zc.equipment.main?.name).toBe('Blessed Katana');
     expect(z.stats.slicey + z.stats.prayer).toBeGreaterThanOrEqual(24);
   });
   it('every weapon class has 3 existing skills in Q/E/R order and the data validates', () => {

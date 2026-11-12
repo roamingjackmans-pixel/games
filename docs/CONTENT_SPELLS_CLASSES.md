@@ -82,7 +82,7 @@ points (D334: the Hunter too).
 | **Pyre Priest** (`cleric`) | 10 | 7 | 11 | 3 | 4 | 13 | 48 | prayer / bonk | Censer Flail | Wooden Talisman | — | Sexton's Mail, Sexton's Chausses | Heal, Bless Weapon | — | "Heals the faithful. Cremates the rest. Same sermon either way." |
 | **Battlemage** (`spearman`) | 7 | 7 | 13 | 8 | 10 | 3 | 48 | bonk / brain | Colossal Sword | Round Shield (D326) | Apprentice Staff | Crypt Rags, Rag Wraps | Arcane Bolt, Scatter Shards | — | "Read one book on magic. Hit the librarian with a sword the size of the shelf." |
 | **Hunter** (`hunter`) | 7 | 9 | 10 | 14 | 5 | 3 | 48 | slicey / bonk | Halberd (two-handed, D334) | — | — | Rag Hood, Crypt Rags, Rag Wraps | — | Bow, Whip | "Can track anything. Mostly tracks in mud." |
-| **Zealot** (`occultist`) | 8 | 8 | 3 | 12 | 3 | 14 | 48 | prayer / slicey | Rapier (D334) | Silver Talisman | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | Sunray, Bless Weapon | — | "Up at five to pray. Up at five past to stab whoever was not." |
+| **Zealot** (`occultist`) | 8 | 8 | 3 | 12 | 3 | 14 | 48 | prayer / slicey | Blessed Katana (B Slicey / C Prayer, Holy; D349) | Silver Talisman | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | Sunray, Bless Weapon | — | "Up at five to pray. Up at five past to stab whoever was not." |
 | **Berserker** (`berserker`) | 10 | 8 | 12 | 11 | 3 | 4 | 48 | bonk / slicey (D334) | Twin Axes (two-handed) | — | — | Sexton's Mail, Sexton's Chausses | — | — | "Was asked to calm down once. Once. Has never been asked to count." |
 | **Nobody** (`nobody`) | 8 | 8 | 8 | 8 | 8 | 8 | 48 | none / all six (D334) | Club | — | — | Loincloth | — | 1 gem | "Joe." |
 

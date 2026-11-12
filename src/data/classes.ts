@@ -12,7 +12,8 @@ export interface ClassDef {
   primary: StatId | null;
   secondary: StatId | readonly StatId[];
   /** `alt` is the 2nd (quick-swap) weapon slot: a weapon, staff or talisman (D117) */
-  start: { main: string; off?: string; alt?: string; armor: string[]; spells: string[]; bag?: string[]; gems?: number };
+  /** `mainVariant`: the starting weapon's scaling variant (D349: the Zealot's Blessed Katana), data/weaponVariants.ts */
+  start: { main: string; mainVariant?: string; off?: string; alt?: string; armor: string[]; spells: string[]; bag?: string[]; gems?: number };
   twoHanded?: boolean;
   blurb: string;
   look: {
@@ -148,7 +149,8 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     primary: 'prayer',
     secondary: 'slicey',
     // D334: a Rapier (was the Dawn Glaive)
-    start: { main: 'rapier', off: 'silver_talisman', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: ['sunray', 'bless_weapon'] },
+    // D349: a Blessed Katana (B Slicey / C Prayer, Holy; was a Rapier, D334): a plain one needs Bonk 7
+    start: { main: 'katana', mainVariant: 'blessed', off: 'silver_talisman', armor: ['sextons_mail_head', 'sextons_mail_body', 'sextons_mail_legs'], spells: ['sunray', 'bless_weapon'] },
     blurb: 'Up at five to pray. Up at five past to stab whoever was not.',
     look: { skin: '#d8c0b0', hair: '#e8d8a0', shirt: '#efe6d2', legs: '#5a4a2a', head: 'hood', trim: '#e6b84a', hairStyle: 'long', beard: 'none', hat: '#d8c8a0', belt: '#e6b84a', emblem: 'sun' },
   },
