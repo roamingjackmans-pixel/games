@@ -281,9 +281,14 @@ export class GameSession {
     const node = this.layout.byId[roomId];
     if (!node) throw new Error(`no room ${roomId}`);
     const w = this.w;
-    // clear the previous room: everything except players
+    // clear the previous room: everything except players, and what follows a living player round (D350: a Regen Aura,
+    // an incense cloud), which goes with them into the next room for the rest of its time
     this.rememberLeftBehind();
-    for (const e of w.entities.values()) if (e.type !== 'player') w.remove(e);
+    const followsPlayer = (e: Entity): boolean => {
+      const f = e.type === 'hazard' && e.hz?.follow ? w.get(e.hz.follow) : undefined;
+      return !!f && f.type === 'player' && !f.pl?.downed && !f.pl?.deadUntilRest;
+    };
+    for (const e of w.entities.values()) if (e.type !== 'player' && !followsPlayer(e)) w.remove(e);
     w.sweep();
     w.scheduled = [];
     w.fallen = [];
