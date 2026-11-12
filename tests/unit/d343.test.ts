@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { WEAPONS } from '../../src/data/weapons';
 import { WEAPON_VARIANTS } from '../../src/data/weaponVariants';
 import { applyVariant } from '../../src/game/items/weaponOf';
-import { BONK_HEAVY_MULT, gradeDamageMult, spellDamageMult } from '../../src/game/combat/formulas';
+import { BONK_HEAVY_MULT, SLICEY_LED_MULT, gradeDamageMult, sliceyLed, spellDamageMult } from '../../src/game/combat/formulas';
 import { World } from '../../src/game/world';
 import { Room } from '../../src/game/room';
 import { newCharacter } from '../../src/game/player/character';
@@ -21,7 +21,7 @@ describe('D343 balance', () => {
   it('a weapon that scales A or S with Bonk, variant included, deals 10% less', () => {
     for (const def of Object.values(WEAPONS)) {
       const heavy = def.grades.bonk === 'A' || def.grades.bonk === 'S';
-      expect(gradeDamageMult(def), def.id).toBe(heavy ? BONK_HEAVY_MULT : 1);
+      expect(gradeDamageMult(def), def.id).toBeCloseTo((heavy ? BONK_HEAVY_MULT : 1) * (sliceyLed(def) ? SLICEY_LED_MULT : 1), 9);
     }
     expect(['greathammer', 'greataxe', 'colossal_sword', 'battleaxe', 'halberd'].every((id) => gradeDamageMult(WEAPONS[id]!) === 0.9)).toBe(true);
     expect(gradeDamageMult(WEAPONS.longsword!)).toBe(1);
@@ -72,5 +72,19 @@ describe('D343 balance', () => {
     expect(aimsFar(p)).toBe(false);
     d.offWeapon = { def: WEAPONS.crossbow!, item: null as never, power: 1, meetsReq: true };
     expect(aimsFar(p)).toBe(true);
+  });
+});
+
+// D347: Slicey-based weapons deal 20% more
+describe('D347 Slicey-based weapons', () => {
+  it('Slicey above Bonk (as rolled) is ×1.2; equal or Bonk-led is not', () => {
+    const led = Object.values(WEAPONS).filter((d) => sliceyLed(d)).map((d) => d.id).sort();
+    expect(led).toEqual(['bow', 'chakram', 'dawn_glaive', 'katana', 'rapier', 'spear', 'spellblade', 'twin_axes', 'twin_daggers', 'whip'].sort());
+    expect(gradeDamageMult(WEAPONS.twin_daggers!)).toBeCloseTo(1.2, 9);
+    expect(gradeDamageMult(WEAPONS.longsword!)).toBe(1);
+    expect(gradeDamageMult(WEAPONS.greathammer!)).toBeCloseTo(0.9, 9);
+    // a Keen Longsword (B Bonk / A Slicey) counts
+    const keen = applyVariant(WEAPONS.longsword!, WEAPON_VARIANTS.longsword!.find((v) => v.grades.slicey === 'A')!);
+    expect(gradeDamageMult(keen)).toBeCloseTo(1.2, 9);
   });
 });

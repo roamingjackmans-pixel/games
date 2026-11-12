@@ -164,9 +164,19 @@ export function weaponScaling(
 /** D343: a weapon that scales A or S with Bonk (as rolled, its variant included) deals 10% less. */
 export const BONK_HEAVY_MULT = 0.9;
 
-/** A weapon's damage multiplier from how it scales (D343): ×0.9 for Bonk A or S, ×1 otherwise. */
-export function gradeDamageMult(def: { grades: { bonk: Grade } }): number {
-  return def.grades.bonk === 'A' || def.grades.bonk === 'S' ? BONK_HEAVY_MULT : 1;
+/** D347: a Slicey-based weapon (its Slicey grade above its Bonk grade, as rolled) deals 20% more. */
+export const SLICEY_LED_MULT = 1.2;
+
+const GRADE_ORDER: Grade[] = ['-', 'E', 'D', 'C', 'B', 'A', 'S'];
+
+/** A weapon scales more with Slicey than with Bonk (D347): Twin Daggers, Rapier, Katana, Bow, Whip, Spear, Twin Axes… */
+export function sliceyLed(def: { grades: { bonk: Grade; slicey: Grade } }): boolean {
+  return GRADE_ORDER.indexOf(def.grades.slicey) > GRADE_ORDER.indexOf(def.grades.bonk);
+}
+
+/** A weapon's damage multiplier from how it scales: ×0.9 for Bonk A or S (D343), ×1.2 when Slicey-based (D347). */
+export function gradeDamageMult(def: { grades: { bonk: Grade; slicey: Grade } }): number {
+  return (def.grades.bonk === 'A' || def.grades.bonk === 'S' ? BONK_HEAVY_MULT : 1) * (sliceyLed(def) ? SLICEY_LED_MULT : 1);
 }
 
 /** weaponDamage = base × (1 + Σ grade × f(effStat)) × attackMultiplier × mods; 40% below requirement */

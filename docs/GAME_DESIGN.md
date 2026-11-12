@@ -227,7 +227,8 @@ statGrowth(s) = (1 + 1.9 f(s)) / (1 + 1.9 f(50))  (1 to 50, ×2 at 100, ×8.25 a
 grades (D88): S 1.9 · A 1.55 · B 1.15 · C 0.8 · D 0.45 · E 0.2 · – 0
 
 weaponPower = base1 × (1 + 0.45 (ilvl − 1)) × (1 + Σ grade × f(effStat) × m) × rarity power × reinforcement
-              × 0.9 if it scales A or S with Bonk (as rolled, variant included; D343) × 0.4 if below requirement
+              × 0.9 if it scales A or S with Bonk (as rolled, variant included; D343)
+              × 1.2 if Slicey-based: its Slicey grade above its Bonk grade (D347) × 0.4 if below requirement
    effStat: Bonk counts ×1.5 (max 999) while two-handing (D72); everything else as it is
 hit         = weaponPower × swing mult × (1 + damage %) + gem adds + flat affix damage   (weaponHitByType, D294)
 armorDef    = def1 × slot mult × (1 + 0.6 (ilvl − 1)) × reinforcement
