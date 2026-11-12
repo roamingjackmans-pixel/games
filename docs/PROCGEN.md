@@ -140,7 +140,7 @@ From cycle 1 (NG+1) the same generators run with the cycle in every stream label
 |---|---|
 | **Zone 8 head counts** (D276) | every room is budgeted like a zone 8 room of its depth (`budgetZone`), priced in the zone's own mix, never below its own budget; the share grows with it, so Shards and loot per room stay the same |
 | **An Elite in every room** (D296) | a room whose waves rolled none makes one eligible enemy (earliest wave) an Elite, or adds an Elite from the mix to wave 1 (`ensureNgElite`) |
-| **Bonus boss room** (D278, D290, D322) | one combat room per zone (`bonusBossFor`) holds a boss from any zone in its second phase instead of waves. Pool: every boss with a second phase that is not `arenaBound` (not the Bloatking, Ignatius or the Landlord). Its bar starts full at 30% of the room's zone boss's full HP for the cycle (not its own); it hits like a boss of the room's zone; Shards ×0.3; a boss chest's loot; not counted as a boss kill |
+| **Bonus boss room** (D278, D290, D322, D360) | one combat room per zone (`bonusBossFor`) holds a boss from any zone in its second phase (its third, Overtime, from NG+2: `bonusBossPhase`) instead of waves. Pool: every boss with a second phase that is not `arenaBound` (not the Bloatking, Ignatius or the Landlord). Its bar starts full at 30% of the room's zone boss's full HP for the cycle (not its own); it hits like a boss of the room's zone; Shards ×0.3; a boss chest's loot; not counted as a boss kill |
 | **Third boss phase** (D295) | zone 1–7 bosses spawn with a derived three-phase list (`boss/ngPhases.ts`) |
 | Enemy scaling | HP, damage, item level and per-zone NG+ damage tables live in `combat/formulas.ts` and `data/roles.ts` (D209, D259, D275, D287); GAME_DESIGN covers the numbers |
 

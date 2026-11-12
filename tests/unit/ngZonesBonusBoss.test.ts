@@ -14,6 +14,7 @@ import { enemyDmgMult } from '../../src/game/combat/formulas';
 import { generateZone } from '../../src/game/procgen/zone';
 import { planRoom } from '../../src/game/procgen/waves';
 import { zoneDef } from '../../src/data/zones';
+import type { BossDef } from '../../src/game/types';
 import { BONUS_BOSS_HP_PCT, bonusBossFor, bonusBossPool } from '../../src/game/procgen/bonusBoss';
 import { checkDeath } from '../../src/game/combat/damage';
 import { validateAttack } from '../../src/data/validate';
@@ -133,9 +134,9 @@ describe("The Caretaker's Last Rites (D277)", () => {
   });
 });
 
-function ngSession(seed: string, zone = 1): GameSession {
+function ngSession(seed: string, zone = 1, cycle = 1): GameSession {
   const c = newCharacter('knight', 'Joe', 'p', new Rng('bb'));
-  c.cycle = 1;
+  c.cycle = cycle;
   c.tutorialDone = true;
   c.level = 120;
   const save = newSave(1, c, seed);
@@ -217,6 +218,27 @@ describe('New Game+ bonus boss rooms (D278)', () => {
     expect(s.save.stats.bossKills).toBe(killsBefore);
     // and it left loot
     expect([...s.w.entities.values()].some((e) => e.type === 'pickup' && e.pk?.kind === 'item')).toBe(true);
+  });
+
+  it('fights in its second phase in NG+1 and its third (Overtime) from NG+2 on, held there (D360)', () => {
+    for (const [cycle, want] of [[1, 1], [2, 2], [3, 2]] as const) {
+      const s = ngSession('BONUSROOM', 1, cycle);
+      const bb = bonusBossFor(s.layout)!;
+      s.enterRoom(bb.roomId, s.layout.byId[bb.roomId]!.doors[0]!);
+      const me = s.w.players[0]!;
+      me.x = 640;
+      me.y = 368;
+      s.tick(0.016);
+      const boss = s.w.get(s.w.bossId)!;
+      expect(boss.en!.bonusBoss).toBe(true);
+      expect(boss.en!.phase).toBe(want);
+      const live = (boss.en!.def as unknown as BossDef).phases;
+      expect(boss.en!.phaseAttacks).toBe(live[want]!.attacks);
+      if (want === 2) expect(live[2]!.name).toMatch(/Overtime|Lantern|Bloom|Hunt|Meltdown|Absolute|Time Runs/);
+      // held: a heavy hit does not change the phase
+      boss.hp!.hp = Math.max(1, boss.hp!.max * 0.05);
+      expect(boss.en!.phase).toBe(want);
+    }
   });
 
   it('no bonus boss in the first playthrough', () => {

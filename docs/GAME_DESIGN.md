@@ -655,9 +655,10 @@ parryable three-cut combo), Repossession (three Red charges), Hostile Takeover (
 circles round the target), Total Eviction (a Piercing burst with 1 s to walk out) and eviction notices. He dies, and
 the credits roll, only when phase 4's bar is empty. His earlier phases shrink the void platform (D69).
 
-### 7.5 NG+ bonus boss rooms (D278, D290, D322)
+### 7.5 NG+ bonus boss rooms (D278, D290, D322, D360)
 
-From NG+1 one combat room per zone (seeded) holds a random boss from any zone in its **second phase**, on a **full bar
+From NG+1 one combat room per zone (seeded) holds a random boss from any zone in its **second phase** (from NG+2 on, its
+**third phase**, the Overtime one with its new look, D360), on a **full bar
 worth 30% of the room's zone boss's** full HP in this playthrough (D322: an Archmagister met in zone 1 has 30% of the
 Caretaker's HP, not of its own), instead of the room's waves ("… waits here, weakened."). It hits as
 hard as a boss of the room's zone and stays in that phase. Bosses whose phase 2 needs their own arena (`arenaBound`:

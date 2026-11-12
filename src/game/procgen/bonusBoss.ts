@@ -12,6 +12,14 @@ export const BONUS_BOSS_HP_PCT = 0.3;
 export const BONUS_BOSS_SHARD_MULT = 0.3;
 /** The phase it fights in (0-based: its second phase). */
 export const BONUS_BOSS_PHASE = 1;
+/** From this New Game+ cycle on it fights in its third phase, the Overtime one (D360; 0-based phase 2). */
+export const BONUS_BOSS_PHASE3_FROM_CYCLE = 2;
+export const BONUS_BOSS_PHASE3 = 2;
+
+/** The phase a bonus boss fights in this cycle: its second, or from NG+2 its third (if its form has one). */
+export function bonusBossPhase(cycle: number, phaseCount: number): number {
+  return Math.min(cycle >= BONUS_BOSS_PHASE3_FROM_CYCLE ? BONUS_BOSS_PHASE3 : BONUS_BOSS_PHASE, phaseCount - 1);
+}
 
 /**
  * Bosses that can fight outside their arena: every boss with a second phase that is not `arenaBound`; with a zone,

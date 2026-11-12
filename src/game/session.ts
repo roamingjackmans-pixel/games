@@ -25,7 +25,7 @@ import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, resetPlayerStun } from './combat/damage';
 import { coopHpMult, enemyDmgMult, reviveRequirement } from './combat/formulas';
 import { zoneDmgFactor } from '../data/roles';
-import { BONUS_BOSS_HP_PCT, BONUS_BOSS_PHASE, BONUS_BOSS_SHARD_MULT } from './procgen/bonusBoss';
+import { BONUS_BOSS_HP_PCT, BONUS_BOSS_SHARD_MULT, bonusBossPhase } from './procgen/bonusBoss';
 import { BOSSES } from '../data/bosses';
 import { DEATH_TITLES } from '../data/story';
 import { newWorldState } from './save/schema';
@@ -801,8 +801,10 @@ export class GameSession {
     const [x, y] = w.room.nearestFloor(pts[0]![0], pts[0]![1], def.radius || 56);
     const e = spawnEnemy(w, def, x, y, { tellS: 1.6, zone: def.zone, dmgMult: dmgFix, zoneResist: zd.resist, zoneImmune: zd.statusImmune });
     const en = e.en!;
-    const phase = Math.min(BONUS_BOSS_PHASE, def.phases.length - 1);
-    const ph = def.phases[phase]!;
+    // D360: its second phase in NG+1, its third (Overtime) from NG+2 on, read from the form it spawned in
+    const live = (en.def as unknown as BossDef).phases;
+    const phase = bonusBossPhase(cyc, live.length);
+    const ph = live[phase]!;
     en.bonusBoss = true;
     en.phase = phase;
     en.phaseAttacks = ph.attacks;
