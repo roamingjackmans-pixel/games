@@ -21,7 +21,7 @@ import { SPELLS } from '../../src/data/spells';
 import { spawnEnemy } from '../../src/game/enemies/spawn';
 import { ENEMIES } from '../../src/data/enemies';
 import { BOSSES } from '../../src/data/bosses';
-import type { ClassId, SaveFile } from '../../src/game/types';
+import type { BossDef, ClassId, SaveFile } from '../../src/game/types';
 import type { Entity, GameEvent } from '../../src/game/world';
 
 function saveOf(cls: ClassId, name: string, pid: string, seed = 'COOP-SEED'): SaveFile {
@@ -41,10 +41,11 @@ interface Party {
   step(sec: number): void;
 }
 
-function party(nGuests = 3, latencyMs = 30): Party {
+function party(nGuests = 3, latencyMs = 30, cycle = 0): Party {
   const hub = new LoopbackHub({ latencyMs, jitterMs: 5 });
   const clock = (): number => hub.now / 1000;
   const hostSave = saveOf('knight', 'Host Joe', 'host');
+  hostSave.character.cycle = cycle;
   const s = new GameSession(hostSave);
   s.start();
   const host = new NetHost(hub.join('ROOM22', 'host-peer'), 'ROOM22', hostSave, clock);
@@ -460,6 +461,38 @@ describe('net: guest-owned bodies (D338)', () => {
     const want = el.en!.eliteOrbAngle + ARCANE_ORB_SPIN * (p.guests[0]!.cw.time - p.s.w.time);
     const diff = Math.atan2(Math.sin(a1 - want), Math.cos(a1 - want));
     expect(Math.abs(diff)).toBeLessThan(0.2);
+  });
+
+  it("a guest's own hits never start a phase change on a boss the host holds in its phase (the NG+ random encounter, D361)", () => {
+    const p = party(1, 30, 1);
+    p.host.start(p.s);
+    p.step(0.6);
+    const g = guestEntity(p, 0);
+    inCombat(p.s.w);
+    // the host's bonus boss (D278): placed in its second phase and held there, a bar of 3,000
+    const boss = spawnEnemy(p.s.w, BOSSES.the_caretaker!, g.x + 90, g.y, { tellS: 0, zone: 1 });
+    boss.en!.bonusBoss = true;
+    boss.en!.phase = 1;
+    boss.en!.phaseAttacks = (boss.en!.def as unknown as BossDef).phases[1]!.attacks;
+    boss.hp!.max = boss.hp!.hp = 3000;
+    p.step(0.5);
+    const gw = p.guests[0]!.cw;
+    const mirror = gw.get(boss.id)!;
+    expect(mirror.en!.bonusBoss).toBe(true);
+    const me = p.guests[0]!.me!;
+    const spec = emptySpec('player');
+    spec.dmg.physical = 130;
+    let seen = p.seen[0]!.length;
+    // the guest hits it again and again, taking the bar well under the line a phase change would sit at (37.5%)
+    for (let i = 0; i < 20; i++) {
+      hitEnemy(gw, me, mirror, spec, me.x, me.y);
+      p.step(0.12);
+      for (; seen < p.seen[0]!.length; seen++) expect(p.seen[0]![seen]!.ev.t).not.toBe('bossPhase');
+      expect(mirror.en!.phase).toBe(1);
+    }
+    expect(mirror.hp!.hp / mirror.hp!.max).toBeLessThan(0.375);
+    expect(boss.en!.phase).toBe(1);
+    expect(boss.en!.phaseTransitionUntil).toBeLessThanOrEqual(p.s.w.time);
   });
 
   it('the host refuses a guest hit on an enemy that is dead, gone or far out of reach', () => {

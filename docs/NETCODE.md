@@ -94,7 +94,8 @@ and a JSON block.
 - **Meta** (`json.meta`, sent only when it changes): what an entity is. Players: id, slot, name and their public
   character (gear, look, stats; never the bag). Enemies: def id, elite, piece, boss, draw id, radius (it changes with
   phases), gaze, linked id, its max HP in the host's world (`hm`: co-op scaling, so a guest's bar and its own hits
-  measure against the real total, D340) and the attack under way (`atk`, so guests draw its real windup and element, D149).
+  measure against the real total, D340), whether it is the NG+ random encounter boss (`bonus`, held in its phase: a guest's own
+  hits must not start a phase change on it, D361) and the attack under way (`atk`, so guests draw its real windup and element, D149).
   Others: the component itself (telegraph shapes and timing, hazard, pickup contents, interactable, projectile look,
   decoy, wall). **Instanced loot** (a pickup for another player) is never sent to anyone else (D33).
 - **Room** (`json.room`, when it changes): tiles, overlay and terrain (base64), doors (exists, open, locked), hazard

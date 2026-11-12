@@ -370,6 +370,8 @@ export class NetGuest {
       e.radius = m.r;
       // the host's max HP (co-op scaling, D159): the mirror's own would be a solo enemy's (D340)
       if (m.hm && e.hp) e.hp.max = m.hm;
+      // held in its phase on the host (D278): this screen's own hits must not start a phase change either (D361)
+      if (m.bonus) e.en!.bonusBoss = true;
     } else {
       e = w.spawn(m.type as EType, x, y, { drawId: m.drawId, radius: m.r, team: m.team as Entity['team'], ...(m.c as Partial<Entity>) });
     }
@@ -390,6 +392,7 @@ export class NetGuest {
       e.en.linkedTo = m.linkedTo;
       if (m.gaze !== undefined) e.en.gaze = m.gaze;
       if (m.hm && e.hp) e.hp.max = m.hm;
+      e.en.bonusBoss = m.bonus === true;
     } else if (m.t === 'other') {
       Object.assign(e, m.c);
       e.drawId = m.drawId;
