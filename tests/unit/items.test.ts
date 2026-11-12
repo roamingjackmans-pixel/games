@@ -4,6 +4,7 @@ import { rescaleLeeching } from '../../src/game/save/migrations';
 import { generateItem, rollRarity, eligibleAffixes, AFFIX_COUNT } from '../../src/game/items/generate';
 import { RARITY_WEIGHTS, RARITY_ORDER, type LootSource } from '../../src/data/lootTables';
 import { makeItem } from '../../src/game/items/make';
+import { LIFESTEAL_MULT } from '../../src/data/roles';
 import { computeDerived } from '../../src/game/player/derived';
 import { newCharacter } from '../../src/game/player/character';
 import {
@@ -144,7 +145,7 @@ describe('inventory, gems, Glowen, levels', () => {
     const d = computeDerived(c);
     expect(d.dmgPct).toBeCloseTo(0.088, 5);
     expect(d.cdr).toBeCloseTo(0.15, 5);
-    expect(d.lifesteal).toBeCloseTo(0.004, 5);
+    expect(d.lifesteal).toBeCloseTo(0.004 * LIFESTEAL_MULT, 5); // D355
     // armor perks in armor
     c.equipment.body = makeItem('crypt_rags_body', 'epic', 1, { sockets: 1, gems: [{ perks: [{ family: 'hearth', q: -0.5 }, { family: 'bulwark' }] }] });
     const d2 = computeDerived(c);

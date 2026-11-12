@@ -730,7 +730,7 @@ Legendaries add 20% to each step within the caps. Items from saves before D89 ke
 ### 8.4 Affixes, legendary powers, set perks
 
 **Affixes** (CONTENT_ITEMS §6): flat and percent damage, elemental damage (Burning, Freezing, Shocking, Radiant,
-Dusky), attack speed, cooldown reduction, Fleet (dodge recharge), stamina cost, lifesteal (D325: a share of max HP, × the hit's multiplier, once an attack however many it hits, rounded up and at least 1 HP (D337); not a share of the damage), status buildup, poise
+Dusky), attack speed, cooldown reduction, Fleet (dodge recharge), stamina cost, lifesteal (D325, ×4 by D355: a share of max HP, × the hit's multiplier, once an attack however many it hits, rounded up and at least 1 HP (D337); not a share of the damage), status buildup, poise
 damage, defense per type, max HP / stamina, Shard / Glowen / gem find, revive value, +stat.
 
 **Legendary powers** (`data/legendaries.ts`) are unique effects on Legendary items (e.g. Joe's Lucky Socks: +1
@@ -810,11 +810,11 @@ roll bands    = Green −50…−15% (55%) · Blue −15…+10% (30%) · Purple 
 | Fleetfoot | −0.6 s dodge recharge (3 s floor) | weapon |
 | Brutal | +11% damage | weapon |
 | Ember / Rime / Storm / Dawn / Dusk | **adds** 13.2% of the hit as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of it, with Burn / Chill / Shock buildup (D283, D292) | weapon |
-| Leech | 0.4% of max HP healed a hit (lifesteal, D325) | weapon |
+| Leech | 1.6% of max HP healed a hit (lifesteal, D325; ×4 by D355) | weapon |
 | Vigor | −16% stamina costs | weapon |
 | Bulwark | +16 defense to all types | armor |
 | Hearth | +8% max HP, applied after everything else (D260) | armor |
-| Zephyr | +16% stamina regeneration | armor |
+| Zephyr | +11.2% stamina regeneration (D356, was 16) | armor |
 | Gilt | +11% Glowen found | armor |
 
 Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost ×0.3).

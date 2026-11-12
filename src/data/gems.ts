@@ -3,6 +3,7 @@
 // (D197) × its quality roll, −50% … +50%.
 import type { Rng } from '../engine/rng';
 import type { DamageType, Gem, GemFamily, GemPerk, StatusId } from '../game/types';
+import { lifestealShown } from './roles';
 
 export interface GemDef {
   family: GemFamily;
@@ -34,7 +35,8 @@ export const GEMS: Record<GemFamily, GemDef> = {
   bulwark: { family: 'bulwark', name: 'Bulwark', color: '#9a9aa6', value: 16, text: '+{v} defense to all types', armorOnly: true },
   // D260: a share of max HP (was +15 … +45 flat)
   hearth: { family: 'hearth', name: 'Hearth', color: '#e0705a', value: 8, text: '+{v}% max HP', armorOnly: true },
-  zephyr: { family: 'zephyr', name: 'Zephyr', color: '#a8e6cf', value: 16, text: '+{v}% stamina regeneration', armorOnly: true },
+  // D356: 30% weaker (was 16)
+  zephyr: { family: 'zephyr', name: 'Zephyr', color: '#a8e6cf', value: 11.2, text: '+{v}% stamina regeneration', armorOnly: true },
   gilt: { family: 'gilt', name: 'Gilt', color: '#d4af37', value: 11, text: '+{v}% Glowen found', armorOnly: true },
 };
 
@@ -163,7 +165,7 @@ export function gemDropLevel(rng: Rng, zone: number, cycle: number): number {
 
 /** The family's baseline text (no level or roll). */
 export function gemText(family: GemFamily): string {
-  return GEMS[family].text.replace('{v}', fmtGemValue(gemBaseValue(family)));
+  return GEMS[family].text.replace('{v}', fmtGemValue(family === 'leech' ? lifestealShown(gemBaseValue(family)) : gemBaseValue(family)));
 }
 
 /** "Brutal (Lv 12)": one perk's name. */
@@ -173,7 +175,7 @@ export function perkName(p: GemPerk): string {
 
 /** "+11% damage": what this perk does at its level and roll. */
 export function perkText(p: GemPerk): string {
-  return GEMS[p.family].text.replace('{v}', fmtGemValue(perkValue(p)));
+  return GEMS[p.family].text.replace('{v}', fmtGemValue(p.family === 'leech' ? lifestealShown(perkValue(p)) : perkValue(p)));
 }
 
 /** "Purple +22%": the perk's roll. */

@@ -182,6 +182,15 @@ export function ngEnemyHpTrim(zone: number, cycle: number): number {
   return NG_ENEMY_HP_TRIM[cycle]?.[Math.max(1, Math.min(8, zone))] ?? 1;
 }
 
+/**
+ * D355: lifesteal heals 4× what it did. The player's total (Leeching, the Leech gem, the Hungering power, set perks,
+ * weapon proficiency) is multiplied once in computeDerived, and the cards show the multiplied number (lifestealShown),
+ * so saved items keep their rolls and everything still reads true.
+ */
+export const LIFESTEAL_MULT = 4;
+/** What a lifesteal figure on a card reads: its stored number times the multiplier (share of max HP, before ×100). */
+export const lifestealShown = (v: number): number => v * LIFESTEAL_MULT;
+
 /** D314: bosses hit 75% harder from NG+1 on (they had fallen behind); every later cycle grows from there. */
 export const NG_BOSS_DMG_MULT = 1.75;
 export function ngBossDmgMult(cycle: number): number {

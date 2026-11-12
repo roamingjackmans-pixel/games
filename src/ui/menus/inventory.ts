@@ -5,6 +5,7 @@ import { glyphText, inputText, padStyle, tabHints } from '../glyphs';
 import { PAD_ALT, PAD_ALT_EVENT, PAD_LOCK, PAD_LOCK_EVENT, TAB_EDGE_EVENT } from '../menuPad';
 import { lockButton } from '../itemLock';
 import { PROF_CLASSES, PROF_MAX_LEVEL, perkPoints, profLevel } from '../../data/proficiency';
+import { lifestealShown } from '../../data/roles';
 import { activeClasses, profXp } from '../../game/items/proficiency';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES, isPrimaryStat, isSecondaryStat } from '../../data/classes';
@@ -374,12 +375,14 @@ export function openInventory(host: InventoryHost): HTMLElement {
   function profTab(el: HTMLElement): void {
     const c = host.char;
     const out = new Set(activeClasses(c));
-    const pct = (x: number, stat: string): string =>
-      stat === 'dodge'
+    const pct = (x0: number, stat: string): string => {
+      const x = stat === 'lifesteal' ? lifestealShown(x0) : x0; // D355
+      return stat === 'dodge'
         ? `−${x.toFixed(2)} s`
         : stat === 'parryWindow'
           ? `+${Math.round(x * 1000)} ms`
           : `${stat === 'stamina' || stat === 'blockStamina' || stat.endsWith('Cooldown') ? '−' : '+'}${(x * 100).toFixed(x * 100 < 1 ? 2 : 1).replace(/\.0+$/, '')}%`;
+    };
     const head = h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('h3', { style: 'margin:0' }, 'Weapon proficiency'));
     const q = btn(profHelp ? '✕' : '?', () => {
       profHelp = !profHelp;

@@ -661,11 +661,11 @@ Gem level 7 (zone 5 drop), +0% roll. Base: 226 DPS, 11.8 average hits to die.
 | Storm | weapon | +13.2% of the hit as Magic (lightning), Shock buildup | +8% sustained, +8% burst DPS |  |
 | Dawn | weapon | +13.2% of the hit as Holy | +8% sustained, +8% burst DPS |  |
 | Dusk | weapon | +13.2% of the hit as Void | +8% sustained, +8% burst DPS |  |
-| Leech | weapon | 0.4% of max HP healed a hit (lifesteal) | — | heals 1.1% max HP per 10 s of attacking |
+| Leech | weapon | 0.4% of max HP healed a hit (lifesteal) | — | heals 4.2% max HP per 10 s of attacking |
 | Vigor | weapon | −16% stamina costs | +5% sustained, +0% burst DPS |  |
 | Bulwark | armour | +16 defense to all types | +5% effective HP |  |
 | Hearth | armour | +8% max HP | +5% effective HP |  |
-| Zephyr | armour | +16% stamina regeneration | — |  |
+| Zephyr | armour | +11.2% stamina regeneration | — |  |
 | Gilt | armour | +11% Glowen found | — |  |
 
 ## 4. Weapons, weapon skills and spells

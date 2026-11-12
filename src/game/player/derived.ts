@@ -19,6 +19,7 @@ import { DAMAGE_TYPES } from '../types';
 import { RARITY_POWER } from '../../data/proficiency';
 import { reinforceDmgMult } from '../../data/essence';
 import { profBonuses } from '../items/proficiency';
+import { LIFESTEAL_MULT } from '../../data/roles';
 
 export interface Derived {
   stats: Stats;
@@ -513,7 +514,7 @@ export function computeDerived(c: Character): Derived {
     cdr: Math.min(0.5, cdrPct),
     dodgeRecharge: dodgeRecharge(dodgeRed),
     stamCost: Math.max(0.3, 1 - stamCostPct),
-    lifesteal,
+    lifesteal: lifesteal * LIFESTEAL_MULT,
     poiseDmgMult: 1 + poisePct,
     statBoost: boost,
     reachMult: 1 + prof.reach,

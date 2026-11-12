@@ -20,7 +20,7 @@ export const LEGENDARY_POWERS: Record<string, LegendaryPower> = {
   thunderclap: { id: 'thunderclap', name: 'Thunderclap', on: ['weapon'], text: 'Every 4th hit chains Lightning to 3 enemies ×0.8.' },
   sunder: { id: 'sunder', name: 'Sunder', on: ['weapon'], text: 'Skills ignore 30% of enemy defense.' },
   second_wind: { id: 'second_wind', name: 'Second Wind', on: ['weapon'], text: 'A kill refunds 20 stamina.' },
-  hungering: { id: 'hungering', name: 'Hungering', on: ['weapon'], text: 'Heal 0.4% of max HP a hit (lifesteal), −10% max HP.' },
+  hungering: { id: 'hungering', name: 'Hungering', on: ['weapon'], text: 'Heal 1.6% of max HP a hit (lifesteal), −10% max HP.' },
   momentum: { id: 'momentum', name: 'Momentum', on: ['weapon'], text: 'Each consecutive hit without being hit: +3% damage (max 10).' },
   riposte_master: { id: 'riposte_master', name: 'Riposte Master', on: ['weapon'], text: 'Ripostes deal ×4 and heal 5%.' },
   spellsword: { id: 'spellsword', name: 'Spellsword', on: ['weapon'], text: 'Spells cast within 2 s after a light attack cost no stamina.' },

@@ -1,5 +1,6 @@
 // CONTENT_ITEMS §10: affixes. Flat ranges scale ×(1 + 0.2 (ilvl − 1)); percents are fixed.
 import type { DamageType, StatusId } from '../game/types';
+import { lifestealShown } from './roles';
 
 export type AffixSlotGroup = 'weapon' | 'armor' | 'head' | 'body' | 'legs' | 'ring' | 'shield' | 'any';
 
@@ -68,6 +69,7 @@ export const AFFIX_IDS = Object.keys(AFFIXES);
 export function affixText(id: string, v: number): string {
   const a = AFFIXES[id];
   if (!a) return id;
+  if (id === 'leeching') v = lifestealShown(v);
   const val = a.integer ? String(Math.round(v)) : v < 1 ? String(Math.round(v * 100) / 100) : v.toFixed(1).replace(/\.0$/, '');
   return a.text.replace('{v}', val);
 }

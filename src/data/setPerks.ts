@@ -4,6 +4,7 @@
 // gear whose requirements you meet counts, as with every other buff (D88). Systems read the effect keys, never a
 // set's id.
 import type { Rarity } from '../game/types';
+import { lifestealShown } from './roles';
 
 /** What a step gives. Fractions (0.1 = 10%) except dodgeS and parryS (seconds) and defense (flat, every type). */
 export interface SetEffect {
@@ -212,7 +213,7 @@ export function setEffectText(e: SetEffect): string {
   if (e.dodgeS) out.push(`−${e.dodgeS.toFixed(1)} s dodge recharge`);
   if (e.staminaCostPct) out.push(`−${pct(e.staminaCostPct)} stamina costs`);
   if (e.staminaRegenPct) out.push(`+${pct(e.staminaRegenPct)} stamina regen`);
-  if (e.lifestealPct) out.push(`${String(Math.round(e.lifestealPct * 10000) / 100)}% of max HP healed a hit (lifesteal)`);
+  if (e.lifestealPct) out.push(`${String(Math.round(lifestealShown(e.lifestealPct) * 10000) / 100)}% of max HP healed a hit (lifesteal)`);
   if (e.poiseDamagePct) out.push(`+${pct(e.poiseDamagePct)} poise damage`);
   if (e.maxHpPct) out.push(`+${pct(e.maxHpPct)} max HP`);
   if (e.defense) out.push(`+${e.defense} defense (all)`);
