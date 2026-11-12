@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MemoryStore } from '../../src/engine/settings';
-import { formatFriendCode, friendRoom, newFriendCode, parseFriendCode } from '../../src/game/net/friendCode';
+import { FRIEND_ALPHABET, formatFriendCode, friendRoom, newFriendCode, parseFriendCode, storedFriendCode } from '../../src/game/net/friendCode';
 import { FriendsService } from '../../src/game/net/friends';
 import { LoopbackHub } from '../../src/game/net/loopback';
 import { INVITE_TTL_MS, Presence, type FriendStatus, type IncomingInvite, type OutState } from '../../src/game/net/presence';
@@ -20,13 +20,45 @@ describe('friend codes', () => {
       expect(parseFriendCode(c)).toBe(c);
       expect(parseFriendCode(` ${formatFriendCode(c).toLowerCase()} `)).toBe(c);
     }
-    const c = newFriendCode();
-    // one character changed is caught by the check character
-    const i = 3;
-    const other = c[i] === 'A' ? 'B' : 'A';
-    expect(parseFriendCode(c.slice(0, i) + other + c.slice(i + 1))).toBeNull();
     expect(parseFriendCode('hello')).toBeNull();
     expect(parseFriendCode('')).toBeNull();
+  });
+
+  it('catches every single-character typo, in every position (D342)', () => {
+    // fixed bodies (no randomness): each completed with the one check character that makes it valid
+    const valid = (body: string): string => {
+      const ok = [...FRIEND_ALPHABET].map((ch) => body + ch).filter((c) => parseFriendCode(c) === c);
+      expect(ok).toHaveLength(1);
+      return ok[0]!;
+    };
+    const bodies: string[] = [];
+    for (let k = 0; k < 64; k++) bodies.push(Array.from({ length: 9 }, (_, i) => FRIEND_ALPHABET[(k * 7 + i * (k + 3)) % 32]!).join(''));
+    bodies.push('000000000', 'ZZZZZZZZZ', 'J00000000', '000J00000');
+    let tried = 0;
+    for (const body of bodies) {
+      const code = valid(body);
+      for (let i = 0; i < code.length; i++)
+        for (const ch of FRIEND_ALPHABET) {
+          if (ch === code[i]) continue;
+          const typo = code.slice(0, i) + ch + code.slice(i + 1);
+          expect(parseFriendCode(typo), `${code} → ${typo}`).toBeNull();
+          tried++;
+        }
+    }
+    expect(tried).toBe(bodies.length * 10 * 31);
+  });
+
+  it('keeps friends already on a stored list, and replaces an own code the check no longer accepts (D342)', () => {
+    // a v1.3.50 code that fails today's check (shape is fine)
+    let legacy = '';
+    for (const ch of FRIEND_ALPHABET) if (!parseFriendCode(`J00000000${ch}`)) legacy = `J00000000${ch}`;
+    expect(storedFriendCode(legacy)).toBe(legacy);
+    const store = new MemoryStore();
+    store.setItem(FRIENDS_KEY, JSON.stringify({ v: 1, me: legacy, appearOnline: true, list: [{ code: legacy.replace('J', 'K'), name: 'Old', added: 1 }] }));
+    const book = new FriendsBook(store);
+    expect(book.me).not.toBe(legacy);
+    expect(parseFriendCode(book.me)).toBe(book.me);
+    expect(book.list.map((f) => f.code)).toEqual([legacy.replace('J', 'K')]);
   });
 
   it('reads O as 0 and I or L as 1', () => {

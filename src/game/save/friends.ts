@@ -2,7 +2,7 @@
 // belong to the person at this browser, not to one of their ten characters: deleting, importing or exporting a
 // character never changes who their friends are or what their own friend code is.
 import type { KeyValueStore } from '../../engine/settings';
-import { newFriendCode, parseFriendCode } from '../net/friendCode';
+import { newFriendCode, parseFriendCode, storedFriendCode } from '../net/friendCode';
 
 export const FRIENDS_KEY = 'dj.friends';
 /** each friend is one relay room kept open while online, so the list is capped */
@@ -27,11 +27,13 @@ export interface FriendsData {
 
 export function normalizeFriends(raw: unknown, me?: string): FriendsData {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  // our own code must pass today's check so friends can type it: one made by v1.3.50's weaker check is replaced (D342)
   const own = (me && parseFriendCode(me)) || (typeof o.me === 'string' && parseFriendCode(o.me)) || newFriendCode();
   const list: FriendEntry[] = [];
   if (Array.isArray(o.list))
     for (const e of o.list as Record<string, unknown>[]) {
-      const code = typeof e?.code === 'string' ? parseFriendCode(e.code) : null;
+      // friends already added keep their codes, whichever check they were made with
+      const code = typeof e?.code === 'string' ? storedFriendCode(e.code) : null;
       if (!code || code === own || list.some((x) => x.code === code)) continue;
       list.push({ code, name: typeof e.name === 'string' ? e.name.slice(0, FRIEND_NAME_MAX) : '', added: typeof e.added === 'number' ? e.added : 0 });
       if (list.length >= MAX_FRIENDS) break;

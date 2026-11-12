@@ -239,7 +239,9 @@ service), `save/friends.ts` (the list), `ui/friends.ts` (Friends screen, lobby i
 
 - **Friend code:** each browser has one, made once with `crypto` and kept in `dj.friends` (DATA_MODEL §1.1): 10
   Crockford base32 characters, 9 random and 1 check, shown `XXXXX-XXXXX`. Typing forgives case, spaces, dashes,
-  O for 0 and I or L for 1; the check character catches a single typo.
+  O for 0 and I or L for 1. The check character is a weighted sum mod 32 with odd weights (1, 3, 5, …), so it
+  catches **every** single-character typo (D342). Codes already on a stored list are kept by shape alone; a stored own
+  code that fails the check (made by v1.3.50) is replaced.
 - **One room per friend.** Two friends meet in a Trystero room whose id and password come from
   `SHA-256("dungeon-joe-friends|" + both codes, sorted)` (`friendRoom`): `f` + 24 hex for the id, the other 40 hex
   for the password. Only someone who knows **both** codes can find, join or read that room, so a friendship works once
