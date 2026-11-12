@@ -13,7 +13,7 @@ The current catalogue of the 28 spells and 10 classes, generated from `src/data/
   give six spells on six keys. Tools go in any of the four weapon slots (D117).
 - **Requirement.** Every spell needs its school's stat (Brain or Prayer) at its requirement.
 - **Power.** Damage and heal numbers below are the base. A spell deals and heals **Spell Skill / 100** times them
-  (D182). Spell Skill = `100 × toolMult × rarity × reinforcement × (1 + grade × f(stat) × class boost) × (1 + spell
+  (D182); its damage is also ×1.4 at 30 Brain / Prayer (its school's stat) or less, easing to ×1 at 300 and after (D343). Spell Skill = `100 × toolMult × rarity × reinforcement × (1 + grade × f(stat) × class boost) × (1 + spell
   power bonuses)`; see CONTENT_ITEMS §4. Buffs, barriers, durations and revive strength grow more gently (×1 at Spell
   Skill 100, about ×1.5 at 270, at most ×3). A tool's element bonus adds to spells of that element; the Saint's Relic
   adds to heals.

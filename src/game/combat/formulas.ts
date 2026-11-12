@@ -161,6 +161,14 @@ export function weaponScaling(
   return 1 + (scalingMult(def.grades, stats, twoHanded, boost) - 1) * (def.scalingBoost ?? 1);
 }
 
+/** D343: a weapon that scales A or S with Bonk (as rolled, its variant included) deals 10% less. */
+export const BONK_HEAVY_MULT = 0.9;
+
+/** A weapon's damage multiplier from how it scales (D343): ×0.9 for Bonk A or S, ×1 otherwise. */
+export function gradeDamageMult(def: { grades: { bonk: Grade } }): number {
+  return def.grades.bonk === 'A' || def.grades.bonk === 'S' ? BONK_HEAVY_MULT : 1;
+}
+
 /** weaponDamage = base × (1 + Σ grade × f(effStat)) × attackMultiplier × mods; 40% below requirement */
 export function weaponDamage(
   base1: number,
@@ -197,6 +205,19 @@ export function spellUtility(p: number): number {
   if (p <= 0) return 0;
   if (p < 1) return Math.sqrt(p);
   return Math.min(3, 1 + 0.5 * Math.log(p));
+}
+
+/**
+ * D343: spells hit harder early and scale less. A spell's damage is ×1.4 while its school's stat (Brain or Prayer) is
+ * 30 or less, easing in a straight line to ×1 at 300, where it stays: the same as before from 300 on. Heals and other
+ * effects are unchanged.
+ */
+export const SPELL_EARLY = { bonus: 0.4, from: 30, to: 300 };
+
+export function spellDamageMult(stat: number): number {
+  const { bonus, from, to } = SPELL_EARLY;
+  const k = Math.max(0, Math.min(1, (to - stat) / (to - from)));
+  return 1 + bonus * k;
 }
 
 /** toolMult = toolGrade × (1 + 0.35 × (toolIlvl − 1)) */

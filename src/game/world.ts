@@ -115,6 +115,8 @@ export interface ChannelRun {
   moveMult: number;
   followAim: boolean;
   source: 'skill' | 'spell';
+  /** a spell's school (D343) */
+  school?: 'brain' | 'prayer';
   powerMult: number;
   hyperArmor: boolean;
 }
@@ -127,6 +129,8 @@ export interface ChargeRun {
   release: EffectDef;
   hyperArmor: boolean;
   source: 'skill' | 'spell';
+  /** a spell's school (D343) */
+  school?: 'brain' | 'prayer';
 }
 
 export interface PlayerC {

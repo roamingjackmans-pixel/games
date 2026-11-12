@@ -273,6 +273,7 @@ function fire(w: World, e: Entity): void {
     windupS: 0,
     tag: `${isSpell ? 'spell' : a.offHand ? 'offskill' : 'skill'}:${a.index}`,
     ...(a.offHand ? { offHand: true } : {}),
+    ...(sp ? { school: sp.school } : {}),
   };
   runEffects(w, a.effects, ctx);
   if (isSpell) {
@@ -324,6 +325,7 @@ export function updatePlayerAction(w: World, e: Entity, dt: number): void {
         baseDamage: pl.derived.weaponPower,
         windupS: 0,
         tag: `channel:${ch.source}`,
+        ...(ch.school ? { school: ch.school } : {}),
       });
       if (ch.source === 'skill') w.sfx('swingLight', e.x, 0.5);
     }
@@ -349,6 +351,7 @@ export function updatePlayerAction(w: World, e: Entity, dt: number): void {
         targetId: 0,
         powerMult: 1,
         isSpell: cg.source === 'spell',
+        ...(cg.school ? { school: cg.school } : {}),
         isSkill: true,
         baseDamage: pl.derived.weaponPower,
         windupS: 0,

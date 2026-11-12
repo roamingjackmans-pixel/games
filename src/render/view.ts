@@ -17,7 +17,7 @@ import { clearTelegraphEchoes, drawTelegraphEchoes, hasTelegraphEchoes } from '.
 import { clearSkillFx, drawSkillFxGround, drawSkillFxTop, spawnSkillFx } from './skillFx';
 import { drawThermosSparkle } from './thermosFx';
 import { ROOM_Y0 } from '../game/room';
-import { debugHitboxes, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerDot, drawPlayerEntity, drawProjectile } from './entities';
+import { debugHitboxes, drawAimArrow, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerDot, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
 import type { Entity, GameEvent, World } from '../game/world';
 
@@ -42,6 +42,8 @@ export class WorldView {
   palette: Palette = DEFAULT_PALETTE;
   propStyle = 'crate';
   localPlayerId = '';
+  /** the local player plays on a controller: draw the aim arrow at their feet (D343) */
+  aimArrow = false;
   messages: { text: string; until: number; color: string }[] = [];
   drawInteract: InteractDrawer | null = null;
   /** extra overlay hook (bosses' arena decorations, etc.) */
@@ -332,6 +334,8 @@ export class WorldView {
     for (const e of list) if (e.type === 'player') drawThermosSparkle(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha, now);
     // each player's eye-coloured dot over everything, so it shows through any attack marker (D262)
     for (const e of list) if (e.type === 'player') drawPlayerDot(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha);
+    // on a controller, which way the local player is looking (D343)
+    if (this.aimArrow) for (const e of list) if (e.type === 'player' && e.pl!.playerId === this.localPlayerId) drawAimArrow(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha);
     drawAmbience(ctx, realDt); // zone particles + vignette (render/ambience.ts)
     if (overlays.hitbox) debugHitboxes(ctx, w);
     if (overlays.ai) {

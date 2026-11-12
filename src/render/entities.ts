@@ -367,6 +367,99 @@ export function drawPlayerDot(ctx: CanvasRenderingContext2D, e: Entity, x: numbe
   ctx.restore();
 }
 
+/** D343: the aim arrow's reach past the dot's wings, px: short, and long with a shooting or casting item in hand. */
+export const AIM_ARROW_LEN = { short: 7, long: 15 };
+
+/** A shooting or casting item in either hand (bow, crossbow, chakram, staff, talisman): the aim arrow is long (D343). */
+export function aimsFar(e: Entity): boolean {
+  const d = e.pl?.derived;
+  return !!d && (!!d.weapon.ranged || !!d.mainTool || !!d.offTool || !!d.offWeapon);
+}
+
+/**
+ * D343: on a controller, a small silver arrow at the local player's feet shows which way they are looking. Two
+ * feathered wings wrap half way round the eye-coloured dot (its front half) and meet at an arrow pointing the way the
+ * player faces; it reaches further with a bow, crossbow, chakram, staff or talisman in either hand.
+ */
+export function drawAimArrow(ctx: CanvasRenderingContext2D, e: Entity, x: number, cy: number): void {
+  const pl = e.pl;
+  if (!pl || pl.deadUntilRest || pl.downed || e.hp?.dead) return;
+  const len = aimsFar(e) ? AIM_ARROW_LEN.long : AIM_ARROW_LEN.short;
+  const R = PLAYER_DOT_R + 1.6;
+  const SILVER = '#dfe4ec';
+  const SHADE = '#9aa4b2';
+  ctx.save();
+  ctx.globalAlpha = e.anim.alpha * 0.95;
+  ctx.translate(x, cy + PLAYER_DOT_DY);
+  ctx.rotate(e.facing);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  // the wings: a tapered crescent each side, from the dot's flank (thin) to its front (full), like a swept feather
+  const n = 10;
+  for (const side of [1, -1]) {
+    const pts: [number, number][] = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      const a = side * (Math.PI / 2) * (1 - t) + side * 0.18 * t;
+      const w = 0.5 + 2.1 * t;
+      pts.push([Math.cos(a) * (R + w), Math.sin(a) * (R + w)]);
+    }
+    for (let i = n; i >= 0; i--) {
+      const t = i / n;
+      const a = side * (Math.PI / 2) * (1 - t) + side * 0.18 * t;
+      pts.push([Math.cos(a) * R, Math.sin(a) * R]);
+    }
+    ctx.beginPath();
+    ctx.moveTo(pts[0]![0], pts[0]![1]);
+    for (const [px, py] of pts) ctx.lineTo(px, py);
+    ctx.closePath();
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.fillStyle = SILVER;
+    ctx.fill();
+    // two feather notches on each wing
+    ctx.strokeStyle = SHADE;
+    ctx.lineWidth = 0.6;
+    for (const t of [0.42, 0.7]) {
+      const a = side * (Math.PI / 2) * (1 - t) + side * 0.18 * t;
+      const w = 0.5 + 2.1 * t;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * (R + w * 0.15), Math.sin(a) * (R + w * 0.15));
+      ctx.lineTo(Math.cos(a - side * 0.12) * (R + w), Math.sin(a - side * 0.12) * (R + w));
+      ctx.stroke();
+    }
+  }
+  // the shaft and the head, from where the wings meet out along the facing
+  const tip = R + 2.6 + len;
+  ctx.strokeStyle = OUTLINE;
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(R + 2, 0);
+  ctx.lineTo(tip - 3, 0);
+  ctx.stroke();
+  ctx.strokeStyle = SILVER;
+  ctx.lineWidth = 1.1;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(tip + 1.2, 0);
+  ctx.lineTo(tip - 3.6, -2.9);
+  ctx.lineTo(tip - 2.4, 0);
+  ctx.lineTo(tip - 3.6, 2.9);
+  ctx.closePath();
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = OUTLINE;
+  ctx.stroke();
+  ctx.fillStyle = SILVER;
+  ctx.fill();
+  // a glint on the head
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(tip - 2.2, -0.9, 0.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Entity, x: number, y: number, now: number, isLocal: boolean): void {
   const pl = e.pl!;
   if (pl.deadUntilRest) return;

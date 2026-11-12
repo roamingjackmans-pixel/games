@@ -88,7 +88,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     req: { bonk: 10, slicey: 0 },
     speedClass: 'slow',
     combo: [sw(120, 60, 700, 1.4, { shape: 'proj', speed: 620, r: 6 }, 0)],
-    base1: 40,
+    base1: 26, // D343: all crossbow damage −35% (was 40)
     stamina: 24,
     poiseDmg: 4,
     reviveValue: 1.5,

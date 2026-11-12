@@ -76,6 +76,7 @@ export abstract class WorldScene implements Scene {
     const w = this.w;
     const a = app();
     this.view.localPlayerId = this.local?.pl?.playerId ?? '';
+    this.view.aimArrow = a.input.lastDevice === 'pad';
     this.view.render(ctx, w, this.menuOpen && w.playerCount <= 1 ? 1 : alpha, realDt);
     if (this.local?.st && this.local.st.controls.blind > w.time) this.view.drawBlind(ctx, this.local.x, this.local.y, 1);
     this.renderOverlay(ctx, alpha, realDt);

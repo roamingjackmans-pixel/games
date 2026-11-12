@@ -227,7 +227,7 @@ statGrowth(s) = (1 + 1.9 f(s)) / (1 + 1.9 f(50))  (1 to 50, ×2 at 100, ×8.25 a
 grades (D88): S 1.9 · A 1.55 · B 1.15 · C 0.8 · D 0.45 · E 0.2 · – 0
 
 weaponPower = base1 × (1 + 0.45 (ilvl − 1)) × (1 + Σ grade × f(effStat) × m) × rarity power × reinforcement
-              × 0.4 if below requirement
+              × 0.9 if it scales A or S with Bonk (as rolled, variant included; D343) × 0.4 if below requirement
    effStat: Bonk counts ×1.5 (max 999) while two-handing (D72); everything else as it is
 hit         = weaponPower × swing mult × (1 + damage %) + gem adds + flat affix damage   (weaponHitByType, D294)
 armorDef    = def1 × slot mult × (1 + 0.6 (ilvl − 1)) × reinforcement
@@ -321,7 +321,9 @@ locks the focused item or gem. A button a menu used is swallowed until released,
 
 **Aim:** the mouse aims at the cursor. On a pad the character faces the right stick; with it neutral, melee goes to the
 nearest enemy within 160 px of the facing cone. Aim assist (strength in Settings) snaps projectiles within ±14° of an
-enemy.
+enemy. On a pad, a small silver **aim arrow** at the local player's feet shows which way they face (D343): two winged
+curves wrap the front half of the eye-coloured dot and meet at an arrow, longer with a bow, crossbow, chakram, staff
+or talisman in either hand.
 
 **Per-character pad layout** (D266): each character saves its own gamepad buttons, menu confirm / back and aim
 assist; keyboard keys, button-picture style, hold/toggle block and touch settings stay global. On the title screen
@@ -878,7 +880,8 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
   of the same school: the weapon hand's keys only.
 - **Spell Skill** (D182): `100 × tool grade × (1 + 0.35 (ilvl − 1)) × rarity power × reinforcement × (1 + letter
   weight × f(Brain or Prayer) × m) × (1 + proficiency and set spell power)`, with letter weights as weapons (C 0.8 …
-  S 1.9). Spells **deal and heal Spell Skill / 100 × their listed amounts**; other effects (buffs, barriers, durations)
+  S 1.9). Spells **deal and heal Spell Skill / 100 × their listed amounts**, and their damage (not heals) is ×1.4 while
+  their school's stat is 30 or less, easing in a straight line to ×1 at 300 and after (D343: more early, the same late); other effects (buffs, barriers, durations)
   grow on a gentler curve (×1.5 at 270, at most ×3). Shown on tool cards, the inventory, the Level up preview and the
   Spells tab.
 - Spells have a cast time (cast speed scales it; you walk slower while casting, §3.1), a cooldown and a stamina cost

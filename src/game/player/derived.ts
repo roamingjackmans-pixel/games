@@ -10,7 +10,7 @@ import { AFFIXES, affixBuildup } from '../../data/affixes';
 import { SET_PERKS, setStep } from '../../data/setPerks';
 import { GEMS, gemBuildup, perkValue } from '../../data/gems';
 import { RINGS, ballastPoise, bandAmount, bandStat } from '../../data/rings';
-import { castMoveMult, slickCast, dodgeRecharge, itemSkillCount, maxHP, maxStamina, staminaRegen, weaponScaling, toolMult, weaponBase } from '../combat/formulas';
+import { castMoveMult, slickCast, dodgeRecharge, itemSkillCount, maxHP, maxStamina, staminaRegen, weaponScaling, toolMult, weaponBase, gradeDamageMult } from '../combat/formulas';
 import { itemRequirements, meetsRequirements } from '../items/bases';
 import { equipLoadOf, type EquipLoadInfo } from './equipLoad';
 import type { CastingToolDef, Character, DamageType, Item, ShieldDef, StatId, StatusId, Stats, WeaponDef } from '../types';
@@ -190,7 +190,7 @@ function offWeaponOf(off: Item | null | undefined, twoHanded: boolean, stats: St
   const def = off && off.kind === 'weapon' ? weaponOf(off) : undefined;
   if (!off || !def?.eitherHand || twoHanded) return null;
   const meetsReq = meetsRequirements(itemRequirements(off), stats, false);
-  const power = weaponBase(def.base1, off.ilvl) * weaponScaling(def, stats, false, boost) * (meetsReq ? 1 : 0.4) * RARITY_POWER[off.rarity] * reinforceDmgMult(off.plus);
+  const power = weaponBase(def.base1, off.ilvl) * weaponScaling(def, stats, false, boost) * gradeDamageMult(def) * (meetsReq ? 1 : 0.4) * RARITY_POWER[off.rarity] * reinforceDmgMult(off.plus);
   return { def, item: off, power, meetsReq };
 }
 
@@ -499,7 +499,7 @@ export function computeDerived(c: Character): Derived {
     // rarity sets the damage tier (D178)
     offWeapon: offWeaponOf(off, twoHanded, stats, boost),
     // D318: a pair dual-wielded (two-handed) hits 50% harder than one blade
-    weaponPower: weaponBase(weapon.base1, weaponIlvl) * weaponScaling(weapon, stats, twoHanded, boost) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceDmgMult(main?.plus) * (weapon.paired && twoHanded ? DUAL_WIELD_MULT : 1),
+    weaponPower: weaponBase(weapon.base1, weaponIlvl) * weaponScaling(weapon, stats, twoHanded, boost) * gradeDamageMult(weapon) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceDmgMult(main?.plus) * (weapon.paired && twoHanded ? DUAL_WIELD_MULT : 1),
     dmgPct,
     flat,
     convert,

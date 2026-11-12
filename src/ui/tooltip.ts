@@ -14,7 +14,7 @@ import { armorPieceDefense, armorPiecePoise, parseArmorBase } from '../data/armo
 import { ELEMENTS } from '../game/elements';
 import { baseInfo, itemRequirements, meetsRequirements, type Requirements } from '../game/items/bases';
 import { defaultSlotFor, itemSellValue, WORN_SLOTS, type EquipSlot } from '../game/items/inventory';
-import { STAT_CAP, reqAtIlvl, toolMult, weaponBase, weaponScaling } from '../game/combat/formulas';
+import { STAT_CAP, reqAtIlvl, toolMult, weaponBase, weaponScaling, gradeDamageMult } from '../game/combat/formulas';
 import { computeDerived } from '../game/player/derived';
 import { toolSpellSkill } from '../game/skills/use';
 import { itemUnlockedSkills } from '../game/items/weaponSkills';
@@ -91,7 +91,7 @@ function weaponDamageByType(item: Item, stats: Stats, twoH: boolean, boost: Part
   const w = weaponOf(item);
   if (!w) return {};
   const meets = meetsRequirements(reqsFor(item), stats, twoH);
-  const total = weaponBase(w.base1, item.ilvl) * weaponScaling(w, stats, twoH, boost) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus);
+  const total = weaponBase(w.base1, item.ilvl) * weaponScaling(w, stats, twoH, boost) * gradeDamageMult(w) * (meets ? 1 : 0.4) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus);
   const holy = w.holyPct ?? 0;
   const out: Partial<Record<DamageType, number>> = {};
   const el = weaponElement(w);

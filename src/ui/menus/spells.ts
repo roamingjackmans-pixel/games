@@ -6,7 +6,7 @@ import type { Character } from '../../game/types';
 import { btn, h } from '../dom';
 import { computeDerived, toolForSchool } from '../../game/player/derived';
 import { spellSkill } from '../../game/skills/use';
-import { spellUtility } from '../../game/combat/formulas';
+import { spellDamageMult, spellUtility } from '../../game/combat/formulas';
 
 export function setLoadout(c: Character, school: 'brain' | 'prayer', slot: number, spellId: string | null): string {
   if (spellId) {
@@ -41,7 +41,7 @@ export function renderSpellTab(el: HTMLElement, c: Character, onChange: () => vo
     const d = computeDerived(c);
     if (toolForSchool(d, school)) {
       const sk = spellSkill(d, school);
-      box.appendChild(h('div', { class: 'small', 'data-testid': `spell-skill-${school}` }, h('b', null, `Spell Skill ${sk}`), ` · spells deal and heal ×${(sk / 100).toFixed(2)}, other effects ×${spellUtility(sk / 100).toFixed(2)} (listed amounts are at 100)`));
+      box.appendChild(h('div', { class: 'small', 'data-testid': `spell-skill-${school}` }, h('b', null, `Spell Skill ${sk}`), ` · spells deal ×${((sk / 100) * spellDamageMult(d.stats[school])).toFixed(2)} and heal ×${(sk / 100).toFixed(2)}, other effects ×${spellUtility(sk / 100).toFixed(2)} (listed amounts are at 100)`));
     } else box.appendChild(h('div', { class: 'small dim-text' }, `Hold a ${school === 'brain' ? 'staff' : 'talisman'} to cast these. Its Spell Skill grows with your ${school === 'brain' ? 'Brain' : 'Prayer'} and its scaling.`));
     for (let i = 0; i < 3; i++) {
       const id = lo[i];

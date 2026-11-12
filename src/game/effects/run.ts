@@ -6,7 +6,7 @@ import { ENEMIES } from '../../data/enemies';
 import { addBuff, buffSum } from '../combat/state';
 import { addRevive, applyControl, checkDeath, cleanse, emptySpec, ffVictims, grantBarrier, heal, hitAlly, hitEnemy, hitPlayer, interrupt } from '../combat/damage';
 import { spawnTelegraphs } from '../combat/telegraph';
-import { ENEMY_PROJECTILE_RANGE, spellUtility } from '../combat/formulas';
+import { ENEMY_PROJECTILE_RANGE, spellDamageMult, spellUtility } from '../combat/formulas';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, resolvePattern, type PatternCtx, type Shape } from '../combat/patterns';
 import { spawnHazard } from '../systems/hazards';
 import { collapseFloor } from '../boss/platform';
@@ -31,6 +31,8 @@ export interface EffectCtx {
   /** telegraph time for pattern damage effects (0 = instant) */
   windupS: number;
   tag: string;
+  /** a player's spell: its school, whose stat sets the spell's early damage bonus (D343) */
+  school?: 'brain' | 'prayer';
 }
 
 /** Hooks the game layer provides (weapon spec for skills, summons into the room's wave tracking). */
@@ -88,6 +90,8 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
       const tool = [d.mainTool, d.offTool].find((t) => t?.def.bonus?.element === e.type)?.def;
       if (tool?.bonus) amt *= 1 + tool.bonus.pct;
       if (src.pl.derived.powers.has('overcharge')) amt *= 1.25;
+      // D343: +40% at 30 Brain / Prayer or less, fading to nothing at 300
+      if (ctx.school) amt *= spellDamageMult(d.stats[ctx.school]);
     }
     spec.dmg = { [e.type]: amt };
     spec.isSpell = ctx.isSpell;
@@ -529,6 +533,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
           moveMult: e.moveSpeedPct,
           followAim: !!e.followAim,
           source: ctx.isSpell ? 'spell' : 'skill',
+          ...(ctx.school ? { school: ctx.school } : {}),
           powerMult: ctx.powerMult,
           hyperArmor: !!e.hyperArmor,
         };
@@ -705,7 +710,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       break;
     case 'charge':
       if (src?.pl) {
-        src.pl.charge = { t: 0, maxS: e.maxS, minMult: e.minMult, maxMult: e.maxMult, release: e.release, hyperArmor: !!e.hyperArmor, source: ctx.isSpell ? 'spell' : 'skill' };
+        src.pl.charge = { t: 0, maxS: e.maxS, minMult: e.minMult, maxMult: e.maxMult, release: e.release, hyperArmor: !!e.hyperArmor, source: ctx.isSpell ? 'spell' : 'skill', ...(ctx.school ? { school: ctx.school } : {}) };
         src.pl.state = 'charge';
       }
       break;
