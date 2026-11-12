@@ -850,10 +850,9 @@ export interface Character {
   quickSlot: ConsumableId | null;
   knownSpells: string[];
   spellLoadout: { brain: Loadout3; prayer: Loadout3 };
-  tears: number;
   /** Soul Essence held, Tier 1 … 5 (D198); absent on older saves */
   essence?: number[];
-  /** stat points refunded by a Tear of Undoing, spent for free at a bonfire */
+  /** stat points to place for free at a bonfire (from a respec before D341, which removed respeccing) */
   freePoints: number;
   tutorialDone: boolean;
   /** the creator's look; absent on old saves (the class look is used) */
@@ -897,7 +896,7 @@ export interface WorldState {
 }
 
 export interface GaryStockEntry {
-  kind: 'item' | 'gem' | 'consumable' | 'tear' | 'ring';
+  kind: 'item' | 'gem' | 'consumable' | 'ring';
   item?: Item;
   gem?: Gem;
   consumable?: ConsumableId;

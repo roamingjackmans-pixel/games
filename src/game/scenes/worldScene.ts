@@ -212,10 +212,6 @@ export abstract class WorldScene implements Scene {
         pl().pl!.char.glowen += Math.floor(n);
         return `Glowen ${pl().pl!.char.glowen}.`;
       },
-      addTear() {
-        pl().pl!.char.tears++;
-        return `Tears: ${pl().pl!.char.tears}.`;
-      },
       testArena: () => self.toArena(),
       revealMap: () => 'Not available in this scene.',
       stats: () => {

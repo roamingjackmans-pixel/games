@@ -103,7 +103,26 @@ export function migrate(raw: unknown): unknown {
     v = typeof s.version === 'number' ? s.version : v + 1;
   }
   untierSave(s);
+  removeTears(s);
   return s;
+}
+
+/** What each Tear of Undoing a save still holds is worth in Glowen now that respeccing is gone (D341). */
+export const TEAR_REFUND_GLOWEN = 2000;
+
+/**
+ * D341: Tears of Undoing and respeccing are gone. A save's Tears become Glowen (2,000 each) and Gary's Tears leave his
+ * stock. Runs on every load and does nothing to a save without them.
+ */
+export function removeTears(s: Record<string, unknown>): void {
+  const c = s.character as Record<string, unknown> | undefined;
+  if (c && 'tears' in c) {
+    const n = typeof c.tears === 'number' && Number.isFinite(c.tears) ? Math.max(0, Math.floor(c.tears)) : 0;
+    if (n > 0 && typeof c.glowen === 'number') c.glowen += n * TEAR_REFUND_GLOWEN;
+    delete c.tears;
+  }
+  const w = s.world as { garyStock?: Record<string, { kind?: string }[]> } | undefined;
+  for (const [k, list] of Object.entries(w?.garyStock ?? {})) if (Array.isArray(list)) w!.garyStock![k] = list.filter((e) => e?.kind !== 'tear');
 }
 
 /**

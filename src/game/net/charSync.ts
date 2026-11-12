@@ -9,7 +9,7 @@ import { uniqueItemId } from '../items/inventory';
 import { untierGem } from '../../data/gems';
 
 export type CharOp =
-  | { op: 'add'; key: 'shards' | 'glowen' | 'tears' | 'bossesBeaten'; n: number }
+  | { op: 'add'; key: 'shards' | 'glowen' | 'bossesBeaten'; n: number }
   | { op: 'set'; key: 'flaskCur' | 'flaskMax' | 'highestZoneBeaten' | 'twoHanded' | 'quickSlot'; v: number | boolean | string | null }
   | { op: 'bag'; item: Item }
   | { op: 'gem'; gem: Gem }
@@ -31,7 +31,7 @@ export function cloneChar(c: Character): Character {
 /** Ops that turn `base` into `cur` for the fields the simulation may change. */
 export function diffChar(base: Character, cur: Character): CharOp[] {
   const ops: CharOp[] = [];
-  for (const key of ['shards', 'glowen', 'tears', 'bossesBeaten'] as const) if (cur[key] !== base[key]) ops.push({ op: 'add', key, n: cur[key] - base[key] });
+  for (const key of ['shards', 'glowen', 'bossesBeaten'] as const) if (cur[key] !== base[key]) ops.push({ op: 'add', key, n: cur[key] - base[key] });
   for (const key of ['flaskCur', 'flaskMax', 'highestZoneBeaten', 'twoHanded', 'quickSlot'] as const) if (cur[key] !== base[key]) ops.push({ op: 'set', key, v: cur[key] });
   const had = new Set(base.bag.map((i) => i.id));
   for (const it of cur.bag) if (!had.has(it.id)) ops.push({ op: 'bag', item: it });

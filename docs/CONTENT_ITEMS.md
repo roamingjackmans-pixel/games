@@ -363,8 +363,7 @@ selling one pays half the listed price.
 | **Lure** | 30 | Throws a decoy that taunts enemies within 300 px for 4 s (bosses 2 s). |
 | **Shard Pouch** | drop only | Use: gain 150 × zone Shards. |
 
-The Tear of Undoing (respec at a bonfire) is kept on the character, not in the quick-use cycle; bosses drop one 10%
-of the time and spell reliquaries 5%. Glowen Wisps (a 1% drop) are taken on pickup. **Nothing restores a Thermos
+There is no Tear of Undoing and no respec (D341). Glowen Wisps (a 1% drop) are taken on pickup. **Nothing restores a Thermos
 charge except resting at a bonfire or dying (D150, D38).**
 
 ## 12. Loot

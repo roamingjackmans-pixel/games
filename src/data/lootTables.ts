@@ -60,5 +60,3 @@ export const GEM_CHANCE = { enemy: 0.013, chest: 0.078, boss: 0.65 };
 export const CONSUMABLE_CHANCE = { chestBundle: 0.08, fodderSingle: 0.03 };
 /** Rare "Glowen Wisp" drops. */
 export const GLOWEN_WISP_CHANCE = 0.01;
-/** Bosses: 10% Tear of Undoing; spell reliquaries 5% a Tear instead of a spell. */
-export const TEAR_CHANCE = { boss: 0.1, reliquary: 0.05 };

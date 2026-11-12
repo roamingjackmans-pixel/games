@@ -76,7 +76,7 @@ export function validateSave(raw: unknown, maxVersion = SAVE_VERSION): string[] 
     if (!isNum(c.level) || c.level < 1) p.push('level');
     const st = c.stats;
     if (!isObj(st) || !['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'].every((k) => isNum(st[k]))) p.push('stats');
-    for (const k of ['shards', 'glowen', 'flaskMax', 'flaskCur', 'bossesBeaten', 'highestZoneBeaten', 'cycle', 'tears']) if (!isNum(c[k])) p.push(`character.${k}`);
+    for (const k of ['shards', 'glowen', 'flaskMax', 'flaskCur', 'bossesBeaten', 'highestZoneBeaten', 'cycle']) if (!isNum(c[k])) p.push(`character.${k}`);
     const eq = c.equipment;
     if (!isObj(eq) || !['main', 'off', 'head', 'body', 'legs', 'ring1', 'ring2'].every((k) => k in eq && validItem(eq[k]))) p.push('equipment');
     if (!Array.isArray(c.bag) || !c.bag.every(validItem)) p.push('bag');

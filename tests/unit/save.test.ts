@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newSave, validateSave, SAVE_VERSION } from '../../src/game/save/schema';
-import { migrate } from '../../src/game/save/migrations';
+import { migrate, TEAR_REFUND_GLOWEN } from '../../src/game/save/migrations';
 import { parseImport, exportText } from '../../src/game/save/exportImport';
 import { readSave, writeSave, listSaves, deleteSave } from '../../src/game/save/storage';
 import { MemoryStore } from '../../src/engine/settings';
@@ -58,6 +58,21 @@ const V0_FIXTURE = {
 };
 
 describe('save schema (DATA_MODEL §1)', () => {
+  it("Tears of Undoing a save still holds become Glowen, 2,000 each, and leave Gary's stock (D341)", () => {
+    const save = newSave(1, newCharacter('knight', 'Joe', 'tear-joe', new Rng(1)), 'TEARS');
+    const c = save.character as unknown as Record<string, unknown>;
+    c.tears = 2;
+    c.glowen = 100;
+    (save.world.garyStock as unknown as Record<string, unknown[]>)['z1'] = [{ kind: 'tear', price: 4000, sold: false }, { kind: 'consumable', consumable: 'throwing_knife', count: 2, price: 30, sold: false }];
+    const back = migrate(JSON.parse(JSON.stringify(save))) as typeof save;
+    expect('tears' in back.character).toBe(false);
+    expect(back.character.glowen).toBe(100 + 2 * TEAR_REFUND_GLOWEN);
+    expect((back.world.garyStock as unknown as Record<string, { kind: string }[]>)['z1']!.map((e) => e.kind)).toEqual(['consumable']);
+    expect(validateSave(back)).toEqual([]);
+    // a second load changes nothing
+    expect((migrate(JSON.parse(JSON.stringify(back))) as typeof save).character.glowen).toBe(back.character.glowen);
+  });
+
   it('a new save of every class validates', () => {
     for (const id of CLASS_IDS) {
       const s = newSave(1, newCharacter(id, 'Joe', 'p', new Rng(id)), 'SEED');

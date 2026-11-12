@@ -184,7 +184,7 @@ function buildPanel(): void {
         h('div', { class: 'row wrap' }, 'Level', level, btn('Set', () => call(() => api.setLevel(num(level.value, 1))))),
         h('div', { class: 'row wrap' }, statSel, statVal, btn('Set stat', () => call(() => api.setStat(statSel.value, num(statVal.value, 1))))),
         h('div', { class: 'row wrap' }, 'Flask', flaskCur, '/', flaskMax, btn('Set', () => call(() => api.setFlask(num(flaskCur.value), num(flaskMax.value))))),
-        h('div', { class: 'row wrap' }, amount, btn('+Shards', () => call(() => api.addShards(num(amount.value)))), btn('+Glowen', () => call(() => api.addGlowen(num(amount.value)))), btn('+Tear', () => call(() => api.addTear()))),
+        h('div', { class: 'row wrap' }, amount, btn('+Shards', () => call(() => api.addShards(num(amount.value)))), btn('+Glowen', () => call(() => api.addGlowen(num(amount.value))))),
         h('div', { class: 'row wrap' }, btn('Learn all spells', () => call(() => api.learnAllSpells())))),
       h('fieldset', null, h('legend', null, 'Items'),
         h('div', { class: 'row wrap' }, baseSel, rar, 'ilvl', ilvl, btn('Give', () => call(() => api.giveItem(baseSel.value, rar.value, num(ilvl.value, 1))))),

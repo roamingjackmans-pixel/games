@@ -260,7 +260,7 @@ counts Bonk ×1.5 toward requirements. Requirements are checked against your sta
 - Gear below requirement gives **none of its buffs** (affixes, gems, bands, ring effects, legendary powers, set
   perks).
 
-### 3.4 Levelling and respec
+### 3.4 Levelling
 
 Enemies drop **Shards**; spend them at a bonfire's **Level up** tab. Cost from level `L` to `L + 1` (D39, D147):
 
@@ -281,8 +281,8 @@ and spends only on **Confirm**; leaving with unconfirmed points asks Lock in / D
 Death drops all unspent Shards as a **Shardpile** where you died (in a boss room, just inside the door). Touch it to
 recover; die again first and it is gone (D3).
 
-**Respec:** a **Tear of Undoing** (bosses 10%, reliquaries 5%, sometimes Gary) resets stats to the class base and
-refunds the points as free points. It asks first, with Back focused (D238).
+**No respec** (D341): stat points, once placed, stay. Tears of Undoing are gone; a save that still held some got 2,000
+Glowen for each, and free points left over from an earlier respec are still placed for nothing at a bonfire.
 
 ## 4. Controls
 
@@ -653,7 +653,7 @@ zone's boss: boss kills, best times and boss achievements ignore it.
 ### 7.6 Rewards
 
 Per player: **2–5 items** from the boss rarity row (20 / 35 / 30 / 11 / 4, D84), a **gem 65%** of the time (D281;
-one extra quality roll), **10% a Tear of Undoing**, 150 × zone Glowen, and Soul Essence (§8.8). 25% of boss kills
+one extra quality roll), 150 × zone Glowen, and Soul Essence (§8.8). 25% of boss kills
 place a **spell reliquary** in the arena (rolled from the world seed, so it is still there on return). The stairs down
 open. Bosses beaten count toward the Thermos (§9.2). Beating a boss adds to the boss's Bestiary entry (§11).
 
@@ -837,7 +837,7 @@ Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost �
 
 ### 9.1 The bonfire
 
-Tabs, in order: **Level up** (with Respec) · **Gem bench** · **Weapons** (rarity bars) · **Reinforce** · **Shop** ·
+Tabs, in order: **Level up** · **Gem bench** · **Weapons** (rarity bars) · **Reinforce** · **Shop** ·
 **Warp** (to any discovered bonfire of this playthrough) · **Bestiary** · **Spells** · **Inventory**.
 
 **Resting** (D150, D152, D153, D177, D324): **every rest heals, refills the Thermos and clears statuses for the whole
@@ -897,11 +897,12 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - **Chests**: treasure rooms hold a chest of two items from the boss row; a quarter of combat rooms have a small chest
   standing in them from the start (D93). Opening takes a 0.6 s hold, possible mid-fight. Chests also give a little
   Glowen, a gem 7.8%, a consumable bundle 8%, and Essence (§8.8). 8% are mimics.
-- **Spell reliquary**: holds one spell the character does not know (either school), 5% a Tear of Undoing instead.
+- **Spell reliquary**: holds one spell the character does not know (either school); 300 × zone Glowen when it knows
+  them all (D341).
   Never a mimic.
 - **Gary**, the wandering merchant (20% a zone from zone 2, D70): 3–5 entries rolled once per zone and cycle — gear at
   item level + 1 from Epic/Legendary weights (half of NG+ gear is Legendary), gems at 6× their sale price with
-  better rolls, consumable bundles, a Lucky Charm ring, and a Tear of Undoing 20% (30% in NG+). A detail pane shows
+  better rolls, consumable bundles and a Lucky Charm ring. A detail pane shows
   full stats against your gear. Hit him three times and he leaves for the playthrough. Only the host trades in co-op.
 - **Bestiary** (D229, D236): a bonfire tab with one collapsible chapter per zone (88 entries). Kills credit every
   standing player. A regular enemy unlocks its picture and name at 1 kill, its lore at 15, its resistances at 40,
@@ -1036,7 +1037,7 @@ face marks and per-limb features, with Randomize and a preview you turn with the
 ## 18. Glossary
 
 Shards (XP currency) · Glowen (the money, §19) · Joe's Thermos (flask) · Shardpile (dropped Shards) · Bonfire (the
-camp stove Joe sits at) · Red = "Crimson" · Piercing / Blue = "Spectral" · Tear of Undoing (respec) · Soul Essence
+camp stove Joe sits at) · Red = "Crimson" · Piercing / Blue = "Spectral" · Soul Essence
 (reinforcing) · Spell reliquary · Gary (the wandering merchant) · The Instructor (tutorial boss) · The Landlord (final
 boss) · Cycle (NG+ count).
 

@@ -50,7 +50,6 @@ export function newCharacter(classId: ClassId, name: string, playerId: string, r
       brain: loadoutOf('brain'),
       prayer: loadoutOf('prayer'),
     },
-    tears: 0,
     freePoints: 0,
     tutorialDone: false,
   };
@@ -67,14 +66,6 @@ export function levelFromStats(c: Character): number {
 
 export function canRaise(c: Character, stat: StatId): boolean {
   return c.stats[stat] < STAT_CAP;
-}
-
-/** Reset stats to the class base, keeping the level's points as unspent (refunded as levels to re-buy). */
-export function respecStats(c: Character): number {
-  const base = CLASSES[c.classId].stats;
-  const refund = statTotal(c) - (base.hp + base.endurance + base.bonk + base.slicey + base.brain + base.prayer);
-  c.stats = { ...base };
-  return refund;
 }
 
 export function expectedPoints(level: number): number {

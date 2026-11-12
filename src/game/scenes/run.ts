@@ -32,7 +32,7 @@ import { openInventory } from '../../ui/menus/inventory';
 import { openBonfire } from '../../ui/menus/bonfire';
 import { renderSpellTab } from '../../ui/menus/spells';
 import { renderGary } from '../../ui/menus/gary';
-import { buyConsumable, buyGem, buyItem, cycleQuickSlot, fuseGems, levelUp, respec, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
+import { buyConsumable, buyGem, buyItem, cycleQuickSlot, fuseGems, levelUp, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
 import { upgradeRarity } from '../items/proficiency';
 import { breakDownEssence, reinforceItem } from '../items/reinforce';
 import { shopGem, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
@@ -384,7 +384,7 @@ export class RunScene extends WorldScene {
     this.menuOpen = true;
   }
 
-  /** The bonfire menu: level up, respec, gem bench, shop, warp. */
+  /** The bonfire menu: level up, gem bench, shop, warp. */
   showBonfire(p: Entity, id: string, first: boolean): void {
     this.dropCut();
     this.closeOverlay();
@@ -421,7 +421,6 @@ export class RunScene extends WorldScene {
             }
             return r(o);
           },
-          respec: () => r(respec(c)),
           socket: (it, si, gi) => r(socketGem(c, it, si, gi)),
           unsocket: (it, si) => r(unsocketGem(c, it, si)),
           // a weapon with a full bar, a rarity up for Glowen (D178); a guest raises its own

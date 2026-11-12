@@ -205,7 +205,6 @@ export function openInventory(host: InventoryHost): HTMLElement {
         ...kv('Shards', fmt(c.shards)),
         ...kv('Next level', fmt(levelCost(c.level))),
         ...kv('Glowen', glowenEl(c.glowen)),
-        ...kv('Tears of Undoing', c.tears),
         ...kv("Joe's Thermos", `${c.flaskCur}/${c.flaskMax}`),
       ),
       btn(c.twoHanded ? `Two-handing (${glyphText('twoHand')}) — click to one-hand` : `One-handing (${glyphText('twoHand')}) — click to two-hand`, () => {

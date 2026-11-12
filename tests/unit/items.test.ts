@@ -10,7 +10,6 @@ import {
   buyConsumable,
   equip,
   levelUp,
-  respec,
   fuseGems,
   fusePreview,
   sellAll,
@@ -226,17 +225,17 @@ describe('inventory, gems, Glowen, levels', () => {
     expect(c.equipment.main).toBe(worn);
     expect(sellAll(c, 'all').ok).toBe(false);
   });
-  it('level up costs follow the curve; respec refunds points as free points', () => {
+  it('level up costs follow the curve; free points left from an old respec are placed for nothing', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
     c.shards = levelCost(1) + levelCost(2) - 1;
     expect(levelUp(c, 'hp').ok).toBe(true);
     expect(c.level).toBe(2);
     expect(levelUp(c, 'hp').ok).toBe(false);
-    c.tears = 1;
-    expect(respec(c).ok).toBe(true);
-    expect(c.stats.hp).toBe(10);
-    expect(c.freePoints).toBe(1);
+    // D341: respeccing is gone, but a save that still holds free points from one places them
+    c.freePoints = 1;
     expect(levelUp(c, 'bonk').ok).toBe(true);
+    expect(c.freePoints).toBe(0);
+    // those points were already counted in the level
     expect(c.level).toBe(2);
     c.glowen = 30; // D309: the knife's 15 doubled
     expect(buyConsumable(c, 'throwing_knife').ok).toBe(true);

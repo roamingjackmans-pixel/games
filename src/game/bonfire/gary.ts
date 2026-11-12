@@ -42,8 +42,6 @@ export function garyStock(ws: WorldState, zone: number, cycle: number): GaryStoc
   const out: GaryStockEntry[] = [pool[0]!(), pool[1]!(), pool[2]!()];
   if (n >= 4) out.push(pool[3]!());
   if (n >= 5) out.push(rng.chance(0.5) ? pool[0]!() : pool[2]!());
-  // a Tear of Undoing, sometimes (rare)
-  if (rng.chance(0.2 + (cycle > 0 ? 0.1 : 0))) out.push({ kind: 'tear', price: buyPrice(2000 * zone), sold: false });
   ws.garyStock[key] = out;
   return out;
 }
@@ -57,8 +55,6 @@ export function garyEntryName(e: GaryStockEntry): string {
       return e.gem ? `${gemKindLabel(e.gem)}: ${gemTitle(e.gem)}` : 'A gem';
     case 'consumable':
       return `${e.count ?? 1}× ${e.consumable ? CONSUMABLES[e.consumable].name : 'thing'}`;
-    case 'tear':
-      return 'Tear of Undoing';
   }
 }
 
@@ -74,6 +70,6 @@ export function buyFromGary(c: Character, e: GaryStockEntry): { ok: boolean; msg
   else if (e.kind === 'consumable' && e.consumable) {
     c.consumables[e.consumable] = Math.min(10, (c.consumables[e.consumable] ?? 0) + (e.count ?? 1));
     if (!c.quickSlot) c.quickSlot = e.consumable;
-  } else if (e.kind === 'tear') c.tears++;
+  }
   return { ok: true, msg: `Bought ${garyEntryName(e)}. "Pleasure."` };
 }

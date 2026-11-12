@@ -320,7 +320,6 @@ export function publicChar(c: Entity['pl'] extends infer P ? (P extends { char: 
     bossesBeaten: c.bossesBeaten,
     highestZoneBeaten: c.highestZoneBeaten,
     cycle: c.cycle,
-    tears: 0,
     freePoints: 0,
     tutorialDone: true,
   };

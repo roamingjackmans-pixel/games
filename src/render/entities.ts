@@ -1218,8 +1218,8 @@ export function drawPickup(ctx: CanvasRenderingContext2D, e: Entity, now: number
     poly(ctx, [x, y - 8, x + 7, y, x, y + 8, x - 7, y], color, OUTLINE, 2);
   } else if (pk.kind === 'consumable') {
     blob(ctx, x, y, 6, 7, { fill: '#b08d6a' });
-  } else if (pk.kind === 'spell' || pk.kind === 'tear') {
-    blob(ctx, x, y, 8, 8, { fill: pk.kind === 'tear' ? '#9ad0ff' : '#c58cff' });
+  } else if (pk.kind === 'spell') {
+    blob(ctx, x, y, 8, 8, { fill: '#c58cff' });
   } else {
     ctx.save();
     ctx.translate(x, y);

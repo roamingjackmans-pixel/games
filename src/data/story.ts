@@ -248,7 +248,6 @@ export const TIPS: readonly string[] = [
   'Spells come from reliquaries, never shops. Gary has tried.',
   'Weapon skills unlock with item level: Worn, Fine, Masterwork, Mythic.',
   'Falling off the edge of the Abyss costs half your HP and all of your pride.',
-  'A Tear of Undoing resets your stats at a fire. Cry responsibly.',
   'Elites glow and drop better loot. They also hit like a rent increase.',
 ];
 

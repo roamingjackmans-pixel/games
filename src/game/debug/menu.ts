@@ -43,7 +43,6 @@ export interface DebugApi {
   setFlask(cur: number, max: number): string;
   addShards(n: number): string;
   addGlowen(n: number): string;
-  addTear(): string;
   testArena(): string;
   revealMap(): string;
   stats(): DebugStats;

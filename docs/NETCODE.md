@@ -179,7 +179,7 @@ with what it sees.
   teleport** (a room change) bumps the guest's **epoch**: the guest takes `x, y, hp` and the down state from the host,
   and the host ignores body packets carrying an older epoch, so nothing in flight undoes it.
 - The host simulates with a **copy** of each guest's character (it needs stats and gear). What the simulation changes
-  on that copy becomes numbered **`CharOp`s** (`charSync.ts`): `add` (Shards, Glowen, tears, bosses beaten), `set`
+  on that copy becomes numbered **`CharOp`s** (`charSync.ts`): `add` (Shards, Glowen, bosses beaten), `set`
   (Thermos, highest zone, two-handing, quick slot), `bag`, `gem`, `consumable`, `spell`, `gear` (a weapon swap), `prof`,
   `essence`, `bestiary`, `seen`. They go to the guest on `charop` with a revision number.
 - When the guest changes its character itself (equipping, levelling, gems, reinforcing, breaking down Essence,

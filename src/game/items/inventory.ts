@@ -3,7 +3,7 @@
 import { GEMS, gemKind, gemKindLabel, gemOrigin, gemTitle } from '../../data/gems';
 import { CONSUMABLES, MAX_CONSUMABLE } from '../../data/consumables';
 import { STAT_CAP, buyPrice, gearSellValue, gemFuseCost, gemSellTotal, levelCost } from '../combat/formulas';
-import { canRaise, levelFromStats, respecStats } from '../player/character';
+import { canRaise, levelFromStats } from '../player/character';
 import type { Character, ConsumableId, Gem, GemFamily, GemPerk, Item, Rarity, StatId } from '../types';
 import { newId } from './make';
 import { WEAPONS } from '../../data/weapons';
@@ -424,15 +424,6 @@ export function planLevelUps(c: Character, pending: PendingPoints): { ok: boolea
     }
   }
   return { ok: true, char: copy, points, shardsSpent: c.shards - copy.shards, freeUsed: c.freePoints - copy.freePoints, msg: '' };
-}
-
-/** Tear of Undoing: stats back to the class base, the points come back as free points to spend. */
-export function respec(c: Character): OpResult {
-  if (c.tears <= 0) return no('You need a Tear of Undoing.');
-  c.tears--;
-  const refund = respecStats(c);
-  c.freePoints += refund;
-  return ok(`Your stats are undone. ${c.freePoints} points to place.`);
 }
 
 /** Cycle the quick-use slot to the next owned consumable. */

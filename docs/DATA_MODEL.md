@@ -49,8 +49,8 @@ interface SaveFile {
 |---|---|
 | `playerId`, `name`, `classId` | `playerId` is stable: co-op identity, loot streams |
 | `level`, `stats` | `stats`: `hp, endurance, bonk, slicey, brain, prayer` (Endurance was Stamina, D82) |
-| `freePoints` | points refunded by a Tear of Undoing, spent free at a bonfire |
-| `shards`, `glowen`, `tears` | currencies; Glowen was Stardust (D80) |
+| `freePoints` | points to place for free at a bonfire (left from a respec before D341 removed it) |
+| `shards`, `glowen` | currencies; Glowen was Stardust (D80); `tears` is gone (D341: turned into Glowen on load) |
 | `essence?` | Soul Essence held, tiers 1–5 as five counts (D198) |
 | `flaskMax`, `flaskCur`, `bossesBeaten` | the Thermos |
 | `highestZoneBeaten`, `cycle` | progress; `cycle` 0 = first playthrough, 1 = NG+1 … |

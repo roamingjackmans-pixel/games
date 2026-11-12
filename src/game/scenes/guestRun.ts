@@ -20,7 +20,7 @@ import { openStatistics } from '../../ui/statistics';
 import { achievements } from '../achievements';
 import { stats } from '../stats';
 import { drawInteractable, nearestInteractable } from '../../render/interactables';
-import { buyConsumable, buyGem, fuseGems, levelUp, respec, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
+import { buyConsumable, buyGem, fuseGems, levelUp, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
 import { upgradeRarity } from '../items/proficiency';
 import { breakDownEssence, reinforceItem } from '../items/reinforce';
 import { shopGem, shopGemPrice } from '../bonfire/shop';
@@ -307,7 +307,6 @@ export class GuestRunScene extends WorldScene {
         discovered: [],
         ops: {
           levelUp: (st) => r(levelUp(c, st)),
-          respec: () => r(respec(c)),
           socket: (it, si, gi) => r(socketGem(c, it, si, gi)),
           unsocket: (it, si) => r(unsocketGem(c, it, si)),
           // a weapon with a full bar, a rarity up for Glowen (D178); a guest raises its own

@@ -1084,11 +1084,6 @@ export class GameSession {
       this.w.emit({ t: 'msg', text: `${pk.amount > 1 ? `${pk.amount} × ` : ''}${def.name} (Soul Essence, Tier ${t})`, forPlayer: p.pl!.playerId, color: def.color });
       return true;
     }
-    if (pk.kind === 'tear') {
-      c.tears++;
-      this.w.emit({ t: 'msg', text: 'A Tear of Undoing.', forPlayer: p.pl!.playerId, color: '#9ad0ff' });
-      return true;
-    }
     return false;
   }
 

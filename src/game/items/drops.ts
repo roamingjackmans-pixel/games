@@ -3,7 +3,7 @@
 import { stream, type Rng } from '../../engine/rng';
 import { essenceTierFor } from '../../data/essence';
 import { gemDropLevel } from '../../data/gems';
-import { CONSUMABLE_CHANCE, DROP_CHANCE, GEM_CHANCE, GLOWEN_PUFF, GLOWEN_WISP_CHANCE, TEAR_CHANCE, type LootSource } from '../../data/lootTables';
+import { CONSUMABLE_CHANCE, DROP_CHANCE, GEM_CHANCE, GLOWEN_PUFF, GLOWEN_WISP_CHANCE, type LootSource } from '../../data/lootTables';
 import { SPELLS } from '../../data/spells';
 import { WEAPON_IDS } from '../../data/weapons';
 import { itemLevelFor } from '../combat/formulas';
@@ -161,14 +161,14 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
   }
 }
 
-/** Spell reliquary: a spell the player does not know (either school), 5% a Tear of Undoing instead. */
+/** Spell reliquary: a spell the player does not know (either school); Glowen when every spell is known (D341). */
 export function reliquaryDrops(c: DropContext, roomId: string, x: number, y: number): void {
   const w = c.w;
   for (const p of w.players) {
     const pl = p.pl!;
     const rng = stream(c.seed, `loot:${pl.playerId}:reliquary:${roomId}:${c.cycle}`);
     const unknown = Object.keys(SPELLS).filter((id) => !pl.char.knownSpells.includes(id));
-    if (rng.chance(TEAR_CHANCE.reliquary) || unknown.length === 0) spawnPickup(w, x, y + 30, { kind: 'tear', forPlayer: pl.playerId, amount: 1, rarity: 'legendary' });
+    if (unknown.length === 0) spawnPickup(w, x, y + 30, { kind: 'glowen', forPlayer: pl.playerId, amount: 300 * Math.max(1, c.zone), rarity: 'uncommon' });
     else {
       // D317: a class whose primary (or secondary) stat is Brain or Prayer finds that school's spells more often
       const f = favorOf(pl.char);
@@ -201,8 +201,8 @@ export function instructorDrops(c: DropContext, x: number, y: number): void {
 }
 
 /**
- * A boss (GAME_DESIGN §7, §8.2, D84): per player 2–5 items from the boss rarity row, a gem (65%, D281), 10% a Tear of
- * Undoing, and some Glowen. The arena's spell reliquary is rolled by the session (it is a world object).
+ * A boss (GAME_DESIGN §7, §8.2, D84): per player 2–5 items from the boss rarity row, a gem (65%, D281) and some Glowen
+ * (D341: no more Tears of Undoing). The arena's spell reliquary is rolled by the session (it is a world object).
  */
 export function bossDrops(c: DropContext, bossId: string, x: number, y: number): void {
   const w = c.w;
@@ -222,10 +222,6 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
     if (rng.chance(GEM_CHANCE.boss)) {
       const [gx, gy] = scatter(rng, x, y, 60);
       spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle), 1), amount: 1, rarity: 'rare' });
-    }
-    if (rng.chance(TEAR_CHANCE.boss)) {
-      const [tx, ty] = scatter(rng, x, y, 60);
-      spawnPickup(w, tx, ty, { kind: 'tear', forPlayer: pid, amount: 1, rarity: 'legendary' });
     }
     const [sx, sy] = scatter(rng, x, y, 60);
     spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round(150 * c.zone * (1 + pl.derived.glowenFind)), rarity: 'uncommon' });

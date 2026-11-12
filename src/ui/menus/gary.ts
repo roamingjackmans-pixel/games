@@ -24,15 +24,13 @@ function entryKind(e: GaryStockEntry): string {
       return e.gem ? e.gem.perks.map(perkText).join(' · ') : 'Gem';
     case 'consumable':
       return e.consumable ? CONSUMABLES[e.consumable].description : 'Consumable';
-    case 'tear':
-      return 'Undo your stats at a bonfire: every point comes back to place freely.';
   }
 }
 
 function entryColor(e: GaryStockEntry): string {
   if (e.item) return RARITY_BORDER[e.item.rarity] ?? '#efe6d2';
   if (e.kind === 'gem' && e.gem) return gemColor(e.gem);
-  return e.kind === 'tear' ? '#9ad0ff' : '#efe6d2';
+  return '#efe6d2';
 }
 
 function entryDetail(e: GaryStockEntry, c: Character): HTMLElement {
