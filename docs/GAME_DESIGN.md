@@ -159,6 +159,10 @@ builds, at their new levels, see the same kill times and hits to die as before. 
 and hit 1–21% softer by zone, NG+2–4 about 10% lighter and 5–30% softer; from NG+5 the report's builds sit at the stat
 soft cap either way, so the factors go to 1.
 
+**Early New Game+ trim** (D352): room enemies (Elites too; not bosses or special NPCs) lose a further share of HP in the first
+NG+ zones, after every curve above (`NG_ENEMY_HP_TRIM` in `data/roles.ts`): NG+1 zone 1 −60%, zone 2 −44%, zone 3 −25%,
+zone 4 −16%; NG+2 zone 1 −15%. Zone average HP lands at 780 / 987 / 1,320 / 1,666 (NG+1 zones 1–4) and 4,747 (NG+2 zone 1).
+
 **NG+ level growth** (D307): New Game+ levels go further than the first playthrough's, so every enemy
 and boss grows by 70% of what those levels give a player (`NG_LEVEL_COMP`, by zone; NG+3 on uses NG+2's column):
 

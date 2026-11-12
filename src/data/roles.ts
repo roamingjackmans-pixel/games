@@ -158,6 +158,20 @@ export function levelPaceComp(kind: 'hp' | 'dmg' | 'bossHp', zone: number, cycle
   return row(lo) * Math.pow(row(hi) / row(lo), (cycle - lo) / (hi - lo));
 }
 
+/**
+ * D352: the early New Game+ zones were too tanky, so room enemies (not bosses or special NPCs) lose a share of their HP
+ * by cycle and zone, on top of every other curve (and kept out of LEVEL_PACE_COMP, which is refitted by script).
+ * NG+1: zone 1 −60%, zone 2 −44%, zone 3 −25%, zone 4 −16%. NG+2: zone 1 −15%. Everything else stays 1.
+ */
+export const NG_ENEMY_HP_TRIM: Record<number, Record<number, number>> = {
+  1: { 1: 0.4, 2: 0.56, 3: 0.75, 4: 0.84 },
+  2: { 1: 0.85 },
+};
+
+export function ngEnemyHpTrim(zone: number, cycle: number): number {
+  return NG_ENEMY_HP_TRIM[cycle]?.[Math.max(1, Math.min(8, zone))] ?? 1;
+}
+
 /** D314: bosses hit 75% harder from NG+1 on (they had fallen behind); every later cycle grows from there. */
 export const NG_BOSS_DMG_MULT = 1.75;
 export function ngBossDmgMult(cycle: number): number {
