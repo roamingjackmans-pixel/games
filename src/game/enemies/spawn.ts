@@ -53,7 +53,7 @@ export function enemyFullHp(def: EnemyDef | BossDef, zone: number, cycle: number
   // a boss lighter on the first playthrough (D211)
   if (isBoss && cycle <= 0) hp *= (def as BossDef).firstCycleHpMult ?? 1;
   // New Game+ bosses sized to a target fight length (D301)
-  if (isBoss && !def.special) hp *= ngBossHpMult((def as BossDef).zone, cycle) * ngBossHpTrim(cycle);
+  if (isBoss && !def.special) hp *= ngBossHpMult((def as BossDef).zone, cycle) * ngBossHpTrim(cycle, (def as BossDef).zone);
   // the slower New Game+ levels (D325): enemies give back what those levels no longer give a player
   if (!def.special) hp *= levelPaceComp('hp', zone, cycle) * (isBoss ? levelPaceComp('bossHp', zone, cycle) : 1);
   // the early New Game+ zones' room enemies were too tanky (D352)

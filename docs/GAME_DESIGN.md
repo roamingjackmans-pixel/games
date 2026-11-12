@@ -156,6 +156,9 @@ NG+3, 0.7, 0.8, 0.9, and NG+7 on is the plain curve. A boss now grows about 1.9�
 3.1–4.5×) and 1.4–1.9× a cycle after that. The fight-length targets above are shorter at NG+1–NG+6 by the same shares
 (the balance report flags them).
 
+**Zone 3 and 4 bosses, NG+1** (D367): they have 15% more HP than the halved NG+1 bosses of D353 (`NG_BOSS_ZONE_HP_TRIM`),
+so the Bloatking has about 99,500 and Vexthorn about 113,900 in total; the random encounter boss follows when it is met in zone 3 or 4.
+
 **Zone 3 room enemies** (D363): the enemies a zone 3 room's waves spawn (Elites too, every cycle) hit **25% harder** than the
 curve gives them (`ZONE_ROOM_ENEMY_DMG` in `data/roles.ts`). The Bloatking, what he summons in his arena, Mimics and
 special NPCs keep the plain curve.

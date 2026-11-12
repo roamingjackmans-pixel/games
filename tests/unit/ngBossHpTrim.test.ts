@@ -6,7 +6,18 @@ import { enemyFullHp } from '../../src/game/enemies/spawn';
 // D353: zone bosses have half the HP in NG+1 and NG+2; D354: the trim climbs back to 1 by NG+7
 describe('NG+1 and NG+2 boss HP trim (D353)', () => {
   it('is 0.5 for NG+1 and NG+2, climbs 0.6 to 0.9 over NG+3–NG+6, and is 1 elsewhere', () => {
-    expect([0, 1, 2, 3, 4, 5, 6, 7, 10].map(ngBossHpTrim)).toEqual([1, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1]);
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 10].map((c) => ngBossHpTrim(c))).toEqual([1, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1]);
+  });
+
+  it('zones 3 and 4 have 15% more in NG+1 only (D367)', () => {
+    expect([1, 2, 3, 4, 5].map((z) => ngBossHpTrim(1, z))).toEqual([0.5, 0.5, 0.5 * 1.15, 0.5 * 1.15, 0.5]);
+    expect([3, 4].map((z) => ngBossHpTrim(2, z))).toEqual([0.5, 0.5]);
+    expect([3, 4].map((z) => ngBossHpTrim(0, z))).toEqual([1, 1]);
+    const hp = (id: string, c: number): number => enemyFullHp(BOSSES[id]!, BOSSES[id]!.zone, c);
+    // before D367 the balance report listed 86,518 (Bloatking) and 99,068 (Vexthorn) at NG+1
+    expect(hp('bloatking', 1)).toBeCloseTo(86518 * 1.15, -2);
+    expect(hp('vexthorn', 1)).toBeCloseTo(99068 * 1.15, -2);
+    expect(hp('mother_spore', 1)).toBeCloseTo(75313, -2); // zone 2: unchanged
   });
 
   it('lands the Caretaker at half its balance-report totals', () => {

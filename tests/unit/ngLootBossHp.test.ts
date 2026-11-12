@@ -2,7 +2,7 @@
 // to a fight length.
 import { describe, expect, it } from 'vitest';
 import { itemLevelFor, reqAtIlvl } from '../../src/game/combat/formulas';
-import { NG_BOSS_HP, ngBossHpMult } from '../../src/data/roles';
+import { NG_BOSS_HP, ngBossHpMult, ngBossHpTrim } from '../../src/data/roles';
 import { World } from '../../src/game/world';
 import { Room } from '../../src/game/room';
 import { spawnEnemy } from '../../src/game/enemies/spawn';
@@ -49,7 +49,7 @@ describe('New Game+ boss HP (D301)', () => {
     // the same boss in the same room, labelled as zone 3's boss: only the D301 multiplier differs
     const a = spawnEnemy(w, THE_CARETAKER, 300, 300, { zone: 1, cycle: 1, players: 1 });
     const b = spawnEnemy(w, { ...THE_CARETAKER, zone: 3 }, 300, 300, { zone: 1, cycle: 1, players: 1 });
-    expect(b.hp!.max / a.hp!.max).toBeCloseTo(NG_BOSS_HP[1][3]! / NG_BOSS_HP[1][1]!, 5);
+    expect(b.hp!.max / a.hp!.max).toBeCloseTo((NG_BOSS_HP[1][3]! / NG_BOSS_HP[1][1]!) * ngBossHpTrim(1, 3), 5); // D367: zone 3's NG+1 boss has 15% more
     const first = spawnEnemy(w, { ...THE_CARETAKER, zone: 3 }, 300, 300, { zone: 1, cycle: 0, players: 1 });
     const first1 = spawnEnemy(w, THE_CARETAKER, 300, 300, { zone: 1, cycle: 0, players: 1 });
     expect(first.hp!.max).toBeCloseTo(first1.hp!.max, 5);

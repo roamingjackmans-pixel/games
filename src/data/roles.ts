@@ -175,8 +175,11 @@ export const NG_ENEMY_HP_TRIM: Record<number, Record<number, number>> = {
  */
 export const NG_BOSS_HP_TRIM: Record<number, number> = { 1: 0.5, 2: 0.5, 3: 0.6, 4: 0.7, 5: 0.8, 6: 0.9 };
 
-export function ngBossHpTrim(cycle: number): number {
-  return NG_BOSS_HP_TRIM[cycle] ?? 1;
+/** D367: on top of that, the zone 3 and 4 bosses have 15% more HP in NG+1. By zone, then cycle. */
+export const NG_BOSS_ZONE_HP_TRIM: Record<number, Record<number, number>> = { 3: { 1: 1.15 }, 4: { 1: 1.15 } };
+
+export function ngBossHpTrim(cycle: number, zone = 0): number {
+  return (NG_BOSS_HP_TRIM[cycle] ?? 1) * (NG_BOSS_ZONE_HP_TRIM[zone]?.[cycle] ?? 1);
 }
 
 export function ngEnemyHpTrim(zone: number, cycle: number): number {

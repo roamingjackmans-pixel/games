@@ -26,8 +26,9 @@ Written by `npm run balance:report` (tests/sim/report.sim.ts) from the live data
 20. **Enemy curve** (severity 3.4): NG+4: zone 7 room enemies have 23,519 HP on average, below zone 6's 26,699. *Suggested:* Check the zone roster mix and the HP curve.
 21. **Enemy curve** (severity 3.3): NG+6: zone 7 room enemies have 35,545 HP on average, below zone 6's 39,993. *Suggested:* Check the zone roster mix and the HP curve.
 22. **Enemy curve** (severity 3.2): NG+3: zone 2 room enemies have 10,968 HP on average, below zone 1's 12,318. *Suggested:* Check the zone roster mix and the HP curve.
-23. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
-24. **Boss curve** (severity 2.9): NG+1: The Bloatking (zone 3) averages 631 a hit, below zone 2's boss (705). *Suggested:* Raise its phase damage multipliers.
+23. **Boss curve** (severity 3.2): NG+1: Foreman Ignatius (zone 5) has 111,403 HP over all phases, below zone 4's boss (113,929). *Suggested:* Raise its baseHp / phase bars, or lower the previous boss.
+24. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
+25. **Boss curve** (severity 2.9): NG+1: The Bloatking (zone 3) averages 631 a hit, below zone 2's boss (705). *Suggested:* Raise its phase damage multipliers.
 
 (138 more findings of the same kinds are in the tables below.)
 
@@ -104,9 +105,9 @@ Average hit by role (HP in brackets):
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | The Caretaker | 3 | 14,848 / 22,272 / 22,272 | 59,393 | 519 / 570 / 654 | 1,019 |  |
 | 2 | Mother Spore | 3 | 18,828 / 28,242 / 28,242 | 75,313 | 453 / 687 / 843 | 1,336 |  |
-| 3 | The Bloatking | 3 | 21,630 / 32,444 / 32,444 | 86,518 | 471 / 607 / 740 | 963 | ⚠ hits softer than zone 2's boss |
-| 4 | Vexthorn, the Hollow Stag | 3 | 24,767 / 37,151 / 37,151 | 99,068 | 563 / 788 / 938 | 1,308 |  |
-| 5 | Foreman Ignatius | 3 | 41,776 / 34,814 / 34,814 | 111,403 | 626 / 907 / 1,057 | 1,844 |  |
+| 3 | The Bloatking | 3 | 24,874 / 37,311 / 37,311 | 99,496 | 471 / 607 / 740 | 963 | ⚠ hits softer than zone 2's boss |
+| 4 | Vexthorn, the Hollow Stag | 3 | 28,482 / 42,723 / 42,723 | 113,929 | 563 / 788 / 938 | 1,308 |  |
+| 5 | Foreman Ignatius | 3 | 41,776 / 34,814 / 34,814 | 111,403 | 626 / 907 / 1,057 | 1,844 | ⚠ less HP than zone 4's boss |
 | 6 | Saint Aurelia the Unthawed | 3 | 15,742 / 55,099 / 55,099 | 125,940 | 604 / 917 / 1,003 | 1,697 |  |
 | 7 | Archmagister Tock | 3 | 42,169 / 49,197 / 49,197 | 140,563 | 859 / 1,300 / 1,540 | 1,961 |  |
 | 8 | The Landlord | 4 | 62,027 / 60,203 / 60,202 / 72,244 | 254,676 | 1,015 / 1,291 / 1,904 / 1,613 | 2,878 |  |
@@ -425,13 +426,13 @@ Boss time-to-kill across the builds (seconds):
 
 | Build | Z1 | Z2 | Z3 | Z4 | Z5 | Z6 | Z7 | Z8 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Bonk: greathammer (2H) | 687 dps · 1.1s / 86s · 18.2 / 2 hits | 874 dps · 1.1s / 86s · 15.3 / 1.8 hits | 1,078 dps · 1.4s / 80s · 17.9 / 3 hits | 1,230 dps · 1.6s / 81s · 15.9 / 2.4 hits | 1,385 dps · 1.5s / 80s · 13.5 / 1.4 hits | 1,556 dps · 1.8s / 81s · 14.8 / 1.7 hits | 1,726 dps · 1.4s / 81s · 17.9 / 2 hits | 1,937 dps · 1.8s / 131s · 13.9 / 1 hits ⚠1-shot |
-| Slicey: twin daggers | 546 dps · 1.4s / 109s · 15.3 / 1.7 hits | 702 dps · 1.4s / 107s · 12.8 / 1.5 hits | 870 dps · 1.7s / 99s · 15 / 2.5 hits | 998 dps · 1.9s / 99s · 13.4 / 2 hits | 1,140 dps · 1.8s / 98s · 11.3 / 1.2 hits | 1,308 dps · 2.1s / 96s · 12.5 / 1.4 hits | 1,471 dps · 1.7s / 96s · 15.1 / 1.7 hits | 1,686 dps · 2.1s / 151s · 11.7 / 0.8 hits ⚠1-shot |
-| Quality: longsword + shield | 586 dps · 1.3s / 101s · 18.9 / 2.1 hits | 720 dps · 1.4s / 105s · 15.9 / 1.9 hits | 874 dps · 1.7s / 99s · 18.6 / 3.1 hits | 966 dps · 2s / 103s · 16.7 / 2.5 hits | 1,060 dps · 1.9s / 105s · 14.1 / 1.5 hits | 1,163 dps · 2.4s / 108s · 15.5 / 1.8 hits | 1,268 dps · 1.9s / 111s · 18.7 / 2.1 hits | 1,383 dps · 2.5s / 184s · 14.6 / 1 hits |
-| Bow (Slicey) | 382 dps · 2s / 156s · 15 / 1.7 hits | 481 dps · 2s / 156s · 12.7 / 1.5 hits | 590 dps · 2.6s / 147s · 14.8 / 2.5 hits | 668 dps · 2.9s / 148s · 13.3 / 2 hits | 760 dps · 2.7s / 147s · 11.2 / 1.2 hits | 860 dps · 3.2s / 146s · 12.3 / 1.4 hits | 957 dps · 2.6s / 147s · 14.9 / 1.7 hits | 1,081 dps · 3.2s / 236s · 11.6 / 0.8 hits ⚠1-shot |
-| Crossbow (Bonk) | 241 dps · 3.2s / 246s · 18.2 / 2 hits | 304 dps · 3.2s / 248s · 15.3 / 1.8 hits | 373 dps · 4.1s / 232s · 17.9 / 3 hits | 430 dps · 4.5s / 230s · 15.9 / 2.4 hits | 483 dps · 4.3s / 231s · 13.5 / 1.4 hits | 547 dps · 5s / 230s · 14.8 / 1.7 hits | 609 dps · 4s / 231s · 17.9 / 2 hits | 688 dps · 5.1s / 370s · 13.9 / 1 hits ⚠1-shot |
-| Brain caster: staff spells | 483 dps · 1.6s / 123s · 15 / 1.7 hits | 597 dps · 1.7s / 126s · 12.7 / 1.5 hits | 727 dps · 2.1s / 119s · 14.8 / 2.5 hits | 809 dps · 2.4s / 122s · 13.3 / 2 hits | 895 dps · 2.3s / 124s · 11.2 / 1.2 hits | 995 dps · 2.8s / 127s · 12.3 / 1.4 hits | 1,099 dps · 2.2s / 128s · 14.9 / 1.7 hits | 1,218 dps · 2.9s / 209s · 11.6 / 0.8 hits ⚠1-shot |
-| Prayer caster: talisman spells | 258 dps · 3s / 230s · 15.3 / 1.7 hits | 323 dps · 3.1s / 233s · 12.8 / 1.5 hits | 397 dps · 3.8s / 218s · 15 / 2.5 hits | 447 dps · 4.3s / 222s · 13.4 / 2 hits | 499 dps · 4.1s / 223s · 11.3 / 1.2 hits | 560 dps · 4.9s / 225s · 12.5 / 1.4 hits | 625 dps · 3.9s / 225s · 15.1 / 1.7 hits | 700 dps · 5s / 364s · 11.7 / 0.8 hits ⚠1-shot |
+| Bonk: greathammer (2H) | 687 dps · 1.1s / 86s · 18.2 / 2 hits | 874 dps · 1.1s / 86s · 15.3 / 1.8 hits | 1,078 dps · 1.4s / 92s · 17.9 / 3 hits | 1,230 dps · 1.6s / 93s · 15.9 / 2.4 hits | 1,385 dps · 1.5s / 80s · 13.5 / 1.4 hits | 1,556 dps · 1.8s / 81s · 14.8 / 1.7 hits | 1,726 dps · 1.4s / 81s · 17.9 / 2 hits | 1,937 dps · 1.8s / 131s · 13.9 / 1 hits ⚠1-shot |
+| Slicey: twin daggers | 546 dps · 1.4s / 109s · 15.3 / 1.7 hits | 702 dps · 1.4s / 107s · 12.8 / 1.5 hits | 870 dps · 1.7s / 114s · 15 / 2.5 hits | 998 dps · 1.9s / 114s · 13.4 / 2 hits | 1,140 dps · 1.8s / 98s · 11.3 / 1.2 hits | 1,308 dps · 2.1s / 96s · 12.5 / 1.4 hits | 1,471 dps · 1.7s / 96s · 15.1 / 1.7 hits | 1,686 dps · 2.1s / 151s · 11.7 / 0.8 hits ⚠1-shot |
+| Quality: longsword + shield | 586 dps · 1.3s / 101s · 18.9 / 2.1 hits | 720 dps · 1.4s / 105s · 15.9 / 1.9 hits | 874 dps · 1.7s / 114s · 18.6 / 3.1 hits | 966 dps · 2s / 118s · 16.7 / 2.5 hits | 1,060 dps · 1.9s / 105s · 14.1 / 1.5 hits | 1,163 dps · 2.4s / 108s · 15.5 / 1.8 hits | 1,268 dps · 1.9s / 111s · 18.7 / 2.1 hits | 1,383 dps · 2.5s / 184s · 14.6 / 1 hits |
+| Bow (Slicey) | 382 dps · 2s / 156s · 15 / 1.7 hits | 481 dps · 2s / 156s · 12.7 / 1.5 hits | 590 dps · 2.6s / 169s · 14.8 / 2.5 hits | 668 dps · 2.9s / 171s · 13.3 / 2 hits | 760 dps · 2.7s / 147s · 11.2 / 1.2 hits | 860 dps · 3.2s / 146s · 12.3 / 1.4 hits | 957 dps · 2.6s / 147s · 14.9 / 1.7 hits | 1,081 dps · 3.2s / 236s · 11.6 / 0.8 hits ⚠1-shot |
+| Crossbow (Bonk) | 241 dps · 3.2s / 246s · 18.2 / 2 hits | 304 dps · 3.2s / 248s · 15.3 / 1.8 hits | 373 dps · 4.1s / 267s · 17.9 / 3 hits | 430 dps · 4.5s / 265s · 15.9 / 2.4 hits | 483 dps · 4.3s / 231s · 13.5 / 1.4 hits | 547 dps · 5s / 230s · 14.8 / 1.7 hits | 609 dps · 4s / 231s · 17.9 / 2 hits | 688 dps · 5.1s / 370s · 13.9 / 1 hits ⚠1-shot |
+| Brain caster: staff spells | 483 dps · 1.6s / 123s · 15 / 1.7 hits | 597 dps · 1.7s / 126s · 12.7 / 1.5 hits | 727 dps · 2.1s / 137s · 14.8 / 2.5 hits | 809 dps · 2.4s / 141s · 13.3 / 2 hits | 895 dps · 2.3s / 124s · 11.2 / 1.2 hits | 995 dps · 2.8s / 127s · 12.3 / 1.4 hits | 1,099 dps · 2.2s / 128s · 14.9 / 1.7 hits | 1,218 dps · 2.9s / 209s · 11.6 / 0.8 hits ⚠1-shot |
+| Prayer caster: talisman spells | 258 dps · 3s / 230s · 15.3 / 1.7 hits | 323 dps · 3.1s / 233s · 12.8 / 1.5 hits | 397 dps · 3.8s / 250s · 15 / 2.5 hits | 447 dps · 4.3s / 255s · 13.4 / 2 hits | 499 dps · 4.1s / 223s · 11.3 / 1.2 hits | 560 dps · 4.9s / 225s · 12.5 / 1.4 hits | 625 dps · 3.9s / 225s · 15.1 / 1.7 hits | 700 dps · 5s / 364s · 11.7 / 0.8 hits ⚠1-shot |
 
 - Brain caster: staff spells: Z1 Meteor, Void Rift, Arcane Beam; spells 454 + weapon 29 · Z2 Meteor, Void Rift, Arcane Beam; spells 562 + weapon 36 · Z3 Meteor, Void Rift, Arcane Beam; spells 684 + weapon 43 · Z4 Meteor, Void Rift, Arcane Beam; spells 762 + weapon 47 · Z5 Meteor, Void Rift, Arcane Beam; spells 844 + weapon 51 · Z6 Meteor, Void Rift, Arcane Beam; spells 939 + weapon 56 · Z7 Meteor, Void Rift, Arcane Beam; spells 1,038 + weapon 61 · Z8 Meteor, Void Rift, Arcane Beam; spells 1,153 + weapon 65
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 145 + weapon 113 · Z2 Sunray, Purify; spells 181 + weapon 142 · Z3 Sunray, Purify; spells 222 + weapon 175 · Z4 Sunray, Purify; spells 249 + weapon 197 · Z5 Sunray, Purify; spells 277 + weapon 221 · Z6 Sunray, Purify; spells 311 + weapon 249 · Z7 Sunray, Purify; spells 346 + weapon 278 · Z8 Sunray, Purify; spells 387 + weapon 313
@@ -442,8 +443,8 @@ Boss time-to-kill across the builds (seconds):
 | --- | --- | --- | --- | --- |
 | 1 | 123 | 86 | 246 | 2.9 |
 | 2 | 126 | 86 | 248 | 2.9 |
-| 3 | 119 | 80 | 232 | 2.9 |
-| 4 | 122 | 81 | 230 | 2.9 |
+| 3 | 137 | 92 | 267 | 2.9 |
+| 4 | 141 | 93 | 265 | 2.9 |
 | 5 | 124 | 80 | 231 | 2.9 |
 | 6 | 127 | 81 | 230 | 2.8 |
 | 7 | 128 | 81 | 231 | 2.8 |
