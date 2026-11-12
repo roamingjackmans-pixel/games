@@ -238,7 +238,7 @@ export const SAINT_AURELIA: BossDef = {
     transitionBeats: [
       { atS: 0.2, sfx: 'guardBreak', shake: 6, fx: 'dust', n: 16 },
       { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#7fd4ff', n: 26 },
-      { atS: 2.2, sfx: '', shake: 8, fx: 'burst', color: '#7fd4ff', n: 34, r: 65 },
+      { atS: 2.2, sfx: 'phaseChange', shake: 8, fx: 'burst', color: '#7fd4ff', n: 34, r: 65 },
       { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#ffffff', n: 44, r: 100 },
     ],
   },

@@ -29,14 +29,14 @@ function spawnSome(w: World, boss: Entity, s: SummonDef, n: number): void {
       // corner parts stand exactly on the corner anchor points (where corner sweeps start)
       const c = freeCorner(w, boss, s.enemyId);
       if (!c) break;
-      const ce = spawnEnemy(w, def, c[0], c[1], { tellS: 1.0, zone: boss.en!.zone, noDrop: true });
+      const ce = spawnEnemy(w, def, c[0], c[1], { tellS: 1.0, zone: boss.en!.bonusZone ?? boss.en!.zone, noDrop: true });
       ce.en!.summonerId = boss.id;
       ce.en!.shards = 0;
       continue;
     }
     const a = w.combat.range(-Math.PI, Math.PI);
     const [x, y] = w.room.nearestFloor(boss.x + Math.cos(a) * (boss.radius + 80), boss.y + Math.sin(a) * (boss.radius + 80), def.radius);
-    const e = spawnEnemy(w, def, x, y, { tellS: 1.0, zone: boss.en!.zone, noDrop: true });
+    const e = spawnEnemy(w, def, x, y, { tellS: 1.0, zone: boss.en!.bonusZone ?? boss.en!.zone, noDrop: true });
     e.en!.summonerId = boss.id;
     e.en!.shards = 0;
   }
@@ -45,11 +45,14 @@ function spawnSome(w: World, boss: Entity, s: SummonDef, n: number): void {
 
 function phaseSummons(boss: Entity): SummonDef[] {
   const def = boss.en!.def as unknown as BossDef;
+  // the NG+ random encounter (D278) leaves its arena's summons behind unless its data says otherwise (D364)
+  if (boss.en!.bonusBoss && !def.bonusSummons) return [];
   return def.phases[boss.en!.phase]?.summons ?? [];
 }
 
 /** Called when a phase starts. */
 export function startPhaseSummons(w: World, boss: Entity): void {
+  if (boss.en!.bonusBoss && !(boss.en!.def as unknown as BossDef).bonusSummons) return;
   for (const s of phaseSummons(boss)) {
     spawnSome(w, boss, s, Math.max(0, Math.min(s.count, s.max - alive(w, boss, s.enemyId))));
     boss.en!.extrasUsed[`__summon:${s.enemyId}`] = w.time;

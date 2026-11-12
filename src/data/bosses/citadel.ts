@@ -203,7 +203,7 @@ export const ARCHMAGISTER_TOCK: BossDef = {
     transitionBeats: [
       { atS: 0.2, sfx: 'hitMetal', shake: 6, fx: 'dust', n: 16 },
       { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#b06bff', n: 26 },
-      { atS: 2.2, sfx: '', shake: 8, fx: 'burst', color: '#b06bff', n: 34, r: 65 },
+      { atS: 2.2, sfx: 'phaseChange', shake: 8, fx: 'burst', color: '#b06bff', n: 34, r: 65 },
       { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#ffd870', n: 44, r: 100 },
     ],
   },

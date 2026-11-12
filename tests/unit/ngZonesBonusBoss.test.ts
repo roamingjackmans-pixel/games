@@ -19,6 +19,7 @@ import { BONUS_BOSS_HP_PCT, bonusBossFor, bonusBossPool } from '../../src/game/p
 import { checkDeath } from '../../src/game/combat/damage';
 import { validateAttack } from '../../src/data/validate';
 import { World } from '../../src/game/world';
+import { stepWorld } from '../../src/game/sim';
 import { attackDamage } from '../../src/game/enemies/spawn';
 
 const level = (z: number): number => enemyDmgMult(z, 1) * zoneDmgFactor(z);
@@ -201,7 +202,7 @@ describe('New Game+ bonus boss rooms (D278)', () => {
     expect(boss.hp!.max).toBeCloseTo(fullHp * BONUS_BOSS_HP_PCT, 3);
     expect(boss.hp!.hp).toBe(boss.hp!.max);
     // only the waves are replaced: nothing else spawned
-    expect(s.w.enemies.filter((e) => !e.hp?.dead && !e.en!.def.traits?.mimic).length).toBe(1);
+    expect(s.w.enemies.filter((e) => !e.hp?.dead && !e.en!.def.traits?.mimic && !e.en!.summonerId).length).toBe(1); // (what Vexthorn calls, D364, is not a wave)
     // it never changes phase again
     boss.hp!.hp = 1;
     expect(boss.en!.phase).toBe(1);
@@ -239,6 +240,53 @@ describe('New Game+ bonus boss rooms (D278)', () => {
       boss.hp!.hp = Math.max(1, boss.hp!.max * 0.05);
       expect(boss.en!.phase).toBe(want);
     }
+  });
+
+  it("Vexthorn as the random encounter still runs with his Stag Sentinels, scaled for the room's zone; other bosses leave their summons behind (D364)", () => {
+    const run = (bossId: string): { s: GameSession; boss: ReturnType<GameSession['w']['get']>; sentinels: () => number } => {
+      const s = ngSession('BONUSROOM', 1, 1);
+      const bb = bonusBossFor(s.layout)!;
+      s.enterRoom(bb.roomId, s.layout.byId[bb.roomId]!.doors[0]!);
+      s.w.players[0]!.x = 640;
+      s.w.players[0]!.y = 368;
+      s.tick(0.016);
+      // whichever boss the room drew goes; the one under test takes its place
+      for (const e of [...s.w.enemies]) s.w.remove(e);
+      s.w.refreshLists();
+      s.w.bossId = 0;
+      (s as unknown as { spawnBonusBoss(id: string): void }).spawnBonusBoss(bossId);
+      const boss = s.w.get(s.w.bossId)!;
+      return { s, boss, sentinels: () => s.w.enemies.filter((e) => !e.hp?.dead && e.en!.def.id === 'stag_sentinel' && e.en!.summonerId === boss.id).length };
+    };
+    const v = run('vexthorn');
+    // phase 2 of the NG form brings two at once
+    expect(v.sentinels()).toBe(2);
+    const sentinel = v.s.w.enemies.find((e) => e.en!.def.id === 'stag_sentinel')!;
+    const ref = spawnEnemy(new World('ref2'), ENEMIES.stag_sentinel!, 0, 0, { zone: 1, cycle: 1, players: 1 });
+    expect(sentinel.hp!.max).toBeCloseTo(ref.hp!.max, 3); // the room's zone (1), not Vexthorn's (4)
+    expect(sentinel.en!.dmgMult).toBeCloseTo(ref.en!.dmgMult, 6);
+    // a fallen one is called back after 15 s
+    sentinel.hp!.hp = 0;
+    sentinel.hp!.dead = true;
+    v.s.w.refreshLists();
+    expect(v.sentinels()).toBe(1);
+    v.s.w.god = true; // nothing here is about surviving
+    for (let i = 0; i < 17 * 60; i++) {
+      stepWorld(v.s.w);
+      v.s.tick(1 / 60);
+    }
+    expect(v.sentinels()).toBe(2);
+    // the boss goes down: what it called goes with it
+    v.boss!.hp!.hp = 0;
+    checkDeath(v.s.w, v.boss!, v.s.w.players[0]!.id);
+    expect(v.sentinels()).toBe(0);
+    // Tock keeps his turrets in his own arena
+    const t = run('archmagister_tock');
+    for (let i = 0; i < 17 * 60; i++) {
+      stepWorld(t.s.w);
+      t.s.tick(1 / 60);
+    }
+    expect(t.s.w.enemies.filter((e) => e.en!.summonerId === t.boss!.id).length).toBe(0);
   });
 
   it('no bonus boss in the first playthrough', () => {

@@ -177,7 +177,7 @@ export const THE_BLOATKING: BossDef = {
     transitionBeats: [
       { atS: 0.2, sfx: 'hitSlime', shake: 6, fx: 'dust', n: 16 },
       { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#3fd6c0', n: 26 },
-      { atS: 2.2, sfx: '', shake: 8, fx: 'burst', color: '#3fd6c0', n: 34, r: 65 },
+      { atS: 2.2, sfx: 'phaseChange', shake: 8, fx: 'burst', color: '#3fd6c0', n: 34, r: 65 },
       { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#ffd24a', n: 44, r: 100 },
     ],
   },

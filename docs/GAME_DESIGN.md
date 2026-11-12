@@ -671,7 +671,9 @@ worth 30% of the room's zone boss's** full HP in this playthrough (D322: an Arch
 Caretaker's HP, not of its own), instead of the room's waves ("… waits here, weakened."). It hits as
 hard as a boss of the room's zone and stays in that phase. Bosses whose phase 2 needs their own arena (`arenaBound`:
 the Bloatking, Ignatius, the Landlord) are never picked. Rewards: Shards ×0.3 and a boss chest's loot. It is not the
-zone's boss: boss kills, best times and boss achievements ignore it.
+zone's boss: boss kills, best times and boss achievements ignore it. Its arena's changes and timed summons stay in its
+arena, except Vexthorn's Stag Sentinels, which still run with him (D364: `BossDef.bonusSummons`, two at once in his second
+phase, a fallen one called back after 15 s, scaled for the room's zone, gone when he falls).
 
 ### 7.6 Rewards
 

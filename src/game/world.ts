@@ -341,6 +341,8 @@ export interface EnemyC {
   stolenFrom: string;
   /** a New Game+ bonus fight (D278): a boss out of its arena, held in the phase it started in; not the zone's boss */
   bonusBoss?: boolean;
+  /** a bonus boss's room zone (D364): the zone its summons scale for, instead of the boss's own */
+  bonusZone?: number;
 }
 
 export interface ProjC {

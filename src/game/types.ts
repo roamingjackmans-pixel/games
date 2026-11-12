@@ -590,6 +590,8 @@ export interface BossDef extends Omit<EnemyDef, 'attacks' | 'role'> {
   arenaBound?: boolean;
   /** attacks only its New Game+ third phase ("Overtime", D295) brings, on top of its last phase's (D309) */
   overtimeAttacks?: AttackDef[];
+  /** as the New Game+ random encounter (D278) it still calls its phases' summons, scaled for the room's zone (D364: Vexthorn's Stag Sentinels) */
+  bonusSummons?: boolean;
   /** how its New Game+ third phase arrives (D358): its name, a scripted field-clearing transition (else the plain one) */
   overtimeIntro?: { name: string; transitionS: number; transitionBeats: NonNullable<BossPhase['transitionBeats']> };
   music: { root: number; tempo: number; bright: number };

@@ -677,9 +677,10 @@ export class GameSession {
       this.playtimeAcc -= Math.floor(this.playtimeAcc);
     }
     if (this.dead) return;
-    if (this.roomPhase === 'boss') {
+    if (this.roomPhase === 'boss' || this.roomPhase === 'fighting') {
       const b = w.get(w.bossId);
-      if (b && !b.hp?.dead) tickPhaseSummons(w, b);
+      // the zone's boss in its arena, or the NG+ random encounter boss (D364: its summons if its data keeps them)
+      if (b && !b.hp?.dead && (this.roomPhase === 'boss' || b.en?.bonusBoss)) tickPhaseSummons(w, b);
     }
     // arming: lock the doors once the party is inside, then spawn waves
     if (this.roomPhase === 'armed' && this.plan) {
@@ -807,6 +808,7 @@ export class GameSession {
     const phase = bonusBossPhase(cyc, live.length);
     const ph = live[phase]!;
     en.bonusBoss = true;
+    en.bonusZone = here;
     en.phase = phase;
     en.phaseAttacks = ph.attacks;
     // its table starts staggered, as a phase change leaves it
@@ -823,6 +825,8 @@ export class GameSession {
     en.shards = Math.max(1, Math.round(en.shards * BONUS_BOSS_SHARD_MULT));
     w.bossId = e.id;
     w.refreshLists();
+    // D364: a boss whose data keeps its summons for this fight (Vexthorn's Stag Sentinels) calls its phase's now
+    startPhaseSummons(w, e);
     this.waveIds = [e.id];
     this.waveSize = 1;
     for (const sp of this.players) addBestiarySeen(sp.char, def.id);
@@ -834,8 +838,9 @@ export class GameSession {
   /** The bonus boss is down (D278): what it called goes with it, a boss chest's worth of loot; the room clears as usual. */
   private bonusBossKilled(e: Entity): void {
     const w = this.w;
-    for (const o of w.livingEnemies()) {
-      if (o === e || o.en!.summonerId !== e.id) continue;
+    // every body it called, even one still in its spawn tell (the room clears only when none is left)
+    for (const o of [...w.enemies]) {
+      if (o === e || o.removed || o.en!.summonerId !== e.id) continue;
       o.en!.quietDeath = true;
       o.hp!.dead = true;
       w.fx('dust', o.x, o.y, { n: 10 });

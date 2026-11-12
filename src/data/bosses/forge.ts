@@ -269,7 +269,7 @@ export const FOREMAN_IGNATIUS: BossDef = {
     transitionBeats: [
       { atS: 0.2, sfx: 'hitMetal', shake: 6, fx: 'dust', n: 16 },
       { atS: 1.1, sfx: 'unboundCharge', shake: 3, fx: 'status', color: '#ff8a1a', n: 26 },
-      { atS: 2.2, sfx: '', shake: 8, fx: 'burst', color: '#ff8a1a', n: 34, r: 65 },
+      { atS: 2.2, sfx: 'explosion', shake: 8, fx: 'burst', color: '#ff8a1a', n: 34, r: 65 },
       { atS: 2.9, sfx: 'bossRoar', shake: 14, fx: 'burst', color: '#fff2c0', n: 44, r: 100 },
     ],
   },
