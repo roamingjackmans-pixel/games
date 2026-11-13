@@ -14,6 +14,7 @@
     { "folder": "horserace", "repo": "horserace", "publish": "public", "stamp": true },
     { "folder": "thedeck", "repo": "thedeck", "publish": "public", "stamp": true },
     { "folder": "lieage", "repo": "lieage", "publish": "public", "stamp": true },
-    { "folder": "roleplay20", "repo": "roleplay20", "publish": "site" }
+    { "folder": "roleplay20", "repo": "roleplay20", "publish": "site" },
+    { "folder": "battlecards", "repo": "battlecards", "publish": "public", "stamp": true }
   ]
 }
