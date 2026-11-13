@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.1.0">
+<meta name="version" content="1.1.1">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -445,7 +445,12 @@ b.hands { color: var(--sparkle); } b.discards { color: var(--shine); } b.money {
 .gizmos-owned { text-align: center; margin-top: 8px; font-size: 20px; }
 /* pack opening */
 #tb-pack { position: absolute; inset: 0; z-index: 30; background: rgba(4, 2, 10, .82); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); overflow: auto; padding: 14px; }
-.pack-open { text-align: center; max-width: 900px; } .pack-open h2 { font-family: var(--font-display); }
+/* while picking from a pack, the critter/consumable trays and the side panel (money) stay usable above the overlay */
+#table[data-pack] #tb-pack { left: 260px; align-items: flex-start; }
+#table[data-pack] .tb-top { position: relative; z-index: 31; }
+#table[data-pack] .tb-top .slots { background: rgba(30, 16, 6, .92); box-shadow: 0 0 0 2px rgba(255, 207, 90, .35), 0 6px 18px rgba(0, 0, 0, .5); }
+.pack-full { display: inline-block; margin: 0 0 4px; padding: 6px 12px; border-radius: 10px; background: rgba(255, 207, 90, .15); border: 2px dashed var(--gold); color: var(--gold); font-weight: 700; animation: bump .5s; }
+.pack-open { text-align: center; max-width: 900px; margin: 0 auto; } .pack-open h2 { font-family: var(--font-display); }
 .crack-me { cursor: pointer; display: inline-block; }
 .pg { width: 200px; height: 200px; border-radius: 42% 48% 44% 50%; background: radial-gradient(circle at 35% 30%, #a09080, #4a3a2a 70%); border: 5px solid var(--pc); box-shadow: 0 0 40px var(--pc); display: grid; place-items: center; font-size: 80px; position: relative; animation: wiggle 1.2s infinite; overflow: hidden; }
 .pg i { position: absolute; background: var(--pc); box-shadow: 0 0 12px #fff; opacity: 0; width: 6px; border-radius: 3px; }
@@ -490,6 +495,8 @@ table.levels { width: 100%; border-collapse: collapse; margin: 10px 0; font-size
   .blind-card { width: 150px; padding: 8px; } .bc-emoji { font-size: 36px; } .bc-tgt b { font-size: 20px; }
   .shop-slot { width: 96px; }
   .pg { width: 150px; height: 150px; }
+  #table[data-pack] #tb-pack { left: 0; position: fixed; }
+  #table[data-pack] .tb-side { z-index: 31; position: relative; }
 }
 #table:not([data-phase="play"]) .tb-actions, #table:not([data-phase="play"]) #tb-deck { visibility: hidden; }
 #table:not([data-phase="play"]) .tb-hand { opacity: .5; }
@@ -750,7 +757,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-13">v1.1.0</div>
+<div id="ver" title="built 2026-11-13">v1.1.1</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -4165,6 +4172,7 @@ G.Table = (() => {
     else if (r.phase === 'shop') T.renderShop();
     else if (r.phase === 'won') T.renderWon();
     else if (r.phase === 'over') T.renderOver();
+    el.root.toggleAttribute('data-pack', !!r.pack);
     if (r.pack) T.renderPack(); else el.pack.classList.add('hidden');
     syncStats();
   };
@@ -4620,9 +4628,12 @@ G.Table = (() => {
         if (pk.cracks >= 3) { G.Audio.pop(true); G.FX.flash(def.color + '88', 300); G.FX.ring(e.clientX, e.clientY, def.color, 300, 12); G.FX.confetti(40, e.clientX, e.clientY); }
         T.renderPack();
       };
+      T.padPack();
       return;
     }
+    const fullUp = pk.choices.some((ch) => ch.kind === 'critter' && !ch.taken && ch.edition !== 'fossil') && E.freeSlots(r) <= 0;
     el.pack.innerHTML = `<div class="pack-open opened"><h2>${def.emoji} ${def.name}</h2><p class="muted">Choose ${pk.picks} · ${pk.needsHand ? 'select cards below first if a rune needs them' : ''}</p>
+      ${fullUp ? '<p class="pack-full">🤠 Yer posse\'s full, partner! Click a critter up top to sell it and make room.</p>' : ''}
       <div class="pack-choices">${pk.choices.map((ch, i) => {
         let inner;
         if (ch.kind === 'critter') inner = T.critterHTML({ id: ch.id, edition: ch.edition, state: {} });
@@ -4640,7 +4651,12 @@ G.Table = (() => {
       const b = d.querySelector('button'); if (!b) return;
       b.onclick = () => {
         const res = E.packChoose(r, +d.dataset.i, sel);
-        if (!res.ok) { G.Audio.error(); G.FX.toast(res.why || "Can't take that"); return; }
+        if (!res.ok) {
+          G.Audio.error();
+          if (ch.kind === 'critter') { G.FX.toast("Posse's full! Sell a critter up top to make room."); G.FX.bump(el.critters, 'nope'); }
+          else G.FX.toast(res.why || "Can't take that");
+          return;
+        }
         G.Audio.upgrade();
         const p = G.FX.centerOf(d); G.FX.sparkles(p.x, p.y, 20, '#fff', 40);
         if (ch.kind === 'tonic') G.FX.banner(`${G.CONSUMABLE[ch.id].hand} level up!`, { color: '#7fb6ff', cls: 'glim', ms: 1100 });
@@ -4657,6 +4673,13 @@ G.Table = (() => {
       d.onclick = () => toggleSel(c.uid);
     });
     el.pack.querySelector('#pk-skip').onclick = () => { E.closePack(r); sel = []; T.render(); T.save(); };
+    T.padPack();
+  };
+  /* the critter + consumable trays float above the pack overlay, so push the pack's contents below them */
+  T.padPack = () => {
+    const top = el.root.querySelector('.tb-top');
+    if (!top || el.pack.classList.contains('hidden')) return;
+    el.pack.style.paddingTop = Math.max(14, top.getBoundingClientRect().bottom - el.pack.getBoundingClientRect().top + 26) + 'px';
   };
 
   /* ---------- deck viewer: every card you own, any time (between rounds too) ---------- */
