@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.1.5">
+<meta name="version" content="1.1.6">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,6 +87,7 @@ b { font-weight: 800; }
 .operation { font-family: var(--font-display); font-weight: 600; color: var(--muted); font-size: 15px; }
 #buffs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 6px; margin: 4px 0; z-index: 2; }
 .buff { --k: 1; display: flex; gap: 6px; align-items: center; padding: 4px 10px 4px 6px; border-radius: 10px; background: linear-gradient(90deg, rgba(255, 138, 61, .5) calc(var(--k) * 100%), rgba(255, 138, 61, .12) 0); border: 1px solid #ff8a3d; animation: pop-in .3s; }
+.buff.gone { animation: buff-out .3s forwards; } @keyframes buff-out { to { opacity: 0; transform: scale(.6); } }
 .buff.bad { background: linear-gradient(90deg, rgba(255, 79, 109, .45) calc(var(--k) * 100%), rgba(255, 79, 109, .1) 0); border-color: var(--bad); }
 .buff span { font-size: 20px; } .buff b { display: block; font-size: 12px; } .buff small { font-size: 11px; color: #ffe1c8; }
 #geode-wrap { position: relative; width: 100%; max-width: 380px; flex: 1 1 0; min-height: 150px; max-height: 380px; display: flex; align-items: center; justify-content: center; }
@@ -759,7 +760,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-13">v1.1.5</div>
+<div id="ver" title="built 2026-11-13">v1.1.6</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -2047,11 +2048,21 @@ G.Events = (() => {
     const el = document.getElementById('buffs'); if (!el) return;
     const s = G.state, now = Date.now();
     s.buffs = s.buffs.filter((b) => b.until > now);
-    el.innerHTML = s.buffs.map((b) => {
+    // keep one element per buff and only update its timer, so it pops in once and then just stays put
+    const live = new Set(s.buffs.map((b) => b.id));
+    el.querySelectorAll('.buff').forEach((d) => { if (!live.has(d.dataset.id) && !d.classList.contains('gone')) { d.classList.add('gone'); setTimeout(() => d.remove(), 300); } });
+    for (const b of s.buffs) {
+      let d = el.querySelector(`.buff[data-id="${b.id}"]:not(.gone)`);
+      if (!d) {
+        d = G.el('div', 'buff' + (b.cps && b.cps < 1 ? ' bad' : ''), `<span>${b.emoji}</span><div><b>${b.name}</b><small></small></div>`);
+        d.dataset.id = b.id; el.appendChild(d);
+      }
       const left = (b.until - now) / 1000, k = Math.max(0, Math.min(1, left / b.dur));
       const m = b.cps ? `×${G.fmt(b.cps)} CpS` : b.click ? `×${G.fmt(b.click)} click` : '';
-      return `<div class="buff ${b.cps && b.cps < 1 ? 'bad' : ''}" style="--k:${k}"><span>${b.emoji}</span><div><b>${b.name}</b><small>${m} · ${Math.ceil(left)}s</small></div></div>`;
-    }).join('');
+      const txt = `${m} · ${Math.ceil(left)}s`, sm = d.querySelector('small');
+      if (sm.textContent !== txt) sm.textContent = txt;
+      d.style.setProperty('--k', k.toFixed(3));
+    }
     document.body.classList.toggle('flipped', s.buffs.some((b) => b.id === 'flip'));
     document.body.classList.toggle('frenzy', s.buffs.some((b) => b.cps >= 7 || b.click));
   };
