@@ -10,6 +10,7 @@
       "stamp": true
     },
     { "folder": "infinitehive", "local": "deploy/infinitehive" },
+    { "folder": "geodegobbler", "local": "deploy/geodegobbler" },
     { "folder": "horserace", "repo": "horserace", "publish": "public", "stamp": true },
     { "folder": "thedeck", "repo": "thedeck", "publish": "public", "stamp": true },
     { "folder": "lieage", "repo": "lieage", "publish": "public", "stamp": true },
