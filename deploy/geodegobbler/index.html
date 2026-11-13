@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.1.1">
+<meta name="version" content="1.1.2">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -340,6 +340,8 @@ b.hands { color: var(--sparkle); } b.discards { color: var(--shine); } b.money {
 .critter { width: 78px; height: 96px; border-radius: 12px; background: linear-gradient(180deg, #f6eedc, #e2d2b0); color: #2a1a40; border: 3px solid #7fb6ff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; cursor: grab; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); transition: transform .12s; touch-action: none; }
 .critter:hover { transform: translateY(-4px) rotate(-2deg); }
 .critter.r2 { border-color: #3fd68a; } .critter.r3 { border-color: #ff4f6d; } .critter.r4 { border-color: #c86bff; background: linear-gradient(180deg, #fff3ff, #e5c8ff); box-shadow: 0 0 16px rgba(200, 107, 255, .6), 0 4px 0 rgba(0, 0, 0, .35); }
+.critter.primed { animation: primed 0.9s ease-in-out infinite; } .critter.primed::after { content: '⚡'; position: absolute; top: -12px; right: -8px; font-size: 20px; animation: idle-bob .6s infinite; }
+@keyframes primed { 50% { box-shadow: 0 0 22px #ffcf5a, 0 4px 0 rgba(0, 0, 0, .35); transform: translateY(-3px); } }
 .critter.empty { background: rgba(255, 255, 255, .04); border: 2px dashed rgba(255, 255, 255, .15); box-shadow: none; cursor: default; }
 .cr-emoji { font-size: 36px; line-height: 1; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, .3)); animation: idle-bob 2.4s ease-in-out infinite; }
 .critter:nth-child(2n) .cr-emoji { animation-delay: -.8s; } .critter:nth-child(3n) .cr-emoji { animation-delay: -1.6s; }
@@ -757,7 +759,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-13">v1.1.1</div>
+<div id="ver" title="built 2026-11-13">v1.1.2</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -3027,7 +3029,19 @@ G.Engine = (() => {
     if (boss && boss.halfBase) { s = Math.max(1, Math.floor(s / 2)); m = Math.max(1, Math.floor(m / 2)); }
     return { sparkle: s, shine: m, level: lvl };
   };
-  E.boss = (run) => (run.blindIdx === 2 && run.phase === 'play' && !run.bossDisabled ? G.BOSS_BY_ID[run.bossId] : null);
+  E.boss = (run) => (run.blindIdx === 2 && run.phase === 'play' && !run.bossDisabled ? G.BOSS_BY_ID[run.bosses[run.ante]] || null : null);
+  /* cure the current Indigestion mid-round (Medicine Show Alpaca): undo what it did at the start of the blind */
+  E.cureBoss = (run) => {
+    const boss = E.boss(run); if (!boss) return false;
+    run.bossDisabled = true;
+    if (boss.handSize) run.curHandSize -= boss.handSize;
+    if (boss.shrink) run.curHandSize = run.handSize;
+    if (boss.discards != null) run.discards += Math.max(0, run.maxDiscards - boss.discards);
+    run.hand.forEach((c) => (c.faceDown = false));
+    run.critters.forEach((c) => (c.asleep = false));
+    E.draw(run);
+    return true;
+  };
 
   /* ---------- scoring ---------- */
   E.scoreHand = (run, selected, opts = {}) => {
@@ -3563,7 +3577,7 @@ G.Engine = (() => {
     { id: 'even_eel', name: 'Even Steven Eel', emoji: '🐍', rarity: 1, cost: 4, desc: 'Scored <b>10, 8, 6, 4, 2</b> give <b class="shine">+3 Shine</b>', onScore: (ctx, c, card) => (card.enh !== 'stone' && card.rank <= 10 && card.rank % 2 === 0 ? { shine: 3 } : null) },
     { id: 'odd_duck', name: 'Odd Duck Desperado', emoji: '🦆', rarity: 1, cost: 4, desc: 'Scored <b>A, 9, 7, 5, 3</b> give <b class="sparkle">+25 Sparkle</b>', onScore: (ctx, c, card) => (card.enh !== 'stone' && (card.rank === 14 || (card.rank <= 9 && card.rank % 2 === 1)) ? { sparkle: 25 } : null) },
     { id: 'banana_slug', name: 'Banana Slug', emoji: '🍌', rarity: 1, cost: 5, desc: '<b class="shine">+14 Shine</b>. <b>1 in 6</b> chance Gobbo eats it at the end of the round.', onHand: () => ({ shine: 14 }), onRoundEnd: (run, c) => { if (run.rng() < 1 / 6) { G.Engine.removeCritter(run, c); run.events && run.events.push({ msg: 'Gobbo ate the Banana Slug. Oops.' }); } return null; } },
-    { id: 'couch_potato', name: 'Rocking Chair Potato', emoji: '🥔', rarity: 1, cost: 4, desc: '<b class="shine">+20 Shine</b> on your <b>last hand</b> of the round', onHand: (ctx) => (ctx.handsLeft === 1 ? { shine: 20, msg: 'Finally, effort.' } : null) },
+    { id: 'couch_potato', name: 'Rocking Chair Potato', emoji: '🥔', rarity: 1, cost: 4, desc: '<b class="shine">+20 Shine</b> on your <b>last hand</b> of the round', descFn: (c, run) => '<b class="shine">+20 Shine</b> on your <b>last hand</b> of the round' + (run && run.phase === 'play' ? (run.hands === 1 ? ' <i>(rockin\' and ready: THIS hand!)</i>' : ` <i>(${run.hands} hands left, still snoozin')</i>`) : ''), primed: (run) => run.phase === 'play' && run.hands === 1, onHand: (ctx) => (ctx.handsLeft === 1 ? { shine: 20, msg: 'Finally, effort.' } : null) },
     { id: 'firefly', name: 'Campfire Firefly Fred', emoji: '🪲', rarity: 1, cost: 5, desc: '<b class="shine">+2 Shine</b> for every card held in hand', onHand: (ctx) => (ctx.held.length ? { shine: 2 * ctx.held.length } : null) },
     { id: 'half_hog', name: 'Half-Pint Hog', emoji: '🐗', rarity: 1, cost: 5, desc: '<b class="shine">+18 Shine</b> if you play <b>3 or fewer</b> cards', onHand: (ctx) => (ctx.played.length <= 3 ? { shine: 18 } : null) },
     { id: 'ace_ant', name: 'Ace-in-the-Hole Ant', emoji: '🐜', rarity: 1, cost: 5, desc: 'Scored <b>Aces</b> give <b class="sparkle">+20 Sparkle</b> and <b class="shine">+4 Shine</b>', onScore: (ctx, c, card) => (card.rank === 14 && card.enh !== 'stone' ? [{ sparkle: 20 }, { shine: 4 }] : null) },
@@ -3861,7 +3875,7 @@ G.Engine = (() => {
     { id: 'antacid_alpaca', name: 'Medicine Show Alpaca', emoji: '🐑', rarity: 2, cost: 6,
       unlock: { stat: 'maxAnte', n: 4, hint: 'Reach Ante 4' },
       desc: 'Sell this during an <b>Indigestion</b> to cure it (its effect is disabled). Chalky, but cheaper than the town doctor.',
-      onSell: (run) => { if (run.phase === 'play' && run.blindIdx === 2) run.bossDisabled = true; } },
+      onSell: (run) => { G.Engine.cureBoss(run); } },
     { id: 'rune_rooster', name: 'High Noon Rooster', emoji: '🐓', rarity: 2, cost: 7,
       desc: 'Every <b>3rd discard</b> creates a random <b>Rune</b> (if there\'s room). Crows at dawn, at high noon, and at runes.',
       descFn: (c) => { const left = 3 - (st(c, 'n') % 3); return `Every <b>3rd discard</b> creates a random <b>Rune</b> (if there's room) <i>(${left} to go)</i>`; },
@@ -4153,7 +4167,8 @@ G.Table = (() => {
   const critterDesc = (c) => { const d = G.CRITTER_BY_ID[c.id]; return d.descFn ? d.descFn(c, T.run) : d.desc; };
   T.critterHTML = (c, extra = '') => {
     const d = G.CRITTER_BY_ID[c.id];
-    return `<div class="critter r${d.rarity} ${c.edition ? 'ed-' + c.edition : ''} ${c.asleep ? 'asleep' : ''} ${c.grumpy ? 'grumpy' : ''} ${extra}" data-uid="${c.uid || ''}" data-id="${d.id}"><div class="cr-emoji">${d.emoji}</div><div class="cr-name">${d.name}</div>${c.asleep ? '<span class="zz">💤</span>' : ''}${c.grumpy ? '<span class="grr">😠</span>' : ''}</div>`;
+    const primed = T.run && d.primed && c.uid && d.primed(T.run, c);
+    return `<div class="critter r${d.rarity} ${primed ? 'primed' : ''} ${c.edition ? 'ed-' + c.edition : ''} ${c.asleep ? 'asleep' : ''} ${c.grumpy ? 'grumpy' : ''} ${extra}" data-uid="${c.uid || ''}" data-id="${d.id}"><div class="cr-emoji">${d.emoji}</div><div class="cr-name">${d.name}</div>${c.asleep ? '<span class="zz">💤</span>' : ''}${c.grumpy ? '<span class="grr">😠</span>' : ''}</div>`;
   };
   const critterTip = (c, price) => () => {
     const d = G.CRITTER_BY_ID[c.id];
@@ -4183,7 +4198,7 @@ G.Table = (() => {
     const isBoss = i === 2;
     const tgt = r.phase === 'play' ? r.target : E.blindTarget(r, i);
     el.blind.className = 'tb-blind b' + i + (isBoss ? ' boss' : '');
-    el.blind.innerHTML = `<div class="bl-name">${isBoss ? boss.emoji + ' ' + boss.name : ['🥨 Snack', '🍝 Meal'][i]}</div>${isBoss ? `<div class="bl-desc">${boss.desc}</div>` : ''}<div class="bl-tgt"><small>Craving</small><b>${G.fmt(tgt)}</b></div><div class="bl-rew">Reward: ${E.blindReward(r, i) ? '$'.repeat(E.blindReward(r, i)) : 'nothing'}</div>`;
+    el.blind.innerHTML = `<div class="bl-name">${isBoss ? boss.emoji + ' ' + boss.name : ['🥨 Snack', '🍝 Meal'][i]}</div>${isBoss ? `<div class="bl-desc">${r.bossDisabled && r.phase === 'play' ? `<s>${boss.desc}</s> <b style="color:#3fd68a">CURED</b>` : boss.desc}</div>` : ''}<div class="bl-tgt"><small>Craving</small><b>${G.fmt(tgt)}</b></div><div class="bl-rew">Reward: ${E.blindReward(r, i) ? '$'.repeat(E.blindReward(r, i)) : 'nothing'}</div>`;
     el.rscore.textContent = G.fmt(r.phase === 'play' ? r.roundScore : 0);
     el.progbar.style.width = Math.min(100, r.phase === 'play' ? r.roundScore / r.target * 100 : 0) + '%';
     el.hands.textContent = r.phase === 'play' ? r.hands : r.maxHands;
@@ -4445,6 +4460,7 @@ G.Table = (() => {
       T.renderHand();
       T.dealAnim(res.drawn || []);
       T.renderSide();
+      T.renderCritters();
       T.save();
     }
   };
@@ -4730,7 +4746,7 @@ G.Table = (() => {
         if (kind === 'card') toggleSel(+uid);
         else if (kind === 'critter') {
           const c = r.critters.find((x) => String(x.uid) === uid);
-          popover(d, `<div class="pop-h">${G.CRITTER_BY_ID[c.id].emoji} <b>${G.CRITTER_BY_ID[c.id].name}</b></div><div class="pop-d">${critterDesc(c)}</div>`, [{ label: `Sell $${E.sellValue(r, c)}`, cls: 'danger', fn: () => { E.sell(r, c); G.state.secrets.sell = (G.state.secrets.sell || 0) + 1; G.Audio.coin(); T.render(); T.save(); } }]);
+          popover(d, `<div class="pop-h">${G.CRITTER_BY_ID[c.id].emoji} <b>${G.CRITTER_BY_ID[c.id].name}</b></div><div class="pop-d">${critterDesc(c)}</div>`, [{ label: `Sell $${E.sellValue(r, c)}`, cls: 'danger', fn: () => { const hadBoss = !!E.boss(r); E.sell(r, c); if (hadBoss && !E.boss(r)) { G.FX.banner('💊 CURED!<small>The Indigestion is settled. Burp.</small>', { color: '#3fd68a', cls: 'glim', ms: 1600 }); G.Audio.burp && G.Audio.burp(); } G.state.secrets.sell = (G.state.secrets.sell || 0) + 1; G.Audio.coin(); T.render(); T.save(); } }]);
         }
         return;
       }
