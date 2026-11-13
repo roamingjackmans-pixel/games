@@ -10,7 +10,7 @@ import { RINGS } from '../../data/rings';
 import { AFFIXES, type AffixDef, type AffixSlotGroup } from '../../data/affixes';
 import { LEGENDARY_NAMES, powersFor, type PowerSlot } from '../../data/legendaries';
 import { LEGENDARY_PER_CYCLE, RARITY_ORDER, RARITY_WEIGHTS, SLOT_WEIGHTS, maxRolledRarity, type LootSource } from '../../data/lootTables';
-import { GEM_FAMILIES, GEMS, familiesOfKind, gemQualityRolls, rollGemQuality, type GemKind } from '../../data/gems';
+import { GEM_FAMILIES, GEMS, familiesOfKind, gemEffect, gemQualityRolls, rollGemQuality, type GemKind } from '../../data/gems';
 import { baseInfo } from './bases';
 import { variantOf } from './weaponOf';
 import { VARIANT_CHANCE, WEAPON_VARIANTS, type WeaponVariantDef } from '../../data/weaponVariants';
@@ -287,9 +287,11 @@ export function randomGem(rng: Rng, cycle = 0, kind?: GemKind, level = 1, bonusR
   if (ch.two + ch.three > 0) {
     const r = rng.next();
     const n = r < ch.three ? 3 : r < ch.three + ch.two ? 2 : 1;
-    const pool = familiesOfKind(GEMS[first].armorOnly ? 'armor' : 'weapon').filter((f) => f !== first);
+    // one of each effect a gem (D369): Rime and Storm never share a gem
+    let pool = familiesOfKind(GEMS[first].armorOnly ? 'armor' : 'weapon').filter((f) => gemEffect(f) !== gemEffect(first));
     for (let i = 1; i < n && pool.length; i++) {
       const f = pool.splice(rng.int(0, pool.length - 1), 1)[0]!;
+      pool = pool.filter((x) => gemEffect(x) !== gemEffect(f));
       perks.push({ family: f, level, q: rollGemQuality(rng, rolls) });
     }
   }

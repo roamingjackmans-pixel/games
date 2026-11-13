@@ -9,6 +9,7 @@ import { spawnTelegraphs } from '../combat/telegraph';
 import { ENEMY_PROJECTILE_RANGE, spellDamageMult, spellUtility } from '../combat/formulas';
 import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y, resolvePattern, type PatternCtx, type Shape } from '../combat/patterns';
 import { spawnHazard } from '../systems/hazards';
+import { toolForSchool } from '../player/derived';
 import { collapseFloor } from '../boss/platform';
 import type { BuffStat, DamageType, EffectDef, EnemyDef, PatternDef, Team } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
@@ -94,6 +95,8 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
       if (ctx.school) amt *= spellDamageMult(d.stats[ctx.school]);
     }
     spec.dmg = { [e.type]: amt };
+    // D369: a spell's lifesteal is the hand's whose staff or talisman cast it
+    if (src?.pl && ctx.isSpell && ctx.school) spec.lifestealPct = toolForSchool(src.pl.derived, ctx.school)?.hand === 'off' ? src.pl.derived.off.lifesteal : src.pl.derived.lifesteal;
     spec.isSpell = ctx.isSpell;
     spec.isSkill = ctx.isSkill;
   }

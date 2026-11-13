@@ -878,7 +878,8 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   if (attacker) en.aggro[attacker.id] = (en.aggro[attacker.id] ?? 0) + total;
   // lifesteal (D325): a share of your max HP for each hit, scaled by how hard the hit is (×1 a plain swing), not of the damage
   // once an attack: a swing that hits ten enemies heals once, not ten times
-  if (pl && !o.noLifesteal && pl.derived.lifesteal > 0 && total > 0) {
+  const ls = spec.lifestealPct ?? pl?.derived.lifesteal ?? 0;
+  if (pl && !o.noLifesteal && ls > 0 && total > 0) {
     const id = spec.attackId;
     const done = (pl.lifestealAttacks ??= []);
     if (id === undefined || !done.includes(id)) {
@@ -887,7 +888,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
         if (done.length > 24) done.shift();
       }
       // D337: rounded up to a whole number, never less than 1
-      heal(w, attacker!, Math.max(1, Math.ceil(attacker!.hp!.max * pl.derived.lifesteal * Math.max(0, spec.lifestealScale ?? 1))), false);
+      heal(w, attacker!, Math.max(1, Math.ceil(attacker!.hp!.max * ls * Math.max(0, spec.lifestealScale ?? 1))), false);
     }
   }
   if (pl) {

@@ -16,6 +16,17 @@ export interface GemDef {
   weaponOnly?: boolean;
   /** D283: this share of the hit is added again as `type`; the physical stays (was taken out of the physical) */
   adds?: { type: DamageType; status?: StatusId };
+  /** families with the same effect (D369: Rime and Storm both add Magic) share one; a gem holds one of each effect */
+  effect?: string;
+}
+
+/** A family's effect (D369): its `effect` group, else the family itself. A gem never carries two of one effect. */
+export function gemEffect(f: GemFamily): string {
+  return GEMS[f].effect ?? f;
+}
+/** The name a gem effect goes by in messages (D369). */
+export function gemEffectName(f: GemFamily): string {
+  return GEMS[f].effect === 'magicHit' ? 'Magic damage (Rime or Storm)' : GEMS[f].name;
 }
 
 export const GEMS: Record<GemFamily, GemDef> = {
@@ -25,8 +36,8 @@ export const GEMS: Record<GemFamily, GemDef> = {
   brutal: { family: 'brutal', name: 'Brutal', color: '#d63a3a', value: 11, text: '+{v}% damage', weaponOnly: true },
   // D283: these add their share on top as their type (they used to convert 20–40% of the physical); D292: 20% more than Brutal
   ember: { family: 'ember', name: 'Ember', color: '#ff7a1a', value: 13.2, text: '+{v}% of the hit as Fire, Burn buildup', weaponOnly: true, adds: { type: 'fire', status: 'burn' } },
-  rime: { family: 'rime', name: 'Rime', color: '#9ad0ff', value: 13.2, text: '+{v}% of the hit as Magic (frost), Chill buildup', weaponOnly: true, adds: { type: 'magic', status: 'chill' } },
-  storm: { family: 'storm', name: 'Storm', color: '#6f8dff', value: 13.2, text: '+{v}% of the hit as Magic (lightning), Shock buildup', weaponOnly: true, adds: { type: 'magic', status: 'shock' } },
+  rime: { family: 'rime', name: 'Rime', color: '#9ad0ff', value: 13.2, text: '+{v}% of the hit as Magic (frost), Chill buildup', weaponOnly: true, adds: { type: 'magic', status: 'chill' }, effect: 'magicHit' },
+  storm: { family: 'storm', name: 'Storm', color: '#6f8dff', value: 13.2, text: '+{v}% of the hit as Magic (lightning), Shock buildup', weaponOnly: true, adds: { type: 'magic', status: 'shock' }, effect: 'magicHit' },
   dawn: { family: 'dawn', name: 'Dawn', color: '#ffe98a', value: 13.2, text: '+{v}% of the hit as Holy', weaponOnly: true, adds: { type: 'holy' } },
   dusk: { family: 'dusk', name: 'Dusk', color: '#8a8396', value: 13.2, text: '+{v}% of the hit as Void', weaponOnly: true, adds: { type: 'void' } },
   // D325: lifesteal is a share of max HP a hit (was 4% of the damage)

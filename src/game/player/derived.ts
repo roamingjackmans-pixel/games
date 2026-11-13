@@ -51,6 +51,12 @@ export interface Derived {
   dodgeRecharge: number;
   stamCost: number;
   lifesteal: number;
+  /**
+   * D369: the off hand's own numbers. Weapon gems work only for the hand they sit in, so these are the main fields'
+   * with the off-hand item's gems in place of the main hand's: an off-hand crossbow's shots and skills and the spells of
+   * an off-hand staff or talisman read them. Everything else (affixes, rings, set perks, proficiency) is in both.
+   */
+  off: HandMods;
   poiseDmgMult: number;
   /** the class's boost to each stat's benefit (D184): primary 1.25, secondary 1.15 */
   statBoost: Record<StatId, number>;
@@ -121,10 +127,12 @@ export interface HeldTool {
  * One weapon hit by damage type for these derived stats (D294): weaponSpec deals it and the item cards show it, so
  * they never disagree. `holyBuffPct` is a timed buff's holy share (none on a card).
  */
-export function weaponHitByType(d: Pick<Derived, 'offWeapon' | 'weapon' | 'weaponPower' | 'dmgPct' | 'convert' | 'addDmg' | 'flat'>, mult: number, offHand = false, holyBuffPct = 0): Partial<Record<DamageType, number>> {
+export function weaponHitByType(d: Pick<Derived, 'offWeapon' | 'weapon' | 'weaponPower' | 'dmgPct' | 'convert' | 'addDmg' | 'flat' | 'off'>, mult: number, offHand = false, holyBuffPct = 0): Partial<Record<DamageType, number>> {
   const ow = offHand ? d.offWeapon : null;
   const wdef = ow?.def ?? d.weapon;
-  const base = (ow?.power ?? d.weaponPower) * mult * (1 + d.dmgPct);
+  // D369: an off-hand shot takes its own hand's gems (Brutal, Ember…), not the weapon hand's
+  const hm = ow ? d.off : d;
+  const base = (ow?.power ?? d.weaponPower) * mult * (1 + hm.dmgPct);
   // a hybrid weapon's base damage is its own type (D80); a weapon's holy share comes out of it
   const own: DamageType = wdef.element ?? 'physical';
   const dmg: Partial<Record<DamageType, number>> = {};
@@ -139,7 +147,7 @@ export function weaponHitByType(d: Pick<Derived, 'offWeapon' | 'weapon' | 'weapo
   }
   dmg[own] = (dmg[own] ?? 0) + Math.max(0, ownLeft);
   // D283: Ember, Rime, Storm, Dawn and Dusk add their share on top as their own type (they used to take it from the base)
-  for (const a of d.addDmg) dmg[a.type] = (dmg[a.type] ?? 0) + base * a.pct;
+  for (const a of hm.addDmg) dmg[a.type] = (dmg[a.type] ?? 0) + base * a.pct;
   if (holyBuffPct > 0) dmg.holy = (dmg.holy ?? 0) + base * holyBuffPct;
   for (const t of DAMAGE_TYPES) {
     const f = d.flat[t];
@@ -177,6 +185,32 @@ const FIST: WeaponDef = {
 
 /** Everyone's poise before gear (D312): a hit of 8% of your max HP staggers you. */
 export const BASE_POISE = 8;
+
+/** One hand's weapon-gem-dependent numbers (D369). */
+export interface HandMods {
+  dmgPct: number;
+  addDmg: { type: DamageType; pct: number }[];
+  statusBuild: { id: StatusId; buildup: number }[];
+  attackSpeed: number;
+  castSpeed: number;
+  cdr: number;
+  stamCost: number;
+  lifesteal: number;
+}
+
+/** What a hand's weapon gems add (D369). */
+interface GemHand {
+  attackSpeedPct: number;
+  castSpeedPct: number;
+  cdrPct: number;
+  dodgeRed: number;
+  dmgPct: number;
+  lifesteal: number;
+  stamCostPct: number;
+  addDmg: { type: DamageType; pct: number }[];
+  statusBuild: { id: StatusId; buildup: number }[];
+}
+const gemHand = (): GemHand => ({ attackSpeedPct: 0, castSpeedPct: 0, cdrPct: 0, dodgeRed: 0, dmgPct: 0, lifesteal: 0, stamCostPct: 0, addDmg: [], statusBuild: [] });
 
 /** Twin daggers and twin axes dual-wielded (two-handed) hit this much harder than one blade (D318). */
 export const DUAL_WIELD_MULT = 1.5;
@@ -260,6 +294,9 @@ export function computeDerived(c: Character): Derived {
   let dodgeRed = 0;
   let stamCostPct = 0;
   let lifesteal = 0;
+  // D369: each hand's weapon gems, kept apart
+  const gemMain = gemHand();
+  const gemOff = gemHand();
   let poisePct = 0;
   let shardFind = 0;
   let glowenFind = 0;
@@ -370,30 +407,33 @@ export function computeDerived(c: Character): Derived {
         continue;
       }
       if ((it.kind !== 'weapon' && it.kind !== 'staff' && it.kind !== 'talisman') || gd.armorOnly) continue;
+      // D369: a weapon gem works only for the hand it sits in
+      const gh = it === c.equipment.main ? gemMain : it === c.equipment.off ? gemOff : null;
+      if (!gh) continue;
       switch (pk.family) {
         case 'quicksilver':
-          attackSpeedPct += v / 100;
-          castSpeedPct += v / 100;
+          gh.attackSpeedPct += v / 100;
+          gh.castSpeedPct += v / 100;
           break;
         case 'tempo':
-          cdrPct += v / 100;
+          gh.cdrPct += v / 100;
           break;
         case 'fleetfoot':
-          dodgeRed += v;
+          gh.dodgeRed += v;
           break;
         case 'brutal':
-          dmgPct += v / 100;
+          gh.dmgPct += v / 100;
           break;
         case 'leech':
-          lifesteal += v / 100;
+          gh.lifesteal += v / 100;
           break;
         case 'vigor':
-          stamCostPct += v / 100;
+          gh.stamCostPct += v / 100;
           break;
         default:
           if (gd.adds) {
-            addDmg.push({ type: gd.adds.type, pct: v / 100 });
-            if (gd.adds.status) statusBuild.push({ id: gd.adds.status, buildup: gemBuildup(pk) });
+            gh.addDmg.push({ type: gd.adds.type, pct: v / 100 });
+            if (gd.adds.status) gh.statusBuild.push({ id: gd.adds.status, buildup: gemBuildup(pk) });
           }
       }
     }
@@ -485,6 +525,20 @@ export function computeDerived(c: Character): Derived {
   sv.holyVoid = Math.min(0.85, sv.holyVoid + elemBlockBonus);
 
   const load = equipLoadOf(c.equipment, stats.endurance, boost.endurance);
+  // D369: each hand's numbers: the shared ones plus that hand's own weapon gems
+  const slick = slickCast(stats.slicey, boost.slicey);
+  const hand = (g: GemHand, toolCast: number): HandMods => ({
+    dmgPct: dmgPct + g.dmgPct,
+    addDmg: [...addDmg, ...g.addDmg],
+    statusBuild: [...statusBuild, ...g.statusBuild],
+    attackSpeed: Math.min(1.6, 1 + attackSpeedPct + g.attackSpeedPct),
+    castSpeed: Math.min(1.6, toolCast * (1 + castSpeedPct + g.castSpeedPct) * slick),
+    cdr: Math.min(0.5, cdrPct + g.cdrPct),
+    stamCost: Math.max(0.3, 1 - stamCostPct - g.stamCostPct),
+    lifesteal: (lifesteal + g.lifesteal) * LIFESTEAL_MULT,
+  });
+  const mainHand = hand(gemMain, castTool?.def.castSpeed ?? 1);
+  const offHand = hand(gemOff, offTool?.def.castSpeed ?? castTool?.def.castSpeed ?? 1);
   return {
     stats,
     maxHp: Math.max(1, Math.round(hp * maxHpMult * (1 + hpPctGem))),
@@ -502,19 +556,21 @@ export function computeDerived(c: Character): Derived {
     offWeapon: offWeaponOf(off, twoHanded, stats, boost),
     // D318: a pair dual-wielded (two-handed) hits 50% harder than one blade
     weaponPower: weaponBase(weapon.base1, weaponIlvl) * weaponScaling(weapon, stats, twoHanded, boost) * gradeDamageMult(weapon) * (weaponMeetsReq ? 1 : 0.4) * RARITY_POWER[main?.rarity ?? 'common'] * reinforceDmgMult(main?.plus) * (weapon.paired && twoHanded ? DUAL_WIELD_MULT : 1),
-    dmgPct,
+    dmgPct: mainHand.dmgPct,
     flat,
     convert,
-    addDmg,
-    statusBuild,
-    attackSpeed: Math.min(1.6, 1 + attackSpeedPct),
+    addDmg: mainHand.addDmg,
+    statusBuild: mainHand.statusBuild,
+    attackSpeed: mainHand.attackSpeed,
     // Slicey quickens your casting hands a little: up to about +21% at 99 (D106)
-    castSpeed: Math.min(1.6, (castTool?.def.castSpeed ?? 1) * (1 + castSpeedPct) * slickCast(stats.slicey, boost.slicey)),
+    castSpeed: mainHand.castSpeed,
     castMoveMult: castMoveMult(stats.bonk, boost.bonk),
-    cdr: Math.min(0.5, cdrPct),
-    dodgeRecharge: dodgeRecharge(dodgeRed),
-    stamCost: Math.max(0.3, 1 - stamCostPct),
-    lifesteal: lifesteal * LIFESTEAL_MULT,
+    cdr: mainHand.cdr,
+    // dodging is not a hand's: only the weapon hand's Fleetfoot counts (D369)
+    dodgeRecharge: dodgeRecharge(dodgeRed + gemMain.dodgeRed),
+    stamCost: mainHand.stamCost,
+    lifesteal: mainHand.lifesteal,
+    off: offHand,
     poiseDmgMult: 1 + poisePct,
     statBoost: boost,
     reachMult: 1 + prof.reach,

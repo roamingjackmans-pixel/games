@@ -15,20 +15,24 @@ import type { Entity, World } from '../world';
 
 export const SKILL_RECOVER_S = 0.2;
 
-export function attackSpeedFor(w: World, e: Entity): number {
+/** `offHand`: an off-hand crossbow's skill (D369: that hand's own gems). */
+export function attackSpeedFor(w: World, e: Entity, offHand = false): number {
   const pl = e.pl!;
-  let s = pl.derived.attackSpeed * (1 + buffSum(e, 'attackSpeedPct', w.time));
+  let s = (offHand ? pl.derived.off.attackSpeed : pl.derived.attackSpeed) * (1 + buffSum(e, 'attackSpeedPct', w.time));
   if (e.st && e.st.active.chill > w.time) s *= 0.7;
   return Math.max(0.3, Math.min(1.6, s));
 }
 
 /** Cooldown reduction from gems, affixes and buffs, capped at 50% (CONTENT_ITEMS §1). */
-export function cooldownReduction(w: World, e: Entity): number {
-  return Math.min(0.5, e.pl!.derived.cdr - buffSum(e, 'cooldownPct', w.time));
+export function cooldownReduction(w: World, e: Entity, offHand = false): number {
+  const d = e.pl!.derived;
+  return Math.min(0.5, (offHand ? d.off.cdr : d.cdr) - buffSum(e, 'cooldownPct', w.time));
 }
 
-export function castSpeedFor(w: World, e: Entity): number {
-  return Math.min(1.6, e.pl!.derived.castSpeed * (1 + buffSum(e, 'castSpeedPct', w.time)));
+/** `offHand`: a spell cast through the off hand's staff or talisman (D369: that hand's own Quicksilver). */
+export function castSpeedFor(w: World, e: Entity, offHand = false): number {
+  const d = e.pl!.derived;
+  return Math.min(1.6, (offHand ? d.off.castSpeed : d.castSpeed) * (1 + buffSum(e, 'castSpeedPct', w.time)));
 }
 
 export function skillOf(e: Entity, i: number): SkillDef | null {
@@ -124,11 +128,13 @@ function msg(w: World, e: Entity, text: string): void {
 }
 
 /** A weapon skill's or spell's stamina (D193: attacks cost 50% more and need the full cost to start). */
-function attackNeed(w: World, e: Entity, amount: number): number {
-  return attackStaminaCost(amount, e.pl!.derived.stamCost, buffSum(e, 'staminaCostPct', w.time), e.stam!.max);
+function attackNeed(w: World, e: Entity, amount: number, offHand = false): number {
+  const d = e.pl!.derived;
+  return attackStaminaCost(amount, offHand ? d.off.stamCost : d.stamCost, buffSum(e, 'staminaCostPct', w.time), e.stam!.max);
 }
-function spendAttack(w: World, e: Entity, amount: number): boolean {
-  const need = attackNeed(w, e, amount);
+/** `offHand`: the off hand acts (its crossbow's skill, its tool's spell): that hand's own Vigor (D369) */
+function spendAttack(w: World, e: Entity, amount: number, offHand = false): boolean {
+  const need = attackNeed(w, e, amount, offHand);
   if (e.stam!.cur < need - 1e-6) return false;
   e.stam!.cur = Math.max(0, e.stam!.cur - need);
   e.pl!.stamDelayUntil = w.time + 0.6;
@@ -150,8 +156,8 @@ export function tryUseSkill(w: World, e: Entity, i: number, offHand = false): bo
   // an off-hand skill keeps its cooldown on the spell keys' timers (D316: there is no off-hand spell then)
   const ready = offHand ? pl.spellReadyAt : pl.skillReadyAt;
   if (ready[i]! > now) return false;
-  if (!spendAttack(w, e, s.stamina)) return false;
-  ready[i] = now + s.cooldownS * (1 - cooldownReduction(w, e));
+  if (!spendAttack(w, e, s.stamina, offHand)) return false;
+  ready[i] = now + s.cooldownS * (1 - cooldownReduction(w, e, offHand));
   let ax = pl.aimX;
   let ay = pl.aimY;
   if (s.range) {
@@ -169,7 +175,7 @@ export function tryUseSkill(w: World, e: Entity, i: number, offHand = false): bo
     index: i,
     id: s.id,
     t: 0,
-    castS: (s.castMs ?? 80) / 1000 / attackSpeedFor(w, e),
+    castS: (s.castMs ?? 80) / 1000 / attackSpeedFor(w, e, offHand),
     fired: false,
     effects: s.effect,
     aimX: ax,
@@ -217,7 +223,7 @@ export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = '
   const boost = pl.nextSpellFree && pl.nextSpellFree.until > now && pl.nextSpellFree.count > 0 ? pl.nextSpellFree : null;
   const free = !!boost?.noStamina || (d.powers.has('font') && e.hp!.hp > e.hp!.max * 0.8) || (d.powers.has('spellsword') && now - pl.lastLightAttackAt < 2);
   if (!free) {
-    if (!spendAttack(w, e, sp.stamina)) return false;
+    if (!spendAttack(w, e, sp.stamina, tool.hand === 'off')) return false;
   }
   let power = spellPowerMult(e, sp);
   // proficiency with the casting tools shortens spell cooldowns (D178)
@@ -238,7 +244,7 @@ export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = '
     index: i,
     id: sp.id,
     t: 0,
-    castS: sp.castS / castSpeedFor(w, e),
+    castS: sp.castS / castSpeedFor(w, e, tool.hand === 'off'),
     fired: false,
     effects: sp.effect,
     aimX: pl.aimX,

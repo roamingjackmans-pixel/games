@@ -808,7 +808,8 @@ one 3:1 automatically; the tab's **Break down Essence** panel turns one of tier 
 ### 8.9 Gems (D92, D197, D227, D280–D286, D292)
 
 Gems slot into sockets. **Weapons, staffs and talismans take weapon gems; armor and shields take armor gems.** A gem
-carries **1–3 perks**, each a different family, each with its own **level (1–50)** and **quality roll (−50% …
+carries **1–3 perks**, each a different family and a different effect (D369: never Rime with Storm), and **a weapon
+gem works only for the hand it sits in** (D369; CONTENT_ITEMS §10), each perk with its own **level (1–50)** and **quality roll (−50% …
 +50%)**. There are **no tiers**:
 
 ```

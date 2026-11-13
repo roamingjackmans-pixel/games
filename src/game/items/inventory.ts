@@ -1,6 +1,6 @@
 // Inventory operations on a Character (bag of 60, equipment, gems, consumables). Pure and validated:
 // the co-op host runs the same functions to check guests' commands (NETCODE §6).
-import { GEMS, gemKind, gemKindLabel, gemOrigin, gemTitle } from '../../data/gems';
+import { GEMS, gemEffect, gemEffectName, gemKind, gemKindLabel, gemOrigin, gemTitle } from '../../data/gems';
 import { CONSUMABLES, MAX_CONSUMABLE } from '../../data/consumables';
 import { STAT_CAP, buyPrice, gearSellValue, gemFuseCost, gemSellTotal, levelCost } from '../combat/formulas';
 import { canRaise, levelFromStats } from '../player/character';
@@ -208,8 +208,9 @@ export function fusePreview(orig: Gem | null, donor: Gem | null, picks: FusePick
   for (const p of picks) {
     const perk = (p.from === 'orig' ? orig : donor).perks[p.idx];
     if (!perk) return { error: 'No such perk.' };
-    if (seen.has(perk.family)) return { error: `Only one ${GEMS[perk.family].name} perk per gem.` };
-    seen.add(perk.family);
+    // one of each effect a gem (D369): not two of a family, nor Rime with Storm
+    if (seen.has(gemEffect(perk.family))) return { error: `Only one ${gemEffectName(perk.family)} perk per gem.` };
+    seen.add(gemEffect(perk.family));
     perks.push({ ...perk });
   }
   // D286: at least one of the gem's original perks stays, through every fuse; the kept ones are its new origin

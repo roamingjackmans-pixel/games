@@ -423,7 +423,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
     for (let i = 0; i < 3; i++) {
       const def = SKILLS[d.offWeapon!.def.skills[i] ?? ''];
       const ready = pl.spellReadyAt[i]!;
-      const total = def ? def.cooldownS * (1 - d.cdr) : 1;
+      const total = def ? def.cooldownS * (1 - d.off.cdr) : 1; // D369: the off hand's own Tempo
       const frac = ready > now ? (ready - now) / Math.max(0.1, total) : 0;
       skillCircle(ctx, SPELL_X[i]!, spellY, SPELL_R, def?.name ?? '—', (['spell1', 'spell2', 'spell3'] as const)[i]!, frac, !def || i >= unlocked, SPELL_COLOR, now, ready, { sub: ready > now ? `${Math.ceil(ready - now)}` : '', alpha, paused: held });
     }

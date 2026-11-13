@@ -386,6 +386,8 @@ export interface DamageSpec {
   dmg: Partial<Record<DamageType, number>>;
   /** how hard the hit is for lifesteal (D325): the swing's or skill's multiplier; absent counts as ×1 */
   lifestealScale?: number;
+  /** the lifesteal of the hand that dealt it (D369: a hand's own Leech gems); absent: the weapon hand's */
+  lifestealPct?: number;
   /** one swing, volley, throw, skill or spell effect (D325): lifesteal heals once an attack; absent heals each hit */
   attackId?: number;
   status: { id: StatusId; buildup: number }[];

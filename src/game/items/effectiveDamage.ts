@@ -41,7 +41,7 @@ function comboPerSec(d: Derived, offHand: boolean): number {
   let secs = 0;
   for (const sw of wdef.combo) {
     dmg += Object.values(weaponHitByType(d, sw.mult, offHand)).reduce((a, b) => a + (b ?? 0), 0);
-    secs += (sw.windupMs + sw.activeMs + sw.recoverMs) / 1000 / Math.max(0.3, d.attackSpeed);
+    secs += (sw.windupMs + sw.activeMs + sw.recoverMs) / 1000 / Math.max(0.3, offHand && d.offWeapon ? d.off.attackSpeed : d.attackSpeed);
   }
   return secs > 0 ? dmg / secs : 0;
 }

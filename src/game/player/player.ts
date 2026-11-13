@@ -163,9 +163,10 @@ function canAct(w: World, e: Entity): boolean {
   return pl.state === 'idle';
 }
 
-export function attackSpeedOf(w: World, e: Entity): number {
+/** `offHand`: an off-hand shot (D369: that hand's own Quicksilver). */
+export function attackSpeedOf(w: World, e: Entity, offHand = false): number {
   const pl = e.pl!;
-  let s = pl.derived.attackSpeed * (1 + buffSum(e, 'attackSpeedPct', w.time));
+  let s = (offHand && pl.derived.offWeapon ? pl.derived.off.attackSpeed : pl.derived.attackSpeed) * (1 + buffSum(e, 'attackSpeedPct', w.time));
   if (e.st && e.st.active.chill > w.time) s *= 0.7;
   s *= pl.timeSlow;
   return Math.max(0.3, Math.min(1.6 * pl.timeSlow, s));
@@ -184,13 +185,14 @@ export function spendStamina(w: World, e: Entity, amount: number): boolean {
 }
 
 /** An attack's stamina cost for this player now (D193). */
-export function attackCost(w: World, e: Entity, amount: number): number {
-  return attackStaminaCost(amount, e.pl!.derived.stamCost, buffSum(e, 'staminaCostPct', w.time), e.stam!.max);
+export function attackCost(w: World, e: Entity, amount: number, offHand = false): number {
+  const d = e.pl!.derived;
+  return attackStaminaCost(amount, offHand && d.offWeapon ? d.off.stamCost : d.stamCost, buffSum(e, 'staminaCostPct', w.time), e.stam!.max);
 }
 
-/** Attacks start only with the stamina to pay for them in full (D193). */
-export function canAffordAttack(w: World, e: Entity, amount: number): boolean {
-  return e.stam!.cur >= attackCost(w, e, amount) - 1e-6;
+/** Attacks start only with the stamina to pay for them in full (D193); `offHand`: an off-hand shot (D369). */
+export function canAffordAttack(w: World, e: Entity, amount: number, offHand = false): boolean {
+  return e.stam!.cur >= attackCost(w, e, amount, offHand) - 1e-6;
 }
 
 /** The aim angle, with gamepad melee auto-targeting and projectile aim assist (GAME_DESIGN §4, §5.1). */
@@ -236,7 +238,10 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   const spec = emptySpec('player');
   spec.dmg = dmg;
   spec.lifestealScale = mult;
-  spec.status = d.statusBuild.map((s) => ({ ...s }));
+  // D369: the hand that strikes brings its own gems' buildup and lifesteal
+  const hm = opts.offHand && d.offWeapon ? d.off : d;
+  spec.lifestealPct = hm.lifesteal;
+  spec.status = hm.statusBuild.map((s) => ({ ...s }));
   // harder swings (combo finishers, charged shots, skills) hit poise harder in proportion (D78)
   spec.poiseDmg = wdef.poiseDmg * Math.max(1, mult) * (opts.poiseMult ?? 1);
   spec.isSkill = !!opts.skill;
@@ -266,9 +271,9 @@ function startSwing(w: World, e: Entity, idx: number, offHand = false): void {
   const pl = e.pl!;
   const wpn = comboWeapon(e, offHand);
   const swing = wpn.combo[idx % wpn.combo.length]!;
-  const spd = attackSpeedOf(w, e);
-  if (!canAffordAttack(w, e, wpn.stamina)) return;
-  e.stam!.cur = Math.max(0, e.stam!.cur - attackCost(w, e, wpn.stamina));
+  const spd = attackSpeedOf(w, e, offHand);
+  if (!canAffordAttack(w, e, wpn.stamina, offHand)) return;
+  e.stam!.cur = Math.max(0, e.stam!.cur - attackCost(w, e, wpn.stamina, offHand));
   pl.stamDelayUntil = w.time + 0.6;
   const ranged = swing.hitbox.shape === 'proj';
   e.facing = aimAngle(w, e, ranged);
@@ -501,7 +506,7 @@ function updateCombo(w: World, e: Entity, dt: number): void {
     if (pressed(inp, key) || (held(inp, key) && c.t > c.dur * 0.3 && !c.offHand)) c.queued = true;
     const last = c.idx === wpn.combo.length - 1;
     // the next swing can start in the back half of the recovery
-    if (c.queued && !last && c.t >= c.dur * 0.45 && canAffordAttack(w, e, wpn.stamina)) {
+    if (c.queued && !last && c.t >= c.dur * 0.45 && canAffordAttack(w, e, wpn.stamina, !!c.offHand)) {
       startSwing(w, e, c.idx + 1, !!c.offHand);
       return;
     }
@@ -514,7 +519,7 @@ function updateCombo(w: World, e: Entity, dt: number): void {
         pl.comboResetAt = w.time + 0.5;
       }
       e.anim.pose = 'idle';
-      if (c.queued && last && canAffordAttack(w, e, wpn.stamina)) startSwing(w, e, 0, !!c.offHand);
+      if (c.queued && last && canAffordAttack(w, e, wpn.stamina, !!c.offHand)) startSwing(w, e, 0, !!c.offHand);
     }
   }
 }
@@ -817,7 +822,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   if (pressed(inp, 'block') && offShot) {
     // a crossbow in the off hand (D291): the block button shoots it, with its own stamina cost
     const ow = pl.derived.offWeapon!;
-    if (pl.state === 'idle' && !pl.channel && !pl.charge && canAffordAttack(w, e, ow.def.stamina)) startSwing(w, e, 0, true);
+    if (pl.state === 'idle' && !pl.channel && !pl.charge && canAffordAttack(w, e, ow.def.stamina, true)) startSwing(w, e, 0, true);
   } else if (pressed(inp, 'block')) {
     pl.blockToggled = !pl.blockToggled;
     const d = pl.derived;

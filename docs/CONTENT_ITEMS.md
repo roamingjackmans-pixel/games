@@ -309,8 +309,12 @@ the one before. Chance a piece rolls one (D245): common 0%, uncommon 7.8%, rare 
 
 ## 10. Gems
 
-**No tiers (D284).** A gem has 1–3 perks of distinct families, all weapon perks or all armor perks. Weapon gems go in
-weapons, staffs and talismans; armor gems in armour and shields (D227). Each perk has its own **level** (1–50) and
+**No tiers (D284).** A gem has 1–3 perks of distinct families and **distinct effects** (D369: Rime and Storm both add
+Magic, so never both on one gem), all weapon perks or all armor perks. Weapon gems go in weapons, staffs and talismans;
+armor gems in armour and shields (D227). **A weapon gem works only for the hand it sits in** (D369): the weapon hand's
+gems for its swings and skills (and spells cast through a staff or talisman held there), the off hand's for its
+crossbow's shots and skills and its staff's or talisman's spells. Off-hand Quicksilver speeds those, not the main
+weapon; off-hand Leech heals on those hits only. Fleetfoot (dodge) counts only from the weapon hand. Each perk has its own **level** (1–50) and
 **quality roll** (−50% … +50%):
 
 - **Strength** = the family's baseline × level multiplier × (1 + roll). Level 1 is ×0.25 of the baseline, level 50
