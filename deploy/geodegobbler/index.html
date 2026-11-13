@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.1.3">
+<meta name="version" content="1.1.4">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -759,7 +759,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-13">v1.1.3</div>
+<div id="ver" title="built 2026-11-13">v1.1.4</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -1280,6 +1280,7 @@ G.TOOTH = [
   { id: 'nap1', name: 'Power Nap', emoji: '😴', cost: 3, desc: 'Offline production <b>10% → 25%</b>, offline cap <b>2h → 6h</b>', req: ['enamel'], row: 1 },
   { id: 'luck1', name: 'Lucky Gums', emoji: '🍀', cost: 5, desc: 'Glimmer Geodes appear <b>10% more often</b>', req: ['enamel'], row: 1 },
   { id: 'table1', name: 'Card Sharp Canine', emoji: '🃏', cost: 7, desc: 'Start every Gobble Table run with <b>+$3</b>', req: ['enamel'], row: 1 },
+  { id: 'bulk', name: "Bulk Buyin' Bicuspid", emoji: '🛒', cost: 10, desc: 'Adds a <b>Buy all</b> button to the General Store. Prickly Pete loves a big spender.', req: ['enamel'], row: 1 },
   { id: 'starter', name: 'Starter Kit', emoji: '🎒', cost: 15, desc: 'After a molt, start with <b>10 Pebble Lickers</b> and <b>5 Rock Tumblers</b>', req: ['nap1'], row: 2 },
   { id: 'combo1', name: 'Caffeinated Jaw', emoji: '☕', cost: 25, desc: 'Combo multiplier caps at <b>×7</b> instead of ×5', req: ['luck1'], row: 2 },
   { id: 'payout1', name: 'Table Manners', emoji: '🍽️', cost: 40, desc: 'Gobble Table payouts <b>×2</b>', req: ['table1'], row: 2 },
@@ -1502,6 +1503,14 @@ G.upgradeVisible = (u) => {
   if (s.upgrades[u.id]) return false;
   if (u.kind === 'tier') return (s.buildings[u.b] || 0) >= u.own;
   return u.unlock ? u.unlock(s) : true;
+};
+/* Bulk Buyin' Bicuspid: buy every General Store upgrade you can afford, cheapest first */
+G.affordableUpgrades = () => G.UPGRADES.filter((u) => G.upgradeVisible(u) && G.state.crunch >= u.cost).sort((a, b) => a.cost - b.cost);
+G.buyAllUpgradesCount = () => { let left = G.state.crunch, n = 0; for (const u of G.affordableUpgrades()) { if (u.cost > left) break; left -= u.cost; n++; } return n; };
+G.buyAllUpgrades = () => {
+  const got = [];
+  for (let u = G.affordableUpgrades()[0]; u; u = G.affordableUpgrades()[0]) { if (!G.buyUpgrade(u.id)) break; got.push(u); }
+  return got;
 };
 G.buyUpgrade = (id) => {
   const u = G.UPGRADE_BY_ID[id];
@@ -2450,7 +2459,7 @@ G.UI = (() => {
     const sig = vis.map((u) => u.id).join() + '|' + stakes.map((x) => x.id).join();
     if (force || sig !== upgSig) {
       upgSig = sig;
-      p.innerHTML = `<div class="panel-h"><h2>🏪 General Store</h2><span class="muted">${Object.keys(s.upgrades).length} / ${G.UPGRADES.length} owned</span></div>
+      p.innerHTML = `<div class="panel-h"><h2>🏪 General Store</h2><span class="muted">${Object.keys(s.upgrades).length} / ${G.UPGRADES.length} owned</span>${s.tooth.bulk ? '<button class="btn sm primary" id="upg-all" disabled>🛒 Buy all</button>' : ''}</div>
         <div class="upg-grid" id="upg-grid">${vis.length ? '' : '<div class="empty">Shelves are bare, partner. Crunch more! 🪨🤠</div>'}</div>
         ${stakes.length ? `<div class="panel-h sub"><h3>🍺 Saloon Stakes</h3><span class="muted">permanent Gobble Saloon boosts</span></div><div class="upg-grid" id="stake-grid"></div>` : ''}`;
       const grid = p.querySelector('#upg-grid');
@@ -2461,6 +2470,15 @@ G.UI = (() => {
         UI.tip(d, () => `<div class="tip-h"><span>${u.emoji}</span><b>${u.name}</b></div><div>${u.desc}</div><div class="tip-flavor">"${u.flavor || ''}"</div><div class="tip-cost">Cost: <b>${G.fmt(u.cost)}</b></div>`);
         grid.appendChild(d);
       });
+      const ua = p.querySelector('#upg-all');
+      if (ua) ua.onclick = () => {
+        const got = G.buyAllUpgrades();
+        if (!got.length) { G.Audio.error(); G.FX.bump(ua, 'nope'); return; }
+        G.Audio.upgrade(); G.Audio.whip(); G.Audio.coin();
+        const c = G.FX.centerOf(ua); G.FX.confetti(30 + got.length * 10, c.x, c.y); G.FX.shake(3 + Math.min(12, got.length));
+        G.FX.banner(`🛒 ${got.length} upgrade${got.length > 1 ? 's' : ''} bought!<small>Prickly Pete is weepin' with joy</small>`, { color: '#ffe066', cls: 'glim', ms: 1500 });
+        upgSig = ''; PANELS.upgrades(p); UI.updateStore(true);
+      };
       const sg = p.querySelector('#stake-grid');
       if (sg) stakes.forEach((x) => {
         const d = G.el('div', 'upg k-stake', `<div class="u-emoji">${x.emoji}</div><div class="u-name">${x.name}</div><div class="u-cost">◆ ${G.fmt(x.cost)}</div>`);
@@ -2471,6 +2489,8 @@ G.UI = (() => {
       });
     }
     p.querySelectorAll('.upg').forEach((d) => d.classList.toggle('can', s.crunch >= +d.dataset.cost));
+    const ua = p.querySelector('#upg-all');
+    if (ua) { const n = G.buyAllUpgradesCount(); if (+ua.dataset.n !== n) { ua.dataset.n = n; ua.disabled = !n; ua.innerHTML = n ? `🛒 Buy all <small>(${n})</small>` : '🛒 Buy all'; } }
   };
 
   PANELS.table = (p, force) => {
