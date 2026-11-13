@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.1.4">
+<meta name="version" content="1.1.5">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -759,7 +759,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-13">v1.1.4</div>
+<div id="ver" title="built 2026-11-13">v1.1.5</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -3139,13 +3139,14 @@ G.Engine = (() => {
     // before
     for (const c of active) { const d = critterDef(c); if (d.before) apply(d.before(ctx, c), { kind: 'critter', uid: c.uid }); }
     if (ctx.levelChanged) { const b2 = E.handBase(run, ev.type); sparkle += b2.sparkle - base.sparkle; shine += b2.shine - base.shine; events.push({ kind: 'base', type: ev.type, level: b2.level, sparkle, shine, levelUp: true }); }
-    // scoring cards
-    const shattered = [];
+    // 1) the played cards themselves, left to right (retriggers counted here, critter reactions happen on each critter's turn below)
+    const shattered = [], scoredCards = [], heldCards = [];
     for (const card of selected) {
       if (!scoredSet.has(card.uid)) continue;
       if (debuffed(card)) { events.push({ kind: 'card', uid: card.uid, msg: 'Debuffed!', debuff: true }); continue; }
       let triggers = 1 + (card.sticker === 'red' ? 1 : 0);
       for (const c of active) { const d = critterDef(c); if (d.retrigger) { const n = d.retrigger(ctx, c, card) || 0; if (n) { triggers += n; events.push({ kind: 'critter', uid: c.uid, msg: 'Again!' }); } } }
+      scoredCards.push([card, triggers]);
       for (let t = 0; t < triggers; t++) {
         const src = { kind: 'card', uid: card.uid, retrig: t > 0 };
         apply({ sparkle: E.cardSparkle(card) }, src);
@@ -3160,24 +3161,23 @@ G.Engine = (() => {
         if (card.edition === 'holo') apply({ shine: 8 }, src);
         if (card.edition === 'molten') apply({ xshine: 1.5 }, src);
         if (card.sticker === 'gold') apply({ money: 3 }, src);
-        for (const c of active) { const d = critterDef(c); if (d.onScore) apply(d.onScore(ctx, c, card), { kind: 'critter', uid: c.uid, card: card.uid }); }
       }
       if (card.enh === 'brittle' && !opts.preview && ctx.rng() < 0.25) shattered.push(card);
     }
-    // held cards
+    // 2) held cards' own effects (Iron)
     for (const card of held) {
       if (debuffed(card)) continue;
       let triggers = 1 + (card.sticker === 'red' ? 1 : 0);
       for (const c of active) { const d = critterDef(c); if (d.retriggerHeld) triggers += d.retriggerHeld(ctx, c, card) || 0; }
-      for (let t = 0; t < triggers; t++) {
-        const src = { kind: 'held', uid: card.uid };
-        if (card.enh === 'iron') apply({ xshine: 1.5 }, src);
-        for (const c of active) { const d = critterDef(c); if (d.onHeld) apply(d.onHeld(ctx, c, card), { kind: 'critter', uid: c.uid, card: card.uid }); }
-      }
+      heldCards.push([card, triggers]);
+      for (let t = 0; t < triggers; t++) if (card.enh === 'iron') apply({ xshine: 1.5 }, { kind: 'held', uid: card.uid });
     }
-    // critters
+    // 3) critters, strictly left to right: each does ALL of its effects on its own turn
+    //    (per scored card, per held card, then whole-hand), so board position is the only thing that decides order
     for (const c of active) {
       const d = critterDef(c), src = { kind: 'critter', uid: c.uid };
+      if (d.onScore) for (const [card, n] of scoredCards) for (let t = 0; t < n; t++) apply(d.onScore(ctx, c, card), { kind: 'critter', uid: c.uid, card: card.uid });
+      if (d.onHeld) for (const [card, n] of heldCards) for (let t = 0; t < n; t++) apply(d.onHeld(ctx, c, card), { kind: 'critter', uid: c.uid, card: card.uid });
       if (c.edition === 'glittery') apply({ sparkle: 40 }, src);
       if (c.edition === 'holo') apply({ shine: 8 }, src);
       if (d.onHand) apply(d.onHand(ctx, c), src);
