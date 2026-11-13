@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.0.0">
+<meta name="version" content="1.1.0">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -336,7 +336,7 @@ b.hands { color: var(--sparkle); } b.discards { color: var(--shine); } b.money {
 .tb-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
 .tb-top { display: flex; gap: 14px; padding: 10px 14px 0; justify-content: space-between; align-items: flex-start; }
 .slots { display: flex; gap: 8px; padding: 8px; border-radius: 14px; background: rgba(0, 0, 0, .25); position: relative; min-height: 104px; flex-wrap: wrap; }
-.slots.cons { min-height: 80px; } .slot-n { position: absolute; bottom: -16px; left: 8px; font-size: 11px; color: rgba(255, 255, 255, .6); }
+.slots.cons-slots { min-height: 80px; flex-wrap: nowrap; flex-shrink: 0; } .slot-n { position: absolute; bottom: -16px; left: 8px; font-size: 11px; color: rgba(255, 255, 255, .6); }
 .critter { width: 78px; height: 96px; border-radius: 12px; background: linear-gradient(180deg, #f6eedc, #e2d2b0); color: #2a1a40; border: 3px solid #7fb6ff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; cursor: grab; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); transition: transform .12s; touch-action: none; }
 .critter:hover { transform: translateY(-4px) rotate(-2deg); }
 .critter.r2 { border-color: #3fd68a; } .critter.r3 { border-color: #ff4f6d; } .critter.r4 { border-color: #c86bff; background: linear-gradient(180deg, #fff3ff, #e5c8ff); box-shadow: 0 0 16px rgba(200, 107, 255, .6), 0 4px 0 rgba(0, 0, 0, .35); }
@@ -678,6 +678,31 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
   .w-top { font-size: 36px; }
   #backdrop .bd-sun { font-size: 70px; } #backdrop .bd-cactus { font-size: 50px; }
 }
+/* ---------- v1.1 layout fixes ---------- */
+/* pop-ups sit at the bottom middle, not over the property list */
+#toasts { left: 50%; right: auto; transform: translateX(-50%); bottom: 14px; width: min(380px, calc(100vw - 28px)); align-items: stretch; }
+.toast.out { transform: translateY(24px); }
+/* a smaller sheriff, standing to the left, with his speech bubble beside him (not over the combo meter) */
+#gobbo-wrap { align-self: flex-start; margin-left: 8%; margin-top: 2px; padding-top: 0; }
+#gobbo { width: 112px; }
+@media (max-height: 760px) { #gobbo { width: 92px !important; } }
+#bubble { bottom: auto; top: 10px; left: 100%; transform: translateX(10px) scale(.5) rotate(-2deg); transform-origin: left center; width: max-content; max-width: min(190px, 52vw); font-size: 12px; padding: 6px 10px; }
+#bubble.show { transform: translateX(10px) scale(1) rotate(-2deg); }
+#bubble::after { top: 18px; left: -16px; margin: 0; border-color: transparent; border-right-color: #3a1d0a; }
+/* deck viewer */
+.deck-modal .modal { width: min(940px, 100%); }
+.deck-view h2 .muted { font-family: var(--font-ui); font-size: 14px; }
+.dv-sum { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; margin-bottom: 8px; color: #3a1d0a; }
+.dv-row { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px dashed #b07a40; }
+.dv-label { width: 112px; flex-shrink: 0; font-family: var(--font-western); font-size: 14px; }
+.dv-cards { display: flex; flex-wrap: wrap; gap: 4px; }
+.deck-view .card { width: 46px; height: 64px; margin: 0; transform: none; cursor: default; border-radius: 6px; box-shadow: 0 2px 0 rgba(0, 0, 0, .3); }
+.deck-view .card .gem { width: 26px; } .deck-view .crn b { font-size: 13px; } .deck-view .crn i { font-size: 9px; } .deck-view .crn.tl { left: 3px; top: 2px; } .deck-view .crn.br { right: 3px; bottom: 2px; }
+.deck-view .stone-face { font-size: 26px; } .deck-view .tag-i { font-size: 10px; top: 2px; right: 2px; } .deck-view .sticker { width: 9px; height: 9px; right: 3px; } .deck-view .bonus { font-size: 8px; }
+.deck-view .card.gone { opacity: .3; filter: grayscale(.6); }
+#tb-deck { cursor: pointer; }
+.tb-sbtns { flex-wrap: wrap; }
+.tb-sbtns .btn { padding: 6px 4px; font-size: 11px; flex: 1 1 30%; }
 
 </style>
 </head>
@@ -725,7 +750,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-13">v1.0.0</div>
+<div id="ver" title="built 2026-11-13">v1.1.0</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -1072,7 +1097,7 @@ G.FX = (() => {
     const box = document.getElementById('toasts');
     const d = G.el('div', 'toast ' + (opts.cls || ''), html);
     box.prepend(d);
-    while (box.children.length > 5) box.lastChild.remove();
+    while (box.children.length > 3) box.lastChild.remove();
     setTimeout(() => d.classList.add('out'), opts.ms || 4200);
     setTimeout(() => d.remove(), (opts.ms || 4200) + 500);
     d.onclick = () => d.remove();
@@ -1931,7 +1956,7 @@ G.Gobbo = (() => {
     el.style.setProperty('--hat', ['#7a4a22', '#4a2a12', '#d9c39a', '#2a2a2a', '#9e2a2a', '#f2f2f2', '#3a5a2a', '#5a2a7a', '#c99a2a', '#1a1a1a', '#ffd700'][Math.min(m, 10)]);
     el.querySelector('.g-acc').textContent = m >= 25 ? '🪄' : m >= 10 ? '🔫' : m >= 3 ? '🌵' : '';
     el.querySelector('.g-name').textContent = s.gobboName;
-    const sz = 1 + Math.min(0.35, Math.log10(1 + s.molars) * 0.04);
+    const sz = 1 + Math.min(0.15, Math.log10(1 + s.molars) * 0.04);
     el.style.setProperty('--gscale', sz);
   };
   B.mouthPos = () => { const r = el.getBoundingClientRect(); return { x: r.left + r.width * 0.5, y: r.top + r.height * 0.68 }; };
@@ -4041,11 +4066,11 @@ G.Table = (() => {
           <div><small>Ante</small><b id="tb-ante">1/8</b></div>
           <div><small>Round</small><b id="tb-roundn">1</b></div>
         </div>
-        <div class="tb-sbtns"><button class="btn sm" id="tb-info">📖 Run info</button><button class="btn sm" id="tb-leave">🚪 Mosey out</button></div>
+        <div class="tb-sbtns"><button class="btn sm" id="tb-deckbtn">🂠 Deck</button><button class="btn sm" id="tb-info">📖 Run info</button><button class="btn sm" id="tb-leave">🚪 Mosey out</button></div>
         <div class="tb-cps muted" id="tb-cps"></div>
       </div>
       <div class="tb-main">
-        <div class="tb-top"><div class="slots" id="tb-critters"></div><div class="slots cons" id="tb-cons"></div></div>
+        <div class="tb-top"><div class="slots" id="tb-critters"></div><div class="slots cons-slots" id="tb-cons"></div></div>
         <div id="tb-center"></div>
         <div id="tb-handwrap">
           <div id="tb-hand"></div>
@@ -4066,6 +4091,8 @@ G.Table = (() => {
     document.getElementById('tb-ssuit').onclick = () => { T.run.sortBy = 'suit'; E.sortHand(T.run); T.renderHand(); };
     document.getElementById('tb-leave').onclick = () => T.hide();
     document.getElementById('tb-info').onclick = () => T.runInfo();
+    document.getElementById('tb-deckbtn').onclick = () => T.deckView();
+    document.getElementById('tb-deck').onclick = () => T.deckView();
     addEventListener('keydown', (e) => {
       if (!T.open || busy || e.target.tagName === 'INPUT') return;
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); T.play(); }
@@ -4534,7 +4561,7 @@ G.Table = (() => {
     const gz = r.gizmoOffer ? G.GIZMO_BY_ID[r.gizmoOffer] : null;
     el.center.innerHTML = `<div class="shop">
       <div class="shop-head"><div class="shopkeep">🦔<span class="sk-hat">🤠</span></div><div><h2>Prickly Pete's General Store</h2><div class="muted">${G.pick(['"Howdy! Everything here is edible. Probably."', '"No refunds, no regrets, no shirt, no service."', '"Critters! Tonics! Snake oil (it\'s just soda)!"', '"You break it, the Sheriff eats it."', '"Fresh critters, barely bitey, mostly legal."', '"That cactus is a prop. Please stop licking it."', '"I\'m a hedgehog in a hat. Don\'t think about it."'])}</div></div>
-        <div class="shop-btns"><button class="btn primary big" id="sh-next">Ride on →</button><button class="btn" id="sh-reroll">🎲 Reroll <b class="money">$${E.rerollCost(r)}</b></button></div></div>
+        <div class="shop-btns"><button class="btn" id="sh-deck">🂠 View deck</button><button class="btn primary big" id="sh-next">Ride on →</button><button class="btn" id="sh-reroll">🎲 Reroll <b class="money">$${E.rerollCost(r)}</b></button></div></div>
       <div class="shop-row items">${sh.items.map((it, i) => {
         if (it.sold) return '<div class="shop-slot sold">SOLD</div>';
         const inner = it.kind === 'critter' ? T.critterHTML({ id: it.id, edition: it.edition, grumpy: it.grumpy, state: {} }) : (() => { const d = G.CONSUMABLE[it.id]; return `<div class="cons-card k-${d.kind}"><span>${d.emoji}</span><b>${d.name}</b></div>`; })();
@@ -4547,6 +4574,7 @@ G.Table = (() => {
       ${gz ? `<div class="shop-slot gizmo" data-g="1"><div class="gz-icon">${gz.emoji}</div><b>${gz.name}</b><i>${gz.desc}</i><small class="muted">Gizmo · lasts the whole run</small><button class="btn sm buy ${r.money >= Math.round(10 * r.discount) ? '' : 'poor'}">$${Math.round(10 * r.discount)}</button></div>` : ''}</div>
       ${r.gizmos.length ? `<div class="gizmos-owned muted">Gizmos: ${r.gizmos.map((g) => `<span title="${G.GIZMO_BY_ID[g].desc}">${G.GIZMO_BY_ID[g].emoji}</span>`).join(' ')}</div>` : ''}
     </div>`;
+    el.center.querySelector('#sh-deck').onclick = () => T.deckView();
     el.center.querySelector('#sh-next').onclick = () => {
       if (r.money === 0) G.state.secrets.broke = 1;
       E.advance(r); G.Audio.whoosh(); T.render(); T.save();
@@ -4629,6 +4657,25 @@ G.Table = (() => {
       d.onclick = () => toggleSel(c.uid);
     });
     el.pack.querySelector('#pk-skip').onclick = () => { E.closePack(r); sel = []; T.render(); T.save(); };
+  };
+
+  /* ---------- deck viewer: every card you own, any time (between rounds too) ---------- */
+  T.deckView = () => {
+    const r = T.run; if (!r) return;
+    const inPlay = r.phase === 'play';
+    const left = new Set(inPlay ? r.drawPile : r.deck.map((c) => c.uid));
+    const rows = [...G.SUIT_KEYS.map((s) => ({ key: s, label: `<span style="color:${G.SUITS[s].color}">${G.SUITS[s].icon} ${G.SUITS[s].name}</span>`, cards: r.deck.filter((c) => c.enh !== 'stone' && c.suit === s) })),
+      { key: 'stone', label: '🪨 Pet Rocks', cards: r.deck.filter((c) => c.enh === 'stone') }].filter((x) => x.cards.length);
+    const count = (f) => r.deck.filter(f).length;
+    const enh = ['crystal', 'glow', 'brittle', 'iron', 'golden', 'lucky', 'stone', 'wild'].map((e) => [e, count((c) => c.enh === e)]).filter(([, n]) => n);
+    const eds = ['glittery', 'holo', 'molten'].map((e) => [e, count((c) => c.edition === e)]).filter(([, n]) => n);
+    const stk = ['red', 'gold', 'purple'].map((e) => [e, count((c) => c.sticker === e)]).filter(([, n]) => n);
+    const faces = count((c) => c.enh !== 'stone' && c.rank >= 11 && c.rank <= 13), aces = count((c) => c.enh !== 'stone' && c.rank === 14);
+    const m = G.UI.modal(`<div class="deck-view"><h2>🂠 Yer Deck <span class="muted">(${r.deck.length} cards${inPlay ? `, ${r.drawPile.length} left to draw` : ''})</span></h2>
+      <div class="dv-sum"><span>Face cards: <b>${faces}</b></span><span>Aces: <b>${aces}</b></span>${enh.map(([e, n]) => `<span>${{ crystal: '💎 Crystal', glow: '✨ Glowing', brittle: '🔨 Brittle', iron: '⚒️ Iron', golden: '🪙 Golden', lucky: '🍀 Lucky', stone: '🪨 Pet Rock', wild: '🌈 Wild' }[e]}: <b>${n}</b></span>`).join('')}${eds.map(([e, n]) => `<span>${G.EDITIONS[e].name}: <b>${n}</b></span>`).join('')}${stk.map(([e, n]) => `<span>${{ red: '🔴', gold: '🟡', purple: '🟣' }[e]} sticker: <b>${n}</b></span>`).join('')}</div>
+      ${inPlay ? '<p class="muted small">Faded cards are already in your hand or used this round.</p>' : ''}
+      ${rows.map((row) => `<div class="dv-row"><div class="dv-label">${row.label} <small class="muted">${row.cards.length}</small></div><div class="dv-cards">${row.cards.slice().sort((a, b) => b.rank - a.rank).map((c) => T.cardHTML({ ...c, faceDown: false }).replace('class="card ', `class="card ${left.has(c.uid) ? '' : 'gone '}`)).join('')}</div></div>`).join('')}</div>`, { cls: 'deck-modal', buttons: [{ label: 'Close', cls: 'primary' }] });
+    m.querySelectorAll('.card').forEach((d) => { const c = r.deck.find((x) => String(x.uid) === d.dataset.uid); if (c) G.UI.tip(d, cardTip({ ...c, faceDown: false })); });
   };
 
   /* ---------- run info ---------- */
