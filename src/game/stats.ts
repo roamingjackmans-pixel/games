@@ -12,7 +12,8 @@
 //              shardsRecovered, most:shards, levels, glowenEarned, glowenSpent
 //   Loot       loot:<rarity>, gems, gemsUpgraded, gemsFused, chests, garyBuys, garyGlowen
 //   Exploring  rooms, roomsCleared, bonfires, distance (px), playtime (s), most:zone, cycles, garyVisits
-//   Co-op      revivesGiven, revivesReceived, coopTime (s), most:party
+//   Co-op      revivesGiven, revivesReceived, coopTime (s), most:party, pvpDealt, pvpTaken (damage to and from other
+//              players, D370), pvpDowns (other players you downed), pvpDowned (times other players downed you)
 import { BOSSES } from '../data/bosses';
 import { GARY, INSTRUCTOR, MIMIC, SPECIAL_ENEMIES } from '../data/enemies/special';
 import { getStore, type KeyValueStore } from '../engine/settings';
@@ -303,9 +304,16 @@ export class StatsTracker {
       case 'dmg': {
         if (ev.heal || ev.amount <= 0) return;
         if (ev.toPlayer) {
-          if (!me || ev.targetId !== me.id) return;
+          if (!me) return;
+          const from = this.who(w, ev.src);
+          // D370: friendly fire, either way
+          if (ev.targetId !== me.id) {
+            if (from === me) this.add('pvpDealt', ev.amount);
+            return;
+          }
           this.add('dmgTaken', ev.amount);
-          const def = this.who(w, ev.src)?.en?.def.id;
+          if (from?.pl && from !== me) this.add('pvpTaken', ev.amount);
+          const def = from?.en?.def.id;
           if (def) this.lastHitter = def;
           return;
         }
@@ -322,8 +330,15 @@ export class StatsTracker {
         if (ev.playerId === pid) this.add('parries');
         return;
       case 'feat':
+        // D370: an ally downed by another player counts for both (it used to count as a revive given)
+        if (ev.kind === 'downAlly') {
+          if (ev.playerId === pid) this.add('pvpDowns');
+          else if (me && ev.targetId === me.id) this.add('pvpDowned');
+          return;
+        }
         if (ev.playerId !== pid) return;
-        this.add(ev.kind === 'riposte' ? 'ripostes' : 'revivesGiven');
+        if (ev.kind === 'riposte') this.add('ripostes');
+        else if (ev.kind === 'revive') this.add('revivesGiven');
         return;
       case 'revived':
         if (ev.playerId === pid) this.add('revivesReceived');

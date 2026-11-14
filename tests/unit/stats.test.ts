@@ -204,6 +204,28 @@ describe('counting a run', () => {
     expect(t.get('loot:rare')).toBe(0);
   });
 
+  it('friendly fire: damage to and from other players, and downs either way (D370)', () => {
+    const { t, w, save, me } = setup();
+    const ally = spawnPlayer(w, newCharacter('brute', 'Ann', 'p2', new Rng('ally')), 1, false, 700, 368);
+    w.refreshLists();
+    const hit = (amount: number, src: number, target: number): GameEvent => ({ t: 'dmg', x: 0, y: 0, amount, type: 'physical', crit: false, toPlayer: true, targetId: target, src });
+    t.frame(w, me, save, [
+      hit(40, me.id, ally.id),
+      hit(25, ally.id, me.id),
+      hit(10, 999, ally.id),
+      { t: 'feat', kind: 'downAlly', playerId: 'p1', targetId: ally.id },
+      { t: 'feat', kind: 'downAlly', playerId: 'p2', targetId: me.id },
+      { t: 'feat', kind: 'abandonAlly', playerId: 'p1', targetId: ally.id },
+    ]);
+    expect(t.get('pvpDealt')).toBe(40);
+    expect(t.get('pvpTaken')).toBe(25);
+    expect(t.get('dmgTaken')).toBe(25);
+    expect(t.get('pvpDowns')).toBe(1);
+    expect(t.get('pvpDowned')).toBe(1);
+    // these used to count as revives given
+    expect(t.get('revivesGiven')).toBe(0);
+  });
+
   it('times a boss from the end of its intro, once per kill', () => {
     const { t, w, save, me, tick } = setup();
     const def = Object.values(BOSSES)[0]!;

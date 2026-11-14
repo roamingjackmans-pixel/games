@@ -1123,7 +1123,8 @@ counted on each client from world events: combat (kills by type and zone, Elites
 damage dealt and taken, biggest hit, weakness and resisted hits, parries, ripostes, dodges, blocks, sips), death and
 Shards (deaths by killer, falls, mimic bites, Shards gained / spent / dropped / recovered, Glowen), loot (items by
 rarity, gems, chests, Gary), exploration (time, distance, rooms, bonfires, deepest zone, cycles) and co-op (time,
-party size, revives, downs). The Statistics screen sits below Achievements, with "This character" and "All
+party size, revives, downs, and friendly fire: damage dealt to and taken from other players, other players you downed
+and times they downed you, D370). The Statistics screen sits below Achievements, with "This character" and "All
 characters" tabs and a headline strip (most hated enemy, nemesis, Shards donated to the floor…).
 
 ## 22. Tools: debug menu, balance report, version

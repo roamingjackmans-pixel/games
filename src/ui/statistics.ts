@@ -145,6 +145,11 @@ function sections(c: Counters): { title: string; rows: Row[] }[][] {
           ['Revives given', N('revivesGiven')],
           ['Revives received', N('revivesReceived')],
           ['Times downed', N('downed')],
+          // D370: friendly fire
+          ['Damage dealt to other players', N('pvpDealt')],
+          ['Damage taken from other players', N('pvpTaken')],
+          ['Other players you downed', N('pvpDowns')],
+          ['Times other players downed you', N('pvpDowned')],
         ],
       },
     ],
