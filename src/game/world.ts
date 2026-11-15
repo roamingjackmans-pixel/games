@@ -482,6 +482,8 @@ export interface HazardC {
   follow: number;
   pull: number;
   armedAt: number;
+  /** a player's spell zone: its school, so its ticks heal by that hand's lifesteal (D374) */
+  school?: 'brain' | 'prayer';
 }
 
 export interface PickupC {

@@ -321,3 +321,100 @@ describe('Prayer buff spells (D373)', () => {
     expect(spellBuffsOn(p, s.w.time + 60)).toEqual([]);
   });
 });
+
+describe('lifesteal gems in a staff or talisman heal on spells, in either hand (D369, D374)', () => {
+  const setup = async (where: 'main' | 'off' | 'weapon') => {
+    const { makeGem } = await import('../../src/data/gems');
+    const s = session('scholar');
+    const p = s.localPlayer!;
+    const c = p.pl!.char;
+    c.stats.brain = 40;
+    const staff = makeItem('apprentice_staff', 'rare');
+    const leech = makeGem('leech', { level: 30, q: 0 });
+    if (where === 'weapon') {
+      c.equipment.main = makeItem('rapier', 'rare');
+      c.equipment.main.sockets = [leech];
+      c.equipment.off = staff;
+      staff.sockets = [null];
+    } else {
+      staff.sockets = [leech];
+      if (where === 'main') {
+        c.equipment.main = staff;
+        c.equipment.off = null;
+      } else {
+        c.equipment.main = makeItem('rapier', 'rare');
+        c.equipment.off = staff;
+      }
+    }
+    c.twoHanded = false;
+    refreshDerived(p);
+    const foe = spawnEnemy(s.w, ENEMIES.shambler!, p.x + 120, p.y, { tellS: 0 });
+    foe.en!.state = 'alert';
+    foe.en!.def = { ...foe.en!.def, resist: {} };
+    foe.hp!.hp = foe.hp!.max = 1e6;
+    p.hp!.hp = p.hp!.max * 0.3;
+    return { s, p, foe };
+  };
+  const castBolt = async (s: GameSession, p: { id: number; x: number; y: number }, foe: { x: number; y: number }, zone = false): Promise<void> => {
+    const { runEffects } = await import('../../src/game/effects/run');
+    const effects = zone
+      ? [{ op: 'zone' as const, pattern: { kind: 'circle' as const, r: 80, anchor: 'aim' as const }, durationS: 1.2, tickS: 0.5, hazard: 'consecrate' as const, tick: [{ op: 'damage' as const, pattern: { kind: 'circle' as const, r: 10, anchor: 'target' as const }, type: 'magic' as const, base: 20 }] }]
+      : [{ op: 'damage' as const, pattern: { kind: 'circle' as const, r: 60, anchor: 'aim' as const }, type: 'magic' as const, base: 40 }];
+    runEffects(s.w, effects as never, { sourceId: p.id, team: 0, x: p.x, y: p.y, aimX: foe.x, aimY: foe.y, targetId: 0, powerMult: 1, isSpell: true, isSkill: false, baseDamage: 20, windupS: 0, tag: 'spell:0', school: 'brain' });
+    const { stepWorld } = await import('../../src/game/sim');
+    for (let i = 0; i < 6; i++) stepWorld(s.w);
+  };
+
+  it('a Leech gem in an off-hand staff heals on its spell hits', async () => {
+    const { s, p, foe } = await setup('off');
+    expect(p.pl!.derived.off.lifesteal).toBeGreaterThan(0);
+    const hp0 = p.hp!.hp;
+    await castBolt(s, p, foe);
+    expect(foe.hp!.hp).toBeLessThan(1e6);
+    expect(p.hp!.hp).toBeGreaterThan(hp0);
+  });
+
+  it('a Leech gem in a weapon-hand staff heals on its spell hits', async () => {
+    const { s, p, foe } = await setup('main');
+    expect(p.pl!.derived.lifesteal).toBeGreaterThan(0);
+    const hp0 = p.hp!.hp;
+    await castBolt(s, p, foe);
+    expect(p.hp!.hp).toBeGreaterThan(hp0);
+  });
+
+  it("a Leech gem in the sword does not heal on the off-hand staff's spells", async () => {
+    const { s, p, foe } = await setup('weapon');
+    const hp0 = p.hp!.hp;
+    await castBolt(s, p, foe);
+    expect(foe.hp!.hp).toBeLessThan(1e6);
+    expect(p.hp!.hp).toBe(hp0);
+  });
+
+  it("a spell zone's ticks heal by the casting hand's lifesteal too", async () => {
+    const { stepWorld } = await import('../../src/game/sim');
+    const { s, p, foe } = await setup('off');
+    // the shambler hits back meanwhile: keep the player untouchable so only healing moves its HP
+    p.hp!.invulnUntil = 1e9;
+    const hp0 = p.hp!.hp;
+    await castBolt(s, p, foe, true);
+    for (let i = 0; i < 60; i++) {
+      stepWorld(s.w);
+      foe.vx = foe.vy = 0;
+    }
+    expect(foe.hp!.hp).toBeLessThan(1e6);
+    expect(p.hp!.hp).toBeGreaterThan(hp0);
+  });
+});
+
+describe('picking up a spell says which (D374)', () => {
+  it('its name and whether it is a Brain or a Prayer spell', () => {
+    const s = session();
+    const p = s.localPlayer!;
+    s.w.events.length = 0;
+    const pk = s.w.spawn('pickup', p.x, p.y, { radius: 14, pk: { kind: 'spell', spellId: 'ward_of_steel', forPlayer: p.pl!.playerId, amount: 1, until: 0, rarity: 'common', autoCollectAt: 0 } });
+    s.collect(p, pk);
+    const msgs = s.w.events.filter((e) => e.t === 'msg').map((e) => (e as { text: string }).text);
+    expect(msgs).toContain('You learned Ward of Steel, a Prayer spell.');
+    expect(p.pl!.char.knownSpells).toContain('ward_of_steel');
+  });
+});

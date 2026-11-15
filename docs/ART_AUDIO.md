@@ -88,7 +88,10 @@ Contents: [1 Rendering](#1-rendering) · [2 Style](#2-style) · [3 Telegraphs an
 - Hit sparks by damage type, slash arcs as fading wedges in the weapon's damage colour (a spin leaves a ring round the
   player, an overhead a burst ring where it lands, a whip's crack an arc at its full length; D320), thrown Chakram rings
   whirling flat as they fly, block and parry flashes, dodge
-  dust, status particles (embers, frost motes, sparks, red drips, green bubbles), screen shake scaled by Settings,
+  dust, status particles (embers, frost motes, sparks, red drips, green bubbles) and, on an enemy, a **status animation
+  for as long as the status runs** (D374, `render/statusFx.ts`): Burn flames licking up round its feet, Chill frost
+  crystals and a pale rim, Shock jagged arcs re-drawn every 70 ms, Bleed a blood splash bursting out with drops, Poison
+  a green haze and rising, popping bubbles, Freeze a block of ice round the body, Root vines round its feet; screen shake scaled by Settings,
   hitstop, floating damage numbers, the boss intro card, the phase-transition flash, level-up ring, Shard motes that
   fly to the HUD counter, loot beams by rarity. Deaths burst into grey smoke and dust; no gore.
 - **Skill and spell animations** (`render/skillFx.ts`): a pattern names its look (`PatternCommon.vfx`) and the animation

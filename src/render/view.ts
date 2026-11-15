@@ -1,6 +1,7 @@
 // The world view: draws a World in ART_AUDIO §1 layer order and turns sim events into sound and particles.
 // Client side only (canvas + audio).
 import { formatPrompts } from '../ui/glyphs';
+import { drawStatusFx } from './statusFx';
 import { playSfx, type SfxId, SFX } from '../engine/audio/sfx';
 import { glow } from '../engine/draw/parts';
 import type { Particles } from '../engine/particles';
@@ -318,10 +319,12 @@ export class WorldView {
       const y = e.py + (e.y - e.py) * alpha;
       drawProjectile(ctx, e, x, y, rt);
     }
-    // status particles while a status runs: embers, frost motes, sparks, red drips, green bubbles (ART_AUDIO §4)
+    // status particles while a status runs: embers, frost motes, sparks, red drips, green bubbles (ART_AUDIO §4); on an
+    // enemy its status also plays an animation on the body for as long as it lasts (D374)
     for (const e of list) {
       const st = e.st;
       if (!st || e.hp?.dead) continue;
+      if (e.type === 'enemy' && e.en?.state !== 'ceiling') drawStatusFx(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha, now);
       for (const [s, color, vy] of STATUS_MOTES) {
         if (st.active[s] <= now || Math.random() > 0.18) continue;
         this.particles.spawn(e.x + (Math.random() - 0.5) * e.radius * 1.6, e.y - e.radius * 0.3 + (Math.random() - 0.5) * e.radius, (Math.random() - 0.5) * 20, vy, 0.7, 2.5, color, 'glow', { drag: 1 });

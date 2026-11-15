@@ -34,6 +34,8 @@ export interface EffectCtx {
   tag: string;
   /** a player's spell: its school, whose stat sets the spell's early damage bonus (D343) */
   school?: 'brain' | 'prayer';
+  /** a spell zone's tick (D374): whose hand's lifesteal heals (the school's tool), with no other effect on the damage */
+  lifestealSchool?: 'brain' | 'prayer';
   /** a player's spell: its id, carried by the buffs it gives so their icons show (D373) */
   spellId?: string;
 }
@@ -97,8 +99,9 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
       if (ctx.school) amt *= spellDamageMult(d.stats[ctx.school]);
     }
     spec.dmg = { [e.type]: amt };
-    // D369: a spell's lifesteal is the hand's whose staff or talisman cast it
-    if (src?.pl && ctx.isSpell && ctx.school) spec.lifestealPct = toolForSchool(src.pl.derived, ctx.school)?.hand === 'off' ? src.pl.derived.off.lifesteal : src.pl.derived.lifesteal;
+    // D369, D374: a spell's lifesteal (its own hits and its zone's ticks) is the hand's whose staff or talisman cast it
+    const lsSchool = ctx.school ?? ctx.lifestealSchool;
+    if (src?.pl && ctx.isSpell && lsSchool) spec.lifestealPct = toolForSchool(src.pl.derived, lsSchool)?.hand === 'off' ? src.pl.derived.off.lifesteal : src.pl.derived.lifesteal;
     spec.isSpell = ctx.isSpell;
     spec.isSkill = ctx.isSkill;
   }
@@ -502,6 +505,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         follow: e.follow ? ctx.sourceId : 0,
         spec: null,
         pull: e.hazard === 'gravityWell' ? 220 : 0,
+        ...(spell && ctx.school ? { school: ctx.school } : {}),
       });
       void hz;
       break;

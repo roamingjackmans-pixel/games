@@ -1,6 +1,7 @@
 // The game session: one playthrough's run logic on the authoritative side (solo or co-op host).
 // Rooms, doors, waves, clears, chests, bonfires (first-rest rule, D38), death + Shardpile (D3),
 // the tutorial hall (PROCGEN §8). Headless: no DOM, canvas or audio.
+import { SPELLS } from '../data/spells';
 import { dist } from '../engine/math';
 import { addBestiarySeen } from '../data/bestiary';
 import { stream } from '../engine/rng';
@@ -1083,7 +1084,10 @@ export class GameSession {
     if (pk.kind === 'spell' && pk.spellId) {
       if (!c.knownSpells.includes(pk.spellId)) c.knownSpells.push(pk.spellId);
       this.w.sfx('reliquary', e.x);
-      this.w.emit({ t: 'msg', text: 'You learned a spell.', forPlayer: p.pl!.playerId, color: '#c58cff' });
+      // D374: its name and its school
+      const sp = SPELLS[pk.spellId];
+      const text = sp ? `You learned ${sp.name}, a ${sp.school === 'brain' ? 'Brain' : 'Prayer'} spell.` : 'You learned a spell.';
+      this.w.emit({ t: 'msg', text, forPlayer: p.pl!.playerId, color: '#c58cff' });
       return true;
     }
     if (pk.kind === 'essence' && pk.essenceTier) {

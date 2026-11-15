@@ -139,6 +139,7 @@ export function updateHazards(w: World, _dt: number): void {
           baseDamage: owner?.pl?.derived.weaponPower ?? 20,
           windupS: 0,
           tag: hz.hazard,
+          ...(hz.school ? { lifestealSchool: hz.school } : {}),
         });
       }
       w.remove(h);
@@ -229,6 +230,8 @@ export function updateHazards(w: World, _dt: number): void {
           baseDamage: owner?.pl?.derived.weaponPower ?? 20,
           windupS: 0,
           tag: `hz:${hz.hazard}:${friendly ? 'ally' : 'foe'}`,
+          // D374: a spell zone's ticks heal by the lifesteal of the hand whose staff or talisman cast it
+          ...(hz.school ? { lifestealSchool: hz.school } : {}),
         });
       }
       // friendly fire (D115): a player's harmful ground (fire puddles, fire walls) burns allies too; zones that do
