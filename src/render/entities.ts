@@ -5,7 +5,7 @@ import { drawById, type DrawState } from '../engine/draw/registry';
 import { DEFAULT_LOOK, drawJoe, type BodyGear, type HeadGear, type JoeLook } from '../engine/draw/players';
 import type { Beard, Emblem, HairStyle, HandPose } from '../engine/draw/players';
 import { ARMOR_LOOKS, HEAD_OVERRIDE } from '../data/armorLooks';
-import { FLASK_DRINK_S, PLAYER_DOT_DY, PLAYER_DOT_R } from '../game/player/player';
+import { FLASK_DRINK_S, PLAYER_DOT_DY, PLAYER_DOT_MARK_R, PLAYER_DOT_R } from '../game/player/player';
 import { chakramRing, drawShield, drawTool, drawWeapon, isPairedWeapon } from '../engine/draw/weapons';
 import { cacheable, drawCachedEnemy } from './spriteCache';
 import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/parts';
@@ -352,17 +352,29 @@ export function drawPlayerDot(ctx: CanvasRenderingContext2D, e: Entity, x: numbe
   const eyes = pl.char.appearance?.eyes || '#5a3a22';
   ctx.save();
   ctx.globalAlpha = e.anim.alpha;
-  ctx.fillStyle = OUTLINE;
+  // D377: the circle area attacks test, as a ring in the eye colour (a dark edge outside, a faint fill inside)
+  ctx.fillStyle = withAlpha(eyes, 0.12);
   ctx.beginPath();
   ctx.arc(x, y, PLAYER_DOT_R, 0, Math.PI * 2);
   ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = withAlpha(OUTLINE, 0.6);
+  ctx.stroke();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = withAlpha(eyes === '#5a3a22' ? '#c8a07a' : eyes, 0.9);
+  ctx.stroke();
+  // the eye-coloured dot at its centre
+  ctx.fillStyle = OUTLINE;
+  ctx.beginPath();
+  ctx.arc(x, y, PLAYER_DOT_MARK_R, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = '#f4efe4';
   ctx.beginPath();
-  ctx.arc(x, y, PLAYER_DOT_R - 1.2, 0, Math.PI * 2);
+  ctx.arc(x, y, PLAYER_DOT_MARK_R - 1.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = eyes;
   ctx.beginPath();
-  ctx.arc(x, y, PLAYER_DOT_R - 2.2, 0, Math.PI * 2);
+  ctx.arc(x, y, PLAYER_DOT_MARK_R - 2.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 }
@@ -390,7 +402,7 @@ export function drawAimArrow(ctx: CanvasRenderingContext2D, e: Entity, x: number
   const pl = e.pl;
   if (!pl || pl.deadUntilRest || pl.downed || e.hp?.dead) return;
   const len = aimsFar(e) ? AIM_ARROW_LEN.long : AIM_ARROW_LEN.short;
-  const R = PLAYER_DOT_R + 1.6;
+  const R = PLAYER_DOT_MARK_R + 1.6;
   const SILVER = '#dfe4ec';
   const SHADE = '#9aa4b2';
   ctx.save();

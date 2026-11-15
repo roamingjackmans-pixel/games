@@ -1,5 +1,6 @@
 // Floor hazards (fire puddles, poison clouds, thorns, ice, oil, slag, roots, time bubbles…) and their ticks.
 import { shapeHit, type Shape } from '../combat/patterns';
+import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
 import { applyControl, applyStatusBuild, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer, rawDamage } from '../combat/damage';
 import { effectSpec, runEffects } from '../effects/run';
 import type { HazardId, Team } from '../types';
@@ -166,7 +167,10 @@ export function updateHazards(w: World, _dt: number): void {
     if (hitEnemies) for (const e of w.livingEnemies()) victims.push(e);
     for (const v of victims) {
       let inside: Shape | null = null;
-      for (const s of hz.shapes) if (shapeHit(s, 0, v.x, v.y, v.radius * 0.6, w.room)) {
+      // D377: a player is caught where the circle at their feet is, as area attacks catch them (D262)
+      const vy = v.pl ? v.y + PLAYER_DOT_DY : v.y;
+      const vr = v.pl ? PLAYER_DOT_R : v.radius * 0.6;
+      for (const s of hz.shapes) if (shapeHit(s, 0, v.x, vy, vr, w.room)) {
         inside = s;
         break;
       }
@@ -281,7 +285,7 @@ export function hazardSlowOn(w: World, p: Entity): number {
     const foe = hz.team !== 0 && !hz.enemiesOnly && (def.hitsTeam === 'players' || def.hitsTeam === 'both');
     const ff = !!hz.hurtsAllies && hz.team === 0 && hz.ownerId !== p.id && ffVictims(w, w.get(hz.ownerId)).includes(p);
     if (!foe && !ff) continue;
-    if (!(hz.shapes ?? []).some((s) => shapeHit(s, 0, p.x, p.y, p.radius * 0.6, w.room))) continue;
+    if (!(hz.shapes ?? []).some((s) => shapeHit(s, 0, p.x, p.y + PLAYER_DOT_DY, PLAYER_DOT_R, w.room))) continue;
     m = Math.min(m, 1 - hz.slowPct);
   }
   return m;

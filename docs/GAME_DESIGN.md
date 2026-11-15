@@ -511,8 +511,10 @@ a **utility** (summon, buff, split, trail, teleport, heal, trap), telegraphed li
   striped fill on Piercing floors.
 
 **What is tested against what you see:**
-- **Area attacks test the dot at your feet** (5 px, 9 px below your centre; D262): if the dot is outside the marker,
-  you are safe. Melee swings and other non-area hits test the body (14 px).
+- **Area attacks test the circle at your feet** (radius 17 px, centred 9 px below your centre; D262, D377: 12 px bigger
+  than the first 5 px dot): if the circle is outside the marker, you are safe. Ground an attack leaves behind (fire,
+  thorns, slowing fields) tests the same circle (D377; it tested a small circle round your middle). Melee swings,
+  projectiles and other non-area hits test the body (14 px).
 - **A charge's or lunge's red bar is its whole hit area** (D272): from where the attacker starts over its full travel
   plus its reach (radius + 22 for a charge, + 18 for a lunge), cut at a wall. Outside the bar is safe.
 - **Sweeping beams** are tested each frame along the arc they turned (1.5° steps or finer); a ticking sweep hits a
@@ -1051,8 +1053,8 @@ face marks and per-limb features, with Randomize and a preview you turn with the
 - **In the world**: status buildup bars over the player's head (D321): one wide, see-through bar per status that is building
   or running, a small drawn picture of it (flame, snowflake, bolt, blood drop, bubbles) in a dark box at its left and
   the bar filled in its colour; once it goes off the bar runs down over the status's length, flashing (a meter building
-  again under it shows as a thin white line). Near the top of the room they hang under the feet. Also an eye-coloured dot
-  at every player's feet (D262); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
+  again under it shows as a thin white line). Near the top of the room they hang under the feet. Also the circle at every
+  player's feet (D262, D377: a 17 px ring in their eye colour round a small eye-coloured dot); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
   stones round a stuck player (D252); gold sparkles on a Thermos drink (D271).
 - **Menus** are HTML overlays over the canvas: Title · Load Character · Character creation · Co-op play · Lobby · Friends (§12.1) ·
   Pause · Inventory (Items, Spells, Proficiency tabs; stats, paper doll, bag, gems in your gear, set perks worn) ·

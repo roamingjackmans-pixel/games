@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { World } from '../../src/game/world';
 import { Room, doorTiles } from '../../src/game/room';
 import { newCharacter } from '../../src/game/player/character';
-import { PLAYER_DOT_DY, PLAYER_DOT_R, PLAYER_RADIUS, spawnPlayer } from '../../src/game/player/player';
+import { PLAYER_DOT_DY, PLAYER_DOT_R, spawnPlayer } from '../../src/game/player/player';
 import { spawnEnemy } from '../../src/game/enemies/spawn';
 import { stepWorld } from '../../src/game/sim';
 import { emptySpec } from '../../src/game/combat/damage';
@@ -54,19 +54,18 @@ describe('area attacks test the dot at a player\'s feet (D262)', () => {
     s.dmg = { physical: 40 };
     return s;
   };
-  it('an area that only grazes the body misses; one over the dot hits', () => {
-    // the dot sits inside the old body circle, so no area catches more than before
-    expect(PLAYER_DOT_DY + PLAYER_DOT_R).toBeLessThanOrEqual(PLAYER_RADIUS);
-    // a big circle whose edge sits 9 px from the player's centre: inside the body, clear of the dot
+  it('an area clear of the circle at the feet misses; one over its edge hits (D377: radius 17)', () => {
+    expect(PLAYER_DOT_R).toBe(17);
+    // a big circle whose edge sits 2 px clear of the circle at the feet
     const miss = world();
     const r = 300;
-    spawnTelegraphs(miss.w, { kind: 'circle', r, anchor: 'target' }, { ownerId: miss.owner, team: 1, kind: 'normal', windupS: 0.2, spec: spec(), ctx: { ...ctx(), tx: miss.px + r + 9, ty: miss.py } });
+    spawnTelegraphs(miss.w, { kind: 'circle', r, anchor: 'target' }, { ownerId: miss.owner, team: 1, kind: 'normal', windupS: 0.2, spec: spec(), ctx: { ...ctx(), tx: miss.px + r + PLAYER_DOT_R + 2, ty: miss.py + PLAYER_DOT_DY } });
     const hp0 = miss.hp();
     for (let i = 0; i < 30; i++) stepWorld(miss.w);
     expect(miss.hp()).toBe(hp0);
-    // the same circle 3 px closer covers the dot's edge
+    // the same circle 4 px closer covers the circle's edge
     const hit = world();
-    spawnTelegraphs(hit.w, { kind: 'circle', r, anchor: 'target' }, { ownerId: hit.owner, team: 1, kind: 'normal', windupS: 0.2, spec: spec(), ctx: { ...ctx(), tx: hit.px + r + 3, ty: hit.py } });
+    spawnTelegraphs(hit.w, { kind: 'circle', r, anchor: 'target' }, { ownerId: hit.owner, team: 1, kind: 'normal', windupS: 0.2, spec: spec(), ctx: { ...ctx(), tx: hit.px + r + PLAYER_DOT_R - 2, ty: hit.py + PLAYER_DOT_DY } });
     const hp1 = hit.hp();
     for (let i = 0; i < 30; i++) stepWorld(hit.w);
     expect(hit.hp()).toBeLessThan(hp1);

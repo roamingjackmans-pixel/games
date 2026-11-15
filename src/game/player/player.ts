@@ -33,9 +33,14 @@ export const FLASK_HEAL_S = 1.5;
 export const GHOST_SPEED = 90;
 export const GHOST_TIME = 30;
 export const PLAYER_RADIUS = 14;
-/** the eye-coloured dot at a player's feet (D262): area attacks test it, not the whole body, so a dot clear of an area is safe */
-export const PLAYER_DOT_R = 5;
-/** how far below a player's centre (their belt) the dot sits, on their feet (D262); with its radius it stays inside the body, so an area never catches more than it did */
+/**
+ * The circle at a player's feet (D262): area attacks and the ground they leave test it, not the whole body, so a
+ * circle clear of an area is safe. D377: 12 px bigger (17, was 5), drawn as a ring round the eye-coloured dot.
+ */
+export const PLAYER_DOT_R = 17;
+/** the eye-coloured dot drawn at its centre (the old size, D262) */
+export const PLAYER_DOT_MARK_R = 5;
+/** how far below a player's centre (their belt) the circle's centre sits, on their feet (D262) */
 export const PLAYER_DOT_DY = 9;
 
 export function spawnPlayer(w: World, char: Character, slot: number, local: boolean, x: number, y: number): Entity {

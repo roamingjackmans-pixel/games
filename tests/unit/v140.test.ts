@@ -575,3 +575,34 @@ describe("a player's projectile keeps its hand's lifesteal (D375, D369)", () => 
     expect(p.hp!.hp).toBeGreaterThan(hp0);
   });
 });
+
+describe('ground left by attacks tests the circle at the feet (D377)', () => {
+  it('a player whose circle is clear of a fire puddle is not burned; one whose circle touches it is', async () => {
+    const { spawnHazard } = await import('../../src/game/systems/hazards');
+    const { PLAYER_DOT_DY, PLAYER_DOT_R } = await import('../../src/game/player/player');
+    const { stepWorld } = await import('../../src/game/sim');
+    const { inCombat } = await import('./inCombat');
+    const run = (gap: number): number => {
+      const s = session();
+      const p = s.localPlayer!;
+      inCombat(s.w);
+      p.x = 640;
+      p.y = 368;
+      const foe = spawnEnemy(s.w, ENEMIES.shambler!, 1100, 600, { tellS: 0 });
+      foe.en!.state = 'dormant';
+      // a puddle above the player: its lower edge `gap` px above the top of the circle at the feet
+      const r = 40;
+      const cy = p.y + PLAYER_DOT_DY - PLAYER_DOT_R - gap - r;
+      spawnHazard(s.w, 'firePuddle', [{ k: 'circle', x: p.x, y: cy, r }], 3, 1, foe.id);
+      const hp0 = p.hp!.hp;
+      for (let i = 0; i < 90; i++) {
+        p.x = 640;
+        p.y = 368;
+        stepWorld(s.w);
+      }
+      return hp0 - p.hp!.hp;
+    };
+    expect(run(2)).toBe(0);
+    expect(run(-3)).toBeGreaterThan(0);
+  });
+});
