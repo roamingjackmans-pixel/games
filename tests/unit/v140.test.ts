@@ -722,3 +722,38 @@ describe("The Fine Print's Terms and Conditions leaves room (D389)", () => {
     expect(lanes[4]!.y + lanes[4]!.w / 2).toBeLessThan(ROOM_MAX_Y);
   });
 });
+
+describe('enemies attack only from within a projectile\'s reach (D390)', () => {
+  it('a caster with a room-wide attack, far away, walks in first and attacks only within reach', async () => {
+    const { World } = await import('../../src/game/world');
+    const { Room } = await import('../../src/game/room');
+    const { spawnPlayer } = await import('../../src/game/player/player');
+    const { stepWorld } = await import('../../src/game/sim');
+    const { ENEMY_PROJECTILE_RANGE } = await import('../../src/game/combat/formulas');
+    const w = new World('RANGE', Room.empty());
+    const c = newCharacter('knight', 'Joe', 'p1', new Rng('r'));
+    const p = spawnPlayer(w, c, 0, true, 120, 368);
+    w.god = true;
+    const foe = spawnEnemy(w, ENEMIES.fine_print!, 1160, 368, { tellS: 0 });
+    const d0 = Math.hypot(foe.x - p.x, foe.y - p.y);
+    expect(d0).toBeGreaterThan(ENEMY_PROJECTILE_RANGE + 200);
+    let firstAttackAt = -1;
+    for (let i = 0; i < 60 * 20 && firstAttackAt < 0; i++) {
+      p.x = 120;
+      p.y = 368;
+      stepWorld(w);
+      if (foe.en!.attack) firstAttackAt = Math.hypot(foe.x - p.x, foe.y - p.y) - p.radius;
+    }
+    expect(firstAttackAt).toBeGreaterThan(0);
+    expect(firstAttackAt).toBeLessThanOrEqual(ENEMY_PROJECTILE_RANGE + 1);
+  });
+
+  it('an enemy that cannot move closer (stationary) still attacks from where it is', async () => {
+    const { canCloseIn } = await import('../../src/game/enemies/ai');
+    const s = session();
+    const turret = spawnEnemy(s.w, { ...ENEMIES.shambler!, moveStyle: 'stationary' }, 600, 368, { tellS: 0 });
+    expect(canCloseIn(turret)).toBe(false);
+    const walker = spawnEnemy(s.w, ENEMIES.shambler!, 600, 368, { tellS: 0 });
+    expect(canCloseIn(walker)).toBe(true);
+  });
+});

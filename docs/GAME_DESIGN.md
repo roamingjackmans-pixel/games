@@ -569,7 +569,10 @@ has 10 types (80 regular enemies, D242) covering these roles.
 A state machine: idle → alert → approach/kite → windup → attack → recover → reposition. Each enemy has a preferred
 range and a move style (walk, dash, circle, flank, hover, burrow, teleport, stationary). Attacks are weighted by
 distance and cooldowns, with a room-wide limit on how many specials wind up at once (2 in zones 1–3, 3 after).
-Enemies with a projectile attack keep within 340 px and only shoot within 425 px (D186). Co-op targeting weighs
+**No enemy attacks from beyond a projectile's reach (425 px, D390)**, room-wide attacks included: one that is
+farther away walks in until it is within reach, then uses whatever it has. Every enemy keeps within 340 px (D186,
+D390). Enemies that cannot close in by themselves (stationary ones, a boss rooted by its phase, Aurelia's drifting
+mirrors, the leashed Instructor) still attack from where they are. Co-op targeting weighs
 recent damage, proximity and taunts, re-evaluated every 1.5 s.
 
 ### 6.3 Waves and rooms

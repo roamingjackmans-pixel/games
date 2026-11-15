@@ -113,10 +113,25 @@ function linkedSpecialWindup(w: World, id: number): boolean {
   return !!a && a.phase === 'windup' && (a.def.kind === 'red' || a.def.kind === 'pierce');
 }
 
+/**
+ * D390: can this enemy close in on its target by itself? Stationary ones (turrets, a boss rooted by its phase), ones
+ * that drift about on their own (Aurelia's mirrors) and leashed ones (The Instructor) cannot; they keep attacking from
+ * where they are, so a fight never stalls with nobody able to act.
+ */
+export function canCloseIn(e: Entity): boolean {
+  const en = e.en!;
+  const def = en.def as EnemyDef;
+  if (phasePassive(e)?.stationaryAt || def.moveStyle === 'stationary') return false;
+  if (def.traits?.drift || def.traits?.homeRadius) return false;
+  return en.speed > 0;
+}
+
 function chooseAttack(w: World, e: Entity, target: Entity): AttackDef | null {
   const en = e.en!;
   const now = w.time;
   const d = dist(e.x, e.y, target.x, target.y) - target.radius;
+  // D390: no attack at all (room-wide ones too) from beyond a projectile's reach; the enemy walks in first
+  if (d > ENEMY_PROJECTILE_RANGE && canCloseIn(e)) return null;
   const list = en.phaseAttacks;
   const options: AttackDef[] = [];
   const weights: number[] = [];
@@ -179,10 +194,10 @@ function moveByStyle(w: World, e: Entity, target: Entity, dt: number): void {
   const now = w.time;
   const sp = moveSpeed(w, e);
   const d = dist(e.x, e.y, target.x, target.y);
-  // a shooter keeps to 80% of its shots' reach so it stays in range to use them (D186)
-  const shoots = en.phaseAttacks.some((a) => a.pattern?.kind === 'projectile');
+  // a shooter keeps to 80% of its shots' reach so it stays in range to use them (D186); since D390 every enemy does,
+  // as nothing attacks from beyond that reach
   const basePref = (en.isBoss ? phasePassive(e)?.preferredRange : undefined) ?? def.preferredRange;
-  const pref = shoots ? Math.min(basePref, ENEMY_PROJECTILE_RANGE * 0.8) : basePref;
+  const pref = Math.min(basePref, ENEMY_PROJECTILE_RANGE * 0.8);
   const face = (): void => {
     const rate = (def.traits?.turnRate ?? 540) * DEG;
     e.facing = turnToward(e.facing, Math.atan2(target.y - e.y, target.x - e.x), rate * dt);
