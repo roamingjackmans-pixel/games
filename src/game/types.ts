@@ -131,6 +131,8 @@ export type PatternDef = PatternCommon &
         orientation: 'vertical' | 'horizontal';
         alternate?: boolean;
         setGapS?: number;
+        /** with `alternate`: only the first set strikes; the lanes between stay safe (D389: The Fine Print) */
+        firstSetOnly?: boolean;
         /** a boulder rolls down each lane at this speed after the telegraph (lanes alternate ends) instead of the lane striking at once */
         roll?: { speed: number };
         /** the lanes stay lit for this long after impact, hitting every `tickS` (bellows jets) */

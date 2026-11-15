@@ -422,6 +422,7 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
         const b: number[] = [];
         for (let i = 0; i < p.n * 2; i++) (i % 2 === 0 ? a : b).push(lo + step * (i + 0.5));
         const gap = p.setGapS ?? 0.8;
+        if (p.firstSetOnly) return [spec(make(a), { ...laneOpts })];
         return [spec(make(a), { ...laneOpts }), spec(make(b), { ...laneOpts, delay: gap, showLate: true })];
       }
       const step = span / p.n;

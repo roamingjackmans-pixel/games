@@ -703,3 +703,22 @@ describe('a Leech gem shows what it heals in its weapon (D386)', () => {
     expect(leechMultIn(null)).toBe(1);
   });
 });
+
+describe("The Fine Print's Terms and Conditions leaves room (D389)", () => {
+  it('only every other lane strikes, one set, with gaps of at least twice the hit circle between', async () => {
+    const { resolvePattern, ROOM_MIN_Y, ROOM_MAX_Y } = await import('../../src/game/combat/patterns');
+    const { PLAYER_DOT_R } = await import('../../src/game/player/player');
+    const { Room } = await import('../../src/game/room');
+    const atk = ENEMIES.fine_print!.attacks.find((a) => a.id === 'terms_and_conditions')!;
+    const sets = resolvePattern(atk.pattern!, { ox: 640, oy: 368, facing: 0, tx: 640, ty: 368, players: [], rng: new Rng('fp'), room: Room.empty(), telegraphS: 1 });
+    expect(sets.length).toBe(1);
+    const lanes = sets[0]!.shapes.map((sh) => sh as { k: string; y: number; w: number }).sort((a, b) => a.y - b.y);
+    expect(lanes.length).toBe(5);
+    for (let i = 1; i < lanes.length; i++) {
+      const gap = lanes[i]!.y - lanes[i - 1]!.y - lanes[i]!.w;
+      expect(gap).toBeGreaterThanOrEqual(PLAYER_DOT_R * 4);
+    }
+    expect(lanes[0]!.y - lanes[0]!.w / 2).toBeGreaterThan(ROOM_MIN_Y);
+    expect(lanes[4]!.y + lanes[4]!.w / 2).toBeLessThan(ROOM_MAX_Y);
+  });
+});

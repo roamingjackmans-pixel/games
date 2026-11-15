@@ -443,11 +443,12 @@ export const ABYSS: Record<string, EnemyDef> = {
     attacks: [
       { id: 'small_print', name: 'Small Print', kind: 'normal', pattern: { kind: 'projectile', speed: 300, r: 7, count: 3, spreadDeg: 24, range: 1000, drawId: 'e_paper' }, windupMs: 550, recoverMs: 450, dmgMult: 0.6, type: 'void', cooldownS: 2.2, range: [80, 850], weight: 3 },
       {
-        // the clauses come down a line at a time, every other line first
+        // the clauses come down every other line, and only those (D389: the lanes between are safe, 68 px gaps, about
+        // twice a player's hit circle; it used to strike the other half 0.8 s later and lanes were 80 px)
         id: 'terms_and_conditions',
         name: 'Terms and Conditions',
         kind: 'pierce',
-        pattern: { kind: 'lanes', n: 5, w: 80, orientation: 'horizontal', alternate: true, setGapS: 0.8 },
+        pattern: { kind: 'lanes', n: 5, w: 60, orientation: 'horizontal', alternate: true, firstSetOnly: true },
         windupMs: 1000,
         recoverMs: 800,
         dmgMult: 1.0,
