@@ -19,7 +19,7 @@ export function startFall(w: World, e: Entity, pct: number, climbS: number): voi
   e.pl.state = 'falling';
   e.forced = null;
   w.sfx('fall', e.x);
-  rawDamage(w, e, e.hp!.max * pct, 'physical', 0);
+  rawDamage(w, e, e.hp!.max * pct, 'physical', 0, true, 'a fall');
   w.emit({ t: 'stat', key: 'falls', playerId: e.pl.playerId });
   w.hooks.onFall?.(w, e);
 }
@@ -71,7 +71,7 @@ export function updateMovement(w: World, dt: number, only?: Entity): void {
         e.x = fx;
         e.y = fy;
       } else {
-        rawDamage(w, e, e.hp!.max * 10, 'physical', e.hp!.lastHitBy);
+        rawDamage(w, e, e.hp!.max * 10, 'physical', e.hp!.lastHitBy, true, 'a fall into the void');
         w.sfx('fall', e.x);
       }
     } else if (e.en && !e.forced) w.room.pushOutOfHoles(e); // nor does an enemy stay half over a hole (D175)

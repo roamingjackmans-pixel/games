@@ -122,7 +122,7 @@ export function triggerStatus(w: World, e: Entity, id: StatusId): void {
       st.active.bleed = now + 0.5;
       w.sfx('bleed', e.x);
       w.fx('status', e.x, e.y, { color: '#c01828', n: 16 });
-      rawDamage(w, e, dmg, 'physical', lastBy, false);
+      rawDamage(w, e, dmg, 'physical', lastBy, false, 'Bleed');
       break;
     }
     case 'poison':
@@ -206,7 +206,35 @@ export function cancelEnemyAttack(w: World, e: Entity): void {
 // ---------------------------------------------------------------- raw damage / heal
 
 /** Apply damage without mitigation (status ticks, falls, bleed bursts). */
-export function rawDamage(w: World, e: Entity, amount: number, type: DamageType, sourceId: number, showNumber = true): void {
+/**
+ * D391: what hurt a player, in words: "Shambler (Rake)", "Ann (friendly fire)", or `cause` for damage nobody dealt
+ * directly (a burn, a fall, the floor).
+ */
+export function hurtSource(w: World, sourceId: number, label?: string, cause?: string): string {
+  const src = w.get(sourceId);
+  const owner = src?.pr?.ownerId ?? src?.tg?.ownerId ?? src?.hz?.ownerId;
+  const who = (owner ? w.get(owner) : undefined) ?? src;
+  const name = who?.en ? `${who.en.elite ? `${who.en.elite[0]!.toUpperCase()}${who.en.elite.slice(1)} ` : ''}${who.en.def.name}` : who?.pl ? `${who.pl.name} (friendly fire)` : '';
+  if (cause) return name ? `${cause} from ${name}` : cause;
+  if (!name) return 'something unseen';
+  return label && who?.en ? `${name} (${label})` : name;
+}
+
+/** D391: "Killed by Shambler (Rake): 84 damage." (`verb`: Killed / Downed), or '' when nothing is known. */
+export function hurtText(p: Entity | null | undefined, verb = 'Killed'): string {
+  const h = p?.pl?.lastHurt;
+  if (!h) return '';
+  return `${verb} by ${h.by}: ${Math.max(1, Math.round(h.amount))} damage.`;
+}
+
+/** Note the hit on a player for the death screen (D391). */
+export function noteHurt(w: World, p: Entity, amount: number, by: string): void {
+  if (!p.pl || amount <= 0) return;
+  p.pl.lastHurt = { by, amount, at: w.time };
+}
+
+/** `cause` (D391): a name for damage nobody struck directly ("Burn", "a fall"), for the death screen. */
+export function rawDamage(w: World, e: Entity, amount: number, type: DamageType, sourceId: number, showNumber = true, cause?: string): void {
   if (!e.hp || e.hp.dead || amount <= 0) return;
   if (e.pl && (w.god || e.pl.downed || e.pl.deadUntilRest)) return;
   // D376: a player who is invulnerable (2 s after a revive) takes no burn, bleed or ground damage either
@@ -227,6 +255,7 @@ export function rawDamage(w: World, e: Entity, amount: number, type: DamageType,
   }
   e.hp.hp -= amount;
   e.hp.lastHitBy = sourceId || e.hp.lastHitBy;
+  if (e.pl) noteHurt(w, e, amount, hurtSource(w, sourceId, undefined, cause));
   if (showNumber) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius, amount, type, crit: false, toPlayer: !!e.pl, targetId: e.id, src: sourceId });
   if (e.en?.isBoss) bossPhaseCheck(w, e);
   checkDeath(w, e, sourceId);
@@ -487,6 +516,7 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
     hp.hp -= total;
     hp.lastHitAt = now;
     hp.lastHitBy = attackerId;
+    noteHurt(w, p, total, hurtSource(w, attackerId, spec.label));
   }
   p.anim.flashUntil = now + 0.08;
   if (total > 0) {
@@ -1145,11 +1175,11 @@ export function statusTickActive(w: World, e: Entity): void {
     st.burnTickAt = now + 1;
     let k = 1;
     if (e.en?.def.traits?.burnKills) k = 2;
-    rawDamage(w, e, max * 0.03 * k * (e.en?.isBoss ? 0.4 : 1), 'fire', e.hp.lastHitBy);
+    rawDamage(w, e, max * 0.03 * k * (e.en?.isBoss ? 0.4 : 1), 'fire', e.hp.lastHitBy, true, 'Burn');
   }
   if (st.active.poison > now && now >= st.poisonTickAt) {
     st.poisonTickAt = now + 1;
-    rawDamage(w, e, max * 0.02 * (e.en?.isBoss ? 0.4 : 1), 'physical', e.hp.lastHitBy);
+    rawDamage(w, e, max * 0.02 * (e.en?.isBoss ? 0.4 : 1), 'physical', e.hp.lastHitBy, true, 'Poison');
   }
 }
 

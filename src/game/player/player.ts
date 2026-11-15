@@ -787,7 +787,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
         pl.iframesUntil = 0;
         // the slam at the end of a grab cannot be blocked or dodged
         const hp0 = e.hp!.hp;
-        rawDamage(w, e, pl.holdDmg * (100 / (100 + pl.derived.defense[pl.holdType])), pl.holdType, holder?.id ?? 0);
+        rawDamage(w, e, pl.holdDmg * (100 / (100 + pl.derived.defense[pl.holdType])), pl.holdType, holder?.id ?? 0, true, 'a crushing grip');
         if (pl.holdStatus && e.hp!.hp < hp0) {
           // status rides on the slam
         }

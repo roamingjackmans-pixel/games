@@ -916,7 +916,10 @@ maximum and changing the heal are allowed.
 
 ### 9.3 Death (solo)
 
-A death screen with a quip and a tip ("JOE DIED", "Joe has fallen down the stairs"…). Shards drop as a Shardpile.
+A death screen with a quip and a tip ("JOE DIED", "Joe has fallen down the stairs"…) and **what killed you and how hard**
+(D391): "Killed by Shambler (Claw Swipe): 15 damage.", "Killed by Burn from Pyromancer: 12 damage.", "Killed by Ann
+(friendly fire): 40 damage.", "Killed by a fall: 30 damage." In co-op the same line shows under DOWN ("Downed by…") and
+on the party wipe. Shards drop as a Shardpile.
 You respawn at the last bonfire rested at with **full HP and a full Thermos**, spells ready; the zone's enemies
 respawn (bosses, opened chests and killed mimics stay done). The map does not change.
 

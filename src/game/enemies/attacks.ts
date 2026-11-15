@@ -20,6 +20,7 @@ export function enemyAttackSpec(e: Entity, atk: AttackDef, mult = 1): DamageSpec
   const phaseMult = en.isBoss ? ((en.def as unknown as { phases: { dmgMult: number }[] }).phases[en.phase]?.dmgMult ?? 1) : 1;
   const spec = emptySpec(atk.kind === 'utility' ? 'normal' : atk.kind);
   spec.dmg[atk.type] = attackDamage(e, atk.dmgMult * mult) * phaseMult;
+  if (atk.name) spec.label = atk.name;
   if (atk.status) spec.status = [atk.status];
   spec.control = atk.control ?? null;
   spec.knockback = atk.knockback ?? 0;
@@ -496,6 +497,7 @@ export function spawnEnemyProjectile(
       poiseDmg: 0,
       onImpact: p.onImpact ? { op: 'damage', pattern: p.onImpact, type: firstType(spec), mult: 1 } : null,
       parryable: spec.parryable,
+      ...(spec.label ? { label: spec.label } : {}),
       reflected: false,
       returns: !!p.returns,
       returning: false,

@@ -178,6 +178,8 @@ export interface PlayerC {
   healOver: { perS: number; until: number; interruptible: boolean; by?: number }[];
   /** healing this player has given and not yet counted in a stat event (D372): [all, to other players] */
   healTally?: [number, number];
+  /** the last thing that hurt this player (D391): who or what, and how much; the death screen says it */
+  lastHurt?: { by: string; amount: number; at: number };
   downed: boolean;
   ghostUntil: number;
   /** a downed player's bleed-out countdown holds until then (D202: each ally hit holds it 3 s) */
@@ -368,6 +370,8 @@ export interface ProjC {
   chain?: { left: number; r: number; falloff: number };
   /** the lifesteal of the hand that made it (D369: an off-hand crossbow's, an off-hand staff's spell) */
   lifestealPct?: number;
+  /** an enemy shot's attack name (D391) */
+  label?: string;
   poiseDmg: number;
   onImpact: EffectDef | null;
   parryable: boolean;
@@ -419,6 +423,8 @@ export interface DamageSpec {
   pullToSource?: boolean;
   undeadMult?: number;
   sourceTag?: string;
+  /** the enemy attack's name (D391: the death screen names what killed you) */
+  label?: string;
   /** effects applied to the victim on hit */
   onHitEffects?: EffectDef[];
   onKillEffects?: EffectDef[];

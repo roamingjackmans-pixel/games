@@ -1,6 +1,7 @@
 // The run scene: a playthrough on screen. Wraps a GameSession (the run rules) with rendering, the HUD,
 // minimap, map screen, title cards, room fades, the death screen, bonfire menu and autosaves.
 import { drawGlyphLabel, drawPromptText, promptLabel } from '../../ui/glyphs';
+import { hurtText } from '../combat/damage';
 import '../../engine/draw/enemies';
 import '../../engine/draw/props';
 import { app } from '../../app';
@@ -372,6 +373,8 @@ export class RunScene extends WorldScene {
         'div',
         { class: 'col center', style: 'align-items:center;gap:18px' },
         h('div', { class: 'death-title' }, this.session.deathLine),
+        // D391: what did it, and how hard
+        h('div', { style: 'font-size:18px;color:#ff9b6a', 'data-testid': 'death-cause' }, hurtText(this.local) || 'Cause unknown. Joe is not saying.'),
         h('div', { style: 'font-size:20px;font-style:italic;color:#efe6d2' }, this.pickLine(DEATH_QUIPS, 'quip')),
         h('div', { class: 'dim-text' }, lost > 0 ? `${Math.floor(lost)} Shards left where you fell. Touch them to take them back. Die first and they are gone.` : 'You had no Shards. Small mercies.'),
         h('div', { class: 'dim-text small' }, 'You will wake at your bonfire with full HP and a full Thermos.'),
@@ -619,6 +622,11 @@ export class RunScene extends WorldScene {
     const p = this.local;
     if (!p) return;
     const now = performance.now() / 1000;
+    // D391: down in co-op: what downed you, and how hard
+    if (!this.overlay && (p.pl?.downed || p.pl?.deadUntilRest)) {
+      const why = hurtText(p, p.pl.deadUntilRest ? 'Killed' : 'Downed');
+      if (why) drawText(ctx, why, 640, 330, { size: 17, align: 'center', color: '#ff9b6a' });
+    }
     // interaction prompt with a hold ring
     const t = this.session.interactTarget(p);
     if (t && !this.overlay) {

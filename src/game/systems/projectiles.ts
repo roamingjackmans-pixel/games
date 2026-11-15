@@ -34,6 +34,7 @@ function specOf(e: Entity): DamageSpec {
   if (pr.attackId !== undefined) s.attackId = pr.attackId;
   if (pr.lifestealScale !== undefined) s.lifestealScale = pr.lifestealScale;
   if (pr.lifestealPct !== undefined) s.lifestealPct = pr.lifestealPct;
+  if (pr.label) s.label = pr.label;
   return s;
 }
 

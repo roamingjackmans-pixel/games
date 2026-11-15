@@ -757,3 +757,34 @@ describe('enemies attack only from within a projectile\'s reach (D390)', () => {
     expect(canCloseIn(walker)).toBe(true);
   });
 });
+
+describe('the death screen says what killed you, and how hard (D391)', () => {
+  it('an enemy attack by name, a burn from it, friendly fire, and a fall', async () => {
+    const { hurtText, rawDamage, hitAlly } = await import('../../src/game/combat/damage');
+    const { enemyAttackSpec } = await import('../../src/game/enemies/attacks');
+    const { inCombat } = await import('./inCombat');
+    const s = session();
+    const p = s.localPlayer!;
+    inCombat(s.w);
+    const foe = spawnEnemy(s.w, ENEMIES.shambler!, p.x - 60, p.y, { tellS: 0 });
+    foe.en!.state = 'alert';
+    const atk = ENEMIES.shambler!.attacks[0]!;
+    p.hp!.hp = p.hp!.max = 5000;
+    hitPlayer(s.w, foe.id, p, enemyAttackSpec(foe, atk), foe.x, foe.y);
+    const hurt = p.pl!.lastHurt!;
+    expect(hurt.by).toBe(`${ENEMIES.shambler!.name} (${atk.name})`);
+    expect(hurt.amount).toBeGreaterThan(0);
+    expect(hurtText(p)).toBe(`Killed by ${ENEMIES.shambler!.name} (${atk.name}): ${Math.round(hurt.amount)} damage.`);
+    rawDamage(s.w, p, 12, 'fire', foe.id, true, 'Burn');
+    expect(hurtText(p, 'Downed')).toBe(`Downed by Burn from ${ENEMIES.shambler!.name}: 12 damage.`);
+    const ally = s.joinPlayer(newCharacter('knight', 'Ann', 'p2', new Rng('a'))).entity!;
+    p.pl!.iframesUntil = 0;
+    p.hp!.invulnUntil = 0;
+    const spec = emptySpec('player');
+    spec.dmg.physical = 40;
+    hitAlly(s.w, ally, p, spec, ally.x, ally.y);
+    expect(p.pl!.lastHurt!.by).toBe('Ann (friendly fire)');
+    rawDamage(s.w, p, 30, 'physical', 0, true, 'a fall');
+    expect(hurtText(p)).toBe('Killed by a fall: 30 damage.');
+  });
+});

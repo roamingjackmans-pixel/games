@@ -183,7 +183,7 @@ export function updateHazards(w: World, _dt: number): void {
         applyControl(w, v, def.trap.control.id, def.trap.control.durationS);
         if (v.en) v.en.rootUntil = Math.max(v.en.rootUntil, now + def.trap.control.durationS);
         const base = 18 * (1 + 0.35 * (w.zone - 1)) * Math.pow(1.35, w.cycle) * def.trap.dmg;
-        rawDamage(w, v, v.pl ? base * (100 / (100 + v.pl.derived.defense.physical)) : base, 'physical', hz.ownerId);
+        rawDamage(w, v, v.pl ? base * (100 / (100 + v.pl.derived.defense.physical)) : base, 'physical', hz.ownerId, true, 'a trap');
         w.sfx('hitMetal', v.x);
         w.remove(h);
         break;

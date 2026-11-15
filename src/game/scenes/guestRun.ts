@@ -2,6 +2,7 @@
 // input every frame, opens its own bonfire/inventory menus (its character is its own, D31/NETCODE §6) and
 // syncs changes back to the host. No pause in co-op: menus are overlays (GAME_DESIGN §12).
 import { drawGlyphLabel, promptLabel } from '../../ui/glyphs';
+import { hurtText } from '../combat/damage';
 import { app } from '../../app';
 import { mixer } from '../../engine/audio/mixer';
 import { music } from '../../engine/audio/music';
@@ -492,11 +493,19 @@ export class GuestRunScene extends WorldScene {
     }
     if (this.local?.pl?.deadUntilRest) drawText(ctx, 'You are out until the party rests at a bonfire.', 640, 300, { size: 20, align: 'center', color: '#ff6a5a' });
     else if (this.local?.pl?.downed) drawText(ctx, 'DOWN — crawl to your friends; their hits revive you', 640, 300, { size: 20, align: 'center', color: '#ffcf6a' });
+    // D391: what downed or killed you, and how hard
+    if (this.local?.pl?.downed || this.local?.pl?.deadUntilRest) {
+      const why = hurtText(this.local, this.local.pl.deadUntilRest ? 'Killed' : 'Downed');
+      if (why) drawText(ctx, why, 640, 326, { size: 17, align: 'center', color: '#ff9b6a' });
+    }
     const now = performance.now() / 1000;
     if (this.banner && now < this.banner.until) {
       mixer.setDuck(0.5);
       drawText(ctx, this.banner.text, 640, 340, { size: 48, align: 'center', weight: 'bold', color: '#ff6a5a' });
       if (this.quip) drawText(ctx, this.quip, 640, 384, { size: 19, align: 'center', color: '#efe6d2', maxWidth: 1100 });
+      // D391: what killed you
+      const why = hurtText(this.local);
+      if (why) drawText(ctx, why, 640, 412, { size: 17, align: 'center', color: '#ff9b6a', maxWidth: 1100 });
     }
     // the cutscene: drawn with the camera the world used this frame, then ticked for the next one
     if (this.cut) {

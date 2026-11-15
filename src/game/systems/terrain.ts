@@ -35,7 +35,7 @@ export function updateTerrain(w: World): void {
 
 function hurt(w: World, p: Entity): void {
   const amount = Math.max(1, Math.round(p.hp!.max * TERRAIN_HURT_PCT));
-  rawDamage(w, p, amount, HURT_TYPE[(w.zone - 1) % 8] ?? 'physical', 0);
+  rawDamage(w, p, amount, HURT_TYPE[(w.zone - 1) % 8] ?? 'physical', 0, true, 'the spiked floor');
   p.anim.flashUntil = w.time + 0.08;
   w.sfx('hitFlesh', p.x, 0.45, 1.3);
   w.fx('dust', p.x, p.y + 10, { n: 4 });

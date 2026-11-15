@@ -80,7 +80,7 @@ export function updateDevour(w: World, mimic: Entity): void {
   w.emit({ t: 'shake', amount: 7 });
   w.fx('hit', v.x, v.y - 10, { color: '#c0304a', n: 12 });
   const hp0 = v.hp!.hp;
-  rawDamage(w, v, v.hp!.max * MIMIC_BITE_PCT, 'physical', mimic.id, true);
+  rawDamage(w, v, v.hp!.max * MIMIC_BITE_PCT, 'physical', mimic.id, true, 'a bite');
   // the bite that finishes a lone player is a death by mimic
   if (hp0 > 0 && v.hp!.hp <= 0 && !v.pl.downed) w.hooks.onMimicBite?.(w, v, mimic);
   if (v.pl.downed || v.hp!.dead || v.hp!.hp <= 0) endDevour(w, mimic, true);
