@@ -801,10 +801,9 @@ function chakram(ctx: Ctx): void {
   chakramRing(ctx, 9, 10);
 }
 
-function fists(ctx: Ctx): void {
-  blob(ctx, 6, 0, 6, 6, { fill: '#e8c9a0' });
-  line(ctx, [3, -5, 3, 5], '#efe6d2', 2, 0.9);
-  line(ctx, [6.5, -5.6, 6.5, 5.6], '#efe6d2', 1.6, 0.9);
+/** Bare fists (D379): nothing in hand at all; the arm's own hand is the fist (it used to draw a wrapped fist held out). */
+function fists(_ctx: Ctx): void {
+  // nothing to draw
 }
 
 /** Hybrid: Bonk + Brain, Void. A heavy maul whose head is an iron cage around a swirling void orb. */
