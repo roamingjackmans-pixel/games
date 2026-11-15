@@ -338,6 +338,8 @@ export interface AttackDef {
   id: string;
   name: string;
   kind: AttackKind;
+  /** a volley of several shots hurts a player once, however many of its shots land (D392: the Clerk's papers) */
+  volleyOnce?: boolean;
   pattern?: PatternDef;
   effects?: EffectDef[];
   windupMs: number;

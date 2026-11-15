@@ -788,3 +788,43 @@ describe('the death screen says what killed you, and how hard (D391)', () => {
     expect(hurtText(p)).toBe('Killed by a fall: 30 damage.');
   });
 });
+
+describe("the Landlord's Clerk's papers hurt once a volley (D392)", () => {
+  it('three papers of one volley landing deal what one does; a second volley hurts again', async () => {
+    const { stepWorld } = await import('../../src/game/sim');
+    const { inCombat } = await import('./inCombat');
+    const { spawnEnemyProjectile, enemyAttackSpec } = await import('../../src/game/enemies/attacks');
+    const atk = ENEMIES.landlords_clerk!.attacks.find((a) => a.id === 'eviction_notices')!;
+    expect(atk.volleyOnce).toBe(true);
+    const taken = (papers: number, volleys = 1): number => {
+      const s = session();
+      const p = s.localPlayer!;
+      inCombat(s.w);
+      p.hp!.hp = p.hp!.max = 5000;
+      const clerk = spawnEnemy(s.w, ENEMIES.landlords_clerk!, p.x - 200, p.y, { tellS: 0 });
+      clerk.en!.state = 'dormant';
+      const pat = { ...(atk.pattern as Extract<NonNullable<typeof atk.pattern>, { kind: 'projectile' }>), homing: 0 };
+      for (let v = 0; v < volleys; v++) {
+        const spec = enemyAttackSpec(clerk, atk);
+        spec.attackId = s.w.newAttackId();
+        spec.volleyOnce = true;
+        for (let i = 0; i < papers; i++) {
+          const pr = spawnEnemyProjectile(s.w, clerk, 0, 260, pat, spec, p.id, p.x, p.y);
+          pr.x = p.x - 30 - i * 3;
+          pr.y = p.y + 9;
+        }
+        for (let i = 0; i < 40; i++) {
+          p.x = 640;
+          stepWorld(s.w);
+          p.pl!.iframesUntil = 0;
+          p.hp!.invulnUntil = 0;
+        }
+      }
+      return 5000 - p.hp!.hp;
+    };
+    const one = taken(1);
+    expect(one).toBeGreaterThan(0);
+    expect(taken(3)).toBeCloseTo(one, 5);
+    expect(taken(3, 2)).toBeCloseTo(one * 2, 5);
+  });
+});

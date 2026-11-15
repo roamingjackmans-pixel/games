@@ -446,6 +446,11 @@ function fireProjectiles(w: World, e: Entity, atk: AttackDef, p: Extract<Pattern
   const spread = (p.spreadDeg ?? (n > 1 ? 30 : 0)) * DEG;
   const base = target ? Math.atan2(target.y - e.y, target.x - e.x) : e.facing;
   const spec = enemyAttackSpec(e, atk);
+  // D392: a volley that hurts once shares one attack id across its shots
+  if (atk.volleyOnce && n > 1) {
+    spec.attackId = w.newAttackId();
+    spec.volleyOnce = true;
+  }
   const speed = p.speed * en.projSpeedMult;
   for (let i = 0; i < n; i++) {
     const ang = n > 1 ? base - spread / 2 + (spread * i) / (n - 1) : base;
@@ -498,6 +503,7 @@ export function spawnEnemyProjectile(
       onImpact: p.onImpact ? { op: 'damage', pattern: p.onImpact, type: firstType(spec), mult: 1 } : null,
       parryable: spec.parryable,
       ...(spec.label ? { label: spec.label } : {}),
+      ...(spec.volleyOnce && spec.attackId !== undefined ? { volleyOnce: true, attackId: spec.attackId } : {}),
       reflected: false,
       returns: !!p.returns,
       returning: false,

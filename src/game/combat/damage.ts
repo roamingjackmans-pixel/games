@@ -365,6 +365,9 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   if (hp.invulnUntil > now) return 'immune';
   const attacker = w.get(attackerId);
 
+  // D392: one volley hurts once: the rest of its shots break on you harmlessly
+  if (spec.volleyOnce && spec.attackId !== undefined && pl.volleysTaken?.includes(spec.attackId)) return 'none';
+
   // i-frames (dodge, Meteor Lunge, Vault) never work against Piercing
   if (spec.kind !== 'pierce' && now >= pl.iframesFrom && now < pl.iframesUntil) {
     w.fx('dodge', p.x, p.y);
@@ -404,6 +407,12 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   if (pl.bareParryUntil > now && facingHit && spec.kind === 'normal' && spec.parryable && attacker?.en) {
     pl.bareParryUntil = 0;
     w.hooks.onTimedBlock?.(w, p, attacker);
+  }
+
+  // D392: this volley has now landed on this player (a blocked shot counts; a dodged or parried one did not)
+  if (spec.volleyOnce && spec.attackId !== undefined) {
+    (pl.volleysTaken ??= []).push(spec.attackId);
+    if (pl.volleysTaken.length > 16) pl.volleysTaken.shift();
   }
 
   let mult = 1;

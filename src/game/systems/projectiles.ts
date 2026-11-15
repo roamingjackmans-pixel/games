@@ -35,6 +35,7 @@ function specOf(e: Entity): DamageSpec {
   if (pr.lifestealScale !== undefined) s.lifestealScale = pr.lifestealScale;
   if (pr.lifestealPct !== undefined) s.lifestealPct = pr.lifestealPct;
   if (pr.label) s.label = pr.label;
+  if (pr.volleyOnce) s.volleyOnce = true;
   return s;
 }
 

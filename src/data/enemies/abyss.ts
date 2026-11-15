@@ -324,6 +324,8 @@ export const ABYSS: Record<string, EnemyDef> = {
         id: 'eviction_notices',
         name: 'Eviction Notices',
         kind: 'normal',
+        // D392: all three papers landing hurt as much as one
+        volleyOnce: true,
         pattern: { kind: 'projectile', speed: 260, r: 8, homing: 80, count: 3, spreadDeg: 40, range: 1100, drawId: 'e_paper' },
         windupMs: 600,
         recoverMs: 500,

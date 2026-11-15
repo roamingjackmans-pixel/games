@@ -178,6 +178,8 @@ export interface PlayerC {
   healOver: { perS: number; until: number; interruptible: boolean; by?: number }[];
   /** healing this player has given and not yet counted in a stat event (D372): [all, to other players] */
   healTally?: [number, number];
+  /** volleys (by attack id) that have already hurt this player (D392: one volley, one hit) */
+  volleysTaken?: number[];
   /** the last thing that hurt this player (D391): who or what, and how much; the death screen says it */
   lastHurt?: { by: string; amount: number; at: number };
   downed: boolean;
@@ -372,6 +374,8 @@ export interface ProjC {
   lifestealPct?: number;
   /** an enemy shot's attack name (D391) */
   label?: string;
+  /** one volley, one hit (D392) */
+  volleyOnce?: boolean;
   poiseDmg: number;
   onImpact: EffectDef | null;
   parryable: boolean;
@@ -425,6 +429,8 @@ export interface DamageSpec {
   sourceTag?: string;
   /** the enemy attack's name (D391: the death screen names what killed you) */
   label?: string;
+  /** one volley, one hit (D392): a player is hurt by the first of its shots that lands (they share `attackId`) */
+  volleyOnce?: boolean;
   /** effects applied to the victim on hit */
   onHitEffects?: EffectDef[];
   onKillEffects?: EffectDef[];
