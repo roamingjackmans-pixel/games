@@ -237,14 +237,33 @@ export function barHost(w: World, e: Entity): Entity | null {
   return h?.hp && !h.hp.dead ? h : null;
 }
 
-export function heal(w: World, e: Entity, amount: number, show = true): number {
+/**
+ * Heal an entity. `by`: the player who healed it, for the Statistics' healing done and healing given to other players
+ * (D372). The Thermos passes nobody, so it never counts.
+ */
+export function heal(w: World, e: Entity, amount: number, show = true, by: Entity | null = null): number {
   if (!e.hp || e.hp.dead || amount <= 0) return 0;
   if (e.pl && (e.pl.downed || e.pl.deadUntilRest)) return 0;
   const before = e.hp.hp;
   e.hp.hp = Math.min(e.hp.max, e.hp.hp + amount);
   const got = e.hp.hp - before;
   if (show && got >= 1) w.emit({ t: 'dmg', x: e.x, y: e.y - e.radius - 6, amount: got, type: 'holy', crit: false, toPlayer: false, heal: true, targetId: e.id });
+  if (got > 0 && by?.pl && e.pl) tallyHeal(w, by, got, e !== by);
   return got;
+}
+
+/** Count healing a player gave (D372), sent as stat events in whole chunks so heals over time do not flood co-op. */
+function tallyHeal(w: World, by: Entity, got: number, ally: boolean): void {
+  const pl = by.pl!;
+  const t = (pl.healTally ??= [0, 0]);
+  t[0] += got;
+  if (ally) t[1] += got;
+  for (const [i, key] of [[0, 'healDone'], [1, 'healAllies']] as const) {
+    if (t[i] < 10) continue;
+    const n = Math.floor(t[i]);
+    t[i] -= n;
+    w.emit({ t: 'stat', key, playerId: pl.playerId, n });
+  }
 }
 
 export function checkDeath(w: World, e: Entity, killerId: number): void {
@@ -379,6 +398,9 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   if (d.powers.has('overcharge')) mult *= 1.1;
 
   let total = 0;
+  // the Statistics (D372): damage the block stopped and damage armour (defense) took off
+  let blockedSum = 0;
+  let armorSum = 0;
   let blockedAny = false;
   let guardBroke = false;
   let staminaCost = 0;
@@ -395,13 +417,18 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
       const blocked = amt * g.pct;
       staminaCost += (g.stability * blocked) / 100;
       amt -= blocked;
+      blockedSum += blocked;
       blockedAny = true;
     }
     let def = d.defense[t] + buffSum(p, 'defenseAll', now) + buffSum(p, `defense:${t}`, now);
     if (t === 'physical') amt *= 1 + buffSum(p, 'physicalTakenPct', now);
     def = Math.max(0, def);
-    total += damageAfterDefense(amt, def);
+    const after = damageAfterDefense(amt, def);
+    armorSum += Math.max(0, amt - after);
+    total += after;
   }
+  if (blockedSum >= 0.5) w.emit({ t: 'stat', key: 'dmgBlocked', playerId: pl.playerId, n: Math.round(blockedSum) });
+  if (armorSum >= 0.5) w.emit({ t: 'stat', key: 'dmgArmor', playerId: pl.playerId, n: Math.round(armorSum) });
   if (blockedAny) {
     staminaCost *= d.stabilityMult * STAMINA_COST_MULT;
     const stam = p.stam!;
@@ -414,7 +441,7 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
     w.fx('block', p.x + Math.cos(p.facing) * 16, p.y + Math.sin(p.facing) * 16);
     // Warden (legendary shield): each blocked hit heals allies within 120 px by 1% of their max HP
     if (d.powers.has('warden')) {
-      for (const a of w.players) if (a !== p && !a.pl!.downed && a.hp && Math.hypot(a.x - p.x, a.y - p.y) <= 120) heal(w, a, a.hp.max * 0.01);
+      for (const a of w.players) if (a !== p && !a.pl!.downed && a.hp && Math.hypot(a.x - p.x, a.y - p.y) <= 120) heal(w, a, a.hp.max * 0.01, true, p);
     }
     // Spiked greatshield: blocking a melee hit deals back half of what the enemy dealt before any reduction (D371:
     // a 300 hit reflects 150, even when the block cut it to 100)
@@ -422,7 +449,7 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
       const back = { ...emptySpec('player'), dmg: { physical: specTotal(spec) * dealtMult * d.shield.thorns } };
       hitEnemy(w, p, attacker, back, p.x, p.y, { thorns: true, noLifesteal: true });
     }
-    if (d.shield?.blockHealPct) heal(w, p, hp.max * d.shield.blockHealPct, false);
+    if (d.shield?.blockHealPct) heal(w, p, hp.max * d.shield.blockHealPct, false, p);
     w.emit({ t: 'stat', key: 'blocks', playerId: pl.playerId });
     w.hooks.onPlayerBlocked?.(w, p, attacker ?? null);
   }
@@ -806,7 +833,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
       hp.riposteUntil = 0;
       w.sfx('riposte', e.x);
       w.emit({ t: 'feat', kind: 'riposte', playerId: pl.playerId, targetId: e.id });
-      if (pl.derived.powers.has('riposte_master')) heal(w, attacker!, attacker!.hp!.max * 0.05);
+      if (pl.derived.powers.has('riposte_master')) heal(w, attacker!, attacker!.hp!.max * 0.05, true, attacker);
     }
     if (spec.critVs) {
       if (spec.critVs === 'staggered' && (hp.staggerUntil > now || hp.riposteUntil > now)) {
@@ -894,7 +921,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
         if (done.length > 24) done.shift();
       }
       // D337: rounded up to a whole number, never less than 1
-      heal(w, attacker!, Math.max(1, Math.ceil(attacker!.hp!.max * ls * Math.max(0, spec.lifestealScale ?? 1))), false);
+      heal(w, attacker!, Math.max(1, Math.ceil(attacker!.hp!.max * ls * Math.max(0, spec.lifestealScale ?? 1))), false, attacker);
     }
   }
   if (pl) {

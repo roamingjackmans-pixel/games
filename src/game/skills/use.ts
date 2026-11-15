@@ -146,11 +146,16 @@ export function tryUseSkill(w: World, e: Entity, i: number, offHand = false): bo
   const d = pl.derived;
   const s = offHand ? offSkillOf(e, i) : skillOf(e, i);
   const now = w.time;
-  if (!s) return false;
+  if (!s) {
+    // D372: say so (a guest's press runs on the host's copy of it, and the message goes to that guest)
+    if (!offHand || d.offWeapon) msg(w, e, "This weapon doesn't have that skill");
+    return false;
+  }
   const unlocked = offHand ? offSkillsUnlocked(d) : d.skillsUnlocked;
   const meets = offHand ? !!d.offWeapon?.meetsReq : d.weaponMeetsReq;
   if (i >= unlocked) {
-    msg(w, e, meets ? `${s.name} is locked (better item tier needed).` : 'Skills are locked: weapon below requirement.');
+    // D372: an item of a lower tier has fewer skills: this one does not have it
+    msg(w, e, meets ? "This weapon doesn't have that skill" : 'Skills are locked: weapon below requirement.');
     return false;
   }
   // an off-hand skill keeps its cooldown on the spell keys' timers (D316: there is no off-hand spell then)

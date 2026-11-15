@@ -838,7 +838,7 @@ Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost �
   and Gary. Drop level rises from about 1 in zone 1 to 50 by NG+3. **Perks by cycle**: one in the first playthrough;
   NG+1 35% two; NG+2 and later 40% two and 25% three. **Better rolls**: level 25+ gems roll quality twice and keep the
   best; treasure chests and bosses add a roll, Gary one or two.
-- **Socketing** happens at the bonfire's Gem bench; picking an empty socket lists only the gems that fit it (D280).
+- **Socketing** happens at the bonfire's Gem bench; loose gems are listed highest level first, and picking an empty socket lists only the gems that fit it, with no Sell button so none is sold by mistake (D280, D372).
   **Removing** a gem is free, anywhere, from the inventory's "Gems in your gear" list or the bench (D168).
 - **Fusing**: a gem with 2+ perks can fuse with a loose gem of the same kind; you choose which perks the original
   keeps (as many as it had, no family twice, at least one from the other gem). A gem remembers its **original
@@ -1120,11 +1120,11 @@ so guests earn theirs. Unlocks show a toast and a bell; the Achievements screen 
 
 About forty counters (D99), kept per character (`stats.extra`, travels with export) and account-wide (`dj.stats`),
 counted on each client from world events: combat (kills by type and zone, Elites by affix, bosses with fastest kills,
-damage dealt and taken, biggest hit, weakness and resisted hits, parries, ripostes, dodges, blocks, sips), death and
+damage dealt and taken, damage blocked and damage armour stopped, healing done (never the Thermos; D372), biggest hit, weakness and resisted hits, parries, ripostes, dodges, blocks, sips), death and
 Shards (deaths by killer, falls, mimic bites, Shards gained / spent / dropped / recovered, Glowen), loot (items by
 rarity, gems, chests, Gary), exploration (time, distance, rooms, bonfires, deepest zone, cycles) and co-op (time,
 party size, revives, downs, and friendly fire: damage dealt to and taken from other players, other players you downed
-and times they downed you, D370). The Statistics screen sits below Achievements, with "This character" and "All
+and times they downed you, D370; healing given to other players, D372). The Statistics screen sits below Achievements, with "This character" and "All
 characters" tabs and a headline strip (most hated enemy, nemesis, Shards donated to the floor…).
 
 ## 22. Tools: debug menu, balance report, version

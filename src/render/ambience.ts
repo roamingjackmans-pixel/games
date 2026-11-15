@@ -281,6 +281,11 @@ export function drawAmbienceUnder(ctx: CanvasRenderingContext2D, room: Room, art
   ctx.globalCompositeOperation = prevOp;
   ctx.globalAlpha = 1;
   hazardAnims(ctx, s, t);
+  // D372: the forge's grating over its lava sits above the bubbles
+  if (art.hazardGrate) {
+    ctx.globalAlpha = 1;
+    ctx.drawImage(art.hazardGrate.canvas, art.hazardGrate.x, art.hazardGrate.y);
+  }
   // puddle ripples
   ctx.lineWidth = 1;
   for (const a of s.puddles) {

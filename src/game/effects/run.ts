@@ -416,12 +416,12 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         if (!t.hp) continue;
         const amount = (e.flat ?? 0) + t.hp.max * e.pct * (e.spell || spell ? ctx.powerMult : 1);
         if (e.overS && e.overS > 0) {
-          if (t.pl) t.pl.healOver.push({ perS: amount / e.overS, until: now + e.overS, interruptible: !!e.interruptible });
+          if (t.pl) t.pl.healOver.push({ perS: amount / e.overS, until: now + e.overS, interruptible: !!e.interruptible, ...(src?.pl ? { by: src.id } : {}) });
           else {
             const steps = Math.ceil(e.overS / 0.5);
             for (let i = 1; i <= steps; i++) w.schedule(i * 0.5, () => heal(w, t, amount / steps));
           }
-        } else heal(w, t, amount);
+        } else heal(w, t, amount, true, src?.pl ? src : null);
         w.fx('heal', t.x, t.y);
         if (t.pl && src?.pl?.derived.powers.has('litany') && t.stam) t.stam.cur = Math.min(t.stam.max, t.stam.cur + t.stam.max * 0.1);
       }
@@ -631,7 +631,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       }
       if (!did && e.livingHealPct) {
         const ally = targets(w, { op: 'heal', pct: 0, target: 'ally' }, ctx, src)[0];
-        if (ally?.hp) heal(w, ally, ally.hp.max * e.livingHealPct * (spell ? ctx.powerMult : 1));
+        if (ally?.hp) heal(w, ally, ally.hp.max * e.livingHealPct * (spell ? ctx.powerMult : 1), true, src);
       }
       break;
     }
@@ -657,7 +657,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
     case 'resource':
       for (const t of targets(w, { ...e, target: e.target ?? 'self' }, ctx, src)) {
         if (e.stamina && t.stam) t.stam.cur = Math.min(t.stam.max, t.stam.cur + e.stamina);
-        if (e.hp && t.hp) heal(w, t, e.hp);
+        if (e.hp && t.hp) heal(w, t, e.hp, true, src?.pl && ctx.isSpell ? src : null);
         if (t.pl) {
           if (e.shards) {
             const k = Math.max(1, w.zone + w.cycle);

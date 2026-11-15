@@ -107,6 +107,10 @@ function sections(c: Counters): { title: string; rows: Row[] }[][] {
           ['Mimics killed', N('mimics')],
           ['Damage dealt', N('dmgDealt')],
           ['Damage taken', N('dmgTaken')],
+          // D372
+          ['Damage blocked', N('dmgBlocked')],
+          ['Damage stopped by armor', N('dmgArmor')],
+          ['Healing done (not the Thermos)', N('healDone')],
           ['Biggest single hit', N('most:hit')],
           ['Critical hits', N('crits')],
           ['Weakness hits ("Weak!")', N('weakHits')],
@@ -145,6 +149,7 @@ function sections(c: Counters): { title: string; rows: Row[] }[][] {
           ['Revives given', N('revivesGiven')],
           ['Revives received', N('revivesReceived')],
           ['Times downed', N('downed')],
+          ['Healing given to other players', N('healAllies')],
           // D370: friendly fire
           ['Damage dealt to other players', N('pvpDealt')],
           ['Damage taken from other players', N('pvpTaken')],

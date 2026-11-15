@@ -716,9 +716,10 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   if (pl.deadUntilRest) return;
   // out of HP: the host decides what happens next (downed, the Training Hall's second chance) and says so
   if (body && e.hp!.hp <= 0) return;
-  // heal over time (Heal, the Thermos) runs on whatever else is happening: frozen, held, falling or staggered (D250)
+  // heal over time (Heal, the Thermos) runs on whatever else is happening: frozen, held, falling or staggered (D250);
+  // the healer's Statistics count it where the heal was cast (the host), not again on a guest's own screen (D372)
   if (pl.healOver.length) {
-    for (const h of pl.healOver) if (h.until > now) heal(w, e, h.perS * dt, false);
+    for (const h of pl.healOver) if (h.until > now) heal(w, e, h.perS * dt, false, h.by && !w.netGuest ? (w.get(h.by) ?? null) : null);
     pl.healOver = pl.healOver.filter((h) => h.until > now);
   }
   if (w.frozen(e)) return;
@@ -977,7 +978,7 @@ export function updatePuppet(w: World, e: Entity, dt: number): void {
   if (pl.deadUntilRest) return;
   // heals over time someone gave it here (a Heal, an aura): they reach the guest as HP it gained
   if (pl.healOver.length) {
-    for (const h of pl.healOver) if (h.until > now) heal(w, e, h.perS * dt, false);
+    for (const h of pl.healOver) if (h.until > now) heal(w, e, h.perS * dt, false, h.by ? (w.get(h.by) ?? null) : null);
     pl.healOver = pl.healOver.filter((h) => h.until > now);
   }
   if (w.frozen(e)) return;

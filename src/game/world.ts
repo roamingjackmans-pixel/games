@@ -172,7 +172,10 @@ export interface PlayerC {
   channel: ChannelRun | null;
   charge: ChargeRun | null;
   flaskT: number;
-  healOver: { perS: number; until: number; interruptible: boolean }[];
+  /** `by`: the healer's entity id, for its Statistics (D372; none for the Thermos) */
+  healOver: { perS: number; until: number; interruptible: boolean; by?: number }[];
+  /** healing this player has given and not yet counted in a stat event (D372): [all, to other players] */
+  healTally?: [number, number];
   downed: boolean;
   ghostUntil: number;
   /** a downed player's bleed-out countdown holds until then (D202: each ally hit holds it 3 s) */

@@ -151,3 +151,57 @@ describe('balance numbers (D371)', () => {
     expect(cast()).toBeCloseTo(plain * (1 + p.pl!.derived.spellDurationPct), 3);
   });
 });
+
+describe('new statistics (D372)', () => {
+  const statsOf = (s: GameSession, pid: string): Record<string, number> => {
+    const out: Record<string, number> = {};
+    for (const ev of s.w.events) if (ev.t === 'stat' && ev.playerId === pid) out[ev.key] = (out[ev.key] ?? 0) + (ev.n ?? 1);
+    return out;
+  };
+
+  it('a blocked hit counts the damage the block stopped and what armour took off', () => {
+    const s = session();
+    const p = s.localPlayer!;
+    p.pl!.char.equipment.off = makeItem('kite_shield', 'common');
+    p.pl!.char.twoHanded = false;
+    refreshDerived(p);
+    const foe = spawnEnemy(s.w, ENEMIES.shambler!, p.x - 80, p.y, { tellS: 0 });
+    foe.en!.state = 'alert';
+    p.facing = Math.PI;
+    p.pl!.blocking = true;
+    p.stam!.cur = p.stam!.max = 500;
+    s.w.events.length = 0;
+    const spec = emptySpec('normal');
+    spec.dmg.physical = 100;
+    hitPlayer(s.w, foe.id, p, spec, foe.x, foe.y);
+    const st = statsOf(s, p.pl!.playerId);
+    expect(st.dmgBlocked).toBeGreaterThan(50);
+    p.pl!.blocking = false;
+    s.w.events.length = 0;
+    p.pl!.iframesUntil = 0;
+    p.hp!.invulnUntil = 0;
+    hitPlayer(s.w, foe.id, p, spec, foe.x, foe.y);
+    expect(statsOf(s, p.pl!.playerId).dmgArmor).toBeGreaterThan(0);
+  });
+
+  it('a Heal spell on an ally counts as healing done and healing given; the Thermos never does', async () => {
+    const { runEffects } = await import('../../src/game/effects/run');
+    const { stepWorld } = await import('../../src/game/sim');
+    const s = session('cleric');
+    const p = s.localPlayer!;
+    const ally = s.joinPlayer(newCharacter('knight', 'Ally', 'p2', new Rng('a'))).entity!;
+    ally.x = p.x + 60;
+    ally.hp!.hp = ally.hp!.max * 0.2;
+    p.hp!.hp = p.hp!.max * 0.2;
+    s.w.events.length = 0;
+    // the Thermos: healing over time with no healer
+    p.pl!.healOver.push({ perS: 200, until: s.w.time + 1, interruptible: false });
+    for (let i = 0; i < 70; i++) stepWorld(s.w);
+    expect(statsOf(s, p.pl!.playerId).healDone ?? 0).toBe(0);
+    s.w.events.length = 0;
+    runEffects(s.w, [{ op: 'heal', pct: 0.5, target: 'party', r: 400, spell: true }], { sourceId: p.id, team: 0, x: p.x, y: p.y, aimX: ally.x, aimY: ally.y, targetId: ally.id, powerMult: 1, isSpell: true, isSkill: false, baseDamage: 0, windupS: 0, tag: 'heal', school: 'prayer' });
+    const st = statsOf(s, p.pl!.playerId);
+    expect(st.healDone).toBeGreaterThan(0);
+    expect(st.healAllies).toBeGreaterThan(0);
+  });
+});

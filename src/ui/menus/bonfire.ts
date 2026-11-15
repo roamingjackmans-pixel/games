@@ -8,7 +8,7 @@ import { SHIELDS, shieldStability, shieldValues } from '../../data/shields';
 import { armorPieceDefense } from '../../data/armor';
 import { canReinforce, reinforceInfo } from '../../game/items/reinforce';
 import { isPrimaryStat, isSecondaryStat } from '../../data/classes';
-import { GEMS, gemColor, gemKind, gemKindLabel, gemOrigin, gemTitle, perkName } from '../../data/gems';
+import { GEMS, gemColor, gemKind, gemKindLabel, gemLevel, gemOrigin, gemTitle, perkName } from '../../data/gems';
 import { flaskHeal, levelCost, gemSellTotal } from '../../game/combat/formulas';
 import { computeDerived } from '../../game/player/derived';
 import { spellSkill, toolSpellSkill } from '../../game/skills/use';
@@ -629,7 +629,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
     // weapons, staffs and talismans); the rest come back when nothing is picked
     const filterKind = sel && free >= 0 ? socketKind(sel) : null;
     let hidden = 0;
-    c.gems.forEach((g, gi) => {
+    // D372: the highest level first (ties keep the bag's order); indexes stay the bag's for the actions
+    const order = c.gems.map((g, gi) => ({ g, gi })).sort((a, b) => gemLevel(b.g) - gemLevel(a.g) || a.gi - b.gi);
+    order.forEach(({ g, gi }) => {
       if (filterKind && gemKind(g) !== filterKind) {
         hidden++;
         return;
@@ -641,9 +643,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
         sock = btn('Socket', () => say(v.ops.socket(sel.id, free, gi)), 'tiny', !fits);
         sock.title = fits ? `Into socket ${free + 1} of ${sel.name}` : `${sel.name} takes ${socketKind(sel) === 'armor' ? 'armor' : 'weapon'} gems.`;
       }
-      // a locked gem's Sell is greyed out (D329)
-      const sell = btn(['Sell ', glowenEl(gemSellTotal(g), '+')], () => say(v.ops.sellGem(gi)), 'tiny', !!g.locked);
-      if (g.locked) sell.title = 'Locked: unlock it to sell it.';
+      // a locked gem's Sell is greyed out (D329); picking a socket hides Sell, so a gem is never sold by mistake (D372)
+      const sell = sock ? null : btn(['Sell ', glowenEl(gemSellTotal(g), '+')], () => say(v.ops.sellGem(gi)), 'tiny', !!g.locked);
+      if (sell && g.locked) sell.title = 'Locked: unlock it to sell it.';
       gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, sell, fuseBtn(g, loc)], `loose-gem-${gi}`)));
     });
     if (filterKind && sel) {
@@ -676,7 +678,10 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     const n = orig.perks.length;
     const kind = gemKind(orig);
-    const donors = c.gems.map((g, i) => ({ g, i })).filter(({ g }) => g !== orig && gemKind(g) === kind);
+    const donors = c.gems
+      .map((g, i) => ({ g, i }))
+      .filter(({ g }) => g !== orig && gemKind(g) === kind)
+      .sort((a, b) => gemLevel(b.g) - gemLevel(a.g) || a.i - b.i);
     const donor = f.donor !== null ? (c.gems[f.donor] ?? null) : null;
     const pickedFamilies = f.picks.map((p) => (p.from === 'orig' ? orig : donor)?.perks[p.idx]?.family);
     // D286: the original gem's original perks, one of which every fuse keeps

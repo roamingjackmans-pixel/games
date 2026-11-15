@@ -561,6 +561,56 @@ export function drawHazards(h: HoleCtx, kind: string): void {
     }
     art.hazardGlow = { canvas, x: x0, y: y0 };
   }
+  art.hazardGrate = style.id === 'forge' && L.family === 'molten' ? lavaGrate(list, hz) : null;
+}
+
+/**
+ * D372: the Ashen Forge's lava floors (zone 5) do not hurt, so an iron grating is laid over every lava tile: a lattice
+ * of dark bars with a lit top edge, the lava glowing through the gaps, and a riveted frame along the pool's edge.
+ */
+function lavaGrate(list: number[], hz: (tx: number, ty: number) => boolean): { canvas: CanvasImageSource; x: number; y: number } {
+  const [x0, y0, w0, h0] = tileBounds(list, 4);
+  const { canvas, ctx: g } = offscreen(w0, h0);
+  const STEP = 8;
+  for (const i of list) {
+    const tx = i % ROOM_W;
+    const ty = Math.floor(i / ROOM_W);
+    const x = tx * TILE - x0;
+    const y = ty * TILE - y0;
+    // shadow under the bars, then the bars, then their lit edge
+    g.fillStyle = 'rgba(10,4,2,0.55)';
+    for (let k = 0; k < TILE; k += STEP) {
+      g.fillRect(x + k + 1, y + 1, 3, TILE);
+      g.fillRect(x + 1, y + k + 1, TILE, 3);
+    }
+    g.fillStyle = '#3a302a';
+    for (let k = 0; k < TILE; k += STEP) {
+      g.fillRect(x + k, y, 3, TILE);
+      g.fillRect(x, y + k, TILE, 3);
+    }
+    g.fillStyle = 'rgba(255,190,120,0.28)';
+    for (let k = 0; k < TILE; k += STEP) {
+      g.fillRect(x + k, y, 1, TILE);
+      g.fillRect(x, y + k, TILE, 1);
+    }
+    // the frame on the pool's outer edges, with rivets
+    g.fillStyle = '#4a3e36';
+    const edges: [boolean, number, number, number, number][] = [
+      [!hz(tx, ty - 1), x, y, TILE, 4],
+      [!hz(tx, ty + 1), x, y + TILE - 4, TILE, 4],
+      [!hz(tx - 1, ty), x, y, 4, TILE],
+      [!hz(tx + 1, ty), x + TILE - 4, y, 4, TILE],
+    ];
+    for (const [on, ex, ey, ew, eh] of edges) {
+      if (!on) continue;
+      g.fillRect(ex, ey, ew, eh);
+      g.fillStyle = '#8a7a6a';
+      if (ew > eh) for (const rx of [6, 16, 26]) g.fillRect(ex + rx - 1, ey + 1, 2, 2);
+      else for (const ry of [6, 16, 26]) g.fillRect(ex + 1, ey + ry - 1, 2, 2);
+      g.fillStyle = '#4a3e36';
+    }
+  }
+  return { canvas, x: x0, y: y0 };
 }
 
 function paintHazardTile(c: CanvasRenderingContext2D, r: Rng, L: HazLook, kind: string, style: RoomStyle, x: number, y: number, art: RoomArt, tx: number, ty: number): void {

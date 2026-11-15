@@ -7,13 +7,15 @@
 // Counter keys. Plain keys add up; `best:` keys keep the lowest value (fastest times); `most:` keys the highest.
 //   Combat     kills, kill:<enemyId>, zoneKills:<zone>, elites, affix:<affix>, bosses, boss:<bossId>,
 //              best:boss:<bossId> (seconds), mimics, mimicBites, dmgDealt, dmgTaken, most:hit, crits, weakHits,
-//              resistHits, parries, ripostes, dodges, blocks, sips
+//              resistHits, parries, ripostes, dodges, blocks, sips, dmgBlocked (damage a block stopped), dmgArmor
+//              (damage armour took off), healDone (healing done by you, any source but the Thermos; D372)
 //   Death      deaths, deathBy:<enemyId | '?'>, bossDeaths, falls, downed, shardsGained, shardsSpent, shardsDropped,
 //              shardsRecovered, most:shards, levels, glowenEarned, glowenSpent
 //   Loot       loot:<rarity>, gems, gemsUpgraded, gemsFused, chests, garyBuys, garyGlowen
 //   Exploring  rooms, roomsCleared, bonfires, distance (px), playtime (s), most:zone, cycles, garyVisits
 //   Co-op      revivesGiven, revivesReceived, coopTime (s), most:party, pvpDealt, pvpTaken (damage to and from other
-//              players, D370), pvpDowns (other players you downed), pvpDowned (times other players downed you)
+//              players, D370), pvpDowns (other players you downed), pvpDowned (times other players downed you),
+//              healAllies (healing you gave other players, D372)
 import { BOSSES } from '../data/bosses';
 import { GARY, INSTRUCTOR, MIMIC, SPECIAL_ENEMIES } from '../data/enemies/special';
 import { getStore, type KeyValueStore } from '../engine/settings';

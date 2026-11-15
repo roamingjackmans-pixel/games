@@ -268,10 +268,12 @@ export interface RoomArt {
   openTiles: number[];
   /** bright parts of glowing hazards (lava, void cracks) for the pulse, cropped */
   hazardGlow: { canvas: CanvasImageSource; x: number; y: number } | null;
+  /** D372: an iron grating laid over the Ashen Forge's lava, drawn above its bubbles: that lava does not hurt */
+  hazardGrate?: { canvas: CanvasImageSource; x: number; y: number } | null;
 }
 
 export function emptyArt(style: RoomStyle): RoomArt {
-  return { style, lights: [], flames: [], gears: [], vents: [], puddles: [], hazardKind: '', hazardFamily: '', hazardHi: '#ffffff', hazardTiles: [], pitTiles: [], voidTiles: [], openTiles: [], hazardGlow: null };
+  return { style, lights: [], flames: [], gears: [], vents: [], puddles: [], hazardKind: '', hazardFamily: '', hazardHi: '#ffffff', hazardTiles: [], pitTiles: [], voidTiles: [], openTiles: [], hazardGlow: null, hazardGrate: null };
 }
 
 // ------------------------------------------------------------------ effective tiles

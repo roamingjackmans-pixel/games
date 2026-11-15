@@ -97,7 +97,9 @@ Contents: [1 Rendering](#1-rendering) · [2 Style](#2-style) · [3 Telegraphs an
 - **Thermos sparkle** (D271, `render/thermosFx.ts`): while a player drinks (1.2 s), a warm gold glow and 14 rising,
   twinkling four-point sparkles; drawn from the drink state, so every co-op client sees it.
 - Ambience (`render/ambience.ts`): flickering light pools, torch and candle flames, animated hazard tiles (ripples,
-  lava bubbles, ice glints, void motes), turning wall gears, haze in pits, the zone's particles and a vignette.
+  lava bubbles, ice glints, void motes), turning wall gears, haze in pits, the zone's particles and a vignette. The
+  Ashen Forge's lava floors (zone 5, which do not hurt) wear an iron grating with a riveted frame over every lava tile,
+  drawn above the bubbles, so it reads as safe to walk on (D372; a boss arena whose lava hurts shows spikes instead, D219).
 - Particles are client-only and may use `Math.random()` (cosmetic, never sent over the network).
 
 ## 5. Audio
