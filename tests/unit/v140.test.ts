@@ -617,3 +617,39 @@ describe('the Nobody starts with nothing in hand (D378)', () => {
     expect(computeDerived(c).weapon.id).toBe('fists');
   });
 });
+
+describe("a player's one hitbox is the silver ring at the feet (D384)", () => {
+  it('an enemy shot passing over the head but clear of the ring misses; one under the body that touches the ring hits', async () => {
+    const { stepWorld } = await import('../../src/game/sim');
+    const { inCombat } = await import('./inCombat');
+    const { PLAYER_DOT_DY, PLAYER_DOT_R, hitCircleOf } = await import('../../src/game/player/player');
+    const shot = (dy: number): number => {
+      const s = session();
+      const p = s.localPlayer!;
+      inCombat(s.w);
+      p.x = 640;
+      p.y = 368;
+      const foe = spawnEnemy(s.w, ENEMIES.shambler!, 300, 368 + dy, { tellS: 0 });
+      foe.en!.state = 'dormant';
+      s.w.spawn('projectile', 400, p.y + dy, {
+        radius: 4,
+        team: 1,
+        vx: 500,
+        vy: 0,
+        pr: { ownerId: foe.id, team: 1, dmg: { physical: 30 }, status: [], control: null, kind: 'normal', speed: 500, homing: 0, targetId: 0, until: s.w.time + 3, pierce: 0, hit: new Set(), poiseDmg: 0, onImpact: null, parryable: false, reflected: false, returns: false, returning: false, drawId: 'e_bolt', color: '#fff', reviveValue: 0, knockback: 0, lob: null, curve: 0, isSpell: false, isSkill: false, sourceTag: '' },
+      });
+      const hp0 = p.hp!.hp;
+      for (let i = 0; i < 60; i++) {
+        p.x = 640;
+        p.y = 368;
+        stepWorld(s.w);
+      }
+      return hp0 - p.hp!.hp;
+    };
+    expect(hitCircleOf({ x: 0, y: 0, radius: 14, pl: {} as never })).toEqual({ x: 0, y: PLAYER_DOT_DY, r: PLAYER_DOT_R });
+    // 12 px above the centre: inside the old 14 px body circle, clear of the ring (its top is 8 px above the centre)
+    expect(shot(-PLAYER_DOT_R + PLAYER_DOT_DY - 4 - 2)).toBe(0);
+    // 22 px below the centre: outside the old body circle, inside the ring
+    expect(shot(22)).toBeGreaterThan(0);
+  });
+});

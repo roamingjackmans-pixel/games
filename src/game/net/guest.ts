@@ -743,7 +743,8 @@ export class NetGuest {
       const pl = me.pl!;
       if (!pl.downed && !pl.deadUntilRest && me.hp!.hp > 0) {
         const ar = h.area;
-        const dot = !!ar?.dot;
+        // D384: a player's one hitbox, the circle at its feet, whatever the attack
+        const dot = true;
         const inside = !ar || shapeHit(ar.s, ar.tau, me.x, me.y + (dot ? PLAYER_DOT_DY : 0), (dot ? PLAYER_DOT_R : me.radius) + HIT_AREA_SLACK, w.room);
         if (!inside) res = 'miss';
         else {

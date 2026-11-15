@@ -1,4 +1,5 @@
 // Projectiles: movement, homing, lobs, walls, hits, parry reflection, pierce, returning axes, impact effects.
+import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
 import { T } from '../room';
 import { DEG, circleHit, dist, turnToward } from '../../engine/math';
 import { addRevive, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer } from '../combat/damage';
@@ -141,11 +142,11 @@ export function updateProjectiles(w: World, dt: number): void {
         if (pr.onImpact) {
           /* the blast below deals the damage */
         } else if (pr.team === 1) {
-          for (const p of w.livingPlayers()) if (circleHit(e.x, e.y, e.radius + 14, p.x, p.y, p.radius)) hitPlayer(w, pr.ownerId, p, specOf(e), e.x, e.y, undefined, circleArea(e.x, e.y, e.radius + 14));
+          for (const p of w.livingPlayers()) if (circleHit(e.x, e.y, e.radius + 14, p.x, p.y + PLAYER_DOT_DY, PLAYER_DOT_R)) hitPlayer(w, pr.ownerId, p, specOf(e), e.x, e.y, undefined, circleArea(e.x, e.y, e.radius + 14));
         } else {
           const owner = w.get(pr.ownerId) ?? null;
           for (const en of w.livingEnemies()) if (circleHit(e.x, e.y, e.radius + 14, en.x, en.y, en.radius)) hitEnemy(w, owner, en, specOf(e), e.x, e.y);
-          for (const a of ffVictims(w, owner)) if (circleHit(e.x, e.y, e.radius + 14, a.x, a.y, a.radius)) hitAlly(w, owner, a, specOf(e), e.x, e.y, undefined, circleArea(e.x, e.y, e.radius + 14));
+          for (const a of ffVictims(w, owner)) if (circleHit(e.x, e.y, e.radius + 14, a.x, a.y + PLAYER_DOT_DY, PLAYER_DOT_R)) hitAlly(w, owner, a, specOf(e), e.x, e.y, undefined, circleArea(e.x, e.y, e.radius + 14));
         }
         impact(w, e);
       }
@@ -228,7 +229,8 @@ export function updateProjectiles(w: World, dt: number): void {
     if (pr.team === 1) {
       for (const p of w.livingPlayers()) {
         if (pr.hit.has(p.id)) continue;
-        if (!circleHit(e.x, e.y, e.radius, p.x, p.y, p.radius)) continue;
+        // D384: a player's hitbox is the circle at its feet
+        if (!circleHit(e.x, e.y, e.radius, p.x, p.y + PLAYER_DOT_DY, PLAYER_DOT_R)) continue;
         pr.hit.add(p.id);
         // a projectile with an impact blast deals its damage through the blast only
         if (pr.onImpact) {
@@ -285,7 +287,7 @@ export function updateProjectiles(w: World, dt: number): void {
       if (!e.removed && owner) {
         for (const a of ffVictims(w, owner)) {
           if (pr.hit.has(a.id)) continue;
-          if (!circleHit(e.x, e.y, e.radius, a.x, a.y, a.radius)) continue;
+          if (!circleHit(e.x, e.y, e.radius, a.x, a.y + PLAYER_DOT_DY, PLAYER_DOT_R)) continue;
           pr.hit.add(a.id);
           if (pr.onImpact) {
             impact(w, e);

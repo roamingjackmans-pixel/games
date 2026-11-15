@@ -46,7 +46,7 @@ spell and class) live in [CONTENT_ENEMIES.md](CONTENT_ENEMIES.md), [CONTENT_ITEM
 
 1. **Every hit is a decision.** Stamina, a 5-second dodge and telegraphed attacks mean you commit.
 2. **Readable danger.** Every attack has a telegraph you can learn. Red means *don't block*. Blue means *don't be
-   there*. Nothing is both. If the dot at your feet is outside an attack's marker, you are safe (D262).
+   there*. Nothing is both. If the silver ring at your feet is outside an attack's marker, you are safe (D262, D384).
 3. **The floor is lava, often.** Enemies and bosses paint the arena with lines, rings, grids, sweeps and zones.
 4. **Loot you feel.** A new weapon changes your verbs (skills), your rhythm (gems) and your build (stats).
 5. **Grim place, dry voice.** The dungeon is deadly serious. The item descriptions are not (D14).
@@ -512,10 +512,11 @@ a **utility** (summon, buff, split, trail, teleport, heal, trap), telegraphed li
   striped fill on Piercing floors.
 
 **What is tested against what you see:**
-- **Area attacks test the circle at your feet** (radius 17 px, centred 9 px below your centre; D262, D377: 12 px bigger
-  than the first 5 px dot): if the circle is outside the marker, you are safe. Ground an attack leaves behind (fire,
-  thorns, slowing fields) tests the same circle (D377; it tested a small circle round your middle). Melee swings,
-  projectiles and other non-area hits test the body (14 px).
+- **Your hitbox is the silver ring at your feet** (radius 17 px, centred 9 px below your centre; D262, D377, D384):
+  every attack tests it, areas and the ground they leave, melee swings, charges, projectiles and friendly fire. If the
+  ring is outside a marker or a shot's path, you are safe. (Before D384 only areas tested a circle at the feet and
+  everything else the 14 px body round the centre, which the ring did not show.) The body circle is now only for
+  walking into walls and other bodies; the debug hitbox overlay draws the ring.
 - **A charge's or lunge's red bar is its whole hit area** (D272): from where the attacker starts over its full travel
   plus its reach (radius + 22 for a charge, + 18 for a lunge), cut at a wall. Outside the bar is safe.
 - **Sweeping beams** are tested each frame along the arc they turned (1.5° steps or finer); a ticking sweep hits a
@@ -1055,8 +1056,8 @@ face marks and per-limb features, with Randomize and a preview you turn with the
   or running, a small drawn picture of it (flame, snowflake, bolt, blood drop, bubbles) in a dark box at its left and
   the bar filled in its colour; once it goes off the bar runs down over the status's length, flashing (a meter building
   again under it shows as a thin white line). Near the top of the room they hang under the feet. Also the circle at every
-  player's feet (D262, D377, D381: a 17 px silver ring drawn under the bodies, with a small eye-coloured dot at its centre drawn over
-  them); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
+  player's feet, the hitbox (D262, D377, D381, D384: a 17 px silver ring drawn under the bodies; the eye-coloured dot
+  is gone); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
   stones round a stuck player (D252); gold sparkles on a Thermos drink (D271).
 - **Menus** are HTML overlays over the canvas: Title · Load Character · Character creation · Co-op play · Lobby · Friends (§12.1) ·
   Pause · Inventory (Items, Spells, Proficiency tabs; stats, paper doll, bag, gems in your gear, set perks worn) ·

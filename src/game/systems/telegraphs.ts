@@ -71,8 +71,8 @@ function impactTest(w: World, t: Entity, tauOrTaus: number | number[], onceSet: 
     if (onceSet && onceSet.has(target.id)) continue;
     if (rehit && (rehit.until.get(target.id) ?? -1) > w.time) continue;
     let hitAny: HitArea | null = null;
-    // an area attack catches a player only where the dot at their feet is (D262); melee swings still take the body
-    const dot = !!target.pl && tg.area;
+    // every attack catches a player only where the hit circle at their feet is (D262, D384: melee swings too)
+    const dot = !!target.pl;
     const r = dot ? PLAYER_DOT_R : target.radius;
     const ty = dot ? target.y + PLAYER_DOT_DY : target.y;
     for (const tau of taus) {

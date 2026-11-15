@@ -34,14 +34,18 @@ export const GHOST_SPEED = 90;
 export const GHOST_TIME = 30;
 export const PLAYER_RADIUS = 14;
 /**
- * The circle at a player's feet (D262): area attacks and the ground they leave test it, not the whole body, so a
- * circle clear of an area is safe. D377: 12 px bigger (17, was 5), drawn as a ring round the eye-coloured dot.
+ * The player's hitbox (D262, D377, D384): every attack that hits a player (areas and their ground, swings, charges,
+ * projectiles, friendly fire) tests this circle round the feet, 17 px, drawn as the silver ring under them. The body
+ * circle (PLAYER_RADIUS round the centre) is only for walking into walls and bodies.
  */
 export const PLAYER_DOT_R = 17;
-/** the eye-coloured dot drawn at its centre (the old size, D262) */
-export const PLAYER_DOT_MARK_R = 5;
 /** how far below a player's centre (their belt) the circle's centre sits, on their feet (D262) */
 export const PLAYER_DOT_DY = 9;
+
+/** Where an attack tests a body (D384): a player's hit circle at the feet, anything else its own body circle. */
+export function hitCircleOf(t: Pick<Entity, 'x' | 'y' | 'radius' | 'pl'>): { x: number; y: number; r: number } {
+  return t.pl ? { x: t.x, y: t.y + PLAYER_DOT_DY, r: PLAYER_DOT_R } : { x: t.x, y: t.y, r: t.radius };
+}
 
 export function spawnPlayer(w: World, char: Character, slot: number, local: boolean, x: number, y: number): Entity {
   const derived = computeDerived(char);
@@ -415,12 +419,15 @@ function swingHits(w: World, e: Entity): void {
   // an overhead (D320) lands a circle in front: reach carries it further out
   const slamX = hb.shape === 'circle' ? e.x + Math.cos(e.facing) * hb.d * reach : 0;
   const slamY = hb.shape === 'circle' ? e.y + Math.sin(e.facing) * hb.d * reach : 0;
-  const test = (t: Entity): boolean =>
-    hb.shape === 'arc'
-      ? coneHit(e.x, e.y, e.facing, (hb.angleDeg * DEG) / 2, hb.r * reach, t.x, t.y, t.radius)
+  // a player (friendly fire) is struck where its hit circle is (D384)
+  const test = (t0: Entity): boolean => {
+    const t = hitCircleOf(t0);
+    return hb.shape === 'arc'
+      ? coneHit(e.x, e.y, e.facing, (hb.angleDeg * DEG) / 2, hb.r * reach, t.x, t.y, t.r)
       : hb.shape === 'circle'
-        ? Math.hypot(t.x - slamX, t.y - slamY) <= hb.r + t.radius
-        : lineHit(e.x, e.y, e.facing, hb.w, hb.l * reach, t.x, t.y, t.radius);
+        ? Math.hypot(t.x - slamX, t.y - slamY) <= hb.r + t.r
+        : lineHit(e.x, e.y, e.facing, hb.w, hb.l * reach, t.x, t.y, t.r);
+  };
   // the overhead's landing kicks up dust and shakes the screen once, as it starts to land
   if (hb.shape === 'circle' && c.hit.size === 0 && !c.landed) {
     c.landed = true;

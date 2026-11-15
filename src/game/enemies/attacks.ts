@@ -430,7 +430,7 @@ function bodyHits(w: World, e: Entity, extra: number): void {
   const spec = enemyAttackSpec(e, a.def);
   for (const p of w.livingPlayers()) {
     if (a.hit.has(p.id)) continue;
-    if (circleHit(e.x, e.y, e.radius + extra, p.x, p.y, p.radius)) {
+    if (circleHit(e.x, e.y, e.radius + extra, p.x, p.y + PLAYER_DOT_DY, PLAYER_DOT_R)) {
       a.hit.add(p.id);
       hitPlayer(w, e.id, p, spec, e.x, e.y, undefined, { s: { k: 'circle', x: e.x, y: e.y, r: e.radius + extra }, tau: 0 });
     }

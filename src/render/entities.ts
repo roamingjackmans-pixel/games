@@ -5,7 +5,7 @@ import { drawById, type DrawState } from '../engine/draw/registry';
 import { DEFAULT_LOOK, drawJoe, type BodyGear, type HeadGear, type JoeLook } from '../engine/draw/players';
 import type { Beard, Emblem, HairStyle, HandPose } from '../engine/draw/players';
 import { ARMOR_LOOKS, HEAD_OVERRIDE } from '../data/armorLooks';
-import { FLASK_DRINK_S, PLAYER_DOT_DY, PLAYER_DOT_MARK_R, PLAYER_DOT_R } from '../game/player/player';
+import { FLASK_DRINK_S, PLAYER_DOT_DY, PLAYER_DOT_R } from '../game/player/player';
 import { chakramRing, drawShield, drawTool, drawWeapon, isPairedWeapon } from '../engine/draw/weapons';
 import { cacheable, drawCachedEnemy } from './spriteCache';
 import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/parts';
@@ -339,33 +339,6 @@ function swingDir(c: { swing: SwingDef; idx: number }): 1 | -1 {
   if (m === 'slash') return 1;
   if (m === 'backslash') return -1;
   return c.idx % 2 === 0 ? 1 : -1;
-}
-
-/**
- * The dot at a player's feet in their eye colour (D262), drawn over the bodies and the attack markers so it shows
- * through any area: it is exactly what an area attack tests, so a dot clear of a marker is safe.
- */
-export function drawPlayerDot(ctx: CanvasRenderingContext2D, e: Entity, x: number, cy: number): void {
-  const y = cy + PLAYER_DOT_DY;
-  const pl = e.pl;
-  if (!pl || pl.deadUntilRest || pl.downed || e.hp?.dead) return;
-  const eyes = pl.char.appearance?.eyes || '#5a3a22';
-  ctx.save();
-  ctx.globalAlpha = e.anim.alpha;
-  // the eye-coloured dot at the centre of the ring (the ring itself is drawn under the bodies, drawPlayerRing)
-  ctx.fillStyle = OUTLINE;
-  ctx.beginPath();
-  ctx.arc(x, y, PLAYER_DOT_MARK_R, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#f4efe4';
-  ctx.beginPath();
-  ctx.arc(x, y, PLAYER_DOT_MARK_R - 1.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = eyes;
-  ctx.beginPath();
-  ctx.arc(x, y, PLAYER_DOT_MARK_R - 2.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
 }
 
 /** D381: the ring's silver, shared with the aim arrow that grows out of it. */
@@ -1482,7 +1455,8 @@ export function debugHitboxes(ctx: CanvasRenderingContext2D, w: World): void {
     if (e.type !== 'player' && e.type !== 'enemy' && e.type !== 'projectile') continue;
     ctx.strokeStyle = e.team === 0 ? '#0f0' : '#f0f';
     ctx.beginPath();
-    ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+    // a player's hitbox is the circle at its feet (D384), the silver ring
+    ctx.arc(e.x, e.y + (e.pl ? PLAYER_DOT_DY : 0), e.pl ? PLAYER_DOT_R : e.radius, 0, Math.PI * 2);
     ctx.stroke();
     const c = e.pl?.combo;
     if (c && c.phase === 'active' && c.swing.hitbox.shape === 'circle') {

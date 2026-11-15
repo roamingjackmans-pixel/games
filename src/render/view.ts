@@ -18,7 +18,7 @@ import { clearTelegraphEchoes, drawTelegraphEchoes, hasTelegraphEchoes } from '.
 import { clearSkillFx, drawSkillFxGround, drawSkillFxTop, spawnSkillFx } from './skillFx';
 import { drawThermosSparkle } from './thermosFx';
 import { ROOM_Y0 } from '../game/room';
-import { debugHitboxes, drawAimArrow, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerDot, drawPlayerRing, drawPlayerEntity, drawProjectile } from './entities';
+import { debugHitboxes, drawAimArrow, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerRing, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
 import type { Entity, GameEvent, World } from '../game/world';
 
@@ -338,8 +338,6 @@ export class WorldView {
     this.particles.draw(ctx);
     // golden sparkles on anyone drinking from the Thermos
     for (const e of list) if (e.type === 'player') drawThermosSparkle(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha, now);
-    // each player's eye-coloured dot over everything, so it shows through any attack marker (D262)
-    for (const e of list) if (e.type === 'player') drawPlayerDot(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha);
     drawAmbience(ctx, realDt); // zone particles + vignette (render/ambience.ts)
     if (overlays.hitbox) debugHitboxes(ctx, w);
     if (overlays.ai) {
