@@ -937,9 +937,90 @@ export function drawEnemyEntity(ctx: CanvasRenderingContext2D, e: Entity, x: num
   }
 }
 
+/** Where each Chain Lightning ball has been lately (D383), for its trail: the path it really took, round its jumps. */
+const lightningPaths = new Map<number, { born: number; pts: { x: number; y: number; t: number }[]; seen: number }>();
+/** how long the trail behind the ball is, in seconds of its flight */
+const LIGHTNING_TRAIL_S = 0.22;
+
+/**
+ * D383: Chain Lightning's ball leaves a trail of lightning along the path it flew: a jagged bolt that re-forks every
+ * 50 ms, bright and thick at the ball and thinning and fading behind it, with a soft yellow glow under it.
+ */
+function drawLightningTrail(ctx: CanvasRenderingContext2D, e: Entity, x: number, y: number, now: number): void {
+  let rec = lightningPaths.get(e.id);
+  if (!rec || rec.born !== e.born) {
+    rec = { born: e.born, pts: [], seen: now };
+    lightningPaths.set(e.id, rec);
+  }
+  rec.seen = now;
+  const last = rec.pts[rec.pts.length - 1];
+  if (!last || Math.hypot(last.x - x, last.y - y) > 2) rec.pts.push({ x, y, t: now });
+  while (rec.pts.length > 2 && now - rec.pts[0]!.t > LIGHTNING_TRAIL_S) rec.pts.shift();
+  for (const [id, r] of lightningPaths) if (now - r.seen > 1) lightningPaths.delete(id);
+  const pts = [...rec.pts, { x, y, t: now }];
+  if (pts.length < 2) return;
+  const step = Math.floor(now / 0.05);
+  const jit = (i: number, k: number): number => {
+    const v = Math.sin((step * 7.31 + i * 12.9898 + k * 78.233 + e.id) * 1.37) * 43758.5453;
+    return (v - Math.floor(v) - 0.5) * 2;
+  };
+  // a jagged copy of the path, kinked sideways at every point but the ball's
+  const bolt = pts.map((q, i) => {
+    if (i === pts.length - 1) return { x: q.x, y: q.y, k: 1 };
+    const n = pts[i + 1]!;
+    const dx = n.x - q.x;
+    const dy = n.y - q.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const age = Math.min(1, (now - q.t) / LIGHTNING_TRAIL_S);
+    const off = jit(i, 1) * (3 + 5 * age);
+    return { x: q.x + (-dy / d) * off, y: q.y + (dx / d) * off, k: 1 - age };
+  });
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const [w, color, a] of [
+    [9, '#ffe14a', 0.18],
+    [4.5, '#ffe14a', 0.7],
+    [1.8, '#ffffff', 1],
+  ] as const) {
+    for (let i = 1; i < bolt.length; i++) {
+      const p0 = bolt[i - 1]!;
+      const p1 = bolt[i]!;
+      const k = (p0.k + p1.k) / 2;
+      if (k <= 0.02) continue;
+      ctx.globalAlpha = a * k;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(0.6, w * (0.35 + 0.65 * k));
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.stroke();
+    }
+  }
+  // a fork or two off the trail now and then
+  for (let f = 0; f < 2; f++) {
+    if (jit(f, 9) < 0.1) continue;
+    const i = Math.max(1, Math.floor(((jit(f, 3) + 1) / 2) * (bolt.length - 1)));
+    const b = bolt[i]!;
+    if (b.k < 0.25) continue;
+    const ang = jit(f, 5) * Math.PI;
+    const len = 8 + 6 * Math.abs(jit(f, 7));
+    ctx.globalAlpha = 0.8 * b.k;
+    ctx.strokeStyle = '#fff6b0';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x + Math.cos(ang) * len * 0.5 + jit(f, 11) * 3, b.y + Math.sin(ang) * len * 0.5 + jit(f, 13) * 3);
+    ctx.lineTo(b.x + Math.cos(ang) * len, b.y + Math.sin(ang) * len);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export function drawProjectile(ctx: CanvasRenderingContext2D, e: Entity, x: number, y: number, now: number): void {
   const pr = e.pr!;
   const c = pr.color;
+  if (pr.drawId === 'p_lightning') drawLightningTrail(ctx, e, x, y, now);
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(e.facing);
