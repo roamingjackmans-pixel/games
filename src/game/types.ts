@@ -457,6 +457,8 @@ export interface EnemyTraits {
   homeRadius?: number;
   /** exact max HP, unscaled by zone, cycle or party size (1-HP ice mirrors) */
   fixedHp?: number;
+  /** a boss's part (special) that still grows with the co-op party as a boss does (D376: Saint Aurelia's Ice Mirrors) */
+  coopHp?: boolean;
   /** never takes damage (decorative boss parts such as corner turrets) */
   invulnerable?: boolean;
 }

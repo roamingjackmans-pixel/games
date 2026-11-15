@@ -39,7 +39,10 @@ import { stats } from './stats';
 import { startPhaseSummons, tickPhaseSummons } from './boss/summons';
 import { spawnHazard } from './systems/hazards';
 import type { BossDef, Character, EliteAffix, SaveFile } from './types';
-import { uniqueItemId } from './items/inventory';
+import { autoQuickSlot, uniqueItemId } from './items/inventory';
+
+/** A revived player is invulnerable this long (D12, D376), on every screen: a guest's own body gets it with the revive. */
+export const REVIVE_INVULN_S = 2;
 
 export interface SessionListener {
   roomEntered?(node: RoomNode, zoneChanged: boolean): void;
@@ -1072,7 +1075,7 @@ export class GameSession {
     }
     if (pk.kind === 'consumable' && pk.consumable) {
       c.consumables[pk.consumable] = Math.min(10, (c.consumables[pk.consumable] ?? 0) + pk.amount);
-      if (!c.quickSlot) c.quickSlot = pk.consumable;
+      autoQuickSlot(c, pk.consumable);
       this.w.sfx('lootCommon', e.x);
       return true;
     }
@@ -1214,7 +1217,7 @@ export class GameSession {
     pl.state = 'idle';
     ghost.hp!.dead = false;
     ghost.hp!.hp = ghost.hp!.max * 0.4;
-    ghost.hp!.invulnUntil = this.w.time + 2;
+    ghost.hp!.invulnUntil = this.w.time + REVIVE_INVULN_S;
     ghost.anim.alpha = 1;
     this.w.emit({ t: 'revived', playerId: pl.playerId });
     this.w.emit({ t: 'msg', text: `${pl.name} is back up.`, color: '#58d66a' });

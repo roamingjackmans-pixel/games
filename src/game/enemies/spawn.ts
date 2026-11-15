@@ -74,7 +74,7 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   const baseHp = isBoss ? ((def as BossDef).baseHp ?? rs.hp) : rs.hp;
   let hp = enemyFullHp(def, zone, cycle, { elite, hpMult: o.hpMult ?? 1 });
   // co-op: more HP for each extra player, more for bosses and Elites (D159); special NPCs and illusions keep theirs
-  const coop = def.special || o.illusion ? 1 : coopHpMult(players, isBoss || !!elite);
+  const coop = (def.special && !def.traits?.coopHp) || o.illusion ? 1 : coopHpMult(players, isBoss || !!elite || !!def.traits?.coopHp);
   hp *= coop;
   if (def.traits?.invincible) hp = def.mult?.hp ? baseHp * def.mult.hp : 120000;
   if (def.traits?.fixedHp) hp = def.traits.fixedHp;
@@ -212,7 +212,7 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
 export function rescaleForPlayers(w: World, players: number): void {
   w.playerCount = players;
   for (const e of w.enemies) {
-    if (!e.hp || e.hp.dead || !e.en || e.en.isIllusion || e.en.def.special) continue;
+    if (!e.hp || e.hp.dead || !e.en || e.en.isIllusion || (e.en.def.special && !e.en.def.traits?.coopHp)) continue;
     // a boss's poise follows the party too, keeping how worn down it is (D194)
     if (e.en.isBoss && e.hp.poiseMax > 0) {
       const pf = e.hp.poise / e.hp.poiseMax;
@@ -222,7 +222,7 @@ export function rescaleForPlayers(w: World, players: number): void {
     if (e.en.def.traits?.invincible || e.en.def.traits?.fixedHp) continue;
     const frac = e.hp.hp / e.hp.max;
     // everyone grows (or shrinks) with the party now, keeping their HP fraction (D159)
-    e.hp.max = e.en.hpScaleBase * coopHpMult(players, e.en.isBoss || !!e.en.elite) * (e.en.barMult ?? 1);
+    e.hp.max = e.en.hpScaleBase * coopHpMult(players, e.en.isBoss || !!e.en.elite || !!e.en.def.traits?.coopHp) * (e.en.barMult ?? 1);
     e.hp.hp = Math.max(1, frac * e.hp.max);
   }
 }

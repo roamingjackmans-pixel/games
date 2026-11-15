@@ -1,5 +1,6 @@
 // Shared client scene for anything that runs a World locally: input sampling, fixed stepping,
 // event → sound/particle routing, world rendering, HUD, and the debug API basics.
+import { autoQuickSlot } from '../items/inventory';
 import { app } from '../../app';
 import { mixer } from '../../engine/audio/mixer';
 import type { Scene } from '../../engine/scene';
@@ -141,7 +142,7 @@ export abstract class WorldScene implements Scene {
         const ch = pl().pl!.char;
         const cid = id as ConsumableId;
         ch.consumables[cid] = Math.min(10, (ch.consumables[cid] ?? 0) + n);
-        if (!ch.quickSlot) ch.quickSlot = cid;
+        autoQuickSlot(ch, cid);
         return `+${n} ${id}`;
       },
       learnAllSpells: () => self.learnAll(),

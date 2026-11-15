@@ -961,7 +961,8 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - **Downed and revive** (D12, D202): at 0 HP a player becomes a ghost (90 px/s, cannot act) for 30 s. Teammates
   revive by **hitting the ghost**; each hit adds the weapon's revive value (greathammer 4 … daggers 0.8; spells 0.25;
   throwables 0.5) and holds the countdown for 3 s. Requirement 10 × 2^(downs − 1), max 40 (downs since the last
-  rest). Revived at 40% HP with 2 s of i-frames (no Thermos refill). A ghost that bleeds out is dead until the party
+  rest). Revived at 40% HP with 2 s of invulnerability (no hit, burn, bleed or harmful ground touches you, on every
+  screen, D376; no Thermos refill). A ghost that bleeds out is dead until the party
   rests or wipes. Every player sees every ghost's countdown (D329). **Clearing the whole room** (not a wave) gets every
   ghost up at 40% HP, as a revive does (D329). **Everyone down** wipes the party: all wake at the host's bonfire full (the host's death screen moves
   on by itself after 3 s, D64).

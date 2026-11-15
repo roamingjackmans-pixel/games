@@ -211,6 +211,8 @@ describe('session: rooms, waves, death and the Shardpile', () => {
     expect(s.dead).toBe(false);
     expect(p.hp!.hp).toBe(1);
     s.enterRoom(s.layout.startId, 'e');
+    // the Hall's moment to recover (1.5 s invulnerable, which burns and the like respect too since D376) is over
+    p.hp!.invulnUntil = 0;
     inCombat(s.w); // D329: a player only takes damage in a fight
     rawDamage(s.w, p, 1e9, 'physical', 0);
     expect(s.dead).toBe(true);

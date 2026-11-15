@@ -20,7 +20,7 @@ import { openStatistics } from '../../ui/statistics';
 import { achievements } from '../achievements';
 import { stats } from '../stats';
 import { drawInteractable, nearestInteractable } from '../../render/interactables';
-import { buyConsumable, buyGem, buyItem, fuseGems, levelUp, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
+import { buyConsumable, buyGem, buyItem, cycleQuickSlot, fuseGems, levelUp, sellAll, sellConsumable, sellAllGems, sellGem, sellItem, socketGem, toggleGemLock, unsocketGem } from '../items/inventory';
 import { upgradeRarity } from '../items/proficiency';
 import { breakDownEssence, reinforceItem } from '../items/reinforce';
 import { noteShopGemBought, rollShopPiece, shopGem, shopGemBuys, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
@@ -122,6 +122,12 @@ export class GuestRunScene extends WorldScene {
       if (a.input.consumeLocal('pause')) this.showPause();
       else if (a.input.consumeLocal('map')) this.showMap();
       else if (a.input.consumeLocal('inventory')) this.showInventory();
+      else if (a.input.consumeLocal('cycleQuick')) {
+        // D376: a guest cycles its own quick-use slot too, and the host hears of it at once
+        const q = cycleQuickSlot(this.save.character);
+        this.changed();
+        toast(q ? `Quick-use: ${q.replace('_', ' ')}` : 'No consumables.', 1200);
+      }
     } else if (this.overlayKind !== 'bonfire' && (a.input.consumeLocal('pause') || a.input.consumeLocal('map') || a.input.consumeLocal('inventory'))) {
       // back from an inventory opened at the bonfire (or the pause menu) returns there (D124)
       const back = this.overlayKind === 'inventory' ? this.overlayBack : null;

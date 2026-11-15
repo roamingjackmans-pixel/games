@@ -668,6 +668,9 @@ export interface WorldHooks {
   onTick?(w: World, dt: number): void;
 }
 
+/** How long a freed entity id waits before it is used again (D376), seconds of world time. */
+export const ID_REUSE_S = 8;
+
 export class World {
   tick = 0;
   time = 0;
@@ -678,7 +681,22 @@ export class World {
   newAttackId(): number {
     return ++this.attackSeq;
   }
-  private freeIds: number[] = [];
+  /** ids free to use again and when they were freed: one is reused only ID_REUSE_S after (D376) */
+  private freeIds: { id: number; at: number }[] = [];
+  /** a co-op guest's mirror (D376): its own entities take ids far above the host's and never recycle them */
+  private localIds = false;
+  /** A co-op guest's mirror of the host's world (D376): its own ids never meet the host's. */
+  static mirror(): World {
+    const w = new World('mirror');
+    w.useLocalIds();
+    return w;
+  }
+  /** Make this world a guest's mirror: ids it hands out itself can never meet one of the host's. */
+  useLocalIds(): void {
+    this.localIds = true;
+    this.nextId = Math.max(this.nextId, 1_000_000_000);
+    this.freeIds = [];
+  }
   events: GameEvent[] = [];
   combat: Rng;
   room: Room;
@@ -737,7 +755,10 @@ export class World {
   }
 
   spawn(type: EType, x: number, y: number, init: Partial<Entity> = {}): Entity {
-    const id = this.freeIds.pop() ?? this.nextId++;
+    // D376: an id comes back only ID_REUSE_S after it was freed, so a co-op guest has long since heard it went (a removed
+    // entity's id reused within one snapshot used to leave the guest's old entity standing in for the new one)
+    const old = this.freeIds[this.freeIds.length - 1];
+    const id = old && this.time - old.at >= ID_REUSE_S ? this.freeIds.pop()!.id : this.nextId++;
     const e: Entity = {
       id,
       type,
@@ -776,13 +797,13 @@ export class World {
     for (const [id, e] of this.entities) {
       if (e.removed) {
         this.entities.delete(id);
-        if (id > 64) this.freeIds.unshift(id);
+        if (id > 64 && !this.localIds) this.freeIds.unshift({ id, at: this.time });
         if (e.type === 'player' || e.type === 'enemy') changed = true;
       }
     }
     if (changed) this.refreshLists();
     // keep the free list from recycling too soon (ids are referenced by telegraph owners etc.)
-    if (this.freeIds.length > 2000) this.freeIds.length = 2000;
+    if (this.freeIds.length > 20000) this.freeIds.length = 20000;
   }
 
   refreshLists(): void {

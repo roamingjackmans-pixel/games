@@ -6,7 +6,7 @@ import { NetGuest } from '../../src/game/net/guest';
 import { decodeInput, encodeInput, newRoomCode, parseRoomCode } from '../../src/game/net/protocol';
 import { decodeSnap, encodeSnap, recordOf } from '../../src/game/net/snapshot';
 import { CharLog, applyCharOp, cloneChar } from '../../src/game/net/charSync';
-import { GameSession } from '../../src/game/session';
+import { GameSession, REVIVE_INVULN_S } from '../../src/game/session';
 import { newSave } from '../../src/game/save/schema';
 import { newCharacter } from '../../src/game/player/character';
 import { Rng } from '../../src/engine/rng';
@@ -223,7 +223,8 @@ describe('net: loopback host + 3 guests (NETCODE §8)', () => {
     for (let i = 0; i < 6 && g.pl!.downed; i++) addRevive(p.s.w, g, p.s.localPlayer!, 2);
     expect(g.pl!.downed).toBe(false);
     expect(g.hp!.hp).toBeCloseTo(g.hp!.max * 0.4, 3);
-    // second down needs 20; let the ghost bleed out
+    // second down needs 20; let the ghost bleed out (after the revive's 2 s of invulnerability, D376)
+    p.step(REVIVE_INVULN_S + 0.1);
     inCombat(p.s.w); // D329: a player only takes damage in a fight
     rawDamage(p.s.w, g, 1e9, 'physical', 0);
     expect(g.pl!.reviveNeed).toBe(20);

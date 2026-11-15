@@ -76,6 +76,14 @@ that guest.
 input the host applied), record count, removed count, JSON length. Then fixed **28-byte records** (the last byte a downed player's countdown, D329), removed ids (u16),
 and a JSON block.
 
+**Ids (D376).** The host hands a freed entity id out again only `ID_REUSE_S` (8 s) later, so a guest has long since
+heard that its old owner went (an id reused within one snapshot used to leave the guest's old entity standing in for
+the new one: an enemy drawn as nothing and out of the guest's reach, a boss's stairs missing, a stale wall). The
+guest also checks each record against what it holds (`sameThing`: same kind, same enemy, same player) and replaces a
+mismatch, its own entities take ids from 1,000,000,000 up (`World.mirror()`), and a mirrored wall or hazard a second past
+its end is dropped even if its removal went astray. On a guest's screen another player's skill picture ends with the
+skill (it used to stay on forever).
+
 | Record field | Encoding |
 |---|---|
 | `id` u16, `kind` u8 (entity type), `pose` u8 | pose index (`idle, windup, attack, recover, swing, cast, open, parry, stagger, hurt, devour`) |
@@ -172,7 +180,9 @@ with what it sees.
   the guest reported 0 HP. `updatePuppet` replaces the player controller for it: only the guest's skill, spell and
   consumable presses start here (from its inputs, when it stands idle), and while one runs the host drives the body
   (its timeline, its walking, its dash, `netHostDriven`), as for any player. Movement, falls and statuses skip a free
-  puppet; in body separation it does not move (whoever it bumps does).
+  puppet; body separation leaves every pair with a puppet alone (D376): a guest never pushes an enemy or a player. On
+  the guest's own screen its body alone is kept out of enemies (it moves, they never do); players pass through each
+  other. A guest's screen also works out the slowing fields it stands in from the hazards it shows (`hazardSlowOn`, D375).
 - **What the host's world does to a guest's body by itself** (a heal or aura, a buff, a barrier, a status from a puddle,
   a control, a stagger, i-frames from a dash skill, a pull, a knockback, a bonfire rest) is caught each tick by
   comparing the puppet with how it stood after the last packet (`snapBody` / `diffBody`) and sent as `SelfState.delta`;

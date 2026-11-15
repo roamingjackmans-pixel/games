@@ -6,7 +6,7 @@ import { CONSUMABLE_IDS, CONSUMABLES } from '../../data/consumables';
 import { gemDropLevel, gemKindLabel, gemTitle } from '../../data/gems';
 import { buyPrice, itemLevelFor, gemSellTotal } from '../combat/formulas';
 import { generateItem, randomGem } from '../items/generate';
-import { itemSellValue, uniqueItemId } from '../items/inventory';
+import { autoQuickSlot, itemSellValue, uniqueItemId } from '../items/inventory';
 import type { Character, GaryStockEntry, WorldState } from '../types';
 
 export const GARY_HITS_TO_LEAVE = 3;
@@ -69,7 +69,7 @@ export function buyFromGary(c: Character, e: GaryStockEntry): { ok: boolean; msg
   else if (e.kind === 'gem' && e.gem) c.gems.push({ perks: e.gem.perks.map((p) => ({ ...p })), ...(e.gem.origin ? { origin: [...e.gem.origin] } : {}) });
   else if (e.kind === 'consumable' && e.consumable) {
     c.consumables[e.consumable] = Math.min(10, (c.consumables[e.consumable] ?? 0) + (e.count ?? 1));
-    if (!c.quickSlot) c.quickSlot = e.consumable;
+    autoQuickSlot(c, e.consumable);
   }
   return { ok: true, msg: `Bought ${garyEntryName(e)}. "Pleasure."` };
 }

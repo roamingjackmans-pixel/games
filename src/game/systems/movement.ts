@@ -91,14 +91,32 @@ export function updateMovement(w: World, dt: number, only?: Entity): void {
       if (!only) for (const b of w.enemies) if (!b.hp?.dead && !b.en?.isBoss) pushOut(w, b, h.wl.x1, h.wl.y1, h.wl.x2, h.wl.y2, h.wl.w / 2);
     }
   }
+  const bodies: Entity[] = [];
+  const standing = (p: Entity): boolean => !p.pl!.downed && !p.pl!.deadUntilRest && !p.pl!.falling;
+  const solidFoe = (e: Entity): boolean => !e.hp?.dead && e.solid && e.en!.state !== 'ceiling' && e.en!.state !== 'spawning' && !e.en!.isIllusion;
   if (only) {
+    // D376: a guest's own body on its own screen is kept out of enemies, and it alone moves: a guest never pushes an
+    // enemy or another player about (it used to, on the host, where its body could not be moved). Players pass through
+    // each other in co-op: nobody body-blocks a teammate.
+    if (only.pl && standing(only) && only.pl.state !== 'dodge') {
+      for (const e of w.enemies) if (solidFoe(e)) bodies.push(e);
+      for (const b of bodies) {
+        if (b.flying !== only.flying) continue;
+        const dx = only.x - b.x;
+        const dy = only.y - b.y;
+        const rr = (only.radius + b.radius) * 0.85;
+        const d2 = dx * dx + dy * dy;
+        if (d2 >= rr * rr || d2 < 1e-6) continue;
+        const d = Math.sqrt(d2);
+        w.room.moveCircle(only, (dx / d) * (rr - d), (dy / d) * (rr - d), only.flying);
+      }
+    }
     if (only.pl) only.pl.timeSlow = 1;
     return;
   }
   // soft separation between bodies (players and enemies push each other apart)
-  const bodies: Entity[] = [];
-  for (const p of w.players) if (!p.pl!.downed && !p.pl!.deadUntilRest && !p.pl!.falling) bodies.push(p);
-  for (const e of w.enemies) if (!e.hp?.dead && e.solid && e.en!.state !== 'ceiling' && e.en!.state !== 'spawning' && !e.en!.isIllusion) bodies.push(e);
+  for (const p of w.players) if (standing(p)) bodies.push(p);
+  for (const e of w.enemies) if (solidFoe(e)) bodies.push(e);
   for (let i = 0; i < bodies.length; i++) {
     const a = bodies[i]!;
     for (let j = i + 1; j < bodies.length; j++) {
@@ -115,11 +133,10 @@ export function updateMovement(w: World, dt: number, only?: Entity): void {
       const ny = dy / d;
       // heavier bodies move less; players dodging pass through
       if (a.pl?.state === 'dodge' || b.pl?.state === 'dodge') continue;
-      // a guest's body stands where its own screen put it (D338): whoever it bumps does all the moving
-      const pa = puppetFree(a);
-      const pb = puppetFree(b);
-      if (pa && pb) continue;
-      const wa = pa ? 0 : pb ? 1 : a.en?.isBoss ? 0.05 : b.en?.isBoss ? 1 : a.radius < b.radius ? 0.7 : 0.3;
+      // a guest's body stands where its own screen put it (D338) and never pushes anyone (D376): its own screen keeps it
+      // out of the others, so the host leaves every pair with a guest's body alone
+      if (a.pl?.net === 'puppet' || b.pl?.net === 'puppet') continue;
+      const wa = a.en?.isBoss ? 0.05 : b.en?.isBoss ? 1 : a.radius < b.radius ? 0.7 : 0.3;
       const wb = 1 - wa;
       w.room.moveCircle(a, -nx * push * 2 * wa, -ny * push * 2 * wa, a.flying);
       w.room.moveCircle(b, nx * push * 2 * wb, ny * push * 2 * wb, b.flying);

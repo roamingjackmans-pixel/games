@@ -216,7 +216,7 @@ rest of the playthrough ("Alright then.").
 
 - **Fey Light** (`fey_light`, Swarm, HP ×2): **Pop**: circle(60) at self, die, ×0.6 holy, windup 0.7 s, cd 1. lights the room.
 - **Foreman Ignatius** (`ignatius_on_foot`, Brute): (on-foot body) **Hammer Throw [PIERCE]**: circle(110) at target, line(40) back to the thrower ×0.8 fire, ×1.3 fire, tell 1 s, cd 7; (on-foot body) **Flame Pillars [PIERCE] [AREA]**: grid(150, 55) checkerboard, 2 sets 0.5 s apart, ×1.1 fire, tell 1 s, cd 11; (on-foot body) **Immolation [RED] [AREA]**: room-wide, 1 safe pocket r 140 (self), ×2.5 fire, tell 1 s, cd 16.
-- **Ice Mirror** (`ice_mirror`, Hazard, HP ×1.2): **Frost Glint**: proj(400), ×0.8 magic, chill 20, windup 0.7 s, cd 3.5; **Shatter [AREA]**: circle(110) at self, ×1.2 magic, chill 30, windup 0.9 s, cd 5. never flinches; reflects projectiles; drifts about the room.
+- **Ice Mirror** (`ice_mirror`, Hazard, HP ×1.2): **Frost Glint**: proj(400), ×0.8 magic, chill 20, windup 0.7 s, cd 3.5; **Shatter [AREA]**: circle(110) at self, ×1.2 magic, chill 30, windup 0.9 s, cd 5. never flinches; reflects projectiles; drifts about the room; its HP grows with the co-op party as the boss's does (+125% a player, D376).
 - **Corner Turret** (`clock_turret`, Hazard): no attacks. never flinches; immune burn, chill, shock, bleed, poison, freeze, blind, hexed, silence, root, hold; construct.
 
 ## 11. Bosses

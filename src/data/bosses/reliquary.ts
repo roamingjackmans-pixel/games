@@ -302,7 +302,8 @@ export const SAINT_AURELIA_PARTS: Record<string, EnemyDef> = {
       { id: 'mirror_glint', name: 'Frost Glint', kind: 'normal', pattern: { kind: 'projectile', speed: 400, r: 7 }, windupMs: 700, recoverMs: 500, dmgMult: 0.8, type: 'magic', status: { id: 'chill', buildup: 20 }, cooldownS: 3.5, range: [0, 700], weight: 3 },
       { id: 'mirror_shatter', name: 'Shatter', kind: 'normal', pattern: { kind: 'circle', r: 110, anchor: 'self' }, windupMs: 900, recoverMs: 800, dmgMult: 1.2, type: 'magic', status: { id: 'chill', buildup: 30 }, cooldownS: 5, range: [0, 120], weight: 4, area: true },
     ],
-    traits: { reflectsProjectiles: true, noFlinch: true, noDrops: true, noShards: true, drift: true },
+    // D376: more HP for each co-op player in the fight, as the boss has
+    traits: { reflectsProjectiles: true, noFlinch: true, noDrops: true, noShards: true, drift: true, coopHp: true },
     flavor: 'Faith, polished until it shows you your own arrow coming back.',
     draw: 'aurelia_mirror',
     palette: ['#cfeaff', '#9ad0ff', '#ffffff'],

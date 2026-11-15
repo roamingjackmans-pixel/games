@@ -20,7 +20,7 @@ import { applyCharOp, cloneChar, type CharOp } from './charSync';
 import { CH, SNAP_HZ, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
 import { HostClock } from './clock';
 import { ARCANE_ORB_SPIN } from '../enemies/ai';
-import { CONTROL_BITS, ENEMY_STATES, F, ORB_BASE, ORB_STEPS, PLAYER_STATES, POSES, STATUS_BITS, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
+import { CONTROL_BITS, ENEMY_STATES, ETYPES, F, ORB_BASE, ORB_STEPS, PLAYER_STATES, POSES, STATUS_BITS, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
 import { applyDelta, bodyReportOf, comboFromWire, encodeBody, stepBody } from './body';
 import type { IncomingHit, NetAct } from './acts';
 import type { NetChannel, Transport } from './transport';
@@ -72,7 +72,7 @@ export class NetGuest {
   welcome: Welcome | null = null;
   rejectReason = '';
   /** the mirror world the guest draws, where its own body runs */
-  cw = new World('mirror');
+  cw = World.mirror();
   layout: ZoneLayout | null = null;
   me: Entity | null = null;
   /** minimap data from the host */
@@ -221,7 +221,7 @@ export class NetGuest {
   }
 
   private resetWorld(): void {
-    this.cw = new World('mirror');
+    this.cw = World.mirror();
     // this world's own body sends what it does to the host (D338)
     this.cw.netGuest = { out: [] };
     if (this.hostFriendlyFire !== null) this.cw.friendlyFire = this.hostFriendlyFire / 100;
@@ -284,19 +284,9 @@ export class NetGuest {
     if (j.meta) for (const [id, m] of Object.entries(j.meta)) this.meta.set(Number(id), m);
     for (const r of s.recs) this.applyRec(r, s.time);
     for (const id of s.removed) {
-      const e = this.cw.entities.get(id);
-      if (e === this.me) this.me = null;
-      if (e) {
-        e.removed = true;
-        this.cw.entities.delete(id);
-      }
-      this.samples.delete(id);
+      if (this.cw.entities.get(id) === this.me) this.me = null;
+      this.forget(id);
       this.meta.delete(id);
-      this.lead.delete(id);
-      this.nudge.delete(id);
-      this.spent.delete(id);
-      this.hpDebt.delete(id);
-      this.lastRecHp.delete(id);
     }
     this.cw.refreshLists();
     this.cw.bossId = j.bossId ?? 0;
@@ -399,6 +389,21 @@ export class NetGuest {
     }
   }
 
+  /** Drop this screen's entity under a host id, and everything kept about it. */
+  private forget(id: number): void {
+    const e = this.cw.entities.get(id);
+    if (e && e !== this.me) {
+      e.removed = true;
+      this.cw.entities.delete(id);
+    } else if (e) this.cw.entities.delete(id);
+    this.samples.delete(id);
+    this.lead.delete(id);
+    this.nudge.delete(id);
+    this.spent.delete(id);
+    this.hpDebt.delete(id);
+    this.lastRecHp.delete(id);
+  }
+
   private applyRec(r: Rec, t: number): void {
     const w = this.cw;
     let e = w.entities.get(r.id) ?? null;
@@ -408,6 +413,11 @@ export class NetGuest {
       return;
     }
     if (e && e.removed) e = null;
+    // D376: the id now names a different thing (the host reused it): this screen's old entity goes, the new one comes
+    if (e && e !== this.me && !sameThing(e, r, m)) {
+      this.forget(r.id);
+      e = null;
+    }
     if (!e) {
       e = this.create(r, m);
       if (!e) return;
@@ -604,6 +614,12 @@ export class NetGuest {
     // screen's own body lives on the same clock, so what it does lines up with what it sees.
     const renderT = this.hostNow() - this.hostClock.delay(dt);
     w.time = renderT < w.time - 1 ? renderT : Math.max(w.time, renderT);
+    // D376: a mirrored wall or hazard whose time ran out a second ago has gone on the host too: it never stays here as
+    // an invisible wall that only a dodge gets through, even if word of its removal went astray
+    for (const e of [...w.entities.values()]) {
+      const until = e.type === 'wall' ? e.wl?.until : e.type === 'hazard' ? e.hz?.until : undefined;
+      if (until !== undefined && until < w.time - 1) this.forget(e.id);
+    }
     // mirrored enemy attacks run their own clock between snapshots (windup glow and motes)
     for (const e of w.entities.values()) {
       if (e.en?.attack) e.en.attack.t += dt;
@@ -749,4 +765,12 @@ export class NetGuest {
     const c = this.save.character;
     return `${c.twoHanded}|${c.equipment.main?.id ?? ''}|${c.equipment.off?.id ?? ''}|${c.altMain?.id ?? ''}|${c.altOff?.id ?? ''}`;
   }
+}
+
+/** Is this screen's entity still the thing the host's record and meta describe (same kind, same enemy)? (D376) */
+export function sameThing(e: Entity, r: Rec, m: EntityMeta): boolean {
+  if (ETYPES[r.kind] !== e.type) return false;
+  if (m.t === 'player') return !!e.pl && e.pl.playerId === m.pid;
+  if (m.t === 'enemy') return !!e.en && e.en.def.id === m.def;
+  return m.t === 'other' && m.type === e.type;
 }

@@ -180,7 +180,9 @@ export function comboFromWire(e: Entity, cIdx: number, cPhase: number, cK: numbe
     const fired = cK >= 128;
     const t = fired ? 1 + ((cK - 128) / 127) * SKILL_RECOVER_S : cK / 127;
     if (sk) pl.action = { kind: 'skill', index: k % 3, id: sk.id, t, castS: 1, fired, effects: [], aimX: e.x, aimY: e.y, powerMult: 1, hyperArmor: false, ...(off ? { offHand: true } : {}) };
-  } else if (pl.action?.kind === 'skill' && !netHostDriven(pl)) pl.action = null;
+    // D376: another player on this screen whose skill ended: its picture goes (the old test, "not host-driven", is never
+    // true while an action is set, so a remote player's skill animation used to play on forever)
+  } else if (pl.action?.kind === 'skill' && (pl.remote || !netHostDriven(pl))) pl.action = null;
 }
 
 /** Host: show a guest's puppet as its latest packet says (D338). Returns false when the packet is out of date. */

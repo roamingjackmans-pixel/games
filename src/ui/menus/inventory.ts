@@ -348,6 +348,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
       cons.appendChild(
         btn(`${c.quickSlot === id ? '▶ ' : ''}${def.name} ×${n}`, () => {
           c.quickSlot = id as ConsumableId;
+          // D376: tell the game (a co-op guest's host uses its copy of the slot when the guest presses Quick-use)
+          host.changed();
           render();
         }, 'tiny'),
       );

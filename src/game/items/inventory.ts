@@ -370,7 +370,7 @@ export function buyConsumable(c: Character, id: ConsumableId): OpResult {
   if (c.glowen < price) return no(`Needs ${price} Glowen.`);
   c.glowen -= price;
   c.consumables[id] = (c.consumables[id] ?? 0) + 1;
-  if (!c.quickSlot) c.quickSlot = id;
+  autoQuickSlot(c, id);
   return ok(`Bought a ${def.name}.`);
 }
 
@@ -425,6 +425,11 @@ export function planLevelUps(c: Character, pending: PendingPoints): { ok: boolea
     }
   }
   return { ok: true, char: copy, points, shardsSpent: c.shards - copy.shards, freeUsed: c.freePoints - copy.freePoints, msg: '' };
+}
+
+/** D376: a consumable just gained goes in the quick-use slot when that slot holds nothing usable (empty, or none left). */
+export function autoQuickSlot(c: Character, id: ConsumableId): void {
+  if (!c.quickSlot || (c.consumables[c.quickSlot] ?? 0) <= 0) c.quickSlot = id;
 }
 
 /** Cycle the quick-use slot to the next owned consumable. */

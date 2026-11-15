@@ -209,6 +209,8 @@ export function cancelEnemyAttack(w: World, e: Entity): void {
 export function rawDamage(w: World, e: Entity, amount: number, type: DamageType, sourceId: number, showNumber = true): void {
   if (!e.hp || e.hp.dead || amount <= 0) return;
   if (e.pl && (w.god || e.pl.downed || e.pl.deadUntilRest)) return;
+  // D376: a player who is invulnerable (2 s after a revive) takes no burn, bleed or ground damage either
+  if (e.pl && e.hp.invulnUntil > w.time) return;
   // D329: nothing hurts a player out of combat: no burn or bleed ticks, falls or harmful ground
   if (e.pl && !w.hostilesPresent()) return;
   if (e.en?.gary) return;
