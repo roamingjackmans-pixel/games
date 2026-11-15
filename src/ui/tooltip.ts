@@ -347,7 +347,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
         { class: 'tt-section' },
         rowsEl(
           [
-            { label: 'Stamina', cur: w.stamina, prev: ow ? ow.stamina : null, better: 'lower', fmt: int0, after: 'per swing' },
+            { label: 'Stamina', cur: w.stamina, prev: ow ? ow.stamina : null, better: 'lower', fmt: int0, after: w.twoHandOnly ? 'per swing' : 'per swing one-handed (+30% two-handed)' },
           ],
           cmp,
           false,

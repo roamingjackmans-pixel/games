@@ -278,13 +278,26 @@ function comboWeapon(e: Entity, offHand: boolean | undefined): WeaponDef {
   return offHand && d.offWeapon ? d.offWeapon.def : d.weapon;
 }
 
+/** D385: a swing two-handed (or dual-wielded) costs this much more stamina than one-handed. */
+export const TWO_HAND_SWING_STAMINA = 1.3;
+
+/**
+ * The listed stamina of a swing with this hand's weapon (before the D193 attack rules): 30% more when the weapon hand
+ * swings two-handed (D385). A weapon that can only be held two-handed (bows) has no one-handed swing to cost more than.
+ */
+export function swingStamina(e: Entity, offHand = false): number {
+  const d = e.pl!.derived;
+  const wpn = comboWeapon(e, offHand);
+  return wpn.stamina * (!offHand && d.twoHanded && !wpn.twoHandOnly ? TWO_HAND_SWING_STAMINA : 1);
+}
+
 function startSwing(w: World, e: Entity, idx: number, offHand = false): void {
   const pl = e.pl!;
   const wpn = comboWeapon(e, offHand);
   const swing = wpn.combo[idx % wpn.combo.length]!;
   const spd = attackSpeedOf(w, e, offHand);
-  if (!canAffordAttack(w, e, wpn.stamina, offHand)) return;
-  e.stam!.cur = Math.max(0, e.stam!.cur - attackCost(w, e, wpn.stamina, offHand));
+  if (!canAffordAttack(w, e, swingStamina(e, offHand), offHand)) return;
+  e.stam!.cur = Math.max(0, e.stam!.cur - attackCost(w, e, swingStamina(e, offHand), offHand));
   pl.stamDelayUntil = w.time + 0.6;
   const ranged = swing.hitbox.shape === 'proj';
   e.facing = aimAngle(w, e, ranged);
@@ -521,7 +534,7 @@ function updateCombo(w: World, e: Entity, dt: number): void {
     if (pressed(inp, key) || (held(inp, key) && c.t > c.dur * 0.3 && !c.offHand)) c.queued = true;
     const last = c.idx === wpn.combo.length - 1;
     // the next swing can start in the back half of the recovery
-    if (c.queued && !last && c.t >= c.dur * 0.45 && canAffordAttack(w, e, wpn.stamina, !!c.offHand)) {
+    if (c.queued && !last && c.t >= c.dur * 0.45 && canAffordAttack(w, e, swingStamina(e, !!c.offHand), !!c.offHand)) {
       startSwing(w, e, c.idx + 1, !!c.offHand);
       return;
     }
@@ -534,7 +547,7 @@ function updateCombo(w: World, e: Entity, dt: number): void {
         pl.comboResetAt = w.time + 0.5;
       }
       e.anim.pose = 'idle';
-      if (c.queued && last && canAffordAttack(w, e, wpn.stamina, !!c.offHand)) startSwing(w, e, 0, !!c.offHand);
+      if (c.queued && last && canAffordAttack(w, e, swingStamina(e, !!c.offHand), !!c.offHand)) startSwing(w, e, 0, !!c.offHand);
     }
   }
 }
@@ -837,8 +850,7 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
   const offShot = !!pl.derived.offWeapon;
   if (pressed(inp, 'block') && offShot) {
     // a crossbow in the off hand (D291): the block button shoots it, with its own stamina cost
-    const ow = pl.derived.offWeapon!;
-    if (pl.state === 'idle' && !pl.channel && !pl.charge && canAffordAttack(w, e, ow.def.stamina, true)) startSwing(w, e, 0, true);
+    if (pl.state === 'idle' && !pl.channel && !pl.charge && canAffordAttack(w, e, swingStamina(e, true), true)) startSwing(w, e, 0, true);
   } else if (pressed(inp, 'block')) {
     pl.blockToggled = !pl.blockToggled;
     const d = pl.derived;
@@ -870,8 +882,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     if (pressed(inp, 'attack') && pl.derived.weapon.twoHandOnly && !pl.derived.twoHanded) {
       // a bow needs both hands to draw (D88): shooting one-handed takes it in both hands and shoots (D203)
       toggleTwoHand(w, e);
-      if (pl.derived.twoHanded && canAffordAttack(w, e, pl.derived.weapon.stamina)) startSwing(w, e, 0);
-    } else if ((pressed(inp, 'attack') || (held(inp, 'attack') && !pl.derived.weapon.ranged)) && canAffordAttack(w, e, pl.derived.weapon.stamina)) {
+      if (pl.derived.twoHanded && canAffordAttack(w, e, swingStamina(e))) startSwing(w, e, 0);
+    } else if ((pressed(inp, 'attack') || (held(inp, 'attack') && !pl.derived.weapon.ranged)) && canAffordAttack(w, e, swingStamina(e))) {
       const idx = now <= pl.comboResetAt ? pl.nextComboIdx : 0;
       startSwing(w, e, idx);
     } else if (pressed(inp, 'flask')) startFlask(w, e);

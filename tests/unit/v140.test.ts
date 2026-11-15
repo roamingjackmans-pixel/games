@@ -653,3 +653,35 @@ describe("a player's one hitbox is the silver ring at the feet (D384)", () => {
     expect(shot(22)).toBeGreaterThan(0);
   });
 });
+
+describe('two-handed swings cost 30% more stamina (D385)', () => {
+  it('the same longsword swing: ×1.3 two-handed; a bow (two-handed only) and a one-handed swing unchanged', async () => {
+    const { stepWorld } = await import('../../src/game/sim');
+    const { ACTION_BIT, emptyInput } = await import('../../src/engine/input/actions');
+    const { swingStamina, TWO_HAND_SWING_STAMINA } = await import('../../src/game/player/player');
+    const spent = (twoHanded: boolean): number => {
+      const s = session();
+      const p = s.localPlayer!;
+      const c = p.pl!.char;
+      c.equipment.main = makeItem('longsword', 'common');
+      c.equipment.off = null;
+      c.twoHanded = twoHanded;
+      refreshDerived(p);
+      p.stam!.max = p.stam!.cur = 500;
+      p.pl!.input = { ...emptyInput(), aimX: p.x + 100, aimY: p.y, buttons: ACTION_BIT.attack, pressed: ACTION_BIT.attack };
+      const before = p.stam!.cur;
+      stepWorld(s.w);
+      return before - p.stam!.cur;
+    };
+    const one = spent(false);
+    const two = spent(true);
+    expect(one).toBeGreaterThan(0);
+    expect(two / one).toBeCloseTo(TWO_HAND_SWING_STAMINA, 2);
+    const s = session();
+    const p = s.localPlayer!;
+    p.pl!.char.equipment.main = makeItem('bow', 'common');
+    p.pl!.char.twoHanded = true;
+    refreshDerived(p);
+    expect(swingStamina(p)).toBe(p.pl!.derived.weapon.stamina);
+  });
+});

@@ -388,6 +388,8 @@ phases, capped at ×1.6.
 - **Stamina** (D105, D193): every stamina cost a player pays is ×1.15; weapon swings, weapon skills and spells cost
   ×1.5 on top **and only start with the stamina to pay in full** (a cost never exceeds a full bar). Dodging and
   blocking work with any stamina left. A held attack starts by itself once the bar refills enough.
+- **Two-handed swings cost 30% more stamina** than the same weapon's one-handed swing (D385; dual-wielded twin
+  weapons too). Bows, which can only be held two-handed, keep their listed cost; skills and spells are unchanged.
 - **Bows** need both hands; shooting one held one-handed two-hands it and shoots on the same press (D203). A bow or
   crossbow shot is a **volley of three** (straight and 5° to each side, D205) that **hits any one enemy at most
   once** (D264). Shots keep full damage to 250 px, then fall to 70% at 750 px (D88). A bow charged 0.6 s deals ×1.8

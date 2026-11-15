@@ -568,6 +568,8 @@ describe('net: guest-owned bodies (D338)', () => {
     expect(host.pl!.downed).toBe(true);
     p.step(0.3);
     const swing = (): void => {
+      // a two-handed greathammer swing costs 30% more (D385): start each with full stamina
+      me().stam!.cur = me().stam!.max;
       p.inputs[0] = { ...emptyInput(), aimX: host.x, aimY: host.y, pressed: ACTION_BIT.attack };
       p.step(1.2);
     };
