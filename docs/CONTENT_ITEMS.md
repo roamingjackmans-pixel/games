@@ -352,7 +352,7 @@ weapon; off-hand Leech heals on those hits only. Fleetfoot (dodge) counts only f
 | **Storm** | weapon | 13.2 | +13.2% of the hit as Magic (lightning), Shock buildup (added on top, D283) | `#6f8dff` |
 | **Dawn** | weapon | 13.2 | +13.2% of the hit as Holy (added on top, D283) | `#ffe98a` |
 | **Dusk** | weapon | 13.2 | +13.2% of the hit as Void (added on top, D283) | `#8a8396` |
-| **Leech** | weapon | 0.4 (×4) | 1.6% of max HP a hit (lifesteal, D325; ×4 by D355) | `#8a1020` |
+| **Leech** | weapon | 0.4 (×4) | 1.6% of max HP a hit (lifesteal, D325; ×4 by D355); in a weapon ×1.5 Medium, ×2 Slow, and shown so (D371, D386) | `#8a1020` |
 | **Vigor** | weapon | 16 | −16% stamina costs | `#2aa198` |
 | **Bulwark** | armor | 16 | +16 defense to all types | `#9a9aa6` |
 | **Hearth** | armor | 8 | +8% max HP | `#e0705a` |

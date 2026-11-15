@@ -184,9 +184,12 @@ export function perkName(p: GemPerk): string {
   return `${GEMS[p.family].name} (Lv ${perkLevel(p)})`;
 }
 
-/** "+11% damage": what this perk does at its level and roll. */
-export function perkText(p: GemPerk): string {
-  return GEMS[p.family].text.replace('{v}', fmtGemValue(p.family === 'leech' ? lifestealShown(perkValue(p)) : perkValue(p)));
+/**
+ * "+11% damage": what this perk does at its level and roll. `leechMult`: in a weapon, Leech heals ×1.5 on a Medium and
+ * ×2 on a Slow one (D371), and shows what it really heals there (D386).
+ */
+export function perkText(p: GemPerk, leechMult = 1): string {
+  return GEMS[p.family].text.replace('{v}', fmtGemValue(p.family === 'leech' ? lifestealShown(perkValue(p) * leechMult) : perkValue(p)));
 }
 
 /** "Purple +22%": the perk's roll. */

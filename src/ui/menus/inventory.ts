@@ -388,8 +388,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
         b.setAttribute('aria-label', `Remove the gem from ${it.name} (${placeLabel(c, it.id)})`);
         b.setAttribute('data-focus', `unsocket-${it.id}-${si}`);
         b.setAttribute('data-testid', `inv-unsocket-${it.id}-${si}`);
-        b.addEventListener('mouseenter', () => showTip(b, gemTooltip(g)));
-        b.addEventListener('focus', () => showTip(b, gemTooltip(g)));
+        b.addEventListener('mouseenter', () => showTip(b, gemTooltip(g, it)));
+        b.addEventListener('focus', () => showTip(b, gemTooltip(g, it)));
         b.addEventListener('mouseleave', hideTip);
         b.addEventListener('blur', hideTip);
         row.appendChild(b);

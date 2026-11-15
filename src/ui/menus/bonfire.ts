@@ -13,7 +13,7 @@ import { flaskHeal, levelCost, gemSellTotal } from '../../game/combat/formulas';
 import { computeDerived } from '../../game/player/derived';
 import { spellSkill, toolSpellSkill } from '../../game/skills/use';
 import { ELEMENTS } from '../../game/elements';
-import { canSocket, socketKind, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, lockedSkipped, planLevelUps, sellAllGemsPreview, sellAllPreview, toggleItemLock, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
+import { canSocket, findItem, socketKind, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, lockedSkipped, planLevelUps, sellAllGemsPreview, sellAllPreview, toggleItemLock, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { hasRarityBar, upgradeInfo } from '../../game/items/proficiency';
@@ -21,7 +21,7 @@ import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus,
 import { tabHints } from '../glyphs';
 import { gemLockButton, lockButton } from '../itemLock';
 import { PAD_LOCK_EVENT } from '../menuPad';
-import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemScore, itemSummary, itemTooltip, staticTip } from '../tooltip';
+import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, leechMultIn, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemScore, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
 export interface BonfireOps {
   levelUp(stat: StatId): string;
@@ -343,10 +343,13 @@ export function openBonfire(v: BonfireView): HTMLElement {
   }
 
   /** One gem on one line: icon, name + chip + effects, then its buttons, the lock last (Y on a pad or L on any of them). */
-  function gemRow(g: Gem, loc: GemLoc, acts: (HTMLElement | null)[], testid: string): HTMLElement {
+  /** `previewIn`: a loose gem shown for the socket picked on this item (D386: Leech as it would heal there) */
+  function gemRow(g: Gem, loc: GemLoc, acts: (HTMLElement | null)[], testid: string, previewIn: Item | null = null): HTMLElement {
+    // D386: a socketed Leech shows what it heals in its weapon (×1.5 Medium, ×2 Slow)
+    const inItem = 'itemId' in loc ? findItem(v.char, loc.itemId) : previewIn;
     const icon = h('span', { style: 'display:inline-flex;flex:none' }, gemIcon(g, 26));
-    hoverTip(icon, () => gemTooltip(g));
-    const main = h('div', { class: 'gem-main' }, gemNameEl(g), h('div', { class: 'small' }, perkEffectsEl(g)));
+    hoverTip(icon, () => gemTooltip(g, inItem));
+    const main = h('div', { class: 'gem-main' }, gemNameEl(g), h('div', { class: 'small' }, perkEffectsEl(g, leechMultIn(inItem))));
     const lock = gemLock(g, loc);
     const row = h('div', { class: `gem-row${g.locked ? ' locked-row' : ''}`, 'data-testid': testid }, icon, main, h('div', { class: 'gem-acts' }, ...acts, lock));
     for (const b of row.querySelectorAll<HTMLElement>('button')) {
@@ -646,7 +649,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       // a locked gem's Sell is greyed out (D329); picking a socket hides Sell, so a gem is never sold by mistake (D372)
       const sell = sock ? null : btn(['Sell ', glowenEl(gemSellTotal(g), '+')], () => say(v.ops.sellGem(gi)), 'tiny', !!g.locked);
       if (sell && g.locked) sell.title = 'Locked: unlock it to sell it.';
-      gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, sell, fuseBtn(g, loc)], `loose-gem-${gi}`)));
+      gems.appendChild(h('div', { class: 'card', style: 'padding:0' }, gemRow(g, loc, [sock, sell, fuseBtn(g, loc)], `loose-gem-${gi}`, sel && free >= 0 ? sel : null)));
     });
     if (filterKind && sel) {
       const all = btn('Show all gems', () => {
@@ -678,6 +681,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     const n = orig.perks.length;
     const kind = gemKind(orig);
+    // D386: fusing into a socketed gem: Leech shows what it heals in that weapon
+    const fm = 'itemId' in f.orig ? leechMultIn(findItem(c, f.orig.itemId)) : 1;
     const donors = c.gems
       .map((g, i) => ({ g, i }))
       .filter(({ g }) => g !== orig && gemKind(g) === kind)
@@ -695,7 +700,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
         [
           h('span', { class: 'tick' }, on ? '✓' : ''),
           h('span', { style: `color:${GEMS[p.family].color};width:120px` }, perkName(p)),
-          h('span', { class: 'small' }, perkEffectEl(p)),
+          h('span', { class: 'small' }, perkEffectEl(p, fm)),
           from === 'orig' && origin.includes(p.family) ? h('span', { class: 'small', style: 'margin-left:6px;padding:0 5px;border-radius:4px;border:1px solid #e8c25a;color:#e8c25a', title: 'An original perk: every fuse must keep at least one.', 'data-testid': `fuse-original-${idx}` }, 'original') : null,
         ],
         () => {
@@ -724,7 +729,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       b.setAttribute('data-testid', `fuse-gem-${d.i}`);
       right.appendChild(b);
       // D286: every perk's effect and strength, to compare without opening each gem
-      if (!on) right.appendChild(h('div', { class: 'col', style: 'gap:1px;padding:0 0 4px 30px', 'data-testid': `fuse-gem-effects-${d.i}` }, ...gemPerkLines(d.g)));
+      if (!on) right.appendChild(h('div', { class: 'col', style: 'gap:1px;padding:0 0 4px 30px', 'data-testid': `fuse-gem-effects-${d.i}` }, ...gemPerkLines(d.g, fm)));
       if (on) {
         const perks = h('div', { class: 'col', style: 'gap:4px;padding-left:18px' });
         d.g.perks.forEach((_, i) => perks.appendChild(perkBtn(d.g, 'donor', i)));
@@ -737,7 +742,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     else {
       const g: Gem = { perks: res.perks };
       preview.appendChild(h('div', { class: 'row' }, gemIcon(g, 26), gemNameEl(g)));
-      for (const line of gemPerkLines(g)) preview.appendChild(line);
+      for (const line of gemPerkLines(g, fm)) preview.appendChild(line);
     }
     const cost = 'error' in res ? 0 : res.cost;
     const go = btn(['Fuse', 'error' in res ? '' : [' (', glowenEl(cost), ')']], () => {
