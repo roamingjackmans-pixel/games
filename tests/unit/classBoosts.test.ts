@@ -41,13 +41,14 @@ describe('primary and secondary stats (D184)', () => {
     expect(spellSkill(d, 'brain')).toBeGreaterThan(plain);
   });
 
-  it('the Knight and the Hunter have their new stats; the Hunter carries a halberd, its bow and whip in the bag (D334)', () => {
+  it('the Knight and the Hunter have their new stats; the Hunter carries a halberd, its bow in the bag (D334, D380)', () => {
     expect(CLASSES.knight.stats).toEqual({ hp: 10, endurance: 10, bonk: 12, slicey: 9, brain: 3, prayer: 4 });
     expect(CLASSES.hunter.stats).toEqual({ hp: 7, endurance: 9, bonk: 10, slicey: 14, brain: 5, prayer: 3 });
     const h = newCharacter('hunter', 'H', 'h', new Rng(1));
     expect(h.equipment.main?.baseId).toBe('halberd');
     expect(h.equipment.off).toBeNull();
-    expect(h.bag.map((i) => i.baseId)).toEqual(expect.arrayContaining(['bow', 'whip']));
+    // D380: the Bow only, no Whip
+    expect(h.bag.map((i) => i.baseId)).toEqual(['bow']);
     expect(h.knownSpells).toEqual([]);
   });
 });

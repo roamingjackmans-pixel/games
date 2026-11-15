@@ -137,7 +137,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(7, 9, 10, 14, 5, 3),
     primary: 'slicey',
     secondary: 'bonk',
-    start: { main: 'halberd', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [], bag: ['bow', 'whip'] },
+    start: { main: 'halberd', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [], bag: ['bow'] }, // D380: no Whip
     twoHanded: true,
     blurb: 'Can track anything. Mostly tracks in mud.',
     look: { skin: '#e0b890', hair: '#6a3a1a', shirt: '#3a5a2a', legs: '#3a3020', head: 'hood', trim: '#a0803a', hairStyle: 'short', beard: 'stubble', hat: '#3a5a2a', belt: '#3a2a1a', emblem: 'leaf' },
