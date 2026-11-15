@@ -1,6 +1,6 @@
 // BroadcastChannel transport: peers in the same browser (the ?net=test two-pane page, Playwright). Presence
 // is a hello/here handshake plus a heartbeat; a peer silent for 4 s is gone.
-import { BaseTransport, randomPeerId, type NetPayload } from './transport';
+import { BaseTransport, BIG_MESSAGE_BYTES, randomPeerId, type NetPayload } from './transport';
 
 type Wire =
   | { t: 'hello' | 'here' | 'beat' | 'bye'; from: string }
@@ -18,6 +18,8 @@ export class BroadcastTransport extends BaseTransport {
    */
   private lagMs = 0;
   private jitterMs = 0;
+  /** `?biglate=1` (D393): a message over 16 KiB arrives two trips later and does not hold back later ones, as Trystero's */
+  private bigLate = false;
   private lastAt = new Map<string, number>();
   /** test jitter only, from its own tiny generator (Math.random is banned in src/game) */
   private jit = 1;
@@ -32,6 +34,7 @@ export class BroadcastTransport extends BaseTransport {
       const q = new URLSearchParams(location.search);
       this.lagMs = Math.max(0, Number(q.get('lag')) || 0);
       this.jitterMs = Math.max(0, Number(q.get('jitter')) || 0);
+      this.bigLate = q.get('biglate') === '1';
     }
     this.bc = new BroadcastChannel(`dungeon-joe-v1:${room}`);
     this.bc.onmessage = (ev: MessageEvent<Wire>) => this.onWire(ev.data);
@@ -64,11 +67,13 @@ export class BroadcastTransport extends BaseTransport {
       if (w.t !== 'here') this.post({ t: 'here', from: this.selfId });
     }
     if (w.t === 'msg' && (!w.to || w.to.includes(this.selfId))) {
-      if (!this.lagMs && !this.jitterMs) this.deliver(w.ch, w.data, w.from);
+      const big = this.bigLate && w.data instanceof ArrayBuffer && w.data.byteLength > BIG_MESSAGE_BYTES;
+      if (!this.lagMs && !this.jitterMs && !big) this.deliver(w.ch, w.data, w.from);
       else {
         const now = performance.now();
-        const at = Math.max(this.lastAt.get(w.from) ?? 0, now + this.lagMs + this.jitRand() * this.jitterMs);
-        this.lastAt.set(w.from, at);
+        const trip = this.lagMs + this.jitRand() * this.jitterMs;
+        const at = big ? now + Math.max(30, trip) * 3 : Math.max(this.lastAt.get(w.from) ?? 0, now + trip);
+        if (!big) this.lastAt.set(w.from, at);
         setTimeout(() => {
           if (!this.closed) this.deliver(w.ch, w.data, w.from);
         }, at - now);

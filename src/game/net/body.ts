@@ -271,7 +271,8 @@ export interface BodyDelta {
   hp?: number;
   full?: boolean;
   stam?: number;
-  barrier?: [number, number];
+  /** amount, until, and (D400) how big it was when given and the spell that gave it */
+  barrier?: [number, number, number?, string?];
   invuln?: number;
   meters?: Record<string, number>;
   active?: Record<string, number>;
@@ -332,7 +333,7 @@ export function diffBody(b: BodySnap, e: Entity): BodyDelta | null {
   }
   const stam = e.stam?.cur ?? 0;
   if (Math.abs(stam - b.stam) > 1e-6) d.stam = stam - b.stam;
-  if (hp.barrier !== b.barrier || hp.barrierUntil !== b.barrierUntil) d.barrier = [hp.barrier, hp.barrierUntil];
+  if (hp.barrier !== b.barrier || hp.barrierUntil !== b.barrierUntil) d.barrier = [hp.barrier, hp.barrierUntil, hp.barrierMax ?? hp.barrier, ...(hp.barrierSpell ? [hp.barrierSpell] : [])] as [number, number, number, string?];
   if (hp.invulnUntil !== b.invulnUntil) d.invuln = hp.invulnUntil;
   const st = e.st!;
   for (const k of Object.keys(st.meters)) {
@@ -406,6 +407,9 @@ export function applyDelta(w: World, e: Entity, d: BodyDelta, off: number): void
   if (d.barrier) {
     hp.barrier = d.barrier[0];
     hp.barrierUntil = t(d.barrier[1]);
+    if (d.barrier[2] !== undefined) hp.barrierMax = d.barrier[2];
+    if (d.barrier[3]) hp.barrierSpell = d.barrier[3];
+    else delete hp.barrierSpell;
   }
   if (d.invuln !== undefined) hp.invulnUntil = Math.max(hp.invulnUntil, t(d.invuln));
   const st = e.st!;

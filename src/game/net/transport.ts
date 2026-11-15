@@ -1,6 +1,10 @@
 // Transport interface (NETCODE §1, §8): the Trystero adapter, the in-memory loopback (tests) and the
 // BroadcastChannel transport (?net=test, Playwright) all implement it. Payloads are JSON values or
-// ArrayBuffers; every channel is reliable and ordered (WebRTC data channels in Trystero are).
+// ArrayBuffers; every channel is reliable and ordered, except that Trystero sends a message over 16 KiB late, after smaller
+// ones sent after it (D393: snapshots carry their number for that).
+
+/** Trystero 0.26 sends a message larger than one 16 KiB frame as an offer, an accept and then chunks (D393). */
+export const BIG_MESSAGE_BYTES = 16384 - 40;
 
 export type NetPayload = ArrayBuffer | string | number | boolean | null | { [k: string]: unknown } | unknown[];
 

@@ -241,11 +241,13 @@ with what it sees.
 
 ## 8. Transports for tests
 
-- `LoopbackTransport` / `LoopbackHub`: in memory, with configurable latency, jitter and loss; the netcode unit tests
-  run a host and up to 3 guests in Node.
+- `LoopbackTransport` / `LoopbackHub`: in memory, with configurable latency, jitter and loss, and (`bigLate`) Trystero's
+  late delivery of messages over 16 KiB (D393); the netcode unit tests run a host and up to 3 guests in Node.
 - `BroadcastTransport`: `BroadcastChannel` between pages of one browser. `?net=bc&auto=host|guest&code=…` runs one
   side on it; `?net=test` shows a host pane and a guest pane side by side in one tab. The Playwright co-op tests use
-  two pages of one browser context (one test adds 60 ± 30 ms of delay).
+  two pages of one browser context (one test adds 60 ± 30 ms of delay). `&lag=40&jitter=10` adds delay, and
+  `&biglate=1` delivers a binary message over 16 KiB three trips late without holding back later ones, as Trystero
+  does (D393).
 
 ## 9. Known limits
 

@@ -2,7 +2,9 @@
 // can show one icon a spell by the HP bar (Haste's two buffs are one icon) and the stats panel can say what each does.
 // Headless: the icons are drawn in src/ui/buffIcons.ts.
 import { SPELLS } from '../../data/spells';
-import type { Buff, Entity } from '../world';
+import { shapeHit } from './patterns';
+import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
+import type { Buff, Entity, World } from '../world';
 
 export interface ActiveSpellBuff {
   spell: string;
@@ -21,6 +23,28 @@ export function spellBuffsOn(e: Entity, now: number): ActiveSpellBuff[] {
     if (!a) out.push((a = { spell: b.spell, name: SPELLS[b.spell]?.name ?? b.spell, until: b.until, buffs: [] }));
     a.until = Math.max(a.until, b.until);
     a.buffs.push(b);
+  }
+  return out;
+}
+
+/**
+ * Every spell icon for this player's HUD (D400): its spell buffs (D373), a spell's barrier on it (Spirit Shield, given
+ * by an ally too), and each helpful spell zone it stands in or cast (Sanctuary, Regen Aura), each with when it ends.
+ */
+export function hudSpellIcons(w: World, e: Entity, now: number): ActiveSpellBuff[] {
+  const out = spellBuffsOn(e, now);
+  const add = (spell: string, until: number): void => {
+    const a = out.find((x) => x.spell === spell);
+    if (a) a.until = Math.max(a.until, until);
+    else out.push({ spell, name: SPELLS[spell]?.name ?? spell, until, buffs: [] });
+  };
+  const hp = e.hp;
+  if (hp && hp.barrierSpell && hp.barrier > 0 && hp.barrierUntil > now) add(hp.barrierSpell, hp.barrierUntil);
+  for (const h of w.entities.values()) {
+    const hz = h.hz;
+    if (h.type !== 'hazard' || h.removed || !hz?.spellIcon || hz.team !== 0 || !(hz.until > now)) continue;
+    const inside = (hz.shapes ?? []).some((s) => shapeHit(s, 0, e.x, e.y + PLAYER_DOT_DY, PLAYER_DOT_R, w.room));
+    if (inside || hz.ownerId === e.id) add(hz.spellIcon, hz.until);
   }
   return out;
 }

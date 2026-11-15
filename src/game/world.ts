@@ -36,6 +36,9 @@ export interface HealthC {
   invulnUntil: number;
   barrier: number;
   barrierUntil: number;
+  /** D400: how big the barrier was when given (the HUD shows what is left of it), and the spell that gave it */
+  barrierMax?: number;
+  barrierSpell?: string;
   staggerUntil: number;
   /** riposte-staggered (parried): next player hit ×3 */
   riposteUntil: number;
@@ -504,6 +507,8 @@ export interface HazardC {
   hurtsAllies?: boolean;
   /** a spell zone cast at a spot that hurts allies (D397): its caster too */
   hurtsOwner?: boolean;
+  /** D400: a helpful spell zone (Sanctuary, Regen Aura): its spell, for an icon and countdown on the HUD of whoever it helps */
+  spellIcon?: string;
   /** a player's spell zone: its school, so its ticks heal by that hand's lifesteal (D374) */
   school?: 'brain' | 'prayer';
 }

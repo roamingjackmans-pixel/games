@@ -1,7 +1,8 @@
 // In-memory transport (NETCODE §8): host and guests in one process, with configurable latency, jitter
 // and loss so the netcode is testable in Node. Time only moves when the hub is pumped (deterministic).
 import { Rng } from '../../engine/rng';
-import { BaseTransport, type NetPayload } from './transport';
+import { BaseTransport, BIG_MESSAGE_BYTES, type NetPayload } from './transport';
+export { BIG_MESSAGE_BYTES };
 
 export interface LoopbackOpts {
   latencyMs?: number;
@@ -18,8 +19,6 @@ export interface LoopbackOpts {
   bigLate?: boolean;
 }
 
-/** Trystero 0.26 sends a message larger than one 16 KiB frame as an offer, an accept and then chunks (D393). */
-export const BIG_MESSAGE_BYTES = 16384 - 40;
 
 function sizeOf(d: NetPayload): number {
   if (d instanceof ArrayBuffer) return d.byteLength;

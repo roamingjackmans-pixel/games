@@ -1242,10 +1242,15 @@ export function cleanse(e: Entity, what: ('statuses' | 'controls')[]): void {
   }
 }
 
-export function grantBarrier(w: World, e: Entity, amount: number, durationS: number): void {
+export function grantBarrier(w: World, e: Entity, amount: number, durationS: number, spell?: string): void {
   if (!e.hp) return;
-  e.hp.barrier = Math.max(e.hp.barrier, amount);
+  const had = e.hp.barrierUntil > w.time ? e.hp.barrier : 0;
+  e.hp.barrier = Math.max(had, amount);
   e.hp.barrierUntil = w.time + durationS;
+  // D400: what the HUD measures the shield against, and the spell's icon
+  if (amount >= had) e.hp.barrierMax = e.hp.barrier;
+  if (spell) e.hp.barrierSpell = spell;
+  else delete e.hp.barrierSpell;
 }
 
 export { addBuff };

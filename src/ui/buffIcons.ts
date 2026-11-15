@@ -1,8 +1,9 @@
 // Spell buff icons by the HP bar (D373): one icon a self-buff spell while its buff lasts (Haste, Ward of Steel and
 // Fortify Thermos on at once: three icons), each drawn in code, with a ring that drains as its time runs out. A timed
 // buff's icon goes when it ends; Fortify Thermos's also when the Thermos is drunk (its buff is used up).
-import { spellBuffsOn } from '../game/combat/spellBuffs';
-import type { Entity } from '../game/world';
+import { hudSpellIcons } from '../game/combat/spellBuffs';
+import { drawText } from '../engine/text';
+import type { Entity, World } from '../game/world';
 
 export const BUFF_ICON = 24;
 
@@ -14,6 +15,10 @@ const RIM: Record<string, string> = {
   bless_weapon: '#ffe27a',
   fortify_thermos: '#ffb04a',
   overload: '#c78aff',
+  // D400
+  spirit_shield: '#5fe0ff',
+  sanctuary: '#7ad0a0',
+  regen_aura: '#7ad0a0',
 };
 
 /** One spell's picture, centred on (x, y), about `s` across. */
@@ -154,6 +159,67 @@ export function drawBuffIcon(ctx: CanvasRenderingContext2D, spell: string, x: nu
       ctx.fill();
       break;
     }
+    case 'spirit_shield': {
+      // a pale blue bubble with a shine, over a small figure
+      ctx.arc(x, y, u * 0.85, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(95,224,255,0.35)';
+      ctx.fill();
+      ctx.strokeStyle = '#bff4ff';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y - u * 0.15, u * 0.2, 0, Math.PI * 2);
+      ctx.moveTo(x - u * 0.32, y + u * 0.5);
+      ctx.quadraticCurveTo(x, y - u * 0.05, x + u * 0.32, y + u * 0.5);
+      ctx.fillStyle = '#e8fbff';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, u * 0.62, -2.5, -1.6);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      break;
+    }
+    case 'sanctuary': {
+      // a green dome of light over a cross
+      ctx.moveTo(x - u * 0.85, y + u * 0.55);
+      ctx.arc(x, y + u * 0.55, u * 0.85, Math.PI, 0);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(122,208,160,0.45)';
+      ctx.fill();
+      ctx.strokeStyle = '#c8f5da';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y - u * 0.1);
+      ctx.lineTo(x, y + u * 0.55);
+      ctx.moveTo(x - u * 0.25, y + u * 0.12);
+      ctx.lineTo(x + u * 0.25, y + u * 0.12);
+      ctx.strokeStyle = '#f4fff8';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      break;
+    }
+    case 'regen_aura': {
+      // a green plus inside a soft ring of leaves
+      ctx.arc(x, y, u * 0.8, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(122,208,160,0.8)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      for (let i = 0; i < 4; i++) {
+        const a = i * (Math.PI / 2) + Math.PI / 4;
+        ctx.beginPath();
+        ctx.ellipse(x + Math.cos(a) * u * 0.8, y + Math.sin(a) * u * 0.8, u * 0.22, u * 0.1, a + Math.PI / 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#7ad0a0';
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.rect(x - u * 0.14, y - u * 0.5, u * 0.28, u);
+      ctx.rect(x - u * 0.5, y - u * 0.14, u, u * 0.28);
+      ctx.fillStyle = '#e6fff0';
+      ctx.fill();
+      break;
+    }
     default: {
       // any other buff spell: a four-point star
       for (let i = 0; i < 8; i++) {
@@ -177,8 +243,9 @@ const started = new Map<string, { until: number; len: number }>();
  * The icons in a row from (x, y) (their top-left), one a self-buff spell on the player now. Returns how wide the row
  * is, so whatever sits to its right can move over.
  */
-export function drawBuffIcons(ctx: CanvasRenderingContext2D, p: Entity, now: number, x: number, y: number): number {
-  const list = spellBuffsOn(p, now);
+export function drawBuffIcons(ctx: CanvasRenderingContext2D, w: World, p: Entity, now: number, x: number, y: number): number {
+  // D400: with a spell's barrier on you and the helpful spell zones you stand in or cast
+  const list = hudSpellIcons(w, p, now);
   const s = BUFF_ICON;
   list.forEach((a, i) => {
     const key = `${p.id}|${a.spell}`;
@@ -207,6 +274,8 @@ export function drawBuffIcons(ctx: CanvasRenderingContext2D, p: Entity, now: num
     ctx.stroke();
     drawBuffIcon(ctx, a.spell, cx, cy, s - 6);
     ctx.restore();
+    // D400: the seconds left, under the icon
+    drawText(ctx, `${Math.max(0, Math.ceil(a.until - now))}`, cx, cy + s / 2 + 12, { size: 11, mono: true, align: 'center', color: rim });
   });
   for (const k of [...started.keys()]) if (k.startsWith(`${p.id}|`) && !list.some((a) => k === `${p.id}|${a.spell}`)) started.delete(k);
   return list.length ? list.length * (s + 6) : 0;

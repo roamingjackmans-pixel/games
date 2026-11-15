@@ -469,7 +469,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       break;
     }
     case 'barrier':
-      for (const t of targets(w, e, ctx, src)) if (t.hp) grantBarrier(w, t, t.hp.max * Math.min(0.75, e.pctMaxHp * u), e.durationS * sd);
+      for (const t of targets(w, e, ctx, src)) if (t.hp) grantBarrier(w, t, t.hp.max * Math.min(0.75, e.pctMaxHp * u), e.durationS * sd, spell ? ctx.spellId : undefined);
       break;
     case 'summon': {
       const def = ENEMIES[e.enemyId];
@@ -541,6 +541,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         pull: e.hazard === 'gravityWell' ? 220 : 0,
         ...(spell && ctx.school ? { school: ctx.school } : {}),
         ...(e.hurtsAllies ? { hurtsAllies: true } : {}),
+        // D400: a helpful spell zone shows its icon and countdown to whoever it helps
+        ...(spell && ctx.spellId && (e.allyTick?.length || e.alliesOnly || e.enemyDamagePct || e.noStatusBuild) ? { spellIcon: ctx.spellId } : {}),
         // D397: a harmful spell zone cast at a spot (Void Rift) catches its caster too
         ...(e.hurtsAllies && spell && 'anchor' in e.pattern && e.pattern.anchor === 'aim' ? { hurtsOwner: true } : {}),
       });

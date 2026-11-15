@@ -317,6 +317,11 @@ const QUICK_X = 386;
 /** spells' circles (both schools, and an off-hand crossbow's skills on the spell keys): pinkish purple (D323) */
 const SPELL_COLOR = '#e08aff';
 
+/** A barrier's number on the HP bar (D400): what is left of it / what it was when given. */
+export function barrierText(hp: { barrier: number; barrierMax?: number }): string {
+  return `${Math.ceil(hp.barrier)} / ${Math.ceil(Math.max(hp.barrier, hp.barrierMax ?? hp.barrier))}`;
+}
+
 export interface HudExtras {
   ghostHp: number;
 }
@@ -333,8 +338,10 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   bar(ctx, 20, 20, hpW, 16, hp.hp / hp.max, '#c8302a', '#2a1418', extras.ghostHp);
   if (hp.barrier > 0) bar(ctx, 20, 20, hpW * Math.min(1, hp.barrier / hp.max), 4, 1, '#5fe0ff');
   drawText(ctx, `${Math.ceil(hp.hp)} / ${hp.max}`, 26, 33, { size: 12, mono: true });
+  // D400: a barrier (Spirit Shield) says how much it holds and how much it was, at the right of the bar
+  if (hp.barrier > 0 && hp.barrierUntil > now) drawText(ctx, barrierText(hp), 20 + hpW - 6, 33, { size: 12, mono: true, align: 'right', color: '#9cf0ff' });
   // D373: an icon a self-buff spell on you, by the HP bar
-  drawBuffIcons(ctx, p, now, 20 + hpW + 12, 16);
+  drawBuffIcons(ctx, w, p, now, 20 + hpW + 12, 16);
   const stW = Math.min(300, 120 + st.max * 0.8);
   bar(ctx, 20, 42, stW, 10, st.cur / st.max, '#4caf50', '#142a18');
   // status buildup: wide bars over the player's head (drawStatusBars); held-in-place controls and buffs under the bars

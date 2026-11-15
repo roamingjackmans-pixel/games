@@ -945,7 +945,10 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - Weapon buffs (Bless Weapon) need a weapon in the weapon hand (D131); a buffed weapon glows its element (D129).
 - **Self-buff spells** (D373): every buff a spell gives carries the spell, so each one active shows an **icon by the HP
   bar** (Bless Weapon, Ward of Steel, Haste, Stone Skin, Fortify Thermos, Overload; one a spell, drawn in code, with a ring
-  that drains) and the inventory's stats panel adds it to the numbers it changes (defense, attack speed, physical damage
+  that drains and the seconds left under it, D400). An ally's spell buff on you shows the same. **Spirit Shield** on you
+  (yours or an ally's) shows its icon until it ends, and the HP bar shows the shield's number at its right, what is left
+  / what it was (D400). A helpful spell zone (**Sanctuary**, **Regen Aura**) shows its icon and seconds left to everyone
+  standing in it and to its caster (D400) and the inventory's stats panel adds it to the numbers it changes (defense, attack speed, physical damage
   taken) and lists it with what it does and the seconds left. **Fortify Thermos** is a buff for 20 s: the next drink
   heals 50% more and clears statuses, and the drink uses it up (its icon goes). Being a buff, it now reaches a co-op
   guest's own body, whose drinks are its own (before, the boost stayed on the host's copy and a guest's drink never got it).
@@ -1067,7 +1070,8 @@ face marks and per-limb features, with Randomize and a preview you turn with the
 
 ## 16. UI and HUD
 
-- **HUD**: HP and stamina bars top-left, a self-buff spell's icon for each one on you right of the HP bar (D373),
+- **HUD**: HP and stamina bars top-left (a barrier's number, left / given, at the HP bar's right, D400), a spell's icon
+  with its seconds left for each buff, barrier or helpful zone on you right of the HP bar (D373, D400),
   held-in-place controls (FROZEN, ROOTED…) and buffs under them; Thermos
   count; Shards and Glowen; minimap; co-op cards (name, HP, status, downed timer) along the left.
 - **Skill circles** (Nightreign style, D321, D323): at the bottom middle, the three weapon skills (Q/E/R) and, past a short
