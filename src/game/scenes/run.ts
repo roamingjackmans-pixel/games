@@ -498,6 +498,7 @@ export class RunScene extends WorldScene {
     this.overlay = openInventory({
       char: p.pl!.char,
       derived: () => p.pl!.derived,
+      live: () => ({ e: p, now: this.w.time }),
       changed: () => refreshDerived(p),
       toggleTwoHand: () => toggleTwoHand(this.w, p),
       extraTabs: [{ label: 'Spells', render: (el) => renderSpellTab(el, p.pl!.char, () => refreshDerived(p), () => (this.overlay as HTMLElement & { rerender?: () => void })?.rerender?.()) }],
@@ -687,7 +688,7 @@ export class RunScene extends WorldScene {
       this.fade = Math.max(0, this.fade - realDt / 0.3);
     }
     if (app().settings.video.showFps) drawText(ctx, `${app().loop.fps.toFixed(0)} fps`, 1270, 150, { size: 12, align: 'right', mono: true, color: '#a59c8a' });
-    if (this.session.node.kind === 'tutorial') drawText(ctx, 'TRAINING HALL — the exit is on the right. The big man waits behind it: beat him, or wake at the bonfire trying.', 640, 40, { size: 14, align: 'center', color: '#a59c8a' });
+    if (this.session.node.kind === 'tutorial') drawText(ctx, 'TRAINING HALL — the exit is on the right. The big man waits behind it: beat him, or wake at the bonfire trying.', 660, 62, { size: 14, align: 'center', color: '#a59c8a' }); // below the buff icons by the HP bar (D373)
     else if (this.session.node.kind === 'trial') drawText(ctx, 'THE INSTRUCTOR — the way down stays shut until he falls. Beat him for a prize, or die and wake at the first bonfire.', 640, 40, { size: 14, align: 'center', color: '#e6a07a' });
   }
 

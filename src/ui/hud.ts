@@ -2,6 +2,7 @@
 // Shards/Glowen, the three weapon skills with radial cooldowns, three spells, quick-use item. Every key hint is
 // a button glyph for the chosen prompt style and the current bindings (glyphs.ts).
 import { GLOWEN_COLOR } from './tooltip';
+import { drawBuffIcons } from './buffIcons';
 import { drawText, FONT, MONO } from '../engine/text';
 import { glow, withAlpha } from '../engine/draw/parts';
 import type { Action } from '../engine/input/actions';
@@ -332,6 +333,8 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   bar(ctx, 20, 20, hpW, 16, hp.hp / hp.max, '#c8302a', '#2a1418', extras.ghostHp);
   if (hp.barrier > 0) bar(ctx, 20, 20, hpW * Math.min(1, hp.barrier / hp.max), 4, 1, '#5fe0ff');
   drawText(ctx, `${Math.ceil(hp.hp)} / ${hp.max}`, 26, 33, { size: 12, mono: true });
+  // D373: an icon a self-buff spell on you, by the HP bar
+  drawBuffIcons(ctx, p, now, 20 + hpW + 12, 16);
   const stW = Math.min(300, 120 + st.max * 0.8);
   bar(ctx, 20, 42, stW, 10, st.cur / st.max, '#4caf50', '#142a18');
   // status buildup: wide bars over the player's head (drawStatusBars); held-in-place controls and buffs under the bars

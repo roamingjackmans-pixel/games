@@ -361,6 +361,7 @@ export class GuestRunScene extends WorldScene {
     this.overlay = openInventory({
       char: c,
       derived: () => p.pl!.derived,
+      live: () => ({ e: this.local ?? p, now: this.w.time }),
       changed: () => this.changed(),
       toggleTwoHand: () => {
         c.twoHanded = !c.twoHanded;

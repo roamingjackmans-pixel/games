@@ -34,6 +34,8 @@ export interface EffectCtx {
   tag: string;
   /** a player's spell: its school, whose stat sets the spell's early damage bonus (D343) */
   school?: 'brain' | 'prayer';
+  /** a player's spell: its id, carried by the buffs it gives so their icons show (D373) */
+  spellId?: string;
 }
 
 /** Hooks the game layer provides (weapon spec for skills, summons into the room's wave tracking). */
@@ -397,6 +399,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
           durationS: e.durationS * sd,
           maxStacks: e.op === 'buff' ? (e.maxStacks ?? 1) : 1,
           sourceId: ctx.sourceId,
+          ...(spell && e.op === 'buff' && ctx.spellId ? { spell: ctx.spellId } : {}),
         });
         if (isStack) {
           // stacking buffs start at 0 stacks and grow on kills/hits (power hooks)
@@ -584,8 +587,9 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
     }
     case 'modifyNext':
       if (src?.pl) {
-        if (e.what === 'flask') src.pl.flaskBoost = { until: now + e.windowS, pct: e.mods.powerPct ?? 0.5, cleanse: true };
-        else
+        // D373: Fortify Thermos is a buff (it reaches a co-op guest's own body, and shows an icon); the drink uses it up
+        if (e.what === 'flask') addBuff(src, w, { id: 'fortify_thermos', stat: 'flaskBoostPct', amount: e.mods.powerPct ?? 0.5, durationS: e.windowS * sd, maxStacks: 1, sourceId: src.id, ...(ctx.spellId ? { spell: ctx.spellId } : {}) });
+        else {
           src.pl.nextSpellFree = {
             count: e.count,
             until: now + e.windowS,
@@ -593,6 +597,9 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
             noCooldown: !!e.mods.noCooldown,
             noStamina: !!e.mods.noStamina,
           };
+          // its icon, until the last boosted spell or the window ends
+          if (ctx.spellId) addBuff(src, w, { id: 'next_spells', stat: 'marker', amount: 0, durationS: e.windowS, maxStacks: 1, sourceId: src.id, spell: ctx.spellId });
+        }
       }
       break;
     case 'link': {
@@ -672,7 +679,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       }
       break;
     case 'hyperArmor':
-      if (src) addBuff(src, w, { id: `hyper:${ctx.tag}`, stat: 'poiseThreshold', amount: 0, durationS: e.durationS * u, maxStacks: 1, sourceId: src.id });
+      if (src) addBuff(src, w, { id: `hyper:${ctx.tag}`, stat: 'poiseThreshold', amount: 0, durationS: e.durationS * u * sd, maxStacks: 1, sourceId: src.id, ...(spell && ctx.spellId ? { spell: ctx.spellId } : {}) });
       break;
     case 'reveal':
       for (const t of enemiesOf(w, ctx.team)) if (t.en && dist(t.x, t.y, ctx.x, ctx.y) <= e.r + 300) t.en.revealedUntil = now + e.durationS * u;

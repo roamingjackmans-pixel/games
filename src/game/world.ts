@@ -67,6 +67,8 @@ export interface Buff {
   /** stacks grow on kills or hits (Bloodlust, Rampage) */
   stackOn?: 'kill' | 'hit';
   onStack?: EffectDef[];
+  /** the player's spell that gave it (D373): its icon shows by the HP bar while it lasts */
+  spell?: string;
 }
 
 export interface ComboState {
@@ -205,7 +207,6 @@ export interface PlayerC {
   aimNeutral: boolean;
   falling: { until: number; toX: number; toY: number } | null;
   nextSpellFree: { count: number; until: number; powerPct: number; noCooldown: boolean; noStamina: boolean } | null;
-  flaskBoost: { until: number; pct: number; cleanse: boolean } | null;
   stanceUntil: number;
   stanceRiposteMult: number;
   link: { otherId: number; until: number; split: number } | null;

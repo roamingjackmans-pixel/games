@@ -203,6 +203,8 @@ export function applyBodyReport(w: World, e: Entity, r: BodyReport, epoch: numbe
   if (pl.downed) return true;
   if (!netHostDriven(pl) && !(r.flags & BF.follow)) {
     const st = (PLAYER_STATES[r.state] ?? 'idle') as PlayerState;
+    // the guest drank: its Fortify Thermos is used up here too (D373)
+    if (st === 'flask' && pl.state !== 'flask' && e.buffs?.some((b) => b.stat === 'flaskBoostPct')) e.buffs = e.buffs.filter((b) => b.stat !== 'flaskBoostPct');
     pl.state = netHostDrivenState(st) ? 'idle' : st;
     pl.blocking = (r.flags & BF.blocking) !== 0;
     pl.parryUntil = r.flags & BF.parry ? now + 0.1 : 0;

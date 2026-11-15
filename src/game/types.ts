@@ -199,6 +199,10 @@ export type BuffStat =
   | 'poiseDamagePct'
   | 'physicalTakenPct'
   | 'speedMult'
+  /** Fortify Thermos (D373): the next drink heals this much more and clears statuses; used up by that drink */
+  | 'flaskBoostPct'
+  /** does nothing: shows that something is on (Overload's next spells, D373) */
+  | 'marker'
   | `defense:${DamageType}`;
 
 export type EffectTarget = 'self' | 'ally' | 'party' | 'others' | 'enemies' | 'ghost' | 'summoner' | 'allEnemies' | 'nearestAlly' | 'target';

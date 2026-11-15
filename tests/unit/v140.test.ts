@@ -205,3 +205,119 @@ describe('new statistics (D372)', () => {
     expect(st.healAllies).toBeGreaterThan(0);
   });
 });
+
+describe('Prayer buff spells (D373)', () => {
+  /** cast a spell from the cleric's Prayer slot 1 through the real cast path, and step until it fires */
+  const castReal = async (s: GameSession, id: string): Promise<void> => {
+    const { tryCastSpell } = await import('../../src/game/skills/use');
+    const { stepWorld } = await import('../../src/game/sim');
+    const p = s.localPlayer!;
+    const c = p.pl!.char;
+    c.stats.prayer = 60;
+    if (!c.knownSpells.includes(id)) c.knownSpells.push(id);
+    c.spellLoadout.prayer = [id, null, null];
+    refreshDerived(p);
+    p.pl!.spellReadyAt = [0, 0, 0];
+    p.stam!.cur = p.stam!.max;
+    expect(tryCastSpell(s.w, p, 0)).toBe(true);
+    for (let i = 0; i < 120 && p.pl!.action; i++) stepWorld(s.w);
+  };
+
+  it('Ward of Steel: +30 defense to all types, so the same hit hurts less', async () => {
+    const s = session('cleric');
+    const p = s.localPlayer!;
+    const foe = spawnEnemy(s.w, ENEMIES.shambler!, p.x - 80, p.y, { tellS: 0 });
+    foe.en!.state = 'alert';
+    const hitFor = (): number => {
+      p.hp!.hp = p.hp!.max;
+      p.hp!.invulnUntil = 0;
+      p.pl!.iframesUntil = 0;
+      const spec = emptySpec('normal');
+      spec.dmg.physical = 80;
+      hitPlayer(s.w, foe.id, p, spec, foe.x, foe.y);
+      return p.hp!.max - p.hp!.hp;
+    };
+    const plain = hitFor();
+    await castReal(s, 'ward_of_steel');
+    const ward = p.buffs!.find((b) => b.id === 'ward_self')!;
+    expect(ward.spell).toBe('ward_of_steel');
+    expect(ward.amount).toBeGreaterThanOrEqual(30);
+    expect(hitFor()).toBeLessThan(plain * 0.85);
+  });
+
+  it('Fortify Thermos: the next drink heals 50% more, and the drink uses it up', async () => {
+    const { stepWorld } = await import('../../src/game/sim');
+    const { ACTION_BIT, emptyInput } = await import('../../src/engine/input/actions');
+    const s = session('cleric');
+    const p = s.localPlayer!;
+    const c = p.pl!.char;
+    const drink = (): number => {
+      c.flaskCur = 1;
+      p.hp!.max = 5000;
+      p.hp!.hp = 1;
+      p.pl!.state = 'idle';
+      p.pl!.input = { ...emptyInput(), buttons: ACTION_BIT.flask, pressed: ACTION_BIT.flask };
+      stepWorld(s.w);
+      p.pl!.input = emptyInput();
+      for (let i = 0; i < 150; i++) stepWorld(s.w);
+      return p.hp!.hp - 1;
+    };
+    const plain = drink();
+    await castReal(s, 'fortify_thermos');
+    expect(p.buffs!.some((b) => b.stat === 'flaskBoostPct' && b.spell === 'fortify_thermos')).toBe(true);
+    const boosted = drink();
+    expect(boosted / plain).toBeGreaterThan(1.4);
+    expect(p.buffs!.some((b) => b.stat === 'flaskBoostPct')).toBe(false);
+    // (the cast raised Prayer, which the Thermos also grows with: compare with a plain drink at the same Prayer)
+    expect(boosted / drink()).toBeCloseTo(1.5, 1);
+  });
+
+  it('a co-op guest drinking uses up its Fortify Thermos on the host copy too', async () => {
+    const { applyBodyReport } = await import('../../src/game/net/body');
+    const s = session('cleric');
+    const g = s.joinPlayer(newCharacter('cleric', 'G', 'g', new Rng('g'))).entity!;
+    g.pl!.net = 'puppet';
+    addBuff(g, s.w, { id: 'fortify_thermos', stat: 'flaskBoostPct', amount: 0.5, durationS: 20, maxStacks: 1, sourceId: g.id, spell: 'fortify_thermos' });
+    const { PLAYER_STATES } = await import('../../src/game/net/snapshot');
+    const report = { epoch: 0, x: g.x, y: g.y, facing: 0, moving: 0, state: PLAYER_STATES.indexOf('flask'), flags: 0, cIdx: 0, cPhase: 0, cK: 0, pose: 0, poseT: 0, squash: 0, alpha: 1, scale: 1, hp: g.hp!.hp, barrier: 0, stam: 50, status: 0, flask: 0 };
+    applyBodyReport(s.w, g, report as never, 0);
+    expect(g.buffs!.some((b) => b.stat === 'flaskBoostPct')).toBe(false);
+  });
+
+  it('Stone Skin cuts physical damage taken and gives hyper armor; Haste speeds attacks', async () => {
+    const { attackSpeedFor } = await import('../../src/game/skills/use');
+    const s = session('cleric');
+    const p = s.localPlayer!;
+    const foe = spawnEnemy(s.w, ENEMIES.shambler!, p.x - 80, p.y, { tellS: 0 });
+    foe.en!.state = 'alert';
+    const hitFor = (): number => {
+      p.hp!.hp = p.hp!.max;
+      p.hp!.invulnUntil = 0;
+      p.pl!.iframesUntil = 0;
+      const spec = emptySpec('normal');
+      spec.dmg.physical = 80;
+      hitPlayer(s.w, foe.id, p, spec, foe.x, foe.y);
+      return p.hp!.max - p.hp!.hp;
+    };
+    const plain = hitFor();
+    await castReal(s, 'stone_skin');
+    expect(p.buffs!.some((b) => b.stat === 'poiseThreshold' && b.spell === 'stone_skin')).toBe(true);
+    expect(hitFor()).toBeLessThan(plain * 0.85);
+    const before = attackSpeedFor(s.w, p);
+    await castReal(s, 'haste');
+    expect(attackSpeedFor(s.w, p)).toBeGreaterThan(before * 1.1);
+  });
+
+  it('one icon a spell: Haste (two buffs), Ward of Steel and Fortify Thermos show three; an ended buff shows none', async () => {
+    const { spellBuffsOn, buffText } = await import('../../src/game/combat/spellBuffs');
+    const s = session('cleric');
+    const p = s.localPlayer!;
+    await castReal(s, 'haste');
+    await castReal(s, 'ward_of_steel');
+    await castReal(s, 'fortify_thermos');
+    const on = spellBuffsOn(p, s.w.time);
+    expect(on.map((a) => a.spell).sort()).toEqual(['fortify_thermos', 'haste', 'ward_of_steel']);
+    expect(on.find((a) => a.spell === 'haste')!.buffs.map(buffText).join(' ')).toMatch(/attack speed/);
+    expect(spellBuffsOn(p, s.w.time + 60)).toEqual([]);
+  });
+});

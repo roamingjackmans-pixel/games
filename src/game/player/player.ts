@@ -99,7 +99,6 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     aimNeutral: false,
     falling: null,
     nextSpellFree: null,
-    flaskBoost: null,
     stanceUntil: 0,
     stanceRiposteMult: 3,
     link: null,
@@ -605,11 +604,11 @@ function startFlask(w: World, e: Entity): void {
   pl.state = 'flask';
   pl.stateUntil = now + FLASK_DRINK_S;
   pl.blocking = false;
-  let boost = 0;
-  if (pl.flaskBoost && pl.flaskBoost.until > now) {
-    boost = pl.flaskBoost.pct;
-    if (pl.flaskBoost.cleanse) cleanse(e, ['statuses']);
-    pl.flaskBoost = null;
+  // Fortify Thermos (D373): a buff, so a co-op guest's own body has it too; this drink uses it up
+  const boost = buffSum(e, 'flaskBoostPct', now);
+  if (boost > 0) {
+    cleanse(e, ['statuses']);
+    e.buffs = e.buffs!.filter((b) => b.stat !== 'flaskBoostPct');
   }
   const amount = flaskHeal(e.hp!.max, pl.derived.stats.prayer, pl.derived.flaskBonus + boost, pl.derived.statBoost.prayer);
   pl.healOver.push({ perS: amount / FLASK_HEAL_S, until: now + FLASK_HEAL_S, interruptible: false });

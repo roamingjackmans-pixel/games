@@ -15,6 +15,8 @@ import { STAT_CAP, levelCost } from '../../game/combat/formulas';
 import { LIGHT_LOAD_MAX, LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
 import { spellSkill } from '../../game/skills/use';
+import { buffText, spellBuffsOn } from '../../game/combat/spellBuffs';
+import type { Entity } from '../../game/world';
 import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus } from '../dom';
 import { DOLL_SLOTS, paperDoll } from '../paperdoll';
@@ -24,6 +26,8 @@ import { SET_PERKS, SET_STEPS, setEffectText, setStep } from '../../data/setPerk
 export interface InventoryHost {
   char: Character;
   derived(): Derived;
+  /** the player's body and the world's time, for the buffs on it right now (D373) */
+  live?(): { e: Entity; now: number } | null;
   /** called after any change so the player entity refreshes its derived stats */
   changed(): void;
   /** co-op guests route these through the host (NETCODE §6); solo applies them directly */
@@ -174,6 +178,28 @@ export function openInventory(host: InventoryHost): HTMLElement {
     const kv = (k: string, v: string | number | Node, cls = ''): HTMLElement[] => [h('div', { class: 'k' }, k), h('div', { class: `mono ${cls}` }, v instanceof Node ? v : String(v))];
     const head = (t: string): HTMLElement => h('div', { class: 'kv-head' }, t);
     const pTag = (k: StatId): string => (isPrimaryStat(c.classId, k) ? ' (P)' : isSecondaryStat(c.classId, k) ? ' (S)' : '');
+    // D373: spell buffs on you now (Ward of Steel, Stone Skin, Haste…) show in the numbers they change and in a list
+    const live = host.live?.() ?? null;
+    const now = live?.now ?? 0;
+    const on = live ? spellBuffsOn(live.e, now) : [];
+    const bsum = (stat: string): number => on.reduce((s, a) => s + a.buffs.filter((b) => b.stat === stat).reduce((t, b) => t + b.amount * Math.max(1, b.stacks), 0), 0);
+    const plus = (base: string, extra: string): HTMLElement => h('span', null, base, h('span', { class: 'good' }, ` ${extra}`));
+    const atkBuff = bsum('attackSpeedPct');
+    const physBuff = bsum('physicalTakenPct');
+    const defOf = (k: (typeof DAMAGE_TYPES)[number]): HTMLElement | number => {
+      const add = bsum('defenseAll') + bsum(`defense:${k}`);
+      return add ? plus(String(Math.round(d.defense[k] + add)), `(+${Math.round(add)})`) : Math.round(d.defense[k]);
+    };
+    const buffRows = on.length
+      ? [
+          head('Spell buffs'),
+          ...on.flatMap((a) => [
+            h('div', { class: 'k good' }, a.name),
+            h('div', { class: 'mono small' }, `${Math.max(0, Math.ceil(a.until - now))} s`),
+            h('div', { class: 'small', style: 'grid-column:1 / -1;margin:-2px 0 2px 8px' }, [...new Set(a.buffs.map(buffText).filter(Boolean))].join('; ')),
+          ]),
+        ]
+      : [];
     return h(
       'div',
       { class: 'col', style: 'width:250px;gap:6px' },
@@ -198,10 +224,12 @@ export function openInventory(host: InventoryHost): HTMLElement {
         ...kv('Weapon power', Math.round(d.weaponPower), d.weaponMeetsReq ? '' : 'bad'),
         // Spell Skill per school you can cast (D182)
         ...(['brain', 'prayer'] as const).filter((sc) => toolForSchool(d, sc)).flatMap((sc) => kv(`${sc === 'brain' ? 'Brain' : 'Prayer'} Spell Skill`, spellSkill(d, sc), toolForSchool(d, sc)?.meetsReq ? '' : 'bad')),
-        ...kv('Attack speed', `×${d.attackSpeed.toFixed(2)}`),
+        ...kv('Attack speed', atkBuff ? plus(`×${(d.attackSpeed * (1 + atkBuff)).toFixed(2)}`, `(+${Math.round(atkBuff * 100)}%)`) : `×${d.attackSpeed.toFixed(2)}`),
         ...kv('Dodge recharge', `${d.dodgeRecharge.toFixed(1)} s`),
         head('Defense'),
-        ...DAMAGE_TYPES.flatMap((k) => kv(ELEMENTS[k].short, Math.round(d.defense[k]))),
+        ...DAMAGE_TYPES.flatMap((k) => kv(ELEMENTS[k].short, defOf(k))),
+        ...(physBuff ? kv('Physical taken', plus('', `${physBuff > 0 ? '+' : '−'}${Math.round(Math.abs(physBuff) * 100)}%`)) : []),
+        ...buffRows,
         head('Carried'),
         ...kv('Shards', fmt(c.shards)),
         ...kv('Next level', fmt(levelCost(c.level))),

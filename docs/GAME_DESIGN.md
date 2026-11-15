@@ -918,6 +918,12 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
   a rest or a death. Since D324 weapon skills (and an off-hand crossbow's) hold and reset the same way.
 - Healing spells are slow: Heal 12.5% over 10 s (cooldown 50 s; D335), and it cannot be interrupted (D128, D250).
 - Weapon buffs (Bless Weapon) need a weapon in the weapon hand (D131); a buffed weapon glows its element (D129).
+- **Self-buff spells** (D373): every buff a spell gives carries the spell, so each one active shows an **icon by the HP
+  bar** (Bless Weapon, Ward of Steel, Haste, Stone Skin, Fortify Thermos, Overload; one a spell, drawn in code, with a ring
+  that drains) and the inventory's stats panel adds it to the numbers it changes (defense, attack speed, physical damage
+  taken) and lists it with what it does and the seconds left. **Fortify Thermos** is a buff for 20 s: the next drink
+  heals 50% more and clears statuses, and the drink uses it up (its icon goes). Being a buff, it now reaches a co-op
+  guest's own body, whose drinks are its own (before, the boost stayed on the host's copy and a guest's drink never got it).
 - Spells are **learned** from spell reliquaries, sometimes bosses and The Instructor; never sold; known forever. A
   reliquary favours the school of your class's primary stat (×3) or secondary (×2) when it is Brain or Prayer (D317).
   14 Brain and 14 Prayer spells (CONTENT_SPELLS_CLASSES §1–2). Gravity Well pulls hovering enemies too, including
@@ -1029,7 +1035,8 @@ face marks and per-limb features, with Randomize and a preview you turn with the
 
 ## 16. UI and HUD
 
-- **HUD**: HP and stamina bars top-left, with held-in-place controls (FROZEN, ROOTED…) and buffs under them; Thermos
+- **HUD**: HP and stamina bars top-left, a self-buff spell's icon for each one on you right of the HP bar (D373),
+  held-in-place controls (FROZEN, ROOTED…) and buffs under them; Thermos
   count; Shards and Glowen; minimap; co-op cards (name, HP, status, downed timer) along the left.
 - **Skill circles** (Nightreign style, D321, D323): at the bottom middle, the three weapon skills (Q/E/R) and, past a short
   divider line, the three spells (1/2/3, or an off-hand crossbow's skills) as circles of the same size, the spells in

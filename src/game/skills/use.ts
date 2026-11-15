@@ -237,7 +237,10 @@ export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = '
     power *= 1 + boost.powerPct;
     if (boost.noCooldown) cooldown = 0.2;
     boost.count--;
-    if (boost.count <= 0) pl.nextSpellFree = null;
+    if (boost.count <= 0) {
+      pl.nextSpellFree = null;
+      if (e.buffs) e.buffs = e.buffs.filter((b) => b.id !== 'next_spells');
+    }
   }
   readyAt[i] = now + cooldown;
   pl.combo = null;
@@ -284,7 +287,7 @@ function fire(w: World, e: Entity): void {
     windupS: 0,
     tag: `${isSpell ? 'spell' : a.offHand ? 'offskill' : 'skill'}:${a.index}`,
     ...(a.offHand ? { offHand: true } : {}),
-    ...(sp ? { school: sp.school } : {}),
+    ...(sp ? { school: sp.school, spellId: sp.id } : {}),
   };
   runEffects(w, a.effects, ctx);
   if (isSpell) {

@@ -17,9 +17,10 @@ export function addBuff(e: Entity, w: World, b: Omit<Buff, 'stacks' | 'until'> &
     existing.until = now + b.durationS;
     if (b.stackAdd) existing.stacks = Math.min(existing.maxStacks, existing.stacks + 1);
     existing.amount = b.amount;
+    if (b.spell) existing.spell = b.spell;
     return;
   }
-  e.buffs.push({ id: b.id, stat: b.stat, amount: b.amount, until: now + b.durationS, stacks: 1, maxStacks: b.maxStacks, sourceId: b.sourceId });
+  e.buffs.push({ id: b.id, stat: b.stat, amount: b.amount, until: now + b.durationS, stacks: 1, maxStacks: b.maxStacks, sourceId: b.sourceId, ...(b.spell ? { spell: b.spell } : {}) });
 }
 
 export function hasControl(e: Entity, c: ControlId, now: number): boolean {
