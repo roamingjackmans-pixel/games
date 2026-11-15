@@ -27,6 +27,7 @@ import { newCharacter } from '../player/character';
 import { newSave, SLOT_COUNT } from '../save/schema';
 import { exportFileName, exportText, parseImport } from '../save/exportImport';
 import { deleteSave, listSaves, readMeta, writeSave } from '../save/storage';
+import { cycleStepper } from '../../ui/cycleStepper';
 import { fmtRushTime, readRushUnlock, rushFastest, rushFurthestLabel, rushStartCycles } from '../waveRush';
 import type { ClassId, SaveFile } from '../types';
 // the character creator's class card and appearance pickers
@@ -257,14 +258,11 @@ export class TitleScene implements Scene {
     }
     const unlock = readRushUnlock(store);
     const cycles = rushStartCycles(unlock);
-    const pick = cycle !== undefined && cycles.includes(cycle) ? cycle : cycles[cycles.length - 1]!;
-    const i = cycles.indexOf(pick);
-    const prev = btn('◀', () => this.rushMenu(first, cycles[Math.max(0, i - 1)]), 'tiny');
-    const next = btn('▶', () => this.rushMenu(first, cycles[Math.min(cycles.length - 1, i + 1)]), 'tiny');
-    prev.setAttribute('aria-label', 'Earlier cycle');
-    next.setAttribute('aria-label', 'Later cycle');
-    prev.disabled = i <= 0;
-    next.disabled = i >= cycles.length - 1;
+    let pick = cycle !== undefined && cycles.includes(cycle) ? cycle : cycles[cycles.length - 1]!;
+    // changes in place, so the arrow pressed keeps its place and the focus (D411)
+    const stepper = cycleStepper(cycles, pick, (c) => {
+      pick = c;
+    });
     const last = first ?? readMeta(store).lastSlot;
     saves.sort((a, b) => (b.slot === last ? 1 : 0) - (a.slot === last ? 1 : 0));
     const list = h('div', { class: 'col', style: 'gap:6px;max-height:400px;overflow:auto;min-width:520px' });
@@ -286,7 +284,7 @@ export class TitleScene implements Scene {
       'rush',
       h('h2', null, 'Wave Rush'),
       h('div', { class: 'small dim-text', style: 'max-width:520px' }, 'Eight rooms, one for each zone, then a boss as hard as the cycle’s final boss. A bonfire and stairs appear when a room is clear. Beat the boss to save your place and go on to the next cycle; die (or lose the whole party) and the cycle starts again from room 1. No Shards or levels here: gear, gems, Glowen and Soul Essence are yours to keep. Your campaign is not touched.'),
-      h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('div', { class: 'grow' }, 'Start at'), prev, h('b', { 'data-testid': 'rush-cycle', style: 'min-width:80px;text-align:center' }, `Cycle ${pick + 1}`), next),
+      stepper,
       h('div', { class: 'small dim-text' }, unlock.best >= 0 ? `Best cleared on this browser: Cycle ${unlock.best + 1}. Every cycle up to ${unlock.best + 2} is open to every character.` : 'Beat Cycle 1’s boss to open Cycle 2, for every character on this browser.'),
       list,
       h('div', { class: 'row' }, btn('Back', () => this.main())),

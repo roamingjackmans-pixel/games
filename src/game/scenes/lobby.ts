@@ -24,6 +24,7 @@ import type { Transport } from '../net/transport';
 import type { SaveFile } from '../types';
 import { friendlyFireRow } from '../../ui/menus/settings';
 import { getStore } from '../../engine/settings';
+import { cycleStepper } from '../../ui/cycleStepper';
 import { canStartRushAt, readRushUnlock, rushStartCycles } from '../waveRush';
 
 /** Scene factories set by main.ts (keeps the lobby free of run-scene imports). */
@@ -99,6 +100,23 @@ export class LobbyScene implements Scene {
     this.draw();
   }
 
+  /** A new starting cycle from the arrows: told to the guests, the line below updated, the panel left as it is. */
+  private setRushCycle(cycle: number): void {
+    this.rushPick = cycle;
+    this.rushLast = cycle;
+    if (this.host) {
+      this.host.rushCycle = cycle;
+      this.host.sendLobby(false);
+    }
+    const line = this.root?.querySelector('[data-testid=lobby-mode-line]');
+    if (line) line.textContent = this.modeLine();
+    playSfx('uiClick');
+  }
+
+  private modeLine(): string {
+    return this.rushPick !== null ? `Wave Rush from Cycle ${this.rushPick + 1}: eight rooms, one per zone, then a boss. Your world is not touched.` : `Your world: ${ZONES[this.save.world.zone - 1]?.name ?? ''}. Everyone starts at your bonfire.`;
+  }
+
   private modeRow(): HTMLElement {
     const cycles = rushStartCycles(readRushUnlock(getStore()));
     const pick = this.rushPick;
@@ -108,16 +126,9 @@ export class LobbyScene implements Scene {
     rush.setAttribute('data-testid', 'mode-rush');
     const kids: HTMLElement[] = [h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('div', { class: 'grow' }, 'Mode'), camp, rush)];
     if (pick !== null) {
-      const i = Math.max(0, cycles.indexOf(pick));
-      const step = (d: number): void => this.setMode(cycles[Math.max(0, Math.min(cycles.length - 1, i + d))]!);
-      const prev = btn('◀', () => step(-1), 'tiny');
-      const next = btn('▶', () => step(1), 'tiny');
-      prev.setAttribute('aria-label', 'Earlier cycle');
-      next.setAttribute('aria-label', 'Later cycle');
-      prev.disabled = i <= 0;
-      next.disabled = i >= cycles.length - 1;
       kids.push(
-        h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('div', { class: 'grow' }, 'Start at'), prev, h('b', { 'data-testid': 'rush-cycle', style: 'min-width:80px;text-align:center' }, `Cycle ${pick + 1}`), next),
+        // changes in place (no redraw), so the arrow pressed keeps its place and the focus (D411)
+        cycleStepper(cycles, pick, (c) => this.setRushCycle(c)),
         h('div', { class: 'small dim-text' }, `Up to Cycle ${cycles.length} is open on this browser: beat a cycle's boss to open the next.`),
       );
     }
@@ -336,7 +347,7 @@ export class LobbyScene implements Scene {
         h('div', { class: 'small dim-text' }, 'Give your friends this code. Up to 3 can join.'),
         h('div', { class: 'room-code', 'data-testid': 'room-code', style: 'font-size:44px;letter-spacing:10px;font-weight:bold;text-align:center;padding:10px 0;color:#e6b84a' }, code),
         this.modeRow(),
-        h('div', { class: 'small dim-text' }, this.rushPick !== null ? `Wave Rush from Cycle ${this.rushPick + 1}: eight rooms, one per zone, then a boss. Your world is not touched.` : `Your world: ${ZONES[this.save.world.zone - 1]?.name ?? ''}. Everyone starts at your bonfire.`),
+        h('div', { class: 'small dim-text', 'data-testid': 'lobby-mode-line' }, this.modeLine()),
         friendlyFireRow({ changed: () => this.host?.sendLobby(false) }),
         btn('Start', () => this.start(), 'primary big'),
         h('h3', { style: 'margin:8px 0 0' }, 'Invite friends'),

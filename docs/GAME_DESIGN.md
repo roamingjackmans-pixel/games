@@ -1199,7 +1199,8 @@ unlock), `src/game/rushRecord.ts` (the record), `GameSession` (`rushStart`, `rus
 
 **Starting.** Solo: the title's **Wave Rush** button (or **Wave Rush** on a character card under Load Character) picks
 the starting cycle and the character. Co-op: in the host's lobby, **Mode: Campaign / Wave Rush**, and for Wave Rush
-the starting cycle; the guests see the pick in their lobby. A run can start at any cycle up to **one past the best any
+the starting cycle; the guests see the pick in their lobby. The cycle picker is ◀ Cycle n ▶ and changes in place, so
+the arrow pressed stays under the pointer (and keeps the focus) to click through cycles quickly (D411). A run can start at any cycle up to **one past the best any
 character on this browser has cleared** (cleared Cycle 5 → any character can start at Cycle 6 or lower). The unlock
 is **account-wide** (`dj.waveRush`, D405); a co-op guest who clears a cycle opens it on its own browser too.
 
