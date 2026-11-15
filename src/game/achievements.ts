@@ -133,6 +133,8 @@ export class AchievementTracker {
   private lastTime = -1;
   private ripostes = new Map<number, number>();
   private cycle = 0;
+  /** Wave Rush (D401): its bosses count as bosses, not as the campaign's New Game+ or clean-zone milestones */
+  private rushMode = false;
 
   constructor(
     private store: KeyValueStore | null = null,
@@ -267,6 +269,7 @@ export class AchievementTracker {
   frame(w: World, me: Entity | null, c: Character, events: readonly GameEvent[]): void {
     const pid = me?.pl?.playerId ?? c.playerId;
     this.cycle = w.cycle;
+    this.rushMode = w.rush;
     this.watchZone(w.zone);
     // events first: the frame a boss dies its id is already gone from the world, the fight record is not
     for (const ev of events) this.event(ev, pid, c);
@@ -346,12 +349,12 @@ export class AchievementTracker {
   private bossDown(bossId: string, zone: number, c: Character): void {
     this.flag(`boss:${bossId}`);
     this.flag(`class:${c.classId}`);
-    if (zone === 8 && this.cycle >= 1) this.flag('ng1');
-    if (zone === 8 && this.cycle >= 2) this.flag('ng2');
+    if (zone === 8 && this.cycle >= 1 && !this.rushMode) this.flag('ng1');
+    if (zone === 8 && this.cycle >= 2 && !this.rushMode) this.flag('ng2');
     const f = this.fight;
     if (f && !f.drank) this.flag('flaskless');
     if (f && !f.armed && !c.equipment.main) this.flag('fists');
-    if (this.cleanZone > 0 && this.cleanZone === zone) this.flag(`clean:${zone}`);
+    if (this.cleanZone > 0 && this.cleanZone === zone && !this.rushMode) this.flag(`clean:${zone}`);
     this.fight = null;
   }
 

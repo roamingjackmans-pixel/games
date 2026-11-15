@@ -1,6 +1,7 @@
-// Save migrations: each entry upgrades a save from `from` to `from + 1`. Version 3 is current.
+// Save migrations: each entry upgrades a save from `from` to `from + 1`. Version 4 is current.
 import { SAVE_VERSION } from './schema';
 import { untierGem } from '../../data/gems';
+import { newRushRecord } from '../rushRecord';
 
 type Migration = { from: number; up: (s: Record<string, unknown>) => Record<string, unknown> };
 
@@ -81,6 +82,11 @@ export const MIGRATIONS: Migration[] = [
       for (const e of Object.values((w.shopStock ?? {}) as Record<string, { item?: unknown }>)) fixItem(e.item);
       return { ...s, character: c, world: w, version: 3 };
     },
+  },
+  {
+    // 3 → 4 (D409): Wave Rush. Every character gets an empty Wave Rush record; nothing else changes.
+    from: 3,
+    up: (s) => ({ ...s, rush: newRushRecord(), version: 4 }),
   },
 ];
 

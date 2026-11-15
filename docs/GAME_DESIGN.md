@@ -39,6 +39,7 @@ spell and class) live in [CONTENT_ENEMIES.md](CONTENT_ENEMIES.md), [CONTENT_ITEM
 21. [Statistics](#21-statistics)
 22. [Tools: debug menu, balance report, version](#22-tools-debug-menu-balance-report-version)
 23. [Not built](#23-not-built)
+24. [Wave Rush](#24-wave-rush) — the horde mode: a room per zone, a boss, the next cycle
 
 ---
 
@@ -978,8 +979,9 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 ## 12. Online co-op
 
 - **Lobby** (D31, D74, D134): Title → **Co-op play** → Host / Join, or the Host / Join buttons on a character card.
-  The host gets a **6-digit room code** (D76). **Joining happens only in the lobby**; Start puts everyone in the host's
-  world at the host's last bonfire; "Return to lobby" brings the party back so more can join. Up to 4 players.
+  The host gets a **6-digit room code** (D76). **Joining happens only in the lobby**. The host picks the **mode** (D401):
+  **Campaign** (Start puts everyone in the host's world at the host's last bonfire) or **Wave Rush** from a cycle (§24),
+  and the guests see the pick; "Return to lobby" brings the party back so more can join. Up to 4 players.
 - **Authority** (NETCODE, D338): the host simulates the world (enemies, loot, rooms, revives, bonfires) and runs every
   player's skills, spells and consumables; each guest's own screen runs that guest's body (movement, dodges, blocks,
   parries, swings and the hits they land) and decides every enemy hit on it; guests own their inventory.
@@ -1041,7 +1043,7 @@ The title screen shows the cycle next to the character.
 
 ## 14. Saves
 
-10 slots in `localStorage` (`dj.save.<n>`), JSON, save version 3 with a migration table and a sanitiser that cleans
+10 slots in `localStorage` (`dj.save.<n>`), JSON, save version 4 (D409: each character's Wave Rush record, §24) with a migration table and a sanitiser that cleans
 every load (older gems lose their tiers, D284; repeated item ids are renewed, D232). Export to a `.dungeonjoe.json`
 file and import from one. Autosave on rest, zone change, boss kill, level up, pickup (debounced), every 30 s and on
 unload. Each character also carries its own pad layout (D266), Bestiary, proficiency and statistics. Settings
@@ -1168,7 +1170,7 @@ damage dealt and taken, damage blocked and damage armour stopped, healing done (
 Shards (deaths by killer, falls, mimic bites, Shards gained / spent / dropped / recovered, Glowen), loot (items by
 rarity, gems, chests, Gary), exploration (time, distance, rooms, bonfires, deepest zone, cycles) and co-op (time,
 party size, revives, downs, and friendly fire: damage dealt to and taken from other players, other players you downed
-and times they downed you, D370; healing given to other players, D372). The Statistics screen sits below Achievements, with "This character" and "All
+and times they downed you, D370; healing given to other players, D372). The Statistics screen sits below Achievements, with "This character" (and its Wave Rush section, §24) and "All
 characters" tabs and a headline strip (most hated enemy, nemesis, Shards donated to the floor…).
 
 ## 22. Tools: debug menu, balance report, version
@@ -1188,3 +1190,56 @@ characters" tabs and a headline strip (most hated enemy, nemesis, Shards donated
 - Translations (all strings are in English; D36).
 - A Steam store release (personal Steam play only, §17).
 - A real `.exe` launcher (D133).
+
+## 24. Wave Rush
+
+A horde mode beside the campaign (D401–D410). Code: `src/game/waveRush.ts` (layouts, the boss pick and its size, the
+unlock), `src/game/rushRecord.ts` (the record), `GameSession` (`rushStart`, `rush`, `beginRushAttempt`,
+`gotoRushStage`).
+
+**Starting.** Solo: the title's **Wave Rush** button (or **Wave Rush** on a character card under Load Character) picks
+the starting cycle and the character. Co-op: in the host's lobby, **Mode: Campaign / Wave Rush**, and for Wave Rush
+the starting cycle; the guests see the pick in their lobby. A run can start at any cycle up to **one past the best any
+character on this browser has cleared** (cleared Cycle 5 → any character can start at Cycle 6 or lower). The unlock
+is **account-wide** (`dj.waveRush`, D405); a co-op guest who clears a cycle opens it on its own browser too.
+
+**A cycle** (cycles are 0-based in code; the UI says "Cycle 1" for the first playthrough's difficulty):
+
+1. **Eight rooms, one per zone**, zone 1 to zone 8, each with that zone's look, enemy roster (a fresh five-type mix),
+   hazards and resistances, at the cycle's scaling (§2.3: the room's zone and the run's cycle, Elites and New Game+
+   head counts included). A room is a single closed arena; the party stands in the middle and the first wave comes
+   **1.5 s** later. Each is a **full horde** (D407): the threat budget of a depth-7 room, so **3 waves** solo plus one
+   per extra player.
+2. A cleared room shows a **bonfire** (every rest heals and refills, D150) and **stairs** ("Descend"; after room 8,
+   "Face the boss").
+3. **The boss** (D403, D404): one of the eight bosses, **drawn at random on every attempt**, in **its own arena** with its
+   home zone's look, all its phases (third phases from Cycle 2, §7.3), with only a name card (no story cutscene). It
+   fights at **zone 8's strength**, hits like **the Landlord** (his ×1.5 in place of its own damage multiplier), and its
+   whole fight takes **as much HP to win as that cycle's Landlord** (his three phases and Unbound's refilled bar: a boss
+   with one bar gets 1.4 × the Landlord's full HP; Ignatius, whose second bar refills, gets that divided by his 1.6
+   bars). Co-op HP scaling applies as usual. Its fall pays a **boss chest's loot at zone 8's item level**.
+4. Beating the boss is a **checkpoint**: the cycle's best time is kept, the cycle unlock moves up, and a bonfire and
+   stairs ("On to Cycle N+1") lead to room 1 of the next cycle. It goes on forever.
+
+**Rewards** (D402). **No Shards and no levels** anywhere in Wave Rush: enemies and bosses carry no Shards and the bonfire
+has no Level up tab (nor Warp). Everything else drops as in the campaign and is kept: items, gems, Glowen, Soul
+Essence, consumables. The bonfire keeps its Gem bench, Weapons, Reinforce, Shop (the room's zone stock at the run's
+cycle, kept through the whole run), Bestiary and Spells. No chests, mimics, reliquaries, Gary or New Game+ bonus
+bosses.
+
+**The campaign is untouched** (D401): Wave Rush plays in a world of its own; the save's world, zone, cycle, bosses
+beaten, Thermos maximum and Shards are never changed, the campaign's deaths counter is not touched, clean-zone and
+New Game+ achievements are not earned there, and the Statistics' "Deepest zone" stays the campaign's.
+
+**Death** (D406). Solo death or a co-op party wipe: everyone wakes in **room 1 of the same cycle** with full HP, a full
+Thermos and spells ready; nothing is lost (no Shardpile; loot picked up is kept). Co-op downs and revives work as in the
+campaign (§12) until everyone is down. Each new start is a new **attempt**: new rooms and a new boss. Quitting mid-run
+ends the run (the next one starts at a chosen cycle).
+
+**The clock.** Each attempt at a cycle times room 1 to the boss falling (play time: a solo game's menus pause it). The
+HUD shows "WAVE RUSH · CYCLE n · ROOM k OF 8 · time"; there is no minimap or map.
+
+**Statistics** (D408): per character, a **Wave Rush** section: tries (attempts begun), deaths and party wipes,
+furthest point (cycle and room, the boss, or cleared), highest cycle cleared, cycles cleared, rooms cleared, fastest
+cycle, time in Wave Rush, and the **best time for every cycle cleared**. The All characters tab names the browser's
+best cleared cycle. Co-op guests keep their own record of the host's run.

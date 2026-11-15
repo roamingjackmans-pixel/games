@@ -66,6 +66,11 @@ export interface HostGuest {
   snapSeq: number;
 }
 
+/** A map as guests know it: a new key means the guest rebuilds its map (a Wave Rush stage has its own, D401). */
+function layoutKey(lay: GameSession['layout']): string {
+  return `${lay.seed}|${lay.zone}|${lay.startId}`;
+}
+
 /** Sessions whose boss kills are already relayed to guests (D195). */
 const HOOKED = new WeakSet<GameSession>();
 
@@ -78,6 +83,8 @@ export class NetHost {
   onGuestLeft: (name: string) => void = () => undefined;
   /** the host's friendly-fire percent for the lobby (the scene reads Settings → Game; D115) */
   friendlyFire: () => number = () => 100;
+  /** the host's choice in the lobby (D401): a Wave Rush from this 0-based cycle, or null for the campaign */
+  rushCycle: number | null = null;
   private ch: {
     hello: NetChannel<Hello & Record<string, unknown>>;
     lobby: NetChannel<LobbyState & Record<string, unknown>>;
@@ -138,7 +145,7 @@ export class NetHost {
     const c = this.save.character;
     const players: PublicPlayer[] = [{ peerId: this.t.selfId, playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, host: true, cycle: c.cycle, appearance: c.appearance, gear: gearOf(c) }];
     for (const g of this.guests.values()) players.push({ peerId: g.peerId, playerId: g.char.playerId, name: g.char.name, classId: g.char.classId, level: g.char.level, host: false, cycle: g.char.cycle, appearance: g.char.appearance, gear: gearOf(g.char) });
-    return { code: this.code, players, zone: this.save.world.zone, ff: this.friendlyFire() };
+    return { code: this.code, players, zone: this.save.world.zone, ff: this.friendlyFire(), ...(this.rushCycle !== null ? { rush: this.rushCycle } : {}) };
   }
 
   /** Send everyone the lobby; `notify` false skips the host's own redraw (a setting being dragged). */
@@ -206,13 +213,13 @@ export class NetHost {
       const prev = session.listener.zoneBeaten;
       session.listener.zoneBeaten = (zone) => {
         prev?.(zone);
-        if (this.session === session) this.broadcastEvent({ t: 'zoneBeaten', zone, cycle: this.save.character.cycle });
+        if (this.session === session) this.broadcastEvent({ t: 'zoneBeaten', zone, cycle: session.cycle });
       };
       // D396: a guest at Gary's cart trades at its own, on its own screen (guests own their inventory, NETCODE §6)
       const gary = session.listener.gary;
       session.listener.gary = (p) => {
         const g = this.session === session ? this.guestByEntity(p) : null;
-        if (g) this.sendEvent(g.peerId, { t: 'gary', zone: session.layout.zone, cycle: this.save.character.cycle });
+        if (g) this.sendEvent(g.peerId, { t: 'gary', zone: session.layout.zone, cycle: session.cycle });
         else gary?.(p);
       };
     }
@@ -235,7 +242,7 @@ export class NetHost {
     g.sentRecs.clear();
     g.sentMeta.clear();
     g.roomSent = '';
-    g.zoneSent = `${lay.seed}|${lay.zone}`;
+    g.zoneSent = layoutKey(lay);
     g.lastFullAt = -99;
     g.snapSeq = 0;
     // a fresh grace period: guests send nothing while waiting in the lobby, so anyone who joined more than 10 s
@@ -245,11 +252,12 @@ export class NetHost {
     const welcome: Welcome = {
       you: g.char.playerId,
       seed: lay.seed,
-      cycle: c.cycle,
+      cycle: s.cycle,
       zone: lay.zone,
       layoutOpts: { tutorial: lay.tutorialId !== null, fewSpells: c.knownSpells.length < 2 },
       time: s.w.time,
       slot: g.sp.slot,
+      ...(s.rush ? { rush: { stage: s.rush.stage, boss: s.rush.bossId } } : {}),
     };
     this.ch.welcome.send(welcome as Welcome & Record<string, unknown>, g.peerId);
   }
@@ -481,11 +489,11 @@ export class NetHost {
     const full = now - g.lastFullAt >= FULL_EVERY_S;
     if (full) g.lastFullAt = now;
     // a zone change: the guest rebuilds its map
-    const zkey = `${s.layout.seed}|${s.layout.zone}`;
+    const zkey = layoutKey(s.layout);
     if (zkey !== g.zoneSent) {
       g.zoneSent = zkey;
       const c = this.save.character;
-      this.sendEvent(g.peerId, { t: 'zone', zone: s.layout.zone, seed: s.layout.seed, cycle: c.cycle, layoutOpts: { tutorial: s.layout.tutorialId !== null, fewSpells: c.knownSpells.length < 2 } });
+      this.sendEvent(g.peerId, { t: 'zone', zone: s.layout.zone, seed: s.layout.seed, cycle: s.cycle, layoutOpts: { tutorial: s.layout.tutorialId !== null, fewSpells: c.knownSpells.length < 2 }, ...(s.rush ? { rush: { stage: s.rush.stage, boss: s.rush.bossId } } : {}) });
     }
     const recs: Rec[] = [];
     const meta: Record<number, EntityMeta> = {};

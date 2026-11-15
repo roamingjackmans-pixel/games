@@ -249,7 +249,8 @@ export class StatsTracker {
     this.watchChar(save);
     this.watchBody(w, me);
     if (++this.frames % 30 === 0) {
-      this.add('most:zone', w.zone);
+      // the deepest zone is the campaign's: a Wave Rush walks through all eight (D401)
+      if (!w.rush) this.add('most:zone', w.zone);
       this.add('most:party', w.players.length);
       if (this.garyRoom !== w.room && w.enemies.some((e) => e.en?.def.id === GARY.id && !e.removed)) {
         this.garyRoom = w.room;

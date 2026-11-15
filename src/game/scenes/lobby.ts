@@ -23,6 +23,8 @@ import { joinTrystero } from '../net/trystero';
 import type { Transport } from '../net/transport';
 import type { SaveFile } from '../types';
 import { friendlyFireRow } from '../../ui/menus/settings';
+import { getStore } from '../../engine/settings';
+import { canStartRushAt, readRushUnlock, rushStartCycles } from '../waveRush';
 
 /** Scene factories set by main.ts (keeps the lobby free of run-scene imports). */
 export const lobbyHooks: {
@@ -67,6 +69,10 @@ export class LobbyScene implements Scene {
   private friendsBox: HTMLElement | null = null;
   private unsubFriends: (() => void) | null = null;
   private overlay: HTMLElement | null = null;
+  /** the host's pick (D401): a Wave Rush from this 0-based cycle, or null for the campaign */
+  private rushPick: number | null = null;
+  /** the cycle the Wave Rush button goes back to */
+  private rushLast = 0;
 
   constructor(
     public save: SaveFile,
@@ -74,6 +80,48 @@ export class LobbyScene implements Scene {
   ) {
     this.host = o.host ?? null;
     this.guest = o.guest ?? null;
+    // coming back from a running session keeps the host's pick; tests may ask for one (?rush=N)
+    const q = new URLSearchParams(location.search).get('rush');
+    const want = o.host ? o.host.rushCycle : q !== null && o.role === 'host' ? Math.max(0, Math.floor(Number(q) || 0)) : null;
+    this.rushPick = want !== null && canStartRushAt(readRushUnlock(getStore()), want) ? want : want !== null ? 0 : null;
+    if (this.rushPick !== null) this.rushLast = this.rushPick;
+  }
+
+  /** The host picks the campaign or a Wave Rush and its first cycle (D401); the guests see the pick in the lobby. */
+  private setMode(cycle: number | null): void {
+    this.rushPick = cycle;
+    if (cycle !== null) this.rushLast = cycle;
+    if (this.host) {
+      this.host.rushCycle = cycle;
+      this.host.sendLobby(false);
+    }
+    playSfx('uiClick');
+    this.draw();
+  }
+
+  private modeRow(): HTMLElement {
+    const cycles = rushStartCycles(readRushUnlock(getStore()));
+    const pick = this.rushPick;
+    const camp = btn('Campaign', () => this.setMode(null), pick === null ? 'primary' : '');
+    const rush = btn('Wave Rush', () => this.setMode(Math.min(this.rushLast, cycles[cycles.length - 1]!)), pick !== null ? 'primary' : '');
+    camp.setAttribute('data-testid', 'mode-campaign');
+    rush.setAttribute('data-testid', 'mode-rush');
+    const kids: HTMLElement[] = [h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('div', { class: 'grow' }, 'Mode'), camp, rush)];
+    if (pick !== null) {
+      const i = Math.max(0, cycles.indexOf(pick));
+      const step = (d: number): void => this.setMode(cycles[Math.max(0, Math.min(cycles.length - 1, i + d))]!);
+      const prev = btn('◀', () => step(-1), 'tiny');
+      const next = btn('▶', () => step(1), 'tiny');
+      prev.setAttribute('aria-label', 'Earlier cycle');
+      next.setAttribute('aria-label', 'Later cycle');
+      prev.disabled = i <= 0;
+      next.disabled = i >= cycles.length - 1;
+      kids.push(
+        h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('div', { class: 'grow' }, 'Start at'), prev, h('b', { 'data-testid': 'rush-cycle', style: 'min-width:80px;text-align:center' }, `Cycle ${pick + 1}`), next),
+        h('div', { class: 'small dim-text' }, `Up to Cycle ${cycles.length} is open on this browser: beat a cycle's boss to open the next.`),
+      );
+    }
+    return h('div', { class: 'col', style: 'gap:6px', 'data-testid': 'lobby-mode' }, ...kids);
   }
 
   enter(): void {
@@ -150,6 +198,7 @@ export class LobbyScene implements Scene {
         return;
       }
       this.host = new NetHost(t, code, this.save);
+      this.host.rushCycle = this.rushPick;
       this.wireHost(this.host);
     } catch (err) {
       this.status = `Could not open a room (${String(err)}). Check your connection and try again.`;
@@ -286,7 +335,8 @@ export class LobbyScene implements Scene {
         h('h2', null, 'Host a game'),
         h('div', { class: 'small dim-text' }, 'Give your friends this code. Up to 3 can join.'),
         h('div', { class: 'room-code', 'data-testid': 'room-code', style: 'font-size:44px;letter-spacing:10px;font-weight:bold;text-align:center;padding:10px 0;color:#e6b84a' }, code),
-        h('div', { class: 'small dim-text' }, `Your world: ${ZONES[this.save.world.zone - 1]?.name ?? ''}. Everyone starts at your bonfire.`),
+        this.modeRow(),
+        h('div', { class: 'small dim-text' }, this.rushPick !== null ? `Wave Rush from Cycle ${this.rushPick + 1}: eight rooms, one per zone, then a boss. Your world is not touched.` : `Your world: ${ZONES[this.save.world.zone - 1]?.name ?? ''}. Everyone starts at your bonfire.`),
         friendlyFireRow({ changed: () => this.host?.sendLobby(false) }),
         btn('Start', () => this.start(), 'primary big'),
         h('h3', { style: 'margin:8px 0 0' }, 'Invite friends'),
@@ -302,7 +352,10 @@ export class LobbyScene implements Scene {
       });
       kids.push(h('h2', null, 'Join a game'), h('div', { class: 'small dim-text' }, `Joining as ${c.name}, level ${c.level}. You keep everything you earn.`));
       if (!this.guest || this.guest.state === 'rejected' || this.guest.state === 'closed') kids.push(input, btn(this.guest ? 'Retry' : 'Join', go, 'primary big'));
-      else if (this.guest.state === 'lobby') kids.push(friendlyFireRow({ hostValue: this.guest.hostFriendlyFire }));
+      else if (this.guest.state === 'lobby') {
+        const rc = this.guest.lobby?.rush;
+        kids.push(h('div', { 'data-testid': 'lobby-host-mode' }, rc !== undefined ? `The host picked Wave Rush, from Cycle ${rc + 1}.` : 'The host picked the campaign, in their world.'), friendlyFireRow({ hostValue: this.guest.hostFriendlyFire }));
+      }
       else if (this.guest.state === 'connecting') kids.push(h('div', { class: 'dim-text' }, 'Looking for the host… public relays can take a few seconds.'), btn('Retry', () => this.retry(), 'big'));
     }
     kids.push(btn('Back', () => this.cancel(), 'big'));

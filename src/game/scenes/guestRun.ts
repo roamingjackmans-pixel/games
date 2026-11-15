@@ -29,6 +29,7 @@ import { refreshDerived } from '../player/player';
 import { buyFromGary, garyStock } from '../bonfire/gary';
 import { renderGary } from '../../ui/menus/gary';
 import { writeSave } from '../save/storage';
+import { newWorldState } from '../save/schema';
 import { getStore } from '../../engine/settings';
 import { releasePad, usePadOf } from '../../engine/padProfile';
 import { WorldScene } from './worldScene';
@@ -36,6 +37,7 @@ import type { NetGuest } from '../net/guest';
 import type { NetEvent } from '../net/protocol';
 import type { BossDef, SaveFile, WorldState } from '../types';
 import { BOSSES } from '../../data/bosses';
+import { RUSH_BOSS_STAGE, applyRushEvent, fmtRushTime, newRushRecord, noteRushUnlock, rushStageLabel } from '../waveRush';
 import { ENEMIES } from '../../data/enemies';
 import { INSTRUCTOR } from '../../data/enemies/special';
 import { BONFIRE_LINES, DEATH_QUIPS, EMBER_LINES, TIPS, zoneCutsceneId, zoneLines } from '../../data/story';
@@ -65,7 +67,12 @@ export class GuestRunScene extends WorldScene {
   private zoneKey = '';
   private lastBossId = 0;
   private pendingDefeat: { def: BossDef; zone: number; at: number } | null = null;
-  private title: { zone: number; names: string[]; until: number } | null = null;
+  private title: { zone: number; names: string[]; until: number; sub?: string } | null = null;
+  /** Wave Rush (D408): seconds counted into this guest's own record, and when this guest's view of the clock started */
+  private rushAcc = 0;
+  /** the shop's stock through a Wave Rush (not saved) */
+  private rushWorld: WorldState | null = null;
+  private rushClock = 0;
   private quip = '';
   private lineN = 0;
   private tip = '';
@@ -93,11 +100,19 @@ export class GuestRunScene extends WorldScene {
     };
     this.view.drawInteract = (ctx, e, now) => drawInteractable(ctx, e, now, { bonfireUsed: (k) => this.rested.has(k), stationDone: () => false });
     super.enter();
+    // a Wave Rush joined from the lobby is an attempt on this guest's record too (D408)
+    const wr = n.welcome?.rush;
+    if (wr) {
+      const rec = (this.save.rush ??= newRushRecord());
+      applyRushEvent(rec, { kind: 'try', cycle: n.cw.cycle, stage: 1 });
+      applyRushEvent(rec, { kind: 'stage', cycle: n.cw.cycle, stage: wr.stage });
+      this.rushClock = performance.now() / 1000;
+    }
     // the guest's own character's controller layout goes live
     usePadOf(app().settings, this.save.character, () => this.persist());
     app().applySettings();
     // a death to The Instructor does not spoil a clean zone (D207)
-    achievements().begin({ clean: this.save.stats.deaths - (this.save.stats.instructorDeaths ?? 0) <= 0 });
+    achievements().begin({ clean: !wr && this.save.stats.deaths - (this.save.stats.instructorDeaths ?? 0) <= 0 });
   }
 
   override exit(): void {
@@ -121,9 +136,20 @@ export class GuestRunScene extends WorldScene {
   protected override beforeStep(dt: number): void {
     const a = app();
     const n = this.net;
+    if (n.rush && n.state === 'game') {
+      // time in Wave Rush, on this guest's own record
+      this.rushAcc += dt;
+      if (this.rushAcc >= 1) {
+        const k = Math.floor(this.rushAcc);
+        (this.save.rush ??= newRushRecord()).timeSec += k;
+        this.rushAcc -= k;
+      }
+    }
     if (!this.overlay) {
       if (a.input.consumeLocal('pause')) this.showPause();
-      else if (a.input.consumeLocal('map')) this.showMap();
+      else if (a.input.consumeLocal('map')) {
+        if (!n.rush) this.showMap();
+      }
       else if (a.input.consumeLocal('inventory')) this.showInventory();
       else if (a.input.consumeLocal('cycleQuick')) {
         // D376: a guest cycles its own quick-use slot too, and the host hears of it at once
@@ -171,7 +197,7 @@ export class GuestRunScene extends WorldScene {
     for (const ev of this.w.events) {
       if (ev.t !== 'death' || ev.isPlayer || !ev.defId) continue;
       const def = BOSSES[ev.defId];
-      if (def && cutscenesEnabled()) this.pendingDefeat = { def, zone: this.net.cw.zone, at: performance.now() / 1000 + 1.1 };
+      if (def && cutscenesEnabled() && !this.net.rush) this.pendingDefeat = { def, zone: this.net.cw.zone, at: performance.now() / 1000 + 1.1 };
     }
   }
 
@@ -212,10 +238,16 @@ export class GuestRunScene extends WorldScene {
     if (n.state !== 'game' || !this.local || !lay || !n.nodeId) return;
     const kind = n.nodeKind;
     // zone entry (never in the Training Hall or the Instructor's room)
-    const key = `${lay.seed}|${lay.zone}`;
+    const key = `${lay.seed}|${lay.zone}|${lay.startId}`;
     if (key !== this.zoneKey && kind !== 'tutorial' && kind !== 'trial') {
       this.zoneKey = key;
       const names = lay.mix.map((id) => ENEMIES[id]?.name ?? id);
+      const rw = n.rush;
+      if (rw) {
+        // Wave Rush: the zone's card with where the run stands, never the story (D410)
+        if (rw.stage < RUSH_BOSS_STAGE) this.title = { zone: lay.zone, names, until: performance.now() / 1000 + 3, sub: `Wave Rush · Cycle ${n.cw.cycle + 1} · ${rushStageLabel(rw.stage)}` };
+        return;
+      }
       const id = zoneCutsceneId(lay.zone);
       if (!cutscenesEnabled() || this.seen(id)) this.title = { zone: lay.zone, names, until: performance.now() / 1000 + 3.5 };
       else {
@@ -239,7 +271,7 @@ export class GuestRunScene extends WorldScene {
       const e = bid ? this.w.get(bid) : undefined;
       if (!bid || e) this.lastBossId = bid;
       const def = e?.en ? BOSSES[e.en.def.id] : undefined;
-      if (e?.en && def && e.en.state === 'spawning' && cutscenesEnabled()) {
+      if (e?.en && def && e.en.state === 'spawning' && cutscenesEnabled() && !n.rush) {
         const zone = lay.zone;
         const cut = bossIntroCut(def, zone, zoneDef(zone).name, () => this.w.get(bid) ?? null, zoneDef(zone).palette.colors, true);
         this.bossCut = cut;
@@ -261,6 +293,14 @@ export class GuestRunScene extends WorldScene {
   }
 
   private onNetEvent(e: NetEvent): void {
+    if (e.t === 'rush') {
+      // the host's Wave Rush is this guest's too: its own record, and its own browser's unlock (D405, D408)
+      applyRushEvent((this.save.rush ??= newRushRecord()), e);
+      if (e.kind === 'try') this.rushClock = performance.now() / 1000;
+      if (e.kind === 'cleared') noteRushUnlock(getStore(), e.cycle);
+      this.persist();
+      return;
+    }
     if (e.t === 'bonfire') {
       this.rested.add(e.id);
       this.showBonfire(e.first);
@@ -324,7 +364,10 @@ export class GuestRunScene extends WorldScene {
     const c = this.save.character;
     const seed = this.net.welcome?.seed ?? 'x';
     const zone = this.net.cw.zone;
-    const ws = this.save.world;
+    // a Wave Rush's shop keeps its own stock, never this guest's campaign world's (D401, D402)
+    const ws = this.net.rush ? (this.rushWorld ??= newWorldState(this.net.welcome?.seed ?? 'rush')) : this.save.world;
+    // the shop follows the cycle played: a Wave Rush's, else this guest's own (D357, D402)
+    const cyc = this.net.rush ? this.net.cw.cycle : c.cycle;
     const r = (o: { msg: string }): string => {
       this.changed();
       return o.msg;
@@ -335,8 +378,8 @@ export class GuestRunScene extends WorldScene {
         char: c,
         bonfireId: 'coop',
         firstRest: first,
-        shopGem: () => shopGem(seed, zone, c.cycle, shopGemBuys(ws, zone, c.cycle)),
-        shopPiece: () => shopPiece(ws, zone, c.cycle),
+        shopGem: () => shopGem(seed, zone, cyc, shopGemBuys(ws, zone, cyc)),
+        shopPiece: () => shopPiece(ws, zone, cyc),
         discovered: [],
         ops: {
           levelUp: (st) => r(levelUp(c, st)),
@@ -358,15 +401,15 @@ export class GuestRunScene extends WorldScene {
           buyConsumable: (cid) => r(buyConsumable(c, cid)),
           // a guest has its own stock (its own save's, rolled from its world seed), as it has its own bag (D357)
           buyGem: () => {
-            const g = shopGem(seed, zone, c.cycle, shopGemBuys(ws, zone, c.cycle));
+            const g = shopGem(seed, zone, cyc, shopGemBuys(ws, zone, cyc));
             const o = buyGem(c, g, shopGemPrice(g));
-            if (o.ok) noteShopGemBought(ws, zone, c.cycle);
+            if (o.ok) noteShopGemBought(ws, zone, cyc);
             return r(o);
           },
           buyPiece: () => {
-            const piece = shopPiece(ws, zone, c.cycle);
+            const piece = shopPiece(ws, zone, cyc);
             const o = buyItem(c, piece, shopItemPrice(piece));
-            if (o.ok) rollShopPiece(ws, zone, c.cycle);
+            if (o.ok) rollShopPiece(ws, zone, cyc);
             return r(o);
           },
           warp: () => 'Only the host can travel between fires.',
@@ -375,6 +418,8 @@ export class GuestRunScene extends WorldScene {
         // the inventory continues the bonfire's LB / RB loop: past its ends it comes back to the bonfire (D169)
         openInventory: () => this.showInventory(() => open(), (step) => open(step > 0 ? 'first' : 'last')),
         startTab,
+        // Wave Rush has no levels and nowhere to warp to (D402)
+        ...(this.net.rush ? { hideTabs: ['level', 'warp'] } : {}),
         close: () => this.closeOverlay(),
       });
       this.overlay.appendChild(restLine(this.pickLine(first ? BONFIRE_LINES : EMBER_LINES, 'rest')));
@@ -433,7 +478,7 @@ export class GuestRunScene extends WorldScene {
         h('div', { class: 'small dim-text' }, 'The game keeps running while this menu is open.'),
         btn('Resume', () => this.closeOverlay(), 'primary big'),
         btn('Inventory', () => this.showInventory(() => this.showPause()), 'big'),
-        btn('Map', () => this.showMap(), 'big'),
+        this.net.rush ? null : btn('Map', () => this.showMap(), 'big'),
         btn(
           'Settings',
           () => {
@@ -502,8 +547,13 @@ export class GuestRunScene extends WorldScene {
 
   protected override renderTop(ctx: CanvasRenderingContext2D, _alpha: number, realDt: number): void {
     const lay = this.net.layout;
+    const rw = this.net.rush;
+    if (rw && this.net.state === 'game') {
+      const t = this.rushClock ? performance.now() / 1000 - this.rushClock : 0;
+      drawText(ctx, `WAVE RUSH · CYCLE ${this.net.cw.cycle + 1} · ${rushStageLabel(rw.stage).toUpperCase()}${this.rushClock ? ` · ${fmtRushTime(t)}` : ''}`, 640, 40, { size: 14, align: 'center', color: '#e6b84a', mono: true });
+    }
     if (!this.cut) {
-      if (lay && this.net.nodeId && lay.byId[this.net.nodeId]) drawMinimap(ctx, { layout: lay, ws: this.mapWs(), currentId: this.net.nodeId, revealAll: false });
+      if (!rw && lay && this.net.nodeId && lay.byId[this.net.nodeId]) drawMinimap(ctx, { layout: lay, ws: this.mapWs(), currentId: this.net.nodeId, revealAll: false });
       drawPartyCards(ctx, this.w, this.save.character.playerId);
     }
     if (!this.local || this.net.state !== 'game') {
@@ -514,7 +564,7 @@ export class GuestRunScene extends WorldScene {
     const t0 = performance.now() / 1000;
     if (this.title && t0 < this.title.until) {
       const z = ZONES[this.title.zone - 1]!;
-      drawZoneTitleCard(ctx, z.name, z.palette.accent, this.title.names, z.tagline, this.title.until - t0, 3.5);
+      drawZoneTitleCard(ctx, z.name, z.palette.accent, this.title.names, this.title.sub ?? z.tagline, this.title.until - t0, 3.5);
     }
     if (this.local?.pl?.deadUntilRest) drawText(ctx, 'You are out until the party rests at a bonfire.', 640, 300, { size: 20, align: 'center', color: '#ff6a5a' });
     else if (this.local?.pl?.downed) drawText(ctx, 'DOWN — crawl to your friends; their hits revive you', 640, 300, { size: 20, align: 'center', color: '#ffcf6a' });

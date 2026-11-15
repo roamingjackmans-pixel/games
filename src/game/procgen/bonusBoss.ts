@@ -69,8 +69,8 @@ export function bonusBossPicks(seed: string, cycle: number): Record<number, stri
 }
 
 /** This zone's bonus fight, or null (the first playthrough, or no combat room). */
-export function bonusBossFor(layout: Pick<ZoneLayout, 'seed' | 'zone' | 'cycle' | 'rooms'>): BonusBoss | null {
-  if (layout.cycle < 1) return null;
+export function bonusBossFor(layout: Pick<ZoneLayout, 'seed' | 'zone' | 'cycle' | 'rooms' | 'rush'>): BonusBoss | null {
+  if (layout.cycle < 1 || layout.rush) return null;
   const rooms = layout.rooms.filter((r) => r.kind === 'combat').sort((a, b) => a.id.localeCompare(b.id));
   const bossId = bonusBossPicks(layout.seed, layout.cycle)[layout.zone];
   if (rooms.length === 0 || !bossId) return null;

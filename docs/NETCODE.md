@@ -40,7 +40,9 @@ Invite: host's lobby → Invite (an online friend, §10) → friend: Join → ch
   started. Ask the host to return to the lobby."). A guest already in the party saying hello again is ignored (D156).
   The party is at most 4; the same character twice is rejected.
 - **Start:** every guest gets `welcome` (seed, cycle, zone, layout options, host time, player slot), generates the
-  same zone layout locally, and appears at the host's respawn bonfire. A fresh 10 s grace starts for everyone (D161).
+  same zone layout locally, and appears at the host's respawn bonfire. The host's lobby picks the mode (D401): in a
+  **Wave Rush** (`LobbyState.rush`, the 0-based starting cycle) the welcome and every `zone` event carry `rush { stage,
+  boss }`, and the guest builds the same one-room layout (`rushLayout`) or the boss's arena; its `cycle` is the run's. A fresh 10 s grace starts for everyone (D161).
 - **Return to lobby** (host pause menu): bodies leave the world, everyone sees the lobby (`toLobby`), and more players
   can join. The world is saved.
 - **Leaving:** a guest that sends `leave`, closes its connection, or is silent for 10 s is removed (and its body).
@@ -51,13 +53,13 @@ Invite: host's lobby → Invite (an online friend, §10) → friend: Join → ch
 | Channel | Direction | When | Payload |
 |---|---|---|---|
 | `hello` | guest → host | joining | `{ version, playerId, name, classId, level, char }` (the whole character) |
-| `lobby` | host → all | lobby changes | `{ code, players: PublicPlayer[], zone, ff? }`: each player's name, class, level, cycle, look and worn gear (`LobbyGear`), the host's friendly-fire percent |
-| `welcome` / `reject` | host → guest | on Start / refused | `Welcome { you, seed, cycle, zone, layoutOpts, time, slot }` / `{ reason }` |
+| `lobby` | host → all | lobby changes | `{ code, players: PublicPlayer[], zone, ff?, rush? }`: each player's name, class, level, cycle, look and worn gear (`LobbyGear`), the host's friendly-fire percent, and `rush`: the host's Wave Rush starting cycle when it picked Wave Rush (D401) |
+| `welcome` / `reject` | host → guest | on Start / refused | `Welcome { you, seed, cycle, zone, layoutOpts, time, slot, rush? }` / `{ reason }` |
 | `input` | guest → host | every frame | 17-byte packet: `seq u16, moveX i8, moveY i8, aimX i16, aimY i16, buttons u16, pressed u16, tick u32, flags u8` (aim neutral, aim assist 0–7). Starts the guest's skills, spells and consumables and drives them (§6), and its interactions |
 | `body` | guest → host | every frame | 36-byte body packet (§5, `body.ts`): `seq u16, epoch u16, x i16, y i16` (half pixels), `facing, state, pose, poseT, squash, alpha, scale, moving u8, flags u16` (blocking, parry, i-frames, following, charging, flash), `hp f32, barrier f32, stamina f32, combo index / phase / progress u8, status u16, Thermos u8` |
 | `act` | guest → host | each frame something happened | `{ a: NetAct[] }` (`acts.ts`): what the guest's own body did to the shared world: `hit` (an enemy hit, resolved), `gary`, `revive` (a hit on a ghost), `ff` (friendly fire on another player), `took` (how an enemy's hit went), `shot` (a ranged swing fired) |
 | `snap` | host → each guest | 30 Hz (`SNAP_HZ`, D149); a keyframe every 2 s or on request | snapshot (§4), built per guest |
-| `event` | host → all or one | reliable | `NetEvent`: `bonfire { id, first }`, `zone { zone, seed, cycle, layoutOpts }`, `died`, `wipe`, `toLobby`, `hostLeft`, `chat`, `credits`, `zoneBeaten { zone, cycle }` (D195) |
+| `event` | host → all or one | reliable | `NetEvent`: `bonfire { id, first }`, `zone { zone, seed, cycle, layoutOpts, rush? }` (a new key per Wave Rush stage: `seed|zone|startId`), `died`, `wipe`, `toLobby`, `hostLeft`, `chat`, `credits`, `zoneBeaten { zone, cycle }` (D195; never in a Wave Rush), `rush { kind, cycle, stage, sec? }` (D408: `try`, `stage`, `room`, `death`, `cleared`; each guest keeps its own Wave Rush record and its own browser's unlock; sent only once the guests are in the game, a guest counts the attempt it joins with from its welcome) |
 | `cmd` | guest → host | reliable | `leave`, `fullPlease` (send a keyframe), `chat` |
 | `charop` | host → guest | after a tick that changed the guest's character | `{ rev, ops: CharOp[] }` (§6) |
 | `char` | guest → host | after the guest changes its own character | `{ ack, char }` (§6) |

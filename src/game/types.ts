@@ -959,6 +959,27 @@ export interface SaveFile {
   stats: SaveStats;
   /** co-op progress waiting for this world's next Continue (D195): the next zone to open and the zones beaten away */
   pending?: { advanceToZone?: number; beatenZones?: number[] };
+  /** this character's Wave Rush record (GAME_DESIGN §24; save version 4, D409) */
+  rush?: RushRecord;
+}
+
+/** A character's Wave Rush record (D408): the Statistics screen's Wave Rush section. Cycles are 0-based. */
+export interface RushRecord {
+  /** attempts begun: entering Wave Rush, starting again after a wipe, going on to the next cycle */
+  tries: number;
+  /** solo deaths and party wipes in Wave Rush */
+  deaths: number;
+  /** cycles cleared (their boss beaten), repeats counted */
+  cleared: number;
+  roomsCleared: number;
+  timeSec: number;
+  /** best time per cycle, room 1 to the boss falling, in seconds (key: the 0-based cycle) */
+  best: Record<string, number>;
+  /** the highest cycle this character has cleared; -1 none */
+  bestCycle: number;
+  /** the furthest point reached: a cycle and a stage (1–8 rooms, 9 the boss, 10 cleared); -1 never played */
+  furthestCycle: number;
+  furthestStage: number;
 }
 
 export type EliteAffix = 'frenzied' | 'armored' | 'vampiric' | 'arcane' | 'molten' | 'frostbound' | 'shielded' | 'summoner';

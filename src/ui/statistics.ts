@@ -8,7 +8,10 @@ import { ZONES } from '../data/zones';
 import { CLASSES } from '../data/classes';
 import { TILE } from '../game/room';
 import { peekSaveCounters, stats, type Counters } from '../game/stats';
-import type { SaveFile } from '../game/types';
+import type { RushRecord, SaveFile } from '../game/types';
+import { fmtRushTime, normalizeRushRecord, rushFastest, rushFurthestLabel } from '../game/rushRecord';
+import { readRushUnlock } from '../game/waveRush';
+import { getStore } from '../engine/settings';
 import { btn, clearEl, fmt, h, layer } from './dom';
 
 export interface StatisticsOpts {
@@ -205,6 +208,37 @@ function sectionEl(s: { title: string; rows: Row[] }): HTMLElement {
   );
 }
 
+/**
+ * A character's Wave Rush (GAME_DESIGN §24, D408): tries, deaths, how far it got, and its best time on every cycle it has
+ * cleared (room 1 to the boss falling).
+ */
+export function rushSections(rec: RushRecord | undefined): { title: string; rows: Row[] }[] {
+  const r = normalizeRushRecord(rec);
+  const fast = rushFastest(r);
+  const main: Row[] = [
+    ['Tries', fmt(r.tries)],
+    ['Deaths and party wipes', fmt(r.deaths)],
+    ['Furthest', rushFurthestLabel(r), r.furthestCycle < 0 ? 'none' : ''],
+    ['Highest cycle cleared', r.bestCycle >= 0 ? `Cycle ${r.bestCycle + 1}` : 'none yet', r.bestCycle < 0 ? 'none' : ''],
+    ['Cycles cleared', fmt(r.cleared)],
+    ['Rooms cleared', fmt(r.roomsCleared)],
+    ['Fastest cycle', fast ? `${fmtRushTime(fast[1])} (Cycle ${fast[0] + 1})` : '—', fast ? '' : 'none'],
+    ['Time in Wave Rush', fmtDuration(r.timeSec)],
+  ];
+  const times: Row[] = Object.entries(r.best)
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .map(([k, v]) => [`Cycle ${Number(k) + 1}`, fmtRushTime(v)] as Row);
+  if (!times.length) times.push(['No cycle cleared yet', '—', 'none']);
+  return [
+    { title: 'Wave Rush', rows: main },
+    { title: 'Wave Rush best times', rows: times },
+  ];
+}
+
+function rushBlock(rec: RushRecord | undefined): HTMLElement {
+  return h('div', { class: 'stat-grid', 'data-testid': 'stat-rush' }, ...rushSections(rec).map((sec) => h('div', { class: 'stat-col' }, sectionEl(sec))));
+}
+
 /** The body for one set of counters. */
 export function statsBody(c: Counters): HTMLElement {
   return h(
@@ -289,9 +323,12 @@ export function openStatistics(onClose: () => void, opts: StatisticsOpts = {}): 
       const c = pick.character;
       panel.appendChild(h('div', { class: 'small dim-text stat-note' }, `${c.name}, ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}. Numbers from before this screen existed start at what the save already knew.`));
       panel.appendChild(statsBody(peekSaveCounters(pick)));
+      panel.appendChild(rushBlock(pick.rush));
     } else {
       panel.appendChild(h('div', { class: 'small dim-text stat-note' }, 'Every character this browser has ever played, deleted ones included. Co-op counts what you did, not what your friends did.'));
       panel.appendChild(statsBody(t.rec.c));
+      const best = readRushUnlock(getStore()).best;
+      panel.appendChild(h('div', { class: 'small dim-text stat-note', 'data-testid': 'stat-rush-unlock' }, best >= 0 ? `Wave Rush: Cycle ${best + 1} is the best cleared on this browser, so every character can start at Cycle ${best + 2} or lower.` : 'Wave Rush: no cycle cleared on this browser yet.'));
     }
     setTimeout(() => {
       // on opening: the first character button below the header if there is one, else Back (D148)

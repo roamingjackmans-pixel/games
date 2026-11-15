@@ -29,7 +29,8 @@ export function treasureChest(layout: ZoneLayout, node: RoomNode, noMimics: bool
  * zone seed and the room: the room has its chest every time you walk in (until it is opened) or never.
  */
 export function smallChest(layout: ZoneLayout, node: RoomNode, noMimics: boolean): ChestPlan | null {
-  if (node.kind !== 'combat' && node.kind !== 'ambush') return null;
+  // Wave Rush rooms have no chests (D401)
+  if ((node.kind !== 'combat' && node.kind !== 'ambush') || layout.rush) return null;
   const rng = stream(layout.seed, `chest:${layout.zone}:${layout.cycle}:${node.id}`);
   const roll = rng.chance(SMALL_CHEST_RATE);
   if (!roll && !node.bonusChest) return null;

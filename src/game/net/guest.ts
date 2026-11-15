@@ -14,10 +14,11 @@ import { hitPlayer } from '../combat/damage';
 import { shapeHit } from '../combat/patterns';
 import { guestZoneBeaten } from '../save/coopProgress';
 import { generateZone, type ZoneLayout } from '../procgen/zone';
+import { rushLayout } from '../waveRush';
 import { Room } from '../room';
 import { HOST_RUN_STATES, LOCAL_ID_BASE, World, type Entity, type EType, type PlayerState } from '../world';
 import { applyCharOp, cloneChar, type CharOp } from './charSync';
-import { CH, SNAP_HZ, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
+import { CH, SNAP_HZ, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type RushWhere, type Welcome } from './protocol';
 import { HostClock } from './clock';
 import { ARCANE_ORB_SPIN } from '../enemies/ai';
 import { CONTROL_BITS, ENEMY_STATES, ETYPES, F, ORB_BASE, ORB_STEPS, PLAYER_STATES, POSES, STATUS_BITS, decodeSnap, fromB64, type EntityMeta, type Rec, type RoomSync, type SelfState } from './snapshot';
@@ -74,6 +75,8 @@ export class NetGuest {
   /** the mirror world the guest draws, where its own body runs */
   cw = World.mirror();
   layout: ZoneLayout | null = null;
+  /** the host's Wave Rush stage and boss (D401), or null in the campaign */
+  rush: RushWhere | null = null;
   me: Entity | null = null;
   /** minimap data from the host */
   visited: string[] = [];
@@ -223,7 +226,7 @@ export class NetGuest {
     this.state = 'game';
     this.resetWorld();
     this.hostClock.reset(wm.time, this.clock());
-    this.buildLayout(wm.seed, wm.zone, wm.cycle, wm.layoutOpts);
+    this.buildLayout(wm.seed, wm.zone, wm.cycle, wm.layoutOpts, wm.rush);
     this.onWelcome();
   }
 
@@ -252,14 +255,17 @@ export class NetGuest {
     this.recSn.clear();
   }
 
-  private buildLayout(seed: string, zone: number, cycle: number, o: { tutorial: boolean; fewSpells: boolean }): void {
-    this.layout = generateZone(seed, zone, { cycle, tutorial: o.tutorial, fewSpells: o.fewSpells });
+  private buildLayout(seed: string, zone: number, cycle: number, o: { tutorial: boolean; fewSpells: boolean }, rush?: RushWhere): void {
+    // a Wave Rush stage is one room (or the boss's arena), built the way the host built it (D401)
+    this.layout = rush ? rushLayout(seed, rush.stage, cycle, rush.boss) : generateZone(seed, zone, { cycle, tutorial: o.tutorial, fewSpells: o.fewSpells });
+    this.rush = rush ?? null;
     this.cw.zone = zone;
     this.cw.cycle = cycle;
+    this.cw.rush = !!rush;
   }
 
   private onNetEvent(e: NetEvent): void {
-    if (e.t === 'zone') this.buildLayout(e.seed, e.zone, e.cycle, e.layoutOpts);
+    if (e.t === 'zone') this.buildLayout(e.seed, e.zone, e.cycle, e.layoutOpts, e.rush);
     if (e.t === 'toLobby') {
       this.state = 'lobby';
       this.resetWorld();

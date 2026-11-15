@@ -4,8 +4,9 @@ import { CLASS_IDS } from '../../data/classes';
 import { sanitizeAppearance } from '../../data/appearance';
 import { dedupeItemIds } from '../items/inventory';
 import { normalizePadLayout } from '../../engine/padProfile';
+import { newRushRecord, normalizeRushRecord } from '../rushRecord';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const SLOT_COUNT = 10;
 
 export function newWorldState(seed: string, zone = 1): WorldState {
@@ -42,6 +43,7 @@ export function newSave(slot: number, character: Character, seed: string, now = 
     character,
     world: newWorldState(seed),
     stats: { deaths: 0, kills: 0, bossKills: 0, playtimeSec: 0, elitesKilled: 0, mimicsKilled: 0, mimicDeaths: 0 },
+    rush: newRushRecord(),
   };
 }
 
@@ -134,6 +136,8 @@ export function normalizeSave(s: SaveFile): SaveFile {
     if (ex && typeof ex === 'object' && !Array.isArray(ex)) for (const [k, v] of Object.entries(ex)) if (typeof v === 'number' && Number.isFinite(v) && v >= 0) clean[k] = v;
     s.stats.extra = clean;
   }
+  // Wave Rush (D409): numbers only, every field there
+  s.rush = normalizeRushRecord(s.rush);
   // optional: saves from before the character creator's appearance keep the class look
   if (c.appearance !== undefined) c.appearance = sanitizeAppearance(c.appearance, c.classId);
   return s;

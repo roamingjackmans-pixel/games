@@ -40,6 +40,7 @@ import { startPhaseSummons, tickPhaseSummons } from './boss/summons';
 import { spawnHazard } from './systems/hazards';
 import type { BossDef, Character, EliteAffix, SaveFile } from './types';
 import { autoQuickSlot, uniqueItemId } from './items/inventory';
+import { RUSH_ARM_S, RUSH_BOSS_STAGE, fmtRushTime, newRushRecord, normalizeRushRecord, noteRushClear, noteRushStage, pickRushBoss, rushBossDmgMult, rushBossHpBase, rushLayout, rushSeed, type RushRun } from './waveRush';
 
 /** A revived player is invulnerable this long (D12, D376), on every screen: a guest's own body gets it with the revive. */
 export const REVIVE_INVULN_S = 2;
@@ -65,6 +66,22 @@ export interface SessionListener {
   newCycle?(): void;
   /** a player talks to Gary */
   gary?(p: Entity): void;
+  /** Wave Rush (GAME_DESIGN §24): an attempt began, a stage was reached, a room cleared, a cycle cleared, the party died */
+  rush?(e: RushEvent): void;
+}
+
+/** What happened in a Wave Rush, for the scene (banners, the unlock, saving) and the host's guests (their own records). */
+export interface RushEvent {
+  kind: 'try' | 'stage' | 'room' | 'cleared' | 'death';
+  cycle: number;
+  stage: number;
+  /** 'cleared': seconds from room 1 to the boss falling */
+  sec?: number;
+}
+
+/** How a session starts: the campaign (the save's world), or a Wave Rush at a 0-based cycle (D401). */
+export interface SessionOpts {
+  rushCycle?: number;
 }
 
 /**
@@ -138,13 +155,31 @@ export class GameSession {
   private guardSpawned = false;
   /** when each player may next hear "Revive X first!" (entity id → world time) */
   private reviveNagAt = new Map<number, number>();
+  /** Wave Rush (D401): the attempt in progress, or null in the campaign */
+  rush: RushRun | null = null;
+  /** the cycle a Wave Rush session starts in (null: the campaign) */
+  readonly rushStart: number | null;
+  /** the campaign world's seed, which seeds every Wave Rush attempt */
+  private readonly baseSeed: string;
+  /** when a Wave Rush room's first wave comes */
+  private rushArmAt = 0;
+  private rushTimeAcc = 0;
 
-  constructor(save: SaveFile, listener: SessionListener = {}) {
+  constructor(save: SaveFile, listener: SessionListener = {}, opts: SessionOpts = {}) {
+    this.baseSeed = save.world.seed;
+    this.rushStart = opts.rushCycle !== undefined ? Math.max(0, Math.floor(opts.rushCycle)) : null;
+    if (this.rushStart !== null) {
+      // Wave Rush plays in a world of its own: the character, its statistics and its record are the save's own, the
+      // campaign's world is never touched (D401). The scene saves the real save.
+      save.rush = normalizeRushRecord(save.rush);
+      save = { ...save, world: newWorldState(rushSeed(save.world.seed, this.rushStart, 0)) };
+    }
     this.save = save;
     this.listener = listener;
     this.w = new World(save.world.seed);
     this.w.zone = save.world.zone;
-    this.w.cycle = save.character.cycle;
+    this.w.cycle = this.rushStart ?? save.character.cycle;
+    this.w.rush = this.rushStart !== null;
     installRules(this.w, {
       onDrops: (w, e, killer) => lootHooks.enemyDrops(this, e, killer),
       onPlayerDown: (w, p) => this.onPlayerDown(p),
@@ -257,7 +292,19 @@ export class GameSession {
 
   // ------------------------------------------------------------------ zones and rooms
 
+  /** The cycle this session plays at: the character's, or the Wave Rush's (D401). */
+  get cycle(): number {
+    return this.rush?.cycle ?? this.rushStart ?? this.save.character.cycle;
+  }
+
+  /** The zone loot is rolled for: a Wave Rush boss pays like the final boss (zone 8, D404). */
+  get lootZone(): number {
+    return this.rush && this.rush.stage >= RUSH_BOSS_STAGE ? 8 : this.layout.zone;
+  }
+
   layoutFor(zone: number): ZoneLayout {
+    const r = this.rush;
+    if (r) return rushLayout(r.seed, r.stage, r.cycle, r.bossId);
     const c = this.save.character;
     const tutorial = zone === 1 && c.cycle === 0 && !c.tutorialDone;
     const fewSpells = c.knownSpells.length < 2;
@@ -266,6 +313,10 @@ export class GameSession {
 
   /** Start (or resume) the run: tutorial hall for new characters, else the saved respawn bonfire. */
   start(): void {
+    if (this.rushStart !== null) {
+      this.beginRushAttempt(this.rushStart);
+      return;
+    }
     const ws = this.save.world;
     // zones beaten as a guest in a zone this world had reached open the next ones here (D195)
     applyCoopProgress(this.save);
@@ -298,7 +349,7 @@ export class GameSession {
     w.roomMods = { floodUntil: 0, floodSlow: 0.15, dark: 0, enrageUntil: 0, lateFeeUntil: 0, lightningBonusUntil: 0 };
     w.bossId = 0;
     w.zone = this.layout.zone;
-    w.cycle = this.save.character.cycle;
+    w.cycle = this.cycle;
     w.specialBudget = w.zone <= 3 ? 2 : 3;
     const built = buildRoom(this.layout, node, node.kind === 'boss' ? this.bossDef?.arenaId : undefined);
     w.room = built.room;
@@ -327,6 +378,8 @@ export class GameSession {
       this.plan = planRoom(this.layout, node, this.players.length);
       this.roomPhase = 'armed';
       this.lockAt = node.kind === 'ambush' ? w.time : 0;
+      // a Wave Rush room has no door to walk through: its first wave comes a moment after the party arrives
+      this.rushArmAt = w.time + RUSH_ARM_S;
     }
     this.spawnRoomContent(node, built.markers, cleared);
     this.applyDoorLocks();
@@ -419,6 +472,7 @@ export class GameSession {
 
   /** This zone's boss (CONTENT_ENEMIES §11). */
   get bossDef(): BossDef | null {
+    if (this.rush) return BOSSES[this.rush.bossId] ?? null;
     return BOSSES[zoneDef(this.layout.zone).boss] ?? null;
   }
 
@@ -426,7 +480,7 @@ export class GameSession {
 
   private bossReliquaryRolled(): boolean {
     const c = this.save.character;
-    return stream(this.layout.seed, `bossReliquary:${this.layout.zone}:${c.cycle}`).chance(BOSS_RELIQUARY_CHANCE);
+    return !this.rush && stream(this.layout.seed, `bossReliquary:${this.layout.zone}:${c.cycle}`).chance(BOSS_RELIQUARY_CHANCE);
   }
 
   private setupBossRoom(m: RoomMarkers): void {
@@ -441,7 +495,15 @@ export class GameSession {
     }
     const zd = zoneDef(this.layout.zone);
     const [bx, by] = m.boss ?? [640, 300];
-    const e = spawnEnemy(w, def, bx, by, { tellS: BOSS_INTRO_S, zone: this.layout.zone, zoneResist: zd.resist, zoneImmune: zd.statusImmune });
+    const rush = !!this.rush;
+    // a Wave Rush boss fights at zone 8's strength and hits like the Landlord (D404)
+    const e = spawnEnemy(w, def, bx, by, { tellS: BOSS_INTRO_S, zone: rush ? 8 : this.layout.zone, zoneResist: zd.resist, zoneImmune: zd.statusImmune, ...(rush ? { dmgMult: rushBossDmgMult(def) } : {}) });
+    if (rush && e.en && e.hp && !def.traits?.fixedHp && !def.traits?.invincible) {
+      // ... and its whole fight takes as much HP to win as that cycle's Landlord's (D404); a party rescale keeps it
+      e.en.hpScaleBase = rushBossHpBase(def, this.cycle);
+      e.hp.max = Math.max(1, e.en.hpScaleBase * coopHpMult(w.playerCount, true) * (e.en.barMult ?? 1));
+      e.hp.hp = e.hp.max;
+    }
     w.bossId = e.id;
     w.refreshLists();
     this.roomPhase = 'boss';
@@ -474,6 +536,10 @@ export class GameSession {
   private spawnBossLeftovers(m: RoomMarkers): void {
     const w = this.w;
     const ws = this.save.world;
+    if (this.rush) {
+      this.spawnRushExit();
+      return;
+    }
     const [sx, sy] = m.stairs ?? [640, 380];
     if (this.layout.zone < 8) w.spawn('interact', sx, sy, { radius: 26, drawId: 'stairs', it: { kind: 'stairs', key: `z${this.layout.zone}-stairs`, label: 'Descend', used: false, holdS: 0 } });
     else {
@@ -503,6 +569,31 @@ export class GameSession {
     const ws = this.save.world;
     if (!ws.bossesBeatenThisCycle.includes(this.layout.zone)) ws.bossesBeatenThisCycle.push(this.layout.zone);
     const z = this.layout.zone;
+    // a Wave Rush boss is not campaign progress (D401): no zone beaten, no Thermos upgrade, nothing for the guests' worlds
+    if (!this.rush) this.campaignBossKilled(z);
+    this.bossCleanup(e);
+    if (this.rush) this.rushCleared(def, e);
+    else {
+      lootHooks.boss(this, e.x, e.y, def.id);
+      w.emit({ t: 'levelBanner', text: 'BOSS DEFEATED', sub: def.name });
+    }
+    w.emit({ t: 'shake', amount: 14 });
+    w.sfx('bossRoar', e.x, 0.8, 0.6);
+    const m = this.markers;
+    const node = this.node;
+    w.schedule(2, () => {
+      if (this.node !== node) return;
+      this.spawnBossLeftovers(m);
+      this.applyDoorLocks();
+      w.sfx('doorOpen');
+    });
+    this.listener.bossDefeated?.(def);
+    this.listener.autosave?.('boss');
+  }
+
+  /** What a zone's boss falling means for the campaign: the party's progress, the Thermos, the guests' worlds (D195). */
+  private campaignBossKilled(z: number): void {
+    const ws = this.save.world;
     this.listener.zoneBeaten?.(z);
     for (const sp of this.players) {
       const c = sp.char;
@@ -518,7 +609,12 @@ export class GameSession {
       ws.respawnBonfireId = 'z8-boss';
       if (!ws.bonfiresDiscovered.includes('z8-boss')) ws.bonfiresDiscovered.push('z8-boss');
     }
-    // the court leaves with its king
+  }
+
+  /** A boss is down: the court leaves with its king, its telegraphs and arena hazards go out with it, the room is won. */
+  private bossCleanup(e: Entity): void {
+    const w = this.w;
+    const ws = this.save.world;
     for (const o of w.livingEnemies()) {
       if (o === e) continue;
       o.en!.quietDeath = true;
@@ -544,20 +640,6 @@ export class GameSession {
     this.sweepEnemyLeftovers();
     if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
     w.emit({ t: 'stat', key: 'roomsCleared', playerId: '' });
-    lootHooks.boss(this, e.x, e.y, def.id);
-    w.emit({ t: 'levelBanner', text: 'BOSS DEFEATED', sub: def.name });
-    w.emit({ t: 'shake', amount: 14 });
-    w.sfx('bossRoar', e.x, 0.8, 0.6);
-    const m = this.markers;
-    const node = this.node;
-    w.schedule(2, () => {
-      if (this.node !== node) return;
-      this.spawnBossLeftovers(m);
-      this.applyDoorLocks();
-      w.sfx('doorOpen');
-    });
-    this.listener.bossDefeated?.(def);
-    this.listener.autosave?.('boss');
   }
 
   private spawnRoomContent(node: RoomNode, m: RoomMarkers, cleared: boolean): void {
@@ -638,7 +720,7 @@ export class GameSession {
     const g = spawnEnemy(w, GARY, x, y, { tellS: 0.05, zone: this.layout.zone });
     g.facing = Math.PI / 2;
     w.spawn('interact', x, y, { radius: 34, drawId: '', it: { kind: 'gary', key: 'gary', label: 'Trade', used: false, holdS: 0, data: { garyId: g.id } } });
-    garyStock(this.save.world, this.layout.zone, this.save.character.cycle);
+    garyStock(this.save.world, this.layout.zone, this.cycle);
   }
 
   private garyHit(gary: Entity): void {
@@ -682,6 +764,14 @@ export class GameSession {
       this.save.stats.playtimeSec += Math.floor(this.playtimeAcc);
       this.playtimeAcc -= Math.floor(this.playtimeAcc);
     }
+    if (this.rush) {
+      this.rushTimeAcc += dt;
+      if (this.rushTimeAcc >= 1) {
+        const n = Math.floor(this.rushTimeAcc);
+        this.save.rush!.timeSec += n;
+        this.rushTimeAcc -= n;
+      }
+    }
     if (this.dead) return;
     if (this.roomPhase === 'boss' || this.roomPhase === 'fighting') {
       const b = w.get(w.bossId);
@@ -693,7 +783,7 @@ export class GameSession {
       // any player stepping in arms it (D151): it used to watch only the first player (the host), so a guest who
       // walked in first could cross the room, or leave by another door, before a single enemy appeared
       const players = w.livingPlayers();
-      const inside = players.length > 0 && (this.plan.ambush || players.some((p) => dist(p.x, p.y, this.entry[0], this.entry[1]) > 70));
+      const inside = players.length > 0 && (this.plan.ambush || (this.layout.rush ? now >= this.rushArmAt : players.some((p) => dist(p.x, p.y, this.entry[0], this.entry[1]) > 70)));
       if (inside) {
         this.roomPhase = 'fighting';
         this.applyDoorLocks();
@@ -798,7 +888,7 @@ export class GameSession {
     const w = this.w;
     if (!def) return;
     const zd = zoneDef(this.layout.zone);
-    const cyc = this.save.character.cycle;
+    const cyc = this.cycle;
     const here = this.layout.zone;
     // it hits like the room's zone boss, so its own zone's NG+ boss damage trim (D362) is swapped for this room's
     const dmgFix = ((enemyDmgMult(here, cyc) * zoneDmgFactor(here)) / (enemyDmgMult(def.zone, cyc) * zoneDmgFactor(def.zone))) * (ngBossDmgTrim(here, cyc) / ngBossDmgTrim(def.zone, cyc));
@@ -892,6 +982,12 @@ export class GameSession {
     this.applyDoorLocks();
     w.sfx('doorOpen');
     w.emit({ t: 'msg', text: 'Room cleared.', color: '#a9b7a0' });
+    if (this.rush) {
+      this.save.rush!.roomsCleared++;
+      this.listener.rush?.({ kind: 'room', cycle: this.rush.cycle, stage: this.rush.stage });
+      this.spawnRushExit();
+      this.listener.autosave?.('room');
+    }
     // no reward chest: a room's chest (if it has one) was already standing there when you came in (D93)
     // dropped Shards are granted instantly; items stay until the room is left (PROCGEN §4)
   }
@@ -1274,6 +1370,18 @@ export class GameSession {
     const c = this.save.character;
     this.dead = true;
     this.w.paused = true;
+    if (this.rush) {
+      // Wave Rush (D406): nothing is lost and there are no Shards; the party starts the cycle again from room 1
+      const rec = this.save.rush!;
+      rec.deaths++;
+      stats().note({ k: 'death', by: this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id });
+      this.deathLine = DEATH_LINES[(rec.deaths + rec.tries) % DEATH_LINES.length]!;
+      this.w.sfx('death');
+      this.listener.rush?.({ kind: 'death', cycle: this.rush.cycle, stage: this.rush.stage });
+      this.listener.playerDied?.(p);
+      this.listener.autosave?.('death');
+      return;
+    }
     this.save.stats.deaths++;
     if (this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id === INSTRUCTOR.id) this.save.stats.instructorDeaths = (this.save.stats.instructorDeaths ?? 0) + 1;
     achievements().note({ k: 'death', by: this.w.get(p.hp?.lastHitBy ?? 0)?.en?.def.id });
@@ -1332,6 +1440,12 @@ export class GameSession {
       }
     }
     this.downs = {};
+    if (this.rush) {
+      // back to room 1 of the cycle, a new attempt (D406)
+      this.beginRushAttempt(this.rush.cycle);
+      this.listener.autosave?.('respawn');
+      return;
+    }
     ws.roomsCleared = ws.roomsCleared.filter((id) => this.layout.byId[id]?.kind === 'boss');
     if (this.layout.tutorialId && !this.save.character.tutorialDone) {
       // the Instructor floored you (D90): you wake at the first bonfire, past him, tutorial done
@@ -1347,6 +1461,13 @@ export class GameSession {
 
   /** Go down the stairs to the next zone (M8 wires the boss room's stairs). */
   descend(): void {
+    const r = this.rush;
+    if (r) {
+      // the next zone's room, the boss after the 8th, the next cycle after the boss (D401)
+      if (r.stage < RUSH_BOSS_STAGE) this.gotoRushStage(r.stage + 1);
+      else this.beginRushAttempt(r.cycle + 1);
+      return;
+    }
     const ws = this.save.world;
     const next = ws.zone + 1;
     if (next > 8) return;
@@ -1375,6 +1496,78 @@ export class GameSession {
     const room = m[2] === 'start' ? this.layout.startId : this.layout.anteroomId;
     this.enterRoom(room, 'bonfire', z !== this.w.zone);
     return true;
+  }
+
+  // ------------------------------------------------------------------ Wave Rush (GAME_DESIGN §24)
+
+  /** A new attempt at a cycle (D401): room 1, a new map seed and a new boss (D403); the cycle clock starts. */
+  beginRushAttempt(cycle: number): void {
+    const rec = (this.save.rush ??= newRushRecord());
+    rec.tries++;
+    const seed = rushSeed(this.baseSeed, cycle, rec.tries);
+    this.rush = { cycle, stage: 1, attempt: rec.tries, startedAt: this.w.time, bossId: pickRushBoss(seed, cycle), seed };
+    // the shop keeps its stock (and what was bought from it) through the whole Wave Rush (D402)
+    const shop = this.save.world.shopStock;
+    this.save.world = newWorldState(seed);
+    this.save.world.shopStock = shop;
+    this.downs = {};
+    this.listener.rush?.({ kind: 'try', cycle, stage: 1 });
+    this.gotoRushStage(1);
+  }
+
+  /** The party goes to a stage of the attempt: a zone's room (1–8) or the boss (9). */
+  gotoRushStage(stage: number): void {
+    const r = this.rush;
+    if (!r) return;
+    r.stage = Math.max(1, Math.min(RUSH_BOSS_STAGE, stage));
+    const ws = this.save.world;
+    this.layout = this.layoutFor(0);
+    ws.zone = this.layout.zone;
+    ws.roomsCleared = [];
+    ws.respawnBonfireId = this.layout.startId;
+    noteRushStage(this.save.rush!, r.cycle, r.stage);
+    this.listener.rush?.({ kind: 'stage', cycle: r.cycle, stage: r.stage });
+    // a room: the party in the middle; the boss's arena: in from its south side, as a door would bring them
+    this.enterRoom(this.layout.startId, r.stage >= RUSH_BOSS_STAGE ? 's' : 'start', true);
+    this.listener.autosave?.('zone');
+  }
+
+  /** A room won (or the boss down): a bonfire to rest at and the stairs on (D401). */
+  private spawnRushExit(): void {
+    const r = this.rush;
+    if (!r) return;
+    const w = this.w;
+    if ([...w.entities.values()].some((e) => e.it?.key === `wr-stairs-${r.stage}` && !e.removed)) return;
+    const boss = r.stage >= RUSH_BOSS_STAGE;
+    // on plain floor: never in a pit, a wall or a patch of hazardous ground, the stairs beside the fire
+    const clear = (x: number, y: number, rad: number): [number, number] => {
+      for (let d = 0; d <= 320; d += 16) {
+        for (let k = 0; k < Math.max(1, Math.round(d / 8)); k++) {
+          const a = (k / Math.max(1, Math.round(d / 8))) * Math.PI * 2;
+          const [fx, fy] = w.room.nearestFloor(x + Math.cos(a) * d, y + Math.sin(a) * d, rad);
+          if (!w.room.isHazardAt(fx, fy) && [-rad, 0, rad].every((o) => w.room.terrainAt(fx + o, fy) === TERRAIN.None)) return [fx, fy];
+        }
+      }
+      return w.room.nearestFloor(x, y, rad);
+    };
+    const [bx, by] = clear(boss ? 560 : 580, boss ? 420 : 368, 20);
+    const [sx, sy] = clear(bx + 120, by, 26);
+    w.spawn('interact', bx, by, { radius: 20, drawId: 'bonfire', it: { kind: 'bonfire', key: `wr-${r.stage}`, label: 'Rest', used: false, holdS: 0, data: { unlit: false } } });
+    const label = boss ? `On to Cycle ${r.cycle + 2}` : r.stage >= RUSH_BOSS_STAGE - 1 ? 'Face the boss' : 'Descend';
+    w.spawn('interact', sx, sy, { radius: 26, drawId: 'stairs', it: { kind: 'stairs', key: `wr-stairs-${r.stage}`, label, used: false, holdS: 0 } });
+    w.refreshLists();
+  }
+
+  /** The cycle's boss fell (D405, D406): a checkpoint, a best time, and a boss chest's loot at zone 8's level. */
+  private rushCleared(def: BossDef, e: Entity): void {
+    const r = this.rush!;
+    const w = this.w;
+    const sec = Math.max(0, w.time - r.startedAt);
+    noteRushClear(this.save.rush!, r.cycle, sec);
+    lootHooks.boss(this, e.x, e.y, def.id);
+    w.emit({ t: 'levelBanner', text: `CYCLE ${r.cycle + 1} CLEARED`, sub: `${def.name} · ${fmtRushTime(sec)}` });
+    w.emit({ t: 'msg', text: `Checkpoint: Cycle ${r.cycle + 1} cleared. The next one is open to every character.`, color: '#ffd27a' });
+    this.listener.rush?.({ kind: 'cleared', cycle: r.cycle, stage: r.stage, sec });
   }
 
   // ------------------------------------------------------------------ mimics

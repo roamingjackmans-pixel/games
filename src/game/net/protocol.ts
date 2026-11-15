@@ -95,6 +95,14 @@ export interface LobbyState {
   zone: number;
   /** the host's friendly-fire percent (0–200), which the whole party plays by (D115; absent from older hosts: 100) */
   ff?: number;
+  /** the host's pick (D401): a Wave Rush from this 0-based cycle; absent: the campaign in the host's world */
+  rush?: number;
+}
+
+/** Where a Wave Rush stands, for a guest to build the same map (one room, or the boss's arena). */
+export interface RushWhere {
+  stage: number;
+  boss: string;
 }
 
 /** Everything a guest needs to enter the host's world. */
@@ -106,6 +114,8 @@ export interface Welcome {
   layoutOpts: { tutorial: boolean; fewSpells: boolean };
   time: number;
   slot: number;
+  /** a Wave Rush (D401): its stage and boss; absent in the campaign */
+  rush?: RushWhere;
 }
 
 /** Guest commands that touch the shared world (NETCODE §3 cmd). */
@@ -114,7 +124,7 @@ export type Cmd = { op: 'leave' } | { op: 'fullPlease' } | { op: 'chat'; text: s
 /** Reliable host → guest events beyond the per-snapshot world events. */
 export type NetEvent =
   | { t: 'bonfire'; id: string; first: boolean }
-  | { t: 'zone'; zone: number; seed: string; cycle: number; layoutOpts: { tutorial: boolean; fewSpells: boolean } }
+  | { t: 'zone'; zone: number; seed: string; cycle: number; layoutOpts: { tutorial: boolean; fewSpells: boolean }; rush?: RushWhere }
   | { t: 'died' }
   | { t: 'wipe' }
   | { t: 'toLobby' }
@@ -124,7 +134,9 @@ export type NetEvent =
   /** a zone's boss fell in the host's world: each guest's own world decides what it keeps (D195) */
   | { t: 'zoneBeaten'; zone: number; cycle: number }
   /** this guest opened Gary's cart in the host's world (D396): its own cart, from its own world, for its own Glowen */
-  | { t: 'gary'; zone: number; cycle: number };
+  | { t: 'gary'; zone: number; cycle: number }
+  /** Wave Rush (D408): what happened, so each guest keeps its own record and its own browser's unlock */
+  | { t: 'rush'; kind: 'try' | 'stage' | 'room' | 'cleared' | 'death'; cycle: number; stage: number; sec?: number };
 
 // ---------------------------------------------------------------- input packet (NETCODE §3)
 // seq u16, moveX i8, moveY i8, aimX i16, aimY i16, buttons u16, pressed u16, tick u32, flags u8 = 17 bytes

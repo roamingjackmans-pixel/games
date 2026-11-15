@@ -21,6 +21,7 @@ Everything lives in `localStorage` (or an in-memory fallback when storage is blo
 | `dj.settings` | `Settings` (§5); the **default** controller layout only (a character's own is in its save, D266) | `engine/settings.ts`, `engine/padProfile.ts` |
 | `dj.achievements` | `{ v, unlocked: id → time, counters }`, account-wide | `game/achievements.ts` |
 | `dj.stats` | account-wide Statistics counters `{ v, c }` | `game/stats.ts` |
+| `dj.waveRush` | `{ best }`: the highest Wave Rush cycle (0-based) any character on this browser has cleared, -1 none; runs start at any cycle up to `best + 1` (D405) | `game/waveRush.ts` |
 | `dj.friends` | `{ v: 1, me, appearOnline, list: { code, name, added }[] }`: this browser's friend code and its friends (D339, max 30) | `game/save/friends.ts` |
 
 Export / import: one save as a `<name>-slot<n>.dungeonjoe.json` file (`game/save/exportImport.ts`). Import migrates,
@@ -28,7 +29,7 @@ validates and refuses versions newer than the game.
 
 ### 1.2 The save file
 
-`SAVE_VERSION = 3`. Loading always runs, in order: `migrate()` (version steps, then `untierSave`), `validateSave()`
+`SAVE_VERSION = 4`. Loading always runs, in order: `migrate()` (version steps, then `untierSave`), `validateSave()`
 (refuses a broken file), `normalizeSave()` (fills fields added since, clamps values). A field added later is
 **optional or defaulted in `normalizeSave`**, so it needs no version bump; bump the version only when an old shape
 must be rewritten, and add a `MIGRATIONS` entry in `save/migrations.ts`.
@@ -40,8 +41,20 @@ interface SaveFile {
   world: WorldState;
   stats: SaveStats;
   pending?: { advanceToZone?: number; beatenZones?: number[] };   // co-op progress for the next Continue (D195)
+  rush?: RushRecord;   // Wave Rush (D408, D409): always there from version 4, normalised on load
+}
+
+interface RushRecord {          // cycles 0-based; GAME_DESIGN §24
+  tries: number; deaths: number; cleared: number; roomsCleared: number; timeSec: number;
+  best: Record<string, number>;  // cycle → best seconds, room 1 to the boss falling
+  bestCycle: number;             // highest cycle cleared, -1 none
+  furthestCycle: number;         // -1 never played
+  furthestStage: number;         // 1–8 rooms, 9 the boss, 10 cleared
 }
 ```
+
+A Wave Rush is played in a `WorldState` of its own (`GameSession` builds it; never saved): the save's `world` is the
+campaign's and a Wave Rush never changes it.
 
 ### 1.3 Character
 
@@ -94,8 +107,9 @@ interface SaveFile {
 | 0 → 1 | `leftBehind`, `altMain`, `freePoints`, `quickSlot`, visited / discovered lists |
 | 1 → 2 | Stardust → Glowen, Stamina → Endurance, renamed items and affixes (D80, D82, D83) |
 | 2 → 3 | a gem is a list of perks (`{family, tier}` → `{perks: [...]}`) |
+| 3 → 4 | an empty Wave Rush record `rush` (D409) |
 | every load | `untierSave` (D284): a perk that still has an old tier folds it into its quality roll; tier-less perks are left alone |
-| every load (`normalizeSave`) | `altOff`, `ring3`, `ring4` (D228), `essence` clamp, `plus` 0–15, duplicate item ids (D232), `pad`, `stats.extra`, `appearance` |
+| every load (`normalizeSave`) | `altOff`, `ring3`, `ring4` (D228), `essence` clamp, `plus` 0–15, duplicate item ids (D232), `pad`, `stats.extra`, `appearance`, `rush` (numbers only, every field there) |
 
 ## 2. Items and gems
 

@@ -63,6 +63,8 @@ export interface BonfireView {
   close(): void;
   /** open on this tab (its key), or the first / last tab before Inventory (LB / RB coming back from the inventory, D169) */
   startTab?: string | undefined;
+  /** tabs this bonfire leaves out (Wave Rush: Level up and Warp, D402) */
+  hideTabs?: string[];
 }
 
 const STATS: { id: StatId; label: string; what: string }[] = [
@@ -87,8 +89,9 @@ export function openBonfire(v: BonfireView): HTMLElement {
   root.setAttribute('data-testid', 'bonfire-menu');
   const panel = h('div', { class: 'panel', style: 'width:1200px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(panel);
-  const tabKeys = ['level', 'gems', 'weapons', 'reinforce', 'shop', 'warp', 'bestiary', ...(v.extraTabs ?? []).map((t) => t.label)];
-  let tab = v.startTab === 'last' ? tabKeys[tabKeys.length - 1]! : v.startTab && v.startTab !== 'first' && tabKeys.includes(v.startTab) ? v.startTab : 'level';
+  const hidden = new Set(v.hideTabs ?? []);
+  const tabKeys = ['level', 'gems', 'weapons', 'reinforce', 'shop', 'warp', 'bestiary', ...(v.extraTabs ?? []).map((t) => t.label)].filter((k) => !hidden.has(k));
+  let tab = v.startTab === 'last' ? tabKeys[tabKeys.length - 1]! : v.startTab && v.startTab !== 'first' && tabKeys.includes(v.startTab) ? v.startTab : tabKeys[0]!;
   let selItem: string | null = null;
   /** the empty socket picked on the selected item (D227): a gem goes there, not just into the first free one */
   let selSocket = -1;
@@ -965,6 +968,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
       ...(v.extraTabs ?? []).map((t) => ({ key: t.label, label: t.label, fn: (el: HTMLElement) => t.render(el, render) })),
     ];
     for (const d of defs) {
+      if (hidden.has(d.key)) continue;
       const b = btn(d.label, () => {
         tab = d.key;
         fuse = null;
@@ -984,7 +988,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     tabHints(tabs);
     tabs.appendChild(h('div', { class: 'grow' }));
     tabs.appendChild(btn('Leave', () => leave(() => v.close()), 'primary'));
-    panel.appendChild(h('div', { class: 'row' }, h('h2', { class: 'grow', style: 'margin:0' }, 'Bonfire'), h('div', { class: 'good' }, v.firstRest ? 'You rest. HP and Thermos restored.' : 'You rest. HP and Thermos restored. Enemies have returned.')));
+    panel.appendChild(h('div', { class: 'row' }, h('h2', { class: 'grow', style: 'margin:0' }, 'Bonfire'), h('div', { class: 'good' }, v.firstRest || hidden.has('warp') ? 'You rest. HP and Thermos restored.' : 'You rest. HP and Thermos restored. Enemies have returned.')));
     panel.appendChild(tabs);
     const content = h('div', { style: 'flex:1;overflow:auto', 'data-focus-group': `tab-${tab}` });
     defs.find((d) => d.key === tab)?.fn?.(content);

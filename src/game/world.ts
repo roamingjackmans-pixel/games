@@ -725,6 +725,8 @@ export class World {
   room: Room;
   zone = 1;
   cycle = 0;
+  /** Wave Rush (GAME_DESIGN §24): enemies carry no Shards and campaign-only achievements are not earned here */
+  rush = false;
   /** number of players for HP scaling */
   playerCount = 1;
   hooks: WorldHooks = {};

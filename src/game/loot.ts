@@ -4,7 +4,7 @@ import type { GameSession } from './session';
 import { bossDrops, chestDrops, enemyDrops, instructorDrops, reliquaryDrops, type DropContext } from './items/drops';
 
 function ctx(s: GameSession): DropContext {
-  return { w: s.w, seed: s.save.world.seed, zone: s.layout.zone, cycle: s.save.character.cycle };
+  return { w: s.w, seed: s.save.world.seed, zone: s.lootZone, cycle: s.cycle };
 }
 
 lootHooks.enemyDrops = (s, e) => enemyDrops(ctx(s), e);

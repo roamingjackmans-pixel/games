@@ -19,7 +19,8 @@ import { drawMap, drawMinimap } from '../../ui/minimap';
 import { drawInteractable } from '../../render/interactables';
 import { drawPartyCards } from '../../ui/party';
 import { WorldScene } from './worldScene';
-import { GameSession, beginNextCycle } from '../session';
+import { GameSession, beginNextCycle, type RushEvent } from '../session';
+import { RUSH_BOSS_STAGE, fmtRushTime, noteRushUnlock, rushStageLabel } from '../waveRush';
 import { buyFromGary, garyStock } from '../bonfire/gary';
 import type { NetHost } from '../net/host';
 import { writeSave } from '../save/storage';
@@ -56,7 +57,7 @@ export class RunScene extends WorldScene {
   readonly name = 'run';
   session: GameSession;
   private fade = 0;
-  private title: { zone: number; names: string[]; until: number } | null = null;
+  private title: { zone: number; names: string[]; until: number; sub?: string } | null = null;
   private bossCard: { def: BossDef; until: number } | null = null;
   private bossSeeds = new Map<string, MusicSeed>();
   private signText: string | null = null;
@@ -77,9 +78,11 @@ export class RunScene extends WorldScene {
   constructor(
     public save: SaveFile,
     public net: NetHost | null = null,
+    opts: { rushCycle?: number } = {},
   ) {
     super();
     this.session = new GameSession(save, {
+      rush: (e) => this.onRush(e),
       roomEntered: (node) => {
         this.fade = 1;
         this.updateMusic();
@@ -111,8 +114,8 @@ export class RunScene extends WorldScene {
       bossPhase: (def, phase) => music.play('boss', this.bossSeed(def), phase + 1),
       bossDefeated: (def) => {
         music.play('off', null);
-        // the defeat lines start once the boss has finished exploding
-        if (cutscenesEnabled()) this.pendingDefeat = { def, zone: this.session.layout.zone, at: performance.now() / 1000 + 1.1 };
+        // the defeat lines start once the boss has finished exploding (not in Wave Rush, which keeps moving: D410)
+        if (cutscenesEnabled() && !this.session.rush) this.pendingDefeat = { def, zone: this.session.layout.zone, at: performance.now() / 1000 + 1.1 };
       },
       credits: () => {
         achievements().note({ k: 'credits' });
@@ -140,7 +143,7 @@ export class RunScene extends WorldScene {
         }
         runHooks.newCycle?.(this.save);
       },
-    });
+    }, opts.rushCycle !== undefined ? { rushCycle: opts.rushCycle } : {});
     this.w = this.session.w;
   }
 
@@ -158,7 +161,8 @@ export class RunScene extends WorldScene {
     usePadOf(app().settings, this.save.character, () => this.persist());
     app().applySettings();
     // a death to The Instructor does not spoil a clean zone (D207)
-    achievements().begin({ clean: this.save.stats.deaths - (this.save.stats.instructorDeaths ?? 0) <= 0 });
+    // Wave Rush never earns a clean-zone achievement (D401)
+    achievements().begin({ clean: !this.session.rush && this.save.stats.deaths - (this.save.stats.instructorDeaths ?? 0) <= 0 });
     window.addEventListener('beforeunload', this.onUnload);
   }
 
@@ -212,7 +216,9 @@ export class RunScene extends WorldScene {
     }
     if (!this.overlay) {
       if (a.input.consumeLocal('pause')) this.showPause();
-      else if (a.input.consumeLocal('map')) this.showMap();
+      else if (a.input.consumeLocal('map')) {
+        if (!this.session.rush) this.showMap();
+      }
       else if (a.input.consumeLocal('inventory')) this.showInventory();
       else if (a.input.consumeLocal('cycleQuick') && this.local) {
         const q = cycleQuickSlot(this.local.pl!.char);
@@ -246,15 +252,15 @@ export class RunScene extends WorldScene {
 
   /** A line from a list: seeded by the world and a counter, so it varies without Math.random. */
   private pickLine(list: readonly string[], label: string): string {
-    return stream(this.save.world.seed, `${label}:${this.save.stats.deaths}:${this.save.stats.kills}`).pick(list);
+    return stream(this.session.save.world.seed, `${label}:${this.save.stats.deaths}:${this.save.stats.kills}`).pick(list);
   }
 
   private seen(id: string): boolean {
-    return (this.save.world.cutscenesSeen ?? []).includes(id);
+    return (this.session.save.world.cutscenesSeen ?? []).includes(id);
   }
 
   private markSeen(id: string): void {
-    const l = (this.save.world.cutscenesSeen ??= []);
+    const l = (this.session.save.world.cutscenesSeen ??= []);
     if (!l.includes(id)) l.push(id);
   }
 
@@ -289,8 +295,25 @@ export class RunScene extends WorldScene {
     }
   }
 
+  /**
+   * Wave Rush (GAME_DESIGN §24): the cycle's unlock when its boss falls (account-wide, D405), the host's guests told so
+   * each keeps its own record (D408), and a save at every step.
+   */
+  private onRush(e: RushEvent): void {
+    if (e.kind === 'cleared') noteRushUnlock(getStore(), e.cycle);
+    // guests still in the lobby count the attempt they join with themselves, from its welcome
+    if (this.net?.inGame) this.net.broadcastEvent({ t: 'rush', kind: e.kind, cycle: e.cycle, stage: e.stage, ...(e.sec !== undefined ? { sec: e.sec } : {}) });
+    if (e.kind === 'cleared' || e.kind === 'death' || e.kind === 'try') this.persist();
+  }
+
   /** Zone entry: the story cutscene the first time this cycle, the plain title card after (D57). */
   private zoneIntro(zone: number, names: string[]): void {
+    const r = this.session.rush;
+    if (r) {
+      // Wave Rush: the zone's card with where the run stands, never the story (D410); the boss has its own card
+      if (r.stage < RUSH_BOSS_STAGE) this.title = { zone, names, until: performance.now() / 1000 + 3, sub: `Wave Rush · Cycle ${r.cycle + 1} · ${rushStageLabel(r.stage)}` };
+      return;
+    }
     const id = zoneCutsceneId(zone);
     if (!cutscenesEnabled() || this.seen(id)) {
       this.title = { zone, names, until: performance.now() / 1000 + 3.5 };
@@ -308,7 +331,7 @@ export class RunScene extends WorldScene {
    */
   private bossIntro(def: BossDef, e: Entity): void {
     const zone = this.session.layout.zone;
-    if (!cutscenesEnabled()) {
+    if (!cutscenesEnabled() || this.session.rush) {
       this.bossCard = { def, until: performance.now() / 1000 + 2.6 };
       return;
     }
@@ -326,7 +349,7 @@ export class RunScene extends WorldScene {
 
   /** The Instructor's lighter card, the first time Joe walks into his room. */
   private instructorIntro(): void {
-    if (!cutscenesEnabled() || this.save.world.instructorKilled || this.seen('instructor')) return;
+    if (!cutscenesEnabled() || this.session.save.world.instructorKilled || this.seen('instructor')) return;
     const inst = this.w.enemies.find((x) => x.en?.def.id === INSTRUCTOR.id && !x.hp?.dead);
     if (!inst) return;
     this.markSeen('instructor');
@@ -347,7 +370,7 @@ export class RunScene extends WorldScene {
     this.dropCut();
     this.closeOverlay();
     mixer.setDuck(0.3);
-    const lost = this.save.world.shardpile?.amount ?? 0;
+    const lost = this.session.save.world.shardpile?.amount ?? 0;
     const l = layer('dim');
     l.setAttribute('data-testid', 'death-screen');
     const respawn = (): void => {
@@ -372,9 +395,13 @@ export class RunScene extends WorldScene {
         h('div', { class: 'death-title' }, this.session.deathLine),
         // D391: what did it, and how hard
         h('div', { style: 'font-size:18px;color:#ff9b6a', 'data-testid': 'death-cause' }, hurtText(this.local) || 'Cause unknown. Joe is not saying.'),
-        h('div', { style: 'font-size:20px;font-style:italic;color:#efe6d2' }, this.pickLine(DEATH_QUIPS, 'quip')),
-        h('div', { class: 'dim-text' }, lost > 0 ? `${Math.floor(lost)} Shards left where you fell. Touch them to take them back. Die first and they are gone.` : 'You had no Shards. Small mercies.'),
-        h('div', { class: 'dim-text small' }, 'You will wake at your bonfire with full HP and a full Thermos.'),
+        h('div', { style: 'font-size:20px;font-style:italic;color:#efe6d2' }, this.pickLine(this.session.rush ? DEATH_QUIPS.filter((q) => !/shard/i.test(q)) : DEATH_QUIPS, 'quip')),
+        ...(this.session.rush
+          ? [h('div', { class: 'dim-text', 'data-testid': 'rush-death' }, `Wave Rush: back to room 1 of Cycle ${this.session.rush.cycle + 1}. Nothing you carry is lost.`)]
+          : [
+              h('div', { class: 'dim-text' }, lost > 0 ? `${Math.floor(lost)} Shards left where you fell. Touch them to take them back. Die first and they are gone.` : 'You had no Shards. Small mercies.'),
+              h('div', { class: 'dim-text small' }, 'You will wake at your bonfire with full HP and a full Thermos.'),
+            ]),
         h('div', { class: 'small', style: 'color:#cfc6b4;max-width:640px;text-align:center' }, `Tip: ${this.pickLine(TIPS, 'tip')}`),
         b,
       ),
@@ -389,10 +416,11 @@ export class RunScene extends WorldScene {
     this.dropCut();
     this.closeOverlay();
     const c = p.pl!.char;
-    const ws = this.save.world;
+    const ws = this.session.save.world;
     const s = this.session;
     const zone = s.layout.zone;
-    const cyc = c.cycle;
+    // the shop's stock follows the cycle being played (a Wave Rush's, D402)
+    const cyc = s.cycle;
     const changed = (): void => refreshDerived(p);
     const r = (o: { msg: string }): string => {
       changed();
@@ -461,6 +489,8 @@ export class RunScene extends WorldScene {
         // the inventory continues the bonfire's LB / RB loop: past its ends it comes back to the bonfire (D169)
         openInventory: () => this.showInventory(() => open(), (step) => open(step > 0 ? 'first' : 'last')),
         startTab,
+        // Wave Rush has no levels and nowhere to warp to (D402)
+        ...(s.rush ? { hideTabs: ['level', 'warp'] } : {}),
         close: () => this.closeOverlay(),
       });
       this.overlay.appendChild(restLine(this.pickLine(first ? BONFIRE_LINES : EMBER_LINES, `rest:${id}`)));
@@ -477,7 +507,7 @@ export class RunScene extends WorldScene {
     const p = this.local;
     if (!p) return;
     const c = p.pl!.char;
-    const stock = garyStock(this.save.world, this.session.layout.zone, c.cycle);
+    const stock = garyStock(this.session.save.world, this.session.layout.zone, this.session.cycle);
     const l = layer('dim');
     l.setAttribute('data-testid', 'gary');
     renderGary(l, { char: c, stock, buy: (e) => stats().count(buyFromGary(c, e), { garyBuys: 1, garyGlowen: e.price }), close: () => this.closeOverlay() }, () => {
@@ -526,7 +556,10 @@ export class RunScene extends WorldScene {
     const l = layer('dim');
     l.setAttribute('data-testid', 'pause-menu');
     const c = this.save.character;
-    const where = `${c.name} · level ${c.level} · ${zoneDef(this.session.layout.zone).name}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`;
+    const rr = this.session.rush;
+    const where = rr
+      ? `${c.name} · level ${c.level} · Wave Rush · Cycle ${rr.cycle + 1} · ${rushStageLabel(rr.stage)}`
+      : `${c.name} · level ${c.level} · ${zoneDef(this.session.layout.zone).name}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`;
     l.appendChild(
       h(
         'div',
@@ -535,7 +568,7 @@ export class RunScene extends WorldScene {
         h('div', { class: 'small dim-text' }, where),
         btn('Resume', () => this.closeOverlay(), 'primary big'),
         btn('Inventory', () => this.showInventory(() => this.showPause()), 'big'),
-        btn('Map', () => this.showMap(), 'big'),
+        rr ? null : btn('Map', () => this.showMap(), 'big'),
         btn(
           'Settings',
           () => {
@@ -578,6 +611,8 @@ export class RunScene extends WorldScene {
     if (!net) return;
     this.persist();
     this.closeOverlay();
+    // a Wave Rush comes back to the lobby picked at the cycle it reached (always open: reaching it cleared the one before)
+    if (this.session.rush) net.rushCycle = this.session.rush.cycle;
     net.toLobby();
     this.net = null;
     runHooks.toLobby?.(this.save, net);
@@ -592,7 +627,7 @@ export class RunScene extends WorldScene {
     const ctx = c.getContext('2d')!;
     ctx.fillStyle = '#14121a';
     ctx.fillRect(0, 0, 700, 520);
-    drawMap(ctx, { layout: this.session.layout, ws: this.save.world, currentId: this.session.node.id, revealAll: this.revealMap }, 40, 40, 64, 42, 10, true);
+    drawMap(ctx, { layout: this.session.layout, ws: this.session.save.world, currentId: this.session.node.id, revealAll: this.revealMap }, 40, 40, 64, 42, 10, true);
     const z = zoneDef(this.session.layout.zone);
     l.appendChild(
       h(
@@ -612,7 +647,7 @@ export class RunScene extends WorldScene {
   // ------------------------------------------------------------------ drawing
 
   private drawInteractable(ctx: CanvasRenderingContext2D, e: Entity, now: number, _pid: string): void {
-    drawInteractable(ctx, e, now, { bonfireUsed: (k) => this.save.world.bonfiresUsed.includes(k), stationDone: (g) => this.session.tutorialDone(g) });
+    drawInteractable(ctx, e, now, { bonfireUsed: (k) => this.session.save.world.bonfiresUsed.includes(k), stationDone: (g) => this.session.tutorialDone(g) });
   }
 
   protected override renderOverlay(ctx: CanvasRenderingContext2D): void {
@@ -669,14 +704,16 @@ export class RunScene extends WorldScene {
 
   protected override renderTop(ctx: CanvasRenderingContext2D, _alpha: number, realDt: number): void {
     const now = performance.now() / 1000;
+    const rush = this.session.rush;
+    if (rush) drawText(ctx, `WAVE RUSH · CYCLE ${rush.cycle + 1} · ${rushStageLabel(rush.stage).toUpperCase()} · ${fmtRushTime(Math.max(0, this.w.time - rush.startedAt))}`, 640, 40, { size: 14, align: 'center', color: '#e6b84a', mono: true });
     if (!this.cut) {
-      drawMinimap(ctx, { layout: this.session.layout, ws: this.save.world, currentId: this.session.node.id, revealAll: this.revealMap });
+      if (!rush) drawMinimap(ctx, { layout: this.session.layout, ws: this.session.save.world, currentId: this.session.node.id, revealAll: this.revealMap });
       if (this.w.players.length > 1) drawPartyCards(ctx, this.w, this.local?.pl?.playerId ?? '');
     }
     // zone title card (a zone already introduced this cycle)
     if (this.title && now < this.title.until) {
       const z = ZONES[this.title.zone - 1]!;
-      drawZoneTitleCard(ctx, z.name, z.palette.accent, this.title.names, z.tagline, this.title.until - now, 3.5);
+      drawZoneTitleCard(ctx, z.name, z.palette.accent, this.title.names, this.title.sub ?? z.tagline, this.title.until - now, 3.5);
     }
     // boss name card when cutscenes are off (inputs are held for the first 1.5 s by the session)
     if (this.bossCard && now < this.bossCard.until) drawBossNameCard(ctx, this.bossCard.def.introTitle, this.bossCard.def.introSub, this.bossCard.def.palette?.[1] ?? '#e6b84a', this.bossCard.until - now, 2.6);
@@ -744,7 +781,7 @@ export class RunScene extends WorldScene {
 
   protected override spawnContext(): { zone?: number; cycle?: number; zoneResist?: Partial<Record<string, number>>; zoneImmune?: string[] } {
     const z = zoneDef(this.session.layout.zone);
-    return { zone: z.id, cycle: this.save.character.cycle, zoneResist: z.resist, zoneImmune: z.statusImmune };
+    return { zone: z.id, cycle: this.session.cycle, zoneResist: z.resist, zoneImmune: z.statusImmune };
   }
 }
 

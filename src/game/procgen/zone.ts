@@ -43,6 +43,8 @@ export interface ZoneLayout {
   mix: string[];
   /** explicit door links that do not follow the grid (the tutorial hall's exit) */
   links: Record<string, { to: string; entry: Side }>;
+  /** a Wave Rush arena (GAME_DESIGN §24): one room, no chests, mimics or New Game+ bonus fight */
+  rush?: boolean;
 }
 
 export const GRID = 9;

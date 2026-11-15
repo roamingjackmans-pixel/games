@@ -154,6 +154,18 @@ From cycle 1 (NG+1) the same generators run with the cycle in every stream label
   seed `<first 12 chars of the seed>+<cycle>`, a fresh `WorldState` at zone 1, no tutorial; the character keeps
   everything.
 
+## 7.1 Wave Rush (GAME_DESIGN §24)
+
+- An **attempt** at a cycle has its own seed, `rushSeed(world seed, cycle, attempt)` = `WR<attempt>c<cycle>:<first 12
+  chars>`, where the attempt is the character's Wave Rush tries counter. The boss is picked from it
+  (`rush:boss:<cycle>`, any of the eight, D403), so each attempt draws again.
+- **A room** (`rushRoomLayout`): a one-room `ZoneLayout` (`rush: true`, node `wr-z<zone>`, kind `combat`, no doors,
+  depth `RUSH_DEPTH` 7, D407) with a template, mirror and shape family from `rush:room:<zone>:<cycle>` and the usual
+  five-type mix from `rooms:<zone>:<cycle>`. Waves, Elites and terrain come from the same streams as any combat room;
+  `smallChest` and `bonusBossFor` give nothing on a `rush` layout.
+- **The boss stage** (`rushBossLayout`): one `boss` node `wr-boss` in the boss's own zone (its arena and palette).
+- The bonfire (`wr-<stage>`) and stairs appear on plain floor near the middle once the room is clear.
+
 ## 8. The Training Hall
 
 A new character's first zone (cycle 0, `tutorial`) adds the **Training Hall** (`z1-tutorial`) below the start room.

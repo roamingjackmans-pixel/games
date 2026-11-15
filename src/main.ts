@@ -30,7 +30,9 @@ if (params.get('net') === 'test') {
   document.body.innerHTML = '';
   document.body.style.cssText = 'margin:0;background:#0d0b12;display:flex;gap:6px;height:100vh';
   for (const role of ['host', 'guest']) {
-    const f = h('iframe', { src: `${location.pathname}?net=bc&auto=${role}&code=${code}`, style: 'flex:1;border:0;height:100%' });
+    // ?rush=N: the host picks a Wave Rush from that cycle (D401)
+    const rush = params.has('rush') ? `&rush=${params.get('rush')}` : '';
+    const f = h('iframe', { src: `${location.pathname}?net=bc&auto=${role}&code=${code}${rush}`, style: 'flex:1;border:0;height:100%' });
     document.body.appendChild(f);
   }
 } else boot();
@@ -53,13 +55,15 @@ function boot(): void {
     if (mode === 'solo') a.scenes.go(new RunScene(save));
     else a.scenes.go(new LobbyScene(save, code ? { role: 'guest', code } : { role: mode === 'host' ? 'host' : 'guest' }));
   };
+  titleHooks.rush = (save, cycle) => a.scenes.go(new RunScene(save, null, { rushCycle: cycle }));
   titleHooks.credits = () => a.scenes.go(new CreditsScene(toTitle));
   runHooks.toTitle = toTitle;
   runHooks.toLobby = (save, net) => a.scenes.go(new LobbyScene(save, { role: 'host', host: net }));
   // after The Landlord: credits, then back at his empty arena where the NG+ fire waits
   runHooks.credits = (s) => a.scenes.go(new CreditsScene(() => a.scenes.go(new RunScene(s.save)), 'Back to the Abyss'));
   runHooks.newCycle = (save) => a.scenes.go(new RunScene(save));
-  lobbyHooks.startHost = (save, net) => a.scenes.go(new RunScene(save, net));
+  // the host's pick in the lobby (D401): the campaign in its world, or a Wave Rush from a cycle
+  lobbyHooks.startHost = (save, net) => a.scenes.go(new RunScene(save, net, net.rushCycle !== null ? { rushCycle: net.rushCycle } : {}));
   lobbyHooks.startGuest = (save, net) => a.scenes.go(new GuestRunScene(save, net));
   lobbyHooks.toTitle = toTitle;
   guestHooks.toTitle = toTitle;

@@ -84,7 +84,8 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   const speed = (def.speed ?? rs.speed) * (def.mult?.speed ?? 1) * (elite === 'frenzied' ? 1.4 : 1);
   const share = Math.max(1, o.share ?? 1);
   const rawShards = (rs.shards * SHARD_SCALE * zoneShardFactor(zone) * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1)) / share;
-  const shards = rawShards > 0 ? Math.max(1, Math.round(rawShards)) : 0;
+  // Wave Rush has no Shards and no levels at all (D401)
+  const shards = rawShards > 0 && !w.rush ? Math.max(1, Math.round(rawShards)) : 0;
   const radius = (def.radius || rs.radius) * (elite ? 1.3 : 1) * (def.traits?.scale ?? 1);
   // bosses keep a large poise pool that hits wear down; everyone else's poise comes from their size (D78)
   const basePoise = (isBoss ? rs.poise : poiseForSize(radius)) * (def.mult?.poise ?? 1) * (elite && !isBoss ? ELITE_POISE_MULT : 1);

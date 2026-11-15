@@ -27,6 +27,7 @@ import { newCharacter } from '../player/character';
 import { newSave, SLOT_COUNT } from '../save/schema';
 import { exportFileName, exportText, parseImport } from '../save/exportImport';
 import { deleteSave, listSaves, readMeta, writeSave } from '../save/storage';
+import { fmtRushTime, readRushUnlock, rushFastest, rushFurthestLabel, rushStartCycles } from '../waveRush';
 import type { ClassId, SaveFile } from '../types';
 // the character creator's class card and appearance pickers
 import { STAT_IDS, type Appearance, type Character, type StatId } from '../types';
@@ -54,7 +55,12 @@ const STAT_HINT: Record<StatId, string> = {
 export type StartMode = 'solo' | 'host' | 'join';
 
 /** Scene factory hooks so the title does not import the run/lobby scenes directly (no cycles). */
-export const titleHooks: { start?: (save: SaveFile, mode: StartMode, code?: string) => void; credits?: () => void } = {};
+export const titleHooks: {
+  start?: (save: SaveFile, mode: StartMode, code?: string) => void;
+  /** a solo Wave Rush from a 0-based cycle (D401) */
+  rush?: (save: SaveFile, cycle: number) => void;
+  credits?: () => void;
+} = {};
 
 function fmtTime(sec: number): string {
   const h0 = Math.floor(sec / 3600);
@@ -185,6 +191,7 @@ export class TitleScene implements Scene {
       h('h2', null, 'Main menu'),
       last ? btn(`Continue — ${last.character.name} (Lv ${last.character.level}${last.character.cycle ? `, Cycle ${last.character.cycle + 1}` : ''})`, () => titleHooks.start?.(last, 'solo'), 'primary big') : null,
       btn('Co-op play', () => this.coopMenu(), 'big'),
+      testId(btn('Wave Rush', () => this.rushMenu(), 'big'), 'wave-rush-btn'),
       testId(
         btn(friendsLabel(), () => {
           this.root!.style.display = 'none';
@@ -233,6 +240,56 @@ export class TitleScene implements Scene {
       btn('Host a game', () => this.coop('host'), 'big'),
       btn('Join a game', () => this.coop('join'), 'big'),
       btn('Back', () => this.main(), 'big'),
+    );
+  }
+
+  /**
+   * Wave Rush, solo (GAME_DESIGN §24, D401): pick the cycle to start in (every one up to one past the best any character
+   * on this browser has cleared, D405) and the character. `first` puts a slot at the top of the list.
+   */
+  rushMenu(first?: number, cycle?: number): void {
+    const store = getStore();
+    const saves = listSaves(store).filter((x): x is SaveFile => !!x);
+    if (saves.length === 0) {
+      toast('Make a character first, then take it into Wave Rush.');
+      this.pickEmpty();
+      return;
+    }
+    const unlock = readRushUnlock(store);
+    const cycles = rushStartCycles(unlock);
+    const pick = cycle !== undefined && cycles.includes(cycle) ? cycle : cycles[cycles.length - 1]!;
+    const i = cycles.indexOf(pick);
+    const prev = btn('◀', () => this.rushMenu(first, cycles[Math.max(0, i - 1)]), 'tiny');
+    const next = btn('▶', () => this.rushMenu(first, cycles[Math.min(cycles.length - 1, i + 1)]), 'tiny');
+    prev.setAttribute('aria-label', 'Earlier cycle');
+    next.setAttribute('aria-label', 'Later cycle');
+    prev.disabled = i <= 0;
+    next.disabled = i >= cycles.length - 1;
+    const last = first ?? readMeta(store).lastSlot;
+    saves.sort((a, b) => (b.slot === last ? 1 : 0) - (a.slot === last ? 1 : 0));
+    const list = h('div', { class: 'col', style: 'gap:6px;max-height:400px;overflow:auto;min-width:520px' });
+    for (const sv of saves) {
+      const c = sv.character;
+      const r = sv.rush;
+      const fast = r ? rushFastest(r) : null;
+      const line = r && r.furthestCycle >= 0 ? `Furthest: ${rushFurthestLabel(r)}${fast ? ` · fastest clear ${fmtRushTime(fast[1])} (Cycle ${fast[0] + 1})` : ''}` : 'Has not tried Wave Rush yet';
+      list.appendChild(
+        h(
+          'div',
+          { class: 'card row', 'data-testid': `rush-pick-${sv.slot}` },
+          h('div', { class: 'grow' }, h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}`), h('div', { class: 'small dim-text' }, line)),
+          btn('Start', () => titleHooks.rush?.(sv, pick), 'tiny primary'),
+        ),
+      );
+    }
+    this.view(
+      'rush',
+      h('h2', null, 'Wave Rush'),
+      h('div', { class: 'small dim-text', style: 'max-width:520px' }, 'Eight rooms, one for each zone, then a boss as hard as the cycle’s final boss. A bonfire and stairs appear when a room is clear. Beat the boss to save your place and go on to the next cycle; die (or lose the whole party) and the cycle starts again from room 1. No Shards or levels here: gear, gems, Glowen and Soul Essence are yours to keep. Your campaign is not touched.'),
+      h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('div', { class: 'grow' }, 'Start at'), prev, h('b', { 'data-testid': 'rush-cycle', style: 'min-width:80px;text-align:center' }, `Cycle ${pick + 1}`), next),
+      h('div', { class: 'small dim-text' }, unlock.best >= 0 ? `Best cleared on this browser: Cycle ${unlock.best + 1}. Every cycle up to ${unlock.best + 2} is open to every character.` : 'Beat Cycle 1’s boss to open Cycle 2, for every character on this browser.'),
+      list,
+      h('div', { class: 'row' }, btn('Back', () => this.main())),
     );
   }
 
@@ -305,6 +362,7 @@ export class TitleScene implements Scene {
           h('div', { class: 'small dim-text' }, `${zone} · ${fmtTime(s.stats.playtimeSec)} played · ${s.stats.deaths} deaths · seed ${s.world.seed}`),
         ),
         btn('Play', () => titleHooks.start?.(s, 'solo'), 'tiny primary'),
+        btn('Wave Rush', () => this.rushMenu(s.slot), 'tiny'),
         btn('Host', () => titleHooks.start?.(s, 'host'), 'tiny'),
         btn('Join', () => this.go(s, 'join'), 'tiny'),
         btn('Export', () => exportSave(s), 'tiny'),
