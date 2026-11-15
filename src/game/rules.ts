@@ -26,13 +26,15 @@ export interface RulesOpts {
 
 /**
  * Weapon experience (D178): every standing player, whoever made the kill, gets it on what they have out (the weapon
- * hand's item and a held staff or talisman) and on those classes' proficiency. A new level refreshes their perks.
+ * hand's item and a held staff or talisman) and on those classes' proficiency (not in Wave Rush, D412). A new level
+ * refreshes their perks.
  */
 export function grantWeaponXp(w: World, xp: number): void {
   for (const p of w.players) {
     const pl = p.pl!;
     if (pl.downed || pl.deadUntilRest || p.removed) continue;
-    const res = grantKillXp(pl.char, xp);
+    // no weapon proficiency in Wave Rush (D412); co-op guests' characters change here too, and are synced from it
+    const res = grantKillXp(pl.char, xp, { proficiency: !w.rush });
     for (const it of res.filled) {
       const u = upgradeInfo(it);
       if (u) w.emit({ t: 'msg', text: `${it.name} is ready to become ${u.to[0]!.toUpperCase()}${u.to.slice(1)} (at a bonfire)`, forPlayer: pl.playerId, color: '#ffd27a' });

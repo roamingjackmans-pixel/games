@@ -58,8 +58,11 @@ export interface KillXpResult {
   filled: Item[];
 }
 
-/** Give a character `xp` on everything it has out (each item's bar, and each class once). */
-export function grantKillXp(c: Character, xp: number): KillXpResult {
+/**
+ * Give a character `xp` on everything it has out (each item's bar, and each class once). `proficiency: false` leaves the
+ * classes alone (Wave Rush, D412: no weapon proficiency there; the items' bars still fill).
+ */
+export function grantKillXp(c: Character, xp: number, o: { proficiency?: boolean } = {}): KillXpResult {
   const res: KillXpResult = { levels: [], filled: [] };
   if (xp <= 0) return res;
   for (const it of itemsOut(c)) {
@@ -69,6 +72,7 @@ export function grantKillXp(c: Character, xp: number): KillXpResult {
     it.xp = Math.min(cap, before + xp);
     if (before < cap && it.xp >= cap) res.filled.push(it);
   }
+  if (o.proficiency === false) return res;
   c.proficiency ??= {};
   for (const cls of activeClasses(c)) {
     const before = profLevel(profXp(c, cls)).level;

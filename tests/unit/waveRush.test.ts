@@ -270,6 +270,53 @@ describe('Wave Rush progression', () => {
   });
 });
 
+describe('no weapon proficiency in Wave Rush (D412)', () => {
+  it('kills there leave every player’s proficiency alone, a co-op guest’s too; the campaign still grants it', () => {
+    const save = rushSave('RUSHPROF');
+    const s = rushSession(0, save);
+    const guest = newCharacter('brute', 'Ann', 'p-ann2', new Rng('ann2'));
+    s.joinPlayer(guest);
+    const profOf = (c: { proficiency?: Record<string, number> }): number => Object.values(c.proficiency ?? {}).reduce((a, b) => a + b, 0);
+    const before = [profOf(save.character), profOf(guest)];
+    clearRoom(s);
+    expect([profOf(save.character), profOf(guest)]).toEqual(before);
+    // the same kills in the campaign do grant it
+    const camp = rushSave('CAMPPROF');
+    camp.character.tutorialDone = true;
+    const c = new GameSession(camp);
+    c.start();
+    const p0 = profOf(camp.character);
+    const e = c.w.enemies[0] ?? null;
+    const me0 = c.w.players[0]!;
+    if (e) {
+      e.hp!.hp = 0;
+      checkDeath(c.w, e, me0.id);
+    } else {
+      const lay = c.layout;
+      const room = lay.rooms.find((r) => r.kind === 'combat')!;
+      c.enterRoom(room.id, room.doors[0]!);
+      c.w.god = true;
+      clearRoom2(c);
+    }
+    expect(profOf(camp.character)).toBeGreaterThan(p0);
+  });
+});
+
+/** Clear a campaign combat room (walk in to arm it, then knock every wave down). */
+function clearRoom2(s: GameSession): void {
+  const p = me(s);
+  p.x = 640;
+  p.y = 368;
+  for (let i = 0; i < 400 && s.roomPhase !== 'cleared'; i++) {
+    steps(s, 0.1);
+    for (const e of [...s.w.enemies]) {
+      if (e.hp?.dead || e.removed || e.en?.def.special) continue;
+      e.hp!.hp = 0;
+      checkDeath(s.w, e, p.id);
+    }
+  }
+}
+
 describe('Wave Rush checkpoint unlock (account-wide)', () => {
   it('starts at cycle 1 only; clearing cycle N opens every cycle up to N + 1, and never goes back', () => {
     const store = new MemoryStore();

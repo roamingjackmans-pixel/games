@@ -1222,7 +1222,7 @@ is **account-wide** (`dj.waveRush`, D405); a co-op guest who clears a cycle open
 4. Beating the boss is a **checkpoint**: the cycle's best time is kept, the cycle unlock moves up, and a bonfire and
    stairs ("On to Cycle N+1") lead to room 1 of the next cycle. It goes on forever.
 
-**Rewards** (D402). **No Shards and no levels** anywhere in Wave Rush: enemies and bosses carry no Shards and the bonfire
+**Rewards** (D402). **No Shards, no levels and no weapon proficiency** (D412) anywhere in Wave Rush (a weapon's rarity bar still fills): enemies and bosses carry no Shards and the bonfire
 has no Level up tab (nor Warp). Everything else drops as in the campaign and is kept: items, gems, Glowen, Soul
 Essence, consumables. The bonfire keeps its Gem bench, Weapons, Reinforce, Shop (the room's zone stock at the run's
 cycle, kept through the whole run), Bestiary and Spells. No chests, mimics, reliquaries, Gary or New Game+ bonus
