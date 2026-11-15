@@ -134,9 +134,33 @@ export function effectSpec(w: World, e: EffectDef, ctx: EffectCtx): DamageSpec |
 /** How much bigger a player's spell projectiles are than their listed radius (D180). */
 export const SPELL_PROJECTILE_SCALE = 4; // D204: twice D180's ×2
 
+/** D399: how much bigger a player's spell areas are from Expanse gems in that school's staff or talisman. */
+export function spellAreaMult(ctx: EffectCtx, src: Entity | undefined): number {
+  if (!ctx.isSpell || ctx.team !== 0 || !ctx.school || !src?.pl) return 1;
+  return 1 + (src.pl.derived.spellGem?.[ctx.school].area ?? 0);
+}
+
+/** A pattern's areas grown by `k` in size (circles, rings, cones, scattered circles); lines and shots are left alone. */
+export function scaleArea(p: PatternDef, k: number): PatternDef {
+  if (k === 1) return p;
+  switch (p.kind) {
+    case 'circle':
+      return { ...p, r: p.r * k };
+    case 'ring':
+      return { ...p, rIn: p.rIn * k, rOut: typeof p.rOut === 'number' ? p.rOut * k : p.rOut };
+    case 'cone':
+      return { ...p, r: typeof p.r === 'number' ? p.r * k : p.r };
+    case 'randomCircles':
+      return { ...p, r: p.r * k, ...(p.within !== undefined ? { within: p.within * k } : {}) };
+    default:
+      return p;
+  }
+}
+
 function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: EffectCtx, src: Entity | undefined): void {
   const spec = damageSpec(w, e, ctx, src);
-  const p = e.pattern;
+  const area = spellAreaMult(ctx, src);
+  const p = scaleArea(e.pattern, area);
   if (p.kind === 'projectile') {
     const a = Math.atan2(ctx.aimY - ctx.y, ctx.aimX - ctx.x);
     const n = p.count ?? 1;
@@ -153,7 +177,7 @@ function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effect
           ...(p.homing ? { homing: p.homing * DEG } : {}),
         });
         if (p.lob) pr.pr!.lob = { fromX: ctx.x, fromY: ctx.y, toX: ctx.aimX, toY: ctx.aimY, t: 0, dur: Math.max(0.3, dist(ctx.x, ctx.y, ctx.aimX, ctx.aimY) / p.speed) };
-        if (p.onImpact) pr.pr!.onImpact = { ...e, pattern: p.onImpact };
+        if (p.onImpact) pr.pr!.onImpact = { ...e, pattern: scaleArea(p.onImpact, area) };
         pr.x = ctx.x + Math.cos(ang) * 16;
         pr.y = ctx.y + Math.sin(ang) * 16;
       } else if (src) {
@@ -202,6 +226,9 @@ function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effect
   }
   const windup = e.telegraphS ?? ctx.windupS;
   const ticks = e.ticks ?? 1;
+  // D397: a player's spell area cast at a spot (Meteor, Comet Barrage) or where its shot lands (Fireball) catches its
+  // caster too
+  const hitsOwner = ctx.isSpell && ctx.team === 0 && 'anchor' in p && (p.anchor === 'aim' || p.anchor === 'point');
   const fire = (): void => {
     spawnTelegraphs(w, p, {
       ownerId: ctx.sourceId,
@@ -212,6 +239,7 @@ function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effect
       ctx: patternCtxFor(w, ctx, src),
       hidden: ctx.team === 0 && windup <= 0.05,
       sourceTag: ctx.tag,
+      ...(hitsOwner ? { hitsOwner } : {}),
     });
   };
   fire();
@@ -325,7 +353,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
   const spell = ctx.isSpell && ctx.team === 0;
   const u = spell ? spellUtility(ctx.powerMult) : 1;
   // Talisman proficiency (D371): a player's spell buffs, debuffs, zones, walls and barriers last longer
-  const sd = spell && src?.pl ? 1 + (src.pl.derived.spellDurationPct ?? 0) : 1;
+  // D399: and Lingering gems in that school's staff or talisman
+  const sd = spell && src?.pl ? 1 + (src.pl.derived.spellDurationPct ?? 0) + (ctx.school ? (src.pl.derived.spellGem?.[ctx.school].duration ?? 0) : 0) : 1;
   switch (e.op) {
     case 'damage':
       doDamage(w, e, ctx, src);
@@ -494,7 +523,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
     }
     case 'zone': {
       const pctx = patternCtxFor(w, ctx, src);
-      const specs = resolvePattern(e.pattern, pctx);
+      const specs = resolvePattern(scaleArea(e.pattern, spellAreaMult(ctx, src)), pctx);
       const shapes: Shape[] = specs.flatMap((s) => s.shapes);
       const hz = spawnHazard(w, e.hazard ?? 'consecrate', shapes, e.durationS * sd, ctx.team, ctx.sourceId, {
         tickS: e.tickS,
@@ -512,6 +541,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         pull: e.hazard === 'gravityWell' ? 220 : 0,
         ...(spell && ctx.school ? { school: ctx.school } : {}),
         ...(e.hurtsAllies ? { hurtsAllies: true } : {}),
+        // D397: a harmful spell zone cast at a spot (Void Rift) catches its caster too
+        ...(e.hurtsAllies && spell && 'anchor' in e.pattern && e.pattern.anchor === 'aim' ? { hurtsOwner: true } : {}),
       });
       void hz;
       break;

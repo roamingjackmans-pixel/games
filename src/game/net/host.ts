@@ -62,6 +62,8 @@ export interface HostGuest {
   /** hits sent and not yet answered, by id */
   pendingHits: Map<number, IncomingHit>;
   hitSeq: number;
+  /** snapshots sent to this guest since it entered the world (Snap.sn, D393) */
+  snapSeq: number;
 }
 
 /** Sessions whose boss kills are already relayed to guests (D195). */
@@ -178,6 +180,7 @@ export class NetHost {
       inbox: [],
       pendingHits: new Map(),
       hitSeq: 0,
+      snapSeq: 0,
     });
     this.sendLobby();
   }
@@ -205,6 +208,13 @@ export class NetHost {
         prev?.(zone);
         if (this.session === session) this.broadcastEvent({ t: 'zoneBeaten', zone, cycle: this.save.character.cycle });
       };
+      // D396: a guest at Gary's cart trades at its own, on its own screen (guests own their inventory, NETCODE §6)
+      const gary = session.listener.gary;
+      session.listener.gary = (p) => {
+        const g = this.session === session ? this.guestByEntity(p) : null;
+        if (g) this.sendEvent(g.peerId, { t: 'gary', zone: session.layout.zone, cycle: this.save.character.cycle });
+        else gary?.(p);
+      };
     }
     const lay = session.layout;
     for (const g of this.guests.values()) this.enter(g, lay);
@@ -227,6 +237,7 @@ export class NetHost {
     g.roomSent = '';
     g.zoneSent = `${lay.seed}|${lay.zone}`;
     g.lastFullAt = -99;
+    g.snapSeq = 0;
     // a fresh grace period: guests send nothing while waiting in the lobby, so anyone who joined more than 10 s
     // before Start was dropped as silent the moment the game began (D161: only the last to join got in)
     g.lastHeard = this.clock();
@@ -496,10 +507,9 @@ export class NetHost {
         g.sentMeta.set(e.id, js);
       }
     }
-    const removed: number[] = [];
+    // what went since the last snapshot is forgotten here; the guest learns it from the live list (D393)
     for (const id of [...g.sentRecs.keys()]) {
       if (seen.has(id)) continue;
-      removed.push(id);
       g.sentRecs.delete(id);
       g.sentMeta.delete(id);
     }
@@ -522,6 +532,6 @@ export class NetHost {
       g.inbox = [];
       json.self = self;
     }
-    this.ch.snap.send(encodeSnap({ full, tick: w.tick, time: w.time, ackSeq: g.lastSeq, recs, removed, json }), g.peerId);
+    this.ch.snap.send(encodeSnap({ full, tick: w.tick, time: w.time, ackSeq: g.lastSeq, sn: ++g.snapSeq, recs, live: [...seen], json }), g.peerId);
   }
 }

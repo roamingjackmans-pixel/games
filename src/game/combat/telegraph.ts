@@ -19,6 +19,8 @@ export interface TeleOpts {
   trackTargetId?: number;
   /** a telegraph's active duration override */
   minActiveS?: number;
+  /** a spell's area cast at a spot: it catches its caster too (D397) */
+  hitsOwner?: boolean;
   /** the attack's damage type (an accent colour in the telegraph's sparks); defaults to the spec's main type */
   dmgType?: DamageType;
 }
@@ -79,6 +81,7 @@ export function spawnTelegraphs(w: World, pattern: PatternDef, o: TeleOpts): Ent
         slowable: 1,
         ...(dmgType ? { dmgType } : {}),
         ...(pattern.vfx ? { vfx: pattern.vfx } : {}),
+        ...(o.hitsOwner ? { hitsOwner: true } : {}),
       },
     });
     out.push(e);

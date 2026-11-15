@@ -466,6 +466,8 @@ export interface TeleC {
   area: boolean;
   /** visible only to its owner team (player skills draw nothing) */
   hidden: boolean;
+  /** a spell's area cast at a spot (D397): it catches its own caster too */
+  hitsOwner?: boolean;
   sourceTag: string;
   slowable: number;
   /** the attack's damage type: its ELEMENTS glow accents the telegraph's sparks and cracks (render only) */
@@ -500,6 +502,8 @@ export interface HazardC {
   armedAt: number;
   /** friendly fire (D375): its ticks and slow reach the owner's co-op allies inside (Void Rift) */
   hurtsAllies?: boolean;
+  /** a spell zone cast at a spot that hurts allies (D397): its caster too */
+  hurtsOwner?: boolean;
   /** a player's spell zone: its school, so its ticks heal by that hand's lifesteal (D374) */
   school?: 'brain' | 'prayer';
 }
@@ -682,6 +686,8 @@ export interface WorldHooks {
 
 /** How long a freed entity id waits before it is used again (D376), seconds of world time. */
 export const ID_REUSE_S = 8;
+/** A co-op guest's own entities take ids from here up (D376); anything below is the host's. */
+export const LOCAL_ID_BASE = 1_000_000_000;
 
 export class World {
   tick = 0;
@@ -706,7 +712,7 @@ export class World {
   /** Make this world a guest's mirror: ids it hands out itself can never meet one of the host's. */
   useLocalIds(): void {
     this.localIds = true;
-    this.nextId = Math.max(this.nextId, 1_000_000_000);
+    this.nextId = Math.max(this.nextId, LOCAL_ID_BASE);
     this.freeIds = [];
   }
   events: GameEvent[] = [];

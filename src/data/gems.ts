@@ -16,6 +16,8 @@ export interface GemDef {
   weaponOnly?: boolean;
   /** D283: this share of the hit is added again as `type`; the physical stays (was taken out of the physical) */
   adds?: { type: DamageType; status?: StatusId };
+  /** D399: works only socketed in a staff or talisman, for the spells of that tool's school */
+  toolOnly?: boolean;
   /** families with the same effect (D369: Rime and Storm both add Magic) share one; a gem holds one of each effect */
   effect?: string;
 }
@@ -49,6 +51,9 @@ export const GEMS: Record<GemFamily, GemDef> = {
   // D356: 30% weaker (was 16)
   zephyr: { family: 'zephyr', name: 'Zephyr', color: '#a8e6cf', value: 11.2, text: '+{v}% stamina regeneration', armorOnly: true },
   gilt: { family: 'gilt', name: 'Gilt', color: '#d4af37', value: 11, text: '+{v}% Glowen found', armorOnly: true },
+  // D399: spell gems for staffs and talismans (in a weapon they do nothing)
+  lingering: { family: 'lingering', name: 'Lingering', color: '#b58cff', value: 15, text: "+{v}% spell duration (in a staff or talisman, its school's spells)", weaponOnly: true, toolOnly: true },
+  expanse: { family: 'expanse', name: 'Expanse', color: '#5fd0e6', value: 10, text: "+{v}% spell area size (in a staff or talisman, its school's spells)", weaponOnly: true, toolOnly: true },
 };
 
 /** The old T1..T5 tables, kept only to carry perks from before D284 across (`untierPerk`). */
@@ -68,6 +73,8 @@ const LEGACY_TIER_VALUES: Record<GemFamily, readonly number[]> = {
   hearth: [4, 6, 8, 10, 12],
   zephyr: [8, 12, 16, 20, 24],
   gilt: [5, 8, 11, 14, 17],
+  lingering: [8, 11, 15, 19, 22],
+  expanse: [5, 8, 10, 12, 15],
 };
 
 export const GEM_FAMILIES = Object.keys(GEMS) as GemFamily[];

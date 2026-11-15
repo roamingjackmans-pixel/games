@@ -73,8 +73,23 @@ that guest.
 ## 4. Snapshots
 
 `encodeSnap` / `decodeSnap` (`snapshot.ts`). Header: `full u8, tick u32, time f64, ackSeq u16` (the guest's last
-input the host applied), record count, removed count, JSON length. Then fixed **28-byte records** (the last byte a downed player's countdown, D329), removed ids (u16),
-and a JSON block.
+input the host applied), record count, live count, JSON length, `sn u32` (this guest's snapshot number, D393). Then fixed
+**28-byte records** (the last byte a downed player's countdown, D329), the live ids (u16), and a JSON block.
+
+**Out of order, and the live list (D393).** Trystero sends a message over one 16 KiB frame as an offer, waits for the
+receiver to accept and only then sends it, so it arrives a couple of trips after a small message sent at the same
+moment; small messages sent after it overtake it. A full snapshot in a busy room (three players' gear, every enemy and
+telegraph) is that big, and so is a room change. Every snapshot therefore carries its number (`sn`, counting up per
+guest from 1) and the **live list**: every id this guest has from the host at that moment. The guest applies the newest
+snapshot whole and removes everything from the host on its screen that its live list lacks (`reconcile`; its own
+entities, ids from 10^9 up, are left alone). A snapshot older than the newest applied, arriving late, gives only what is
+still news: its events, its hits and body changes, its room if nothing newer brought one, and an entity's record or meta
+only where no newer one was applied and the newest live list still has it. (Before, a late full snapshot was applied as
+new and brought back everything removed while it was on its way; the host had already said they went, so they stayed
+for good: dead enemies standing, telegraphs, shots and effects, about six a room with three players.) The guest asks
+for a keyframe when a record arrives without its meta and when its room is cleared. When a room is cleared the host
+also removes the enemies' telegraphs, shots and ground that are left (`sweepEnemyLeftovers`). The loopback transport
+can send big messages late the same way (`LoopbackOpts.bigLate`) for tests.
 
 **Ids (D376).** The host hands a freed entity id out again only `ID_REUSE_S` (8 s) later, so a guest has long since
 heard that its old owner went (an id reused within one snapshot used to leave the guest's old entity standing in for
@@ -97,8 +112,8 @@ skill (it used to stay on forever).
 | `cIdx`, `cPhase`, `cK` u8 | players' attacks: a combo swing is its index; **an off-hand shot is 100 + index** (D291); a weapon skill is 200 + key (D234). `cPhase` = windup / active / recovery, `cK` = progress |
 | `status` u16 | bits 0–4 the statuses, 5–10 the controls |
 
-- **Deltas:** a `snap` carries only records that changed since what that guest last got, plus removed ids. A
-  keyframe (`full`) resends everything.
+- **Deltas:** a `snap` carries only records that changed since what that guest last got, plus the live list (D393).
+  A keyframe (`full`) resends everything.
 - **Meta** (`json.meta`, sent only when it changes): what an entity is. Players: id, slot, name and their public
   character (gear, look, stats; never the bag). Enemies: def id, elite, piece, boss, draw id, radius (it changes with
   phases), gaze, linked id, its max HP in the host's world (`hm`: co-op scaling, so a guest's bar and its own hits

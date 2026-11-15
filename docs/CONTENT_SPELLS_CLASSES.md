@@ -27,17 +27,17 @@ The current catalogue of the 28 spells and 10 classes, generated from `src/data/
 | **Arcane Bolt** | 8 | 0.3 s | 1.2 s | 8 | void | A bolt of arcane force: 19.2 (counts as Void; D300: was 24). The bread and butter. |
 | **Scatter Shards** | 10 | 0.4 s | 4 s | 14 | void | 5 shards in a 50° fan, 14 each. |
 | **Frost Lance** | 12 | 0.5 s | 5 s | 16 | magic | line(30,420) 40 Magic, Chill 50. |
-| **Fireball** | 14 | 0.6 s | 6 s | 18 | fire | A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s. |
+| **Fireball** | 14 | 0.6 s | 6 s | 18 | fire | A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s. The blast catches you too if you stand in it (D397). |
 | **Blink** | 12 | 0.1 s | 10 s | 10 | — | Teleport 240 px toward the cursor. Not i-frames: it escapes Piercing areas if you land outside them. |
 | **Chain Lightning** | 16 | 0.5 s | 7 s | 18 | magic | A ball of lightning flies from you where you aim at 420 px/s, no homing (D375): 36 Magic and Shock 40 on the first body it meets, then it flies on to 4 more within 180 px, enemies before players (−15% per jump). Slow enough that an ally it turns toward can step out of its way. It drags a trail of lightning along the path it flew (D383). |
-| **Void Rift** | 15 | 0.7 s | 9 s | 22 | void | circle(120) at the cursor for 4 s: 12 Void per 0.5 s and −20% speed to everyone inside but you: enemies and co-op allies (friendly fire, D375). |
+| **Void Rift** | 15 | 0.7 s | 9 s | 22 | void | circle(120) at the cursor for 4 s: 12 Void per 0.5 s and −20% speed to everyone inside, you too: enemies, co-op allies and its caster (friendly fire, D375, D397). |
 | **Gravity Well** | 20 | 0.6 s | 12 s | 22 | void | circle(160) for 3 s pulling non-bosses to its centre, ice mirrors and flyers too (bosses −20% speed). It deals no damage. |
 | **Arcane Beam** | 22 | 0.1 s | 11 s | 30 | void | Channel 2 s: a line(52,700) beam that follows the cursor, 18 per 0.2 s; walk at 40%. |
 | **Mirror Images** | 24 | 0.5 s | 18 s | 20 | — | Two decoys for 6 s that pull enemies within 250 px. |
 | **Time Dilation** | 28 | 0.6 s | 20 s | 26 | — | circle(200) at the cursor for 5 s: enemies inside act at 60% speed (bosses 80%). |
-| **Meteor** | 30 | 0.8 s | 16 s | 34 | fire | circle(170) at the cursor, lands after 1.5 s: 160 Fire, Burn 100, knockback. |
+| **Meteor** | 30 | 0.8 s | 16 s | 34 | fire | circle(170) at the cursor, lands after 1.5 s: 160 Fire, Burn 100, knockback. It hits you too if you stand in it (D397). |
 | **Overload** | 26 | 0.3 s | 30 s | 10 | — | Your next 3 spells within 8 s: +50% power and no cooldown. |
-| **Comet Barrage** | 35 | 1 s | 22 s | 40 | fire | 8 comets within 260 px of the cursor over 2 s, 44 each, Burn 30. |
+| **Comet Barrage** | 35 | 1 s | 22 s | 40 | fire | 8 comets within 260 px of the cursor over 2 s, 44 each, Burn 30. They hit you too (D397). |
 
 Notes: Frost Lance fades where it stops; it has no burst at the end (D268). Gravity Well only pulls; it deals no
 damage and has no end burst (D270), and its pull reaches flyers and Saint Aurelia's ice mirrors (D269). Blink is not
@@ -60,7 +60,7 @@ i-frames: it escapes a Piercing area only if you land outside it.
 | **Guardian Wall** | 22 | 0.7 s | 16 s | 20 | — | A wall at the cursor for 6 s: blocks enemy projectiles and non-boss enemies; players pass. |
 | **Fortify Thermos** | 24 | 0.5 s | 30 s | 10 | — | Your next flask drink within 20 s heals +50% and clears statuses. |
 | **Martyr's Chain** | 28 | 0.8 s | 30 s | 22 | — | Link to the ally under the cursor for 12 s: damage either of you takes is split 50/50. |
-| **Sanctuary** | 30 | 1.2 s | 80 s | 36 | — | circle(180) at the cursor for 8 s: statuses cannot build, allies heal 0.5%/s, enemies deal −20%. |
+| **Sanctuary** | 30 | 1.2 s | 80 s | 36 | — | circle(180) at the cursor for 8 s: statuses cannot build, allies heal 0.5%/s, enemies deal −20%. Drawn in Regen Aura's green (D398). |
 
 Notes: healing spells heal slowly and come back slowly (D128); Heal runs its full 20 s and nothing interrupts it
 (D250). Bless Weapon and other weapon buffs need a weapon in the weapon hand (D131). Fortify Thermos makes a drink

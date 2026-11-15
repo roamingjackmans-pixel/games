@@ -15,7 +15,7 @@ import { shapeHit } from '../combat/patterns';
 import { guestZoneBeaten } from '../save/coopProgress';
 import { generateZone, type ZoneLayout } from '../procgen/zone';
 import { Room } from '../room';
-import { HOST_RUN_STATES, World, type Entity, type EType, type PlayerState } from '../world';
+import { HOST_RUN_STATES, LOCAL_ID_BASE, World, type Entity, type EType, type PlayerState } from '../world';
 import { applyCharOp, cloneChar, type CharOp } from './charSync';
 import { CH, SNAP_HZ, encodeInput, gameVersion, seqNewer, type Cmd, type Hello, type LobbyState, type NetEvent, type Welcome } from './protocol';
 import { HostClock } from './clock';
@@ -118,6 +118,13 @@ export class NetGuest {
   private nudge = new Map<number, { x: number; y: number }>();
   /** enemy shots that hit this body: hidden here until the host removes them */
   private spent = new Set<number>();
+  /** the newest snapshot applied, and the one that last brought the room (Snap.sn, D393) */
+  private lastSn = 0;
+  private roomSn = 0;
+  /** the ids the host has for this screen, as of the newest snapshot (D393) */
+  private live = new Set<number>();
+  /** the snapshot each entity's record was last taken from, so a late snapshot never undoes a newer record */
+  private recSn = new Map<number, number>();
   private gearKey = '';
   private roomKey = '';
   private ch: {
@@ -239,6 +246,10 @@ export class NetGuest {
     this.nudge.clear();
     this.spent.clear();
     this.roomKey = '';
+    this.lastSn = 0;
+    this.roomSn = 0;
+    this.live.clear();
+    this.recSn.clear();
   }
 
   private buildLayout(seed: string, zone: number, cycle: number, o: { tutorial: boolean; fewSpells: boolean }): void {
@@ -274,21 +285,52 @@ export class NetGuest {
 
   // ------------------------------------------------------------------ snapshots → mirror world
 
+  /**
+   * One snapshot (D393). Trystero sends a message over 16 KiB (every full snapshot in a busy room, a room change) a
+   * couple of trips late, so newer small ones overtake it. The newest snapshot so far (by its number) is applied whole,
+   * and its live list is the truth: anything else on this screen from the host goes. An older one that arrives late
+   * gives only what is still news: its events and hits, the room if nothing newer brought one, and an entity's record
+   * or meta only where nothing newer has, and only for things the newest live list still has. It used to be applied
+   * as if new, bringing back everything removed since it was sent, and as the host had already said they went,
+   * nothing ever removed them again (the "leftovers": dead enemies standing, telegraphs, shots, effects).
+   */
   private applySnap(b: ArrayBuffer): void {
     const s = decodeSnap(b);
     const now = this.clock();
     this.noteOwnHits();
-    this.hostClock.sample(s.time, now);
+    // far behind the newest: the host started counting again (a new game), not a late one
+    const fresh = s.sn > this.lastSn || s.sn + 300 < this.lastSn;
     const j = s.json;
-    if (j.room) this.applyRoom(j.room);
-    if (j.meta) for (const [id, m] of Object.entries(j.meta)) this.meta.set(Number(id), m);
-    for (const r of s.recs) this.applyRec(r, s.time);
-    for (const id of s.removed) {
-      if (this.cw.entities.get(id) === this.me) this.me = null;
-      this.forget(id);
-      this.meta.delete(id);
+    if (fresh) {
+      this.lastSn = s.sn;
+      this.hostClock.sample(s.time, now);
+      this.live = new Set(s.live);
     }
+    if (j.room && s.sn > this.roomSn) {
+      this.roomSn = s.sn;
+      this.applyRoom(j.room);
+    }
+    if (j.meta) {
+      for (const [k, m] of Object.entries(j.meta)) {
+        const id = Number(k);
+        if (fresh || (!this.meta.has(id) && this.live.has(id))) this.meta.set(id, m);
+      }
+    }
+    for (const r of s.recs) {
+      if (s.sn <= (this.recSn.get(r.id) ?? 0) || !this.live.has(r.id)) continue;
+      if (this.applyRec(r, s.time, fresh)) this.recSn.set(r.id, s.sn);
+    }
+    if (fresh) this.reconcile();
     this.cw.refreshLists();
+    if (j.ev) this.cw.events.push(...j.ev);
+    if (!fresh) {
+      // what the host did to this body and the hits on it are news whenever they arrive
+      if (j.self && this.me?.pl) {
+        if (j.self.delta) applyDelta(this.cw, this.me, j.self.delta, this.cw.time - s.time);
+        for (const h of j.self.hits ?? []) this.inbox.push({ ...h, by: this.cw.time });
+      }
+      return;
+    }
     this.cw.bossId = j.bossId ?? 0;
     if (j.roomMods) {
       this.cw.roomMods.dark = j.roomMods.dark;
@@ -298,8 +340,19 @@ export class NetGuest {
       if (typeof j.roomMods.lightningBonusUntil === 'number') this.cw.roomMods.lightningBonusUntil = j.roomMods.lightningBonusUntil;
     }
     this.setFriendlyFire(j.ff);
-    if (j.ev) this.cw.events.push(...j.ev);
     if (j.self) this.applySelf(j.self, s.time);
+  }
+
+  /** Everything on this screen from the host that the newest live list no longer has goes (D393). */
+  private reconcile(): void {
+    for (const id of [...this.cw.entities.keys()]) {
+      if (id >= LOCAL_ID_BASE || this.live.has(id)) continue;
+      if (this.cw.entities.get(id) === this.me) this.me = null;
+      this.forget(id);
+    }
+    for (const id of [...this.meta.keys()]) if (!this.live.has(id)) this.meta.delete(id);
+    for (const id of [...this.recSn.keys()]) if (!this.live.has(id)) this.recSn.delete(id);
+    for (const id of [...this.samples.keys()]) if (!this.live.has(id)) this.samples.delete(id);
   }
 
   /** The host's friendly fire, as sent (a missing or broken value leaves the last one). */
@@ -329,6 +382,8 @@ export class NetGuest {
       this.inbox = [];
     }
     this.cw.room = room;
+    // D393: this room just cleared: everything again from the host, so nothing stale outlives the fight
+    if (r.key === this.roomKey && r.cleared.includes(r.nodeId) && !this.cleared.includes(r.nodeId)) this.command({ op: 'fullPlease' });
     this.nodeId = r.nodeId;
     this.nodeKind = r.kind;
     this.visited = r.visited;
@@ -402,15 +457,18 @@ export class NetGuest {
     this.spent.delete(id);
     this.hpDebt.delete(id);
     this.lastRecHp.delete(id);
+    this.recSn.delete(id);
   }
 
-  private applyRec(r: Rec, t: number): void {
+  /** One entity's record; false when it could not be applied (its meta has not arrived). */
+  private applyRec(r: Rec, t: number, fresh = true): boolean {
     const w = this.cw;
     let e = w.entities.get(r.id) ?? null;
     const m = this.meta.get(r.id);
     if (!m) {
-      this.command({ op: 'fullPlease' });
-      return;
+      // its meta may be in a big snapshot still on its way: ask for everything again (a late one gives nothing new)
+      if (fresh) this.command({ op: 'fullPlease' });
+      return false;
     }
     if (e && e.removed) e = null;
     // D376: the id now names a different thing (the host reused it): this screen's old entity goes, the new one comes
@@ -420,7 +478,7 @@ export class NetGuest {
     }
     if (!e) {
       e = this.create(r, m);
-      if (!e) return;
+      if (!e) return false;
     } else this.refreshMeta(e, m);
     const x = r.x / 2;
     const y = r.y / 2;
@@ -436,7 +494,7 @@ export class NetGuest {
         e.anim.poseT = r.poseT / 50;
         comboFromWire(e, r.cIdx, r.cPhase, r.cK, (r.flags & F.charging) !== 0);
       }
-      return;
+      return true;
     }
     const list = this.samples.get(r.id) ?? [];
     list.push({ t, x, y });
@@ -509,6 +567,7 @@ export class NetGuest {
     }
     if (e.pr?.lob) e.pr.lob.t = (r.extra / 1000) * e.pr.lob.dur;
     if (e.it) e.it.used = (r.flags & F.used) !== 0;
+    return true;
   }
 
   /**

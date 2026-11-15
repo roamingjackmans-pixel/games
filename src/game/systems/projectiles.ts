@@ -285,9 +285,11 @@ export function updateProjectiles(w: World, dt: number): void {
           break;
         }
       }
-      // friendly fire (D115): a player's shot hits standing allies in its path like it hits enemies
+      // friendly fire (D115): a player's shot hits standing allies in its path like it hits enemies. A spell's shot
+      // stops on any standing ally as it stops on an enemy (D397), hurting them only as friendly fire does
       if (!e.removed && owner) {
-        for (const a of ffVictims(w, owner)) {
+        const allies = pr.isSpell && owner.pl ? w.livingPlayers().filter((p) => p !== owner) : ffVictims(w, owner);
+        for (const a of allies) {
           if (pr.hit.has(a.id)) continue;
           if (!circleHit(e.x, e.y, e.radius, a.x, a.y + PLAYER_DOT_DY, PLAYER_DOT_R)) continue;
           pr.hit.add(a.id);
@@ -301,7 +303,10 @@ export function updateProjectiles(w: World, dt: number): void {
             break;
           }
           const res = hitAlly(w, owner, a, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e, circleArea(e.x, e.y, e.radius));
-          if (res === 'dodged' || res === 'none') continue;
+          // a co-op guest's body decides the hit on its own screen (D338): the shot stops unless it is mid-dodge here
+          const puppetTook = res === 'dodged' && a.pl?.net === 'puppet' && a.pl.state !== 'dodge';
+          if (res === 'dodged' && !puppetTook) continue;
+          if (res === 'none' && !pr.isSpell) continue;
           if (pr.chain) {
             if (!chainOn(w, e, owner)) impact(w, e);
             break;

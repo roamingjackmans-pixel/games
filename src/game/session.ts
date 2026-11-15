@@ -26,7 +26,7 @@ import { dormantMimicNear, mimicBite } from './interact';
 import { cleanse, resetPlayerStun } from './combat/damage';
 import { coopHpMult, enemyDmgMult, reviveRequirement } from './combat/formulas';
 import { ngBossDmgTrim, roomEnemyDmgTrim, zoneDmgFactor } from '../data/roles';
-import { BONUS_BOSS_HP_PCT, BONUS_BOSS_SHARD_MULT, bonusBossPhase } from './procgen/bonusBoss';
+import { BONUS_BOSS_HP_PCT, BONUS_BOSS_SHARD_MULT, bonusBossFor, bonusBossPhase } from './procgen/bonusBoss';
 import { BOSSES } from '../data/bosses';
 import { DEATH_TITLES } from '../data/story';
 import { newWorldState } from './save/schema';
@@ -320,7 +320,8 @@ export class GameSession {
     this.waveIdx = 0;
     this.waveIds = [];
     // room content
-    const cleared = ws.roomsCleared.includes(roomId);
+    // D394: a New Game+ bonus boss beaten in this playthrough stays beaten, through rests and deaths
+    const cleared = ws.roomsCleared.includes(roomId) || this.bonusBeatenIn(roomId);
     this.roomPhase = 'peace';
     if ((node.kind === 'combat' || node.kind === 'ambush') && !cleared) {
       this.plan = planRoom(this.layout, node, this.players.length);
@@ -540,6 +541,7 @@ export class GameSession {
     w.bossId = 0;
     this.roomPhase = 'cleared';
     this.reviveDowned();
+    this.sweepEnemyLeftovers();
     if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
     w.emit({ t: 'stat', key: 'roomsCleared', playerId: '' });
     lootHooks.boss(this, e.x, e.y, def.id);
@@ -839,9 +841,19 @@ export class GameSession {
     w.emit({ t: 'msg', text: `${def.name} waits here, weakened.`, color: def.palette?.[1] ?? '#ffcf6a' });
   }
 
+  /** Is this room this zone's bonus fight, already won in this playthrough? (D394) */
+  bonusBeatenIn(roomId: string): boolean {
+    const bb = bonusBossFor(this.layout);
+    return !!bb && bb.roomId === roomId && (this.save.world.bonusBeaten ?? []).includes(`${this.layout.cycle}:${this.layout.zone}`);
+  }
+
   /** The bonus boss is down (D278): what it called goes with it, a boss chest's worth of loot; the room clears as usual. */
   private bonusBossKilled(e: Entity): void {
     const w = this.w;
+    // D394: it stays beaten for the rest of this playthrough (a rest or a death used to bring it back)
+    const key = `${this.layout.cycle}:${this.layout.zone}`;
+    const beaten = (this.save.world.bonusBeaten ??= []);
+    if (!beaten.includes(key)) beaten.push(key);
     // every body it called, even one still in its spawn tell (the room clears only when none is left)
     for (const o of [...w.enemies]) {
       if (o === e || o.removed || o.en!.summonerId !== e.id) continue;
@@ -857,11 +869,24 @@ export class GameSession {
     w.emit({ t: 'shake', amount: 10 });
   }
 
+  /**
+   * D393: with the room won, what the enemies' attacks left goes too (telegraphs still winding up, shots in flight,
+   * ground they left), on the host's screen and so on every guest's.
+   */
+  sweepEnemyLeftovers(): void {
+    const w = this.w;
+    for (const e of w.entities.values()) {
+      if (e.removed) continue;
+      if ((e.type === 'telegraph' && e.tg?.team === 1) || (e.type === 'projectile' && e.pr?.team === 1) || (e.type === 'hazard' && e.hz?.team === 1 && e.hz.hazard !== 'curePool')) w.remove(e);
+    }
+  }
+
   clearRoom(): void {
     const w = this.w;
     const ws = this.save.world;
     this.roomPhase = 'cleared';
     this.reviveDowned();
+    this.sweepEnemyLeftovers();
     if (!ws.roomsCleared.includes(this.node.id)) ws.roomsCleared.push(this.node.id);
     w.emit({ t: 'stat', key: 'roomsCleared', playerId: '' });
     this.applyDoorLocks();

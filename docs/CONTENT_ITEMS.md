@@ -173,7 +173,9 @@ Stability = stamina lost per 100 damage blocked. A shield with no parry window c
 
 **Spell Skill** (D182) is one number for what a tool makes of your Brain or Prayer: `100 × toolMult × rarity ×
 reinforcement × (1 + grade × f(stat) × class boost) × (1 + spell power bonuses)`, with `toolMult = grade value × (1 +
-0.35 × (ilvl − 1))` and the grade weights of §1 for the letter. Spells deal and heal Spell Skill / 100 × their listed
+0.35 × (ilvl − 1))` and the grade weights of §1 for the letter, except that **a staff's letter uses a flatter table**
+(D395): S 1.33, A 1.25, B 1.15, C 0.8, D 0.45, E 0.2 (the weapon table's S 1.9 and A 1.55 drew too much out of Brain on
+the Archmagister's Rod). Talismans use the weapon table. Spells deal and heal Spell Skill / 100 × their listed
 amounts; their other effects grow more gently. A tool's bonus adds its % to spells of its element (or to heals). Cast
 speed scales cast times. A staff casts only Brain spells, a talisman only Prayer spells; each holds three.
 
@@ -382,6 +384,12 @@ weapon; off-hand Leech heals on those hits only. Fleetfoot (dodge) counts only f
 | **Hearth** | armor | 8 | +8% max HP | `#e0705a` |
 | **Zephyr** | armor | 11.2 | +11.2% stamina regeneration (D356, was 16) | `#a8e6cf` |
 | **Gilt** | armor | 11 | +11% Glowen found | `#d4af37` |
+| **Lingering** | weapon (staff / talisman) | 15 | +15% spell duration: zones, walls, buffs, barriers, debuffs of that tool's school (D399) | `#b58cff` |
+| **Expanse** | weapon (staff / talisman) | 10 | +10% spell area size: the radius of circles, rings, cones and scattered circles of that tool's school, a zone's too; lines and shots keep their size (D399) | `#5fd0e6` |
+
+Lingering and Expanse (D399) work only socketed in a staff or talisman, and only for the spells of that tool's school
+(a talisman's for Prayer spells); in a weapon they do nothing. Lingering adds to the Talisman proficiency's spell
+duration.
 
 ## 11. Consumables (quick use, up to 10 of each)
 

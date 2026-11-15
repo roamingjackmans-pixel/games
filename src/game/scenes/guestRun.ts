@@ -26,6 +26,8 @@ import { upgradeRarity } from '../items/proficiency';
 import { breakDownEssence, reinforceItem } from '../items/reinforce';
 import { noteShopGemBought, rollShopPiece, shopGem, shopGemBuys, shopGemPrice, shopItemPrice, shopPiece } from '../bonfire/shop';
 import { refreshDerived } from '../player/player';
+import { buyFromGary, garyStock } from '../bonfire/gary';
+import { renderGary } from '../../ui/menus/gary';
 import { writeSave } from '../save/storage';
 import { getStore } from '../../engine/settings';
 import { releasePad, usePadOf } from '../../engine/padProfile';
@@ -269,6 +271,7 @@ export class GuestRunScene extends WorldScene {
       this.quip = this.pickLine(DEATH_QUIPS, 'quip');
     }
     else if (e.t === 'chat') toast(`${e.from}: ${e.text}`, 4000);
+    else if (e.t === 'gary') this.showGary(e.zone, e.cycle);
     else if (e.t === 'credits') {
       achievements().note({ k: 'credits' });
       this.persist();
@@ -278,6 +281,28 @@ export class GuestRunScene extends WorldScene {
   }
 
   // ------------------------------------------------------------------ overlays
+
+  /**
+   * Gary's cart for this guest (D396): the host's Gary, this guest's own stock (rolled from its own world, kept in its
+   * save, like its bonfire shop), bought with its own Glowen; the host hears of the change like any other.
+   */
+  showGary(zone: number, cycle: number): void {
+    const p = this.local;
+    if (!p) return;
+    this.dropCut();
+    this.closeOverlay();
+    const c = this.save.character;
+    const stock = garyStock(this.save.world, zone, cycle);
+    const l = layer('dim');
+    l.setAttribute('data-testid', 'gary');
+    renderGary(l, { char: c, stock, buy: (e) => stats().count(buyFromGary(c, e), { garyBuys: 1, garyGlowen: e.price }), close: () => this.closeOverlay() }, () => {
+      this.w.sfx('lootRare', p.x);
+      this.changed();
+    });
+    this.overlay = l;
+    this.overlayKind = 'bonfire';
+    this.menuOpen = true;
+  }
 
   closeOverlay(): void {
     this.overlay?.remove();

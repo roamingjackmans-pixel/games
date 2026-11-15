@@ -67,6 +67,8 @@ export interface Derived {
   spellPowerPct: number;
   /** spells' buffs, hazards, walls and barriers last this much longer, from Talisman proficiency (D371) */
   spellDurationPct: number;
+  /** D399: Lingering (+duration) and Expanse (+area size) gems in staffs and talismans, by school, as shares */
+  spellGem: Record<'brain' | 'prayer', { duration: number; area: number }>;
   defense: Record<DamageType, number>;
   defensePct: Partial<Record<DamageType, number>>;
   offKind: 'shield' | 'staff' | 'talisman' | null;
@@ -299,6 +301,8 @@ export function computeDerived(c: Character): Derived {
   // D369: each hand's weapon gems, kept apart
   const gemMain = gemHand();
   const gemOff = gemHand();
+  /** D399: Lingering and Expanse gems in staffs and talismans, by school */
+  const spellGem = { brain: { duration: 0, area: 0 }, prayer: { duration: 0, area: 0 } };
   let poisePct = 0;
   let shardFind = 0;
   let glowenFind = 0;
@@ -409,6 +413,14 @@ export function computeDerived(c: Character): Derived {
         continue;
       }
       if ((it.kind !== 'weapon' && it.kind !== 'staff' && it.kind !== 'talisman') || gd.armorOnly) continue;
+      // D399: spell gems work in a staff or talisman, for that school's spells (in a weapon they do nothing)
+      if (gd.toolOnly) {
+        const school = CASTING_TOOLS[it.baseId]?.school;
+        if (!school) continue;
+        if (pk.family === 'lingering') spellGem[school].duration += v / 100;
+        else if (pk.family === 'expanse') spellGem[school].area += v / 100;
+        continue;
+      }
       // D369: a weapon gem works only for the hand it sits in
       const gh = it === c.equipment.main ? gemMain : it === c.equipment.off ? gemOff : null;
       if (!gh) continue;
@@ -587,6 +599,7 @@ export function computeDerived(c: Character): Derived {
     spellCdr: Math.min(0.5, prof.spellCooldown + spellCdrSet),
     spellPowerPct: prof.spellPower + spellPowerSet,
     spellDurationPct: Math.min(1, prof.spellDuration),
+    spellGem,
     defense,
     defensePct: defPct,
     offKind: twoHanded ? null : shield ? 'shield' : tool ? (tool.school === 'brain' ? 'staff' : 'talisman') : null,

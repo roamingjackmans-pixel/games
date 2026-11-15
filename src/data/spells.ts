@@ -52,7 +52,7 @@ const BRAIN: SpellDef[] = [
     9,
     22,
     [{ op: 'zone', pattern: { kind: 'circle', r: 120, anchor: 'aim' }, durationS: 4, tickS: 0.5, hazard: 'voidRift', slowPct: 0.2, enemiesOnly: true, hurtsAllies: true, tick: [dmg({ kind: 'circle', r: 10, anchor: 'target', vfx: 'tick' }, 12, 'void')] }],
-    'circle(120) at the cursor for 4 s: 12 Void per 0.5 s and −20% speed to everyone inside but you, co-op allies too (friendly fire).',
+    'circle(120) at the cursor for 4 s: 12 Void per 0.5 s and −20% speed to everyone inside, co-op allies and you too (friendly fire).',
     'void',
   ),
   B(

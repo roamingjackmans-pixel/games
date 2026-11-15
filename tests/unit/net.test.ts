@@ -112,14 +112,15 @@ describe('net: codecs', () => {
     expect(back.frame.pressed).toBe(4);
     expect(back.frame.aimNeutral).toBe(true);
   });
-  it('snapshots round-trip records, removals and JSON', () => {
+  it('snapshots round-trip records, the live list, the snapshot number and JSON', () => {
     const s = new GameSession(saveOf('knight', 'J', 'p'));
     s.start();
     const e = s.localPlayer!;
     const r = recordOf(e, s.w.time);
-    const back = decodeSnap(encodeSnap({ full: true, tick: 9, time: 1.25, ackSeq: 7, recs: [r], removed: [3, 4], json: { bossId: 0, ev: [{ t: 'shake', amount: 3 }] } }));
+    const back = decodeSnap(encodeSnap({ full: true, tick: 9, time: 1.25, ackSeq: 7, recs: [r], sn: 70001, live: [3, 4], json: { bossId: 0, ev: [{ t: 'shake', amount: 3 }] } }));
     expect(back.recs[0]).toEqual(r);
-    expect(back.removed).toEqual([3, 4]);
+    expect(back.live).toEqual([3, 4]);
+    expect(back.sn).toBe(70001);
     expect(back.time).toBe(1.25);
     expect(back.json.ev?.[0]).toEqual({ t: 'shake', amount: 3 });
   });

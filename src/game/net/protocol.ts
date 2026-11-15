@@ -122,7 +122,9 @@ export type NetEvent =
   | { t: 'chat'; from: string; text: string }
   | { t: 'credits' }
   /** a zone's boss fell in the host's world: each guest's own world decides what it keeps (D195) */
-  | { t: 'zoneBeaten'; zone: number; cycle: number };
+  | { t: 'zoneBeaten'; zone: number; cycle: number }
+  /** this guest opened Gary's cart in the host's world (D396): its own cart, from its own world, for its own Glowen */
+  | { t: 'gary'; zone: number; cycle: number };
 
 // ---------------------------------------------------------------- input packet (NETCODE §3)
 // seq u16, moveX i8, moveY i8, aimX i16, aimY i16, buttons u16, pressed u16, tick u32, flags u8 = 17 bytes

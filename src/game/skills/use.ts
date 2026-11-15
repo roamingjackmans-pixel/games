@@ -4,7 +4,7 @@ import { reinforceDmgMult } from '../../data/essence';
 import { SKILLS } from '../../data/skills';
 import { SPELLS } from '../../data/spells';
 import { runEffects } from '../effects/run';
-import { attackStaminaCost, GRADE_MULT, itemLevelFor, itemSkillCount, scalingCurve, toolMult } from '../combat/formulas';
+import { attackStaminaCost, GRADE_MULT, itemLevelFor, itemSkillCount, scalingCurve, toolGradeMult, toolMult } from '../combat/formulas';
 import { CASTING_TOOLS } from '../../data/castingTools';
 import { RARITY_POWER } from '../../data/proficiency';
 import { buffSum } from '../combat/state';
@@ -78,9 +78,9 @@ export function spellOf(e: Entity, i: number, keys: SpellKeys = 'spell'): SpellD
 export function schoolPower(d: Pick<Derived, 'stats' | 'mainTool' | 'offTool'> & Partial<Pick<Derived, 'statBoost'>>, school: SpellSchool): number {
   const stat = school === 'brain' ? d.stats.brain : d.stats.prayer;
   const tool = toolForSchool(d, school);
-  // the tool's own scaling letter decides how much Brain or Prayer it draws out (D182): C 0.8 … S 1.9, as weapons
+  // the tool's own scaling letter decides how much Brain or Prayer it draws out (D182): a talisman C 0.8 … S 1.9 as weapons, a staff on its flatter table (D395)
   // a class's primary or secondary Brain / Prayer counts 25% / 15% more (D184)
-  const curve = 1 + GRADE_MULT[tool?.def.gradeLetter ?? 'E'] * scalingCurve(stat) * (d.statBoost?.[school] ?? 1);
+  const curve = 1 + (tool ? toolGradeMult(tool.def) : GRADE_MULT.E) * scalingCurve(stat) * (d.statBoost?.[school] ?? 1);
   return curve * Math.max(0.5, tool?.mult ?? 0);
 }
 
@@ -98,7 +98,7 @@ export function toolSpellSkill(item: Item, stats: Pick<Stats, 'brain' | 'prayer'
   const def = CASTING_TOOLS[item.baseId];
   if (!def) return 0;
   const stat = def.school === 'brain' ? stats.brain : stats.prayer;
-  return Math.round(100 * toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus) * (1 + GRADE_MULT[def.gradeLetter] * scalingCurve(stat) * (boost[def.school] ?? 1)));
+  return Math.round(100 * toolMult(def.grade, item.ilvl) * RARITY_POWER[item.rarity] * reinforceDmgMult(item.plus) * (1 + toolGradeMult(def) * scalingCurve(stat) * (boost[def.school] ?? 1)));
 }
 
 /** The power multiplier of a spell for this caster: Brain/Prayer curve × casting tool (GAME_DESIGN §3.1). */

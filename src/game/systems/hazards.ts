@@ -1,7 +1,7 @@
 // Floor hazards (fire puddles, poison clouds, thorns, ice, oil, slag, roots, time bubbles…) and their ticks.
 import { shapeHit, type Shape } from '../combat/patterns';
 import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
-import { applyControl, applyStatusBuild, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer, rawDamage } from '../combat/damage';
+import { applyControl, applyStatusBuild, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer, hitSelf, rawDamage } from '../combat/damage';
 import { effectSpec, runEffects } from '../effects/run';
 import type { HazardId, Team } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
@@ -50,7 +50,7 @@ export const HAZARDS: Record<HazardId, HazardDef> = {
   tendril: { dmg: 0.5, tickS: 0.6, slow: 0.4, color: '#c58cff', hitsTeam: 'players' },
   fireWall: { dmg: 0.5, tickS: 0.5, status: { id: 'burn', buildup: 40 }, color: '#ff6a1a', hitsTeam: 'players' },
   consecrate: { dmg: 0, tickS: 1, color: '#fff3b0', hitsTeam: 'both' },
-  sanctuary: { dmg: 0, tickS: 1, color: '#fff3b0', hitsTeam: 'both' },
+  sanctuary: { dmg: 0, tickS: 1, color: '#7ad0a0', hitsTeam: 'both' },
   voidRift: { dmg: 0, tickS: 0.5, slow: 0.2, color: '#9b5bff', hitsTeam: 'enemies' },
   regenAura: { dmg: 0, tickS: 1, color: '#7ad0a0', hitsTeam: 'players' },
   timeDilation: { dmg: 0, tickS: 0.25, slow: 0.4, color: '#b08de8', hitsTeam: 'enemies' },
@@ -189,7 +189,9 @@ export function updateHazards(w: World, _dt: number): void {
         break;
       }
       // friendly fire (D375): a zone that hurts allies (Void Rift) slows the caster's co-op allies and ticks on them
-      const ffAlly = !!hz.hurtsAllies && hz.team === 0 && !!v.pl && v.id !== hz.ownerId && ffVictims(w, w.get(hz.ownerId)).includes(v);
+      // D397: one cast at a spot (hurtsOwner) catches its caster too
+      const selfHit = !!hz.hurtsOwner && hz.team === 0 && !!v.pl && v.id === hz.ownerId;
+      const ffAlly = selfHit || (!!hz.hurtsAllies && hz.team === 0 && !!v.pl && v.id !== hz.ownerId && ffVictims(w, w.get(hz.ownerId)).includes(v));
       // slows apply continuously
       if (hz.slowPct > 0) {
         if (ffAlly) v.pl!.timeSlow = Math.min(v.pl!.timeSlow, 1 - hz.slowPct);
@@ -225,7 +227,8 @@ export function updateHazards(w: World, _dt: number): void {
         const ctx = { sourceId: hz.ownerId, team: 0 as const, x: v.x, y: v.y, aimX: v.x, aimY: v.y, targetId: v.id, powerMult: hz.powerMult, isSpell: true, isSkill: false, baseDamage: owner?.pl?.derived.weaponPower ?? 20, windupS: 0, tag: `hz:${hz.hazard}:ff` };
         for (const eff of hz.effects) {
           const spec = effectSpec(w, eff, ctx);
-          if (spec) hitAlly(w, owner, v, spec, h.x, h.y, undefined, { s: inside, tau: 0 });
+          if (spec && selfHit) hitSelf(w, v, spec, h.x, h.y, { s: inside, tau: 0 });
+          else if (spec) hitAlly(w, owner, v, spec, h.x, h.y, undefined, { s: inside, tau: 0 });
         }
         continue;
       }
@@ -283,7 +286,7 @@ export function hazardSlowOn(w: World, p: Entity): number {
     const def = HAZARDS[hz.hazard];
     if (!def || (def.armS && w.time < hz.armedAt + def.armS)) continue;
     const foe = hz.team !== 0 && !hz.enemiesOnly && (def.hitsTeam === 'players' || def.hitsTeam === 'both');
-    const ff = !!hz.hurtsAllies && hz.team === 0 && hz.ownerId !== p.id && ffVictims(w, w.get(hz.ownerId)).includes(p);
+    const ff = (!!hz.hurtsOwner && hz.team === 0 && hz.ownerId === p.id) || (!!hz.hurtsAllies && hz.team === 0 && hz.ownerId !== p.id && ffVictims(w, w.get(hz.ownerId)).includes(p));
     if (!foe && !ff) continue;
     if (!(hz.shapes ?? []).some((s) => shapeHit(s, 0, p.x, p.y + PLAYER_DOT_DY, PLAYER_DOT_R, w.room))) continue;
     m = Math.min(m, 1 - hz.slowPct);

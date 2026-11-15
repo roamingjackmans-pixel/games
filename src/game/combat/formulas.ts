@@ -110,6 +110,18 @@ export function statGrowth(s: number): number {
 /** Grade weights (D88: raised so stats matter more; were S 1.2, A 1.0, B 0.75, C 0.5, D 0.25, E 0.1). */
 export const GRADE_MULT: Record<Grade, number> = { S: 1.9, A: 1.55, B: 1.15, C: 0.8, D: 0.45, E: 0.2, '-': 0 };
 
+/**
+ * A staff's scaling letter draws out Brain on a flatter curve than a weapon's (D395): S is 30% weaker than the weapon
+ * table's (1.33, was 1.9), A sits clearly under it (1.25, was 1.55), and B down stay as they were. Talismans keep the
+ * weapon table.
+ */
+export const STAFF_GRADE_MULT: Record<Grade, number> = { S: 1.33, A: 1.25, B: 1.15, C: 0.8, D: 0.45, E: 0.2, '-': 0 };
+
+/** How much a casting tool's scaling letter draws out its stat: a staff's flatter table (D395), a talisman's the weapons'. */
+export function toolGradeMult(def: { gradeLetter: Grade; school: 'brain' | 'prayer' }): number {
+  return (def.school === 'brain' ? STAFF_GRADE_MULT : GRADE_MULT)[def.gradeLetter];
+}
+
 /** Two-handing counts Bonk ×1.5 (capped at the stat cap) for scaling and requirements; Slicey is unchanged (D72). */
 export function effBonk(bonk: number, twoHanded: boolean): number {
   return twoHanded ? Math.min(STAT_CAP, bonk * 1.5) : bonk;

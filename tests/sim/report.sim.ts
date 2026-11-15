@@ -228,6 +228,8 @@ const BUILDS: Build[] = [
   { name: 'Bow (Slicey)', cls: 'hunter', main: 'bow', twoHanded: true, split: { slicey: 0.5, hp: 0.3, endurance: 0.2 } },
   { name: 'Crossbow (Bonk)', cls: 'brute', main: 'crossbow', split: { bonk: 0.5, hp: 0.3, endurance: 0.2 } },
   { name: 'Brain caster: staff spells', cls: 'scholar', main: 'rapier', off: 'apprentice_staff', split: { brain: 0.55, hp: 0.3, endurance: 0.15 }, caster: 'brain' },
+  // D395: the S staff, on the staffs' flatter scaling table
+  { name: "Brain caster: S staff (Archmagister's Rod)", cls: 'scholar', main: 'rapier', off: 'archmagister_rod', split: { brain: 0.55, hp: 0.3, endurance: 0.15 }, caster: 'brain' },
   { name: 'Prayer caster: talisman spells', cls: 'occultist', main: 'dawn_glaive', off: 'silver_talisman', split: { prayer: 0.55, hp: 0.3, endurance: 0.15 }, caster: 'prayer' },
 ];
 

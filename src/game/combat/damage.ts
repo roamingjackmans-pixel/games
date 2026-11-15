@@ -603,6 +603,27 @@ export function hitAlly(w: World, attacker: Entity | null | undefined, p: Entity
   return hitPlayer(w, attacker.id, p, s, fromX, fromY, projectile, area);
 }
 
+/**
+ * D397: a player's own spell area cast at a spot (Meteor, Comet Barrage, Void Rift, Fireball's blast) lands on the
+ * caster too, as friendly fire does on an ally: the normal player hit (dodge, block, defense, barrier) at the host's
+ * friendly-fire strength, never parried, solo too; never out of combat (D329), never at 0% friendly fire.
+ */
+export function hitSelf(w: World, p: Entity, spec: DamageSpec, fromX: number, fromY: number, area?: HitArea): HitResult {
+  const k = w.friendlyFire;
+  if (!p.pl || p.pl.downed || p.pl.deadUntilRest || !(k > 0) || specTotal(spec) <= 0 || !w.hostilesPresent()) return 'none';
+  const s: DamageSpec = {
+    ...scaleSpec(spec, k),
+    kind: 'player',
+    parryable: false,
+    status: spec.status.map((x) => ({ ...x, buildup: x.buildup * k })),
+    grab: null,
+    pull: null,
+    staminaDrain: 0,
+  };
+  delete s.onHitEffects;
+  return hitPlayer(w, p.id, p, s, fromX, fromY, undefined, area);
+}
+
 function sanctuaryEnemyMult(w: World, p: Entity): number {
   for (const h of w.entities.values()) {
     if (h.type !== 'hazard' || !h.hz || h.removed || !h.hz.enemyDamagePct) continue;

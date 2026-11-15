@@ -802,7 +802,10 @@ export type GemFamily =
   | 'bulwark'
   | 'hearth'
   | 'zephyr'
-  | 'gilt';
+  | 'gilt'
+  /** D399: spell gems, working in a staff or talisman for that school's spells */
+  | 'lingering'
+  | 'expanse';
 
 export interface Item {
   id: string;
@@ -903,6 +906,8 @@ export interface WorldState {
   mimicsAwake: string[];
   reliquariesOpened: string[];
   bossesBeatenThisCycle: number[];
+  /** New Game+ bonus bosses beaten, as `cycle:zone` (D394): a beaten one never comes back to its room that playthrough */
+  bonusBeaten?: string[];
   garyGone: boolean;
   garyStock: Record<string, GaryStockEntry[]>;
   /** per zone and cycle (`z1c0`, D357; older saves have one entry per bonfire id): the rotating piece and how many shop gems were bought */

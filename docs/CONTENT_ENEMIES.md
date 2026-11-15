@@ -210,7 +210,9 @@ Below 65% HP (**Second half**):
 The Instructor guards the tutorial hall. He walks the whole hall (D110), does not heal (D111), and at 65% HP blows
 the whistle: everything comes faster and he picks on anyone standing back (D107, D226). On death he drops a Legendary
 weapon at ilvl 3 with all three skills, or (50%) a spell. Gary is the wandering merchant: he never attacks, and three hits make him leave for the
-rest of the playthrough ("Alright then.").
+rest of the playthrough ("Alright then."); every New Game+ he is back. In co-op every player trades with him: a guest at
+his cart opens its own cart on its own screen (its own stock, rolled from its own world and kept in its save, bought
+with its own Glowen), and the host its own (D396).
 
 **Boss parts and summons** (spawned by bosses; HP and damage scale with the boss's zone):
 
@@ -238,7 +240,10 @@ Common rules (GAME_DESIGN §7):
 - **NG+ bonus boss rooms (D278, D290, D322):** from NG+1 one combat room per zone holds a random boss from any zone,
   fighting in its phase 2 for the whole fight, on a full bar worth 30% of the room's zone boss's full HP for the playthrough (not its own). It hits
   like a boss of the room's zone. Arena-bound bosses (the Bloatking, Ignatius, the Landlord) are never picked. It
-  pays 30% of the Shards and a boss chest; it is not the zone's boss.
+  pays 30% of the Shards and a boss chest; it is not the zone's boss. **Beaten, it stays beaten** for the rest of that
+  playthrough: rests and deaths do not bring it back (`WorldState.bonusBeaten`, D394). **No one boss appears in more
+  than two zones of a playthrough** (`BONUS_BOSS_MAX_PER_RUN`): the zones pick in order, zone 1 first, each leaving out
+  bosses already picked twice, seeded per zone as before (`bonusBossPicks`, D394).
 
 ### Arenas
 

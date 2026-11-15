@@ -1,7 +1,7 @@
 // Telegraph system: resolves impacts, pulses, continuous areas (sweeps, rings, waves, beams) and persistence.
 import { DEG, turnToward } from '../../engine/math';
 import { shapeHit, type Shape } from '../combat/patterns';
-import { addRevive, ffVictims, hitAlly, hitEnemy, hitPlayer } from '../combat/damage';
+import { addRevive, ffVictims, hitAlly, hitEnemy, hitPlayer, hitSelf } from '../combat/damage';
 import { runEffects } from '../effects/run';
 import { spawnHazard } from './hazards';
 import { attackDamage } from '../enemies/spawn';
@@ -17,8 +17,11 @@ function targetsFor(w: World, t: Entity): Entity[] {
     if (owner?.en?.def.traits?.friendlyFire) return [...list, ...w.livingEnemies().filter((e) => e.id !== owner.id)];
     return list;
   }
-  // friendly fire (D115): a player's areas also catch the other standing players
-  return [...w.livingEnemies(), ...ffVictims(w, w.get(tg.ownerId))];
+  // friendly fire (D115): a player's areas also catch the other standing players; a spell cast at a spot, its caster (D397)
+  const owner = w.get(tg.ownerId);
+  const list = [...w.livingEnemies(), ...ffVictims(w, owner)];
+  if (tg.hitsOwner && owner?.pl && !owner.removed && !owner.pl.downed && !owner.pl.deadUntilRest) list.push(owner);
+  return list;
 }
 
 function applyHit(w: World, t: Entity, target: Entity, area?: HitArea): void {
@@ -31,7 +34,8 @@ function applyHit(w: World, t: Entity, target: Entity, area?: HitArea): void {
   const fromX = tg.area ? target.x + Math.cos(target.facing) * 10 : ox;
   const fromY = tg.area ? target.y + Math.sin(target.facing) * 10 : oy;
   if (!spec) return;
-  if (target.pl && tg.team === 0) hitAlly(w, owner, target, spec, ox, oy, undefined, area);
+  if (target.pl && tg.team === 0 && target === owner) hitSelf(w, target, spec, target.x + Math.cos(target.facing) * 10, target.y + Math.sin(target.facing) * 10, area);
+  else if (target.pl && tg.team === 0) hitAlly(w, owner, target, spec, ox, oy, undefined, area);
   else if (target.pl) hitPlayer(w, tg.ownerId, target, spec, tg.area && tg.kind === 'pierce' ? fromX : ox, tg.area && tg.kind === 'pierce' ? fromY : oy, undefined, area);
   else if (target.en) {
     if (tg.team === 1) {

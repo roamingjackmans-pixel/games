@@ -10,6 +10,20 @@ export interface LoopbackOpts {
   loss?: number;
   lossy?: string[];
   seed?: string;
+  /**
+   * Trystero's way with big messages (D393): one larger than BIG_MESSAGE_BYTES is offered first and sent only once
+   * the receiver accepts, so it arrives about two trips later than a small message sent at the same moment, and
+   * small messages sent after it overtake it. Off by default.
+   */
+  bigLate?: boolean;
+}
+
+/** Trystero 0.26 sends a message larger than one 16 KiB frame as an offer, an accept and then chunks (D393). */
+export const BIG_MESSAGE_BYTES = 16384 - 40;
+
+function sizeOf(d: NetPayload): number {
+  if (d instanceof ArrayBuffer) return d.byteLength;
+  return typeof d === 'string' ? d.length : JSON.stringify(d).length;
 }
 
 interface Packet {
@@ -19,6 +33,8 @@ interface Packet {
   name: string;
   data: NetPayload;
   from: string;
+  /** a big message (bigLate): late, and never holds back the ones after it */
+  big?: boolean;
 }
 
 function copy(d: NetPayload): NetPayload {
@@ -85,10 +101,12 @@ export class LoopbackHub {
       if (t === from) continue;
       if (to && !to.includes(t.selfId)) continue;
       if (lossy && this.opts.loss && this.rng.chance(this.opts.loss)) continue;
-      // reliable channels stay in order: never deliver before an earlier packet to the same peer
-      let at = this.now + this.delay();
-      if (!lossy) for (const q of this.queue) if (q.to === t && q.from === from.selfId && q.at > at) at = q.at;
-      this.queue.push({ at, seq: this.seq++, to: t, name, data: copy(data), from: from.selfId });
+      const big = !!this.opts.bigLate && sizeOf(data) > BIG_MESSAGE_BYTES;
+      // reliable channels stay in order: never deliver before an earlier packet to the same peer (except a big one,
+      // which waits for its accept while the small ones after it go straight out, as Trystero does)
+      let at = this.now + this.delay() * (big ? 3 : 1);
+      if (!lossy && !big) for (const q of this.queue) if (q.to === t && q.from === from.selfId && !q.big && q.at > at) at = q.at;
+      this.queue.push({ at, seq: this.seq++, to: t, name, data: copy(data), from: from.selfId, ...(big ? { big } : {}) });
     }
   }
 

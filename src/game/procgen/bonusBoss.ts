@@ -36,14 +36,45 @@ export interface BonusBoss {
   bossId: string;
 }
 
+/** No one bonus boss turns up in more than this many zones of one playthrough (D394). */
+export const BONUS_BOSS_MAX_PER_RUN = 2;
+
+const picksCache = new Map<string, Record<number, string>>();
+
+/**
+ * Every zone's bonus boss for one playthrough (seed and cycle), zone 1 first (D394): each zone picks from its pool
+ * leaving out any boss already picked for two earlier zones, so Vexthorn met in zones 1 and 2 is not met again in
+ * that playthrough. Seeded per zone as before (the room's pick first, then the boss's), so a pick changes only where
+ * the cap rules it out.
+ */
+export function bonusBossPicks(seed: string, cycle: number): Record<number, string> {
+  const key = `${seed}|${cycle}`;
+  const hit = picksCache.get(key);
+  if (hit) return hit;
+  const out: Record<number, string> = {};
+  const used = new Map<string, number>();
+  for (let z = 1; z <= 8; z++) {
+    const all = bonusBossPool(z);
+    if (!all.length) continue;
+    const open = all.filter((b) => (used.get(b.id) ?? 0) < BONUS_BOSS_MAX_PER_RUN);
+    const rng = stream(seed, `bonusBoss:${z}:${cycle}`);
+    rng.next(); // the room's pick (bonusBossFor)
+    const boss = rng.pick(open.length ? open : all);
+    out[z] = boss.id;
+    used.set(boss.id, (used.get(boss.id) ?? 0) + 1);
+  }
+  if (picksCache.size > 64) picksCache.clear();
+  picksCache.set(key, out);
+  return out;
+}
+
 /** This zone's bonus fight, or null (the first playthrough, or no combat room). */
 export function bonusBossFor(layout: Pick<ZoneLayout, 'seed' | 'zone' | 'cycle' | 'rooms'>): BonusBoss | null {
   if (layout.cycle < 1) return null;
   const rooms = layout.rooms.filter((r) => r.kind === 'combat').sort((a, b) => a.id.localeCompare(b.id));
-  const pool = bonusBossPool(layout.zone);
-  if (rooms.length === 0 || pool.length === 0) return null;
+  const bossId = bonusBossPicks(layout.seed, layout.cycle)[layout.zone];
+  if (rooms.length === 0 || !bossId) return null;
   const rng = stream(layout.seed, `bonusBoss:${layout.zone}:${layout.cycle}`);
   const room = rng.pick(rooms);
-  const boss = rng.pick(pool);
-  return { roomId: room.id, bossId: boss.id };
+  return { roomId: room.id, bossId };
 }

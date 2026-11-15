@@ -851,6 +851,8 @@ roll bands    = Green −50…−15% (55%) · Blue −15…+10% (30%) · Purple 
 | Hearth | +8% max HP, applied after everything else (D260) | armor |
 | Zephyr | +11.2% stamina regeneration (D356, was 16) | armor |
 | Gilt | +11% Glowen found | armor |
+| Lingering | +15% spell duration, in a staff or talisman for that school's spells (D399) | weapon |
+| Expanse | +10% spell area size (radius), in a staff or talisman for that school's spells (D399) | weapon |
 
 Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost ×0.3).
 
@@ -932,7 +934,7 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
   of the same school: the weapon hand's keys only.
 - **Spell Skill** (D182): `100 × tool grade × (1 + 0.35 (ilvl − 1)) × rarity power × reinforcement × (1 + letter
   weight × f(Brain or Prayer) × m) × (1 + proficiency and set spell power)`, with letter weights as weapons (C 0.8 …
-  S 1.9). Spells **deal and heal Spell Skill / 100 × their listed amounts**, and their damage (not heals) is ×1.4 while
+  S 1.9) for talismans and a flatter table for staffs (S 1.33, A 1.25, B 1.15, C 0.8; D395). Spells **deal and heal Spell Skill / 100 × their listed amounts**, and their damage (not heals) is ×1.4 while
   their school's stat is 30 or less, easing in a straight line to ×1 at 300 and after (D343: more early, the same late); other effects (buffs, barriers, durations)
   grow on a gentler curve (×1.5 at 270, at most ×3). Shown on tool cards, the inventory, the Level up preview and the
   Spells tab.
@@ -993,7 +995,11 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - **Safe out of combat** (D329): with nothing to fight in the room, a player takes no damage at all: no enemy hits,
   burn or bleed ticks, falls, harmful ground, or friendly fire.
 - **Friendly fire** (D115): players' damaging attacks hit standing allies at Settings → Co-op → Friendly fire
-  damage (0–200%, default 100%); the host's value rules the session. Your own attacks never hit you. Chain Lightning's
+  damage (0–200%, default 100%); the host's value rules the session. Your own attacks never hit you, except **spells
+  cast at a spot** (D397): Meteor, Comet Barrage, Void Rift and Fireball's blast catch their caster too, at the same
+  friendly-fire strength, solo as well (never at 0%, never with nothing to fight). **A spell's shot stops on a player**
+  (an ally in its path) as it stops on an enemy, dealing friendly-fire damage (none at 0%: it still stops) (D397); a
+  co-op guest's body on the host counts (the shot used to fly through it while the guest decided the hit). Chain Lightning's
   ball jumps to an ally only when no enemy is in reach, and an ally can step out of its path (D375); Void Rift ticks on
   and slows allies standing in it (D375). A guest's own screen works out the slowing fields it stands in itself.
 - **What a guest takes home** (D195): Shards, loot, levels, spells, gems, Glowen and Thermos upgrades always. Zone

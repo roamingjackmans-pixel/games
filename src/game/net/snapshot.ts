@@ -14,6 +14,7 @@ export const ENEMY_STATES = ['spawning', 'idle', 'alert', 'approach', 'kite', 'w
 export const PLAYER_STATES = ['idle', 'attack', 'dodge', 'skill', 'cast', 'flask', 'stagger', 'held', 'falling', 'consumable', 'channel', 'charge', 'dashing'] as const;
 export const COMBO_PHASES = ['', 'windup', 'active', 'recovery'] as const;
 const REC = 28;
+const HEADER = 27;
 /** An enemy record's extra2 at or above this carries an Arcane Elite's orb angle (D340), in ORB_STEPS steps a turn. */
 export const ORB_BASE = 2000;
 export const ORB_STEPS = 60000;
@@ -232,14 +233,20 @@ export interface Snap {
   tick: number;
   time: number;
   ackSeq: number;
+  /**
+   * This guest's snapshot number, counting up from 1 (D393). Trystero sends a message over 16 KiB late, after smaller
+   * ones sent later, so snapshots can arrive out of order; the guest goes by this, not by arrival.
+   */
+  sn: number;
   recs: Rec[];
-  removed: number[];
+  /** every id this guest has from the host, as of this snapshot (D393): anything else on its screen is gone */
+  live: number[];
   json: SnapJson;
 }
 
 export function encodeSnap(s: Snap): ArrayBuffer {
   const json = new TextEncoder().encode(JSON.stringify(s.json));
-  const size = 1 + 4 + 8 + 2 + 2 + 2 + 4 + s.recs.length * REC + s.removed.length * 2 + json.length;
+  const size = HEADER + s.recs.length * REC + s.live.length * 2 + json.length;
   const b = new ArrayBuffer(size);
   const v = new DataView(b);
   let o = 0;
@@ -248,14 +255,15 @@ export function encodeSnap(s: Snap): ArrayBuffer {
   v.setFloat64(o + 5, s.time);
   v.setUint16(o + 13, s.ackSeq & 0xffff);
   v.setUint16(o + 15, s.recs.length);
-  v.setUint16(o + 17, s.removed.length);
+  v.setUint16(o + 17, s.live.length);
   v.setUint32(o + 19, json.length);
-  o = 23;
+  v.setUint32(o + 23, s.sn >>> 0);
+  o = HEADER;
   for (const r of s.recs) {
     writeRec(v, o, r);
     o += REC;
   }
-  for (const id of s.removed) {
+  for (const id of s.live) {
     v.setUint16(o, id);
     o += 2;
   }
@@ -268,19 +276,19 @@ export function decodeSnap(b: ArrayBuffer): Snap {
   const nRec = v.getUint16(15);
   const nRem = v.getUint16(17);
   const jl = v.getUint32(19);
-  let o = 23;
+  let o = HEADER;
   const recs: Rec[] = [];
   for (let i = 0; i < nRec; i++) {
     recs.push(readRec(v, o));
     o += REC;
   }
-  const removed: number[] = [];
+  const live: number[] = [];
   for (let i = 0; i < nRem; i++) {
-    removed.push(v.getUint16(o));
+    live.push(v.getUint16(o));
     o += 2;
   }
   const json = JSON.parse(new TextDecoder().decode(new Uint8Array(b, o, jl))) as SnapJson;
-  return { full: v.getUint8(0) === 1, tick: v.getUint32(1), time: v.getFloat64(5), ackSeq: v.getUint16(13), recs, removed, json };
+  return { full: v.getUint8(0) === 1, tick: v.getUint32(1), time: v.getFloat64(5), ackSeq: v.getUint16(13), sn: v.getUint32(23), recs, live, json };
 }
 
 // ---------------------------------------------------------------- meta

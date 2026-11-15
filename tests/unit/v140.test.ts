@@ -511,7 +511,7 @@ describe('Chain Lightning is a ball of lightning (D375)', () => {
 });
 
 describe('Void Rift hurts and slows co-op allies (D375)', () => {
-  it("ticks on another player inside and slows them; never the caster", async () => {
+  it("ticks on another player inside and slows them; its caster too since D397", async () => {
     const { runEffects } = await import('../../src/game/effects/run');
     const { SPELLS } = await import('../../src/data/spells');
     const { stepWorld } = await import('../../src/game/sim');
@@ -529,7 +529,7 @@ describe('Void Rift hurts and slows co-op allies (D375)', () => {
     const hpA = ally.hp!.hp;
     runEffects(s.w, SPELLS.void_rift!.effect, { sourceId: p.id, team: 0, x: p.x, y: p.y, aimX: 650, aimY: 370, targetId: 0, powerMult: 1, isSpell: true, isSkill: false, baseDamage: 20, windupS: 0, tag: 'spell:0', school: 'brain' });
     expect(hazardSlowOn(s.w, ally)).toBeCloseTo(0.8, 6);
-    expect(hazardSlowOn(s.w, p)).toBe(1);
+    expect(hazardSlowOn(s.w, p)).toBeCloseTo(0.8, 6); // D397: cast at a spot, it catches its caster too
     for (let i = 0; i < 90; i++) {
       p.x = 640;
       p.y = 368;
@@ -538,7 +538,7 @@ describe('Void Rift hurts and slows co-op allies (D375)', () => {
       stepWorld(s.w);
     }
     expect(ally.hp!.hp).toBeLessThan(hpA);
-    expect(p.hp!.hp).toBe(hpP);
+    expect(p.hp!.hp).toBeLessThan(hpP);
   });
 });
 

@@ -127,11 +127,8 @@ export class RunScene extends WorldScene {
         runHooks.credits?.(this.session);
       },
       gary: (p) => {
-        if (this.net?.guestByEntity(p)) {
-          this.w.emit({ t: 'msg', text: 'Gary: "One customer at a time. The host first."', forPlayer: p.pl!.playerId, color: '#e6d08a' });
-          return;
-        }
-        this.showGary();
+        // a guest's own cart opens on its own screen (NetHost, D396)
+        if (p === this.local) this.showGary();
       },
       newCycle: () => {
         beginNextCycle(this.save);
