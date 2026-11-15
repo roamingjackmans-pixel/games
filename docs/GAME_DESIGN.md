@@ -344,9 +344,9 @@ locks the focused item or gem. A button a menu used is swallowed until released,
 
 **Aim:** the mouse aims at the cursor. On a pad the character faces the right stick; with it neutral, melee goes to the
 nearest enemy within 160 px of the facing cone. Aim assist (strength in Settings) snaps projectiles within ±14° of an
-enemy. On a pad, a small silver **aim arrow** at the local player's feet shows which way they face (D343): two winged
-curves hug the front half of the silver ring at the feet (D381: the arrow grows out of the ring) and meet at an arrow, longer with a bow, crossbow, chakram, staff
-or talisman in either hand. The wings are see-through at their back ends and solid toward the arrow (D344). The ring
+enemy. On a pad, with a bow, crossbow, chakram, staff or talisman in either hand (D382: with anything else there is no arrow,
+only the ring, as with a mouse), a small silver **aim arrow** at the local player's feet shows which way they face (D343): two winged
+curves hug the front half of the silver ring at the feet (D381: the arrow grows out of the ring) and meet at an arrow. The wings are see-through at their back ends and solid toward the arrow (D344). The ring
 and the arrow are drawn under the bodies, so the character stands on them (D381).
 
 **Per-character pad layout** (D266): each character saves its own gamepad buttons, menu confirm / back and aim

@@ -416,7 +416,9 @@ export function aimsFar(e: Entity): boolean {
 export function drawAimArrow(ctx: CanvasRenderingContext2D, e: Entity, x: number, cy: number): void {
   const pl = e.pl;
   if (!pl || pl.deadUntilRest || pl.downed || e.hp?.dead) return;
-  const len = aimsFar(e) ? AIM_ARROW_LEN.long : AIM_ARROW_LEN.short;
+  // D382: only with a bow, crossbow, chakram, staff or talisman in hand; otherwise just the ring, as with a mouse
+  if (!aimsFar(e)) return;
+  const len = AIM_ARROW_LEN.long;
   // D381: the wings hug the silver ring at the feet, so the arrow grows out of it
   const R = PLAYER_DOT_R / AIM_ARROW_SCALE;
   const SILVER = RING_SILVER;
