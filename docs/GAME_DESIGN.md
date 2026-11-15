@@ -1032,7 +1032,7 @@ Ten classes (CONTENT_SPELLS_CLASSES §3 is the source of truth; every kit meets 
 | Hunter | 7 / 9 / 10 / 14 / 5 / 3 | Slicey / Bonk | Halberd (two-handed), a Bow and a Whip in the bag (D334) |
 | Zealot | 8 / 8 / 3 / 12 / 3 / 14 | Prayer / Slicey | Blessed Katana (D349), Silver Talisman; Sunray, Bless Weapon |
 | Berserker | 10 / 8 / 12 / 11 / 3 / 4 | Bonk / Slicey (D334) | Twin Axes (dual-wielded) |
-| Nobody | 8 / 8 / 8 / 8 / 8 / 8 | none / every stat (D334) | Club, a loincloth, one random gem |
+| Nobody | 8 / 8 / 8 / 8 / 8 / 8 | none / every stat (D334) | No weapon (bare fists, D378), a loincloth, one random gem |
 
 **Character creation**: name (blank = Joe, D200), class (a fixed-layout card, D188), optional seed, and an
 **Appearance** panel (D100, D183): body (male / female), skin, hair, facial hair, eyes and eye colour, nose, brows,

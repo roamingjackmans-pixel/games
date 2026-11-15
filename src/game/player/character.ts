@@ -11,7 +11,7 @@ import { STAT_CAP, pointsForLevel } from '../combat/formulas';
 export function newCharacter(classId: ClassId, name: string, playerId: string, rng?: Rng): Character {
   const cls = CLASSES[classId];
   const mk = (b: string): Item => (rng ? makeItem(b, 'common', 1, { rng }) : makeItem(b, 'common', 1));
-  const equipment: Character['equipment'] = { main: mk(cls.start.main), off: null, head: null, body: null, legs: null, ring1: null, ring2: null, ring3: null, ring4: null };
+  const equipment: Character['equipment'] = { main: cls.start.main ? mk(cls.start.main) : null, off: null, head: null, body: null, legs: null, ring1: null, ring2: null, ring3: null, ring4: null };
   // a starting weapon may be a scaling variant (D349)
   if (cls.start.mainVariant && equipment.main) {
     equipment.main.variant = cls.start.mainVariant;

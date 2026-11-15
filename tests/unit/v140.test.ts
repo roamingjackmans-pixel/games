@@ -606,3 +606,14 @@ describe('ground left by attacks tests the circle at the feet (D377)', () => {
     expect(run(-3)).toBeGreaterThan(0);
   });
 });
+
+describe('the Nobody starts with nothing in hand (D378)', () => {
+  it('no weapon: bare fists, only the loincloth and a gem', async () => {
+    const { computeDerived } = await import('../../src/game/player/derived');
+    const c = newCharacter('nobody', 'N', 'n', new Rng('n'));
+    expect(c.equipment.main).toBeNull();
+    expect(c.equipment.off).toBeNull();
+    expect(c.bag).toEqual([]);
+    expect(computeDerived(c).weapon.id).toBe('fists');
+  });
+});

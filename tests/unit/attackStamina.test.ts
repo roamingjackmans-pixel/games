@@ -57,8 +57,10 @@ describe('attack stamina (D193)', () => {
     for (const c of CLASS_IDS) {
       const ch = newCharacter(c, 'Joe', 'p', new Rng('k'));
       const d = computeDerived(ch);
-      const wpn = WEAPONS[CLASSES[c].start.main]!;
-      const costs = [d.weapon.stamina, ...wpn.skills.map((s) => SKILLS[s]!.stamina), ...CLASSES[c].start.spells.map((s) => SPELLS[s]!.stamina)];
+      // the Nobody starts with bare fists (D378), which have no skills
+      const main = CLASSES[c].start.main;
+      const skills = main ? WEAPONS[main]!.skills : [];
+      const costs = [d.weapon.stamina, ...skills.filter((s) => SKILLS[s]).map((s) => SKILLS[s]!.stamina), ...CLASSES[c].start.spells.map((s) => SPELLS[s]!.stamina)];
       for (const a of costs) expect(a * STAMINA_COST_MULT * ATTACK_STAMINA_MULT * d.stamCost, `${c} ${a}`).toBeLessThanOrEqual(d.maxStam);
     }
   });

@@ -84,14 +84,14 @@ points (D334: the Hunter too).
 | **Hunter** (`hunter`) | 7 | 9 | 10 | 14 | 5 | 3 | 48 | slicey / bonk | Halberd (two-handed, D334) | — | — | Rag Hood, Crypt Rags, Rag Wraps | — | Bow, Whip | "Can track anything. Mostly tracks in mud." |
 | **Zealot** (`occultist`) | 8 | 8 | 3 | 12 | 3 | 14 | 48 | prayer / slicey | Blessed Katana (B Slicey / C Prayer, Holy; D349) | Silver Talisman | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | Sunray, Bless Weapon | — | "Up at five to pray. Up at five past to stab whoever was not." |
 | **Berserker** (`berserker`) | 10 | 8 | 12 | 11 | 3 | 4 | 48 | bonk / slicey (D334) | Twin Axes (two-handed) | — | — | Sexton's Mail, Sexton's Chausses | — | — | "Was asked to calm down once. Once. Has never been asked to count." |
-| **Nobody** (`nobody`) | 8 | 8 | 8 | 8 | 8 | 8 | 48 | none / all six (D334) | Club | — | — | Loincloth | — | 1 gem | "Joe." |
+| **Nobody** (`nobody`) | 8 | 8 | 8 | 8 | 8 | 8 | 48 | none / all six (D334) | — (bare fists, D378) | — | — | Loincloth | — | 1 gem | "Joe." |
 
 - Every kit meets its own requirements at level 1, its 2nd weapon included, and no kit starts encumbered.
 - The **Hunter** fights with a Halberd, Slicey first and Bonk second; its Bow and Whip wait in the bag, and it knows no
   spells (D334; it was a bow-and-spells kit, D184).
 - The **Battlemage** starts two-handing its Colossal Sword (Bonk 19 needed, D329), the shield waiting for more Bonk, with the staff on the swap (D117, D119).
 - The **Berserker** dual-wields the Twin Axes (two-handed) (D120, D123, D140).
-- **Nobody** starts with one random level-1 gem in the gem pouch.
+- **Nobody** starts with nothing in hand (bare fists, D378; it had a Club), a loincloth and one random level-1 gem in the gem pouch.
 - Old class ids are kept for saves: `cleric` is the Pyre Priest (D118), `spearman` the Battlemage (D119),
   `occultist` the Zealot (D121).
 - Each character keeps its own controller layout (D266).

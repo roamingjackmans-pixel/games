@@ -418,7 +418,7 @@ export class TitleScene implements Scene {
         kit.append(h('div', { class: 'lbl' }, label), h('div', { class: 'sep' }, label ? '-' : ''), h('div', { class: `wide cc-one${dim ? ' dim-text' : ''}`, title: value }, value));
       };
       const eq = ch.equipment;
-      const paired = isPairedWeapon(WEAPONS[cls.start.main]?.draw ?? '');
+      const paired = isPairedWeapon((cls.start.main ? WEAPONS[cls.start.main]?.draw : undefined) ?? '');
       kitRow('Weapon', `${eq.main?.name ?? 'Fists'}${cls.twoHanded ? (paired ? ' (dual-wielding)' : ' (two-handed)') : ''}`);
       kitRow('Off hand', eq.off?.name ?? '—', !eq.off);
       kitRow('2nd weapon', ch.altMain ? `${ch.altMain.name} (swap: ${glyphText('swapWeapon')})` : '—', !ch.altMain);
@@ -614,7 +614,7 @@ export class TitleScene implements Scene {
     }
     // stands still facing you, turned a touch to the side; the right stick or a drag turns it (D125)
     const facing = Math.PI / 2 - 0.3 + this.previewTurn;
-    const wDraw = WEAPONS[cls.start.main]?.draw ?? CASTING_TOOLS[cls.start.main]?.draw ?? 'w_fists';
+    const wDraw = (cls.start.main ? (WEAPONS[cls.start.main]?.draw ?? CASTING_TOOLS[cls.start.main]?.draw) : undefined) ?? 'w_fists';
     const off = cls.start.off;
     drawJoe(ctx, look, {
       x: W / 2,

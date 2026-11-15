@@ -13,7 +13,8 @@ export interface ClassDef {
   secondary: StatId | readonly StatId[];
   /** `alt` is the 2nd (quick-swap) weapon slot: a weapon, staff or talisman (D117) */
   /** `mainVariant`: the starting weapon's scaling variant (D349: the Zealot's Blessed Katana), data/weaponVariants.ts */
-  start: { main: string; mainVariant?: string; off?: string; alt?: string; armor: string[]; spells: string[]; bag?: string[]; gems?: number };
+  /** `main` absent: bare fists (D378: the Nobody) */
+  start: { main?: string; mainVariant?: string; off?: string; alt?: string; armor: string[]; spells: string[]; bag?: string[]; gems?: number };
   twoHanded?: boolean;
   blurb: string;
   look: {
@@ -174,7 +175,8 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     // D334: no primary; every stat is secondary (+15% from every point)
     primary: null,
     secondary: ['hp', 'endurance', 'bonk', 'slicey', 'brain', 'prayer'],
-    start: { main: 'club', armor: ['loincloth_legs'], spells: [], gems: 1 },
+    // D378: no weapon at all, bare fists (was a Club)
+    start: { armor: ['loincloth_legs'], spells: [], gems: 1 },
     blurb: 'Joe.',
     look: { skin: '#e8c9a0', hair: '#4a3626', shirt: '#9a8a7a', legs: '#8a6a3a', head: 'none', trim: '#c9b98a', hairStyle: 'messy', beard: 'stubble' },
   },
