@@ -1,7 +1,7 @@
 // The weapon an item really is (D319): its class with the item's scaling variant, if it rolled one, laid over it
 // (grades, requirements, damage type). Everything that reads a weapon item's grades or element asks this.
 import { WEAPONS } from '../../data/weapons';
-import { VARIANT_REQ, WEAPON_VARIANTS, type WeaponVariantDef } from '../../data/weaponVariants';
+import { STARTER_VARIANTS, VARIANT_REQ, WEAPON_VARIANTS, type WeaponVariantDef } from '../../data/weaponVariants';
 import type { Grade, Item, WeaponDef } from '../types';
 
 const ORDER: Grade[] = ['-', 'E', 'D', 'C', 'B', 'A', 'S'];
@@ -9,7 +9,7 @@ const cache = new Map<string, WeaponDef>();
 
 export function variantOf(item: Pick<Item, 'baseId' | 'variant'> | null | undefined): WeaponVariantDef | undefined {
   if (!item?.variant) return undefined;
-  return WEAPON_VARIANTS[item.baseId]?.find((v) => v.id === item.variant);
+  return WEAPON_VARIANTS[item.baseId]?.find((v) => v.id === item.variant) ?? STARTER_VARIANTS[item.baseId]?.find((v) => v.id === item.variant);
 }
 
 /** A class with a variant laid over it: a stat it newly needs asks VARIANT_REQ; a lowered grade lowers its requirement. */

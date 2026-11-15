@@ -718,7 +718,7 @@ Rarity power (D178, D221) multiplies weapon and casting-tool damage and tightens
 / 8 / 2, treasure chests (two items) as bosses, mimics 0 / 20 / 45 / 27 / 8. First playthrough zones 1–2 never roll Epic or Legendary and zones 3–4 never Legendary;
 from NG+1 every source's Legendary share is ×1.2 a cycle, the rest shrinking in proportion (D327, CONTENT_ITEMS §12).
 Loot is instanced per player. A player's
-own drops favour weapons that scale with their class's primary stat (+30%), secondary (+15%) or both (+55%); staffs
+own drops favour weapons that scale with their class's primary stat (+80%), secondary (+40%) or both (+130%, D371); staffs
 count as Brain, talismans as Prayer; HP and Endurance give nothing (D254, D317). Most kills also shed a puff of Glowen (35%, D83).
 
 Every item has its own id; duplicate ids are repaired on load and pickup (D232).
@@ -783,12 +783,12 @@ talisman or shield in the off hand when not two-handing): fodder and swarms 1, o
 30.
 
 - **Item bars**: weapons, casting tools and shields fill a bar (Common 120, Uncommon 240, Rare 400, Epic 640). With a
-  full bar, the bonfire's **Weapons** tab raises the item a rarity for Glowen (2 × (150 / 400 / 1,000 / 2,500) (D309) × (1 + 0.2 per
+  full bar, the bonfire's **Weapons** tab raises the item a rarity for Glowen (2 × (75 / 200 / 500 / 1,250) (D309; D371 halved it) × (1 + 0.2 per
   item level above 1)); it keeps everything and its power moves to the new tier. Epic → Legendary rolls a legendary
   power and name.
 - **Proficiency**: the same experience trains the item's class (each weapon base, Staffs, Talismans, and Small /
   Medium / Great Shields) to **level 100**, costing 20 + 3.1 × level a level. Odd levels raise its first perk, even
-  levels its second (`data/proficiency.ts`), and perks work only while that class is out. An off-hand crossbow earns
+  levels its second (`data/proficiency.ts`; every perk is ×1.3 its table value, D371), and perks work only while that class is out. An off-hand crossbow earns
   none (D294). The inventory's **Proficiency** tab lists every class.
 
 ### 8.8 Soul Essence and reinforcing (D198, D226, D285)
@@ -834,7 +834,7 @@ roll bands    = Green −50…−15% (55%) · Blue −15…+10% (30%) · Purple 
 
 Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost ×0.3).
 
-- **Drops**: enemies **1.3%**, chests **7.8%**, bosses **65%** (D281), the bonfire shop (one one-perk gem per zone)
+- **Drops**: enemies **1.69%**, chests **10.14%**, bosses **84.5%** (D281, D371: 30% more), the bonfire shop (one one-perk gem per zone)
   and Gary. Drop level rises from about 1 in zone 1 to 50 by NG+3. **Perks by cycle**: one in the first playthrough;
   NG+1 35% two; NG+2 and later 40% two and 25% three. **Better rolls**: level 25+ gems roll quality twice and keep the
   best; treasure chests and bosses add a roll, Gary one or two.

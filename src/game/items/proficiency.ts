@@ -81,7 +81,7 @@ export function grantKillXp(c: Character, xp: number): KillXpResult {
 
 export type ProfBonuses = Record<ProfStat, number>;
 
-const ZERO: ProfBonuses = { damage: 0, poise: 0, attackSpeed: 0, castSpeed: 0, skillCooldown: 0, spellCooldown: 0, spellPower: 0, dodge: 0, stamina: 0, reach: 0, bleed: 0, lifesteal: 0, parryWindow: 0, blockStamina: 0, elemBlock: 0 };
+const ZERO: ProfBonuses = { damage: 0, poise: 0, attackSpeed: 0, castSpeed: 0, skillCooldown: 0, spellCooldown: 0, spellPower: 0, spellDuration: 0, dodge: 0, stamina: 0, reach: 0, bleed: 0, lifesteal: 0, parryWindow: 0, blockStamina: 0, elemBlock: 0 };
 
 /** The perk totals of one class at its current level. */
 export function classBonuses(c: Character, cls: string): ProfBonuses {

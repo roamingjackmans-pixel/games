@@ -89,7 +89,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(8, 11, 5, 14, 5, 5),
     primary: 'slicey',
     secondary: 'endurance',
-    start: { main: 'twin_daggers', off: 'buckler', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [] },
+    start: { main: 'twin_daggers', mainVariant: 'novice', off: 'buckler', armor: ['crypt_rags_head', 'crypt_rags_body', 'crypt_rags_legs'], spells: [] },
     blurb: 'Has never been hit. Says so.',
     look: { skin: '#f0d0b0', hair: '#1a1a1a', shirt: '#7a2a3a', legs: '#2a2a3a', head: 'bandana', trim: '#e6b84a', hairStyle: 'slick', beard: 'moustache', hat: '#a02030', belt: '#1a1a1a' },
   },

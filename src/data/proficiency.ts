@@ -15,6 +15,8 @@ export type ProfStat =
   | 'skillCooldown'
   | 'spellCooldown'
   | 'spellPower'
+  /** talismans (D371): spell buffs, hazards, walls and barriers last longer (a fraction) */
+  | 'spellDuration'
   | 'dodge'
   | 'stamina'
   | 'reach'
@@ -45,7 +47,10 @@ export interface ProfClass {
 
 export const PROF_MAX_LEVEL = 100; // D218 (was 50): the same cost curve carried on, so no level already earned moved
 
-const p = (stat: ProfStat, per: number, label: string): ProfPerk => ({ stat, per, label });
+/** Every perk is 30% bigger than its table value (D371). */
+export const PROF_PERK_MULT = 1.3;
+
+const p = (stat: ProfStat, per: number, label: string): ProfPerk => ({ stat, per: per * PROF_PERK_MULT, label });
 
 /** The shield classes by shield size (D215). */
 export const SHIELD_PROF_CLASS = { small: 'shield_small', medium: 'shield_medium', great: 'shield_great' } as const;
@@ -74,7 +79,8 @@ export const PROF_CLASSES: Record<string, ProfClass> = {
   chakram: { id: 'chakram', name: 'Chakrams', blurb: 'Catch it. Every time. Mostly.', perks: [p('damage', 0.008, 'Damage'), p('attackSpeed', 0.005, 'Throw speed')] },
   crossbow: { id: 'crossbow', name: 'Crossbows', blurb: 'Point. Click. Problem solved.', perks: [p('damage', 0.01, 'Damage'), p('attackSpeed', 0.006, 'Reload speed')] },
   staff: { id: 'staff', name: 'Staffs', blurb: 'The words come quicker once you stop reading them.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('spellPower', 0.008, 'Spell power')] },
-  talisman: { id: 'talisman', name: 'Talismans', blurb: 'Faith is a muscle. Use it.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('castSpeed', 0.006, 'Cast speed')] },
+  // D371: spell duration in place of cast speed
+  talisman: { id: 'talisman', name: 'Talismans', blurb: 'Faith is a muscle. Use it.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('spellDuration', 0.008, 'Spell duration')] },
   // shields (D215): at level 50, small +0.075 s parry and −15% block stamina; medium −20% and +7.5% elemental block;
   // great −30% block stamina and +10% elemental block (twice that at level 100, D218)
   shield_small: { id: 'shield_small', name: 'Small Shields', blurb: 'Late is just early with worse timing.', perks: [p('parryWindow', 0.003, 'Parry window'), p('blockStamina', 0.006, 'Block stamina')] },
@@ -121,7 +127,8 @@ export function killXp(o: { isBoss: boolean; elite: boolean; role: string; mimic
 export const RARITY_XP: Partial<Record<Rarity, number>> = { common: 120, uncommon: 240, rare: 400, epic: 640 };
 
 /** Glowen to raise an item from this rarity to the next (× 1 + 0.2 per item level above 1). */
-export const RARITY_UPGRADE_COST: Partial<Record<Rarity, number>> = { common: 150, uncommon: 400, rare: 1000, epic: 2500 };
+// D371: half what it was (150 / 400 / 1000 / 2500)
+export const RARITY_UPGRADE_COST: Partial<Record<Rarity, number>> = { common: 75, uncommon: 200, rare: 500, epic: 1250 };
 
 /** Weapon and staff damage by rarity (D178: rarity used to change only affixes and sockets). */
 export const RARITY_POWER: Record<Rarity, number> = { common: 1, uncommon: 1.06, rare: 1.12, epic: 1.2, legendary: 1.28 };

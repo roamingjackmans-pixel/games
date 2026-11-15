@@ -65,6 +65,8 @@ export interface Derived {
   /** spell cooldown reduction and spell power, from proficiency (D178) */
   spellCdr: number;
   spellPowerPct: number;
+  /** spells' buffs, hazards, walls and barriers last this much longer, from Talisman proficiency (D371) */
+  spellDurationPct: number;
   defense: Record<DamageType, number>;
   defensePct: Partial<Record<DamageType, number>>;
   offKind: 'shield' | 'staff' | 'talisman' | null;
@@ -576,6 +578,7 @@ export function computeDerived(c: Character): Derived {
     reachMult: 1 + prof.reach,
     spellCdr: Math.min(0.5, prof.spellCooldown + spellCdrSet),
     spellPowerPct: prof.spellPower + spellPowerSet,
+    spellDurationPct: Math.min(1, prof.spellDuration),
     defense,
     defensePct: defPct,
     offKind: twoHanded ? null : shield ? 'shield' : tool ? (tool.school === 'brain' ? 'staff' : 'talisman') : null,

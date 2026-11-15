@@ -10,7 +10,7 @@ import { stepWorld } from '../../src/game/sim';
 import { emptyInput, ACTION_BIT } from '../../src/engine/input/actions';
 import { Rng } from '../../src/engine/rng';
 import { makeItem } from '../../src/game/items/make';
-import { WEAPONS } from '../../src/data/weapons';
+import { SPEED_TAG_MULT, WEAPONS } from '../../src/data/weapons';
 
 describe('lifesteal (D325)', () => {
   it('a spin that hits two enemies heals once, by max HP × lifesteal × the swing multiplier', () => {
@@ -43,7 +43,8 @@ describe('lifesteal (D325)', () => {
     }
     expect(en.every((e) => e.hp!.hp < 1e9)).toBe(true);
     // enemies hit back in that time, so allow for their hits: never two heals' worth
-    const one = Math.max(1, Math.ceil(p.hp!.max * 0.01 * mult)); // D337: rounded up
+    // D371: a Medium weapon (the halberd) steals 50% more
+    const one = Math.max(1, Math.ceil(p.hp!.max * 0.01 * mult * SPEED_TAG_MULT.medium)); // D337: rounded up
     const gained = p.hp!.hp - hp0;
     expect(gained).toBeLessThanOrEqual(one + 1e-6);
     expect(p.pl!.lifestealAttacks?.length).toBe(1);

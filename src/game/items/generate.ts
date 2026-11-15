@@ -57,7 +57,7 @@ function rarityIndex(r: Rarity): number {
 
 /**
  * Whose drop it is, for its weapons (D254, D317): a weapon (or staff, or talisman) that scales with the class's primary
- * stat drops 30% more often, with its secondary 15% more, and with both 55% more (the two plus 10%). A stat no weapon
+ * stat drops 80% more often, with its secondary 40% more, and with both 130% more (the two plus 10%; D371, was 30% / 15%). A stat no weapon
  * scales with (HP, Endurance) does nothing, so a Brute (Bonk / HP) gets only the Bonk boost and a Knight none.
  */
 export interface DropFavor {
@@ -69,8 +69,8 @@ export interface DropFavor {
 export function favorSecondaries(f: DropFavor): readonly StatId[] {
   return typeof f.secondary === 'string' ? [f.secondary] : f.secondary;
 }
-export const FAVOR_PRIMARY = 1.3;
-export const FAVOR_SECONDARY = 1.15;
+export const FAVOR_PRIMARY = 1.8; // D371: was 1.3
+export const FAVOR_SECONDARY = 1.4; // D371: was 1.15
 /** on top of both, for a weapon that scales with the primary and the secondary stat (D317) */
 export const FAVOR_BOTH_EXTRA = 0.1;
 

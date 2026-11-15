@@ -366,10 +366,13 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   mult *= 1 + buffSum(p, 'damageTakenPct', now);
   if (spec.kind === 'red') mult *= d.redTakenMult;
   if (d.powers.has('hollow_guard') && hp.hp < hp.max * 0.3) mult *= 0.7;
+  // what the enemy really dealt, before the player's own reductions (block, armour, buffs): thorns reflect a share of it
+  let dealtMult = 1;
   if (attacker?.en) {
     const lateFee = w.roomMods.lateFeeUntil > now ? 0.2 : 0;
     const enrage = w.roomMods.enrageUntil > now ? 0.25 : 0;
-    mult *= 1 + buffSum(attacker, 'damagePct', now) + lateFee + enrage;
+    dealtMult = 1 + buffSum(attacker, 'damagePct', now) + lateFee + enrage;
+    mult *= dealtMult;
     mult *= sanctuaryEnemyMult(w, p);
   }
   // Overcharge: you take +10%
@@ -413,10 +416,11 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
     if (d.powers.has('warden')) {
       for (const a of w.players) if (a !== p && !a.pl!.downed && a.hp && Math.hypot(a.x - p.x, a.y - p.y) <= 120) heal(w, a, a.hp.max * 0.01);
     }
-    // Spiked greatshield: blocking a melee hit deals ×0.5 back
+    // Spiked greatshield: blocking a melee hit deals back half of what the enemy dealt before any reduction (D371:
+    // a 300 hit reflects 150, even when the block cut it to 100)
     if (d.shield?.thorns && attacker?.en && !projectile) {
-      const back = { ...emptySpec('player'), dmg: { physical: specTotal(spec) * d.shield.thorns } };
-      hitEnemy(w, p, attacker, back, p.x, p.y);
+      const back = { ...emptySpec('player'), dmg: { physical: specTotal(spec) * dealtMult * d.shield.thorns } };
+      hitEnemy(w, p, attacker, back, p.x, p.y, { thorns: true, noLifesteal: true });
     }
     if (d.shield?.blockHealPct) heal(w, p, hp.max * d.shield.blockHealPct, false);
     w.emit({ t: 'stat', key: 'blocks', playerId: pl.playerId });
@@ -710,6 +714,8 @@ export interface PlayerHitOpts {
   /** this hit is a light attack (riposte bonus applies) */
   light?: boolean;
   noLifesteal?: boolean;
+  /** a shield's thorns (D371): the reflected hit is exactly its share of what the enemy dealt, no player bonus on it */
+  thorns?: boolean;
 }
 
 /** How much of a front guard's cut non-physical damage takes (D176): a 70% guard stops 70% of physical, 21% of the rest. */
@@ -785,7 +791,7 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
   if (traits.shell && en.flippedUntil > now) mult *= traits.shell.flippedMult;
   if (traits.backMult && behind(e, fromX, fromY)) mult *= traits.backMult;
   if (traits.submerged && en.state === 'submerged') mult *= 0.5;
-  if (pl) {
+  if (pl && !o.thorns) {
     const wpn = pl.derived.weapon;
     if (wpn.backstabMult && behind(e, fromX, fromY) && o.light) {
       mult *= wpn.backstabMult;
@@ -818,9 +824,9 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
     if (pl.derived.rings.has('ring_stillness') && now - pl.stillSince >= 1) mult *= Math.pow(1.15, pl.derived.ringCounts.ring_stillness ?? 1);
   }
   if (en.elite === 'armored') spec = { ...spec, dmg: { ...spec.dmg, physical: (spec.dmg.physical ?? 0) * 0.6 } };
-  if (attacker) mult *= 1 + buffSum(attacker, 'damagePct', now);
+  if (attacker && !o.thorns) mult *= 1 + buffSum(attacker, 'damagePct', now);
   // the Bestiary (D229): +25% against an enemy you have studied
-  if (pl) mult *= bestiaryDealMult(pl.char, en.def);
+  if (pl && !o.thorns) mult *= bestiaryDealMult(pl.char, en.def);
 
   let total = 0;
   const resist = en.def.resist;

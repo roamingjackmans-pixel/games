@@ -314,6 +314,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
   // else (buff sizes, barriers, revive strength, how long utility lasts) by the gentler spellUtility
   const spell = ctx.isSpell && ctx.team === 0;
   const u = spell ? spellUtility(ctx.powerMult) : 1;
+  // Talisman proficiency (D371): a player's spell buffs, debuffs, zones, walls and barriers last longer
+  const sd = spell && src?.pl ? 1 + (src.pl.derived.spellDurationPct ?? 0) : 1;
   switch (e.op) {
     case 'damage':
       doDamage(w, e, ctx, src);
@@ -392,7 +394,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
           id,
           stat: e.stat as BuffStat,
           amount: spell ? spellBuffAmount(e.stat, e.amount * u) : e.amount,
-          durationS: e.durationS,
+          durationS: e.durationS * sd,
           maxStacks: e.op === 'buff' ? (e.maxStacks ?? 1) : 1,
           sourceId: ctx.sourceId,
         });
@@ -427,7 +429,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       break;
     }
     case 'barrier':
-      for (const t of targets(w, e, ctx, src)) if (t.hp) grantBarrier(w, t, t.hp.max * Math.min(0.75, e.pctMaxHp * u), e.durationS);
+      for (const t of targets(w, e, ctx, src)) if (t.hp) grantBarrier(w, t, t.hp.max * Math.min(0.75, e.pctMaxHp * u), e.durationS * sd);
       break;
     case 'summon': {
       const def = ENEMIES[e.enemyId];
@@ -483,7 +485,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       const pctx = patternCtxFor(w, ctx, src);
       const specs = resolvePattern(e.pattern, pctx);
       const shapes: Shape[] = specs.flatMap((s) => s.shapes);
-      const hz = spawnHazard(w, e.hazard ?? 'consecrate', shapes, e.durationS, ctx.team, ctx.sourceId, {
+      const hz = spawnHazard(w, e.hazard ?? 'consecrate', shapes, e.durationS * sd, ctx.team, ctx.sourceId, {
         tickS: e.tickS,
         effects: e.tick,
         allyEffects: e.allyTick ?? [],
@@ -508,7 +510,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       w.spawn('wall', ctx.aimX, ctx.aimY, {
         team: ctx.team,
         wl: {
-          until: now + e.durationS * u,
+          until: now + e.durationS * u * sd,
           blocksProjectiles: e.blocks.includes('projectiles'),
           blocksEnemies: e.blocks.includes('enemies'),
           x1: ctx.aimX - (Math.cos(a) * len) / 2,

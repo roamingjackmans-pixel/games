@@ -54,8 +54,8 @@ export const SLOT_WEIGHTS: { slot: 'weapon' | 'shield' | 'staff' | 'talisman' | 
   { slot: 'ring', w: 4 },
 ];
 
-/** Gem drop chances (GAME_DESIGN §8.5; D281: 35% fewer, was 2% / 12% / every boss). */
-export const GEM_CHANCE = { enemy: 0.013, chest: 0.078, boss: 0.65 };
+/** Gem drop chances (GAME_DESIGN §8.9; D281: 35% fewer, was 2% / 12% / every boss; D371: then 30% more). */
+export const GEM_CHANCE = { enemy: 0.013 * 1.3, chest: 0.078 * 1.3, boss: 0.65 * 1.3 };
 /** Chests: 8% a consumable bundle of 3–6 of one kind; fodder 3% a single knife or bomb (CONTENT_ITEMS §12). */
 export const CONSUMABLE_CHANCE = { chestBundle: 0.08, fodderSingle: 0.03 };
 /** Rare "Glowen Wisp" drops. */

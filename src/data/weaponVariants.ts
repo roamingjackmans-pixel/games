@@ -57,3 +57,11 @@ export const WEAPON_VARIANTS: Record<string, WeaponVariantDef[]> = {
   censer_flail: [heavy({ bonk: 'A', slicey: '-', prayer: 'D' }), devout({ bonk: 'D', slicey: '-', prayer: 'A' })],
   dawn_glaive: [keen({ bonk: '-', slicey: 'A', prayer: 'D' }), devout({ bonk: '-', slicey: 'D', prayer: 'A' })],
 };
+
+/**
+ * Variants only a class's starting weapon has (D371), never rolled on a drop: the Duelist's starting Twin Daggers
+ * scale B in Slicey, not the class's S.
+ */
+export const STARTER_VARIANTS: Record<string, WeaponVariantDef[]> = {
+  twin_daggers: [{ id: 'novice', word: 'Novice', grades: { bonk: '-', slicey: 'B' } }],
+};

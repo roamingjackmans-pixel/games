@@ -45,7 +45,7 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
 | Greataxe | Keen B / D; Fervent C / - / Prayer C |
 | Colossal Sword | Keen B / D; Fervent C / E / Prayer C; Hollow C / E / Brain C |
 | Crossbow | Fervent C / - / Prayer D; Hollow C / - / Brain D |
-| Twin Daggers | Blessed - / B / Prayer C; Arcane - / B / Brain C |
+| Twin Daggers | Blessed - / B / Prayer C; Arcane - / B / Brain C; Novice - / B (the Duelist's starting pair only, never dropped: D371) |
 | Rapier | Blessed - / C / Prayer C; Arcane - / C / Brain C |
 | Katana | Balanced C / B; Blessed - / B / Prayer C; Arcane - / B / Brain C |
 | Bow | Blessed - / D / Prayer C; Arcane - / D / Brain C |
@@ -74,29 +74,36 @@ the spinning weapons about 10%, and the ones whose reach barely changed nothing.
 `Base` = base1 at ilvl 1. Stamina per swing; poise damage per hit; revive value per hit on a downed ally (GAME_DESIGN
 §12); equip-load weight.
 
-| Weapon | Grades (Bonk / Slicey) | Req | Speed | Combo (windup/active/recovery ms ×mult hitbox) | Base | Stam | Poise | Revive | Weight | Notes |
+**Speed tags (D371).** Every weapon class is tagged by its base one-handed attack speed: very fast and fast are
+**Fast**, medium and medium-slow **Medium**, slow and very slow **Slow** (`speedTag`, shown on the item card).
+Fast: Twin Daggers, Rapier, Katana, Bow, Twin Axes. Medium: Club, Whip, Longsword, Spear, Battleaxe, Mace, Halberd,
+Spellblade, Censer Flail, Dawn Glaive, Chakrams. Slow: Greathammer, Greataxe, Colossal Sword, Crossbow, Hollow Maul.
+Bless Weapon (every timed Holy weapon buff) and the weapon's lifesteal do **50% more on a Medium** weapon and **100% more
+on a Slow** one; Fast weapons are unchanged.
+
+| Weapon | Grades (Bonk / Slicey) | Req | Speed (tag, D371) | Combo (windup/active/recovery ms ×mult hitbox) | Base | Stam | Poise | Revive | Weight | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **Greathammer** | S / - | 20 / 0 (D329) | veryslow | 520/150/480 ×0.88 slash arc(110°, 120); 520/150/480 ×0.88 backslash arc(110°, 120); 700/160/620 ×1.32 overhead slam(r 75, 100 ahead) | 62 | 28 | 60 | 4 | 14 | hyper armor (all). *"For when the problem is a wall."* |
-| **Greataxe** | A / - | 18 / 0 (D329) | slow | 450/140/400 ×0.92 slash arc(130°, 115); 450/140/400 ×0.92 backslash arc(130°, 115); 450/140/400 ×0.96 slash arc(130°, 115); 520/200/520 ×1.19 spin spin(110) | 54 | 24 | 50 | 3.5 | 11 | hyper armor (last). *"Pure Bonk. The edge is mostly a formality."* |
-| **Colossal Sword** | A / E | 19 / 8 (D329) | slow | 480/150/420 ×1 slash arc(150°, 130); 480/150/420 ×1.1 backslash arc(150°, 130); 640/160/560 ×1.51 overhead slam(r 85, 115 ahead) | 56 | 25 | 50 | 3.5 | 16 | hyper armor (all). *"Not so much swung as committed to."* |
-| **Crossbow** | B / - | 10 / 0 | slow | 120/60/700 ×1.4 proj(620) | 26 (D343, was 40) | 24 | 4 | 1.5 | 6.5 | either hand; its skills on the spell keys from the off hand (D316); in the off hand the block button shoots it (D291); volley of 3, 5° apart, each target hit once (D205, D264); pierces 1 with Bonk ≥ 30. *"Reloading is a lifestyle."* |
-| **Club** | E / - | 8 / 0 | mediumslow | 380/120/360 ×0.98 slash arc(110°, 95); 380/120/360 ×0.98 backslash arc(110°, 95); 480/130/440 ×1.27 overhead slam(r 55, 80 ahead) | 80 (D302) | 18 | 40 | 3 | 3 | hyper armor (all). *"Wood. It doesn't care how strong you are."* |
-| **Twin Daggers** | - / S | 0 / 14 | veryfast | 115/62/115 ×0.45 slash arc(80°, 70); 115/62/115 ×0.45 backslash arc(80°, 70); 115/62/115 ×0.45 slash arc(80°, 70); 115/62/115 ×0.45 backslash arc(80°, 70); 131/85/146 ×0.54 spin spin(75); 131/69/162 ×0.68 thrust thrust(30, 105) | 26 | 8 | 6 | 0.8 | 1.5 | scaling ×1.25 (D331); Bleed 15 per hit; backstab ×1.5; dual-wielded (two-handed) ×1.5 damage (D318). *"Two is company. Three is a backstab."* Two-handed (dual-wielded) they also regain stamina 30% faster, a hidden bonus no card shows (D345), and slow you half as much while swinging (×0.8 walking, D346). |
-| **Rapier** | - / A | 0 / 10 | fast | 154/69/154 ×0.75 thrust thrust(28, 120); 154/69/154 ×0.75 thrust thrust(28, 120); 162/69/162 ×0.75 slash arc(90°, 100); 154/69/154 ×0.75 thrust thrust(28, 120); 231/77/246 ×1.12 thrust thrust(28, 150) | 30 | 11 | 8 | 1.2 | 2.5 | ×1.5 on riposte-staggered. *"Pointy. Polite. Very rude after a parry."* |
-| **Katana** | D / A | 7 / 12 | fast | 200/87/191 ×0.84 slash arc(120°, 110); 200/87/191 ×0.84 backslash arc(120°, 110); 200/78/191 ×0.84 thrust thrust(30, 130); 226/122/226 ×0.93 spin spin(105); 296/96/296 ×1.21 slash arc(170°, 125) | 39.1 (D333) | 9 | 13 | 1.5 | 5.5 | scaling ×1.25 (D331); Bleed 20 per hit. *"Folded a thousand times. Like Joe."* |
-| **Bow** | - / B | 0 / 10 | fast | 200/60/260 ×1 proj(700) | 28 | 20 | 2 | 0.6 | 3 | two hands only (D88); volley of 3, 5° apart, each target hit once (D205, D264); hold 0.6 s: ×1.8 charged, pierces 1. *"Never misses. Rarely hits."* |
-| **Whip** | - / E | 0 / 9 | medium | 280/120/300 ×0.75 lash thrust(26, 220); 300/130/300 ×0.75 lashSweep arc(50°, 200); 300/130/300 ×0.75 lashSweep arc(50°, 200); 360/140/380 ×0.96 lash thrust(32, 240) | 65 (D302) | 12 | 10 | 1 | 2 | ignores front guards. *"Goes over shields. And under skin."* |
-| **Longsword** | B / B | 9 / 9 | medium | 261/96/243 ×1 slash arc(110°, 105); 261/96/243 ×1 backslash arc(110°, 105); 261/96/243 ×1 thrust thrust(32, 140); 365/104/348 ×1.35 overhead slam(r 55, 90 ahead) | 38 | 12 | 21 | 2 | 6 | scaling ×1.25 (D331); . *"A sword. Long."* |
-| **Spear** | C / B | 8 / 10 | medium | 260/100/260 ×0.81 thrust thrust(30, 150); 260/100/260 ×0.81 thrust thrust(30, 150); 300/110/300 ×0.81 slash arc(100°, 140); 380/120/360 ×1.16 thrust thrust(30, 180) | 38 | 14 | 20 | 2 | 5 | . *"Keeps a polite distance."* |
-| **Battleaxe** | A / D | 11 / 7 | mediumslow | 340/120/320 ×0.99 slash arc(120°, 100); 340/120/320 ×1.09 backslash arc(120°, 100); 460/140/440 ×1.43 overhead slam(r 60, 90 ahead) | 44 | 18 | 35 | 2.5 | 8 | hyper armor (all). *"Mostly Bonk, a pinch of Slicey. Gran’s recipe."* |
-| **Mace** | B / E | 11 / 3 | mediumslow | 360/120/340 ×1.06 slash arc(100°, 95); 360/120/340 ×1.06 backslash arc(100°, 95); 460/140/440 ×1.39 overhead slam(r 55, 85 ahead) | 46 | 18 | 45 | 3 | 5 | hyper armor (all); 20% Holy. *"Blessed by a priest who was in a hurry."* |
-| **Halberd** | A / C | 10 / 10 | mediumslow | 340/130/340 ×0.91 slash arc(140°, 135); 340/130/340 ×0.91 thrust thrust(30, 160); 340/130/340 ×0.91 backslash arc(140°, 135); 420/190/460 ×1.18 spin spin(130) | 44 | 17 | 30 | 2.5 | 10 | hyper armor (all). *"An axe, a spear and a hook walked into a bar."* |
-| **Twin Axes** | C / B | 10 / 10 | fast | 286/130/273 ×1.01 slash arc(100°, 90); 286/130/273 ×1.01 backslash arc(100°, 90); 286/130/273 ×1.01 slash arc(100°, 90); 338/182/338 ×1.13 spin spin(95); 416/143/416 ×1.51 overhead slam(r 50, 70 ahead) | 34 | 12 | 22 | 1.5 | 6.5 | . Dual-wielded (two-handed) ×1.5 damage (D318); its Bonk and Slicey requirements rise together and stay equal (D328). *"Has two of everything except plans."* |
-| **Hollow Maul** | B / - / Brain B | 18 / 0 / Brain 12 (D329) | slow | 500/150/450 ×0.96 slash arc(110°, 115); 500/150/450 ×0.96 backslash arc(110°, 115); 620/160/580 ×1.35 overhead slam(r 70, 100 ahead) | 52 | 24 | 50 | 3.5 | 12 | void damage (hybrid, D80); hyper armor (last). *"There is nothing inside. It is very heavy anyway."* |
-| **Spellblade** | - / B / Brain B | 0 / 10 / Brain 12 | medium | 290/110/270 ×0.9 slash arc(110°, 105); 290/110/270 ×0.9 backslash arc(110°, 105); 320/150/320 ×0.95 spin spin(100); 380/120/360 ×1.18 thrust thrust(34, 150) | 36 | 11 | 22 | 2 | 5.5 | magic damage (hybrid, D80). *"Sharp on one edge, smug on the other."* |
-| **Censer Flail** | B / - / Prayer B | 11 / 0 / Prayer 11 | mediumslow | 340/130/330 ×1.02 slash arc(140°, 110); 340/130/330 ×1.02 backslash arc(140°, 110); 420/140/420 ×1.22 overhead slam(r 60, 90 ahead); 460/150/440 ×1.37 spin spin(115) | 44 | 18 | 35 | 2.5 | 7.5 | fire damage (hybrid, D80); hyper armor (last). *"Smells like church. Hits like the fire that took the church."* |
-| **Dawn Glaive** | - / B / Prayer B | 0 / 11 / Prayer 11 | mediumslow | 320/120/320 ×0.89 slash arc(140°, 130); 320/120/320 ×0.89 backslash arc(140°, 130); 320/120/320 ×0.89 thrust thrust(30, 165); 460/140/440 ×1.21 spin spin(135) | 42 | 16 | 28 | 2.5 | 9 | holy damage (hybrid, D80). *"A morning person. On a stick."* |
-| **Chakrams** | E / B | 6 / 11 | medium | 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 320/60/380 ×0.56 throw ring(r 16, 380 out and back) | 36 | 14 | 6 | 1 | 2.5 | D320: each ring pierces everything out and back (hits a group twice), no falloff; soft hits for that (about 0.7× the median weapon on one target, both passes counted). *"What goes around comes around. Then goes around again."* |
+| **Greathammer** | S / - | 20 / 0 (D329) | veryslow (**Slow**) | 520/150/480 ×0.88 slash arc(110°, 120); 520/150/480 ×0.88 backslash arc(110°, 120); 700/160/620 ×1.32 overhead slam(r 75, 100 ahead) | 62 | 28 | 60 | 4 | 14 | hyper armor (all). *"For when the problem is a wall."* |
+| **Greataxe** | A / - | 18 / 0 (D329) | slow (**Slow**) | 450/140/400 ×0.92 slash arc(130°, 115); 450/140/400 ×0.92 backslash arc(130°, 115); 450/140/400 ×0.96 slash arc(130°, 115); 520/200/520 ×1.19 spin spin(110) | 54 | 24 | 50 | 3.5 | 11 | hyper armor (last). *"Pure Bonk. The edge is mostly a formality."* |
+| **Colossal Sword** | A / E | 19 / 8 (D329) | slow (**Slow**) | 480/150/420 ×1 slash arc(150°, 130); 480/150/420 ×1.1 backslash arc(150°, 130); 640/160/560 ×1.51 overhead slam(r 85, 115 ahead) | 56 | 25 | 50 | 3.5 | 16 | hyper armor (all). *"Not so much swung as committed to."* |
+| **Crossbow** | B / - | 10 / 0 | slow (**Slow**) | 120/60/700 ×1.4 proj(620) | 26 (D343, was 40) | 24 | 4 | 1.5 | 6.5 | either hand; its skills on the spell keys from the off hand (D316); in the off hand the block button shoots it (D291); volley of 3, 5° apart, each target hit once (D205, D264); pierces 1 with Bonk ≥ 30. *"Reloading is a lifestyle."* |
+| **Club** | E / - | 8 / 0 | mediumslow (**Medium**) | 380/120/360 ×0.98 slash arc(110°, 95); 380/120/360 ×0.98 backslash arc(110°, 95); 480/130/440 ×1.27 overhead slam(r 55, 80 ahead) | 80 (D302) | 18 | 40 | 3 | 3 | hyper armor (all). *"Wood. It doesn't care how strong you are."* |
+| **Twin Daggers** | - / S | 0 / 14 | veryfast (**Fast**) | 115/62/115 ×0.45 slash arc(80°, 70); 115/62/115 ×0.45 backslash arc(80°, 70); 115/62/115 ×0.45 slash arc(80°, 70); 115/62/115 ×0.45 backslash arc(80°, 70); 131/85/146 ×0.54 spin spin(75); 131/69/162 ×0.68 thrust thrust(30, 105) | 26 | 8 | 6 | 0.8 | 1.5 | scaling ×1.25 (D331); Bleed 15 per hit; backstab ×1.5; dual-wielded (two-handed) ×1.5 damage (D318). *"Two is company. Three is a backstab."* Two-handed (dual-wielded) they also regain stamina 30% faster, a hidden bonus no card shows (D345), and slow you half as much while swinging (×0.8 walking, D346). |
+| **Rapier** | - / A | 0 / 10 | fast (**Fast**) | 154/69/154 ×0.75 thrust thrust(28, 120); 154/69/154 ×0.75 thrust thrust(28, 120); 162/69/162 ×0.75 slash arc(90°, 100); 154/69/154 ×0.75 thrust thrust(28, 120); 231/77/246 ×1.12 thrust thrust(28, 150) | 30 | 11 | 8 | 1.2 | 2.5 | ×1.5 on riposte-staggered. *"Pointy. Polite. Very rude after a parry."* |
+| **Katana** | D / A | 7 / 12 | fast (**Fast**) | 200/87/191 ×0.84 slash arc(120°, 110); 200/87/191 ×0.84 backslash arc(120°, 110); 200/78/191 ×0.84 thrust thrust(30, 130); 226/122/226 ×0.93 spin spin(105); 296/96/296 ×1.21 slash arc(170°, 125) | 39.1 (D333) | 9 | 13 | 1.5 | 5.5 | scaling ×1.25 (D331); Bleed 20 per hit. *"Folded a thousand times. Like Joe."* |
+| **Bow** | - / B | 0 / 10 | fast (**Fast**) | 200/60/260 ×1 proj(700) | 28 | 20 | 2 | 0.6 | 3 | two hands only (D88); volley of 3, 5° apart, each target hit once (D205, D264); hold 0.6 s: ×1.8 charged, pierces 1. *"Never misses. Rarely hits."* |
+| **Whip** | - / E | 0 / 9 | medium (**Medium**) | 280/120/300 ×0.75 lash thrust(26, 220); 300/130/300 ×0.75 lashSweep arc(50°, 200); 300/130/300 ×0.75 lashSweep arc(50°, 200); 360/140/380 ×0.96 lash thrust(32, 240) | 65 (D302) | 12 | 10 | 1 | 2 | ignores front guards. *"Goes over shields. And under skin."* |
+| **Longsword** | B / B | 9 / 9 | medium (**Medium**) | 261/96/243 ×1 slash arc(110°, 105); 261/96/243 ×1 backslash arc(110°, 105); 261/96/243 ×1 thrust thrust(32, 140); 365/104/348 ×1.35 overhead slam(r 55, 90 ahead) | 38 | 12 | 21 | 2 | 6 | scaling ×1.25 (D331); . *"A sword. Long."* |
+| **Spear** | C / B | 8 / 10 | medium (**Medium**) | 260/100/260 ×0.81 thrust thrust(30, 150); 260/100/260 ×0.81 thrust thrust(30, 150); 300/110/300 ×0.81 slash arc(100°, 140); 380/120/360 ×1.16 thrust thrust(30, 180) | 38 | 14 | 20 | 2 | 5 | . *"Keeps a polite distance."* |
+| **Battleaxe** | A / D | 11 / 7 | mediumslow (**Medium**) | 340/120/320 ×0.99 slash arc(120°, 100); 340/120/320 ×1.09 backslash arc(120°, 100); 460/140/440 ×1.43 overhead slam(r 60, 90 ahead) | 44 | 18 | 35 | 2.5 | 8 | hyper armor (all). *"Mostly Bonk, a pinch of Slicey. Gran’s recipe."* |
+| **Mace** | B / E | 11 / 3 | mediumslow (**Medium**) | 360/120/340 ×1.06 slash arc(100°, 95); 360/120/340 ×1.06 backslash arc(100°, 95); 460/140/440 ×1.39 overhead slam(r 55, 85 ahead) | 46 | 18 | 45 | 3 | 5 | hyper armor (all); 20% Holy. *"Blessed by a priest who was in a hurry."* |
+| **Halberd** | A / C | 10 / 10 | mediumslow (**Medium**) | 340/130/340 ×0.91 slash arc(140°, 135); 340/130/340 ×0.91 thrust thrust(30, 160); 340/130/340 ×0.91 backslash arc(140°, 135); 420/190/460 ×1.18 spin spin(130) | 44 | 17 | 30 | 2.5 | 10 | hyper armor (all). *"An axe, a spear and a hook walked into a bar."* |
+| **Twin Axes** | C / B | 10 / 10 | fast (**Fast**) | 286/130/273 ×1.01 slash arc(100°, 90); 286/130/273 ×1.01 backslash arc(100°, 90); 286/130/273 ×1.01 slash arc(100°, 90); 338/182/338 ×1.13 spin spin(95); 416/143/416 ×1.51 overhead slam(r 50, 70 ahead) | 34 | 12 | 22 | 1.5 | 6.5 | . Dual-wielded (two-handed) ×1.5 damage (D318); its Bonk and Slicey requirements rise together and stay equal (D328). *"Has two of everything except plans."* |
+| **Hollow Maul** | B / - / Brain B | 18 / 0 / Brain 12 (D329) | slow (**Slow**) | 500/150/450 ×0.96 slash arc(110°, 115); 500/150/450 ×0.96 backslash arc(110°, 115); 620/160/580 ×1.35 overhead slam(r 70, 100 ahead) | 52 | 24 | 50 | 3.5 | 12 | void damage (hybrid, D80); hyper armor (last). *"There is nothing inside. It is very heavy anyway."* |
+| **Spellblade** | - / B / Brain B | 0 / 10 / Brain 12 | medium (**Medium**) | 290/110/270 ×0.9 slash arc(110°, 105); 290/110/270 ×0.9 backslash arc(110°, 105); 320/150/320 ×0.95 spin spin(100); 380/120/360 ×1.18 thrust thrust(34, 150) | 36 | 11 | 22 | 2 | 5.5 | magic damage (hybrid, D80). *"Sharp on one edge, smug on the other."* |
+| **Censer Flail** | B / - / Prayer B | 11 / 0 / Prayer 11 | mediumslow (**Medium**) | 340/130/330 ×1.02 slash arc(140°, 110); 340/130/330 ×1.02 backslash arc(140°, 110); 420/140/420 ×1.22 overhead slam(r 60, 90 ahead); 460/150/440 ×1.37 spin spin(115) | 44 | 18 | 35 | 2.5 | 7.5 | fire damage (hybrid, D80); hyper armor (last). *"Smells like church. Hits like the fire that took the church."* |
+| **Dawn Glaive** | - / B / Prayer B | 0 / 11 / Prayer 11 | mediumslow (**Medium**) | 320/120/320 ×0.89 slash arc(140°, 130); 320/120/320 ×0.89 backslash arc(140°, 130); 320/120/320 ×0.89 thrust thrust(30, 165); 460/140/440 ×1.21 spin spin(135) | 42 | 16 | 28 | 2.5 | 9 | holy damage (hybrid, D80). *"A morning person. On a stick."* |
+| **Chakrams** | E / B | 6 / 11 | medium (**Medium**) | 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 320/60/380 ×0.56 throw ring(r 16, 380 out and back) | 36 | 14 | 6 | 1 | 2.5 | D320: each ring pierces everything out and back (hits a group twice), no falloff; soft hits for that (about 0.7× the median weapon on one target, both passes counted). *"What goes around comes around. Then goes around again."* |
 
 **Either-hand weapons.** Staffs and talismans (D117) and the crossbow (D291) go in any of the four weapon slots. A
 crossbow in the off hand shoots on the block button with its own power and stamina; with it there is no block or
@@ -147,7 +154,7 @@ Stability = stamina lost per 100 damage blocked. A shield with no parry window c
 | **Kite Shield** | medium | 17 / 9 | 88% | 45% | 28 | 0.1 s | 5 |  *"Does not fly. Was asked."* |
 | **Heater Shield** | medium | 22 / 11 | 90% | 50% | 26 | — | 5.5 |  *"Not a heater. Do not ask again."* |
 | **Tower Greatshield** | great | 28 / 5 | 100% | 55% | 18 | — | 13 | walk ×0.9 while raised *"A wall with a handle."* |
-| **Spiked Greatshield** | great | 20 / 3 | 100% | 65% | 20 | — | 12 | blocking a melee hit returns ×0.5 *"Hugging it is a mistake."* |
+| **Spiked Greatshield** | great | 20 / 3 | 100% | 65% | 20 | — | 12 | blocking a melee hit returns ×0.5 of what the enemy dealt before the block and armour (a 300 hit returns 150, D371) *"Hugging it is a mistake."* |
 | **Holy Bulwark** | great | 36 / 8 | 100% | 60% (Holy/Void 80%) | 16 | — | 12 | blocking heals 1%; Legendary only *"Every blow it stops does you a little good. Saintly, if smug."* |
 
 ## 4. Casting tools
@@ -324,7 +331,7 @@ weapon; off-hand Leech heals on those hits only. Fleetfoot (dodge) counts only f
 - **Drop level** rises evenly from 1 (zone 1) to 50 (the start of NG+3), up to 4 below that target.
 - **Elemental families** (Ember, Rime, Storm, Dawn, Dusk) **add** their share of the hit as their own type on top of
   the physical (D283), at a baseline 20% above Brutal's (D292), with 22 status buildup × the roll.
-- **Drops** (D281): 1.3% per enemy, 7.8% per chest, 65% per boss. The bonfire shop and Gary also sell gems (6× their
+- **Drops** (D281, D371: 30% more): 1.69% per enemy, 10.14% per chest, 84.5% per boss. The bonfire shop and Gary also sell gems (6× their
   sale price, D309).
 - **Fusing**: the original gem (2+ perks) keeps the chosen perks and takes the rest from a loose donor gem of the same
   kind, which is used up. It must keep at least one of its **original** perks, and after the fuse only the original
@@ -408,35 +415,35 @@ Instructor's Legendary, Gary's NG+ Legendaries.
 Every kill gives experience to what you have out: the item in the weapon hand and a staff, talisman or shield in the
 off hand (not while two-handing; an off-hand crossbow earns none, D294). It fills the item's own bar and its class's
 proficiency (levels 1–100). Odd levels raise the first perk, even levels the second; perks work only while an item of
-that class is out.
+that class is out. Every perk is 30% bigger than it was before 1.4.0 (D371); the table shows the values now.
 
 | Class | Perk on odd levels (per point) | Perk on even levels (per point) |
 |---|---|---|
-| Greataxes | Damage 1% | Poise damage 1% |
-| Greathammers | Damage 1% | Poise damage 1.5% |
-| Colossal Swords | Damage 1% | Swing stamina 0.6% |
-| Hollow Mauls | Damage 1% | Poise damage 1.5% |
-| Battleaxes | Damage 1% | Poise damage 1% |
-| Twin Axes | Attack speed 0.5% | Lifesteal 0.024% of max HP a hit (D325) |
-| Clubs | Poise damage 1.5% | Swing stamina 0.8% |
-| Maces | Poise damage 1.5% | Damage 0.8% |
-| Censer Flails | Damage 0.8% | Reach 0.8% |
-| Longswords | Damage 0.8% | Swing stamina 0.6% |
-| Katanas | Damage 0.8% | Attack speed 0.5% |
-| Spellblades | Damage 0.8% | Cast speed 0.6% |
-| Rapiers | Attack speed 0.6% | Dodge recharge 0.02 s |
-| Twin Daggers | Attack speed 0.6% | Bleed buildup 2% |
-| Spears | Reach 0.8% | Damage 0.8% |
-| Halberds | Reach 0.8% | Poise damage 1% |
-| Dawn Glaives | Damage 0.8% | Reach 0.6% |
-| Whips | Reach 1.2% | Attack speed 0.5% |
-| Bows | Damage 1% | Skill cooldowns 0.8% |
-| Crossbows | Damage 1% | Reload speed 0.6% |
-| Staffs | Spell cooldowns 0.8% | Spell power 0.8% |
-| Talismans | Spell cooldowns 0.8% | Cast speed 0.6% |
-| Small Shields | Parry window 0.003 s | Block stamina 0.6% |
-| Medium Shields | Block stamina 0.8% | Elemental block 0.3% |
-| Great Shields | Block stamina 1.2% | Elemental block 0.4% |
+| Greataxes | Damage 1.3% | Poise damage 1.3% |
+| Greathammers | Damage 1.3% | Poise damage 1.95% |
+| Colossal Swords | Damage 1.3% | Swing stamina 0.78% |
+| Hollow Mauls | Damage 1.3% | Poise damage 1.95% |
+| Battleaxes | Damage 1.3% | Poise damage 1.3% |
+| Twin Axes | Attack speed 0.65% | Lifesteal 0.0312% of max HP a hit (D325) |
+| Clubs | Poise damage 1.95% | Swing stamina 1.04% |
+| Maces | Poise damage 1.95% | Damage 1.04% |
+| Censer Flails | Damage 1.04% | Reach 1.04% |
+| Longswords | Damage 1.04% | Swing stamina 0.78% |
+| Katanas | Damage 1.04% | Attack speed 0.65% |
+| Spellblades | Damage 1.04% | Cast speed 0.78% |
+| Rapiers | Attack speed 0.78% | Dodge recharge 0.026 s |
+| Twin Daggers | Attack speed 0.78% | Bleed buildup 2.6% |
+| Spears | Reach 1.04% | Damage 1.04% |
+| Halberds | Reach 1.04% | Poise damage 1.3% |
+| Dawn Glaives | Damage 1.04% | Reach 0.78% |
+| Whips | Reach 1.56% | Attack speed 0.65% |
+| Bows | Damage 1.3% | Skill cooldowns 1.04% |
+| Crossbows | Damage 1.3% | Reload speed 0.78% |
+| Staffs | Spell cooldowns 1.04% | Spell power 1.04% |
+| Talismans | Spell cooldowns 1.04% | Spell duration 1.04% (D371, was cast speed) |
+| Small Shields | Parry window 0.0039 s | Block stamina 0.78% |
+| Medium Shields | Block stamina 1.04% | Elemental block 0.39% |
+| Great Shields | Block stamina 1.56% | Elemental block 0.52% |
 
 **Raising a rarity**: a full item bar (Common 120, Uncommon 240, Rare 400, Epic 640 experience) lets you pay Glowen at
 a bonfire to raise the item one rarity (Common → Uncommon 300, → Rare 800, → Epic 2,000, → Legendary 5,000, × (1 + 0.2

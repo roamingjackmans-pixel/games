@@ -1,6 +1,6 @@
 // D178: weapon experience bars, rarity raises, and weapon-class proficiency with two perks per class.
 import { describe, expect, it } from 'vitest';
-import { PROF_CLASSES, PROF_MAX_LEVEL, RARITY_POWER, killXp, perkPoints, profLevel, profLevelCost } from '../../src/data/proficiency';
+import { PROF_CLASSES, PROF_MAX_LEVEL, PROF_PERK_MULT, RARITY_POWER, killXp, perkPoints, profLevel, profLevelCost } from '../../src/data/proficiency';
 import { WEAPONS } from '../../src/data/weapons';
 import { activeClasses, grantKillXp, profBonuses, upgradeInfo, upgradeRarity } from '../../src/game/items/proficiency';
 import { computeDerived } from '../../src/game/player/derived';
@@ -81,8 +81,8 @@ describe('experience on what is out (D178)', () => {
     c.equipment.main = makeItem('greataxe', 'common');
     const lv = profLevel(2000).level;
     const [a, b] = perkPoints(lv);
-    expect(profBonuses(c).damage).toBeCloseTo(0.01 * a, 6);
-    expect(profBonuses(c).poise).toBeCloseTo(0.01 * b, 6);
+    expect(profBonuses(c).damage).toBeCloseTo(0.01 * PROF_PERK_MULT * a, 6); // D371: ×1.3
+    expect(profBonuses(c).poise).toBeCloseTo(0.01 * PROF_PERK_MULT * b, 6);
     const d = computeDerived(c);
     expect(d.dmgPct).toBeGreaterThanOrEqual(0.01 * a - 1e-9);
   });

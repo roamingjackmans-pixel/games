@@ -4,7 +4,7 @@ import { newCharacter } from '../../src/game/player/character';
 import { computeDerived } from '../../src/game/player/derived';
 import { makeItem } from '../../src/game/items/make';
 import { grantKillXp, hasRarityBar, itemsOut, profClassOf, upgradeInfo, upgradeRarity } from '../../src/game/items/proficiency';
-import { PROF_MAX_LEVEL, RARITY_POWER, RARITY_XP, profLevelCost } from '../../src/data/proficiency';
+import { PROF_MAX_LEVEL, PROF_PERK_MULT as M, RARITY_POWER, RARITY_XP, profLevelCost } from '../../src/data/proficiency';
 import { Rng } from '../../src/engine/rng';
 
 const xpTo = (level: number): number => Array.from({ length: level }, (_, i) => profLevelCost(i + 1)).reduce((a, b) => a + b, 0);
@@ -51,27 +51,27 @@ describe('shield proficiency (D215)', () => {
     expect(sh.legendaryPower).toBeTruthy();
   });
 
-  it('level 50: small +75 ms parry, great −30% block stamina and +10% elemental block', () => {
+  it('level 50: small +75 ms parry, great −30% block stamina and +10% elemental block, all ×1.3 (D371)', () => {
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
     c.twoHanded = false;
     c.equipment.off = makeItem('buckler', 'common', 1);
     const base = computeDerived(c);
     c.proficiency = { shield_small: maxXp };
     const small = computeDerived(c);
-    expect(small.parryBonusS - base.parryBonusS).toBeCloseTo(0.075, 6);
-    expect(small.stabilityMult).toBeCloseTo(base.stabilityMult - 0.15, 6);
+    expect(small.parryBonusS - base.parryBonusS).toBeCloseTo(0.075 * M, 6);
+    expect(small.stabilityMult).toBeCloseTo(base.stabilityMult - 0.15 * M, 6);
 
     c.equipment.off = makeItem('tower_greatshield', 'common', 1);
     c.proficiency = {};
     const g0 = computeDerived(c);
     c.proficiency = { shield_great: maxXp };
     const g50 = computeDerived(c);
-    expect(g50.stabilityMult).toBeCloseTo(g0.stabilityMult - 0.3, 6);
-    expect(g50.shieldVals.elemental).toBeCloseTo(Math.min(0.85, g0.shieldVals.elemental + 0.1), 6);
+    expect(g50.stabilityMult).toBeCloseTo(g0.stabilityMult - 0.3 * M, 6);
+    expect(g50.shieldVals.elemental).toBeCloseTo(Math.min(0.85, g0.shieldVals.elemental + 0.1 * M), 6);
     // level 100 (D218): twice the level-50 numbers
     expect(PROF_MAX_LEVEL).toBe(100);
     c.proficiency = { shield_great: xpTo(PROF_MAX_LEVEL) };
-    expect(computeDerived(c).stabilityMult).toBeCloseTo(g0.stabilityMult - 0.6, 6);
+    expect(computeDerived(c).stabilityMult).toBeCloseTo(g0.stabilityMult - 0.6 * M, 6);
     // a great-shield class does nothing while a small shield is out
     c.equipment.off = makeItem('buckler', 'common', 1);
     expect(computeDerived(c).stabilityMult).toBeCloseTo(base.stabilityMult, 6);

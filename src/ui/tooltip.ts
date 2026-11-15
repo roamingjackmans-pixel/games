@@ -1,6 +1,6 @@
 // Item tooltips (GAME_DESIGN §16): one organised, stacked layout for every item kind, side-by-side compare
 // against what is worn in that slot (green better, white same, red worse), and small item icons.
-import { WEAPONS } from '../data/weapons';
+import { SPEED_TAG_LABEL, SPEED_TAG_MULT, WEAPONS, speedTag } from '../data/weapons';
 import { variantOf, weaponOf } from '../game/items/weaponOf';
 import { SHIELDS, SHIELD_POISE, shieldStability, shieldValues } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
@@ -36,7 +36,8 @@ export const GLOWEN_COLOR = '#9dffcf';
 
 export const STAT_LABEL: Record<StatId, string> = { hp: 'HP', endurance: 'Endurance', bonk: 'Bonk', slicey: 'Slicey', brain: 'Brain', prayer: 'Prayer' };
 const ARMOR_SLOT_LABEL: Record<string, string> = { head: 'Helmet', body: 'Body Armor', legs: 'Legs' };
-const SPEED_LABEL: Record<string, string> = { veryslow: 'Very slow', slow: 'Slow', mediumslow: 'Medium-slow', medium: 'Medium', fast: 'Fast', veryfast: 'Very fast' };
+/** A weapon's speed tag (D371): "Fast weapon", "Medium weapon", "Slow weapon". */
+const speedTagLabel = (w: Parameters<typeof speedTag>[0]): string => `${SPEED_TAG_LABEL[speedTag(w)]} weapon`;
 const SHIELD_SIZE_LABEL: Record<string, string> = { small: 'Small shield', medium: 'Medium shield', great: 'Greatshield' };
 const GRADE_ORDER: Grade[] = ['-', 'E', 'D', 'C', 'B', 'A', 'S'];
 
@@ -234,7 +235,7 @@ export function itemSummary(item: Item): string {
   const t = CASTING_TOOLS[item.baseId];
   const vw = variantOf(item)?.word;
   const cls = (w && vw ? `${vw} ${w.name}` : undefined) ?? w?.name ?? s?.name ?? t?.name ?? (item.kind === 'armor' ? (ARMOR_SLOT_LABEL[item.slot] ?? 'Armor') : item.kind === 'ring' ? 'Ring' : (baseInfo(item.baseId)?.name ?? item.kind));
-  const sub = w ? (SPEED_LABEL[w.speedClass] ?? w.speedClass) : s ? (SHIELD_SIZE_LABEL[s.size] ?? 'Shield') : t ? (t.school === 'brain' ? 'Staff' : 'Talisman') : item.kind === 'armor' ? (parseArmorBase(item.baseId)?.set?.weight ?? 'cloth') : '';
+  const sub = w ? speedTagLabel(w) : s ? (SHIELD_SIZE_LABEL[s.size] ?? 'Shield') : t ? (t.school === 'brain' ? 'Staff' : 'Talisman') : item.kind === 'armor' ? (parseArmorBase(item.baseId)?.set?.weight ?? 'cloth') : '';
   const parts = [`${RARITY_LABEL[item.rarity]} ${cls}`, `Level ${item.ilvl}`];
   if (sub) parts.push(sub[0]!.toUpperCase() + sub.slice(1));
   if (item.affixes.length) parts.push(`${item.affixes.length} affix${item.affixes.length === 1 ? '' : 'es'}`);
@@ -285,7 +286,7 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
 
   // ---- class - weight (and the equip load change if worn)
   const kindLabel = w
-    ? (SPEED_LABEL[w.speedClass] ?? w.speedClass)
+    ? speedTagLabel(w)
     : s
       ? (SHIELD_SIZE_LABEL[s.size] ?? 'Shield')
       : t
@@ -305,6 +306,9 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
 
   // ---- per kind
   if (w) {
+    // D371: what the speed tag does
+    const tm = SPEED_TAG_MULT[speedTag(w)];
+    if (tm > 1) out.push(h('div', { class: 'tt-vs' }, `${SPEED_TAG_LABEL[speedTag(w)]} weapon: Bless Weapon and lifesteal do ${Math.round((tm - 1) * 100)}% more`));
     const ow = other ? weaponOf(other) : undefined;
     // D294: what it would really deal in your hands, every perk counted (equipped on a copy of you)
     const mineHit = effectiveWeaponHit(c, item);

@@ -1,6 +1,7 @@
 // The player controller (GAME_DESIGN §4–5): input → movement, light combos, dodge, block, parry,
 // two-hand toggle, flask, skills/spells hooks. Runs for the host's own player and, on each co-op guest's screen, for
 // that guest's own body; a guest's copy in the host's world runs only what the host runs (updatePuppet, D338).
+import { SPEED_TAG_MULT, speedTag } from '../../data/weapons';
 import { emptyInput, held, pressed } from '../../engine/input/actions';
 import { T } from '../room';
 import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
@@ -233,14 +234,16 @@ export function weaponSpec(w: World, e: Entity, mult: number, opts: { skill?: bo
   const now = w.time;
   // a shot of the off-hand weapon (D291) uses that weapon's own power
   const wdef = (opts.offHand ? d.offWeapon?.def : null) ?? d.weapon;
+  // D371: Bless Weapon and lifesteal do 50% more on a Medium weapon, 100% more on a Slow one
+  const tagMult = SPEED_TAG_MULT[speedTag(wdef)];
   // the hit by type (shared with the item cards, D294), plus a timed holy buff (Bless Weapon, Consecrate…)
-  const dmg = weaponHitByType(d, mult, !!opts.offHand, buffSum(e, 'holyConvertPct', now));
+  const dmg = weaponHitByType(d, mult, !!opts.offHand, buffSum(e, 'holyConvertPct', now) * tagMult);
   const spec = emptySpec('player');
   spec.dmg = dmg;
   spec.lifestealScale = mult;
   // D369: the hand that strikes brings its own gems' buildup and lifesteal
   const hm = opts.offHand && d.offWeapon ? d.off : d;
-  spec.lifestealPct = hm.lifesteal;
+  spec.lifestealPct = hm.lifesteal * tagMult;
   spec.status = hm.statusBuild.map((s) => ({ ...s }));
   // harder swings (combo finishers, charged shots, skills) hit poise harder in proportion (D78)
   spec.poiseDmg = wdef.poiseDmg * Math.max(1, mult) * (opts.poiseMult ?? 1);

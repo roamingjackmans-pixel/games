@@ -87,9 +87,9 @@ describe('adding gems (D283)', () => {
 
 describe('gem drop rate (D281)', () => {
   it('is 35% lower everywhere', () => {
-    expect(GEM_CHANCE.enemy).toBeCloseTo(0.02 * 0.65, 6);
-    expect(GEM_CHANCE.chest).toBeCloseTo(0.12 * 0.65, 6);
-    expect(GEM_CHANCE.boss).toBeCloseTo(0.65, 6);
+    expect(GEM_CHANCE.enemy).toBeCloseTo(0.02 * 0.65 * 1.3, 6); // D371: 30% more
+    expect(GEM_CHANCE.chest).toBeCloseTo(0.12 * 0.65 * 1.3, 6);
+    expect(GEM_CHANCE.boss).toBeCloseTo(0.65 * 1.3, 6);
   });
 });
 

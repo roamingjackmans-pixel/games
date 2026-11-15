@@ -432,3 +432,15 @@ export function weaponDef(id: string): WeaponDef {
   if (!w) throw new Error(`Unknown weapon ${id}`);
   return w;
 }
+
+/**
+ * Every weapon class's speed tag (D371), from its base one-handed attack speed (`speedClass`): Very fast and Fast are
+ * Fast, Medium and Medium-slow are Medium, Slow and Very slow are Slow. Shown on the item card.
+ */
+export type SpeedTag = 'fast' | 'medium' | 'slow';
+export function speedTag(w: Pick<WeaponDef, 'speedClass'>): SpeedTag {
+  return w.speedClass === 'veryfast' || w.speedClass === 'fast' ? 'fast' : w.speedClass === 'medium' || w.speedClass === 'mediumslow' ? 'medium' : 'slow';
+}
+export const SPEED_TAG_LABEL: Record<SpeedTag, string> = { fast: 'Fast', medium: 'Medium', slow: 'Slow' };
+/** Bless Weapon (and every timed holy weapon buff) and weapon lifesteal do this much on a weapon of each tag (D371). */
+export const SPEED_TAG_MULT: Record<SpeedTag, number> = { fast: 1, medium: 1.5, slow: 2 };

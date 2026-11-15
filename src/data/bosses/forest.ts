@@ -172,6 +172,8 @@ export const VEXTHORN: BossDef = {
   role: 'boss',
   // D217: 15% more than the boss role's 3,600
   baseHp: 4140,
+  // D371: three times a boss's shards
+  mult: { shards: 3 },
   radius: 46,
   speed: 175,
   resist: {},
