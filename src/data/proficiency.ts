@@ -77,6 +77,11 @@ export const PROF_CLASSES: Record<string, ProfClass> = {
   whip: { id: 'whip', name: 'Whips', blurb: 'Every crack reaches a little further.', perks: [p('reach', 0.012, 'Reach'), p('attackSpeed', 0.005, 'Attack speed')] },
   bow: { id: 'bow', name: 'Bows', blurb: 'Breathe out. Let go.', perks: [p('damage', 0.01, 'Damage'), p('skillCooldown', 0.008, 'Skill cooldowns')] },
   chakram: { id: 'chakram', name: 'Chakrams', blurb: 'Catch it. Every time. Mostly.', perks: [p('damage', 0.008, 'Damage'), p('attackSpeed', 0.005, 'Throw speed')] },
+  // D388
+  cestus: { id: 'cestus', name: 'Cestuses', blurb: 'Every problem looks like a chin.', perks: [p('attackSpeed', 0.006, 'Attack speed'), p('poise', 0.012, 'Poise damage')] },
+  rune_kris: { id: 'rune_kris', name: 'Rune Krises', blurb: 'The runes do the talking. The point does the rest.', perks: [p('attackSpeed', 0.006, 'Attack speed'), p('castSpeed', 0.006, 'Cast speed')] },
+  hex_hammer: { id: 'hex_hammer', name: 'Hex Hammers', blurb: 'Heavier on the other side.', perks: [p('damage', 0.009, 'Damage'), p('poise', 0.012, 'Poise damage')] },
+  harvest_sickle: { id: 'harvest_sickle', name: 'Harvest Sickles', blurb: 'What you sow, you sickle.', perks: [p('damage', 0.008, 'Damage'), p('reach', 0.008, 'Reach')] },
   crossbow: { id: 'crossbow', name: 'Crossbows', blurb: 'Point. Click. Problem solved.', perks: [p('damage', 0.01, 'Damage'), p('attackSpeed', 0.006, 'Reload speed')] },
   staff: { id: 'staff', name: 'Staffs', blurb: 'The words come quicker once you stop reading them.', perks: [p('spellCooldown', 0.008, 'Spell cooldowns'), p('spellPower', 0.008, 'Spell power')] },
   // D371: spell duration in place of cast speed

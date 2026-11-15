@@ -4,6 +4,7 @@
 // legendaryWeapons.ts draw that instead of their base (pass the item's name).
 import { OUTLINE, blob, glow, limb, poly, shade, spec, withAlpha } from './parts';
 import { drawLegendaryWeapon } from './legendaryWeapons';
+import { HYBRID_BASE } from './weaponsHybrid';
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -1045,7 +1046,7 @@ function dawnGlaive(ctx: Ctx, t: number): void {
   glint(ctx, sx + Math.cos(ha + Math.PI) * 4.5, Math.sin(ha + Math.PI) * 15, 1.6, GL, 0.7);
 }
 
-type BaseDraw = (ctx: Ctx, t: number, charge: number, stretch: number) => void;
+export type BaseDraw = (ctx: Ctx, t: number, charge: number, stretch: number) => void;
 
 const BASE: Record<string, BaseDraw> = {
   w_greathammer: (c) => greathammer(c),
@@ -1073,13 +1074,14 @@ const BASE: Record<string, BaseDraw> = {
 };
 
 /** Every weapon draw id with its own art (anything else draws as fists). */
-export const WEAPON_DRAW_IDS: string[] = Object.keys(BASE);
+export const WEAPON_DRAW_IDS: string[] = [...Object.keys(BASE), ...Object.keys(HYBRID_BASE)];
 
 /** Draw a base weapon by draw id, ignoring legendary designs. */
 export function drawBaseWeapon(ctx: Ctx, id: string, t = 0, charge = 0, stretch = 1): void {
   // a staff or talisman held in the weapon hand (D117) draws as itself
-  if (!BASE[id] && id.startsWith('t_')) return drawTool(ctx, id, t);
-  (BASE[id] ?? fists)(ctx, t, charge, stretch);
+  if (!BASE[id] && !HYBRID_BASE[id] && id.startsWith('t_')) return drawTool(ctx, id, t);
+  // D388: the Cestus, Rune Kris, Hex Hammer and Harvest Sickle (weaponsHybrid.ts)
+  (BASE[id] ?? HYBRID_BASE[id] ?? fists)(ctx, t, charge, stretch);
 }
 
 /**

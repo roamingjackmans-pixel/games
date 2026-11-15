@@ -850,6 +850,10 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
       }
     }
     if (pl.derived.powers.has('momentum')) mult *= 1 + 0.03 * Math.min(10, pl.momentum);
+    // D388
+    if (pl.derived.powers.has('executioner') && hp.hp < hp.max * 0.25) mult *= 1.4;
+    if (pl.derived.powers.has('giant_slayer') && (en.isBoss || en.elite)) mult *= 1.25;
+    if (pl.derived.powers.has('last_stand') && attacker?.hp && attacker.hp.hp < attacker.hp.max * 0.3) mult *= 1.3;
     if (pl.derived.rings.has('ring_stillness') && now - pl.stillSince >= 1) mult *= Math.pow(1.15, pl.derived.ringCounts.ring_stillness ?? 1);
   }
   if (en.elite === 'armored') spec = { ...spec, dmg: { ...spec.dmg, physical: (spec.dmg.physical ?? 0) * 0.6 } };

@@ -1,4 +1,5 @@
-// CONTENT_ITEMS §4: the 17 weapon classes plus 4 hybrids (D80, Chakrams D320). Grades are spread from E to S on purpose (D40).
+// CONTENT_ITEMS §4: the 17 weapon classes plus 4 hybrids (D80, Chakrams D320), and since D388 the Cestus, Rune Kris,
+// Hex Hammer and Harvest Sickle. Grades are spread from E to S on purpose (D40).
 // Movesets (D320): fast weapons have long combos, heavy ones at least three steps; spins circle the player, overheads
 // land a slam in front, whips lash out to their full length. A combo that covers more ground hits a little softer:
 // its damage per second is the old one × (old average area / new)^0.25 (docs/CONTENT_ITEMS §4).
@@ -40,7 +41,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     hyperArmor: 'all',
     flavor: 'For when the problem is a wall.',
     draw: 'w_greathammer',
-    legendaryNames: ["Landlord's Gavel", 'Noise Complaint', 'The Big One'],
+    legendaryNames: ["Landlord's Gavel", 'Noise Complaint', 'The Big One', 'Load-Bearing Wall'],
   },
   greataxe: {
     id: 'greataxe',
@@ -59,7 +60,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     hyperArmor: 'last',
     flavor: 'Pure Bonk. The edge is mostly a formality.',
     draw: 'w_greataxe',
-    legendaryNames: ['The Severance Package', 'Lumberjack Retirement Plan', 'Firewood'],
+    legendaryNames: ['The Severance Package', 'Lumberjack Retirement Plan', 'Firewood', 'Timber!'],
   },
   colossal_sword: {
     id: 'colossal_sword',
@@ -78,7 +79,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     hyperArmor: 'all',
     flavor: 'Not so much swung as committed to.',
     draw: 'w_colossal',
-    legendaryNames: ['Overcompensation', 'The Door', 'Small Talk'],
+    legendaryNames: ['Overcompensation', 'The Door', 'Small Talk', 'Big Energy'],
   },
   crossbow: {
     id: 'crossbow',
@@ -97,7 +98,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     eitherHand: true, // D291: any weapon slot; in the off hand it shoots on the block button
     flavor: 'Reloading is a lifestyle.',
     draw: 'w_crossbow',
-    legendaryNames: ['Second Opinion', 'The Notary', 'Quarrelsome'],
+    legendaryNames: ['Second Opinion', 'The Notary', 'Quarrelsome', 'Bolt From the Blue'],
   },
   club: {
     id: 'club',
@@ -115,7 +116,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     hyperArmor: 'all',
     flavor: "Wood. It doesn't care how strong you are.",
     draw: 'w_club',
-    legendaryNames: ['Stick of Destiny', 'Problem Solver', 'Original Recipe'],
+    legendaryNames: ['Stick of Destiny', 'Problem Solver', 'Original Recipe', 'Club Membership'],
   },
   twin_daggers: {
     id: 'twin_daggers',
@@ -138,7 +139,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     backstabMult: 1.5,
     flavor: 'Two is company. Three is a backstab.',
     draw: 'w_daggers',
-    legendaryNames: ['Paper Cut', 'The Fine Print', 'Mr. and Mrs. Stabby'],
+    legendaryNames: ['Paper Cut', 'The Fine Print', 'Mr. and Mrs. Stabby', 'Backstabbers'],
   },
   rapier: {
     id: 'rapier',
@@ -156,7 +157,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     ripostedCritMult: 1.5,
     flavor: 'Pointy. Polite. Very rude after a parry.',
     draw: 'w_rapier',
-    legendaryNames: ['Strongly Worded Letter', 'En Garde', 'The Point'],
+    legendaryNames: ['Strongly Worded Letter', 'En Garde', 'The Point', 'Touché'],
   },
   katana: {
     id: 'katana',
@@ -175,7 +176,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     bleed: 20,
     flavor: 'Folded a thousand times. Like Joe.',
     draw: 'w_katana',
-    legendaryNames: ['Moonlight Shift', 'Overtime', 'Folded Laundry'],
+    legendaryNames: ['Moonlight Shift', 'Overtime', 'Folded Laundry', 'Paper Thin'],
   },
   bow: {
     id: 'bow',
@@ -195,7 +196,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     ranged: { speed: 700, drawId: 'p_arrow', sfx: 'shootArrow', chargeS: 0.6, chargeMult: 1.8, chargePierce: 1, volley: { count: 3, spreadDeg: 5 } }, // D205: three arrows at once
     flavor: 'Never misses. Rarely hits.',
     draw: 'w_bow',
-    legendaryNames: ['Long Distance Relationship', 'Return to Sender', 'Cupid Retired'],
+    legendaryNames: ['Long Distance Relationship', 'Return to Sender', 'Cupid Retired', 'Arrow Minded'],
   },
   whip: {
     id: 'whip',
@@ -213,7 +214,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     ignoreFrontGuard: true,
     flavor: 'Goes over shields. And under skin.',
     draw: 'w_whip',
-    legendaryNames: ['Middle Management', 'The Long Reach', 'Snap Decision'],
+    legendaryNames: ['Middle Management', 'The Long Reach', 'Snap Decision', 'Crack of Dawn'],
   },
   longsword: {
     id: 'longsword',
@@ -231,7 +232,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     skills: ['longsword_shield_breaker', 'longsword_spin_slash', 'longsword_battle_cry'],
     flavor: 'A sword. Long.',
     draw: 'w_longsword',
-    legendaryNames: ['Employee of the Month', 'Plot Armor', 'Exactly As Long As It Needs To Be'],
+    legendaryNames: ['Employee of the Month', 'Plot Armor', 'Exactly As Long As It Needs To Be', 'Main Character'],
   },
   spear: {
     id: 'spear',
@@ -248,7 +249,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     skills: ['spear_impale', 'spear_sweep', 'spear_phalanx'],
     flavor: 'Keeps a polite distance.',
     draw: 'w_spear',
-    legendaryNames: ['Social Distancing', 'The Ten-Foot Rule', 'Personal Space'],
+    legendaryNames: ['Social Distancing', 'The Ten-Foot Rule', 'Personal Space', 'Point of No Return'],
   },
   battleaxe: {
     id: 'battleaxe',
@@ -266,7 +267,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     hyperArmor: 'all',
     flavor: 'Mostly Bonk, a pinch of Slicey. Gran’s recipe.',
     draw: 'w_battleaxe',
-    legendaryNames: ['Hostile Takeover', 'Chopping Block', 'Axe Me Anything'],
+    legendaryNames: ['Hostile Takeover', 'Chopping Block', 'Axe Me Anything', 'Splitting Hairs'],
   },
   mace: {
     id: 'mace',
@@ -285,7 +286,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     holyPct: 0.2,
     flavor: 'Blessed by a priest who was in a hurry.',
     draw: 'w_mace',
-    legendaryNames: ['Sunday Best', 'Thoughts and Prayers', 'The Sermon'],
+    legendaryNames: ['Sunday Best', 'Thoughts and Prayers', 'The Sermon', 'Blunt Truth'],
   },
   halberd: {
     id: 'halberd',
@@ -303,7 +304,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     hyperArmor: 'all',
     flavor: 'An axe, a spear and a hook walked into a bar.',
     draw: 'w_halberd',
-    legendaryNames: ['Committee Decision', 'Swiss Army Pole', 'The Long Arm of the Law'],
+    legendaryNames: ['Committee Decision', 'Swiss Army Pole', 'The Long Arm of the Law', 'Red Tape'],
   },
   twin_axes: {
     id: 'twin_axes',
@@ -323,7 +324,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     skills: ['twinaxes_whirlwind', 'twinaxes_throw', 'twinaxes_rampage'],
     flavor: 'Has two of everything except plans.',
     draw: 'w_twinaxes',
-    legendaryNames: ['Double Shift', 'Twice Shy', 'The Twins'],
+    legendaryNames: ['Double Shift', 'Twice Shy', 'The Twins', 'Split Decision'],
   },
   // ---- hybrid weapons (D80): a physical stat plus Brain or Prayer, dealing their own damage type ----
   hollow_maul: {
@@ -344,7 +345,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     hyperArmor: 'last',
     flavor: 'There is nothing inside. It is very heavy anyway.',
     draw: 'w_hollow_maul',
-    legendaryNames: ['Dark Matter of Fact', 'Existential Dread', 'The Void Warranty'],
+    legendaryNames: ['Dark Matter of Fact', 'Existential Dread', 'The Void Warranty', 'Nothing Personal'],
   },
   spellblade: {
     id: 'spellblade',
@@ -363,7 +364,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     skills: ['spellblade_arc_wave', 'spellblade_blink_strike', 'spellblade_runic_edge'],
     flavor: 'Sharp on one edge, smug on the other.',
     draw: 'w_spellblade',
-    legendaryNames: ['Spell Check', 'Sharp Mind', 'Wizard of Odds'],
+    legendaryNames: ['Spell Check', 'Sharp Mind', 'Wizard of Odds', 'Hex Appeal'],
   },
   censer_flail: {
     id: 'censer_flail',
@@ -382,7 +383,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     hyperArmor: 'last',
     flavor: 'Smells like church. Hits like the fire that took the church.',
     draw: 'w_censer',
-    legendaryNames: ['Holy Smokes', 'Fire and Brimstone Inc.', 'Smoke Alarm'],
+    legendaryNames: ['Holy Smokes', 'Fire and Brimstone Inc.', 'Smoke Alarm', 'Hot Take'],
   },
   dawn_glaive: {
     id: 'dawn_glaive',
@@ -401,7 +402,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     skills: ['glaive_sunrise', 'glaive_halo_throw', 'glaive_judgement_ray'],
     flavor: 'A morning person. On a stick.',
     draw: 'w_dawn_glaive',
-    legendaryNames: ['Morning Person', 'Sunday Service', 'Rise and Shine'],
+    legendaryNames: ['Morning Person', 'Sunday Service', 'Rise and Shine', 'First Light'],
   },
   chakram: {
     id: 'chakram',
@@ -421,7 +422,83 @@ export const WEAPONS: Record<string, WeaponDef> = {
     ranged: { speed: 560, drawId: 'p_chakram', sfx: 'swingLight' },
     flavor: 'What goes around comes around. Then goes around again.',
     draw: 'w_chakram',
-    legendaryNames: ['Return Policy', 'Full Circle', 'The Halo Effect'],
+    legendaryNames: ['Return Policy', 'Full Circle', 'The Halo Effect', 'Boomerang Theory'],
+  },
+  // ---- D388: four more classes, three of them hybrids, so every Bonk or Slicey build with Brain or Prayer has two Fast
+  // and two Medium weapons (counting the scaling variants, weaponVariants.ts) ----
+  cestus: {
+    id: 'cestus',
+    name: 'Cestus',
+    weight: 3,
+    grades: { bonk: 'A', slicey: '-' },
+    req: { bonk: 12, slicey: 0 },
+    speedClass: 'fast',
+    combo: [sw(150, 65, 150, 0.74, thrust(32, 72), 12, 'thrust'), sw(150, 65, 150, 0.74, thrust(32, 72), 12, 'thrust'), sw(160, 70, 160, 0.78, arc(80, 70), 10, 'slash'), sw(150, 65, 150, 0.74, thrust(32, 72), 12, 'thrust'), sw(230, 85, 250, 1.16, slam(48, 58), 16, 'overhead')],
+    base1: 31,
+    stamina: 10,
+    poiseDmg: 16,
+    reviveValue: 1.4,
+    skills: ['cestus_jab_rush', 'cestus_uppercut', 'cestus_iron_skin'],
+    flavor: 'A glove with opinions, all of them made of iron.',
+    draw: 'w_cestus',
+    legendaryNames: ['Knuckle Sandwich', 'Hands Down', 'Fist Impressions', 'The Handshake'],
+  },
+  rune_kris: {
+    id: 'rune_kris',
+    noSliceyBoost: true,
+    name: 'Rune Kris',
+    weight: 2,
+    grades: { bonk: '-', slicey: 'B', brain: 'B' },
+    req: { bonk: 0, slicey: 10, brain: 12 },
+    element: 'magic',
+    speedClass: 'fast',
+    combo: [sw(140, 62, 140, 0.62, arc(80, 76), 10, 'slash'), sw(140, 62, 140, 0.62, arc(80, 76), 10, 'backslash'), sw(140, 62, 140, 0.62, arc(80, 76), 10, 'slash'), sw(150, 70, 170, 0.78, thrust(28, 112), 14, 'thrust'), sw(170, 82, 190, 0.96, spin(82), 10, 'spin')],
+    base1: 29,
+    stamina: 9,
+    poiseDmg: 8,
+    reviveValue: 1.0,
+    skills: ['kris_hex_cut', 'kris_rune_shards', 'kris_mirror_step'],
+    flavor: 'The blade wiggles so the curse has somewhere to sit.',
+    draw: 'w_rune_kris',
+    legendaryNames: ['Curse Word', 'Hex Key', 'Stab in the Dark', 'Mind the Gap'],
+  },
+  hex_hammer: {
+    id: 'hex_hammer',
+    name: 'Hex Hammer',
+    weight: 7,
+    grades: { bonk: 'B', slicey: '-', brain: 'B' },
+    req: { bonk: 12, slicey: 0, brain: 12 },
+    element: 'void',
+    speedClass: 'medium',
+    combo: [sw(320, 110, 300, 1.0, arc(100, 96), 14, 'slash'), sw(320, 110, 300, 1.0, arc(100, 96), 14, 'backslash'), sw(400, 130, 400, 1.32, slam(56, 86), 18, 'overhead')],
+    base1: 42,
+    stamina: 15,
+    poiseDmg: 38,
+    reviveValue: 2.6,
+    skills: ['hexhammer_null_slam', 'hexhammer_gravity_hook', 'hexhammer_curse'],
+    hyperArmor: 'last',
+    flavor: 'Hits twice: once here, and once somewhere you cannot see.',
+    draw: 'w_hex_hammer',
+    legendaryNames: ['Mind Over Matter', 'Thinking Cap', 'Headache', 'Brainstorm'],
+  },
+  harvest_sickle: {
+    id: 'harvest_sickle',
+    noSliceyBoost: true,
+    name: 'Harvest Sickle',
+    weight: 4,
+    grades: { bonk: '-', slicey: 'B', prayer: 'B' },
+    req: { bonk: 0, slicey: 10, prayer: 12 },
+    element: 'holy',
+    speedClass: 'medium',
+    combo: [sw(270, 100, 250, 0.9, arc(120, 100), 14, 'slash'), sw(270, 100, 250, 0.9, arc(120, 100), 14, 'backslash'), sw(300, 110, 280, 0.95, arc(120, 100), 14, 'slash'), sw(360, 140, 340, 1.2, spin(100), 12, 'spin')],
+    base1: 37,
+    stamina: 12,
+    poiseDmg: 20,
+    reviveValue: 2.0,
+    skills: ['sickle_reap', 'sickle_harvest_hook', 'sickle_bountiful'],
+    flavor: 'Cuts wheat, weeds and anything that rises again.',
+    draw: 'w_sickle',
+    legendaryNames: ['Grim Reaping', 'Harvest Moon', 'Crop Circle', 'Sickle Day'],
   },
 };
 

@@ -551,7 +551,7 @@ export function gemTooltip(g: Gem, inItem?: Item | null): HTMLElement {
 
 /** Draw a small icon for an item into a canvas. */
 /** Rough drawn length of each weapon (grip at 0 → tip), for fitting icons. */
-const WEAPON_ICON_LEN: Record<string, number> = { w_bow: 60, w_crossbow: 56, w_spear: 120, w_halberd: 118, w_dawn_glaive: 118, w_colossal: 88, w_greathammer: 66, w_hollow_maul: 66, w_whip: 90, w_greataxe: 66, w_longsword: 78, w_spellblade: 78, w_katana: 76, w_rapier: 74, w_chakram: 30 };
+const WEAPON_ICON_LEN: Record<string, number> = { w_bow: 60, w_crossbow: 56, w_spear: 120, w_halberd: 118, w_dawn_glaive: 118, w_colossal: 88, w_greathammer: 66, w_hollow_maul: 66, w_whip: 90, w_greataxe: 66, w_longsword: 78, w_spellblade: 78, w_katana: 76, w_rapier: 74, w_chakram: 30, w_cestus: 26, w_rune_kris: 44, w_hex_hammer: 60, w_sickle: 50 };
 
 export function itemIcon(item: Item | null, size = 40): HTMLCanvasElement {
   const c = h('canvas', { width: size, height: size });

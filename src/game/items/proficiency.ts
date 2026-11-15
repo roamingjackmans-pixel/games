@@ -8,7 +8,7 @@ import { Rng } from '../../engine/rng';
 import { RARITIES, type Character, type Item, type Rarity } from '../types';
 import { findItem } from './inventory';
 import { itemName, powerSlotOf } from './generate';
-import { powersFor } from '../../data/legendaries';
+import { LEGENDARY_WEAPON_POWERS, powersFor } from '../../data/legendaries';
 import { buyPrice } from '../combat/formulas';
 
 /** The proficiency class of an item: its weapon base, 'staff' / 'talisman', or its shield size (null: armor, a ring…). */
@@ -141,6 +141,9 @@ export function upgradeRarity(c: Character, itemId: string): { ok: boolean; msg:
     const list = ps ? powersFor(ps) : [];
     if (list.length && !it.legendaryPower) it.legendaryPower = rng.pick(list);
     it.name = itemName(rng, it);
+    // D388: a legendary weapon's name carries its own power
+    const named = LEGENDARY_WEAPON_POWERS[it.name];
+    if (named) it.legendaryPower = named;
   }
   return { ok: true, msg: `${it.name} is now ${u.to[0]!.toUpperCase()}${u.to.slice(1)}.` };
 }

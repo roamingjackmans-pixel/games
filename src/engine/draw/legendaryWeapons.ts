@@ -3,12 +3,17 @@
 // length and grip of its class, so swings still read. `t` (seconds) drives glows, particles and shimmer;
 // every design also carries a travelling warm legendary glint (#ff9b2e).
 import { OUTLINE, blob, glow, limb, poly, shade, spec } from './parts';
+import { DESIGNS_A } from './legendaryWeaponsA';
+import { DESIGNS_B } from './legendaryWeaponsB';
+import { DESIGNS_C } from './legendaryWeaponsC';
+import { DESIGNS_D } from './legendaryWeaponsD';
 import { GOLD, IRON, LEATHER, STEEL, WOOD, chakramRing, band, bowString, cord, crossguard, dot, drift, flame, glint, grip, haft, hash, line, plate, pommel, rivet, runes, sheen, swordBlade, trace, worldUp } from './weapons';
 
 type Ctx = CanvasRenderingContext2D;
 type Vec = readonly [number, number];
 
-interface Design {
+/** A legendary weapon design (D388: also built in legendaryWeaponsA–D.ts). */
+export interface Design {
   /** reach of the art along +x (the legendary glint travels along it) */
   len: number;
   /** bows: the glint travels along the limbs instead */
@@ -2759,6 +2764,11 @@ const DESIGNS: Record<string, Design> = {
   'Return Policy': { len: 20, draw: returnPolicy },
   'Full Circle': { len: 20, draw: fullCircle },
   'The Halo Effect': { len: 20, draw: haloEffect },
+  // D388: the fourth legendary of every class, and the new classes' four
+  ...DESIGNS_A,
+  ...DESIGNS_B,
+  ...DESIGNS_C,
+  ...DESIGNS_D,
 };
 
 /** Every legendary name with its own design. */

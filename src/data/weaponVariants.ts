@@ -45,12 +45,18 @@ export const WEAPON_VARIANTS: Record<string, WeaponVariantDef[]> = {
   bow: [blessed({ bonk: '-', slicey: 'D', prayer: 'C' }), arcane({ bonk: '-', slicey: 'D', brain: 'C' })],
   // D328: the Keen Longsword leans a little to Slicey (B / A), the owner's ask; it is an upgrade on the B / B class
   longsword: [heavy({ bonk: 'A', slicey: 'D' }), { ...keen({ bonk: 'B', slicey: 'A' }), upgrade: true }, blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' })],
-  spear: [heavy({ bonk: 'B', slicey: 'C' }), keen({ bonk: 'E', slicey: 'A' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' })],
+  spear: [heavy({ bonk: 'B', slicey: 'C' }), keen({ bonk: 'E', slicey: 'A' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: '-', slicey: 'B', brain: 'C' })], // D388: Arcane
   battleaxe: [keen({ bonk: 'C', slicey: 'B' }), fervent({ bonk: 'C', slicey: 'D', prayer: 'C' }), hollow({ bonk: 'C', slicey: 'D', brain: 'C' })],
   mace: [fervent({ bonk: 'D', slicey: 'E', prayer: 'C' }), hollow({ bonk: 'D', slicey: 'E', brain: 'C' })],
-  halberd: [keen({ bonk: 'C', slicey: 'A' }), fervent({ bonk: 'C', slicey: 'D', prayer: 'C' })],
-  twin_axes: [heavy({ bonk: 'B', slicey: 'C' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' })],
+  halberd: [keen({ bonk: 'C', slicey: 'A' }), fervent({ bonk: 'C', slicey: 'D', prayer: 'C' }), hollow({ bonk: 'C', slicey: 'D', brain: 'C' })], // D388: Hollow
+  // D388: Fervent and Hollow make them a fast Bonk weapon with Prayer or Brain
+  twin_axes: [heavy({ bonk: 'B', slicey: 'C' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' }), fervent({ bonk: 'B', slicey: '-', prayer: 'C' }), hollow({ bonk: 'B', slicey: '-', brain: 'C' })],
   chakram: [blessed({ bonk: '-', slicey: 'D', prayer: 'C' }), arcane({ bonk: '-', slicey: 'D', brain: 'C' })],
+  // D388: the four new classes trade their second stat
+  cestus: [hollow({ bonk: 'C', slicey: '-', brain: 'C' }), fervent({ bonk: 'C', slicey: '-', prayer: 'C' })],
+  rune_kris: [blessed({ bonk: '-', slicey: 'B', prayer: 'B' })],
+  hex_hammer: [fervent({ bonk: 'B', slicey: '-', prayer: 'B' })],
+  harvest_sickle: [arcane({ bonk: '-', slicey: 'B', brain: 'B' })],
   // the hybrids (D80) lean one way or the other
   hollow_maul: [heavy({ bonk: 'A', slicey: '-', brain: 'D' }), deep({ bonk: 'D', slicey: '-', brain: 'A' })],
   spellblade: [keen({ bonk: '-', slicey: 'A', brain: 'D' }), deep({ bonk: '-', slicey: 'D', brain: 'A' })],

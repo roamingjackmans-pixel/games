@@ -288,7 +288,8 @@ export const TWO_HAND_SWING_STAMINA = 1.3;
 export function swingStamina(e: Entity, offHand = false): number {
   const d = e.pl!.derived;
   const wpn = comboWeapon(e, offHand);
-  return wpn.stamina * (!offHand && d.twoHanded && !wpn.twoHandOnly ? TWO_HAND_SWING_STAMINA : 1);
+  // D388: a Featherweight legendary's swings cost 25% less
+  return wpn.stamina * (!offHand && d.twoHanded && !wpn.twoHandOnly ? TWO_HAND_SWING_STAMINA : 1) * (d.powers.has('featherweight') ? 0.75 : 1);
 }
 
 function startSwing(w: World, e: Entity, idx: number, offHand = false): void {

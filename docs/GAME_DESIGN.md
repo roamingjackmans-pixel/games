@@ -756,6 +756,17 @@ damage, defense per type, max HP / stamina, Shard / Glowen / gem find, revive va
 **Legendary powers** (`data/legendaries.ts`) are unique effects on Legendary items (e.g. Joe's Lucky Socks: +1
 Thermos maximum).
 
+**Legendary weapons** (D388): every weapon class has **four** legendary weapons, each with its own drawn design and
+its own fixed legendary power (`LEGENDARY_WEAPON_POWERS`; the four of a class all differ). A Legendary weapon rolls
+one of its class's four names and carries that name's power. 20 weapon powers in all (eleven added by D388:
+Executioner, Giant Slayer, Last Stand, Featherweight, Quickdraw, Shatterpoint, Bloodletter, Kindling, Frostbite,
+Static Charge, Bounty Hunter). Legendaries found before D388 keep the power they rolled.
+
+**Weapon classes** (D388): 25. The Cestus (Fast, Bonk), Rune Kris (Fast, Slicey + Brain, Magic), Hex Hammer (Medium,
+Bonk + Brain, Void) and Harvest Sickle (Medium, Slicey + Prayer, Holy) joined, and more classes gained scaling
+variants, so every Bonk or Slicey build that also leans on Brain or Prayer has at least two Fast and two Medium
+weapons to choose from (a class or a variant scaling C or better in both stats; CONTENT_ITEMS §2).
+
 **Set perks** (D243, D245): any piece of gear can carry one of ten set perks — Counteroffer, Moonlight Flit,
 Eviction, Squatter's Rights, Fine Print, Late Fees, Handyman, Demolition, Tea Break, Load-Bearing Wall (poise, D313). Wearing **3, 5 or 7** pieces with
 the same one (every slot in use counts) gives a small, medium or large bonus to that playstyle. Drop chance: Uncommon

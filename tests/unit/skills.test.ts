@@ -113,7 +113,7 @@ describe('spells and classes data (CONTENT_SPELLS_CLASSES §4)', () => {
         expect(SKILLS[sid]!.weapon).toBe(w.id);
       });
     }
-    expect(Object.keys(SKILLS).length).toBe(63); // D320: Chakrams brought three
+    expect(Object.keys(SKILLS).length).toBe(75); // D320: Chakrams brought three; D388: four classes twelve more
     expect(validateData().map((i) => `${i.where}: ${i.msg}`)).toEqual([]);
   });
 });

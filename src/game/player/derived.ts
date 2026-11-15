@@ -459,6 +459,14 @@ export function computeDerived(c: Character): Derived {
     maxHpMult *= 0.9;
   }
   if (powers.has('timekeeper')) dodgeRed += 1.0;
+  // D388
+  if (powers.has('quickdraw')) attackSpeedPct += 0.15;
+  if (powers.has('shatterpoint')) poisePct += 0.5;
+  if (powers.has('bounty_hunter')) shardFind += 0.25;
+  if (powers.has('bloodletter')) statusBuild.push({ id: 'bleed', buildup: 15 });
+  if (powers.has('kindling')) statusBuild.push({ id: 'burn', buildup: 12 });
+  if (powers.has('frostbite')) statusBuild.push({ id: 'chill', buildup: 12 });
+  if (powers.has('static_charge')) statusBuild.push({ id: 'shock', buildup: 12 });
   // weapon-class proficiency (D178): the perks of the classes out right now
   const prof = profBonuses(c);
   dmgPct += prof.damage;

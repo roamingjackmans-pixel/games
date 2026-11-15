@@ -79,7 +79,8 @@ describe('D343 balance', () => {
 describe('D347 Slicey-based weapons', () => {
   it('Slicey above Bonk (as rolled) is ×1.2; equal or Bonk-led is not', () => {
     const led = Object.values(WEAPONS).filter((d) => sliceyLed(d)).map((d) => d.id).sort();
-    expect(led).toEqual(['bow', 'chakram', 'dawn_glaive', 'katana', 'rapier', 'spear', 'spellblade', 'twin_axes', 'twin_daggers', 'whip'].sort());
+    // D388: the Rune Kris and Harvest Sickle lead with Slicey too (with no boost, like the other hybrids)
+    expect(led).toEqual(['bow', 'chakram', 'dawn_glaive', 'harvest_sickle', 'katana', 'rapier', 'rune_kris', 'spear', 'spellblade', 'twin_axes', 'twin_daggers', 'whip'].sort());
     expect(gradeDamageMult(WEAPONS.twin_daggers!)).toBeCloseTo(1.2, 9);
     expect(gradeDamageMult(WEAPONS.longsword!)).toBe(1);
     expect(gradeDamageMult(WEAPONS.greathammer!)).toBeCloseTo(0.9, 9);

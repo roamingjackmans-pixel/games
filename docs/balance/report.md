@@ -697,6 +697,10 @@ Every weapon at item level 5, rare, +0, held by a knight whose points (10 in eac
 | Censer Flail | B/-/Pr B | 2H | 453 | 155 | 351 | 31.1 | Incense 61, Brimstone 52, Sanctified Flame 0 |  |
 | Dawn Glaive | -/B/Pr B | 1H | 364 | 126 | 260 | 27.6 | Sunrise 54, Halo Throw 32, Judgement Ray 36 |  |
 | Chakrams | E/B | 2H | 317 | 104 | 178 | 24.2 | Orbit 52, Ring Storm 10, Grand Ring 18 | ⚠ 0.67× median DPS |
+| Cestus | A/- | 2H | 635 | 190 | 222 | 17.3 | Jab Rush 80, Uppercut 46, Iron Skin 0 |  |
+| Rune Kris | -/B/Br B | 1H | 427 | 127 | 133 | 15.5 | Hex Cut 40, Rune Shards 14, Mirror Step 16 |  |
+| Hex Hammer | B/-/Br B | 2H | 454 | 165 | 321 | 25.9 | Null Slam 61, Gravity Hook 31, Curse of Weight 0 |  |
+| Harvest Sickle | -/B/Pr B | 1H | 390 | 147 | 233 | 20.7 | Reap 47, Harvest Hook 26, Bountiful Harvest 0 |  |
 
 Spells at Spell Skill 100 (single target; fans count one projectile, ticking areas their whole duration):
 

@@ -50,16 +50,20 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
 | Katana | Balanced C / B; Blessed - / B / Prayer C; Arcane - / B / Brain C |
 | Bow | Blessed - / D / Prayer C; Arcane - / D / Brain C |
 | Longsword | Heavy A / D; Keen B / A (D328, an upgrade on its class); Blessed D / C / Prayer C; Arcane D / C / Brain C |
-| Spear | Heavy B / C; Keen E / A; Blessed D / C / Prayer C |
+| Spear | Heavy B / C; Keen E / A; Blessed D / C / Prayer C; Arcane - / B / Brain C (D388) |
 | Battleaxe | Keen C / B; Fervent C / D / Prayer C; Hollow C / D / Brain C |
 | Mace | Fervent D / E / Prayer C; Hollow D / E / Brain C |
-| Halberd | Keen C / A; Fervent C / D / Prayer C |
-| Twin Axes | Heavy B / C; Blessed D / C / Prayer C; Arcane D / C / Brain C |
+| Halberd | Keen C / A; Fervent C / D / Prayer C; Hollow C / D / Brain C (D388) |
+| Twin Axes | Heavy B / C; Blessed D / C / Prayer C; Arcane D / C / Brain C; Fervent B / - / Prayer C; Hollow B / - / Brain C (D388) |
 | Chakrams | Blessed - / D / Prayer C; Arcane - / D / Brain C |
 | Hollow Maul | Heavy A / - / Brain D; Deep D / - / Brain A |
 | Spellblade | Keen - / A / Brain D; Deep - / D / Brain A |
 | Censer Flail | Heavy A / - / Prayer D; Devout D / - / Prayer A |
 | Dawn Glaive | Keen - / A / Prayer D; Devout - / D / Prayer A |
+| Cestus (D388) | Hollow C / - / Brain C; Fervent C / - / Prayer C |
+| Rune Kris (D388) | Blessed - / B / Prayer B |
+| Hex Hammer (D388) | Fervent B / - / Prayer B |
+| Harvest Sickle (D388) | Arcane - / B / Brain B |
 
 ## 2. Weapons
 
@@ -76,8 +80,8 @@ the spinning weapons about 10%, and the ones whose reach barely changed nothing.
 
 **Speed tags (D371).** Every weapon class is tagged by its base one-handed attack speed: very fast and fast are
 **Fast**, medium and medium-slow **Medium**, slow and very slow **Slow** (`speedTag`, shown on the item card).
-Fast: Twin Daggers, Rapier, Katana, Bow, Twin Axes. Medium: Club, Whip, Longsword, Spear, Battleaxe, Mace, Halberd,
-Spellblade, Censer Flail, Dawn Glaive, Chakrams. Slow: Greathammer, Greataxe, Colossal Sword, Crossbow, Hollow Maul.
+Fast: Twin Daggers, Rapier, Katana, Bow, Twin Axes, Cestus, Rune Kris. Medium: Club, Whip, Longsword, Spear, Battleaxe, Mace, Halberd,
+Spellblade, Censer Flail, Dawn Glaive, Chakrams, Hex Hammer, Harvest Sickle. Slow: Greathammer, Greataxe, Colossal Sword, Crossbow, Hollow Maul.
 Bless Weapon (every timed Holy weapon buff) and the weapon's lifesteal do **50% more on a Medium** weapon and **100% more
 on a Slow** one; Fast weapons are unchanged.
 
@@ -104,13 +108,17 @@ on a Slow** one; Fast weapons are unchanged.
 | **Censer Flail** | B / - / Prayer B | 11 / 0 / Prayer 11 | mediumslow (**Medium**) | 340/130/330 ×1.02 slash arc(140°, 110); 340/130/330 ×1.02 backslash arc(140°, 110); 420/140/420 ×1.22 overhead slam(r 60, 90 ahead); 460/150/440 ×1.37 spin spin(115) | 44 | 18 | 35 | 2.5 | 7.5 | fire damage (hybrid, D80); hyper armor (last). *"Smells like church. Hits like the fire that took the church."* |
 | **Dawn Glaive** | - / B / Prayer B | 0 / 11 / Prayer 11 | mediumslow (**Medium**) | 320/120/320 ×0.89 slash arc(140°, 130); 320/120/320 ×0.89 backslash arc(140°, 130); 320/120/320 ×0.89 thrust thrust(30, 165); 460/140/440 ×1.21 spin spin(135) | 42 | 16 | 28 | 2.5 | 9 | holy damage (hybrid, D80). *"A morning person. On a stick."* |
 | **Chakrams** | E / B | 6 / 11 | medium (**Medium**) | 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 320/60/380 ×0.56 throw ring(r 16, 380 out and back) | 36 | 14 | 6 | 1 | 2.5 | D320: each ring pierces everything out and back (hits a group twice), no falloff; soft hits for that (about 0.7× the median weapon on one target, both passes counted). *"What goes around comes around. Then goes around again."* |
+| **Cestus** (D388) | A / - | 12 / 0 | fast (**Fast**) | 150/65/150 ×0.74 thrust thrust(32, 72); 150/65/150 ×0.74 thrust thrust(32, 72); 160/70/160 ×0.78 slash arc(80°, 70); 150/65/150 ×0.74 thrust thrust(32, 72); 230/85/250 ×1.16 overhead slam(r 48, 58 ahead) | 31 | 10 | 16 | 1.4 | 3 | A studded fighting gauntlet worn over the fist. *"A glove with opinions, all of them made of iron."* |
+| **Rune Kris** (D388) | - / B, Brain B | 0 / 10, Brain 12 | fast (**Fast**) | 140/62/140 ×0.62 slash arc(80°, 76) ×3 (slash, backslash, slash); 150/70/170 ×0.78 thrust thrust(28, 112); 170/82/190 ×0.96 spin spin(82) | 29 | 9 | 8 | 1 | 2 | Hybrid: deals Magic. A wavy rune-marked dagger. *"The blade wiggles so the curse has somewhere to sit."* |
+| **Hex Hammer** (D388) | B / -, Brain B | 12 / 0, Brain 12 | medium (**Medium**) | 320/110/300 ×1 slash arc(100°, 96); 320/110/300 ×1 backslash arc(100°, 96); 400/130/400 ×1.32 overhead slam(r 56, 86 ahead) | 42 | 15 | 38 | 2.6 | 7 | Hybrid: deals Void; hyper armor (last). *"Hits twice: once here, and once somewhere you cannot see."* |
+| **Harvest Sickle** (D388) | - / B, Prayer B | 0 / 10, Prayer 12 | medium (**Medium**) | 270/100/250 ×0.9 slash arc(120°, 100); 270/100/250 ×0.9 backslash arc(120°, 100); 300/110/280 ×0.95 slash arc(120°, 100); 360/140/340 ×1.2 spin spin(100) | 37 | 12 | 20 | 2 | 4 | Hybrid: deals Holy. *"Cuts wheat, weeds and anything that rises again."* |
 
 **Either-hand weapons.** Staffs and talismans (D117) and the crossbow (D291) go in any of the four weapon slots. A
 crossbow in the off hand shoots on the block button with its own power and stamina; with it there is no block or
 parry. A staff or talisman in the weapon hand swings a modest bash (staff: base 7, Bonk D / Brain E; talisman: base
 5.6, Bonk E / Prayer D, 25% Holy) and casts on the weapon-skill keys (D201).
 
-**Legendary names** (one picked per Legendary weapon): Greathammer: "Landlord's Gavel", "Noise Complaint", "The Big One"; Greataxe: "The Severance Package", "Lumberjack Retirement Plan", "Firewood"; Colossal Sword: "Overcompensation", "The Door", "Small Talk"; Crossbow: "Second Opinion", "The Notary", "Quarrelsome"; Club: "Stick of Destiny", "Problem Solver", "Original Recipe"; Twin Daggers: "Paper Cut", "The Fine Print", "Mr. and Mrs. Stabby"; Rapier: "Strongly Worded Letter", "En Garde", "The Point"; Katana: "Moonlight Shift", "Overtime", "Folded Laundry"; Bow: "Long Distance Relationship", "Return to Sender", "Cupid Retired"; Whip: "Middle Management", "The Long Reach", "Snap Decision"; Longsword: "Employee of the Month", "Plot Armor", "Exactly As Long As It Needs To Be"; Spear: "Social Distancing", "The Ten-Foot Rule", "Personal Space"; Battleaxe: "Hostile Takeover", "Chopping Block", "Axe Me Anything"; Mace: "Sunday Best", "Thoughts and Prayers", "The Sermon"; Halberd: "Committee Decision", "Swiss Army Pole", "The Long Arm of the Law"; Twin Axes: "Double Shift", "Twice Shy", "The Twins"; Hollow Maul: "Dark Matter of Fact", "Existential Dread", "The Void Warranty"; Spellblade: "Spell Check", "Sharp Mind", "Wizard of Odds"; Censer Flail: "Holy Smokes", "Fire and Brimstone Inc.", "Smoke Alarm"; Dawn Glaive: "Morning Person", "Sunday Service", "Rise and Shine"; Chakrams: "Return Policy", "Full Circle", "The Halo Effect".
+**Legendary weapons** (D388: four a class, each with its own design and its own legendary power, below in brackets; one name is picked per Legendary weapon, and it brings its power): Greathammer: "Landlord's Gavel" (Sunder), "Noise Complaint" (Shatterpoint), "The Big One" (Giant Slayer), "Load-Bearing Wall" (Last Stand); Greataxe: "The Severance Package" (Executioner), "Lumberjack Retirement Plan" (Second Wind), "Firewood" (Kindling), "Timber!" (Shatterpoint); Colossal Sword: "Overcompensation" (Giant Slayer), "The Door" (Sunder), "Small Talk" (Momentum), "Big Energy" (Last Stand); Crossbow: "Second Opinion" (Executioner), "The Notary" (Mimic), "Quarrelsome" (Quickdraw), "Bolt From the Blue" (Static Charge); Club: "Stick of Destiny" (Thunderclap), "Problem Solver" (Shatterpoint), "Original Recipe" (Bounty Hunter), "Club Membership" (Featherweight); Twin Daggers: "Paper Cut" (Bloodletter), "The Fine Print" (Mimic), "Mr. and Mrs. Stabby" (Riposte Master), "Backstabbers" (Executioner); Rapier: "Strongly Worded Letter" (Riposte Master), "En Garde" (Timekeeper), "The Point" (Quickdraw), "Touché" (Bloodletter); Katana: "Moonlight Shift" (Frostbite), "Overtime" (Momentum), "Folded Laundry" (Featherweight), "Paper Thin" (Executioner); Bow: "Long Distance Relationship" (Giant Slayer), "Return to Sender" (Spellsword), "Cupid Retired" (Hungering), "Arrow Minded" (Quickdraw); Whip: "Middle Management" (Momentum), "The Long Reach" (Static Charge), "Snap Decision" (Quickdraw), "Crack of Dawn" (Kindling); Longsword: "Employee of the Month" (Bounty Hunter), "Plot Armor" (Last Stand), "Exactly As Long As It Needs To Be" (Second Wind), "Main Character" (Momentum); Spear: "Social Distancing" (Timekeeper), "The Ten-Foot Rule" (Thunderclap), "Personal Space" (Frostbite), "Point of No Return" (Executioner); Battleaxe: "Hostile Takeover" (Bounty Hunter), "Chopping Block" (Executioner), "Axe Me Anything" (Second Wind), "Splitting Hairs" (Bloodletter); Mace: "Sunday Best" (Shatterpoint), "Thoughts and Prayers" (Hungering), "The Sermon" (Sunder), "Blunt Truth" (Giant Slayer); Halberd: "Committee Decision" (Sunder), "Swiss Army Pole" (Mimic), "The Long Arm of the Law" (Executioner), "Red Tape" (Frostbite); Twin Axes: "Double Shift" (Second Wind), "Twice Shy" (Timekeeper), "The Twins" (Hungering), "Split Decision" (Quickdraw); Hollow Maul: "Dark Matter of Fact" (Shatterpoint), "Existential Dread" (Last Stand), "The Void Warranty" (Sunder), "Nothing Personal" (Giant Slayer); Spellblade: "Spell Check" (Spellsword), "Sharp Mind" (Static Charge), "Wizard of Odds" (Thunderclap), "Hex Appeal" (Momentum); Censer Flail: "Holy Smokes" (Kindling), "Fire and Brimstone Inc." (Giant Slayer), "Smoke Alarm" (Timekeeper), "Hot Take" (Hungering); Dawn Glaive: "Morning Person" (Second Wind), "Sunday Service" (Spellsword), "Rise and Shine" (Last Stand), "First Light" (Kindling); Chakrams: "Return Policy" (Bounty Hunter), "Full Circle" (Momentum), "The Halo Effect" (Thunderclap), "Boomerang Theory" (Featherweight); Cestus: "Knuckle Sandwich" (Shatterpoint), "Hands Down" (Riposte Master), "Fist Impressions" (Momentum), "The Handshake" (Second Wind); Rune Kris: "Curse Word" (Static Charge), "Hex Key" (Spellsword), "Stab in the Dark" (Bloodletter), "Mind the Gap" (Timekeeper); Hex Hammer: "Mind Over Matter" (Sunder), "Thinking Cap" (Spellsword), "Headache" (Shatterpoint), "Brainstorm" (Thunderclap); Harvest Sickle: "Grim Reaping" (Executioner), "Harvest Moon" (Hungering), "Crop Circle" (Featherweight), "Sickle Day" (Bounty Hunter).
 
 ### 2.1 Weapon skills (Q / E / R)
 
@@ -139,6 +147,10 @@ Multipliers are × the weapon's hit. Cooldown in seconds, then stamina.
 | Censer Flail | **Incense** cd 14, 20: Swing the censer: a 130 px cloud of burning incense follows you for 4 s, ×0.35 Fire and Burn 15 every 0.5 s. | **Brimstone** cd 11, 22: Lob a coal from the censer: it bursts circle(110) ×1.9 Fire, Burn 45. | **Sanctified Flame** cd 22, 15: Breathe in the holy smoke (not recommended): heal 15% over 3 s and +15% damage for 6 s. |
 | Chakrams | **Orbit** cd 12, 22: 3 s of rings circling you: 360° r95 ×0.32 every 0.3 s, moving at full speed. | **Ring Storm** cd 10, 20: Six rings in a wide fan ×0.5, through everything, out and back. | **Grand Ring** cd 14, 26: One huge ring ×1.3 through everything, out and back. |
 | Dawn Glaive | **Sunrise** cd 9, 22: A rising half-moon arc(180°,160) ×1.8 that knocks foes back. | **Halo Throw** cd 10, 18: Throw the blade like a halo: ×1.2 Holy out and ×1.2 back. | **Judgement Ray** cd 18, 28: Point at the problem: after 0.5 s a ray of dawn line(88,700) ×2.4 Holy. |
+| Cestus (D388) | **Jab Rush** cd 8, 18: Step in and throw four jabs thrust(34,80) ×0.6. | **Uppercut** cd 11, 20: A rising blow circle(70) ×1.9, guaranteed stagger (bosses take 2× poise). | **Iron Skin** cd 20, 12: 5 s: hyper armor, −25% damage taken, +15% attack speed. |
+| Rune Kris (D388) | **Hex Cut** cd 7, 14: A hexed thrust(30,150) ×1.5 Magic, Shock 35. | **Rune Shards** cd 10, 16: Five rune shards in a 40° fan, ×0.75 Magic each. | **Mirror Step** cd 16, 20: Blink 200 px, cut circle(85) ×1.4 Magic, then +20% attack speed for 4 s. |
+| Hex Hammer (D388) | **Null Slam** cd 9, 22: circle(100) ×1.9 Void in front of you. | **Gravity Hook** cd 12, 18: Drag enemies within 220 px in, then circle(95) ×1.3 Void. | **Curse of Weight** cd 20, 16: Enemies within 160 px take +25% damage and move 30% slower for 6 s. |
+| Harvest Sickle (D388) | **Reap** cd 8, 20: A wide reaping arc(200°,140) ×1.6 Holy; each kill heals 4%. | **Harvest Hook** cd 11, 16: Hook thrust(40,210) ×1.2, pulls, Bleed 30. | **Bountiful Harvest** cd 22, 18: 10 s: +25% of your hit as Holy, and heal 8% over 4 s. |
 
 ## 3. Shields
 
@@ -230,7 +242,8 @@ Rings have no ilvl scaling except the bands' stat amount. A ring's floor is the 
 ## 7. Legendary powers
 
 A Legendary item carries one power from its row (Legendary rings are the named rings with a Legendary floor; they
-carry no extra power).
+carry no extra power). A Legendary **weapon** carries the power of its name (D388, the list in §2); other Legendaries
+roll one.
 
 | Power | On | Effect |
 |---|---|---|
@@ -250,6 +263,17 @@ carry no extra power).
 | **Spellsword** | weapon | Spells cast within 2 s after a light attack cost no stamina. |
 | **Timekeeper** | weapon | Dodge recharge −1 s (floor 3 s). |
 | **Mimic's Tooth** | weapon | Chests have a 0% mimic chance; mimics you attack first take ×2. |
+| **Executioner** (D388) | weapon | +40% damage to enemies below 25% HP. |
+| **Giant Slayer** (D388) | weapon | +25% damage to bosses and Elites. |
+| **Last Stand** (D388) | weapon | Below 30% of your HP: +30% damage. |
+| **Featherweight** (D388) | weapon | Swings cost 25% less stamina. |
+| **Quickdraw** (D388) | weapon | +15% attack speed. |
+| **Shatterpoint** (D388) | weapon | +50% poise damage. |
+| **Bloodletter** (D388) | weapon | Every hit builds Bleed 15. |
+| **Kindling** (D388) | weapon | Every hit builds Burn 12. |
+| **Frostbite** (D388) | weapon | Every hit builds Chill 12. |
+| **Static Charge** (D388) | weapon | Every hit builds Shock 12. |
+| **Bounty Hunter** (D388) | weapon | +25% Shards from kills. |
 | **Moss Mantle** | armor, legs | Statuses build 40% slower. |
 | **Hollow Guard** | armor, legs | Below 30% HP: −30% damage taken. |
 | **Coward's Comfort** | armor, legs | Dodging grants 1 s of +40% move speed. |
@@ -441,6 +465,10 @@ that class is out. Every perk is 30% bigger than it was before 1.4.0 (D371); the
 | Crossbows | Damage 1.3% | Reload speed 0.78% |
 | Staffs | Spell cooldowns 1.04% | Spell power 1.04% |
 | Talismans | Spell cooldowns 1.04% | Spell duration 1.04% (D371, was cast speed) |
+| Cestuses (D388) | Attack speed 0.78% | Poise damage 1.56% |
+| Rune Krises (D388) | Attack speed 0.78% | Cast speed 0.78% |
+| Hex Hammers (D388) | Damage 1.17% | Poise damage 1.56% |
+| Harvest Sickles (D388) | Damage 1.04% | Reach 1.04% |
 | Small Shields | Parry window 0.0039 s | Block stamina 0.78% |
 | Medium Shields | Block stamina 1.04% | Elemental block 0.39% |
 | Great Shields | Block stamina 1.56% | Elemental block 0.52% |

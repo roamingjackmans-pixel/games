@@ -8,7 +8,7 @@ import { CASTING_TOOLS } from '../../data/castingTools';
 import { ARMOR_SETS } from '../../data/armor';
 import { RINGS } from '../../data/rings';
 import { AFFIXES, type AffixDef, type AffixSlotGroup } from '../../data/affixes';
-import { LEGENDARY_NAMES, powersFor, type PowerSlot } from '../../data/legendaries';
+import { LEGENDARY_NAMES, LEGENDARY_WEAPON_POWERS, powersFor, type PowerSlot } from '../../data/legendaries';
 import { LEGENDARY_PER_CYCLE, RARITY_ORDER, RARITY_WEIGHTS, SLOT_WEIGHTS, maxRolledRarity, type LootSource } from '../../data/lootTables';
 import { GEM_FAMILIES, GEMS, familiesOfKind, gemEffect, gemQualityRolls, rollGemQuality, type GemKind } from '../../data/gems';
 import { baseInfo } from './bases';
@@ -240,6 +240,9 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
   }
   if (item.kind === 'weapon') rollVariant(item, o.favor);
   item.name = itemName(rng, item);
+  // D388: a legendary weapon's name carries its own power
+  const named = item.rarity === 'legendary' ? LEGENDARY_WEAPON_POWERS[item.name] : undefined;
+  if (named) item.legendaryPower = named;
   rollSetPerk(item);
   return item;
 }
