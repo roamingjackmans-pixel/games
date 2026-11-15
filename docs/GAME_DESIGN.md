@@ -345,8 +345,9 @@ locks the focused item or gem. A button a menu used is swallowed until released,
 **Aim:** the mouse aims at the cursor. On a pad the character faces the right stick; with it neutral, melee goes to the
 nearest enemy within 160 px of the facing cone. Aim assist (strength in Settings) snaps projectiles within ±14° of an
 enemy. On a pad, a small silver **aim arrow** at the local player's feet shows which way they face (D343): two winged
-curves wrap the front half of the eye-coloured dot and meet at an arrow, longer with a bow, crossbow, chakram, staff
-or talisman in either hand. The wings are see-through at their back ends and solid toward the arrow (D344).
+curves hug the front half of the silver ring at the feet (D381: the arrow grows out of the ring) and meet at an arrow, longer with a bow, crossbow, chakram, staff
+or talisman in either hand. The wings are see-through at their back ends and solid toward the arrow (D344). The ring
+and the arrow are drawn under the bodies, so the character stands on them (D381).
 
 **Per-character pad layout** (D266): each character saves its own gamepad buttons, menu confirm / back and aim
 assist; keyboard keys, button-picture style, hold/toggle block and touch settings stay global. On the title screen
@@ -1054,7 +1055,8 @@ face marks and per-limb features, with Randomize and a preview you turn with the
   or running, a small drawn picture of it (flame, snowflake, bolt, blood drop, bubbles) in a dark box at its left and
   the bar filled in its colour; once it goes off the bar runs down over the status's length, flashing (a meter building
   again under it shows as a thin white line). Near the top of the room they hang under the feet. Also the circle at every
-  player's feet (D262, D377: a 17 px ring in their eye colour round a small eye-coloured dot); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
+  player's feet (D262, D377, D381: a 17 px silver ring drawn under the bodies, with a small eye-coloured dot at its centre drawn over
+  them); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
   stones round a stuck player (D252); gold sparkles on a Thermos drink (D271).
 - **Menus** are HTML overlays over the canvas: Title · Load Character · Character creation · Co-op play · Lobby · Friends (§12.1) ·
   Pause · Inventory (Items, Spells, Proficiency tabs; stats, paper doll, bag, gems in your gear, set perks worn) ·

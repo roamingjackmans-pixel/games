@@ -18,7 +18,7 @@ import { clearTelegraphEchoes, drawTelegraphEchoes, hasTelegraphEchoes } from '.
 import { clearSkillFx, drawSkillFxGround, drawSkillFxTop, spawnSkillFx } from './skillFx';
 import { drawThermosSparkle } from './thermosFx';
 import { ROOM_Y0 } from '../game/room';
-import { debugHitboxes, drawAimArrow, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerDot, drawPlayerEntity, drawProjectile } from './entities';
+import { debugHitboxes, drawAimArrow, drawEnemyEntity, drawHazardEntity, drawPickup, drawPlayerDot, drawPlayerRing, drawPlayerEntity, drawProjectile } from './entities';
 import type { Palette } from '../game/types';
 import type { Entity, GameEvent, World } from '../game/world';
 
@@ -296,6 +296,9 @@ export class WorldView {
     const layer = (e: Entity): number => (e.type === 'enemy' && e.en?.isBoss ? 0 : 1);
     list.sort((a, b) => layer(a) - layer(b) || a.y - b.y);
     const iconScale = st.video.telegraphIconSize * (st.video.highContrastTelegraphs ? 1.5 : 1);
+    // D381: each player's silver ring at the feet, and the local player's aim arrow joined to it, under the bodies
+    for (const e of list) if (e.type === 'player') drawPlayerRing(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha);
+    if (this.aimArrow) for (const e of list) if (e.type === 'player' && e.pl!.playerId === this.localPlayerId) drawAimArrow(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha);
     for (const e of list) {
       const x = e.px + (e.x - e.px) * alpha;
       const y = e.py + (e.y - e.py) * alpha;
@@ -337,8 +340,6 @@ export class WorldView {
     for (const e of list) if (e.type === 'player') drawThermosSparkle(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha, now);
     // each player's eye-coloured dot over everything, so it shows through any attack marker (D262)
     for (const e of list) if (e.type === 'player') drawPlayerDot(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha);
-    // on a controller, which way the local player is looking (D343)
-    if (this.aimArrow) for (const e of list) if (e.type === 'player' && e.pl!.playerId === this.localPlayerId) drawAimArrow(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha);
     drawAmbience(ctx, realDt); // zone particles + vignette (render/ambience.ts)
     if (overlays.hitbox) debugHitboxes(ctx, w);
     if (overlays.ai) {

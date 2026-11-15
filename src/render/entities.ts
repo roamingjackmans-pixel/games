@@ -352,18 +352,7 @@ export function drawPlayerDot(ctx: CanvasRenderingContext2D, e: Entity, x: numbe
   const eyes = pl.char.appearance?.eyes || '#5a3a22';
   ctx.save();
   ctx.globalAlpha = e.anim.alpha;
-  // D377: the circle area attacks test, as a ring in the eye colour (a dark edge outside, a faint fill inside)
-  ctx.fillStyle = withAlpha(eyes, 0.12);
-  ctx.beginPath();
-  ctx.arc(x, y, PLAYER_DOT_R, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = withAlpha(OUTLINE, 0.6);
-  ctx.stroke();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = withAlpha(eyes === '#5a3a22' ? '#c8a07a' : eyes, 0.9);
-  ctx.stroke();
-  // the eye-coloured dot at its centre
+  // the eye-coloured dot at the centre of the ring (the ring itself is drawn under the bodies, drawPlayerRing)
   ctx.fillStyle = OUTLINE;
   ctx.beginPath();
   ctx.arc(x, y, PLAYER_DOT_MARK_R, 0, Math.PI * 2);
@@ -376,6 +365,32 @@ export function drawPlayerDot(ctx: CanvasRenderingContext2D, e: Entity, x: numbe
   ctx.beginPath();
   ctx.arc(x, y, PLAYER_DOT_MARK_R - 2.2, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
+}
+
+/** D381: the ring's silver, shared with the aim arrow that grows out of it. */
+export const RING_SILVER = '#dfe4ec';
+
+/**
+ * D377, D381: the circle area attacks test (PLAYER_DOT_R round the feet), a silver ring drawn under the bodies so it
+ * reads as a mark on the ground, not over the character; the aim arrow joins it (drawAimArrow).
+ */
+export function drawPlayerRing(ctx: CanvasRenderingContext2D, e: Entity, x: number, cy: number): void {
+  const pl = e.pl;
+  if (!pl || pl.deadUntilRest || pl.downed || e.hp?.dead) return;
+  const y = cy + PLAYER_DOT_DY;
+  ctx.save();
+  ctx.globalAlpha = e.anim.alpha;
+  ctx.fillStyle = withAlpha(RING_SILVER, 0.08);
+  ctx.beginPath();
+  ctx.arc(x, y, PLAYER_DOT_R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = withAlpha(OUTLINE, 0.55);
+  ctx.stroke();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = withAlpha(RING_SILVER, 0.85);
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -402,8 +417,9 @@ export function drawAimArrow(ctx: CanvasRenderingContext2D, e: Entity, x: number
   const pl = e.pl;
   if (!pl || pl.deadUntilRest || pl.downed || e.hp?.dead) return;
   const len = aimsFar(e) ? AIM_ARROW_LEN.long : AIM_ARROW_LEN.short;
-  const R = PLAYER_DOT_MARK_R + 1.6;
-  const SILVER = '#dfe4ec';
+  // D381: the wings hug the silver ring at the feet, so the arrow grows out of it
+  const R = PLAYER_DOT_R / AIM_ARROW_SCALE;
+  const SILVER = RING_SILVER;
   const SHADE = '#9aa4b2';
   ctx.save();
   ctx.globalAlpha = e.anim.alpha * 0.95;
