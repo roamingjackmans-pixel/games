@@ -364,6 +364,10 @@ export interface ProjC {
   hit: Set<number>;
   /** shared by every arrow of one bow or crossbow volley: each target takes one arrow's hit per shot (D264) */
   volleyHit?: Set<number>;
+  /** a ball of lightning (D375): after each hit it flies on to the next body, `left` more times, each hit ×(1 − falloff) */
+  chain?: { left: number; r: number; falloff: number };
+  /** the lifesteal of the hand that made it (D369: an off-hand crossbow's, an off-hand staff's spell) */
+  lifestealPct?: number;
   poiseDmg: number;
   onImpact: EffectDef | null;
   parryable: boolean;
@@ -482,6 +486,8 @@ export interface HazardC {
   follow: number;
   pull: number;
   armedAt: number;
+  /** friendly fire (D375): its ticks and slow reach the owner's co-op allies inside (Void Rift) */
+  hurtsAllies?: boolean;
   /** a player's spell zone: its school, so its ticks heal by that hand's lifesteal (D374) */
   school?: 'brain' | 'prayer';
 }

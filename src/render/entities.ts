@@ -951,6 +951,29 @@ export function drawProjectile(ctx: CanvasRenderingContext2D, e: Entity, x: numb
       ctx.stroke();
       glow(ctx, 0, 0, e.radius * 1.6, '#c8c0ff', 0.6);
       break;
+    case 'p_lightning': {
+      // Chain Lightning's ball (D375): a crackling yellow orb, a white-hot core and arcs that jump round it
+      const R = Math.max(8, e.radius);
+      glow(ctx, 0, 0, R * 3.4, '#ffe14a', 0.95);
+      blob(ctx, 0, 0, R * 0.95, R * 0.95, { fill: '#fff6b0', outlineW: 0 });
+      blob(ctx, 0, 0, R * 0.55, R * 0.55, { fill: '#ffffff', outlineW: 0 });
+      const step = Math.floor(now / 0.06);
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 3; i++) {
+        const a0 = ((step * 2.399 + i * 2.1) % (Math.PI * 2)) + e.id;
+        ctx.strokeStyle = i === 0 ? '#ffffff' : '#ffe14a';
+        ctx.lineWidth = i === 0 ? 1.6 : 2;
+        ctx.beginPath();
+        for (let k = 0; k <= 3; k++) {
+          const a = a0 + k * 0.45;
+          const rr = R * (0.9 + (k % 2 ? 0.55 : 0.15));
+          if (k) ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+          else ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+        }
+        ctx.stroke();
+      }
+      break;
+    }
     case 'p_magic':
       glow(ctx, 0, 0, e.radius * 3.2, c, 0.9);
       blob(ctx, 0, 0, e.radius * 0.8, e.radius * 0.8, { fill: '#ffffff', outlineW: 0 });

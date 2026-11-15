@@ -126,6 +126,11 @@ function damageSpec(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effe
   return spec;
 }
 
+/** A damage effect's hit as it would land from this source (D375: a friendly-fire zone tick on an ally). */
+export function effectSpec(w: World, e: EffectDef, ctx: EffectCtx): DamageSpec | null {
+  return e.op === 'damage' ? damageSpec(w, e, ctx, w.get(ctx.sourceId)) : null;
+}
+
 /** How much bigger a player's spell projectiles are than their listed radius (D180). */
 export const SPELL_PROJECTILE_SCALE = 4; // D204: twice D180's ×2
 
@@ -506,6 +511,7 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         spec: null,
         pull: e.hazard === 'gravityWell' ? 220 : 0,
         ...(spell && ctx.school ? { school: ctx.school } : {}),
+        ...(e.hurtsAllies ? { hurtsAllies: true } : {}),
       });
       void hz;
       break;
@@ -554,6 +560,16 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
       }
       break;
     case 'chain': {
+      // D375: a player's Chain Lightning is a ball that flies from the caster where they aim and jumps on from each hit
+      if (e.ball && ctx.team === 0 && src?.pl && effectHooks.spawnPlayerProjectile && e.hit.op === 'damage') {
+        const spec = damageSpec(w, e.hit, ctx, src);
+        const a = Math.atan2(ctx.aimY - src.y, ctx.aimX - src.x);
+        const ball = effectHooks.spawnPlayerProjectile(w, src, Number.isFinite(a) ? a : src.facing, e.ball.speed, e.ball.r, spec, 0, 'p_lightning', { range: e.ball.range, isSpell: true, color: '#ffe14a' });
+        ball.pr!.chain = { left: e.jumps, r: e.r, falloff: e.falloff };
+        ball.pr!.sourceTag = ctx.tag;
+        w.sfx('shock', ctx.x, 0.6);
+        break;
+      }
       const hit = new Set<number>();
       // a player's chain starts at the cursor (the bolt is near-instant at 900 px/s)
       let fx = ctx.team === 0 ? ctx.aimX : ctx.x;

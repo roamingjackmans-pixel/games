@@ -3,6 +3,12 @@
 import type { DamageType, EffectDef, PatternDef, SpellDef } from '../game/types';
 
 const dmg = (pattern: PatternDef, base: number, type: DamageType, extra: Partial<Extract<EffectDef, { op: 'damage' }>> = {}): EffectDef => ({ op: 'damage', pattern, base, type, ...extra });
+/**
+ * Chain Lightning's ball (D375), px/s: as fast as it can be while a co-op player it jumps to can still step out of its way.
+ * A jump reaches at most 180 px; getting clear sideways takes (ball 12 + player 14 px) / 260 px/s walking = 0.1 s, so a
+ * 0.3 s reaction leaves 0.4 s for the jump: 180 / 0.43 ≈ 420 px/s (slower than the other spell shots, 520–700).
+ */
+export const CHAIN_BALL_SPEED = 420;
 const proj = (speed: number, r: number, extra: Partial<Extract<PatternDef, { kind: 'projectile' }>> = {}): PatternDef => ({ kind: 'projectile', speed, r, drawId: 'p_magic', ...extra });
 
 const B = (id: string, name: string, req: number, castS: number, cooldownS: number, stamina: number, effect: EffectDef[], description: string, element?: DamageType): SpellDef => ({
@@ -37,7 +43,7 @@ const BRAIN: SpellDef[] = [
   B('frost_lance', 'Frost Lance', 12, 0.5, 5, 16, [dmg({ kind: 'line', w: 30, l: 420, anchor: 'self', vfx: 'ice_lance' }, 40, 'magic', { status: { id: 'chill', buildup: 50 } })], 'line(30,420) 40 Magic, Chill 50.', 'magic'),
   B('fireball', 'Fireball', 14, 0.6, 6, 18, [dmg(proj(520, 10, { onImpact: { kind: 'circle', r: 100, anchor: 'point', persist: { hazard: 'firePuddle', durationS: 2 }, vfx: 'fire_burst' } }), 48, 'fire', { status: { id: 'burn', buildup: 50 } })], 'A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s.', 'fire'),
   B('blink', 'Blink', 12, 0.1, 10, 10, [{ op: 'teleport', distance: 240, toward: 'aim' }], 'Teleport 240 px toward the cursor. Not i-frames: it escapes Piercing areas if you land outside them.'),
-  B('chain_lightning', 'Chain Lightning', 16, 0.5, 7, 18, [{ op: 'chain', jumps: 4, r: 180, falloff: 0.15, hit: dmg({ kind: 'circle', r: 10, anchor: 'target', vfx: 'lightning' }, 36, 'magic', { status: { id: 'shock', buildup: 40 } }) }], '36 Magic lightning that chains to 4 more enemies within 180 px (−15% per jump), Shock 40.', 'magic'),
+  B('chain_lightning', 'Chain Lightning', 16, 0.5, 7, 18, [{ op: 'chain', jumps: 4, r: 180, falloff: 0.15, ball: { speed: CHAIN_BALL_SPEED, r: 12, range: 650 }, hit: dmg({ kind: 'circle', r: 10, anchor: 'target', vfx: 'lightning' }, 36, 'magic', { status: { id: 'shock', buildup: 40 } }) }], 'A ball of lightning flies where you aim: 36 Magic and Shock 40 on the first body it meets, then it flies on to 4 more within 180 px, enemies before players (−15% per jump).', 'magic'),
   B(
     'void_rift',
     'Void Rift',
@@ -45,8 +51,8 @@ const BRAIN: SpellDef[] = [
     0.7,
     9,
     22,
-    [{ op: 'zone', pattern: { kind: 'circle', r: 120, anchor: 'aim' }, durationS: 4, tickS: 0.5, hazard: 'voidRift', slowPct: 0.2, enemiesOnly: true, tick: [dmg({ kind: 'circle', r: 10, anchor: 'target', vfx: 'tick' }, 12, 'void')] }],
-    'circle(120) at the cursor for 4 s: 12 Void per 0.5 s, enemies inside −20% speed.',
+    [{ op: 'zone', pattern: { kind: 'circle', r: 120, anchor: 'aim' }, durationS: 4, tickS: 0.5, hazard: 'voidRift', slowPct: 0.2, enemiesOnly: true, hurtsAllies: true, tick: [dmg({ kind: 'circle', r: 10, anchor: 'target', vfx: 'tick' }, 12, 'void')] }],
+    'circle(120) at the cursor for 4 s: 12 Void per 0.5 s and −20% speed to everyone inside but you, co-op allies too (friendly fire).',
     'void',
   ),
   B(

@@ -5,6 +5,7 @@
 // which applies it to the body it owns. This module holds the shared parts: the body packet, that change capture,
 // applying it, and the guest's per-frame step of its own body.
 import { checkDeath, interrupt } from '../combat/damage';
+import { hazardSlowOn } from '../systems/hazards';
 import { updatePlayer } from '../player/player';
 import { updateMovement } from '../systems/movement';
 import { updateStatuses } from '../systems/statuses';
@@ -432,6 +433,8 @@ export function applyDelta(w: World, e: Entity, d: BodyDelta, off: number): void
 export function stepBody(w: World, e: Entity, dt: number): void {
   e.px = e.x;
   e.py = e.y;
+  // slowing fields it stands in, from the hazards this screen shows (D375: the host's hazards never run here)
+  if (e.pl) e.pl.timeSlow = Math.min(e.pl.timeSlow, hazardSlowOn(w, e));
   updatePlayer(w, e, dt);
   updateMovement(w, dt, e);
   updateStatuses(w, dt, e);

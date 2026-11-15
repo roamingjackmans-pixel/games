@@ -29,8 +29,8 @@ The current catalogue of the 28 spells and 10 classes, generated from `src/data/
 | **Frost Lance** | 12 | 0.5 s | 5 s | 16 | magic | line(30,420) 40 Magic, Chill 50. |
 | **Fireball** | 14 | 0.6 s | 6 s | 18 | fire | A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s. |
 | **Blink** | 12 | 0.1 s | 10 s | 10 | — | Teleport 240 px toward the cursor. Not i-frames: it escapes Piercing areas if you land outside them. |
-| **Chain Lightning** | 16 | 0.5 s | 7 s | 18 | magic | 36 Magic lightning that chains to 4 more enemies within 180 px (−15% per jump), Shock 40. |
-| **Void Rift** | 15 | 0.7 s | 9 s | 22 | void | circle(120) at the cursor for 4 s: 12 Void per 0.5 s, enemies inside −20% speed. |
+| **Chain Lightning** | 16 | 0.5 s | 7 s | 18 | magic | A ball of lightning flies from you where you aim at 420 px/s, no homing (D375): 36 Magic and Shock 40 on the first body it meets, then it flies on to 4 more within 180 px, enemies before players (−15% per jump). Slow enough that an ally it turns toward can step out of its way. |
+| **Void Rift** | 15 | 0.7 s | 9 s | 22 | void | circle(120) at the cursor for 4 s: 12 Void per 0.5 s and −20% speed to everyone inside but you: enemies and co-op allies (friendly fire, D375). |
 | **Gravity Well** | 20 | 0.6 s | 12 s | 22 | void | circle(160) for 3 s pulling non-bosses to its centre, ice mirrors and flyers too (bosses −20% speed). It deals no damage. |
 | **Arcane Beam** | 22 | 0.1 s | 11 s | 30 | void | Channel 2 s: a line(52,700) beam that follows the cursor, 18 per 0.2 s; walk at 40%. |
 | **Mirror Images** | 24 | 0.5 s | 18 s | 20 | — | Two decoys for 6 s that pull enemies within 250 px. |

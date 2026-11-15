@@ -278,11 +278,15 @@ export type EffectDef = EffectBase &
         burst?: EffectDef;
         /** effects run on allies standing inside each tick (tick runs on foes) */
         allyTick?: EffectDef[];
+        /** friendly fire (D375): its ticks hurt and its slow slows the caster's co-op allies inside too (Void Rift) */
+        hurtsAllies?: boolean;
       }
     | { op: 'wall'; pattern: PatternDef; durationS: number; blocks: ('projectiles' | 'enemies')[] }
     | { op: 'stance'; durationS: number; onHitTaken: 'parry' | 'ignore'; riposteMult?: number }
     | { op: 'channel'; durationS: number; tickS: number; tick: EffectDef[]; moveSpeedPct: number; hyperArmor?: boolean; followAim?: boolean }
-    | { op: 'chain'; jumps: number; r: number; falloff: number; hit: EffectDef }
+    /** `ball` (D375): a player's chain flies as a ball of lightning from the caster toward the aim (no homing) and, on each
+     *  hit, on to the next body within `r` (enemies first, then other players), at `speed` px/s */
+    | { op: 'chain'; jumps: number; r: number; falloff: number; hit: EffectDef; ball?: { speed: number; r: number; range: number } }
     | { op: 'modifyNext'; count: number; windowS: number; mods: { powerPct?: number; noCooldown?: boolean; noStamina?: boolean }; what?: 'spell' | 'flask' }
     | { op: 'link'; durationS: number; splitPct: number }
     | { op: 'cleanse'; what: ('statuses' | 'controls')[] }

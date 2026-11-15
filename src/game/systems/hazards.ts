@@ -1,7 +1,7 @@
 // Floor hazards (fire puddles, poison clouds, thorns, ice, oil, slag, roots, time bubbles…) and their ticks.
 import { shapeHit, type Shape } from '../combat/patterns';
-import { applyControl, applyStatusBuild, emptySpec, hitAlly, hitEnemy, hitPlayer, rawDamage } from '../combat/damage';
-import { runEffects } from '../effects/run';
+import { applyControl, applyStatusBuild, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer, rawDamage } from '../combat/damage';
+import { effectSpec, runEffects } from '../effects/run';
 import type { HazardId, Team } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
 
@@ -184,8 +184,11 @@ export function updateHazards(w: World, _dt: number): void {
         w.remove(h);
         break;
       }
+      // friendly fire (D375): a zone that hurts allies (Void Rift) slows the caster's co-op allies and ticks on them
+      const ffAlly = !!hz.hurtsAllies && hz.team === 0 && !!v.pl && v.id !== hz.ownerId && ffVictims(w, w.get(hz.ownerId)).includes(v);
       // slows apply continuously
       if (hz.slowPct > 0) {
+        if (ffAlly) v.pl!.timeSlow = Math.min(v.pl!.timeSlow, 1 - hz.slowPct);
         if (v.en && (hz.team === 0 || def.hitsTeam !== 'players')) {
           v.en.slowUntil = now + 0.15;
           v.en.slowMult = Math.min(v.en.slowMult < 1 && v.en.slowUntil > now ? v.en.slowMult : 1, 1 - hz.slowPct);
@@ -213,6 +216,15 @@ export function updateHazards(w: World, _dt: number): void {
       if (now < next) continue;
       hz.nextTick[v.id] = now + hz.tickS;
       const friendly = (v.pl && hz.team === 0) || (v.en && hz.team === 1);
+      if (ffAlly) {
+        const owner = w.get(hz.ownerId);
+        const ctx = { sourceId: hz.ownerId, team: 0 as const, x: v.x, y: v.y, aimX: v.x, aimY: v.y, targetId: v.id, powerMult: hz.powerMult, isSpell: true, isSkill: false, baseDamage: owner?.pl?.derived.weaponPower ?? 20, windupS: 0, tag: `hz:${hz.hazard}:ff` };
+        for (const eff of hz.effects) {
+          const spec = effectSpec(w, eff, ctx);
+          if (spec) hitAlly(w, owner, v, spec, h.x, h.y, undefined, { s: inside, tau: 0 });
+        }
+        continue;
+      }
       const list = friendly ? hz.allyEffects : hz.effects;
       if (list.length) {
         const owner = w.get(hz.ownerId);
@@ -250,4 +262,27 @@ export function updateHazards(w: World, _dt: number): void {
       }
     }
   }
+}
+
+/**
+ * How much the slowing fields a player stands in slow it (a speed multiplier, 1 = none), worked out from the hazards
+ * this world shows. A co-op guest runs its own body (D338) and never runs the hazards, so its screen asks this every
+ * step (D375): an enemy's slowing field, or a friendly-fire zone of another player's (Void Rift), slows it there too.
+ */
+export function hazardSlowOn(w: World, p: Entity): number {
+  let m = 1;
+  if (!p.pl || p.flying) return m;
+  for (const h of w.entities.values()) {
+    if (h.type !== 'hazard' || h.removed || !h.hz) continue;
+    const hz = h.hz;
+    if (!(hz.slowPct > 0)) continue;
+    const def = HAZARDS[hz.hazard];
+    if (!def || (def.armS && w.time < hz.armedAt + def.armS)) continue;
+    const foe = hz.team !== 0 && !hz.enemiesOnly && (def.hitsTeam === 'players' || def.hitsTeam === 'both');
+    const ff = !!hz.hurtsAllies && hz.team === 0 && hz.ownerId !== p.id && ffVictims(w, w.get(hz.ownerId)).includes(p);
+    if (!foe && !ff) continue;
+    if (!(hz.shapes ?? []).some((s) => shapeHit(s, 0, p.x, p.y, p.radius * 0.6, w.room))) continue;
+    m = Math.min(m, 1 - hz.slowPct);
+  }
+  return m;
 }

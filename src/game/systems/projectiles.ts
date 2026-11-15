@@ -32,7 +32,46 @@ function specOf(e: Entity): DamageSpec {
   s.sourceTag = pr.sourceTag;
   if (pr.attackId !== undefined) s.attackId = pr.attackId;
   if (pr.lifestealScale !== undefined) s.lifestealScale = pr.lifestealScale;
+  if (pr.lifestealPct !== undefined) s.lifestealPct = pr.lifestealPct;
   return s;
+}
+
+/**
+ * A ball of lightning that just hit something flies on (D375): to the nearest enemy within its jump range it has not hit
+ * yet, else the nearest other standing player (enemies come first); straight at where that body is now, no homing, so a
+ * player who steps aside lets it pass. Returns false when there is nothing left to jump to (the ball bursts).
+ */
+function chainOn(w: World, e: Entity, owner: Entity | null): boolean {
+  const pr = e.pr!;
+  const ch = pr.chain;
+  if (!ch || ch.left <= 0) return false;
+  const nearest = (list: Entity[]): Entity | null => {
+    let best: Entity | null = null;
+    let bd = ch.r;
+    for (const t of list) {
+      if (pr.hit.has(t.id) || t.removed || t.hp?.dead || t.en?.state === 'ceiling') continue;
+      const d = dist(t.x, t.y, e.x, e.y);
+      if (d < bd) {
+        bd = d;
+        best = t;
+      }
+    }
+    return best;
+  };
+  const next = nearest(w.livingEnemies()) ?? nearest(ffVictims(w, owner));
+  if (!next) return false;
+  ch.left--;
+  const k = 1 - ch.falloff;
+  pr.dmg = Object.fromEntries(Object.entries(pr.dmg).map(([t, v]) => [t, (v ?? 0) * k]));
+  const a = Math.atan2(next.y - e.y, next.x - e.x);
+  e.vx = Math.cos(a) * pr.speed;
+  e.vy = Math.sin(a) * pr.speed;
+  e.facing = a;
+  // long enough to reach it and a little past, then it fizzles
+  pr.until = w.time + (dist(next.x, next.y, e.x, e.y) + 80) / pr.speed;
+  w.fx('projHit', e.x, e.y, { color: pr.color });
+  w.sfx('shock', e.x, 0.5);
+  return true;
 }
 
 function impact(w: World, e: Entity): void {
@@ -229,6 +268,10 @@ export function updateProjectiles(w: World, dt: number): void {
         }
         pr.volleyHit?.add(en.id);
         hitEnemy(w, owner, en, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, { light: !pr.isSpell && !pr.isSkill });
+        if (pr.chain) {
+          if (!chainOn(w, e, owner)) impact(w, e);
+          break;
+        }
         if (pr.pierce > 0) {
           pr.pierce--;
           continue;
@@ -255,6 +298,10 @@ export function updateProjectiles(w: World, dt: number): void {
           }
           const res = hitAlly(w, owner, a, specOf(e), e.x - e.vx * 0.05, e.y - e.vy * 0.05, e, circleArea(e.x, e.y, e.radius));
           if (res === 'dodged' || res === 'none') continue;
+          if (pr.chain) {
+            if (!chainOn(w, e, owner)) impact(w, e);
+            break;
+          }
           pr.volleyHit?.add(a.id);
           if (pr.pierce > 0) {
             pr.pierce--;

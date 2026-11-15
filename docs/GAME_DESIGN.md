@@ -969,7 +969,9 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
 - **Safe out of combat** (D329): with nothing to fight in the room, a player takes no damage at all: no enemy hits,
   burn or bleed ticks, falls, harmful ground, or friendly fire.
 - **Friendly fire** (D115): players' damaging attacks hit standing allies at Settings → Co-op → Friendly fire
-  damage (0–200%, default 100%); the host's value rules the session. Your own attacks never hit you.
+  damage (0–200%, default 100%); the host's value rules the session. Your own attacks never hit you. Chain Lightning's
+  ball jumps to an ally only when no enemy is in reach, and an ally can step out of its path (D375); Void Rift ticks on
+  and slows allies standing in it (D375). A guest's own screen works out the slowing fields it stands in itself.
 - **What a guest takes home** (D195): Shards, loot, levels, spells, gems, Glowen and Thermos upgrades always. Zone
   progress counts in the guest's own world only for zones that world had already reached, and then chains.
 - Guests who disconnect are dropped after 10 s; the host sends save-relevant changes as they happen. No pause in

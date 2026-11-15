@@ -418,3 +418,160 @@ describe('picking up a spell says which (D374)', () => {
     expect(p.pl!.char.knownSpells).toContain('ward_of_steel');
   });
 });
+
+describe('Chain Lightning is a ball of lightning (D375)', () => {
+  const setup = () => {
+    const s = session('scholar');
+    const p = s.localPlayer!;
+    p.x = 300;
+    p.y = 368;
+    const ally = s.joinPlayer(newCharacter('knight', 'Ally', 'p2', new Rng('a'))).entity!;
+    const mk = (x: number, y: number) => {
+      const e = spawnEnemy(s.w, ENEMIES.shambler!, x, y, { tellS: 0 });
+      e.en!.state = 'dormant';
+      e.hp!.hp = e.hp!.max = 1e6;
+      return e;
+    };
+    return { s, p, ally, mk };
+  };
+  const cast = async (s: GameSession, p: { id: number; x: number; y: number }, ax: number, ay: number) => {
+    const { runEffects } = await import('../../src/game/effects/run');
+    const { SPELLS } = await import('../../src/data/spells');
+    runEffects(s.w, SPELLS.chain_lightning!.effect, { sourceId: p.id, team: 0, x: p.x, y: p.y, aimX: ax, aimY: ay, targetId: 0, powerMult: 1, isSpell: true, isSkill: false, baseDamage: 20, windupS: 0, tag: 'spell:0', school: 'brain', spellId: 'chain_lightning' });
+  };
+  const hold = (es: { x: number; y: number; vx: number; vy: number }[], at: [number, number][]) =>
+    es.forEach((e, i) => {
+      e.x = at[i]![0];
+      e.y = at[i]![1];
+      e.vx = e.vy = 0;
+    });
+
+  it('flies from the caster where it is aimed, at medium-slow speed, with no homing', async () => {
+    const { CHAIN_BALL_SPEED } = await import('../../src/data/spells');
+    const { s, p, ally } = setup();
+    ally.x = 100;
+    await cast(s, p, 700, 200);
+    const ball = [...s.w.entities.values()].find((e) => e.type === 'projectile' && e.pr?.drawId === 'p_lightning')!;
+    expect(ball).toBeTruthy();
+    expect(Math.hypot(ball.vx, ball.vy)).toBeCloseTo(CHAIN_BALL_SPEED, 0);
+    expect(CHAIN_BALL_SPEED).toBeLessThan(520);
+    expect(ball.pr!.homing).toBe(0);
+    expect(Math.atan2(ball.vy, ball.vx)).toBeCloseTo(Math.atan2(200 - 368, 700 - 300), 2);
+  });
+
+  it('jumps from its first hit to the next enemy before a nearer player, then on to the player', async () => {
+    const { stepWorld } = await import('../../src/game/sim');
+    const { s, p, ally, mk } = setup();
+    const a = mk(600, 368);
+    const b = mk(600, 368 + 170);
+    const spots: [number, number][] = [[600, 368], [600, 538], [700, 368], [p.x, p.y]];
+    await cast(s, p, 600, 368);
+    const hpA = a.hp!.hp;
+    let order: string[] = [];
+    for (let i = 0; i < 240; i++) {
+      hold([a, b, ally, p], spots);
+      const before = [a.hp!.hp, b.hp!.hp, ally.hp!.hp];
+      stepWorld(s.w);
+      if (a.hp!.hp < before[0]!) order.push('a');
+      if (b.hp!.hp < before[1]!) order.push('b');
+      if (ally.hp!.hp < before[2]!) order.push('ally');
+    }
+    order = order.filter((x, i) => order[i - 1] !== x);
+    expect(a.hp!.hp).toBeLessThan(hpA);
+    // the ally at 100 px is nearer than enemy b at 170 px, but enemies come first
+    expect(order.slice(0, 3)).toEqual(['a', 'b', 'ally']);
+  });
+
+  it('a co-op player who steps sideways when it turns toward them is missed; one who stands still is hit', async () => {
+    const { stepWorld } = await import('../../src/game/sim');
+    const { emptyInput } = await import('../../src/engine/input/actions');
+    const run = async (dodge: boolean): Promise<number> => {
+      const { s, p, ally, mk } = setup();
+      const a = mk(600, 368);
+      ally.x = 600;
+      ally.y = 368 + 175;
+      await cast(s, p, 600, 368);
+      const hp0 = ally.hp!.hp;
+      let turnedAt = -1;
+      for (let i = 0; i < 180; i++) {
+        hold([a], [[600, 368]]);
+        p.x = 300;
+        const ball = [...s.w.entities.values()].find((e) => e.type === 'projectile' && e.pr?.drawId === 'p_lightning');
+        if (turnedAt < 0 && ball && ball.vy > 0) turnedAt = s.w.time;
+        // a 0.3 s reaction, then walk straight sideways
+        const go = dodge && turnedAt >= 0 && s.w.time - turnedAt >= 0.3;
+        ally.pl!.input = { ...emptyInput(), moveX: go ? 1 : 0, aimX: ally.x + 100, aimY: ally.y };
+        stepWorld(s.w);
+      }
+      return hp0 - ally.hp!.hp;
+    };
+    expect(await run(false)).toBeGreaterThan(0);
+    expect(await run(true)).toBe(0);
+  });
+});
+
+describe('Void Rift hurts and slows co-op allies (D375)', () => {
+  it("ticks on another player inside and slows them; never the caster", async () => {
+    const { runEffects } = await import('../../src/game/effects/run');
+    const { SPELLS } = await import('../../src/data/spells');
+    const { stepWorld } = await import('../../src/game/sim');
+    const { hazardSlowOn } = await import('../../src/game/systems/hazards');
+    const s = session('scholar');
+    const p = s.localPlayer!;
+    const ally = s.joinPlayer(newCharacter('knight', 'Ally', 'p2', new Rng('a'))).entity!;
+    const { inCombat } = await import('./inCombat');
+    inCombat(s.w);
+    p.x = 640;
+    p.y = 368;
+    ally.x = 660;
+    ally.y = 380;
+    const hpP = p.hp!.hp;
+    const hpA = ally.hp!.hp;
+    runEffects(s.w, SPELLS.void_rift!.effect, { sourceId: p.id, team: 0, x: p.x, y: p.y, aimX: 650, aimY: 370, targetId: 0, powerMult: 1, isSpell: true, isSkill: false, baseDamage: 20, windupS: 0, tag: 'spell:0', school: 'brain' });
+    expect(hazardSlowOn(s.w, ally)).toBeCloseTo(0.8, 6);
+    expect(hazardSlowOn(s.w, p)).toBe(1);
+    for (let i = 0; i < 90; i++) {
+      p.x = 640;
+      p.y = 368;
+      ally.x = 660;
+      ally.y = 380;
+      stepWorld(s.w);
+    }
+    expect(ally.hp!.hp).toBeLessThan(hpA);
+    expect(p.hp!.hp).toBe(hpP);
+  });
+});
+
+describe("a player's projectile keeps its hand's lifesteal (D375, D369)", () => {
+  it('an off-hand staff bolt heals by the staff\'s Leech, not the weapon hand\'s', async () => {
+    const { makeGem } = await import('../../src/data/gems');
+    const { runEffects } = await import('../../src/game/effects/run');
+    const { SPELLS } = await import('../../src/data/spells');
+    const { stepWorld } = await import('../../src/game/sim');
+    const s = session('scholar');
+    const p = s.localPlayer!;
+    const c = p.pl!.char;
+    c.equipment.main = makeItem('rapier', 'rare');
+    const staff = makeItem('apprentice_staff', 'rare');
+    staff.sockets = [makeGem('leech', { level: 30, q: 0 })];
+    c.equipment.off = staff;
+    c.twoHanded = false;
+    refreshDerived(p);
+    p.x = 300;
+    p.y = 368;
+    const foe = spawnEnemy(s.w, ENEMIES.shambler!, 600, 368, { tellS: 0 });
+    foe.en!.state = 'dormant';
+    foe.hp!.hp = foe.hp!.max = 1e6;
+    p.hp!.hp = p.hp!.max * 0.3;
+    p.hp!.invulnUntil = 1e9;
+    const hp0 = p.hp!.hp;
+    runEffects(s.w, SPELLS.arcane_bolt!.effect, { sourceId: p.id, team: 0, x: p.x, y: p.y, aimX: 600, aimY: 368, targetId: 0, powerMult: 1, isSpell: true, isSkill: false, baseDamage: 20, windupS: 0, tag: 'spell:0', school: 'brain' });
+    for (let i = 0; i < 90; i++) {
+      foe.x = 600;
+      foe.y = 368;
+      stepWorld(s.w);
+    }
+    expect(foe.hp!.hp).toBeLessThan(1e6);
+    expect(p.hp!.hp).toBeGreaterThan(hp0);
+  });
+});

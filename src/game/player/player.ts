@@ -379,6 +379,7 @@ export function spawnPlayerProjectile(w: World, e: Entity, a: number, speed: num
       returns: !!opts.returns,
       ...(spec.attackId !== undefined ? { attackId: spec.attackId } : {}),
       ...(spec.lifestealScale !== undefined ? { lifestealScale: spec.lifestealScale } : {}),
+      ...(spec.lifestealPct !== undefined ? { lifestealPct: spec.lifestealPct } : {}),
       returning: false,
       drawId,
       color: opts.color ?? '#efe6d2',
