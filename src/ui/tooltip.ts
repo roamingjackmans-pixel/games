@@ -644,5 +644,5 @@ export function setPerkSection(sp: SetPerkDef, worn: number): HTMLElement {
       setEffectText(sp.steps[i]!),
     ),
   );
-  return section(`Set perk · ${sp.name}`, h('div', { class: 'tt-text', style: `color:${sp.color}` }, `${sp.style} · you wear ${worn} / 7`), ...rows);
+  return section(`Set perk · ${sp.name}`, h('div', { class: 'tt-text', style: `color:${sp.color}` }, `${sp.style} · you wear ${worn} / ${SET_STEPS[2]}`), ...rows);
 }

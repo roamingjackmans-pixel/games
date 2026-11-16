@@ -772,7 +772,7 @@ variants, so every Bonk or Slicey build that also leans on Brain or Prayer has a
 weapons to choose from (a class or a variant scaling C or better in both stats; CONTENT_ITEMS §2).
 
 **Set perks** (D243, D245): any piece of gear can carry one of ten set perks — Counteroffer, Moonlight Flit,
-Eviction, Squatter's Rights, Fine Print, Late Fees, Handyman, Demolition, Tea Break, Load-Bearing Wall (poise, D313). Wearing **3, 5 or 7** pieces with
+Eviction, Squatter's Rights, Fine Print, Late Fees, Handyman, Demolition, Tea Break, Load-Bearing Wall (poise, D313). Wearing **1, 2 or 4** pieces (D419; was 3, 5, 7) with
 the same one (every slot in use counts) gives a small, medium or large bonus to that playstyle. Drop chance: Uncommon
 7.8%, Rare 14.3%, Epic 20.8%, Legendary 29.3%; Commons never.
 

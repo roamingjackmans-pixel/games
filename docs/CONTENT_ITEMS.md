@@ -323,11 +323,11 @@ percentages are fixed.
 
 ## 9. Set perks (D243)
 
-Any piece of gear may carry a set perk. Wearing 3, 5 or 7 worn pieces with the same one (weapon, off hand, head, body,
+Any piece of gear may carry a set perk. Wearing 1, 2 or 4 worn pieces (D419; was 3, 5, 7, D243) with the same one (weapon, off hand, head, body,
 legs, the four rings; only gear whose requirements you meet) gives the small, medium or large step; each step replaces
 the one before. Chance a piece rolls one (D245): common 0%, uncommon 7.8%, rare 14.3%, epic 20.8%, legendary 29.3%.
 
-| Set perk | Style | 3 pieces | 5 pieces | 7 pieces |
+| Set perk | Style | 1 piece | 2 pieces | 4 pieces |
 |---|---|---|---|---|
 | **Counteroffer** | Parry and block | −10% stamina lost blocking, +0.03 s parry window | +5% damage, −20% stamina lost blocking, +0.06 s parry window | +12% damage, −35% stamina lost blocking, +0.10 s parry window |
 | **Moonlight Flit** | Dodging | −0.3 s dodge recharge, −5% stamina costs | +4% attack speed, −0.6 s dodge recharge, −10% stamina costs | +8% attack speed, −1.0 s dodge recharge, −15% stamina costs |

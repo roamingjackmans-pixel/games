@@ -28,15 +28,16 @@ describe('set perks (D243)', () => {
     for (const s of Object.values(SET_PERKS)) for (const e of s.steps) expect(setEffectText(e).length, s.id).toBeGreaterThan(0);
   });
 
-  it('steps at 3, 5 and 7', () => {
-    expect([0, 2, 3, 4, 5, 6, 7, 9].map(setStep)).toEqual([0, 0, 1, 1, 2, 2, 3, 3]);
+  it('steps at 1, 2 and 4 (D419; were 3, 5 and 7)', () => {
+    expect([0, 1, 2, 3, 4, 5, 9].map(setStep)).toEqual([0, 1, 2, 2, 3, 3, 3]);
   });
 
-  it('two pieces give nothing; 3, 5 and 7 give the small, medium and large step (not added together)', () => {
+  it('1, 2 and 4 pieces give the small, medium and large step (not added together); 3 stays on the medium', () => {
     const base = computeDerived(wearing('eviction', 0)).dmgPct;
-    expect(computeDerived(wearing('eviction', 2)).dmgPct).toBeCloseTo(base, 6);
-    expect(computeDerived(wearing('eviction', 3)).dmgPct).toBeCloseTo(base + 0.06, 6);
-    expect(computeDerived(wearing('eviction', 5)).dmgPct).toBeCloseTo(base + 0.12, 6);
+    expect(computeDerived(wearing('eviction', 1)).dmgPct).toBeCloseTo(base + 0.06, 6);
+    expect(computeDerived(wearing('eviction', 2)).dmgPct).toBeCloseTo(base + 0.12, 6);
+    expect(computeDerived(wearing('eviction', 3)).dmgPct).toBeCloseTo(base + 0.12, 6);
+    expect(computeDerived(wearing('eviction', 4)).dmgPct).toBeCloseTo(base + 0.2, 6);
     expect(computeDerived(wearing('eviction', 7)).dmgPct).toBeCloseTo(base + 0.2, 6);
     expect(computeDerived(wearing('eviction', 7)).setCounts.eviction).toBe(7);
   });
@@ -47,7 +48,7 @@ describe('set perks (D243)', () => {
     expect(flit.dodgeRecharge).toBeLessThan(none.dodgeRecharge);
     expect(computeDerived(wearing('squatters_rights', 5)).maxHp).toBeGreaterThan(none.maxHp);
     expect(computeDerived(wearing('counteroffer', 7)).parryBonusS).toBeCloseTo(none.parryBonusS + 0.1, 6);
-    expect(computeDerived(wearing('fine_print', 3)).spellPowerPct).toBeCloseTo(none.spellPowerPct + 0.06, 6);
+    expect(computeDerived(wearing('fine_print', 1)).spellPowerPct).toBeCloseTo(none.spellPowerPct + 0.06, 6);
   });
 
   it('new drops roll them by rarity, never on Commons, from their own stream', () => {

@@ -28,12 +28,14 @@ describe('poise from rings and a set (D313)', () => {
     c.equipment.ring1 = ring;
     expect(computeDerived(c).poise).toBe(base + 4);
   });
-  it('Load-Bearing Wall: +5 / +10 / +18 poise at 3 / 5 / 7 pieces', () => {
+  it('Load-Bearing Wall: +5 / +10 / +18 poise at 1 / 2 / 4 pieces (D419)', () => {
     expect(SET_PERKS.load_bearing_wall!.steps.map((s) => s.poise)).toEqual([5, 10, 18]);
     const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
     const base = computeDerived(c).poise;
     const worn = [c.equipment.main, c.equipment.off, c.equipment.head, c.equipment.body, c.equipment.legs].filter((x) => !!x);
-    for (const it of worn.slice(0, 3)) it!.setPerk = 'load_bearing_wall';
+    worn[0]!.setPerk = 'load_bearing_wall';
     expect(computeDerived(c).poise).toBe(base + 5);
+    worn[1]!.setPerk = 'load_bearing_wall';
+    expect(computeDerived(c).poise).toBe(base + 10);
   });
 });

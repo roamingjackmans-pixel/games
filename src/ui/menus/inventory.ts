@@ -357,7 +357,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     if (!cons.childElementCount) cons.appendChild(h('div', { class: 'small dim-text' }, 'Nothing to quick-use.'));
     bag.appendChild(h('h3', { style: 'margin:4px 0 0' }, `Quick-use (${glyphText('quick')})`));
     bag.appendChild(cons);
-    // ---- set perks worn (D243): each set, the pieces, and the step reached (3 / 5 / 7)
+    // ---- set perks worn (D243): each set, the pieces, and the step reached (1 / 2 / 4, D419)
     const counts = host.derived().setCounts;
     const sets = Object.entries(counts).filter(([id]) => SET_PERKS[id]).sort((a, b) => b[1] - a[1]);
     if (sets.length) {
@@ -365,7 +365,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       for (const [id, n] of sets) {
         const sp = SET_PERKS[id]!;
         const step = setStep(n);
-        const row = h('div', { class: 'small', style: step ? `color:${sp.color}` : '' }, h('b', null, `${sp.name} ${n} / 7`), h('span', { class: step ? '' : 'dim-text' }, ` · ${step ? setEffectText(sp.steps[step - 1]!) : `${SET_STEPS[0] - n} more for its first bonus`}`));
+        const row = h('div', { class: 'small', style: step ? `color:${sp.color}` : '' }, h('b', null, `${sp.name} ${n} / ${SET_STEPS[2]}`), h('span', { class: step ? '' : 'dim-text' }, ` · ${step ? setEffectText(sp.steps[step - 1]!) : `${SET_STEPS[0] - n} more for its first bonus`}`));
         row.addEventListener('mouseenter', () => showTip(row, h('div', { class: 'tooltip' }, setPerkSection(sp, n))));
         row.addEventListener('mouseleave', hideTip);
         list.appendChild(row);

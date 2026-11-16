@@ -1,4 +1,4 @@
-// Set perks (D243): any piece of gear may carry one. Wear 3, 5 or 7 pieces with the same set perk (every slot in
+// Set perks (D243): any piece of gear may carry one. Wear 1, 2 or 4 pieces (D419; was 3, 5, 7) with the same set perk (every slot in
 // use counts: weapon, off hand, head, body, legs, all four rings) for a small, medium or large boost to one
 // playstyle. Each step replaces the one before (the large one is the whole bonus, not added to the others). Only
 // gear whose requirements you meet counts, as with every other buff (D88). Systems read the effect keys, never a
@@ -48,11 +48,12 @@ export interface SetPerkDef {
   style: string;
   color: string;
   flavor: string;
-  /** at 3, 5 and 7 pieces */
+  /** at 1, 2 and 4 pieces (D419) */
   steps: [SetEffect, SetEffect, SetEffect];
 }
 
-export const SET_STEPS = [3, 5, 7] as const;
+/** pieces worn for the small, medium and large step (D419: 1, 2, 4; was 3, 5, 7, D243) */
+export const SET_STEPS = [1, 2, 4] as const;
 
 const S = (d: SetPerkDef): SetPerkDef => d;
 
