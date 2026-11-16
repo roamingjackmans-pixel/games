@@ -210,6 +210,9 @@ export function updateTelegraphs(w: World, dt: number): void {
   }
 }
 
+/** how far a line's start may be from its caster and still count as drawn from the caster's feet (D427) */
+export const FROM_CASTER_PX = 32;
+
 function impactFx(w: World, t: Entity): void {
   const tg = t.tg!;
   const color = tg.kind === 'red' ? '#ff3b3b' : tg.kind === 'pierce' ? '#8fd3ff' : tg.team === 0 ? '#ffd27a' : '#e8d8c0';
@@ -222,8 +225,9 @@ function impactFx(w: World, t: Entity): void {
     const owner = w.get(tg.ownerId);
     for (const s of tg.shapes) {
       if (n++ > 10) break;
-      // a line from its caster's feet names the caster, so a following animation can stay on it (D425)
-      const src = s.k === 'line' && owner && Math.abs(owner.x - s.x) < 1 && Math.abs(owner.y - s.y) < 1 ? { src: owner.id } : {};
+      // a line from its caster's feet names the caster, so a following animation can stay on it (D425). The caster
+      // may have walked on a step since the line was laid (D427: a beam swung on the move), so near is enough.
+      const src = s.k === 'line' && owner && Math.hypot(owner.x - s.x, owner.y - s.y) < FROM_CASTER_PX ? { src: owner.id } : {};
       if (s.k === 'circle') w.fx('circle', s.x, s.y, { r: s.r, v, el, d });
       else if (s.k === 'ring') w.fx('circle', s.x, s.y, { r: Math.min(400, s.rOut), x2: s.rIn, v, el, d });
       else if (s.k === 'line') w.fx('line', s.x, s.y, { a: s.a, r: s.l, x2: s.w, v, el, d, ...src });

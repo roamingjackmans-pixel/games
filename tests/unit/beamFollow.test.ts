@@ -38,6 +38,36 @@ describe('Arcane Beam turns smoothly (D425)', () => {
     }
   });
 
+  it('D427: walking while it fires, every tick still names its caster, so the beam stays one beam on the move', () => {
+    const w = new World('BEAM2', Room.empty());
+    const c = newCharacter('scholar', 'Joe', 'p1', new Rng(4));
+    c.stats.brain = 40;
+    c.knownSpells = [...new Set([...c.knownSpells, 'arcane_beam'])];
+    c.spellLoadout.brain = ['arcane_beam', null, null];
+    const p = spawnPlayer(w, c, 0, true, 400, 400);
+    p.pl!.input = { ...emptyInput(), aimX: 900, aimY: 200 };
+    w.god = true;
+    spawnEnemy(w, ENEMIES.hollow_wolf!, 1200, 650);
+    expect(tryCastSpell(w, p, 0)).toBe(true);
+    const x0 = p.x;
+    let beams = 0;
+    let named = 0;
+    for (let i = 0; i < 100; i++) {
+      // walk diagonally (down-right) the whole time
+      p.pl!.input = { ...p.pl!.input, moveX: 0.7, moveY: 0.7 };
+      w.events.length = 0;
+      stepWorld(w);
+      for (const ev of w.events) {
+        if (ev.t !== 'fx' || ev.v !== 'arcane_beam') continue;
+        beams++;
+        if (ev.src === p.id) named++;
+      }
+    }
+    expect(p.x).toBeGreaterThan(x0 + 20);
+    expect(beams).toBeGreaterThan(5);
+    expect(named).toBe(beams);
+  });
+
   it('the ticks of one caster draw one beam, on the caster and at its angle now', () => {
     clearSkillFx();
     const rotations: number[] = [];
