@@ -78,7 +78,7 @@ const BRAIN: SpellDef[] = [
     [{ op: 'zone', pattern: { kind: 'circle', r: 200, anchor: 'aim' }, durationS: 5, tickS: 0.25, hazard: 'timeDilation', slowPct: 0.4, enemiesOnly: true, tick: [] }],
     'circle(200) at the cursor for 5 s: enemies inside act at 60% speed (bosses 80%).',
   ),
-  B('meteor', 'Meteor', 30, 0.8, 16, 34, [dmg({ kind: 'circle', r: 170, anchor: 'aim', vfx: 'meteor' }, 160, 'fire', { telegraphS: 1.5, status: { id: 'burn', buildup: 100 }, knockback: 120 })], 'circle(170) at the cursor, lands after 1.5 s: 160 Fire, Burn 100, knockback.', 'fire'),
+  B('meteor', 'Meteor', 30, 0.8, 16, 34, [dmg({ kind: 'circle', r: 170, anchor: 'aim', vfx: 'meteor' }, 160, 'fire', { telegraphS: 1.5, knockback: 120 })], 'circle(170) at the cursor, lands after 1.5 s: 160 Fire, knockback.', 'fire'),
   B('overload', 'Overload', 26, 0.3, 50, 10, [{ op: 'buff', stat: 'spellCooldownPct', amount: -0.5, durationS: 15, id: 'overload' }], '15 s: every spell you cast comes back in half its cooldown.'),
   B('comet_barrage', 'Comet Barrage', 35, 1.0, 22, 40, [dmg({ kind: 'randomCircles', n: 8, r: 70, within: 260, anchor: 'aim', overS: 2, vfx: 'meteor' }, 44, 'fire', { telegraphS: 0.6, status: { id: 'burn', buildup: 30 } })], '8 comets within 260 px of the cursor over 2 s, 44 each, Burn 30.', 'fire'),
 ];

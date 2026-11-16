@@ -58,6 +58,7 @@ holds now. Additions that only build on an earlier decision are not listed.
 | D426 | Arcane Beam 8 per tick | Owner's request: Arcane Beam's base damage per 0.2 s tick 18 → 8 (Spell Skill and the staff still scale it, D182). Ten ticks over its 2 s channel: 80 base, was 180. |
 | D427 | Arcane Beam stays smooth on the move | Owner's report: after D425 the beam swung smoothly standing still but still jumped while walking. A tick's beam was tied to its caster only if the line started within 1 px of where the caster stood when the tick landed, and walking moves the caster a step between the line being laid and landing, so every tick on the move fell back to its own fixed beam. Now within 32 px counts (`FROM_CASTER_PX`). |
 | D428 | Arcane Beam 10 per tick | Owner's request: Arcane Beam's base damage per 0.2 s tick 8 → 10 (D426 had cut it from 18). 100 base over the 2 s channel. |
+| D429 | Meteor has no Burn | Owner's request: Meteor no longer builds Burn (was 100). It still deals 160 Fire with knockback. Comet Barrage keeps its Burn 30. |
 | D185 (enemy range 850) | D186 | Enemy projectiles reach 425 px; players' 850. |
 | D198 (Essence rates) | D226 | Essence drops at half the rate. |
 | D205 (each arrow full hit) | D264 | A volley hits any one enemy at most once. |
