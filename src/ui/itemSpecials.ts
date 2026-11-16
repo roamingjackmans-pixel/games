@@ -2,6 +2,7 @@
 // penalty, bleed, backstabs, ripostes, hyper armor, ignoring guards, two hands only, charged and piercing shots.
 // Everything here is read from the item's data, so a new value shows up with its real number.
 import type { ShieldDef, WeaponDef } from '../game/types';
+import { DUAL_WIELD_MULT } from '../game/player/derived';
 
 const pct = (x: number): string => `${Math.round(x * 100)}%`;
 const times = (x: number): string => `×${Number(x.toFixed(2))}`;
@@ -10,6 +11,7 @@ const times = (x: number): string => `×${Number(x.toFixed(2))}`;
 export function weaponSpecials(w: WeaponDef): string[] {
   const out: string[] = [];
   if (w.twoHandOnly) out.push('Two hands only: shooting takes it in both hands.');
+  if (w.paired) out.push(`Dual-wielded: two-handed, it is one in each hand and hits ${pct(DUAL_WIELD_MULT - 1)} harder.`);
   if (w.hyperArmor === 'all') out.push('Hyper armor: hits do not stagger you while it swings.');
   if (w.hyperArmor === 'last') out.push('Hyper armor on the last swing of a combo: hits do not stagger you then.');
   if (w.bleed) out.push(`Bleed: each hit builds bleed by ${w.bleed} (at 100 it bursts for 10% of an enemy's current HP, at least 3% of its max; 5% of a boss's current HP).`);

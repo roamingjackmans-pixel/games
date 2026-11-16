@@ -428,6 +428,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   // and two Medium weapons (counting the scaling variants, weaponVariants.ts) ----
   cestus: {
     id: 'cestus',
+    paired: true, // D421: a fist weapon, worn on both hands when two-handed (dual-wielded, D318: hits 50% harder)
     name: 'Cestus',
     weight: 3,
     grades: { bonk: 'A', slicey: '-' },

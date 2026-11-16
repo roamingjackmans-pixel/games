@@ -1116,9 +1116,9 @@ export function drawWeapon(ctx: Ctx, id: string, t = 0, legendaryName?: string, 
   if (back) ctx.restore();
 }
 
-/** True for weapons drawn in both hands (second copy in the off hand). */
+/** True for weapons drawn in both hands (second copy in the off hand): twin blades, and fist weapons (D421). */
 export function isPairedWeapon(id: string): boolean {
-  return id === 'w_daggers' || id === 'w_twinaxes';
+  return id === 'w_daggers' || id === 'w_twinaxes' || id === 'w_cestus';
 }
 
 // ---------------------------------------------------------------------------------------------

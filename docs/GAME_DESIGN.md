@@ -431,7 +431,7 @@ your next light hit on it deals **×2** (Riposte Master ×3; D88). A parried pro
 Bosses can be parried only on attacks marked *parryable*, and need two parries within 6 s to stagger.
 
 **Two-handing** (Shift): the off hand is set aside, its gems too (D316) (a tool in the weapon hand still casts, D117).
-Twin daggers and twin axes two-handed are **dual-wielded** and hit **50% harder** (D318). Bonk counts ×1.5
+Twin daggers, twin axes and fist weapons (the Cestus, D421) two-handed are **dual-wielded**, one in each hand, and hit **50% harder** (D318). Bonk counts ×1.5
 (§3.1). Holding block is a **weapon guard**: 45% physical, 15% other types, stability 12, no parry.
 
 **Being hit**: your **Poise** (D312) is the share of your max HP a hit must deal to stagger you: **8%**, plus armour

@@ -4,7 +4,7 @@ import { WEAPONS } from '../../src/data/weapons';
 import { SHIELDS } from '../../src/data/shields';
 import { shieldSpecials, weaponSpecials } from '../../src/ui/itemSpecials';
 
-const WEAPON_PERKS = ['twoHandOnly', 'hyperArmor', 'bleed', 'backstabMult', 'ripostedCritMult', 'ignoreFrontGuard'] as const;
+const WEAPON_PERKS = ['twoHandOnly', 'paired', 'hyperArmor', 'bleed', 'backstabMult', 'ripostedCritMult', 'ignoreFrontGuard'] as const;
 const SHIELD_PERKS = ['thorns', 'blockHealPct', 'walkMult'] as const;
 
 describe('item special perks (D171)', () => {
