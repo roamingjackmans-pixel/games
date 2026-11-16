@@ -418,8 +418,8 @@ export class RunScene extends WorldScene {
     const ws = this.session.save.world;
     const s = this.session;
     const zone = s.layout.zone;
-    // the shop's stock follows the cycle being played (a Wave Rush's, D402)
-    const cyc = s.cycle;
+    // the shop's stock follows the cycle being played (a Wave Rush's, D402), no better than this character's loot (D431)
+    const cyc = s.lootCycleFor(c);
     const changed = (): void => refreshDerived(p);
     const r = (o: { msg: string }): string => {
       changed();

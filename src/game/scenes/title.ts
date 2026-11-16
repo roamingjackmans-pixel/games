@@ -28,7 +28,7 @@ import { newSave, SLOT_COUNT } from '../save/schema';
 import { exportFileName, exportText, parseImport } from '../save/exportImport';
 import { deleteSave, listSaves, readMeta, writeSave } from '../save/storage';
 import { cycleStepper } from '../../ui/cycleStepper';
-import { fmtRushTime, rushFastest, rushFurthestLabel, rushStartCycles } from '../waveRush';
+import { RUSH_FREE_LOOT_CLEARED, fmtRushTime, rushFastest, rushFurthestLabel, rushStartCycles } from '../waveRush';
 import type { ClassId, SaveFile } from '../types';
 // the character creator's class card and appearance pickers
 import { STAT_IDS, type Appearance, type Character, type StatId } from '../types';
@@ -305,6 +305,11 @@ export class TitleScene implements Scene {
     const stepper = cycleStepper(cycles, pick, (cy) => {
       pick = cy;
     });
+    // D431: loot no better than the campaign's cycle until this character has cleared Wave Rush Cycle 5
+    const lootCap =
+      (sv.rush?.bestCycle ?? -1) >= RUSH_FREE_LOOT_CLEARED
+        ? `Loot climbs with the cycle you play: ${c.name} has cleared Cycle ${RUSH_FREE_LOOT_CLEARED + 1}.`
+        : `Loot is no better than ${c.name}’s campaign (Cycle ${c.cycle + 1}) until it clears Wave Rush Cycle ${RUSH_FREE_LOOT_CLEARED + 1}.`;
     const open = cycles.length === 1 ? `Only Cycle 1 is open for ${c.name}: beat its boss to open Cycle 2.` : `Cycles 1 to ${cycles.length} are open for ${c.name}: beat Cycle ${cycles.length}’s boss to open the next.`;
     this.view(
       'rush',
@@ -313,6 +318,7 @@ export class TitleScene implements Scene {
       h('div', { class: 'small dim-text', style: 'max-width:520px' }, RUSH_ABOUT),
       h('div', { style: 'min-width:360px' }, stepper),
       h('div', { class: 'small dim-text', 'data-testid': 'rush-open' }, open),
+      h('div', { class: 'small dim-text', style: 'max-width:520px', 'data-testid': 'rush-loot-cap' }, lootCap),
       h('div', { class: 'row' }, testId(btn('Start', () => titleHooks.rush?.(sv, pick), 'primary'), 'rush-start'), btn('Back', () => (back === 'list' ? this.rushMenu() : back === 'slots' ? this.slots() : this.main()))),
     );
   }

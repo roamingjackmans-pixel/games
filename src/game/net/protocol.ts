@@ -60,6 +60,8 @@ export interface Hello {
   classId: ClassId;
   level: number;
   char: Character;
+  /** the guest's best cleared Wave Rush cycle (0-based, −1 none): caps its Wave Rush loot (D431) */
+  rushBest?: number;
 }
 
 export interface PublicPlayer {

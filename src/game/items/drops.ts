@@ -18,6 +18,13 @@ export interface DropContext {
   seed: string;
   zone: number;
   cycle: number;
+  /** the cycle this character's loot is rolled at, when not the cycle played (a Wave Rush, D431) */
+  cycleFor?(c: Character): number;
+}
+
+/** The cycle a player's loot is rolled at (D431). */
+function lootCycle(c: DropContext, ch: Character): number {
+  return c.cycleFor ? c.cycleFor(ch) : c.cycle;
 }
 
 /** The class's primary and secondary stats, which weapon drops lean toward (D254). */
@@ -65,7 +72,6 @@ export function enemyDrops(c: DropContext, e: Entity): void {
   const en = e.en!;
   const w = c.w;
   const role = en.def.role as Role | 'boss';
-  const ilvl = itemLevelFor(c.zone, c.cycle);
   // a room holds share × the original count of enemies (D79), so each one drops share times less often; an
   // Elite only divides by the party size, so the extra Elites of a big party are a little extra loot
   const share = Math.max(1, en.share ?? 1);
@@ -75,6 +81,8 @@ export function enemyDrops(c: DropContext, e: Entity): void {
     if (pl.deadUntilRest) continue;
     const pid = pl.playerId;
     const rng = lootRng(c, pid, 'e');
+    const cy = lootCycle(c, pl.char);
+    const ilvl = itemLevelFor(c.zone, cy);
     const chance = (en.elite ? DROP_CHANCE.elite : role === 'swarm' ? DROP_CHANCE.swarm : role === 'fodder' ? DROP_CHANCE.fodder : DROP_CHANCE.other) / divide;
     if (rng.chance(chance)) {
       const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone, favor: favorOf(pl.char) });
@@ -89,7 +97,7 @@ export function enemyDrops(c: DropContext, e: Entity): void {
     }
     if (rng.chance((GEM_CHANCE.enemy * (1 + pl.derived.gemFind)) / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
-      spawnPickup(w, x, y, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle)), amount: 1, rarity: 'rare' });
+      spawnPickup(w, x, y, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, cy, undefined, gemDropLevel(rng, c.zone, cy)), amount: 1, rarity: 'rare' });
     }
     if (role === 'fodder' && rng.chance(CONSUMABLE_CHANCE.fodderSingle / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
@@ -100,7 +108,7 @@ export function enemyDrops(c: DropContext, e: Entity): void {
       spawnPickup(w, x, y, { kind: 'glowen', forPlayer: pid, amount: Math.round(60 * c.zone * (1 + pl.derived.glowenFind)), rarity: 'uncommon' });
     }
     // Soul Essence (D198), rolled last so the older drops keep their rolls
-    const et = essenceTierFor(c.zone, c.cycle);
+    const et = essenceTierFor(c.zone, cy);
     if (et && rng.chance((en.elite ? ESSENCE_DROP.elite : ESSENCE_DROP.enemy) / divide)) {
       const [x, y] = scatter(rng, e.x, e.y);
       dropEssence(w, pid, et, 1, x, y);
@@ -129,12 +137,13 @@ const BUNDLE: ConsumableId[] = ['throwing_knife', 'firebomb', 'frost_jar', 'holy
 /** Chest loot for every player (each sees only their own). Mimics add a bonus roll from the Mimic row. */
 export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'treasure' | 'mimic' | 'boss', x: number, y: number): void {
   const w = c.w;
-  const ilvl = itemLevelFor(c.zone, c.cycle);
   for (const p of w.players) {
     const pl = p.pl!;
     if (pl.deadUntilRest) continue;
     const pid = pl.playerId;
     const rng = stream(c.seed, `loot:${pid}:chest:${chestId}:${c.cycle}`);
+    const cy = lootCycle(c, pl.char);
+    const ilvl = itemLevelFor(c.zone, cy);
     const rows: LootSource[] = kind === 'treasure' ? ['chestTreasure', 'chestTreasure'] : kind === 'mimic' ? ['chestSmall', 'mimic'] : kind === 'boss' ? ['boss'] : ['chestSmall'];
     for (const row of rows) {
       const item = generateItem(rng, { source: row, ilvl, zone: c.zone, favor: favorOf(pl.char) });
@@ -143,7 +152,7 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
     }
     if (rng.chance(GEM_CHANCE.chest * (1 + pl.derived.gemFind))) {
       const [gx, gy] = scatter(rng, x, y + 20);
-      spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle), kind === 'treasure' ? 1 : 0), amount: 1, rarity: 'rare' });
+      spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, cy, undefined, gemDropLevel(rng, c.zone, cy), kind === 'treasure' ? 1 : 0), amount: 1, rarity: 'rare' });
     }
     if (rng.chance(CONSUMABLE_CHANCE.chestBundle)) {
       const [bx, by] = scatter(rng, x, y + 20);
@@ -152,7 +161,7 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
     // a little Glowen always
     const [sx, sy] = scatter(rng, x, y + 20);
     spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round((kind === 'treasure' ? 60 : 25) * c.zone * (1 + pl.derived.glowenFind)), rarity: 'common' });
-    const et = essenceTierFor(c.zone, c.cycle);
+    const et = essenceTierFor(c.zone, cy);
     if (et) {
       const n = kind === 'treasure' ? essenceCount(rng, ESSENCE_DROP.treasure) : kind === 'mimic' ? (rng.chance(ESSENCE_DROP.mimic) ? 1 : 0) : kind === 'small' ? (rng.chance(ESSENCE_DROP.smallChest) ? 1 : 0) : 0;
       const [ex, ey] = scatter(rng, x, y + 20);
@@ -206,12 +215,13 @@ export function instructorDrops(c: DropContext, x: number, y: number): void {
  */
 export function bossDrops(c: DropContext, bossId: string, x: number, y: number): void {
   const w = c.w;
-  const ilvl = itemLevelFor(c.zone, c.cycle);
   for (const p of w.players) {
     const pl = p.pl!;
     if (pl.deadUntilRest) continue;
     const pid = pl.playerId;
     const rng = stream(c.seed, `loot:${pid}:boss:${bossId}:${c.cycle}`);
+    const cy = lootCycle(c, pl.char);
+    const ilvl = itemLevelFor(c.zone, cy);
     const rolls = rng.int(DROP_CHANCE.bossMin, DROP_CHANCE.bossMax);
     for (let i = 0; i < rolls; i++) {
       const item = generateItem(rng, { source: 'boss', ilvl, zone: c.zone, favor: favorOf(pl.char) });
@@ -221,11 +231,11 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
     // D281: a gem 65% of the time (was always); D284: it rolls its quality one extra time and keeps the best
     if (rng.chance(GEM_CHANCE.boss)) {
       const [gx, gy] = scatter(rng, x, y, 60);
-      spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, c.cycle, undefined, gemDropLevel(rng, c.zone, c.cycle), 1), amount: 1, rarity: 'rare' });
+      spawnPickup(w, gx, gy, { kind: 'gem', forPlayer: pid, gem: randomGem(rng, cy, undefined, gemDropLevel(rng, c.zone, cy), 1), amount: 1, rarity: 'rare' });
     }
     const [sx, sy] = scatter(rng, x, y, 60);
     spawnPickup(w, sx, sy, { kind: 'glowen', forPlayer: pid, amount: Math.round(150 * c.zone * (1 + pl.derived.glowenFind)), rarity: 'uncommon' });
     const [ex, ey] = scatter(rng, x, y, 60);
-    dropEssence(w, pid, essenceTierFor(c.zone, c.cycle), essenceCount(rng, ESSENCE_DROP.boss), ex, ey);
+    dropEssence(w, pid, essenceTierFor(c.zone, cy), essenceCount(rng, ESSENCE_DROP.boss), ex, ey);
   }
 }

@@ -231,7 +231,7 @@ export class NetHost {
   private enter(g: HostGuest, lay: GameSession['layout']): void {
     const s = this.session!;
     g.log = new CharLog(g.char);
-    g.sp = s.joinPlayer(g.char);
+    g.sp = s.joinPlayer(g.char, typeof g.hello.rushBest === 'number' ? g.hello.rushBest : -1);
     g.sp.entity!.pl!.net = 'puppet';
     g.body = null;
     g.epoch = 0;

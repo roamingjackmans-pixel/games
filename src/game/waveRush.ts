@@ -203,3 +203,17 @@ export function canStartRushAt(r: Pick<RushRecord, 'bestCycle'> | null | undefin
   return Number.isInteger(cycle) && cycle >= 0 && cycle <= bestCleared(r) + 1;
 }
 
+/** The Wave Rush cycle (0-based) a character must have cleared before its loot climbs past its campaign (D431): Cycle 5. */
+export const RUSH_FREE_LOOT_CLEARED = 4;
+
+/**
+ * The cycle a character's Wave Rush loot is rolled at (D431): items' level, gems and Soul Essence, the shop's stock
+ * too. Until the character has cleared Wave Rush Cycle 5 itself, no better than its own campaign's cycle (playing Cycle
+ * 3 of the campaign, a Cycle 6 rush still drops Cycle 3 loot: no Superintendent's Blaze or Freeholder's Soul); from
+ * Cycle 6 on, the cycle being played.
+ */
+export function rushLootCycle(rushCycle: number, campaignCycle: number, rushBestCleared: number): number {
+  if (Number.isFinite(rushBestCleared) && rushBestCleared >= RUSH_FREE_LOOT_CLEARED) return rushCycle;
+  return Math.max(0, Math.min(rushCycle, Number.isFinite(campaignCycle) ? Math.floor(campaignCycle) : 0));
+}
+
