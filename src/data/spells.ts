@@ -66,7 +66,7 @@ const BRAIN: SpellDef[] = [
     'circle(160) for 3 s pulling non-bosses to its centre, ice mirrors and flyers too (bosses −20% speed). It deals no damage.',
     'void',
   ),
-  B('arcane_beam', 'Arcane Beam', 22, 0.1, 11, 30, [{ op: 'channel', durationS: 2, tickS: 0.2, moveSpeedPct: 0.4, followAim: true, tick: [dmg({ kind: 'line', w: 52, l: 700, anchor: 'self', vfx: 'arcane_beam' }, 18, 'void')] }], 'Channel 2 s: a line(52,700) beam that follows the cursor, 18 per 0.2 s; walk at 40%.', 'void'),
+  B('arcane_beam', 'Arcane Beam', 22, 0.1, 11, 30, [{ op: 'channel', durationS: 2, tickS: 0.2, moveSpeedPct: 0.4, followAim: true, tick: [dmg({ kind: 'line', w: 52, l: 700, anchor: 'self', vfx: 'arcane_beam' }, 8, 'void')] }], 'Channel 2 s: a line(52,700) beam that follows the cursor, 8 per 0.2 s; walk at 40%.', 'void'),
   B('mirror_images', 'Mirror Images', 24, 0.5, 18, 20, [{ op: 'decoy', count: 2, durationS: 6, tauntR: 250, illusion: true }], 'Two decoys for 6 s that pull enemies within 250 px.'),
   B(
     'time_dilation',

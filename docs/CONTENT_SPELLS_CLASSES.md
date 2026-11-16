@@ -32,7 +32,7 @@ The current catalogue of the 28 spells and 10 classes, generated from `src/data/
 | **Chain Lightning** | 16 | 0.5 s | 7 s | 18 | magic | A ball of lightning flies from you where you aim at 420 px/s, no homing (D375): 36 Magic and Shock 40 on the first body it meets, then it flies on to 4 more within 180 px, enemies before players (−15% per jump). Slow enough that an ally it turns toward can step out of its way. It drags a trail of lightning along the path it flew (D383). |
 | **Void Rift** | 15 | 0.7 s | 9 s | 22 | void | circle(120) at the cursor for 4 s: 12 Void per 0.5 s and −20% speed to everyone inside, you too: enemies, co-op allies and its caster (friendly fire, D375, D397). |
 | **Gravity Well** | 20 | 0.6 s | 12 s | 22 | void | circle(160) for 3 s pulling non-bosses to its centre, ice mirrors and flyers too (bosses −20% speed). It deals no damage. |
-| **Arcane Beam** | 22 | 0.1 s | 11 s | 30 | void | Channel 2 s: a line(52,700) beam that follows the cursor, 18 per 0.2 s; walk at 40%. |
+| **Arcane Beam** | 22 | 0.1 s | 11 s | 30 | void | Channel 2 s: a line(52,700) beam that follows the cursor, 8 per 0.2 s; walk at 40%. |
 | **Mirror Images** | 24 | 0.5 s | 18 s | 20 | — | Two decoys for 6 s that pull enemies within 250 px. |
 | **Time Dilation** | 28 | 0.6 s | 20 s | 26 | — | circle(200) at the cursor for 5 s: enemies inside act at 60% speed (bosses 80%). |
 | **Meteor** | 30 | 0.8 s | 16 s | 34 | fire | circle(170) at the cursor, lands after 1.5 s: 160 Fire, Burn 100, knockback. It hits you too if you stand in it (D397). |
