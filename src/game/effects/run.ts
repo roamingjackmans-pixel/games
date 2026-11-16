@@ -436,7 +436,8 @@ function runOne(w: World, e: EffectDef, ctx: EffectCtx): void {
         addBuff(t, w, {
           id,
           stat: e.stat as BuffStat,
-          amount: spell ? spellBuffAmount(e.stat, e.amount * u) : e.amount,
+          // D422: Overload's spell-cooldown cut is exactly what it lists, whatever the Spell Skill
+          amount: spell && e.stat !== 'spellCooldownPct' ? spellBuffAmount(e.stat, e.amount * u) : e.amount,
           durationS: e.durationS * sd,
           maxStacks: e.op === 'buff' ? (e.maxStacks ?? 1) : 1,
           sourceId: ctx.sourceId,

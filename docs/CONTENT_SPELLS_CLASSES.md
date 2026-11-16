@@ -36,7 +36,7 @@ The current catalogue of the 28 spells and 10 classes, generated from `src/data/
 | **Mirror Images** | 24 | 0.5 s | 18 s | 20 | — | Two decoys for 6 s that pull enemies within 250 px. |
 | **Time Dilation** | 28 | 0.6 s | 20 s | 26 | — | circle(200) at the cursor for 5 s: enemies inside act at 60% speed (bosses 80%). |
 | **Meteor** | 30 | 0.8 s | 16 s | 34 | fire | circle(170) at the cursor, lands after 1.5 s: 160 Fire, Burn 100, knockback. It hits you too if you stand in it (D397). |
-| **Overload** | 26 | 0.3 s | 30 s | 10 | — | Your next 3 spells within 8 s: +50% power and no cooldown. |
+| **Overload** | 26 | 0.3 s | 50 s | 10 | — | 15 s: every spell you cast comes back in half its cooldown (spell cooldowns only; exactly −50% whatever the Spell Skill; its own 50 s is set before it starts, D422). Was: the next 3 spells within 8 s at +50% power and no cooldown. |
 | **Comet Barrage** | 35 | 1 s | 22 s | 40 | fire | 8 comets within 260 px of the cursor over 2 s, 44 each, Burn 30. They hit you too (D397). |
 
 Notes: Frost Lance fades where it stops; it has no burst at the end (D268). Gravity Well only pulls; it deals no

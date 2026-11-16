@@ -79,6 +79,8 @@ export function buffText(b: Buff): string {
       return `${pct(a)} stamina costs`;
     case 'cooldownPct':
       return `${pct(a)} cooldowns`;
+    case 'spellCooldownPct':
+      return `${pct(a)} spell cooldowns`;
     case 'poiseThreshold':
       return 'hyper armor: hits do not stagger you';
     case 'flaskBoostPct':

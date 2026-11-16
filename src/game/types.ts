@@ -191,6 +191,8 @@ export type BuffStat =
   | 'staminaRegenPct'
   | 'staminaCostPct'
   | 'cooldownPct'
+  /** spell cooldowns only, as a share (Overload, D422: −0.5 halves the cooldown of every spell cast while it lasts) */
+  | 'spellCooldownPct'
   | 'dodgeRechargeS'
   | 'poiseThreshold'
   | 'bleedBuildupPct'

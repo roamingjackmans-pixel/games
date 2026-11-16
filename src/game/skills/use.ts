@@ -233,6 +233,8 @@ export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = '
   let power = spellPowerMult(e, sp);
   // proficiency with the casting tools shortens spell cooldowns (D178)
   let cooldown = sp.cooldownS * (1 - d.spellCdr);
+  // D422: Overload halves the cooldown of every spell cast while it lasts (its own cooldown is set before it starts)
+  cooldown *= Math.max(0.1, 1 + buffSum(e, 'spellCooldownPct', now));
   if (boost) {
     power *= 1 + boost.powerPct;
     if (boost.noCooldown) cooldown = 0.2;
