@@ -27,7 +27,7 @@ The current catalogue of the 28 spells and 10 classes, generated from `src/data/
 | **Arcane Bolt** | 8 | 0.3 s | 1.2 s | 8 | void | A bolt of arcane force: 19.2 (counts as Void; D300: was 24). The bread and butter. |
 | **Scatter Shards** | 10 | 0.4 s | 4 s | 14 | void | 5 shards in a 50° fan, 14 each. |
 | **Frost Lance** | 12 | 0.5 s | 5 s | 16 | magic | line(30,420) 40 Magic, Chill 50. |
-| **Fireball** | 14 | 0.6 s | 6 s | 18 | fire | A fireball: circle(100) 48 Fire, Burn 50, a puddle for 2 s. The blast catches you too if you stand in it (D397). |
+| **Fireball** | 14 | 0.6 s | 6 s | 18 | fire | A fireball: circle(100) 30 Fire (×Spell Skill / 100 like every spell; was a flat 48, D420), Burn 50, a puddle for 2 s. The blast catches you too if you stand in it (D397). |
 | **Blink** | 12 | 0.1 s | 10 s | 10 | — | Teleport 240 px toward the cursor. Not i-frames: it escapes Piercing areas if you land outside them. |
 | **Chain Lightning** | 16 | 0.5 s | 7 s | 18 | magic | A ball of lightning flies from you where you aim at 420 px/s, no homing (D375): 36 Magic and Shock 40 on the first body it meets, then it flies on to 4 more within 180 px, enemies before players (−15% per jump). Slow enough that an ally it turns toward can step out of its way. It drags a trail of lightning along the path it flew (D383). |
 | **Void Rift** | 15 | 0.7 s | 9 s | 22 | void | circle(120) at the cursor for 4 s: 12 Void per 0.5 s and −20% speed to everyone inside, you too: enemies, co-op allies and its caster (friendly fire, D375, D397). |

@@ -177,7 +177,11 @@ function doDamage(w: World, e: Extract<EffectDef, { op: 'damage' }>, ctx: Effect
           ...(p.homing ? { homing: p.homing * DEG } : {}),
         });
         if (p.lob) pr.pr!.lob = { fromX: ctx.x, fromY: ctx.y, toX: ctx.aimX, toY: ctx.aimY, t: 0, dur: Math.max(0.3, dist(ctx.x, ctx.y, ctx.aimX, ctx.aimY) / p.speed) };
-        if (p.onImpact) pr.pr!.onImpact = { ...e, pattern: scaleArea(p.onImpact, area) };
+        if (p.onImpact) {
+          pr.pr!.onImpact = { ...e, pattern: scaleArea(p.onImpact, area) };
+          // D420: a spell's blast keeps the cast's Spell Skill and school (it used to land at ×1, the listed amount)
+          if (ctx.isSpell) pr.pr!.impactCtx = { powerMult: ctx.powerMult, ...(ctx.school ? { school: ctx.school } : {}) };
+        }
         pr.x = ctx.x + Math.cos(ang) * 16;
         pr.y = ctx.y + Math.sin(ang) * 16;
       } else if (src) {

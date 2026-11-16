@@ -381,6 +381,8 @@ export interface ProjC {
   volleyOnce?: boolean;
   poiseDmg: number;
   onImpact: EffectDef | null;
+  /** a player's spell shot (D420): the cast's Spell Skill multiplier and school, so its impact blast scales as the spell does */
+  impactCtx?: { powerMult: number; school?: 'brain' | 'prayer' };
   parryable: boolean;
   reflected: boolean;
   returns: boolean;

@@ -302,7 +302,7 @@ export type EntityMeta =
   | { t: 'enemy'; def: string; elite: string | null; piece: number; boss: boolean; drawId: string; r: number; illusion: boolean; gaze?: number; linkedTo: number; atk?: string; hm?: number; bonus?: boolean }
   | { t: 'other'; type: EType; drawId: string; r: number; team: number; c: Record<string, unknown> };
 
-const DROP_KEYS = new Set(['spec', 'onImpact', 'effects', 'allyEffects', 'nextTick', 'hit']);
+const DROP_KEYS = new Set(['spec', 'onImpact', 'impactCtx', 'effects', 'allyEffects', 'nextTick', 'hit']);
 function clean(o: unknown): Record<string, unknown> {
   return JSON.parse(JSON.stringify(o, (k, val: unknown) => (DROP_KEYS.has(k) || val instanceof Set || val instanceof Map ? undefined : val))) as Record<string, unknown>;
 }
