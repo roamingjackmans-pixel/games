@@ -236,6 +236,8 @@ export const FOREMAN_IGNATIUS: BossDef = {
   zone: 5,
   name: 'Foreman Ignatius',
   role: 'boss',
+  // D418: three times a boss's shards (as Vexthorn, D371)
+  mult: { shards: 3 },
   // his second phase is a split body on foot round the widened lava channel (D278)
   arenaBound: true,
   radius: 58,

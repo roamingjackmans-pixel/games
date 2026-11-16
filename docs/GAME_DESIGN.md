@@ -1197,8 +1197,9 @@ A horde mode beside the campaign (D401–D410). Code: `src/game/waveRush.ts` (la
 unlock), `src/game/rushRecord.ts` (the record), `GameSession` (`rushStart`, `rush`, `beginRushAttempt`,
 `gotoRushStage`).
 
-**Starting.** Solo: the title's **Wave Rush** button (or **Wave Rush** on a character card under Load Character) lists
-the characters, each with its own starting-cycle picker and Start. Co-op: in the host's lobby, **Mode: Campaign / Wave Rush**, and for Wave Rush
+**Starting.** Solo: the title's **Wave Rush** button asks **which character** first (straight on with only one), then
+shows that character's starting-cycle picker and Start (D417); **Wave Rush** on a character card under Load Character has
+already chosen it. Co-op: in the host's lobby, **Mode: Campaign / Wave Rush**, and for Wave Rush
 the starting cycle; the guests see the pick in their lobby. The cycle picker is ◀ Cycle n ▶ and changes in place, so
 the arrow pressed stays under the pointer (and keeps the focus) to click through cycles quickly (D411). A character can start at any cycle up to **one past the best
 it has cleared itself** (`RushRecord.bestCycle`; cleared Cycle 5 → it can start at Cycle 6 or lower), so each character

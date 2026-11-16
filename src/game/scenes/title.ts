@@ -79,6 +79,17 @@ export function exportSave(save: SaveFile): void {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+/** What Wave Rush is, on its menus (GAME_DESIGN §24). */
+const RUSH_ABOUT =
+  'Eight rooms, one for each zone, then a boss as hard as the cycle’s final boss. A bonfire and stairs appear when a room is clear. Beat the boss to save your place and go on to the next cycle; die (or lose the whole party) and the cycle starts again from room 1. No Shards or levels here: gear, gems, Glowen and Soul Essence are yours to keep. Your campaign is not touched. Each character opens its own cycles.';
+
+/** A character's Wave Rush so far, in one line. */
+function rushLine(sv: SaveFile): string {
+  const r = sv.rush;
+  const fast = r ? rushFastest(r) : null;
+  return r && r.furthestCycle >= 0 ? `Furthest: ${rushFurthestLabel(r)}${fast ? ` · fastest clear ${fmtRushTime(fast[1])} (Cycle ${fast[0] + 1})` : ''}` : 'Has not tried Wave Rush yet';
+}
+
 function testId<T extends HTMLElement>(el: T, id: string): T {
   el.setAttribute('data-testid', id);
   return el;
@@ -245,8 +256,9 @@ export class TitleScene implements Scene {
   }
 
   /**
-   * Wave Rush, solo (GAME_DESIGN §24, D401): each character with the cycles it has opened itself (every one up to one past
-   * the best it has cleared, D416), a cycle picker and Start. `first` puts a slot at the top of the list.
+   * Wave Rush, solo (GAME_DESIGN §24, D401): first the character (D417), then the cycle it starts at, from the ones that
+   * character has opened itself (D416). With one character it goes straight to its cycle; `first` (a Load Character
+   * card's Wave Rush button) has already chosen one.
    */
   rushMenu(first?: number): void {
     const store = getStore();
@@ -256,42 +268,52 @@ export class TitleScene implements Scene {
       this.pickEmpty();
       return;
     }
-    const last = first ?? readMeta(store).lastSlot;
+    const chosen = first !== undefined ? saves.find((s) => s.slot === first) : saves.length === 1 ? saves[0] : undefined;
+    if (chosen) {
+      this.rushCycleMenu(chosen, first !== undefined ? 'slots' : 'main');
+      return;
+    }
+    const last = readMeta(store).lastSlot;
     saves.sort((a, b) => (b.slot === last ? 1 : 0) - (a.slot === last ? 1 : 0));
-    const list = h('div', { class: 'col', style: 'gap:6px;max-height:400px;overflow:auto;min-width:580px' });
+    const list = h('div', { class: 'col', style: 'gap:6px;max-height:400px;overflow:auto;min-width:520px' });
     for (const sv of saves) {
       const c = sv.character;
-      const r = sv.rush;
-      const fast = r ? rushFastest(r) : null;
-      const line = r && r.furthestCycle >= 0 ? `Furthest: ${rushFurthestLabel(r)}${fast ? ` · fastest clear ${fmtRushTime(fast[1])} (Cycle ${fast[0] + 1})` : ''}` : 'Has not tried Wave Rush yet';
-      const cycles = rushStartCycles(r);
-      let pick = cycles[cycles.length - 1]!;
-      // changes in place, so the arrow pressed keeps its place and the focus (D411)
-      const stepper = cycleStepper(
-        cycles,
-        pick,
-        (cy) => {
-          pick = cy;
-        },
-        null,
-      );
       list.appendChild(
         h(
           'div',
           { class: 'card row', 'data-testid': `rush-pick-${sv.slot}` },
-          h('div', { class: 'grow' }, h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}`), h('div', { class: 'small dim-text' }, line)),
-          stepper,
-          btn('Start', () => titleHooks.rush?.(sv, pick), 'tiny primary'),
+          h('div', { class: 'grow' }, h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}`), h('div', { class: 'small dim-text' }, rushLine(sv))),
+          btn('Choose', () => this.rushCycleMenu(sv, 'list'), 'tiny primary'),
         ),
       );
     }
     this.view(
       'rush',
-      h('h2', null, 'Wave Rush'),
-      h('div', { class: 'small dim-text', style: 'max-width:580px' }, 'Eight rooms, one for each zone, then a boss as hard as the cycle’s final boss. A bonfire and stairs appear when a room is clear. Beat the boss to save your place and go on to the next cycle; die (or lose the whole party) and the cycle starts again from room 1. No Shards or levels here: gear, gems, Glowen and Soul Essence are yours to keep. Your campaign is not touched.'),
-      h('div', { class: 'small dim-text', style: 'max-width:580px' }, 'Each character opens its own cycles: beat Cycle 1’s boss with a character to open Cycle 2 for it, and so on.'),
+      h('h2', null, 'Wave Rush — with which character?'),
+      h('div', { class: 'small dim-text', style: 'max-width:520px' }, RUSH_ABOUT),
       list,
       h('div', { class: 'row' }, btn('Back', () => this.main())),
+    );
+  }
+
+  /** The chosen character's starting cycle (D417): every one up to one past the best it has cleared (D416), and Start. */
+  private rushCycleMenu(sv: SaveFile, back: 'list' | 'slots' | 'main'): void {
+    const c = sv.character;
+    const cycles = rushStartCycles(sv.rush);
+    let pick = cycles[cycles.length - 1]!;
+    // changes in place, so the arrow pressed keeps its place and the focus (D411)
+    const stepper = cycleStepper(cycles, pick, (cy) => {
+      pick = cy;
+    });
+    const open = cycles.length === 1 ? `Only Cycle 1 is open for ${c.name}: beat its boss to open Cycle 2.` : `Cycles 1 to ${cycles.length} are open for ${c.name}: beat Cycle ${cycles.length}’s boss to open the next.`;
+    this.view(
+      'rush',
+      h('h2', null, `Wave Rush — ${c.name}`),
+      h('div', { class: 'small dim-text' }, `${CLASSES[c.classId].name}, level ${c.level} · ${rushLine(sv)}`),
+      h('div', { class: 'small dim-text', style: 'max-width:520px' }, RUSH_ABOUT),
+      h('div', { style: 'min-width:360px' }, stepper),
+      h('div', { class: 'small dim-text', 'data-testid': 'rush-open' }, open),
+      h('div', { class: 'row' }, testId(btn('Start', () => titleHooks.rush?.(sv, pick), 'primary'), 'rush-start'), btn('Back', () => (back === 'list' ? this.rushMenu() : back === 'slots' ? this.slots() : this.main()))),
     );
   }
 

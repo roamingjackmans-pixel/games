@@ -828,3 +828,17 @@ describe("the Landlord's Clerk's papers hurt once a volley (D392)", () => {
     expect(taken(3, 2)).toBeCloseTo(one * 2, 5);
   });
 });
+
+describe('Foreman Ignatius pays three times the shards (D418)', () => {
+  it('his kill is worth three times a plain boss of zone 5, like Vexthorn in zone 4', async () => {
+    const { BOSSES } = await import('../../src/data/bosses');
+    const ig = BOSSES.foreman_ignatius!;
+    expect(ig.zone).toBe(5);
+    expect(ig.mult?.shards).toBe(3);
+    const s = session();
+    const p = s.localPlayer!;
+    const tripled = spawnEnemy(s.w, ig, p.x + 300, p.y, { zone: 5 }).en!.shards;
+    const plain = spawnEnemy(s.w, { ...ig, mult: { ...ig.mult, shards: 1 } }, p.x + 300, p.y, { zone: 5 }).en!.shards;
+    expect(tripled / plain).toBeCloseTo(3, 2);
+  });
+});

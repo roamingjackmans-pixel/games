@@ -52,9 +52,10 @@ test('Wave Rush from the title menu: room 1 is zone 1, clear it, the stairs lead
   await page.goto('./');
   await expect(page.getByTestId('title')).toBeVisible();
   await page.getByTestId('wave-rush-btn').click();
-  await expect(page.getByRole('heading', { name: 'Wave Rush' })).toBeVisible();
+  // one character: straight to its starting cycle (D417)
+  await expect(page.getByRole('heading', { name: 'Wave Rush — Joe' })).toBeVisible();
   await expect(page.getByTestId('rush-cycle')).toHaveText('Cycle 1');
-  await page.locator('[data-testid^=rush-pick-]').first().getByRole('button', { name: 'Start' }).click();
+  await page.getByTestId('rush-start').click();
   await expect.poll(() => sceneName(page), { timeout: 10000 }).toBe('run');
   const where = (): Promise<string> =>
     page.evaluate(() => {
@@ -72,6 +73,47 @@ test('Wave Rush from the title menu: room 1 is zone 1, clear it, the stairs lead
   await page.getByRole('button', { name: 'Statistics' }).click();
   await expect(page.getByTestId('stat-rush')).toContainText('Cycle 1, room 2 of 8');
   expect(errors).toEqual([]);
+});
+
+test('Wave Rush asks for the character first, then offers only the cycles that character has opened (D416, D417)', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.getByTestId('title')).toBeVisible();
+  // a veteran who has cleared Cycle 4 and a brand-new character, plus an old browser-wide unlock that must not count
+  await page.evaluate(async () => {
+    const base = '/games/dungeonjoe/src/';
+    type Fn = (...a: unknown[]) => unknown;
+    const imp = (m: string): Promise<Record<string, Fn>> => import(/* @vite-ignore */ base + m);
+    const writeSave = (await imp('game/save/storage.ts')).writeSave!;
+    const getStore = (await imp('engine/settings.ts')).getStore!;
+    const newSave = (await imp('game/save/schema.ts')).newSave!;
+    const newCharacter = (await imp('game/player/character.ts')).newCharacter!;
+    const { Rng } = (await import(/* @vite-ignore */ base + 'engine/rng.ts')) as { Rng: new (s: string) => unknown };
+    const st = getStore();
+    for (const [slot, name, best] of [[1, 'Veteran', 3], [2, 'Rookie', -1]] as const) {
+      const c = newCharacter('knight', name, 'p-' + name, new Rng(name)) as { tutorialDone: boolean };
+      c.tutorialDone = true;
+      const sv = newSave(slot, c, 'S' + name) as { rush: { bestCycle: number } };
+      sv.rush.bestCycle = best;
+      writeSave(st, sv);
+    }
+    (st as Storage).setItem('dj.waveRush', JSON.stringify({ best: 6 }));
+  });
+  await page.reload();
+  await page.getByTestId('wave-rush-btn').click();
+  await expect(page.getByRole('heading', { name: 'Wave Rush — with which character?' })).toBeVisible();
+  // no cycle on offer until a character is chosen
+  await expect(page.getByTestId('rush-cycle')).toHaveCount(0);
+  await page.getByTestId('rush-pick-2').getByRole('button', { name: 'Choose' }).click();
+  await expect(page.getByTestId('rush-cycle')).toHaveText('Cycle 1');
+  // the last open cycle: the arrow on is dimmed and does nothing
+  await expect(page.getByRole('button', { name: 'Later cycle' })).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByTestId('rush-open')).toContainText('Only Cycle 1 is open for Rookie');
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByTestId('rush-pick-1').getByRole('button', { name: 'Choose' }).click();
+  await expect(page.getByTestId('rush-cycle')).toHaveText('Cycle 5');
+  await expect(page.getByRole('button', { name: 'Later cycle' })).toHaveAttribute('aria-disabled', 'true');
+  await page.getByRole('button', { name: 'Earlier cycle' }).click();
+  await expect(page.getByTestId('rush-cycle')).toHaveText('Cycle 4');
 });
 
 test('co-op: the host picks Wave Rush in the lobby, the guest follows into room 2', async ({ context }) => {

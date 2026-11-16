@@ -350,7 +350,7 @@ Phase 2 — **The throne sinks** (50% → 0%; speed ×1.2, damage ×1.25, arena:
 
 *VEXTHORN, THE HOLLOW STAG: "The forest has a heart. He is wearing it, and he will not give it back."* A fey stag with antlers of thorn, and the forest’s last Glowen in a lantern for a heart.
 
-HP solo (its first bar): **10514** first playthrough, 198137 at NG+1, 896868 at NG+2 (D301, D307, D325). Radius 46. Boss hit ×1.0 = 101 first playthrough. Can appear as an NG+ bonus boss (D278).
+HP solo (its first bar): **10514** first playthrough, 198137 at NG+1, 896868 at NG+2 (D301, D307, D325). Radius 46. Boss hit ×1.0 = 101 first playthrough. Can appear as an NG+ bonus boss (D278). Pays **×3 Shards** (D371).
 
 Phase 1 (100% → 50%; speed ×1, damage ×1, summons 1 Stag Sentinel (max 1, every 15 s)):
 - **Antler Gore**: arc(90°, 150), ×1.3 physical (132), bleed 30, windup 0.6 s, cd 2.4, parryable
@@ -378,7 +378,7 @@ Phase 2 — **The heart-lantern flares** (50% → 0%; speed ×1.2, damage ×1.25
 
 *FOREMAN IGNATIUS: "Twelve-hour shifts. No breaks. You are the break."* A fire-cult blacksmith riding an Anvil Golem’s shoulders. The Golem does not get a say.
 
-HP solo (its first bar): **6418** first playthrough, 83553 at NG+1, 366965 at NG+2 (D301, D307, D325). Radius 58. Boss hit ×1.0 = 124 first playthrough. construct. Arena-bound: never a bonus boss (D278).
+HP solo (its first bar): **6418** first playthrough, 83553 at NG+1, 366965 at NG+2 (D301, D307, D325). Radius 58. Boss hit ×1.0 = 124 first playthrough. construct. Arena-bound: never a bonus boss (D278). Pays **×3 Shards** (D418).
 
 Phase 1 (100% → 0%; speed ×1, damage ×1, bar 60% of full HP, arena: hazardTiles):
 - **Golem Slam**: circle(120) at self, ×1.4 physical (174), windup 0.9 s, cd 3
