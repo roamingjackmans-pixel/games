@@ -1,7 +1,8 @@
 // Hazardous terrain effects (PROCGEN §3.2, GAME_DESIGN §2.4). Slow terrain: −35% walking speed for players and
 // walking enemies while their centre is on it (one multiplier, never stacked; dodges, leaps, dashes and knockbacks
 // are forced motion and keep their full distance). Hurt terrain: players standing in it take 3% of max HP every
-// 0.5 s (a dodge's i-frames skip a tick; enemies are at home in their dungeon and take none).
+// 0.5 s (a dodge's i-frames skip a tick; enemies are at home in their dungeon and take none); out of combat it hurts nobody
+// and shows nothing (D329, D430).
 import { rawDamage } from '../combat/damage';
 import { TERRAIN, TERRAIN_SLOW_MULT, type Room } from '../room';
 import type { DamageType } from '../types';
@@ -35,7 +36,10 @@ export function updateTerrain(w: World): void {
 
 function hurt(w: World, p: Entity): void {
   const amount = Math.max(1, Math.round(p.hp!.max * TERRAIN_HURT_PCT));
+  const before = p.hp!.hp;
   rawDamage(w, p, amount, HURT_TYPE[(w.zone - 1) % 8] ?? 'physical', 0, true, 'the spiked floor');
+  // out of combat the ground hurts nobody (D329): no flash, no cry, no dust either (D430)
+  if (p.hp!.hp >= before) return;
   p.anim.flashUntil = w.time + 0.08;
   w.sfx('hitFlesh', p.x, 0.45, 1.3);
   w.fx('dust', p.x, p.y + 10, { n: 4 });

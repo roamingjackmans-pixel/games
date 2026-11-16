@@ -1001,7 +1001,8 @@ respawn (bosses, opened chests and killed mimics stay done). The map does not ch
   on by itself after 3 s, D64).
 - **Nobody leaves a ghost behind** (D115): while a player is down, doors and stairs refuse ("Revive *name* first!").
 - **Safe out of combat** (D329): with nothing to fight in the room, a player takes no damage at all: no enemy hits,
-  burn or bleed ticks, falls, harmful ground, or friendly fire.
+  burn or bleed ticks, falls, harmful ground, or friendly fire. Harmful ground that hurts nobody shows nothing either: no
+  hurt flash, hit sound or dust as you walk it (D430).
 - **Friendly fire** (D115): players' damaging attacks hit standing allies at Settings → Co-op → Friendly fire
   damage (0–200%, default 100%); the host's value rules the session. Your own attacks never hit you, except **spells
   cast at a spot** (D397): Meteor, Comet Barrage, Void Rift and Fireball's blast catch their caster too, at the same

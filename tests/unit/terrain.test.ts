@@ -243,6 +243,29 @@ describe('hazardous terrain effects', () => {
     expect(e.hp!.hp).toBe(eh);
   });
 
+  it('D430: out of combat, walking on Hurt terrain neither hurts nor flashes the player, nor plays the hit sound', () => {
+    const { w, p } = setup(TERRAIN.Hurt);
+    walkRight(p);
+    const hp0 = p.hp!.hp;
+    let flashed = false;
+    let cried = false;
+    for (let i = 0; i < 90; i++) {
+      w.events.length = 0;
+      stepWorld(w);
+      if (p.anim.flashUntil > w.time) flashed = true;
+      if (w.events.some((ev) => ev.t === 'sfx' && ev.id === 'hitFlesh')) cried = true;
+    }
+    expect(p.hp!.hp).toBe(hp0);
+    expect(flashed).toBe(false);
+    expect(cried).toBe(false);
+    // in combat it still flashes as it hurts
+    inCombat(w);
+    p.pl!.terrainHurtAt = 0;
+    stepWorld(w);
+    expect(p.hp!.hp).toBeLessThan(hp0);
+    expect(p.anim.flashUntil).toBeGreaterThan(w.time);
+  });
+
   it('travels to guests with the room sync', () => {
     for (let s = 0; s < 6; s++) {
       const L = generateZone(`sync-${s}`, 3);
