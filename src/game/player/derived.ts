@@ -523,7 +523,8 @@ export function computeDerived(c: Character): Derived {
     flaskBonus += e.flaskPct ?? 0;
     poiseBonus += e.poise ?? 0;
   }
-  if (statusSet) for (const sb of statusBuild) sb.buildup *= 1 + statusSet;
+  // D415: the gems' buildup too (each hand's own, D369), not only the shared sources
+  if (statusSet) for (const sb of [...statusBuild, ...gemMain.statusBuild, ...gemOff.statusBuild]) sb.buildup *= 1 + statusSet;
   if (powers.has('unyielding')) stabilityRed += 0.4;
   // shield proficiency (D215): less stamina a block, more elemental block
   stabilityRed += prof.blockStamina;

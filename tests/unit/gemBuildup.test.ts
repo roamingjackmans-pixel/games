@@ -52,3 +52,19 @@ describe('gem status buildup (D414)', () => {
     expect(affixText('burning', 8)).toBe('+8 fire damage, Burn buildup');
   });
 });
+
+describe('set perks raise gem buildup too (D415)', () => {
+  it('three pieces of Late Fees (+15% status buildup) raise a gem’s Burn as they raise an affix’s', () => {
+    const c = newCharacter('knight', 'Joe', 'p-gem', new Rng('GEMBUILD'));
+    for (const k of Object.keys(c.stats) as (keyof typeof c.stats)[]) c.stats[k] = 60;
+    c.equipment.main = makeItem('greataxe', 'rare', 1, { sockets: 1, gems: [makeGem('ember', { level: 10, q: 0 })] });
+    c.equipment.off = null;
+    const burn = (): number => computeDerived(c).statusBuild.filter((s) => s.id === 'burn').reduce((a, s) => a + s.buildup, 0);
+    expect(burn()).toBe(26);
+    for (const r of ['ring1', 'ring2', 'ring3'] as const) {
+      c.equipment[r] = makeItem('lucky_charm', 'rare', 3);
+      c.equipment[r]!.setPerk = 'late_fees';
+    }
+    expect(burn()).toBeCloseTo(26 * 1.15, 6);
+  });
+});

@@ -334,7 +334,7 @@ the one before. Chance a piece rolls one (D245): common 0%, uncommon 7.8%, rare 
 | **Eviction** | All-out attack | +6% damage, +3% attack speed | +12% damage, +6% attack speed, 0.4% lifesteal | +20% damage, +10% attack speed, 1% lifesteal |
 | **Squatter's Rights** | Tanking | +5% max HP, +3 defense (all) | +5% poise damage, +12% max HP, +7 defense (all) | +10% poise damage, +20% max HP, +12 defense (all) |
 | **Fine Print** | Spellcasting | +4% cast speed, +6% spell power | +8% cast speed, +12% spell power, −5% spell cooldowns | +12% cast speed, +20% spell power, −12% spell cooldowns |
-| **Late Fees** | Bleed, burn and other ailments | +15% status buildup | 0.4% lifesteal, +35% status buildup | +5% damage, 0.8% lifesteal, +60% status buildup |
+| **Late Fees** | Bleed, burn and other ailments (every source: weapons, affixes, gems (D415), powers) | +15% status buildup | 0.4% lifesteal, +35% status buildup | +5% damage, 0.8% lifesteal, +60% status buildup |
 | **Handyman** | Weapon skills | −6% skill cooldowns | −12% skill cooldowns, −5% stamina costs | +5% damage, −20% skill cooldowns, −10% stamina costs |
 | **Demolition** | Heavy hits and staggers | +10% poise damage | +4% damage, +25% poise damage | +10% damage, +40% poise damage, +5% max HP |
 | **Tea Break** | Healing and staying power | +8% stamina regen, Thermos heals +10% | +15% stamina regen, 0.4% lifesteal, Thermos heals +20% | +25% stamina regen, 0.8% lifesteal, Thermos heals +35% |
