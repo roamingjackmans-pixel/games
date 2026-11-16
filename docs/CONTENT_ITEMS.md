@@ -60,7 +60,7 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
 | Spellblade | Keen - / A / Brain D; Deep - / D / Brain A |
 | Censer Flail | Heavy A / - / Prayer D; Devout D / - / Prayer A |
 | Dawn Glaive | Keen - / A / Prayer D; Devout - / D / Prayer A |
-| Cestus (D388) | Hollow C / - / Brain C; Fervent C / - / Prayer C |
+| Cestus (D388, D433) | Hollow C / - / Brain C; Fervent C / - / Prayer C; Keen - / A; Blessed - / C / Prayer C |
 | Rune Kris (D388) | Blessed - / B / Prayer B |
 | Hex Hammer (D388) | Fervent B / - / Prayer B |
 | Harvest Sickle (D388) | Arcane - / B / Brain B |

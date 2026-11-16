@@ -53,7 +53,8 @@ export const WEAPON_VARIANTS: Record<string, WeaponVariantDef[]> = {
   twin_axes: [heavy({ bonk: 'B', slicey: 'C' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' }), fervent({ bonk: 'B', slicey: '-', prayer: 'C' }), hollow({ bonk: 'B', slicey: '-', brain: 'C' })],
   chakram: [blessed({ bonk: '-', slicey: 'D', prayer: 'C' }), arcane({ bonk: '-', slicey: 'D', brain: 'C' })],
   // D388: the four new classes trade their second stat
-  cestus: [hollow({ bonk: 'C', slicey: '-', brain: 'C' }), fervent({ bonk: 'C', slicey: '-', prayer: 'C' })],
+  // D433: and Keen (Slicey) and Blessed (Slicey + Prayer) fists for Slicey builds
+  cestus: [hollow({ bonk: 'C', slicey: '-', brain: 'C' }), fervent({ bonk: 'C', slicey: '-', prayer: 'C' }), keen({ bonk: '-', slicey: 'A' }), blessed({ bonk: '-', slicey: 'C', prayer: 'C' })],
   rune_kris: [blessed({ bonk: '-', slicey: 'B', prayer: 'B' })],
   hex_hammer: [fervent({ bonk: 'B', slicey: '-', prayer: 'B' })],
   harvest_sickle: [arcane({ bonk: '-', slicey: 'B', brain: 'B' })],
