@@ -311,11 +311,11 @@ function sweepShape(s: Sweep, a: number): Shape {
   return SC_CONE;
 }
 
-/** A rotating cone / beam: the start wedge charges, a dotted ember arc shows the way it will turn. */
-/** A sweep, with its gaps (D163) cut out and their safe rings marked. */
+/** A sweep, with its gaps (D163) cut out and their safe rings marked, and arrows the way it will turn (D423). */
 function drawSweep(ctx: CanvasRenderingContext2D, s: Sweep, l: Look, c: Charge, hc: boolean, pre: boolean, tau: number, id: number): void {
   if (!s.gaps?.length) {
     drawSweepBody(ctx, s, l, c, hc, pre, tau, id);
+    if (pre) drawTurnArrows(ctx, s, l, c, hc);
     return;
   }
   const hw = (s.gapW ?? 130) / 2;
@@ -352,6 +352,92 @@ function drawSweep(ctx: CanvasRenderingContext2D, s: Sweep, l: Look, c: Charge, 
   ctx.stroke();
   ctx.setLineDash(NO_DASH);
   ctx.lineCap = 'butt';
+  // over the gap cut-outs, so the safe rings never break the arrows up
+  if (pre) drawTurnArrows(ctx, s, l, c, hc);
+}
+
+/** A sweep that turns (nearly) all the way round: it ends where it starts, so an end-of-turn arc says nothing. */
+export function fullTurn(s: Sweep): boolean {
+  return Math.abs(s.arc) >= Math.PI * 1.5;
+}
+
+/**
+ * Which way a sweep will turn, shown all through its tell (D423): a row of double chevrons down the leading side
+ * of the start wedge, marching the way it will go (stand on the other side, behind it), and on a full turn a
+ * bold curved arrow round the pivot. White-hot over a dark under-stroke, so it reads on any floor in any kind
+ * colour.
+ */
+export function drawTurnArrows(ctx: CanvasRenderingContext2D, s: Sweep, l: Look, c: Charge, hc: boolean): void {
+  const dir = Math.sign(s.arc) || 1;
+  // the start wedge's leading edge, and the way it moves
+  const ea = s.line ? s.a0 : s.a0 + dir * s.half;
+  const ux = Math.cos(ea);
+  const uy = Math.sin(ea);
+  const tx = -uy * dir;
+  const ty = ux * dir;
+  const reach = Math.min(1600, s.r);
+  const off = (s.line ? s.w / 2 : 0) + 28;
+  const march = (c.t * 1.6) % 1;
+  const passes: [string, number, number][] = [
+    [l.deep, hc ? 10 : 8, 0.6],
+    [l.hot, hc ? 4.5 : 3.5, 0.95],
+  ];
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  for (let d = 70; d < reach; d += 110) {
+    const bx = s.x + ux * d + tx * (off + march * 10);
+    const by = s.y + uy * d + ty * (off + march * 10);
+    if (bx < ROOM_MIN_X + 10 || bx > ROOM_MAX_X - 10 || by < ROOM_MIN_Y + 10 || by > ROOM_MAX_Y - 10) continue;
+    for (let k = 0; k < 2; k++) {
+      const cx = bx + tx * k * 15;
+      const cy = by + ty * k * 15;
+      ctx.moveTo(cx - tx * 10 + ux * 14, cy - ty * 10 + uy * 14);
+      ctx.lineTo(cx + tx * 3, cy + ty * 3);
+      ctx.lineTo(cx - tx * 10 - ux * 14, cy - ty * 10 - uy * 14);
+    }
+  }
+  const fade = 0.75 + 0.25 * Math.sin(Math.PI * march);
+  for (const [col, lw, a] of passes) {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = lw;
+    ctx.globalAlpha = a * fade;
+    ctx.stroke();
+  }
+  if (fullTurn(s)) {
+    // a quarter turn of bold arrow round the pivot, starting just past the start wedge
+    const R = Math.max(90, Math.min(150, reach * 0.5));
+    const pad = (s.line ? s.w / 2 + 16 : 16) / R + (s.line ? 0 : s.half);
+    const a1 = s.a0 + dir * pad;
+    const a2 = s.a0 + dir * (pad + Math.PI / 2);
+    const hx = s.x + Math.cos(a2) * R;
+    const hy = s.y + Math.sin(a2) * R;
+    const htx = -Math.sin(a2) * dir;
+    const hty = Math.cos(a2) * dir;
+    const hnx = Math.cos(a2);
+    const hny = Math.sin(a2);
+    for (const [col, lw, a] of passes) {
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = col;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, R, a1, a2, dir < 0);
+      ctx.lineWidth = lw + 3;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(hx + htx * 20, hy + hty * 20);
+      ctx.lineTo(hx - htx * 4 + hnx * 15, hy - hty * 4 + hny * 15);
+      ctx.lineTo(hx - htx * 4 - hnx * 15, hy - hty * 4 - hny * 15);
+      ctx.closePath();
+      ctx.fill();
+      if (col === l.deep) {
+        ctx.lineWidth = 5;
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
 }
 
 function drawSweepBody(ctx: CanvasRenderingContext2D, s: Sweep, l: Look, c: Charge, hc: boolean, pre: boolean, tau: number, id: number): void {
@@ -360,6 +446,8 @@ function drawSweepBody(ctx: CanvasRenderingContext2D, s: Sweep, l: Look, c: Char
     ONE[0] = sweepShape(s, s.a0);
     drawAreas(ctx, ONE, true, l, c, hc, true, tau, 'once', id);
     const rr = Math.min(s.r, 260) * 0.7;
+    // a full turn ends where it starts: drawTurnArrows says which way instead of an end-of-turn arc
+    if (fullTurn(s)) return;
     ctx.beginPath();
     ctx.arc(s.x, s.y, rr, s.a0, s.a0 + s.arc, dir < 0);
     ctx.setLineDash(DOTS);
