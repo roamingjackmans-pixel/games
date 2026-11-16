@@ -334,7 +334,10 @@ export class WorldView {
       }
     }
     // skill and spell animations over the bodies (and meteors / arrows about to land on their telegraphs)
-    drawSkillFxTop(ctx, rt, this.particles, w.entities.values(), now);
+    drawSkillFxTop(ctx, rt, this.particles, w.entities.values(), now, (id) => {
+      const e = w.entities.get(id);
+      return e && !e.removed ? { x: e.px + (e.x - e.px) * alpha, y: e.py + (e.y - e.py) * alpha, a: e.facing } : null;
+    });
     this.particles.draw(ctx);
     // golden sparkles on anyone drinking from the Thermos
     for (const e of list) if (e.type === 'player') drawThermosSparkle(ctx, e, e.px + (e.x - e.px) * alpha, e.py + (e.y - e.py) * alpha, now);

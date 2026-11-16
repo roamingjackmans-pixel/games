@@ -321,6 +321,8 @@ export function updatePlayerAction(w: World, e: Entity, dt: number): void {
   }
   const ch = pl.channel;
   if (ch) {
+    // a channel that follows the aim (Arcane Beam, Flurry) turns with it every frame, not only on its ticks (D425)
+    if (ch.followAim && now < ch.until) e.facing = Math.atan2(pl.aimY - e.y, pl.aimX - e.x);
     if (now >= ch.until) {
       pl.channel = null;
       if (pl.state === 'channel') pl.state = 'idle';

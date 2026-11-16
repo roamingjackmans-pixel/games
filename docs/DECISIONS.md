@@ -54,6 +54,7 @@ holds now. Additions that only build on an earlier decision are not listed.
 | D178 (prof. level 50, bar sizes) | D218, D221 | Proficiency to level 100; item bars doubled (120 / 240 / 400 / 640). |
 | D180 (spell shots ×2) | D204 | Player spell projectiles are ×4 their listed size. |
 | D180 (players' shots fly over props) | D424 | Props stop every player shot loosed without pierce; piercing ones fly through. |
+| D425 | Arcane Beam swings smoothly | Owner's report: swinging Arcane Beam round while it fires jumps around and feels bad. Two causes: the caster turned toward the aim only on each 0.2 s damage tick, and each tick drew its own fixed beam at that tick's angle (0.27 s long, overlapping the next), so a swung beam stepped five times a second and showed two beams at once mid-swing. Now a channel that follows the aim (`followAim`: Arcane Beam, Flurry, Thousand Cuts) turns the caster every frame. The beam animation (`VfxDef.follow`) is one per caster: the fx event names the caster (`FxExtra.src`, set for a line drawn from its caster's feet), each tick lengthens the lit beam instead of adding one, and the view draws it from the caster's drawn position at their facing every frame. Damage is unchanged: each tick still hits the line the caster faces at that tick. |
 | D185 (enemy range 850) | D186 | Enemy projectiles reach 425 px; players' 850. |
 | D198 (Essence rates) | D226 | Essence drops at half the rate. |
 | D205 (each arrow full hit) | D264 | A volley hits any one enemy at most once. |

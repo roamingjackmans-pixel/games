@@ -93,6 +93,8 @@ interface Fx {
   tint: Tint;
   /** one-shot flags (debris bursts) */
   done: number;
+  /** the entity it follows (VfxDef.follow), 0 for none */
+  src: number;
 }
 
 interface VfxDef {
@@ -104,6 +106,9 @@ interface VfxDef {
   ground?: ((ctx: CanvasRenderingContext2D, f: Fx, age: number) => void) | undefined;
   /** over the bodies */
   top(ctx: CanvasRenderingContext2D, f: Fx, age: number, p: Particles): void;
+  /** stays on its caster and turns with it (D425): each new tick from the same caster lengthens the one animation
+   * instead of laying a fresh one at the tick's angle, so a beam swung round moves smoothly instead of jumping */
+  follow?: boolean;
   /** drawn over a telegraph while it is about to land (k 0 → 1 over `preS` seconds): a meteor falling */
   pre?: { s: number; draw(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, k: number, seed: number): void };
 }
@@ -995,12 +1000,14 @@ const SUN_LAYERS: [number, string, number][] = [
   [0.28, '#ffffff', 0.95],
 ];
 
-/** one tick of a channelled beam: ticks overlap so the beam reads as one continuous ray */
+/** a channelled beam (D425): one animation for the whole channel, on the caster and turning with it, each tick
+ * keeping it lit a little longer */
 const arcaneBeam: VfxDef = {
   dur: () => 0.27,
   tint: VOID,
+  follow: true,
   top(ctx, f, age) {
-    const al = c01(age / 0.03) * fade(age, 0.2, 0.27);
+    const al = c01(age / 0.03) * fade(age, f.dur - 0.07, f.dur);
     const rt = performance.now() / 1000;
     ctx.save();
     toLocal(ctx, f);
@@ -1497,9 +1504,25 @@ let liveN = 0;
 export function spawnSkillFx(ev: { kind: string; x: number; y: number } & FxExtra, now: number): boolean {
   if (!ev.v || !isVfxId(ev.v)) return false;
   const def = DEFS[ev.v];
+  const src = def.follow && ev.src ? ev.src : 0;
+  if (src) {
+    // the caster's beam is already lit: keep it lit for this tick too
+    for (const g of pool) {
+      if (!g || !g.live || g.def !== def || g.src !== src || now - g.t0 > g.dur) continue;
+      g.dur = now - g.t0 + def.dur(ev.d ?? 0);
+      g.l = ev.r ?? g.l;
+      g.w = ev.x2 ?? g.w;
+      if (!followed(g)) {
+        g.x = ev.x;
+        g.y = ev.y;
+        g.a = ev.a ?? g.a;
+      }
+      return true;
+    }
+  }
   let f = pool[next];
   if (!f) {
-    f = { live: false, def, shape: 0, x: 0, y: 0, a: 0, l: 0, w: 0, t0: 0, dur: 0, seed: 0, tint: TINTS.physical, done: 0 };
+    f = { live: false, def, shape: 0, x: 0, y: 0, a: 0, l: 0, w: 0, t0: 0, dur: 0, seed: 0, tint: TINTS.physical, done: 0, src: 0 };
     pool[next] = f;
   }
   next = (next + 1) % MAX;
@@ -1517,6 +1540,22 @@ export function spawnSkillFx(ev: { kind: string; x: number; y: number } & FxExtr
   f.seed = (seedN = (seedN * 1103515245 + 12345) & 0x7fffffff);
   f.tint = def.tint ?? TINTS[ev.el ?? 'physical'];
   f.done = 0;
+  f.src = src;
+  return true;
+}
+
+/** Where a followed caster is drawn this frame, and which way it faces (null: gone, the animation stays put). */
+export type FxFollow = (id: number) => { x: number; y: number; a: number } | null;
+let follow: FxFollow | null = null;
+
+/** Move a following animation onto its caster; false if it has none or the caster is gone. */
+function followed(f: Fx): boolean {
+  if (!f.src || !follow) return false;
+  const at = follow(f.src);
+  if (!at) return false;
+  f.x = at.x;
+  f.y = at.y;
+  f.a = at.a;
   return true;
 }
 
@@ -1539,7 +1578,8 @@ export function drawSkillFxGround(ctx: CanvasRenderingContext2D, now: number): v
 }
 
 /** Draw the bright parts over the bodies, plus whatever is about to land on a telegraph (falling meteors, arrows). */
-export function drawSkillFxTop(ctx: CanvasRenderingContext2D, now: number, p: Particles, telegraphs: Iterable<Entity>, simNow: number): void {
+export function drawSkillFxTop(ctx: CanvasRenderingContext2D, now: number, p: Particles, telegraphs: Iterable<Entity>, simNow: number, at: FxFollow | null = null): void {
+  follow = at;
   ctx.save();
   for (const e of telegraphs) {
     const tg = e.tg;
@@ -1553,7 +1593,11 @@ export function drawSkillFxTop(ctx: CanvasRenderingContext2D, now: number, p: Pa
   }
   if (liveN) {
     sweep(now);
-    for (const f of pool) if (f.live) f.def.top(ctx, f, now - f.t0, p);
+    for (const f of pool) {
+      if (!f.live) continue;
+      if (f.src) followed(f);
+      f.def.top(ctx, f, now - f.t0, p);
+    }
   }
   ctx.restore();
 }

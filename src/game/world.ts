@@ -605,6 +605,8 @@ export interface FxExtra {
   el?: DamageType;
   /** how long the area stays live, s (a beam tick's length) */
   d?: number;
+  /** the entity a line starts at (D425): a following animation (Arcane Beam) stays on it and turns with it */
+  src?: number;
 }
 
 export type GameEvent =

@@ -219,11 +219,14 @@ function impactFx(w: World, t: Entity): void {
     const v = tg.vfx;
     const d = Math.max(0, tg.end - tg.impact);
     const el = tg.dmgType ?? 'physical';
+    const owner = w.get(tg.ownerId);
     for (const s of tg.shapes) {
       if (n++ > 10) break;
+      // a line from its caster's feet names the caster, so a following animation can stay on it (D425)
+      const src = s.k === 'line' && owner && Math.abs(owner.x - s.x) < 1 && Math.abs(owner.y - s.y) < 1 ? { src: owner.id } : {};
       if (s.k === 'circle') w.fx('circle', s.x, s.y, { r: s.r, v, el, d });
       else if (s.k === 'ring') w.fx('circle', s.x, s.y, { r: Math.min(400, s.rOut), x2: s.rIn, v, el, d });
-      else if (s.k === 'line') w.fx('line', s.x, s.y, { a: s.a, r: s.l, x2: s.w, v, el, d });
+      else if (s.k === 'line') w.fx('line', s.x, s.y, { a: s.a, r: s.l, x2: s.w, v, el, d, ...src });
       else if (s.k === 'cone') w.fx('cone', s.x, s.y, { a: s.a, r: Math.min(500, s.r), x2: s.half, v, el, d });
     }
     if (tg.area) w.emit({ t: 'shake', amount: tg.kind === 'normal' ? 2 : 4 });

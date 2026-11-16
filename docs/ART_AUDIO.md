@@ -76,6 +76,9 @@ Contents: [1 Rendering](#1-rendering) · [2 Style](#2-style) · [3 Telegraphs an
   down the leading side of the start wedge, the way it will turn (stand on the other side, behind it). A sweep that
   turns all the way round (the Gear Turret's and Tock's corner Laser Sweeps) also gets a bold curved arrow a quarter
   turn long round its pivot, in place of the dotted end-of-turn arc, which on a full circle ended where it began.
+- **Channelled beams follow their caster** (D425): Arcane Beam is one animation for the whole channel, drawn from
+  where the caster stands this frame and at the way they face this frame (the caster turns with the aim every frame),
+  each 0.2 s damage tick keeping it lit; it used to be a fresh beam per tick at that tick's angle, which jumped.
 - **High contrast** (Settings → Video) adds a dark outline and a solid kind-coloured edge and strengthens fills; the
   icon size setting doubles the icons.
 
