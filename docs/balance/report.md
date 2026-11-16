@@ -15,21 +15,20 @@ Written by `npm run balance:report` (tests/sim/report.sim.ts) from the live data
 9. **Boss length** (severity 4.5): NG+5 zone 8: the median build needs 460 s of nonstop hitting to kill The Landlord (3,981,273 HP), 7.7 minutes before any dodging (target 11 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
 10. **Weapons** (severity 4.4): Katana: 266 sustained light-attack DPS, 1.73× the median weapon (154) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
 11. **Boss length** (severity 4.3): NG+4 zone 8: the median build needs 390 s of nonstop hitting to kill The Landlord (2,769,325 HP), 6.5 minutes before any dodging (target 11 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
-12. **Boss length** (severity 4.2): NG+7 zone 1: the median build needs 360 s of nonstop hitting to kill The Caretaker (3,690,201 HP), 6 minutes before any dodging (target 8 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
-13. **Weapons** (severity 4.1): Twin Daggers: 250 sustained light-attack DPS, 1.62× the median weapon (154) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
-14. **Weapons** (severity 4.1): Crossbow: 96 sustained light-attack DPS, 0.62× the median weapon (154) at equal fitting stats. *Suggested:* Raise its base damage / combo multipliers (D40: poor scaling should mean higher base, not lower DPS).
-15. **Spells** (severity 4): Comet Barrage (brain): 2.9 damage per busy second at Spell Skill 100, 0.39× the brain median (7.3). *Suggested:* Raise its base or shorten its cooldown (unless its utility is the point).
+12. **Spells** (severity 4.2): Comet Barrage (brain): 2.9 damage per busy second at Spell Skill 100, 0.36× the brain median (8). *Suggested:* Raise its base or shorten its cooldown (unless its utility is the point).
+13. **Boss length** (severity 4.2): NG+7 zone 1: the median build needs 360 s of nonstop hitting to kill The Caretaker (3,690,201 HP), 6 minutes before any dodging (target 8 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
+14. **Weapons** (severity 4.1): Twin Daggers: 250 sustained light-attack DPS, 1.62× the median weapon (154) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
+15. **Weapons** (severity 4.1): Crossbow: 96 sustained light-attack DPS, 0.62× the median weapon (154) at equal fitting stats. *Suggested:* Raise its base damage / combo multipliers (D40: poor scaling should mean higher base, not lower DPS).
 16. **Builds** (severity 4): First playthrough zone 1: the Brain caster: S staff (Archmagister's Rod) build at level 6 does not meet its own casting tool's requirements at item level 1 (40% damage, no skills). *Suggested:* Item-level requirements (+2 a level on the primary stat) outpace the points a focused build has; ease reqAtIlvl or the NG+ item level.
 17. **Builds** (severity 4): First playthrough zone 2: the Brain caster: S staff (Archmagister's Rod) build at level 15 does not meet its own casting tool's requirements at item level 2 (40% damage, no skills). *Suggested:* Item-level requirements (+2 a level on the primary stat) outpace the points a focused build has; ease reqAtIlvl or the NG+ item level.
 18. **Enemy curve** (severity 3.8): First playthrough: zone 8 room enemies hit for 100 on average, below zone 7's 108. *Suggested:* Make the per-zone damage table climb (zoneDmgFactor / NG_ZONE_ENEMY_DMG).
 19. **Weapons** (severity 3.7): Chakrams: 104 sustained light-attack DPS, 0.67× the median weapon (154) at equal fitting stats. *Suggested:* Raise its base damage / combo multipliers (D40: poor scaling should mean higher base, not lower DPS).
-20. **Spells** (severity 3.7): Arcane Bolt (brain): 16 damage per busy second at Spell Skill 100, 2.2× the brain median (7.3). *Suggested:* Lengthen its cooldown or lower its base.
-21. **Enemy curve** (severity 3.4): NG+4: zone 7 room enemies have 23,519 HP on average, below zone 6's 26,699. *Suggested:* Check the zone roster mix and the HP curve.
-22. **Enemy curve** (severity 3.3): NG+6: zone 7 room enemies have 35,545 HP on average, below zone 6's 39,993. *Suggested:* Check the zone roster mix and the HP curve.
-23. **Enemy curve** (severity 3.2): NG+3: zone 2 room enemies have 10,968 HP on average, below zone 1's 12,318. *Suggested:* Check the zone roster mix and the HP curve.
-24. **Boss curve** (severity 3.2): NG+1: Foreman Ignatius (zone 5) has 111,403 HP over all phases, below zone 4's boss (113,929). *Suggested:* Raise its baseHp / phase bars, or lower the previous boss.
-25. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
-26. **Boss curve** (severity 2.9): NG+1: The Bloatking (zone 3) averages 631 a hit, below zone 2's boss (705). *Suggested:* Raise its phase damage multipliers.
+20. **Enemy curve** (severity 3.4): NG+4: zone 7 room enemies have 23,519 HP on average, below zone 6's 26,699. *Suggested:* Check the zone roster mix and the HP curve.
+21. **Enemy curve** (severity 3.3): NG+6: zone 7 room enemies have 35,545 HP on average, below zone 6's 39,993. *Suggested:* Check the zone roster mix and the HP curve.
+22. **Enemy curve** (severity 3.2): NG+3: zone 2 room enemies have 10,968 HP on average, below zone 1's 12,318. *Suggested:* Check the zone roster mix and the HP curve.
+23. **Boss curve** (severity 3.2): NG+1: Foreman Ignatius (zone 5) has 111,403 HP over all phases, below zone 4's boss (113,929). *Suggested:* Raise its baseHp / phase bars, or lower the previous boss.
+24. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
+25. **Boss curve** (severity 2.9): NG+1: The Bloatking (zone 3) averages 631 a hit, below zone 2's boss (705). *Suggested:* Raise its phase damage multipliers.
 
 (155 more findings of the same kinds are in the tables below.)
 
@@ -727,15 +726,15 @@ Spells at Spell Skill 100 (single target; fans count one projectile, ticking are
 
 | Spell | School | Damage | Cast s | Cooldown s | Stamina | Dmg / busy s | Dmg / stamina | Flags |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Arcane Bolt | brain | 19 | 0.3 | 1.2 | 8 | 16 | 2.4 | ⚠ 2.2× school median DPS |
+| Arcane Bolt | brain | 19 | 0.3 | 1.2 | 8 | 16 | 2.4 |  |
 | Scatter Shards | brain | 14 | 0.4 | 4 | 14 | 3.5 | 1 |  |
 | Frost Lance | brain | 40 | 0.5 | 5 | 16 | 8 | 2.5 |  |
 | Fireball | brain | 30 | 0.6 | 6 | 18 | 5 | 1.7 |  |
 | Chain Lightning | brain | 36 | 0.5 | 7 | 18 | 5.1 | 2 |  |
 | Void Rift | brain | 96 | 0.7 | 9 | 22 | 10.7 | 4.4 |  |
-| Arcane Beam | brain | 80 | 2.1 | 11 | 30 | 7.3 | 2.7 |  |
+| Arcane Beam | brain | 100 | 2.1 | 11 | 30 | 9.1 | 3.3 |  |
 | Meteor | brain | 160 | 0.8 | 16 | 34 | 10 | 4.7 |  |
-| Comet Barrage | brain | 63 | 1 | 22 | 40 | 2.9 | 1.6 | ⚠ 0.39× school median DPS |
+| Comet Barrage | brain | 63 | 1 | 22 | 40 | 2.9 | 1.6 | ⚠ 0.36× school median DPS |
 | Purify | prayer | 30 | 0.5 | 10 | 12 | 3 | 2.5 |  |
 | Sunray | prayer | 36 | 0.5 | 6 | 14 | 6 | 2.6 |  |
 

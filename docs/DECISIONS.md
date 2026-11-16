@@ -57,6 +57,7 @@ holds now. Additions that only build on an earlier decision are not listed.
 | D425 | Arcane Beam swings smoothly | Owner's report: swinging Arcane Beam round while it fires jumps around and feels bad. Two causes: the caster turned toward the aim only on each 0.2 s damage tick, and each tick drew its own fixed beam at that tick's angle (0.27 s long, overlapping the next), so a swung beam stepped five times a second and showed two beams at once mid-swing. Now a channel that follows the aim (`followAim`: Arcane Beam, Flurry, Thousand Cuts) turns the caster every frame. The beam animation (`VfxDef.follow`) is one per caster: the fx event names the caster (`FxExtra.src`, set for a line drawn from its caster's feet), each tick lengthens the lit beam instead of adding one, and the view draws it from the caster's drawn position at their facing every frame. Damage is unchanged: each tick still hits the line the caster faces at that tick. |
 | D426 | Arcane Beam 8 per tick | Owner's request: Arcane Beam's base damage per 0.2 s tick 18 → 8 (Spell Skill and the staff still scale it, D182). Ten ticks over its 2 s channel: 80 base, was 180. |
 | D427 | Arcane Beam stays smooth on the move | Owner's report: after D425 the beam swung smoothly standing still but still jumped while walking. A tick's beam was tied to its caster only if the line started within 1 px of where the caster stood when the tick landed, and walking moves the caster a step between the line being laid and landing, so every tick on the move fell back to its own fixed beam. Now within 32 px counts (`FROM_CASTER_PX`). |
+| D428 | Arcane Beam 10 per tick | Owner's request: Arcane Beam's base damage per 0.2 s tick 8 → 10 (D426 had cut it from 18). 100 base over the 2 s channel. |
 | D185 (enemy range 850) | D186 | Enemy projectiles reach 425 px; players' 850. |
 | D198 (Essence rates) | D226 | Essence drops at half the rate. |
 | D205 (each arrow full hit) | D264 | A volley hits any one enemy at most once. |
@@ -81,6 +82,7 @@ holds now. Additions that only build on an earlier decision are not listed.
 | D284 (gem status buildup 22 × roll) | D414 | Status gems build 22 × 0.6 × roll, × the weapon's speed tag (×1 / ×1.5 / ×2). |
 | D405 (Wave Rush unlock shared by the browser) | D416 | Each character opens its own Wave Rush cycles; in co-op the host's character decides. |
 | D243 (set steps at 3, 5, 7 pieces) | D419 | Set perk steps come at 1, 2 and 4 pieces. |
+| D426 (Arcane Beam 8 per tick) | D428 | Arcane Beam deals 10 per tick. |
 
 ## Decisions
 
