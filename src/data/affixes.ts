@@ -66,13 +66,17 @@ export const AFFIXES: Record<string, AffixDef> = {
 
 export const AFFIX_IDS = Object.keys(AFFIXES);
 
-/** `leechMult`: on a weapon, Leeching heals ×1.5 on a Medium and ×2 on a Slow one (D371) and shows it (D386). */
-export function affixText(id: string, v: number, leechMult = 1): string {
+/**
+ * `leechMult`: on a weapon, Leeching heals ×1.5 on a Medium and ×2 on a Slow one (D371) and shows it (D386).
+ * `ilvl`: the item's level, so a status affix shows its buildup per hit as a number (D414).
+ */
+export function affixText(id: string, v: number, leechMult = 1, ilvl?: number): string {
   const a = AFFIXES[id];
   if (!a) return id;
   if (id === 'leeching') v = lifestealShown(v * leechMult);
   const val = a.integer ? String(Math.round(v)) : v < 1 ? String(Math.round(v * 100) / 100) : v.toFixed(1).replace(/\.0$/, '');
-  return a.text.replace('{v}', val);
+  const text = a.text.replace('{v}', val);
+  return ilvl !== undefined && a.status ? text.replace(/ buildup$/, ` buildup ${affixBuildup(id, v, ilvl)}`) : text;
 }
 
 /** Status buildup that rides along with an elemental affix (scaled by the rolled value within its range). */

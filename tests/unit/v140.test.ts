@@ -689,18 +689,18 @@ describe('two-handed swings cost 30% more stamina (D385)', () => {
 describe('a Leech gem shows what it heals in its weapon (D386)', () => {
   it('the same gem reads ×1.5 in a Medium weapon and ×2 in a Slow one; loose or in a staff as listed', async () => {
     const { makeGem, perkText } = await import('../../src/data/gems');
-    const { leechMultIn } = await import('../../src/ui/tooltip');
+    const { speedMultIn } = await import('../../src/ui/tooltip');
     const g = makeGem('leech', { level: 30, q: 0 });
     const p = g.perks[0]!;
     const num = (t: string): number => parseFloat(t.replace(/[^0-9.]/g, ''));
-    const fast = num(perkText(p, leechMultIn(makeItem('rapier', 'rare'))));
-    const medium = num(perkText(p, leechMultIn(makeItem('longsword', 'rare'))));
-    const slow = num(perkText(p, leechMultIn(makeItem('greataxe', 'rare'))));
+    const fast = num(perkText(p, speedMultIn(makeItem('rapier', 'rare'))));
+    const medium = num(perkText(p, speedMultIn(makeItem('longsword', 'rare'))));
+    const slow = num(perkText(p, speedMultIn(makeItem('greataxe', 'rare'))));
     expect(num(perkText(p))).toBeCloseTo(fast, 6);
     expect(medium / fast).toBeCloseTo(1.5, 1);
     expect(slow / fast).toBeCloseTo(2, 1);
-    expect(leechMultIn(makeItem('apprentice_staff', 'rare'))).toBe(1);
-    expect(leechMultIn(null)).toBe(1);
+    expect(speedMultIn(makeItem('apprentice_staff', 'rare'))).toBe(1);
+    expect(speedMultIn(null)).toBe(1);
   });
 });
 

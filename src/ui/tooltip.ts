@@ -447,14 +447,14 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
   }
 
   // ---- affixes, sockets, legendary power: each in its own section
-  if (item.affixes.length) out.push(section('Affixes', ...item.affixes.map((a) => h('div', { class: 'tt-text good' }, affixText(a.id, a.value, leechMultIn(item))))));
+  if (item.affixes.length) out.push(section('Affixes', ...item.affixes.map((a) => h('div', { class: 'tt-text good' }, affixText(a.id, a.value, speedMultIn(item), item.ilvl)))));
   if (item.sockets.length) {
     out.push(
       section(
         'Sockets',
         ...item.sockets.map((g, i) =>
           g
-            ? h('div', { class: 'tt-text' }, ...g.perks.map((p, j) => h('div', null, h('span', { style: `color:${GEMS[p.family].color}` }, `${j === 0 ? '◆' : '+'} ${perkName(p)}`), ': ', perkEffectEl(p, leechMultIn(item)))))
+            ? h('div', { class: 'tt-text' }, ...g.perks.map((p, j) => h('div', null, h('span', { style: `color:${GEMS[p.family].color}` }, `${j === 0 ? '◆' : '+'} ${perkName(p)}`), ': ', perkEffectEl(p, speedMultIn(item)))))
             : h('div', { class: 'tt-text dim-text' }, `◇ Empty socket ${i + 1} (${item.kind === 'armor' ? 'armor' : 'weapon'} gems)`),
         ),
       ),
@@ -504,46 +504,49 @@ export function gemKindChip(g: Gem): HTMLElement {
 }
 
 /**
- * D386: how much a Leech gem's lifesteal counts in this item: a weapon's speed tag (D371: ×1 Fast, ×1.5 Medium, ×2
- * Slow); anything else (a staff, a talisman, a loose gem) ×1.
+ * How much a gem's Leech (D386) and status buildup (D414) count in this item: a weapon's speed tag (D371: ×1 Fast,
+ * ×1.5 Medium, ×2 Slow); anything else (a staff, a talisman, a loose gem) ×1.
  */
-export function leechMultIn(item: Item | null | undefined): number {
+export function speedMultIn(item: Item | null | undefined): number {
   const w = item ? weaponOf(item) : undefined;
   return w ? SPEED_TAG_MULT[speedTag(w)] : 1;
 }
 
 /** What a perk does, in its quality colour (Green, Blue, Purple, Orange), its roll beside it (D197). */
-export function perkEffectEl(p: GemPerk, leechMult = 1): HTMLElement {
+export function perkEffectEl(p: GemPerk, speedMult = 1): HTMLElement {
   const qd = perkQuality(p);
-  return h('span', { style: `color:${qd.color}`, title: `${perkRollText(p)} of its level value` }, perkText(p, leechMult), h('span', { class: 'dim-text', style: 'font-size:.85em' }, ` (${perkRollText(p)})`));
+  return h('span', { style: `color:${qd.color}`, title: `${perkRollText(p)} of its level value` }, perkText(p, speedMult), h('span', { class: 'dim-text', style: 'font-size:.85em' }, ` (${perkRollText(p)})`));
 }
 
 /** Perks' effects side by side, " · " between. */
-export function perkEffectsEl(g: Gem, leechMult = 1): HTMLElement {
+export function perkEffectsEl(g: Gem, speedMult = 1): HTMLElement {
   const el = h('span', null);
   g.perks.forEach((p, i) => {
     if (i) el.append(' · ');
-    el.appendChild(perkEffectEl(p, leechMult));
+    el.appendChild(perkEffectEl(p, speedMult));
   });
   return el;
 }
 
 /** One line per perk: name (level, family colour) and what it does (quality colour). */
-export function gemPerkLines(g: Gem, leechMult = 1): HTMLElement[] {
-  return g.perks.map((p) => h('div', { class: 'small' }, h('span', { style: `color:${GEMS[p.family].color}` }, perkName(p)), ' ', perkEffectEl(p, leechMult)));
+export function gemPerkLines(g: Gem, speedMult = 1): HTMLElement[] {
+  return g.perks.map((p) => h('div', { class: 'small' }, h('span', { style: `color:${GEMS[p.family].color}` }, perkName(p)), ' ', perkEffectEl(p, speedMult)));
 }
 
-/** `inItem`: the weapon it sits in, so Leech shows what it heals there (D386). */
+/** `inItem`: the weapon it sits in, so Leech shows what it heals there (D386) and a status gem its buildup there (D414). */
 export function gemTooltip(g: Gem, inItem?: Item | null): HTMLElement {
-  const lm = leechMultIn(inItem);
+  const lm = speedMultIn(inItem);
   const leech = g.perks.some((p) => p.family === 'leech');
+  const status = g.perks.some((p) => GEMS[p.family].adds?.status);
+  const tag = inItem && lm > 1 ? SPEED_TAG_LABEL[speedTag(weaponOf(inItem)!)] : null;
   return h(
     'div',
     { class: 'tooltip' },
     h('div', { class: 'name', style: `color:${gemColor(g)}` }, gemTitle(g)),
     h('div', null, gemKindChip(g)),
     ...gemPerkLines(g, lm),
-    ...(leech ? [h('div', { class: 'small dim-text' }, inItem && lm > 1 ? `Leech heals ×${lm} in this ${SPEED_TAG_LABEL[speedTag(weaponOf(inItem)!)]} weapon.` : 'Leech heals ×1.5 in a Medium weapon and ×2 in a Slow one (as shown once socketed).')] : []),
+    ...(leech ? [h('div', { class: 'small dim-text' }, tag ? `Leech heals ×${lm} in this ${tag} weapon.` : 'Leech heals ×1.5 in a Medium weapon and ×2 in a Slow one (as shown once socketed).')] : []),
+    ...(status ? [h('div', { class: 'small dim-text', 'data-testid': 'gem-buildup-note' }, tag ? `Status buildup ×${lm} in this ${tag} weapon (per hit).` : 'Status buildup is per hit: ×1.5 in a Medium weapon and ×2 in a Slow one (as shown once socketed).')] : []),
     h('div', { class: 'small dim-text' }, gemKind(g) === 'armor' ? 'Armor sockets only.' : 'Weapon sockets only.', g.perks.length > 1 ? ' Each perk upgrades on its own.' : ''),
     h('div', { class: 'small dim-text' }, 'Rolls: ', ...GEM_QUALITIES.flatMap((qd, i) => [i ? ' · ' : '', h('span', { style: `color:${qd.color}` }, qd.label)]), ' (−50% … +50%). Level 1–50: ×0.25 … ×3.'),
   );

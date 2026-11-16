@@ -1,5 +1,6 @@
 // D280–D285: no gem tiers (quality only), adding gems, fewer gem drops, Sell all gems with locks, Essence breakdown.
 import { describe, expect, it } from 'vitest';
+import { SPEED_TAG_MULT, speedTag, WEAPONS } from '../../src/data/weapons';
 import { Rng } from '../../src/engine/rng';
 import { GEMS, gemOrigin, gemQualityRolls, isValidGem, makeGem, perkValue, rollGemQuality, untierGem } from '../../src/data/gems';
 import { GEM_CHANCE } from '../../src/data/lootTables';
@@ -80,7 +81,9 @@ describe('adding gems (D283)', () => {
     const d = computeDerived(c);
     expect(d.convert.filter((x) => x.type === 'fire')).toEqual([]);
     expect(d.addDmg).toEqual([{ type: 'fire', pct: 0.132 }]);
-    expect(d.statusBuild.some((s) => s.id === 'burn' && s.buildup === 22)).toBe(true);
+    // D414: 22 × 0.6, × the weapon's speed tag (the Knight's starting weapon)
+    const tag = SPEED_TAG_MULT[speedTag(WEAPONS[c.equipment.main!.baseId]!)];
+    expect(d.statusBuild.some((s) => s.id === 'burn' && s.buildup === Math.round(22 * 0.6 * tag))).toBe(true);
     expect(plain.addDmg).toEqual([]);
   });
 });

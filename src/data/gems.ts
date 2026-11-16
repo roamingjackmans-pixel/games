@@ -195,8 +195,14 @@ export function perkName(p: GemPerk): string {
  * "+11% damage": what this perk does at its level and roll. `leechMult`: in a weapon, Leech heals ×1.5 on a Medium and
  * ×2 on a Slow one (D371), and shows what it really heals there (D386).
  */
-export function perkText(p: GemPerk, leechMult = 1): string {
-  return GEMS[p.family].text.replace('{v}', fmtGemValue(p.family === 'leech' ? lifestealShown(perkValue(p) * leechMult) : perkValue(p)));
+/**
+ * What a perk does. `speedMult` is the speed tag of the weapon it sits in (D371: ×1 Fast, ×1.5 Medium, ×2 Slow; ×1 loose):
+ * a Leech gem heals that much more (D386) and a status gem's buildup, shown as a number, builds that much more (D414).
+ */
+export function perkText(p: GemPerk, speedMult = 1): string {
+  const d = GEMS[p.family];
+  const text = d.text.replace('{v}', fmtGemValue(p.family === 'leech' ? lifestealShown(perkValue(p) * speedMult) : perkValue(p)));
+  return d.adds?.status ? text.replace(/ buildup$/, ` buildup ${gemBuildup(p, speedMult)}`) : text;
 }
 
 /** "Purple +22%": the perk's roll. */
@@ -275,9 +281,15 @@ export function isValidGem(g: unknown): g is Gem {
   return true;
 }
 
-/** Status buildup added per hit by an adding gem (D284: 22, the old T3, × its roll). */
-export function gemBuildup(p: GemPerk): number {
-  return Math.round(22 * (1 + perkQ(p)));
+/** D414: an adding gem builds its status 40% slower than D284's 22 */
+export const GEM_BUILDUP_MULT = 0.6;
+
+/**
+ * Status buildup added per hit by an adding gem (D284: 22, the old T3, × its roll; D414: × 0.6, then × the weapon's
+ * speed tag, `speedMult`: ×1 Fast, ×1.5 Medium, ×2 Slow, D371). A loose gem shows the Fast amount.
+ */
+export function gemBuildup(p: GemPerk, speedMult = 1): number {
+  return Math.round(22 * GEM_BUILDUP_MULT * (1 + perkQ(p)) * speedMult);
 }
 
 // ---------- carrying tiered perks across (D284) ----------

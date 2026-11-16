@@ -845,7 +845,7 @@ roll bands    = Green −50…−15% (55%) · Blue −15…+10% (30%) · Purple 
 | Tempo | −12% skill cooldowns | weapon |
 | Fleetfoot | −0.6 s dodge recharge (3 s floor) | weapon |
 | Brutal | +11% damage | weapon |
-| Ember / Rime / Storm / Dawn / Dusk | **adds** 13.2% of the hit as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of it, with Burn / Chill / Shock buildup (D283, D292) | weapon |
+| Ember / Rime / Storm / Dawn / Dusk | **adds** 13.2% of the hit as Fire / Magic (frost) / Magic (lightning) / Holy / Void on top of it, with Burn / Chill / Shock buildup 13.2 × roll a hit, ×1.5 in a Medium weapon and ×2 in a Slow one, shown as a number (D283, D292, D414) | weapon |
 | Leech | 1.6% of max HP healed a hit (lifesteal, D325; ×4 by D355) | weapon |
 | Vigor | −16% stamina costs | weapon |
 | Bulwark | +16 defense to all types | armor |

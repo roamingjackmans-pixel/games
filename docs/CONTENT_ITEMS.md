@@ -82,8 +82,8 @@ the spinning weapons about 10%, and the ones whose reach barely changed nothing.
 **Fast**, medium and medium-slow **Medium**, slow and very slow **Slow** (`speedTag`, shown on the item card).
 Fast: Twin Daggers, Rapier, Katana, Bow, Twin Axes, Cestus, Rune Kris. Medium: Club, Whip, Longsword, Spear, Battleaxe, Mace, Halberd,
 Spellblade, Censer Flail, Dawn Glaive, Chakrams, Hex Hammer, Harvest Sickle. Slow: Greathammer, Greataxe, Colossal Sword, Crossbow, Hollow Maul.
-Bless Weapon (every timed Holy weapon buff) and the weapon's lifesteal do **50% more on a Medium** weapon and **100% more
-on a Slow** one; Fast weapons are unchanged.
+Bless Weapon (every timed Holy weapon buff), the weapon's lifesteal and the status buildup of its gems (D414) do **50% more
+on a Medium** weapon and **100% more on a Slow** one; Fast weapons are unchanged.
 
 | Weapon | Grades (Bonk / Slicey) | Req | Speed (tag, D371) | Combo (windup/active/recovery ms ×mult hitbox) | Base | Stam | Poise | Revive | Weight | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -356,7 +356,10 @@ weapon; off-hand Leech heals on those hits only. Fleetfoot (dodge) counts only f
   bosses add a roll, Gary one or two (one more in NG+).
 - **Drop level** rises evenly from 1 (zone 1) to 50 (the start of NG+3), up to 4 below that target.
 - **Elemental families** (Ember, Rime, Storm, Dawn, Dusk) **add** their share of the hit as their own type on top of
-  the physical (D283), at a baseline 20% above Brutal's (D292), with 22 status buildup × the roll.
+  the physical (D283), at a baseline 20% above Brutal's (D292), with status buildup **13.2 × the roll** a hit
+  (D414: 22 × 0.6, 40% slower than before) **× the weapon's speed tag**: ×1 Fast, ×1.5 Medium, ×2 Slow (so 13 / 20 / 26 at
+  an even roll). A gem's info shows the number: loose, the Fast amount (with a note on the others); socketed, the amount in
+  that weapon. A status affix on a weapon (Burning, Freezing, Shocking) shows its buildup number in the weapon's info too.
 - **Drops** (D281, D371: 30% more): 1.69% per enemy, 10.14% per chest, 84.5% per boss. The bonfire shop and Gary also sell gems (6× their
   sale price, D309).
 - **Fusing**: the original gem (2+ perks) keeps the chosen perks and takes the rest from a loose donor gem of the same
@@ -373,9 +376,9 @@ weapon; off-hand Leech heals on those hits only. Fleetfoot (dodge) counts only f
 | **Tempo** | weapon | 12 | −12% skill cooldowns | `#e6b84a` |
 | **Fleetfoot** | weapon | 0.6 | −0.6 s dodge recharge | `#58d66a` |
 | **Brutal** | weapon | 11 | +11% damage | `#d63a3a` |
-| **Ember** | weapon | 13.2 | +13.2% of the hit as Fire, Burn buildup (added on top, D283) | `#ff7a1a` |
-| **Rime** | weapon | 13.2 | +13.2% of the hit as Magic (frost), Chill buildup (added on top, D283) | `#9ad0ff` |
-| **Storm** | weapon | 13.2 | +13.2% of the hit as Magic (lightning), Shock buildup (added on top, D283) | `#6f8dff` |
+| **Ember** | weapon | 13.2 | +13.2% of the hit as Fire, Burn buildup 13.2 × roll × speed tag (added on top, D283; D414) | `#ff7a1a` |
+| **Rime** | weapon | 13.2 | +13.2% of the hit as Magic (frost), Chill buildup 13.2 × roll × speed tag (added on top, D283; D414) | `#9ad0ff` |
+| **Storm** | weapon | 13.2 | +13.2% of the hit as Magic (lightning), Shock buildup 13.2 × roll × speed tag (added on top, D283; D414) | `#6f8dff` |
 | **Dawn** | weapon | 13.2 | +13.2% of the hit as Holy (added on top, D283) | `#ffe98a` |
 | **Dusk** | weapon | 13.2 | +13.2% of the hit as Void (added on top, D283) | `#8a8396` |
 | **Leech** | weapon | 0.4 (×4) | 1.6% of max HP a hit (lifesteal, D325; ×4 by D355); in a weapon ×1.5 Medium, ×2 Slow, and shown so (D371, D386) | `#8a1020` |

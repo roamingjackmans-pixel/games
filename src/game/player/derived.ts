@@ -9,6 +9,7 @@ import { armorPieceDefense } from '../../data/armor';
 import { AFFIXES, affixBuildup } from '../../data/affixes';
 import { SET_PERKS, setStep } from '../../data/setPerks';
 import { GEMS, gemBuildup, perkValue } from '../../data/gems';
+import { SPEED_TAG_MULT, speedTag } from '../../data/weapons';
 import { RINGS, ballastPoise, bandAmount, bandStat } from '../../data/rings';
 import { castMoveMult, slickCast, dodgeRecharge, itemSkillCount, maxHP, maxStamina, staminaRegen, weaponScaling, toolMult, weaponBase, gradeDamageMult } from '../combat/formulas';
 import { itemRequirements, meetsRequirements } from '../items/bases';
@@ -447,7 +448,9 @@ export function computeDerived(c: Character): Derived {
         default:
           if (gd.adds) {
             gh.addDmg.push({ type: gd.adds.type, pct: v / 100 });
-            if (gd.adds.status) gh.statusBuild.push({ id: gd.adds.status, buildup: gemBuildup(pk) });
+            // D414: 40% slower than before, ×1.5 in a Medium weapon and ×2 in a Slow one (its speed tag, D371)
+            const wd = weaponOf(it);
+            if (gd.adds.status) gh.statusBuild.push({ id: gd.adds.status, buildup: gemBuildup(pk, wd ? SPEED_TAG_MULT[speedTag(wd)] : 1) });
           }
       }
     }

@@ -21,7 +21,7 @@ import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus,
 import { tabHints } from '../glyphs';
 import { gemLockButton, lockButton } from '../itemLock';
 import { PAD_LOCK_EVENT } from '../menuPad';
-import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, leechMultIn, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemScore, itemSummary, itemTooltip, staticTip } from '../tooltip';
+import { gemIcon, gemKindChip, gemPerkLines, gemTooltip, speedMultIn, perkEffectEl, perkEffectsEl, glowenEl, itemIcon, itemScore, itemSummary, itemTooltip, staticTip } from '../tooltip';
 
 export interface BonfireOps {
   levelUp(stat: StatId): string;
@@ -352,7 +352,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const inItem = 'itemId' in loc ? findItem(v.char, loc.itemId) : previewIn;
     const icon = h('span', { style: 'display:inline-flex;flex:none' }, gemIcon(g, 26));
     hoverTip(icon, () => gemTooltip(g, inItem));
-    const main = h('div', { class: 'gem-main' }, gemNameEl(g), h('div', { class: 'small' }, perkEffectsEl(g, leechMultIn(inItem))));
+    const main = h('div', { class: 'gem-main' }, gemNameEl(g), h('div', { class: 'small' }, perkEffectsEl(g, speedMultIn(inItem))));
     const lock = gemLock(g, loc);
     const row = h('div', { class: `gem-row${g.locked ? ' locked-row' : ''}`, 'data-testid': testid }, icon, main, h('div', { class: 'gem-acts' }, ...acts, lock));
     for (const b of row.querySelectorAll<HTMLElement>('button')) {
@@ -685,7 +685,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const n = orig.perks.length;
     const kind = gemKind(orig);
     // D386: fusing into a socketed gem: Leech shows what it heals in that weapon
-    const fm = 'itemId' in f.orig ? leechMultIn(findItem(c, f.orig.itemId)) : 1;
+    const fm = 'itemId' in f.orig ? speedMultIn(findItem(c, f.orig.itemId)) : 1;
     const donors = c.gems
       .map((g, i) => ({ g, i }))
       .filter(({ g }) => g !== orig && gemKind(g) === kind)
