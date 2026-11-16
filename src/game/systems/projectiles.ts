@@ -201,10 +201,14 @@ export function updateProjectiles(w: World, dt: number): void {
         continue;
       }
     }
-    const tx = Math.floor(e.x / 32);
-    const ty = Math.floor((e.y - 16) / 32);
-    // walls and pillars stop every shot; enemy shots also stop at obstacles: props, crates, vases, trees (D180)
-    if (!pr.returning && (w.room.blocksProjectile(tx, ty) || (pr.team === 1 && w.room.get(tx, ty) === T.Prop))) {
+    // a player's shot is tested at its front edge (D424), so a big spell orb stops as it meets the wall, not once
+    // its middle is inside it
+    const lead = pr.team === 0 ? Math.min(e.radius * 0.5, 16) / (Math.hypot(e.vx, e.vy) || 1) : 0;
+    const tx = Math.floor((e.x + e.vx * lead) / 32);
+    const ty = Math.floor((e.y + e.vy * lead - 16) / 32);
+    // walls and pillars stop every shot; obstacles (props, crates, vases, trees) stop every shot but a player's that
+    // was loosed piercing (D180, D424)
+    if (!pr.returning && (w.room.blocksProjectile(tx, ty) || (w.room.get(tx, ty) === T.Prop && !(pr.team === 0 && pr.throughProps)))) {
       if (pr.returns) {
         pr.returning = true;
         pr.hit.clear();

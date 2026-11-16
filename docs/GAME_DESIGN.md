@@ -395,8 +395,11 @@ phases, capped at ×1.6.
   crossbow shot is a **volley of three** (straight and 5° to each side, D205) that **hits any one enemy at most
   once** (D264). Shots keep full damage to 250 px, then fall to 70% at 750 px (D88). A bow charged 0.6 s deals ×1.8
   and pierces one.
-- **Projectile range** (D185, D186): players' shots fly at most 850 px; enemies' 425 px. Enemy shots stop at props;
-  players' fly over them (D180). Player spell projectiles are ×4 their listed size (D204).
+- **Projectile range** (D185, D186): players' shots fly at most 850 px; enemies' 425 px. Walls and pillars stop every shot.
+  Props (crates, vases, barrels, coffins, trees) stop enemy shots and every player shot that does not pierce: Arcane
+  Bolt, Fireball, a plain arrow or bolt. A player's shot loosed piercing flies through them (D424): a charged bow, a
+  crossbow at 30 Bonk, a pierce gem or skill, the crescent and ring throws. A player's shot is tested at its front
+  edge, so a big spell orb stops as it reaches the obstacle. Player spell projectiles are ×4 their listed size (D204).
 
 ### 5.3 Dodge
 

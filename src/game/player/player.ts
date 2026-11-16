@@ -394,6 +394,7 @@ export function spawnPlayerProjectile(w: World, e: Entity, a: number, speed: num
       targetId: 0,
       until: w.time + range / speed,
       pierce,
+      ...(pierce > 0 ? { throughProps: true } : {}),
       hit: new Set(),
       poiseDmg: spec.poiseDmg,
       onImpact: null,

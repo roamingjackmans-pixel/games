@@ -1,4 +1,4 @@
-// D180: enemy shots stop at obstacles (props, crates, trees), not only walls; player shots still fly over them.
+// D180: enemy shots stop at obstacles (props, crates, trees), not only walls. D424: so do a player's shots, unless loosed piercing.
 import { describe, expect, it } from 'vitest';
 import { World } from '../../src/game/world';
 import { Room, ROOM_W, ROOM_H, ROOM_Y0, T, TILE } from '../../src/game/room';
@@ -31,12 +31,39 @@ describe('projectiles and obstacles (D180)', () => {
     expect(shot.x).toBeLessThan(21 * TILE + 6);
   });
 
-  it("a player's shot still flies past props", () => {
+  it("D424: a player's shot that does not pierce stops at a prop (Arcane Bolt, Fireball, a plain arrow)", () => {
     const w = new World('PRJ', propRoom());
     const p = spawnPlayer(w, newCharacter('knight', 'J', 'p', new Rng(1)), 0, true, 12 * TILE, midY);
-    const shot = spawnPlayerProjectile(w, p, 0, 500, 6, emptySpec(), 0, 'p_knife');
+    const shot = spawnPlayerProjectile(w, p, 0, 500, 7 * SPELL_PROJECTILE_SCALE, emptySpec(), 0, 'p_magic', { isSpell: true });
+    for (let i = 0; i < 60 && !shot.removed; i++) stepWorld(w);
+    expect(shot.removed).toBe(true);
+    // stopped as its front met the prop, not once its middle was well inside it
+    expect(shot.x).toBeLessThan(20 * TILE + 4);
+    const arrow = spawnPlayerProjectile(w, p, 0, 700, 5, emptySpec(), 0, 'p_arrow');
+    for (let i = 0; i < 60 && !arrow.removed; i++) stepWorld(w);
+    expect(arrow.removed).toBe(true);
+    expect(arrow.x).toBeLessThan(21 * TILE);
+  });
+
+  it("D424: a player's shot loosed piercing (a charged or Bonk-piercing arrow, a crescent) flies through props, even once its pierce is spent", () => {
+    const w = new World('PRJ', propRoom());
+    const p = spawnPlayer(w, newCharacter('knight', 'J', 'p', new Rng(1)), 0, true, 12 * TILE, midY);
+    const shot = spawnPlayerProjectile(w, p, 0, 500, 6, emptySpec(), 1, 'p_arrow');
+    shot.pr!.pierce = 0;
     for (let i = 0; i < 40; i++) stepWorld(w);
+    expect(shot.removed).toBe(false);
     expect(shot.x).toBeGreaterThan(22 * TILE);
+  });
+
+  it('D424: walls stop every shot, piercing or not', () => {
+    const tiles = new Uint8Array(ROOM_W * ROOM_H);
+    for (let y = 2; y < ROOM_H - 2; y++) tiles[y * ROOM_W + 20] = T.Wall;
+    const w = new World('PRJ', new Room(tiles));
+    const p = spawnPlayer(w, newCharacter('knight', 'J', 'p', new Rng(1)), 0, true, 12 * TILE, midY);
+    const shot = spawnPlayerProjectile(w, p, 0, 500, 6, emptySpec(), 99, 'p_arrow');
+    for (let i = 0; i < 60 && !shot.removed; i++) stepWorld(w);
+    expect(shot.removed).toBe(true);
+    expect(shot.x).toBeLessThan(21 * TILE);
   });
 
   it("a player's spell projectiles fly four times their listed size (D180 doubled them, D204 again)", () => {

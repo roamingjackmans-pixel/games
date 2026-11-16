@@ -66,7 +66,7 @@ Each zone has **10 interior templates** (`src/data/rooms/<zone>.ts`), ASCII grid
 
 ```
 #  wall      .  floor      P  pillar (blocks movement and projectiles)
-o  prop (blocks movement; enemy shots stop at it, D180)       ~  zone hazard tile (walkable, hurts or slows)
+o  prop (blocks movement; shots stop at it unless a player's pierces, D180, D424)       ~  zone hazard tile (walkable, hurts or slows)
 _  pit (cannot walk; falling in = 30% of max HP)               G  raised grate (Sewers: safe from waves)
 S  enemy spawn point (≥ 200 px from any door)    C  chest spot    D  door
 boss arenas: K boss spot, H stairs, g open grave (pit + summon spot), w pool, t breakable tree, V void
