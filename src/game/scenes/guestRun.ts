@@ -37,7 +37,7 @@ import type { NetGuest } from '../net/guest';
 import type { NetEvent } from '../net/protocol';
 import type { BossDef, SaveFile, WorldState } from '../types';
 import { BOSSES } from '../../data/bosses';
-import { RUSH_BOSS_STAGE, applyRushEvent, fmtRushTime, newRushRecord, noteRushUnlock, rushStageLabel } from '../waveRush';
+import { RUSH_BOSS_STAGE, applyRushEvent, fmtRushTime, newRushRecord, rushStageLabel } from '../waveRush';
 import { ENEMIES } from '../../data/enemies';
 import { INSTRUCTOR } from '../../data/enemies/special';
 import { BONFIRE_LINES, DEATH_QUIPS, EMBER_LINES, TIPS, zoneCutsceneId, zoneLines } from '../../data/story';
@@ -294,10 +294,9 @@ export class GuestRunScene extends WorldScene {
 
   private onNetEvent(e: NetEvent): void {
     if (e.t === 'rush') {
-      // the host's Wave Rush is this guest's too: its own record, and its own browser's unlock (D405, D408)
+      // the host's Wave Rush is this guest's too: its own record, which opens the next cycle for this character (D408, D416)
       applyRushEvent((this.save.rush ??= newRushRecord()), e);
       if (e.kind === 'try') this.rushClock = performance.now() / 1000;
-      if (e.kind === 'cleared') noteRushUnlock(getStore(), e.cycle);
       this.persist();
       return;
     }

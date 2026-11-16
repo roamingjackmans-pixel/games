@@ -10,8 +10,6 @@ import { TILE } from '../game/room';
 import { peekSaveCounters, stats, type Counters } from '../game/stats';
 import type { RushRecord, SaveFile } from '../game/types';
 import { fmtRushTime, normalizeRushRecord, rushFastest, rushFurthestLabel } from '../game/rushRecord';
-import { readRushUnlock } from '../game/waveRush';
-import { getStore } from '../engine/settings';
 import { btn, clearEl, fmt, h, layer } from './dom';
 
 export interface StatisticsOpts {
@@ -220,6 +218,8 @@ export function rushSections(rec: RushRecord | undefined): { title: string; rows
     ['Deaths and party wipes', fmt(r.deaths)],
     ['Furthest', rushFurthestLabel(r), r.furthestCycle < 0 ? 'none' : ''],
     ['Highest cycle cleared', r.bestCycle >= 0 ? `Cycle ${r.bestCycle + 1}` : 'none yet', r.bestCycle < 0 ? 'none' : ''],
+    // D416: each character opens its own cycles
+    ['Can start at', r.bestCycle >= 0 ? `Cycle 1 to ${r.bestCycle + 2}` : 'Cycle 1'],
     ['Cycles cleared', fmt(r.cleared)],
     ['Rooms cleared', fmt(r.roomsCleared)],
     ['Fastest cycle', fast ? `${fmtRushTime(fast[1])} (Cycle ${fast[0] + 1})` : '—', fast ? '' : 'none'],
@@ -327,8 +327,7 @@ export function openStatistics(onClose: () => void, opts: StatisticsOpts = {}): 
     } else {
       panel.appendChild(h('div', { class: 'small dim-text stat-note' }, 'Every character this browser has ever played, deleted ones included. Co-op counts what you did, not what your friends did.'));
       panel.appendChild(statsBody(t.rec.c));
-      const best = readRushUnlock(getStore()).best;
-      panel.appendChild(h('div', { class: 'small dim-text stat-note', 'data-testid': 'stat-rush-unlock' }, best >= 0 ? `Wave Rush: Cycle ${best + 1} is the best cleared on this browser, so every character can start at Cycle ${best + 2} or lower.` : 'Wave Rush: no cycle cleared on this browser yet.'));
+      panel.appendChild(h('div', { class: 'small dim-text stat-note', 'data-testid': 'stat-rush-unlock' }, 'Wave Rush: each character opens its own cycles; see its tab for how far it can start.'));
     }
     setTimeout(() => {
       // on opening: the first character button below the header if there is one, else Back (D148)

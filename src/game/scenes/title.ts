@@ -28,7 +28,7 @@ import { newSave, SLOT_COUNT } from '../save/schema';
 import { exportFileName, exportText, parseImport } from '../save/exportImport';
 import { deleteSave, listSaves, readMeta, writeSave } from '../save/storage';
 import { cycleStepper } from '../../ui/cycleStepper';
-import { fmtRushTime, readRushUnlock, rushFastest, rushFurthestLabel, rushStartCycles } from '../waveRush';
+import { fmtRushTime, rushFastest, rushFurthestLabel, rushStartCycles } from '../waveRush';
 import type { ClassId, SaveFile } from '../types';
 // the character creator's class card and appearance pickers
 import { STAT_IDS, type Appearance, type Character, type StatId } from '../types';
@@ -245,10 +245,10 @@ export class TitleScene implements Scene {
   }
 
   /**
-   * Wave Rush, solo (GAME_DESIGN §24, D401): pick the cycle to start in (every one up to one past the best any character
-   * on this browser has cleared, D405) and the character. `first` puts a slot at the top of the list.
+   * Wave Rush, solo (GAME_DESIGN §24, D401): each character with the cycles it has opened itself (every one up to one past
+   * the best it has cleared, D416), a cycle picker and Start. `first` puts a slot at the top of the list.
    */
-  rushMenu(first?: number, cycle?: number): void {
+  rushMenu(first?: number): void {
     const store = getStore();
     const saves = listSaves(store).filter((x): x is SaveFile => !!x);
     if (saves.length === 0) {
@@ -256,26 +256,31 @@ export class TitleScene implements Scene {
       this.pickEmpty();
       return;
     }
-    const unlock = readRushUnlock(store);
-    const cycles = rushStartCycles(unlock);
-    let pick = cycle !== undefined && cycles.includes(cycle) ? cycle : cycles[cycles.length - 1]!;
-    // changes in place, so the arrow pressed keeps its place and the focus (D411)
-    const stepper = cycleStepper(cycles, pick, (c) => {
-      pick = c;
-    });
     const last = first ?? readMeta(store).lastSlot;
     saves.sort((a, b) => (b.slot === last ? 1 : 0) - (a.slot === last ? 1 : 0));
-    const list = h('div', { class: 'col', style: 'gap:6px;max-height:400px;overflow:auto;min-width:520px' });
+    const list = h('div', { class: 'col', style: 'gap:6px;max-height:400px;overflow:auto;min-width:580px' });
     for (const sv of saves) {
       const c = sv.character;
       const r = sv.rush;
       const fast = r ? rushFastest(r) : null;
       const line = r && r.furthestCycle >= 0 ? `Furthest: ${rushFurthestLabel(r)}${fast ? ` · fastest clear ${fmtRushTime(fast[1])} (Cycle ${fast[0] + 1})` : ''}` : 'Has not tried Wave Rush yet';
+      const cycles = rushStartCycles(r);
+      let pick = cycles[cycles.length - 1]!;
+      // changes in place, so the arrow pressed keeps its place and the focus (D411)
+      const stepper = cycleStepper(
+        cycles,
+        pick,
+        (cy) => {
+          pick = cy;
+        },
+        null,
+      );
       list.appendChild(
         h(
           'div',
           { class: 'card row', 'data-testid': `rush-pick-${sv.slot}` },
           h('div', { class: 'grow' }, h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}`), h('div', { class: 'small dim-text' }, line)),
+          stepper,
           btn('Start', () => titleHooks.rush?.(sv, pick), 'tiny primary'),
         ),
       );
@@ -283,9 +288,8 @@ export class TitleScene implements Scene {
     this.view(
       'rush',
       h('h2', null, 'Wave Rush'),
-      h('div', { class: 'small dim-text', style: 'max-width:520px' }, 'Eight rooms, one for each zone, then a boss as hard as the cycle’s final boss. A bonfire and stairs appear when a room is clear. Beat the boss to save your place and go on to the next cycle; die (or lose the whole party) and the cycle starts again from room 1. No Shards or levels here: gear, gems, Glowen and Soul Essence are yours to keep. Your campaign is not touched.'),
-      stepper,
-      h('div', { class: 'small dim-text' }, unlock.best >= 0 ? `Best cleared on this browser: Cycle ${unlock.best + 1}. Every cycle up to ${unlock.best + 2} is open to every character.` : 'Beat Cycle 1’s boss to open Cycle 2, for every character on this browser.'),
+      h('div', { class: 'small dim-text', style: 'max-width:580px' }, 'Eight rooms, one for each zone, then a boss as hard as the cycle’s final boss. A bonfire and stairs appear when a room is clear. Beat the boss to save your place and go on to the next cycle; die (or lose the whole party) and the cycle starts again from room 1. No Shards or levels here: gear, gems, Glowen and Soul Essence are yours to keep. Your campaign is not touched.'),
+      h('div', { class: 'small dim-text', style: 'max-width:580px' }, 'Each character opens its own cycles: beat Cycle 1’s boss with a character to open Cycle 2 for it, and so on.'),
       list,
       h('div', { class: 'row' }, btn('Back', () => this.main())),
     );

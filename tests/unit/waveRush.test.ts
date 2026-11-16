@@ -1,4 +1,4 @@
-// Wave Rush (GAME_DESIGN §24, D401–D410): room and cycle progression, the boss, the checkpoint unlock, the wipe reset,
+// Wave Rush (GAME_DESIGN §24, D401–D416): room and cycle progression, the boss, the per-character unlock, the wipe reset,
 // the per-character record and the save migration.
 import { describe, expect, it } from 'vitest';
 import { GameSession, type RushEvent } from '../../src/game/session';
@@ -7,7 +7,6 @@ import { migrate } from '../../src/game/save/migrations';
 import { newCharacter } from '../../src/game/player/character';
 import { Rng } from '../../src/engine/rng';
 import { checkDeath } from '../../src/game/combat/damage';
-import { MemoryStore } from '../../src/engine/settings';
 import { stepWorld } from '../../src/game/sim';
 import { BOSSES } from '../../src/data/bosses';
 import { rosterOf } from '../../src/data/enemies';
@@ -17,6 +16,7 @@ import { planRoom } from '../../src/game/procgen/waves';
 import {
   RUSH_BOSS_STAGE,
   RUSH_ROOMS,
+  applyRushEvent,
   bossBarWork,
   canStartRushAt,
   fmtRushTime,
@@ -24,9 +24,7 @@ import {
   normalizeRushRecord,
   noteRushClear,
   noteRushStage,
-  noteRushUnlock,
   pickRushBoss,
-  readRushUnlock,
   RUSH_EXIT_GAP,
   rushBossHpBase,
   rushExitFits,
@@ -325,21 +323,34 @@ function clearRoom2(s: GameSession): void {
   }
 }
 
-describe('Wave Rush checkpoint unlock (account-wide)', () => {
-  it('starts at cycle 1 only; clearing cycle N opens every cycle up to N + 1, and never goes back', () => {
-    const store = new MemoryStore();
-    expect(readRushUnlock(store).best).toBe(-1);
-    expect(rushStartCycles(readRushUnlock(store))).toEqual([0]);
-    noteRushUnlock(store, 0);
-    expect(rushStartCycles(readRushUnlock(store))).toEqual([0, 1]);
-    noteRushUnlock(store, 5);
-    expect(rushStartCycles(readRushUnlock(store))).toEqual([0, 1, 2, 3, 4, 5, 6]);
-    noteRushUnlock(store, 2);
-    expect(readRushUnlock(store).best).toBe(5);
-    expect(canStartRushAt(readRushUnlock(store), 6)).toBe(true);
-    expect(canStartRushAt(readRushUnlock(store), 7)).toBe(false);
-    store.setItem('dj.waveRush', 'not json');
-    expect(readRushUnlock(store).best).toBe(-1);
+describe('Wave Rush checkpoint unlock (per character, D416)', () => {
+  it('starts at cycle 1 only; clearing cycle N opens every cycle up to N + 1 for that character, and never goes back', () => {
+    const r = newRushRecord();
+    expect(rushStartCycles(r)).toEqual([0]);
+    expect(rushStartCycles(undefined)).toEqual([0]);
+    noteRushClear(r, 0, 100);
+    expect(rushStartCycles(r)).toEqual([0, 1]);
+    noteRushClear(r, 5, 100);
+    expect(rushStartCycles(r)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    noteRushClear(r, 2, 100);
+    expect(r.bestCycle).toBe(5);
+    expect(canStartRushAt(r, 6)).toBe(true);
+    expect(canStartRushAt(r, 7)).toBe(false);
+  });
+
+  it('one character beating a cycle opens nothing for another', () => {
+    const a = rushSave('RUSHA');
+    const b = rushSave('RUSHB');
+    noteRushClear(a.rush!, 0, 100);
+    expect(rushStartCycles(a.rush)).toEqual([0, 1]);
+    expect(rushStartCycles(b.rush)).toEqual([0]);
+    expect(canStartRushAt(b.rush, 1)).toBe(false);
+  });
+
+  it('a co-op guest who fought the boss opens the next cycle for its own character', () => {
+    const guest = newRushRecord();
+    applyRushEvent(guest, { kind: 'cleared', cycle: 0, stage: RUSH_BOSS_STAGE, sec: 300 });
+    expect(rushStartCycles(guest)).toEqual([0, 1]);
   });
 });
 

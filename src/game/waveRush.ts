@@ -1,9 +1,8 @@
 // Wave Rush (GAME_DESIGN §24, D401–D410): a horde mode. One arena room per zone, zone 1 to zone 8 at one cycle's
 // difficulty, then a random boss sized like that cycle's Landlord; beating it is a checkpoint, and the next cycle
-// follows. Pure helpers here (layouts, the boss pick and its scaling, the account-wide unlock, the per-character
-// record); GameSession runs the mode (session.ts) and the scenes show it.
+// follows. Pure helpers here (layouts, the boss pick and its scaling, the per-character record and the
+// cycles it opens, D416); GameSession runs the mode (session.ts) and the scenes show it.
 import { stream } from '../engine/rng';
-import type { KeyValueStore } from '../engine/settings';
 import { ROOM_TEMPLATES } from '../data/rooms';
 import { ENEMIES, rosterOf } from '../data/enemies';
 import { zoneDef } from '../data/zones';
@@ -13,7 +12,7 @@ import { shapeIds } from './procgen/shapes';
 import { enemyFullHp } from './enemies/spawn';
 import { ngBossDef } from './boss/ngPhases';
 import type { RoomNode, ZoneLayout } from './procgen/zone';
-import type { BossDef } from './types';
+import type { BossDef, RushRecord } from './types';
 import { ROOM_H, ROOM_W, ROOM_Y0, T, TERRAIN, TILE, type Room } from './room';
 import { RUSH_BOSS_STAGE, RUSH_ROOMS } from './rushRecord';
 
@@ -188,47 +187,19 @@ export function rushExitSpots(room: Room, x: number, y: number): { bonfire: [num
   return { bonfire: room.nearestFloor(x - RUSH_EXIT_GAP / 2, y, 20), stairs: room.nearestFloor(x + RUSH_EXIT_GAP / 2, y, 26) };
 }
 
-// ---------------------------------------------------------------- the cycle unlock (account-wide, D405)
+// ---------------------------------------------------------------- the cycle unlock (per character, D416)
 
-/** The browser's Wave Rush unlock, shared by every save slot (D405). */
-export const RUSH_KEY = 'dj.waveRush';
-
-export interface RushUnlock {
-  /** the highest cycle (0-based) any character on this browser has cleared; -1 none */
-  best: number;
+/** The highest cycle (0-based) this character has cleared in Wave Rush, -1 none (its own record, D416; was the browser's, D405). */
+function bestCleared(r: Pick<RushRecord, 'bestCycle'> | null | undefined): number {
+  return r && Number.isFinite(r.bestCycle) ? Math.max(-1, Math.floor(r.bestCycle)) : -1;
 }
 
-export function readRushUnlock(store: KeyValueStore): RushUnlock {
-  try {
-    const raw = store.getItem(RUSH_KEY);
-    const o = raw ? (JSON.parse(raw) as { best?: unknown }) : null;
-    const b = typeof o?.best === 'number' && Number.isFinite(o.best) ? Math.max(-1, Math.floor(o.best)) : -1;
-    return { best: b };
-  } catch {
-    return { best: -1 };
-  }
+/** The cycles this character may start a run in (0-based): every one up to one past the best it has cleared. */
+export function rushStartCycles(r: Pick<RushRecord, 'bestCycle'> | null | undefined): number[] {
+  return Array.from({ length: bestCleared(r) + 2 }, (_, i) => i);
 }
 
-/** A cycle cleared: the unlock moves up (never down). */
-export function noteRushUnlock(store: KeyValueStore, cycle: number): RushUnlock {
-  const u = readRushUnlock(store);
-  if (cycle > u.best) {
-    u.best = cycle;
-    try {
-      store.setItem(RUSH_KEY, JSON.stringify(u));
-    } catch {
-      // storage full: the unlock waits for the next clear
-    }
-  }
-  return u;
-}
-
-/** The cycles a run may start in (0-based): every one up to one past the best cleared. */
-export function rushStartCycles(u: RushUnlock): number[] {
-  return Array.from({ length: Math.max(0, u.best + 1) + 1 }, (_, i) => i);
-}
-
-export function canStartRushAt(u: RushUnlock, cycle: number): boolean {
-  return Number.isInteger(cycle) && cycle >= 0 && cycle <= u.best + 1;
+export function canStartRushAt(r: Pick<RushRecord, 'bestCycle'> | null | undefined, cycle: number): boolean {
+  return Number.isInteger(cycle) && cycle >= 0 && cycle <= bestCleared(r) + 1;
 }
 

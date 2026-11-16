@@ -1197,12 +1197,14 @@ A horde mode beside the campaign (D401–D410). Code: `src/game/waveRush.ts` (la
 unlock), `src/game/rushRecord.ts` (the record), `GameSession` (`rushStart`, `rush`, `beginRushAttempt`,
 `gotoRushStage`).
 
-**Starting.** Solo: the title's **Wave Rush** button (or **Wave Rush** on a character card under Load Character) picks
-the starting cycle and the character. Co-op: in the host's lobby, **Mode: Campaign / Wave Rush**, and for Wave Rush
+**Starting.** Solo: the title's **Wave Rush** button (or **Wave Rush** on a character card under Load Character) lists
+the characters, each with its own starting-cycle picker and Start. Co-op: in the host's lobby, **Mode: Campaign / Wave Rush**, and for Wave Rush
 the starting cycle; the guests see the pick in their lobby. The cycle picker is ◀ Cycle n ▶ and changes in place, so
-the arrow pressed stays under the pointer (and keeps the focus) to click through cycles quickly (D411). A run can start at any cycle up to **one past the best any
-character on this browser has cleared** (cleared Cycle 5 → any character can start at Cycle 6 or lower). The unlock
-is **account-wide** (`dj.waveRush`, D405); a co-op guest who clears a cycle opens it on its own browser too.
+the arrow pressed stays under the pointer (and keeps the focus) to click through cycles quickly (D411). A character can start at any cycle up to **one past the best
+it has cleared itself** (`RushRecord.bestCycle`; cleared Cycle 5 → it can start at Cycle 6 or lower), so each character
+beats Cycle 1 before Cycle 2 opens for it (D416; was shared by every character on the browser, D405). In co-op the
+**host's character** decides which cycles the lobby offers; every player who fought the boss when it fell, guests too,
+opens the next cycle for their own character.
 
 **A cycle** (cycles are 0-based in code; the UI says "Cycle 1" for the first playthrough's difficulty):
 

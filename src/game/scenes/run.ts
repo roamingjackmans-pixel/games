@@ -20,7 +20,7 @@ import { drawInteractable } from '../../render/interactables';
 import { drawPartyCards } from '../../ui/party';
 import { WorldScene } from './worldScene';
 import { GameSession, beginNextCycle, type RushEvent } from '../session';
-import { RUSH_BOSS_STAGE, fmtRushTime, noteRushUnlock, rushStageLabel } from '../waveRush';
+import { RUSH_BOSS_STAGE, fmtRushTime, rushStageLabel } from '../waveRush';
 import { buyFromGary, garyStock } from '../bonfire/gary';
 import type { NetHost } from '../net/host';
 import { writeSave } from '../save/storage';
@@ -296,11 +296,10 @@ export class RunScene extends WorldScene {
   }
 
   /**
-   * Wave Rush (GAME_DESIGN §24): the cycle's unlock when its boss falls (account-wide, D405), the host's guests told so
-   * each keeps its own record (D408), and a save at every step.
+   * Wave Rush (GAME_DESIGN §24): the host's guests told of every step so each keeps its own record (D408), which also
+   * opens the next cycle for that character (D416), and a save at every step.
    */
   private onRush(e: RushEvent): void {
-    if (e.kind === 'cleared') noteRushUnlock(getStore(), e.cycle);
     // guests still in the lobby count the attempt they join with themselves, from its welcome
     if (this.net?.inGame) this.net.broadcastEvent({ t: 'rush', kind: e.kind, cycle: e.cycle, stage: e.stage, ...(e.sec !== undefined ? { sec: e.sec } : {}) });
     if (e.kind === 'cleared' || e.kind === 'death' || e.kind === 'try') this.persist();

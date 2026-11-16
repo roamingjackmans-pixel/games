@@ -21,7 +21,6 @@ Everything lives in `localStorage` (or an in-memory fallback when storage is blo
 | `dj.settings` | `Settings` (§5); the **default** controller layout only (a character's own is in its save, D266) | `engine/settings.ts`, `engine/padProfile.ts` |
 | `dj.achievements` | `{ v, unlocked: id → time, counters }`, account-wide | `game/achievements.ts` |
 | `dj.stats` | account-wide Statistics counters `{ v, c }` | `game/stats.ts` |
-| `dj.waveRush` | `{ best }`: the highest Wave Rush cycle (0-based) any character on this browser has cleared, -1 none; runs start at any cycle up to `best + 1` (D405) | `game/waveRush.ts` |
 | `dj.friends` | `{ v: 1, me, appearOnline, list: { code, name, added }[] }`: this browser's friend code and its friends (D339, max 30) | `game/save/friends.ts` |
 
 Export / import: one save as a `<name>-slot<n>.dungeonjoe.json` file (`game/save/exportImport.ts`). Import migrates,
@@ -47,7 +46,7 @@ interface SaveFile {
 interface RushRecord {          // cycles 0-based; GAME_DESIGN §24
   tries: number; deaths: number; cleared: number; roomsCleared: number; timeSec: number;
   best: Record<string, number>;  // cycle → best seconds, room 1 to the boss falling
-  bestCycle: number;             // highest cycle cleared, -1 none
+  bestCycle: number;             // highest cycle cleared, -1 none; this character may start at any cycle up to bestCycle + 1 (D416)
   furthestCycle: number;         // -1 never played
   furthestStage: number;         // 1–8 rooms, 9 the boss, 10 cleared
 }

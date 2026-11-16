@@ -23,9 +23,8 @@ import { joinTrystero } from '../net/trystero';
 import type { Transport } from '../net/transport';
 import type { SaveFile } from '../types';
 import { friendlyFireRow } from '../../ui/menus/settings';
-import { getStore } from '../../engine/settings';
 import { cycleStepper } from '../../ui/cycleStepper';
-import { canStartRushAt, readRushUnlock, rushStartCycles } from '../waveRush';
+import { canStartRushAt, rushStartCycles } from '../waveRush';
 
 /** Scene factories set by main.ts (keeps the lobby free of run-scene imports). */
 export const lobbyHooks: {
@@ -84,7 +83,7 @@ export class LobbyScene implements Scene {
     // coming back from a running session keeps the host's pick; tests may ask for one (?rush=N)
     const q = new URLSearchParams(location.search).get('rush');
     const want = o.host ? o.host.rushCycle : q !== null && o.role === 'host' ? Math.max(0, Math.floor(Number(q) || 0)) : null;
-    this.rushPick = want !== null && canStartRushAt(readRushUnlock(getStore()), want) ? want : want !== null ? 0 : null;
+    this.rushPick = want !== null && canStartRushAt(this.save.rush, want) ? want : want !== null ? 0 : null;
     if (this.rushPick !== null) this.rushLast = this.rushPick;
   }
 
@@ -118,7 +117,8 @@ export class LobbyScene implements Scene {
   }
 
   private modeRow(): HTMLElement {
-    const cycles = rushStartCycles(readRushUnlock(getStore()));
+    // the host's character decides which cycles are open (D416)
+    const cycles = rushStartCycles(this.save.rush);
     const pick = this.rushPick;
     const camp = btn('Campaign', () => this.setMode(null), pick === null ? 'primary' : '');
     const rush = btn('Wave Rush', () => this.setMode(Math.min(this.rushLast, cycles[cycles.length - 1]!)), pick !== null ? 'primary' : '');
@@ -129,7 +129,7 @@ export class LobbyScene implements Scene {
       kids.push(
         // changes in place (no redraw), so the arrow pressed keeps its place and the focus (D411)
         cycleStepper(cycles, pick, (c) => this.setRushCycle(c)),
-        h('div', { class: 'small dim-text' }, `Up to Cycle ${cycles.length} is open on this browser: beat a cycle's boss to open the next.`),
+        h('div', { class: 'small dim-text' }, `Up to Cycle ${cycles.length} is open for ${this.save.character.name}: beat a cycle's boss to open the next for each character who fought it.`),
       );
     }
     return h('div', { class: 'col', style: 'gap:6px', 'data-testid': 'lobby-mode' }, ...kids);
