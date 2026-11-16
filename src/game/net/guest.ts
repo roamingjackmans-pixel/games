@@ -192,7 +192,7 @@ export class NetGuest {
 
   sayHello(): void {
     const c = this.save.character;
-    const h: Hello = { version: gameVersion(), playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, char: cloneChar(c), rushBest: this.save.rush?.bestCycle ?? -1 };
+    const h: Hello = { version: gameVersion(), playerId: c.playerId, name: c.name, classId: c.classId, level: c.level, char: cloneChar(c) };
     this.ch.hello.send(h as Hello & Record<string, unknown>, this.hostId);
   }
 

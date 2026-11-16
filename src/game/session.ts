@@ -112,8 +112,6 @@ export interface SessionPlayer {
   local: boolean;
   entity: Entity | null;
   slot: number;
-  /** a guest's best cleared Wave Rush cycle (its hello, then each clear here; D431); the host's own is its save's */
-  rushBest?: number;
 }
 
 const INTERACT_R = 56;
@@ -243,11 +241,11 @@ export class GameSession {
   }
 
   /** A co-op guest arrives (host only): spawn them beside the host and rescale enemy HP (D15). */
-  joinPlayer(char: Character, rushBest = -1): SessionPlayer {
+  joinPlayer(char: Character): SessionPlayer {
     const used = new Set(this.players.map((p) => p.slot));
     let slot = 0;
     while (used.has(slot)) slot++;
-    const sp: SessionPlayer = { char, local: false, entity: null, slot, rushBest: Number.isFinite(rushBest) ? Math.max(-1, Math.floor(rushBest)) : -1 };
+    const sp: SessionPlayer = { char, local: false, entity: null, slot };
     this.players.push(sp);
     const host = this.localPlayer;
     const [x, y] = this.w.room.nearestFloor((host?.x ?? this.entry[0]) + 30 * (slot % 2 ? 1 : -1), (host?.y ?? this.entry[1]) + 24, 14);
@@ -300,14 +298,12 @@ export class GameSession {
   }
 
   /**
-   * The cycle a player's loot and shop are rolled at (D431): the cycle played, except in a Wave Rush, where a character
-   * that has not cleared its Cycle 5 gets no better than its own campaign's cycle.
+   * The cycle a player's loot and shop are rolled at (D431, D432): the cycle played, except in a Wave Rush, where a
+   * character that has not cleared Cycle 5 of the campaign gets no better than its own campaign's cycle.
    */
   lootCycleFor(char: Character): number {
     if (this.rushStart === null && !this.rush) return this.cycle;
-    const sp = this.players.find((p) => p.char.playerId === char.playerId);
-    const best = !sp || sp.local ? (this.save.rush?.bestCycle ?? -1) : (sp.rushBest ?? -1);
-    return rushLootCycle(this.cycle, char.cycle, best);
+    return rushLootCycle(this.cycle, char.cycle);
   }
 
   /** The zone loot is rolled for: a Wave Rush boss pays like the final boss (zone 8, D404). */
@@ -1566,8 +1562,6 @@ export class GameSession {
     const w = this.w;
     const sec = Math.max(0, w.time - r.startedAt);
     noteRushClear(this.save.rush!, r.cycle, sec);
-    // every guest here opens the next cycle for its own character too (D416), and its loot may climb with it (D431)
-    for (const sp of this.players) if (!sp.local) sp.rushBest = Math.max(sp.rushBest ?? -1, r.cycle);
     lootHooks.boss(this, e.x, e.y, def.id);
     w.emit({ t: 'levelBanner', text: `CYCLE ${r.cycle + 1} CLEARED`, sub: `${def.name} · ${fmtRushTime(sec)}` });
     w.emit({ t: 'msg', text: `Checkpoint: Cycle ${r.cycle + 1} cleared. Cycle ${r.cycle + 2} is open.`, color: '#ffd27a' });

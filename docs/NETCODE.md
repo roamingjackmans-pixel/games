@@ -52,7 +52,7 @@ Invite: host's lobby → Invite (an online friend, §10) → friend: Join → ch
 
 | Channel | Direction | When | Payload |
 |---|---|---|---|
-| `hello` | guest → host | joining | `{ version, playerId, name, classId, level, char, rushBest }` (the whole character; `rushBest`: its best cleared Wave Rush cycle, which caps its Wave Rush loot, D431) |
+| `hello` | guest → host | joining | `{ version, playerId, name, classId, level, char }` (the whole character) |
 | `lobby` | host → all | lobby changes | `{ code, players: PublicPlayer[], zone, ff?, rush? }`: each player's name, class, level, cycle, look and worn gear (`LobbyGear`), the host's friendly-fire percent, and `rush`: the host's Wave Rush starting cycle when it picked Wave Rush (D401; any cycle the host's character has opened, D416) |
 | `welcome` / `reject` | host → guest | on Start / refused | `Welcome { you, seed, cycle, zone, layoutOpts, time, slot, rush? }` / `{ reason }` |
 | `input` | guest → host | every frame | 17-byte packet: `seq u16, moveX i8, moveY i8, aimX i16, aimY i16, buttons u16, pressed u16, tick u32, flags u8` (aim neutral, aim assist 0–7). Starts the guest's skills, spells and consumables and drives them (§6), and its interactions |

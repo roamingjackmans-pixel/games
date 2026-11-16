@@ -1232,11 +1232,12 @@ opens the next cycle for their own character.
 
 **Rewards** (D402). **No Shards, no levels and no weapon proficiency** (D412) anywhere in Wave Rush (a weapon's rarity bar still fills): enemies and bosses carry no Shards and the bonfire
 has no Level up tab (nor Warp). Everything else drops as in the campaign and is kept: items, gems, Glowen, Soul
-Essence, consumables. **Loot is capped at the campaign** (D431): until a character has cleared Wave Rush **Cycle 5**
-itself, what it finds (items' level, gems, Soul Essence, and the shop's piece and gem) is rolled at the lower of the cycle
-played and its own campaign's cycle, so a character on Cycle 3 of the campaign finds no Superintendent's Blaze or
-Freeholder's Soul in a Cycle 6 rush. From Cycle 6 on its loot climbs with the cycle. In co-op each player's own cap
-applies (a guest's best cleared cycle comes with its hello). The cycle picker says which applies. The bonfire keeps its Gem bench, Weapons, Reinforce, Shop (the room's zone stock at the run's
+Essence, consumables. **Loot is capped at the campaign** (D431, D432): until a character has cleared **Cycle 5 of
+the campaign** (it has reached the campaign's Cycle 6), what it finds in Wave Rush (items' level, gems, Soul Essence, and
+the shop's piece and gem) is rolled at the lower of the cycle played and its own campaign's cycle, so a character on
+Cycle 3 of the campaign finds no Superintendent's Blaze or Freeholder's Soul in a Cycle 6 rush, however many Wave Rush
+cycles it has cleared. After that its loot climbs with whatever Wave Rush cycle it plays. In co-op each player's own
+campaign cycle applies. The cycle picker says which applies. The bonfire keeps its Gem bench, Weapons, Reinforce, Shop (the room's zone stock at the run's
 cycle, kept through the whole run), Bestiary and Spells. No chests, mimics, reliquaries, Gary or New Game+ bonus
 bosses.
 

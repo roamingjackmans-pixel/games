@@ -366,7 +366,7 @@ export class GuestRunScene extends WorldScene {
     // a Wave Rush's shop keeps its own stock, never this guest's campaign world's (D401, D402)
     const ws = this.net.rush ? (this.rushWorld ??= newWorldState(this.net.welcome?.seed ?? 'rush')) : this.save.world;
     // the shop follows the cycle played: a Wave Rush's, else this guest's own (D357, D402)
-    const cyc = this.net.rush ? rushLootCycle(this.net.cw.cycle, c.cycle, this.save.rush?.bestCycle ?? -1) : c.cycle;
+    const cyc = this.net.rush ? rushLootCycle(this.net.cw.cycle, c.cycle) : c.cycle;
     const r = (o: { msg: string }): string => {
       this.changed();
       return o.msg;
