@@ -40,7 +40,7 @@ import { startPhaseSummons, tickPhaseSummons } from './boss/summons';
 import { spawnHazard } from './systems/hazards';
 import type { BossDef, Character, EliteAffix, SaveFile } from './types';
 import { autoQuickSlot, uniqueItemId } from './items/inventory';
-import { RUSH_ARM_S, RUSH_BOSS_STAGE, fmtRushTime, newRushRecord, normalizeRushRecord, noteRushClear, noteRushStage, pickRushBoss, rushBossDmgMult, rushBossHpBase, rushLayout, rushSeed, type RushRun } from './waveRush';
+import { RUSH_ARM_S, RUSH_BOSS_STAGE, fmtRushTime, newRushRecord, normalizeRushRecord, noteRushClear, noteRushStage, pickRushBoss, rushBossDmgMult, rushBossHpBase, rushExitSpots, rushLayout, rushSeed, type RushRun } from './waveRush';
 
 /** A revived player is invulnerable this long (D12, D376), on every screen: a guest's own body gets it with the revive. */
 export const REVIVE_INVULN_S = 2;
@@ -1539,19 +1539,8 @@ export class GameSession {
     const w = this.w;
     if ([...w.entities.values()].some((e) => e.it?.key === `wr-stairs-${r.stage}` && !e.removed)) return;
     const boss = r.stage >= RUSH_BOSS_STAGE;
-    // on plain floor: never in a pit, a wall or a patch of hazardous ground, the stairs beside the fire
-    const clear = (x: number, y: number, rad: number): [number, number] => {
-      for (let d = 0; d <= 320; d += 16) {
-        for (let k = 0; k < Math.max(1, Math.round(d / 8)); k++) {
-          const a = (k / Math.max(1, Math.round(d / 8))) * Math.PI * 2;
-          const [fx, fy] = w.room.nearestFloor(x + Math.cos(a) * d, y + Math.sin(a) * d, rad);
-          if (!w.room.isHazardAt(fx, fy) && [-rad, 0, rad].every((o) => w.room.terrainAt(fx + o, fy) === TERRAIN.None)) return [fx, fy];
-        }
-      }
-      return w.room.nearestFloor(x, y, rad);
-    };
-    const [bx, by] = clear(boss ? 560 : 580, boss ? 420 : 368, 20);
-    const [sx, sy] = clear(bx + 120, by, 26);
+    // side by side on plain floor, moved straight north when something stands in the way (D413)
+    const { bonfire: [bx, by], stairs: [sx, sy] } = rushExitSpots(w.room, boss ? 620 : 640, boss ? 420 : 368);
     w.spawn('interact', bx, by, { radius: 20, drawId: 'bonfire', it: { kind: 'bonfire', key: `wr-${r.stage}`, label: 'Rest', used: false, holdS: 0, data: { unlit: false } } });
     const label = boss ? `On to Cycle ${r.cycle + 2}` : r.stage >= RUSH_BOSS_STAGE - 1 ? 'Face the boss' : 'Descend';
     w.spawn('interact', sx, sy, { radius: 26, drawId: 'stairs', it: { kind: 'stairs', key: `wr-stairs-${r.stage}`, label, used: false, holdS: 0 } });

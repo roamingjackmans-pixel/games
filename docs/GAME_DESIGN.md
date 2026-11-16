@@ -1212,7 +1212,8 @@ is **account-wide** (`dj.waveRush`, D405); a co-op guest who clears a cycle open
    **1.5 s** later. Each is a **full horde** (D407): the threat budget of a depth-7 room, so **3 waves** solo plus one
    per extra player.
 2. A cleared room shows a **bonfire** (every rest heals and refills, D150) and **stairs** ("Descend"; after room 8,
-   "Face the boss").
+   "Face the boss"), side by side in the middle of the room, or straight north of it when an obstacle is in the way
+   (D413, PROCGEN §7.1).
 3. **The boss** (D403, D404): one of the eight bosses, **drawn at random on every attempt**, in **its own arena** with its
    home zone's look, all its phases (third phases from Cycle 2, §7.3), with only a name card (no story cutscene). It
    fights at **zone 8's strength**, hits like **the Landlord** (his ×1.5 in place of its own damage multiplier), and its

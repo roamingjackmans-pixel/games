@@ -14,6 +14,7 @@ import { enemyFullHp } from './enemies/spawn';
 import { ngBossDef } from './boss/ngPhases';
 import type { RoomNode, ZoneLayout } from './procgen/zone';
 import type { BossDef } from './types';
+import { ROOM_H, ROOM_W, ROOM_Y0, T, TERRAIN, TILE, type Room } from './room';
 import { RUSH_BOSS_STAGE, RUSH_ROOMS } from './rushRecord';
 
 export * from './rushRecord';
@@ -130,6 +131,61 @@ export function rushBossHpBase(def: BossDef, cycle: number): number {
 export function rushBossDmgMult(def: BossDef): number {
   const ll = BOSSES[RUSH_FINAL_BOSS]!;
   return (ll.mult?.dmg ?? 1) / (def.mult?.dmg ?? 1);
+}
+
+// ---------------------------------------------------------------- the exit (D413)
+
+/** centre-to-centre gap between the bonfire (left) and the stairs (right) */
+export const RUSH_EXIT_GAP = 100;
+/** half the pair's drawn width (stairs ±30 round its centre) plus a tile's breathing room, and its height above / below */
+const EXIT_HALF_W = RUSH_EXIT_GAP / 2 + 30 + 16;
+const EXIT_UP = 40 + 16;
+const EXIT_DOWN = 28 + 16;
+
+/**
+ * Is the pair's whole footprint, centred on (cx, cy), clear? Never a wall, pillar, prop, tree, pit or door; `plain` also
+ * keeps it off the zone's ~ hazard tiles, grates and patches of bad terrain (walkable, so allowed when nothing plainer is left).
+ */
+export function rushExitFits(room: Room, cx: number, cy: number, plain = true): boolean {
+  const tx0 = Math.floor((cx - EXIT_HALF_W) / TILE);
+  const tx1 = Math.floor((cx + EXIT_HALF_W - 1) / TILE);
+  const ty0 = Math.floor((cy - EXIT_UP - ROOM_Y0) / TILE);
+  const ty1 = Math.floor((cy + EXIT_DOWN - 1 - ROOM_Y0) / TILE);
+  if (tx0 < 1 || ty0 < 1 || tx1 >= ROOM_W - 1 || ty1 >= ROOM_H - 1) return false;
+  for (let ty = ty0; ty <= ty1; ty++) {
+    for (let tx = tx0; tx <= tx1; tx++) {
+      const t = room.get(tx, ty);
+      if (plain ? t !== T.Floor : t !== T.Floor && t !== T.Hazard && t !== T.Grate) return false;
+      if (plain && room.terrainAt(tx * TILE + 16, ROOM_Y0 + ty * TILE + 16) !== TERRAIN.None) return false;
+    }
+  }
+  return true;
+}
+
+/** candidate offsets from the wanted spot, nearest first, anything to the south counted twice as far */
+let exitTries: [number, number][] | null = null;
+function exitOffsets(): [number, number][] {
+  if (exitTries) return exitTries;
+  const all: [number, number, number][] = [];
+  for (let dy = -ROOM_H * TILE; dy <= ROOM_H * TILE; dy += 16) {
+    for (let dx = -ROOM_W * TILE; dx <= ROOM_W * TILE; dx += 16) all.push([dx, dy, Math.hypot(dx, dy) + Math.max(0, dy)]);
+  }
+  all.sort((a, b) => a[2] - b[2]);
+  return (exitTries = all.map(([dx, dy]) => [dx, dy]));
+}
+
+/**
+ * Where a cleared room's bonfire and stairs go (D413): side by side, the fire on the left, centred on (x, y) when that is
+ * clear, else straight north of it to the first clear spot, else the nearest clear spot (north first). Plain floor is
+ * tried before walkable hazard ground; only a room with no room for the pair at all puts each on its own nearest floor.
+ */
+export function rushExitSpots(room: Room, x: number, y: number): { bonfire: [number, number]; stairs: [number, number] } {
+  const pair = (cx: number, cy: number) => ({ bonfire: [cx - RUSH_EXIT_GAP / 2, cy] as [number, number], stairs: [cx + RUSH_EXIT_GAP / 2, cy] as [number, number] });
+  for (const plain of [true, false]) {
+    for (let cy = y; cy - EXIT_UP > ROOM_Y0 + TILE; cy -= 16) if (rushExitFits(room, x, cy, plain)) return pair(x, cy);
+    for (const [dx, dy] of exitOffsets()) if (rushExitFits(room, x + dx, y + dy, plain)) return pair(x + dx, y + dy);
+  }
+  return { bonfire: room.nearestFloor(x - RUSH_EXIT_GAP / 2, y, 20), stairs: room.nearestFloor(x + RUSH_EXIT_GAP / 2, y, 26) };
 }
 
 // ---------------------------------------------------------------- the cycle unlock (account-wide, D405)

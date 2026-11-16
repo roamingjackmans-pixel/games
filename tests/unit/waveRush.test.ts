@@ -27,13 +27,17 @@ import {
   noteRushUnlock,
   pickRushBoss,
   readRushUnlock,
+  RUSH_EXIT_GAP,
   rushBossHpBase,
+  rushExitFits,
+  rushExitSpots,
   rushFastest,
   rushFurthestLabel,
   rushRoomLayout,
   rushStartCycles,
 } from '../../src/game/waveRush';
 import type { SaveFile } from '../../src/game/types';
+import { Room, T } from '../../src/game/room';
 import type { Entity } from '../../src/game/world';
 
 function rushSave(seed = 'RUSHTEST'): SaveFile {
@@ -171,6 +175,10 @@ describe('Wave Rush progression', () => {
       expect(s.w.cycle).toBe(1);
       clearRoom(s);
       expect(stairs(s)!.it!.label).toBe(room === RUSH_ROOMS ? 'Face the boss' : 'Descend');
+      // side by side, the fire on the left, on a footprint of plain floor (D413)
+      expect(stairs(s)!.y).toBe(bonfire(s)!.y);
+      expect(stairs(s)!.x - bonfire(s)!.x).toBe(RUSH_EXIT_GAP);
+      expect(rushExitFits(s.w.room, (stairs(s)!.x + bonfire(s)!.x) / 2, stairs(s)!.y)).toBe(true);
       takeStairs(s);
     }
     expect(s.rush!.stage).toBe(RUSH_BOSS_STAGE);
@@ -372,5 +380,35 @@ describe('Wave Rush record (Statistics)', () => {
     expect(m.version).toBe(SAVE_VERSION);
     expect(SAVE_VERSION).toBe(4);
     expect(m.rush).toEqual(newRushRecord());
+  });
+});
+
+describe('Wave Rush exit placement (D413)', () => {
+  it('the bonfire and stairs sit side by side in the middle of an open room', () => {
+    const { bonfire, stairs } = rushExitSpots(Room.empty(), 640, 368);
+    expect(bonfire).toEqual([640 - RUSH_EXIT_GAP / 2, 368]);
+    expect(stairs).toEqual([640 + RUSH_EXIT_GAP / 2, 368]);
+  });
+
+  it('an obstacle in the middle moves both straight north, still together and clear of it', () => {
+    const room = Room.empty();
+    // a 6 × 4 grove of props over the middle, as in a zone room with trees
+    for (let ty = 9; ty <= 12; ty++) for (let tx = 17; tx <= 22; tx++) room.set(tx, ty, T.Prop);
+    const { bonfire, stairs } = rushExitSpots(room, 640, 368);
+    expect(bonfire[0]).toBe(640 - RUSH_EXIT_GAP / 2);
+    expect(stairs[0]).toBe(640 + RUSH_EXIT_GAP / 2);
+    expect(stairs[1]).toBe(bonfire[1]);
+    expect(bonfire[1]).toBeLessThan(368);
+    expect(rushExitFits(room, 640, bonfire[1])).toBe(true);
+    // the first clear row: one step further south would touch the grove
+    expect(rushExitFits(room, 640, bonfire[1] + 16)).toBe(false);
+  });
+
+  it('a room blocked all the way north still finds the pair a clear spot elsewhere', () => {
+    const room = Room.empty();
+    for (let ty = 1; ty <= 14; ty++) for (let tx = 15; tx <= 24; tx++) room.set(tx, ty, T.Pillar);
+    const { bonfire, stairs } = rushExitSpots(room, 640, 368);
+    expect(stairs[0] - bonfire[0]).toBe(RUSH_EXIT_GAP);
+    expect(rushExitFits(room, (bonfire[0] + stairs[0]) / 2, bonfire[1])).toBe(true);
   });
 });

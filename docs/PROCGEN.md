@@ -164,7 +164,11 @@ From cycle 1 (NG+1) the same generators run with the cycle in every stream label
   five-type mix from `rooms:<zone>:<cycle>`. Waves, Elites and terrain come from the same streams as any combat room;
   `smallChest` and `bonusBossFor` give nothing on a `rush` layout.
 - **The boss stage** (`rushBossLayout`): one `boss` node `wr-boss` in the boss's own zone (its arena and palette).
-- The bonfire (`wr-<stage>`) and stairs appear on plain floor near the middle once the room is clear.
+- The bonfire (`wr-<stage>`) and stairs appear once the room is clear, **side by side** (fire on the left, 100 px apart,
+  `rushExitSpots`, D413). The pair's whole footprint (a tile of room round both) must be plain floor: no wall, pillar,
+  prop, pit, door, `~` tile, grate or terrain patch. It goes at the room's middle (the boss arena: a little below it);
+  if that is blocked, **straight north** to the first clear spot; failing that, the nearest clear spot, north counted
+  nearer than south. A room with no plain spot left allows walkable `~` tiles, grates and terrain (never an obstacle or a pit).
 
 ## 8. The Training Hall
 
