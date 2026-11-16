@@ -149,6 +149,17 @@ export function rescaleLeeching(it: unknown): void {
   for (const a of affixes) if (a?.id === 'leeching' && typeof a.value === 'number' && a.value >= 1) a.value = Math.round(a.value * 10) / 100;
 }
 
+/**
+ * D434: the Cestus itself scales A Slicey now, so the Keen Cestus (D433, - / A Slicey) is gone: one already found
+ * becomes a plain Cestus, the word off its name. Runs on every load and does nothing to anything else.
+ */
+export function unKeenCestus(it: unknown): void {
+  const o = it as { baseId?: unknown; variant?: unknown; name?: unknown } | null;
+  if (!o || o.baseId !== 'cestus' || o.variant !== 'keen') return;
+  delete o.variant;
+  if (typeof o.name === 'string') o.name = o.name.replace(/(^| )Keen (?=Cestus)/, '$1');
+}
+
 function untierAndRescale(s: Record<string, unknown>): void {
   const c = (s.character ?? {}) as Record<string, unknown>;
   const fixItem = (it: unknown): void => {
@@ -156,6 +167,7 @@ function untierAndRescale(s: Record<string, unknown>): void {
     const o = it as { sockets?: unknown[] };
     if (Array.isArray(o.sockets)) for (const g of o.sockets) untierGem(g);
     rescaleLeeching(it);
+    unKeenCestus(it);
   };
   if (Array.isArray(c.gems)) for (const g of c.gems) untierGem(g);
   for (const it of Object.values((c.equipment ?? {}) as Record<string, unknown>)) fixItem(it);

@@ -251,7 +251,7 @@ grades (D88): S 1.9 · A 1.55 · B 1.15 · C 0.8 · D 0.45 · E 0.2 · – 0
 weaponPower = base1 × (1 + 0.45 (ilvl − 1)) × (1 + Σ grade × f(effStat) × m) × rarity power × reinforcement
               × 0.9 if it scales A or S with Bonk (as rolled, variant included; D343)
               × 1.2 if Slicey-based: its Slicey grade above its Bonk grade (D347; never the Bow, Twin Axes,
-              Spellblade, Dawn Glaive or Chakrams, D348) × 0.4 if below requirement
+              Spellblade, Dawn Glaive, Chakrams, D348, Rune Kris, Harvest Sickle, D388, or Cestus, D434) × 0.4 if below requirement
    effStat: Bonk counts ×1.5 (max 999) while two-handing (D72); everything else as it is
 hit         = weaponPower × swing mult × (1 + damage %) + gem adds + flat affix damage   (weaponHitByType, D294)
 armorDef    = def1 × slot mult × (1 + 0.6 (ilvl − 1)) × reinforcement
@@ -769,7 +769,7 @@ one of its class's four names and carries that name's power. 20 weapon powers in
 Executioner, Giant Slayer, Last Stand, Featherweight, Quickdraw, Shatterpoint, Bloodletter, Kindling, Frostbite,
 Static Charge, Bounty Hunter). Legendaries found before D388 keep the power they rolled.
 
-**Weapon classes** (D388): 25. The Cestus (Fast, Bonk), Rune Kris (Fast, Slicey + Brain, Magic), Hex Hammer (Medium,
+**Weapon classes** (D388): 25. The Cestus (Fast, Slicey since D434; its Hollow and Fervent variants Bonk), Rune Kris (Fast, Slicey + Brain, Magic), Hex Hammer (Medium,
 Bonk + Brain, Void) and Harvest Sickle (Medium, Slicey + Prayer, Holy) joined, and more classes gained scaling
 variants, so every Bonk or Slicey build that also leans on Brain or Prayer has at least two Fast and two Medium
 weapons to choose from (a class or a variant scaling C or better in both stats; CONTENT_ITEMS §2).

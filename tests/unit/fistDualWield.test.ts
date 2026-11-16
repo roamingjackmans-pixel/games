@@ -13,7 +13,7 @@ import { Rng } from '../../src/engine/rng';
 describe('fist weapons dual-wield two-handed (D421)', () => {
   it('the Cestus and its variants are paired and drawn on both hands', () => {
     expect(WEAPONS.cestus!.paired).toBe(true);
-    for (const variant of ['hollow', 'fervent', 'keen', 'blessed']) expect(weaponOf({ baseId: 'cestus', variant })!.paired, variant).toBe(true);
+    for (const variant of ['hollow', 'fervent', 'blessed']) expect(weaponOf({ baseId: 'cestus', variant })!.paired, variant).toBe(true);
     expect(isPairedWeapon(WEAPONS.cestus!.draw)).toBe(true);
     expect(weaponSpecials(WEAPONS.cestus!).join(' ')).toMatch(/Dual-wielded/);
   });

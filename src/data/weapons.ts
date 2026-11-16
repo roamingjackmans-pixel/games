@@ -429,10 +429,11 @@ export const WEAPONS: Record<string, WeaponDef> = {
   cestus: {
     id: 'cestus',
     paired: true, // D421: a fist weapon, worn on both hands when two-handed (dual-wielded, D318: hits 50% harder)
+    noSliceyBoost: true, // D434: Slicey-led like the other D388 classes, without the ×1.2 (D348)
     name: 'Cestus',
     weight: 3,
-    grades: { bonk: 'A', slicey: '-' },
-    req: { bonk: 12, slicey: 0 },
+    grades: { bonk: '-', slicey: 'A' }, // D434: Slicey fists (was Bonk A)
+    req: { bonk: 0, slicey: 12 },
     speedClass: 'fast',
     combo: [sw(150, 65, 150, 0.74, thrust(32, 72), 12, 'thrust'), sw(150, 65, 150, 0.74, thrust(32, 72), 12, 'thrust'), sw(160, 70, 160, 0.78, arc(80, 70), 10, 'slash'), sw(150, 65, 150, 0.74, thrust(32, 72), 12, 'thrust'), sw(230, 85, 250, 1.16, slam(48, 58), 16, 'overhead')],
     base1: 31,
