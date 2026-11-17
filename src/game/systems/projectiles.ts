@@ -19,8 +19,8 @@ function specOf(e: Entity): DamageSpec {
   if (pr.falloffFrom) {
     // full damage to 250 px, then down to 70% at 750 px and beyond (D88)
     const d = Math.hypot(e.x - pr.falloffFrom.x, e.y - pr.falloffFrom.y);
-    const k = d <= 250 ? 1 : Math.max(0.7, 1 - ((d - 250) / 500) * 0.3);
-    if (k < 1) s.dmg = Object.fromEntries(Object.entries(pr.dmg).map(([t, v]) => [t, (v ?? 0) * k]));
+    const k = pr.longShot ? (d > 250 ? 1.2 : 1) : d <= 250 ? 1 : Math.max(0.7, 1 - ((d - 250) / 500) * 0.3);
+    if (k !== 1) s.dmg = Object.fromEntries(Object.entries(pr.dmg).map(([t, v]) => [t, (v ?? 0) * k]));
   }
   s.status = pr.status;
   s.control = pr.control;

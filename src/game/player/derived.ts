@@ -482,6 +482,7 @@ export function computeDerived(c: Character): Derived {
   if (powers.has('kindling')) statusBuild.push({ id: 'burn', buildup: 12 });
   if (powers.has('frostbite')) statusBuild.push({ id: 'chill', buildup: 12 });
   if (powers.has('static_charge')) statusBuild.push({ id: 'shock', buildup: 12 });
+  if (powers.has('venom')) statusBuild.push({ id: 'poison', buildup: 12 }); // D439
   // weapon-class proficiency (D178): the perks of the classes out right now
   const prof = profBonuses(c);
   dmgPct += prof.damage;

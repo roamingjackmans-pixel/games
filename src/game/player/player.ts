@@ -114,6 +114,7 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     attached: [],
     timeSlow: 1,
     terrainHurtAt: 0,
+    counterUntil: 0,
     pastPos: [],
     shardsGained: 0,
     inBossRoom: false,
@@ -352,8 +353,11 @@ function fireWeaponProjectile(w: World, e: Entity, swing: SwingDef, mult: number
       ...(hb.returns ? { returns: true } : {}),
       ...(hb.range ? { range: hb.range } : {}),
     });
-    // a thrown ring that comes back (D320) loses nothing with distance; arrows and bolts do
-    if (!hb.returns) shot.pr!.falloffFrom = { x: e.x, y: e.y };
+    // a thrown ring that comes back (D320) loses nothing with distance; arrows and bolts do. Long Shot (D439): none
+    // lose anything, and every one deals +20% past 250 px
+    const longShot = pl.derived.powers.has('long_shot');
+    if (!hb.returns || longShot) shot.pr!.falloffFrom = { x: e.x, y: e.y };
+    if (longShot) shot.pr!.longShot = true;
     if (volleyHit) shot.pr!.volleyHit = volleyHit;
   }
   w.sfx(wpn.ranged?.sfx ?? 'shootBolt', e.x);
@@ -593,6 +597,8 @@ function startDodge(w: World, e: Entity): void {
   pl.blocking = false;
   pl.state = 'dodge';
   pl.stateUntil = now + DODGE_S;
+  // Counterstep (D439): the first hit within 1.5 s of the dodge ending
+  if (pl.derived.powers.has('counterstep')) pl.counterUntil = now + DODGE_S + 1.5;
   pl.dodgeUntil = now + DODGE_S;
   pl.dodgeDir = [dx, dy];
   // equip load (D82): heavier loads shorten the invulnerable window (from its start)

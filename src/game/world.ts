@@ -221,6 +221,8 @@ export interface PlayerC {
   timeSlow: number;
   /** next time Hurt terrain may hit this player (PROCGEN §3.2: every 0.5 s while standing in it) */
   terrainHurtAt: number;
+  /** Counterstep (D439): a hit before this time deals +40% (and spends it) */
+  counterUntil: number;
   pastPos: { t: number; x: number; y: number }[];
   shardsGained: number;
   inBossRoom: boolean;
@@ -400,6 +402,8 @@ export interface ProjC {
   sourceTag: string;
   /** bow and crossbow shots lose damage past 250 px from where they were loosed (D88) */
   falloffFrom?: { x: number; y: number };
+  /** Long Shot (D439): no falloff, +20% past 250 px from falloffFrom */
+  longShot?: boolean;
   /** the attack it belongs to and how hard it hits, for lifesteal (D325) */
   attackId?: number;
   lifestealScale?: number;

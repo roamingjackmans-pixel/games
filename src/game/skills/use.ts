@@ -26,7 +26,8 @@ export function attackSpeedFor(w: World, e: Entity, offHand = false): number {
 /** Cooldown reduction from gems, affixes and buffs, capped at 50% (CONTENT_ITEMS §1). */
 export function cooldownReduction(w: World, e: Entity, offHand = false): number {
   const d = e.pl!.derived;
-  return Math.min(0.5, (offHand ? d.off.cdr : d.cdr) - buffSum(e, 'cooldownPct', w.time));
+  // Drillmaster (D439): weapon skills come back 20% faster (not spells: they use their own reduction)
+  return Math.min(0.5, (offHand ? d.off.cdr : d.cdr) - buffSum(e, 'cooldownPct', w.time) + (d.powers.has('drillmaster') ? 0.2 : 0));
 }
 
 /** `offHand`: a spell cast through the off hand's staff or talisman (D369: that hand's own Quicksilver). */

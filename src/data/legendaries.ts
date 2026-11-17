@@ -38,6 +38,17 @@ export const LEGENDARY_POWERS: Record<string, LegendaryPower> = {
   frostbite: { id: 'frostbite', name: 'Frostbite', on: ['weapon'], text: 'Every hit builds Chill 12.' },
   static_charge: { id: 'static_charge', name: 'Static Charge', on: ['weapon'], text: 'Every hit builds Shock 12.' },
   bounty_hunter: { id: 'bounty_hunter', name: 'Bounty Hunter', on: ['weapon'], text: '+25% Shards from kills.' },
+  // D439: ten more, so no power sits on more than four weapon classes
+  backbreaker: { id: 'backbreaker', name: 'Backbreaker', on: ['weapon'], text: '+35% damage to staggered enemies.' },
+  first_blood: { id: 'first_blood', name: 'First Blood', on: ['weapon'], text: '+50% damage to enemies at full HP.' },
+  long_shot: { id: 'long_shot', name: 'Long Shot', on: ['weapon'], text: 'Your shots lose no damage with distance and deal +20% past 250 px.' },
+  finisher: { id: 'finisher', name: 'Finisher', on: ['weapon'], text: 'The last hit of your attack chain deals +40%.' },
+  counterstep: { id: 'counterstep', name: 'Counterstep', on: ['weapon'], text: 'Your first hit within 1.5 s of a dodge deals +40%.' },
+  reapers_due: { id: 'reapers_due', name: "Reaper's Due", on: ['weapon'], text: 'A kill heals 4% of your max HP.' },
+  smite: { id: 'smite', name: 'Smite', on: ['weapon'], text: '+30% damage to undead.' },
+  drillmaster: { id: 'drillmaster', name: 'Drillmaster', on: ['weapon'], text: 'Weapon skills come back 20% faster.' },
+  whirlwind: { id: 'whirlwind', name: 'Whirlwind', on: ['weapon'], text: '+15% damage for each other enemy within 150 px of you (up to +45%).' },
+  venom: { id: 'venom', name: 'Venom', on: ['weapon'], text: 'Every hit builds Poison 12.' },
   moss_mantle: { id: 'moss_mantle', name: 'Moss Mantle', on: ['armor', 'legs'], text: 'Statuses build 40% slower.' },
   hollow_guard: { id: 'hollow_guard', name: 'Hollow Guard', on: ['armor', 'legs'], text: 'Below 30% HP: −30% damage taken.' },
   cowards_comfort: { id: 'cowards_comfort', name: "Coward's Comfort", on: ['armor', 'legs'], text: 'Dodging grants 1 s of +40% move speed.' },
@@ -46,6 +57,7 @@ export const LEGENDARY_POWERS: Record<string, LegendaryPower> = {
 
 /**
  * D388: every legendary weapon's name carries its own power (each class's four legendaries, four different powers).
+ * D439: no power is on more than four weapon classes, each chosen for how those classes play.
  * A legendary weapon gets the power of the name it rolls; a name not listed here rolls a power as before.
  */
 export const LEGENDARY_WEAPON_POWERS: Record<string, string> = {
@@ -53,21 +65,21 @@ export const LEGENDARY_WEAPON_POWERS: Record<string, string> = {
   "Landlord's Gavel": 'sunder',
   'Noise Complaint': 'shatterpoint',
   'The Big One': 'giant_slayer',
-  'Load-Bearing Wall': 'last_stand',
+  'Load-Bearing Wall': 'backbreaker',
   // Greataxe
   'The Severance Package': 'executioner',
-  'Lumberjack Retirement Plan': 'second_wind',
+  'Lumberjack Retirement Plan': 'reapers_due',
   Firewood: 'kindling',
-  'Timber!': 'shatterpoint',
+  'Timber!': 'whirlwind',
   // Colossal Sword
   Overcompensation: 'giant_slayer',
-  'The Door': 'sunder',
-  'Small Talk': 'momentum',
+  'The Door': 'backbreaker',
+  'Small Talk': 'reapers_due',
   'Big Energy': 'last_stand',
   // Crossbow
-  'Second Opinion': 'executioner',
+  'Second Opinion': 'first_blood',
   'The Notary': 'mimics_tooth',
-  Quarrelsome: 'quickdraw',
+  Quarrelsome: 'long_shot',
   'Bolt From the Blue': 'static_charge',
   // Club
   'Stick of Destiny': 'thunderclap',
@@ -76,22 +88,22 @@ export const LEGENDARY_WEAPON_POWERS: Record<string, string> = {
   'Club Membership': 'featherweight',
   // Twin Daggers
   'Paper Cut': 'bloodletter',
-  'The Fine Print': 'mimics_tooth',
-  'Mr. and Mrs. Stabby': 'riposte_master',
-  Backstabbers: 'executioner',
+  'The Fine Print': 'venom',
+  'Mr. and Mrs. Stabby': 'finisher',
+  Backstabbers: 'first_blood',
   // Rapier
   'Strongly Worded Letter': 'riposte_master',
-  'En Garde': 'timekeeper',
+  'En Garde': 'counterstep',
   'The Point': 'quickdraw',
-  'Touché': 'bloodletter',
+  'Touché': 'finisher',
   // Katana
   'Moonlight Shift': 'frostbite',
   Overtime: 'momentum',
-  'Folded Laundry': 'featherweight',
-  'Paper Thin': 'executioner',
+  'Folded Laundry': 'counterstep',
+  'Paper Thin': 'bloodletter',
   // Bow
-  'Long Distance Relationship': 'giant_slayer',
-  'Return to Sender': 'spellsword',
+  'Long Distance Relationship': 'long_shot',
+  'Return to Sender': 'first_blood',
   'Cupid Retired': 'hungering',
   'Arrow Minded': 'quickdraw',
   // Whip
@@ -102,33 +114,33 @@ export const LEGENDARY_WEAPON_POWERS: Record<string, string> = {
   // Longsword
   'Employee of the Month': 'bounty_hunter',
   'Plot Armor': 'last_stand',
-  'Exactly As Long As It Needs To Be': 'second_wind',
+  'Exactly As Long As It Needs To Be': 'drillmaster',
   'Main Character': 'momentum',
   // Spear
   'Social Distancing': 'timekeeper',
-  'The Ten-Foot Rule': 'thunderclap',
+  'The Ten-Foot Rule': 'drillmaster',
   'Personal Space': 'frostbite',
   'Point of No Return': 'executioner',
   // Battleaxe
   'Hostile Takeover': 'bounty_hunter',
   'Chopping Block': 'executioner',
-  'Axe Me Anything': 'second_wind',
+  'Axe Me Anything': 'whirlwind',
   'Splitting Hairs': 'bloodletter',
   // Mace
   'Sunday Best': 'shatterpoint',
-  'Thoughts and Prayers': 'hungering',
+  'Thoughts and Prayers': 'smite',
   'The Sermon': 'sunder',
-  'Blunt Truth': 'giant_slayer',
+  'Blunt Truth': 'backbreaker',
   // Halberd
-  'Committee Decision': 'sunder',
-  'Swiss Army Pole': 'mimics_tooth',
+  'Committee Decision': 'whirlwind',
+  'Swiss Army Pole': 'drillmaster',
   'The Long Arm of the Law': 'executioner',
   'Red Tape': 'frostbite',
   // Twin Axes
   'Double Shift': 'second_wind',
-  'Twice Shy': 'timekeeper',
+  'Twice Shy': 'finisher',
   'The Twins': 'hungering',
-  'Split Decision': 'quickdraw',
+  'Split Decision': 'whirlwind',
   // Hollow Maul
   'Dark Matter of Fact': 'shatterpoint',
   'Existential Dread': 'last_stand',
@@ -138,41 +150,41 @@ export const LEGENDARY_WEAPON_POWERS: Record<string, string> = {
   'Spell Check': 'spellsword',
   'Sharp Mind': 'static_charge',
   'Wizard of Odds': 'thunderclap',
-  'Hex Appeal': 'momentum',
+  'Hex Appeal': 'drillmaster',
   // Censer Flail
   'Holy Smokes': 'kindling',
-  'Fire and Brimstone Inc.': 'giant_slayer',
+  'Fire and Brimstone Inc.': 'smite',
   'Smoke Alarm': 'timekeeper',
   'Hot Take': 'hungering',
   // Dawn Glaive
   'Morning Person': 'second_wind',
-  'Sunday Service': 'spellsword',
+  'Sunday Service': 'smite',
   'Rise and Shine': 'last_stand',
   'First Light': 'kindling',
   // Chakrams
-  'Return Policy': 'bounty_hunter',
+  'Return Policy': 'long_shot',
   'Full Circle': 'momentum',
-  'The Halo Effect': 'thunderclap',
+  'The Halo Effect': 'smite',
   'Boomerang Theory': 'featherweight',
   // Cestus
-  'Knuckle Sandwich': 'shatterpoint',
+  'Knuckle Sandwich': 'finisher',
   'Hands Down': 'riposte_master',
-  'Fist Impressions': 'momentum',
+  'Fist Impressions': 'counterstep',
   'The Handshake': 'second_wind',
   // Rune Kris
   'Curse Word': 'static_charge',
   'Hex Key': 'spellsword',
-  'Stab in the Dark': 'bloodletter',
+  'Stab in the Dark': 'first_blood',
   'Mind the Gap': 'timekeeper',
   // Hex Hammer
   'Mind Over Matter': 'sunder',
   'Thinking Cap': 'spellsword',
-  Headache: 'shatterpoint',
+  Headache: 'backbreaker',
   Brainstorm: 'thunderclap',
   // Harvest Sickle
-  'Grim Reaping': 'executioner',
+  'Grim Reaping': 'reapers_due',
   'Harvest Moon': 'hungering',
-  'Crop Circle': 'featherweight',
+  'Crop Circle': 'venom',
   'Sickle Day': 'bounty_hunter',
 };
 

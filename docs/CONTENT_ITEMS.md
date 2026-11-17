@@ -121,7 +121,7 @@ crossbow in the off hand shoots on the block button with its own power and stami
 parry. A staff or talisman in the weapon hand swings a modest bash (staff: base 7, Bonk D / Brain E; talisman: base
 5.6, Bonk E / Prayer D, 25% Holy) and casts on the weapon-skill keys (D201).
 
-**Legendary weapons** (D388: four a class, each with its own design and its own legendary power, below in brackets; one name is picked per Legendary weapon, and it brings its power): Greathammer: "Landlord's Gavel" (Sunder), "Noise Complaint" (Shatterpoint), "The Big One" (Giant Slayer), "Load-Bearing Wall" (Last Stand); Greataxe: "The Severance Package" (Executioner), "Lumberjack Retirement Plan" (Second Wind), "Firewood" (Kindling), "Timber!" (Shatterpoint); Colossal Sword: "Overcompensation" (Giant Slayer), "The Door" (Sunder), "Small Talk" (Momentum), "Big Energy" (Last Stand); Crossbow: "Second Opinion" (Executioner), "The Notary" (Mimic), "Quarrelsome" (Quickdraw), "Bolt From the Blue" (Static Charge); Club: "Stick of Destiny" (Thunderclap), "Problem Solver" (Shatterpoint), "Original Recipe" (Bounty Hunter), "Club Membership" (Featherweight); Twin Daggers: "Paper Cut" (Bloodletter), "The Fine Print" (Mimic), "Mr. and Mrs. Stabby" (Riposte Master), "Backstabbers" (Executioner); Rapier: "Strongly Worded Letter" (Riposte Master), "En Garde" (Timekeeper), "The Point" (Quickdraw), "Touché" (Bloodletter); Katana: "Moonlight Shift" (Frostbite), "Overtime" (Momentum), "Folded Laundry" (Featherweight), "Paper Thin" (Executioner); Bow: "Long Distance Relationship" (Giant Slayer), "Return to Sender" (Spellsword), "Cupid Retired" (Hungering), "Arrow Minded" (Quickdraw); Whip: "Middle Management" (Momentum), "The Long Reach" (Static Charge), "Snap Decision" (Quickdraw), "Crack of Dawn" (Kindling); Longsword: "Employee of the Month" (Bounty Hunter), "Plot Armor" (Last Stand), "Exactly As Long As It Needs To Be" (Second Wind), "Main Character" (Momentum); Spear: "Social Distancing" (Timekeeper), "The Ten-Foot Rule" (Thunderclap), "Personal Space" (Frostbite), "Point of No Return" (Executioner); Battleaxe: "Hostile Takeover" (Bounty Hunter), "Chopping Block" (Executioner), "Axe Me Anything" (Second Wind), "Splitting Hairs" (Bloodletter); Mace: "Sunday Best" (Shatterpoint), "Thoughts and Prayers" (Hungering), "The Sermon" (Sunder), "Blunt Truth" (Giant Slayer); Halberd: "Committee Decision" (Sunder), "Swiss Army Pole" (Mimic), "The Long Arm of the Law" (Executioner), "Red Tape" (Frostbite); Twin Axes: "Double Shift" (Second Wind), "Twice Shy" (Timekeeper), "The Twins" (Hungering), "Split Decision" (Quickdraw); Hollow Maul: "Dark Matter of Fact" (Shatterpoint), "Existential Dread" (Last Stand), "The Void Warranty" (Sunder), "Nothing Personal" (Giant Slayer); Spellblade: "Spell Check" (Spellsword), "Sharp Mind" (Static Charge), "Wizard of Odds" (Thunderclap), "Hex Appeal" (Momentum); Censer Flail: "Holy Smokes" (Kindling), "Fire and Brimstone Inc." (Giant Slayer), "Smoke Alarm" (Timekeeper), "Hot Take" (Hungering); Dawn Glaive: "Morning Person" (Second Wind), "Sunday Service" (Spellsword), "Rise and Shine" (Last Stand), "First Light" (Kindling); Chakrams: "Return Policy" (Bounty Hunter), "Full Circle" (Momentum), "The Halo Effect" (Thunderclap), "Boomerang Theory" (Featherweight); Cestus: "Knuckle Sandwich" (Shatterpoint), "Hands Down" (Riposte Master), "Fist Impressions" (Momentum), "The Handshake" (Second Wind); Rune Kris: "Curse Word" (Static Charge), "Hex Key" (Spellsword), "Stab in the Dark" (Bloodletter), "Mind the Gap" (Timekeeper); Hex Hammer: "Mind Over Matter" (Sunder), "Thinking Cap" (Spellsword), "Headache" (Shatterpoint), "Brainstorm" (Thunderclap); Harvest Sickle: "Grim Reaping" (Executioner), "Harvest Moon" (Hungering), "Crop Circle" (Featherweight), "Sickle Day" (Bounty Hunter).
+**Legendary weapons** (D388: four a class, each with its own design and its own legendary power, below in brackets; one name is picked per Legendary weapon, and it brings its power. D439: no power is on more than four weapon classes): Greathammer: "Landlord's Gavel" (Sunder), "Noise Complaint" (Shatterpoint), "The Big One" (Giant Slayer), "Load-Bearing Wall" (Backbreaker); Greataxe: "The Severance Package" (Executioner), "Lumberjack Retirement Plan" (Reaper's Due), "Firewood" (Kindling), "Timber!" (Whirlwind); Colossal Sword: "Overcompensation" (Giant Slayer), "The Door" (Backbreaker), "Small Talk" (Reaper's Due), "Big Energy" (Last Stand); Crossbow: "Second Opinion" (First Blood), "The Notary" (Mimic's Tooth), "Quarrelsome" (Long Shot), "Bolt From the Blue" (Static Charge); Club: "Stick of Destiny" (Thunderclap), "Problem Solver" (Shatterpoint), "Original Recipe" (Bounty Hunter), "Club Membership" (Featherweight); Twin Daggers: "Paper Cut" (Bloodletter), "The Fine Print" (Venom), "Mr. and Mrs. Stabby" (Finisher), "Backstabbers" (First Blood); Rapier: "Strongly Worded Letter" (Riposte Master), "En Garde" (Counterstep), "The Point" (Quickdraw), "Touché" (Finisher); Katana: "Moonlight Shift" (Frostbite), "Overtime" (Momentum), "Folded Laundry" (Counterstep), "Paper Thin" (Bloodletter); Bow: "Long Distance Relationship" (Long Shot), "Return to Sender" (First Blood), "Cupid Retired" (Hungering), "Arrow Minded" (Quickdraw); Whip: "Middle Management" (Momentum), "The Long Reach" (Static Charge), "Snap Decision" (Quickdraw), "Crack of Dawn" (Kindling); Longsword: "Employee of the Month" (Bounty Hunter), "Plot Armor" (Last Stand), "Exactly As Long As It Needs To Be" (Drillmaster), "Main Character" (Momentum); Spear: "Social Distancing" (Timekeeper), "The Ten-Foot Rule" (Drillmaster), "Personal Space" (Frostbite), "Point of No Return" (Executioner); Battleaxe: "Hostile Takeover" (Bounty Hunter), "Chopping Block" (Executioner), "Axe Me Anything" (Whirlwind), "Splitting Hairs" (Bloodletter); Mace: "Sunday Best" (Shatterpoint), "Thoughts and Prayers" (Smite), "The Sermon" (Sunder), "Blunt Truth" (Backbreaker); Halberd: "Committee Decision" (Whirlwind), "Swiss Army Pole" (Drillmaster), "The Long Arm of the Law" (Executioner), "Red Tape" (Frostbite); Twin Axes: "Double Shift" (Second Wind), "Twice Shy" (Finisher), "The Twins" (Hungering), "Split Decision" (Whirlwind); Hollow Maul: "Dark Matter of Fact" (Shatterpoint), "Existential Dread" (Last Stand), "The Void Warranty" (Sunder), "Nothing Personal" (Giant Slayer); Spellblade: "Spell Check" (Spellsword), "Sharp Mind" (Static Charge), "Wizard of Odds" (Thunderclap), "Hex Appeal" (Drillmaster); Censer Flail: "Holy Smokes" (Kindling), "Fire and Brimstone Inc." (Smite), "Smoke Alarm" (Timekeeper), "Hot Take" (Hungering); Dawn Glaive: "Morning Person" (Second Wind), "Sunday Service" (Smite), "Rise and Shine" (Last Stand), "First Light" (Kindling); Chakrams: "Return Policy" (Long Shot), "Full Circle" (Momentum), "The Halo Effect" (Smite), "Boomerang Theory" (Featherweight); Cestus: "Knuckle Sandwich" (Finisher), "Hands Down" (Riposte Master), "Fist Impressions" (Counterstep), "The Handshake" (Second Wind); Rune Kris: "Curse Word" (Static Charge), "Hex Key" (Spellsword), "Stab in the Dark" (First Blood), "Mind the Gap" (Timekeeper); Hex Hammer: "Mind Over Matter" (Sunder), "Thinking Cap" (Spellsword), "Headache" (Backbreaker), "Brainstorm" (Thunderclap); Harvest Sickle: "Grim Reaping" (Reaper's Due), "Harvest Moon" (Hungering), "Crop Circle" (Venom), "Sickle Day" (Bounty Hunter).
 
 ### 2.1 Weapon skills (Q / E / R)
 
@@ -259,26 +259,36 @@ roll one.
 | **Font** | staff, talisman | Spells cost no stamina while you are above 80% HP. |
 | **Litany** | talisman | Your heals also restore 10% stamina to their targets. |
 | **Overcharge** | staff | Spells deal +25% but you take +10% damage. |
-| **Thunderclap** | weapon | Every 4th hit chains Lightning to 3 enemies ×0.8. |
-| **Sunder** | weapon | Skills ignore 30% of enemy defense. |
-| **Second Wind** | weapon | A kill refunds 20 stamina. |
-| **Hungering** | weapon | Heal 1.6% of max HP a hit (lifesteal, D325; ×4 by D355), −10% max HP. |
-| **Momentum** | weapon | Each consecutive hit without being hit: +3% damage (max 10). |
-| **Riposte Master** | weapon | Ripostes deal ×4 and heal 5%. |
-| **Spellsword** | weapon | Spells cast within 2 s after a light attack cost no stamina. |
-| **Timekeeper** | weapon | Dodge recharge −1 s (floor 3 s). |
-| **Mimic's Tooth** | weapon | Chests have a 0% mimic chance; mimics you attack first take ×2. |
-| **Executioner** (D388) | weapon | +40% damage to enemies below 25% HP. |
-| **Giant Slayer** (D388) | weapon | +25% damage to bosses and Elites. |
-| **Last Stand** (D388) | weapon | Below 30% of your HP: +30% damage. |
-| **Featherweight** (D388) | weapon | Swings cost 25% less stamina. |
-| **Quickdraw** (D388) | weapon | +15% attack speed. |
-| **Shatterpoint** (D388) | weapon | +50% poise damage. |
-| **Bloodletter** (D388) | weapon | Every hit builds Bleed 15. |
-| **Kindling** (D388) | weapon | Every hit builds Burn 12. |
-| **Frostbite** (D388) | weapon | Every hit builds Chill 12. |
-| **Static Charge** (D388) | weapon | Every hit builds Shock 12. |
-| **Bounty Hunter** (D388) | weapon | +25% Shards from kills. |
+| **Thunderclap** | weapon: Club, Spellblade, Hex Hammer | Every 4th hit chains Lightning to 3 enemies ×0.8. |
+| **Sunder** | weapon: Greathammer, Mace, Hollow Maul, Hex Hammer | Skills ignore 30% of enemy defense. |
+| **Second Wind** | weapon: Twin Axes, Dawn Glaive, Cestus | A kill refunds 20 stamina. |
+| **Hungering** | weapon: Bow, Twin Axes, Censer Flail, Harvest Sickle | Heal 1.6% of max HP a hit (lifesteal, D325; ×4 by D355), −10% max HP. |
+| **Momentum** | weapon: Katana, Whip, Longsword, Chakrams | Each consecutive hit without being hit: +3% damage (max 10). |
+| **Riposte Master** | weapon: Rapier, Cestus | Ripostes deal ×4 and heal 5%. |
+| **Spellsword** | weapon: Spellblade, Rune Kris, Hex Hammer | Spells cast within 2 s after a light attack cost no stamina. |
+| **Timekeeper** | weapon: Spear, Censer Flail, Rune Kris | Dodge recharge −1 s (floor 3 s). |
+| **Mimic's Tooth** | weapon: Crossbow | Chests have a 0% mimic chance; mimics you attack first take ×2. |
+| **Executioner** (D388) | weapon: Greataxe, Spear, Battleaxe, Halberd | +40% damage to enemies below 25% HP. |
+| **Giant Slayer** (D388) | weapon: Greathammer, Colossal Sword, Hollow Maul | +25% damage to bosses and Elites. |
+| **Last Stand** (D388) | weapon: Colossal Sword, Longsword, Hollow Maul, Dawn Glaive | Below 30% of your HP: +30% damage. |
+| **Featherweight** (D388) | weapon: Club, Chakrams | Swings cost 25% less stamina. |
+| **Quickdraw** (D388) | weapon: Rapier, Bow, Whip | +15% attack speed. |
+| **Shatterpoint** (D388) | weapon: Greathammer, Club, Mace, Hollow Maul | +50% poise damage. |
+| **Bloodletter** (D388) | weapon: Twin Daggers, Katana, Battleaxe | Every hit builds Bleed 15. |
+| **Kindling** (D388) | weapon: Greataxe, Whip, Censer Flail, Dawn Glaive | Every hit builds Burn 12. |
+| **Frostbite** (D388) | weapon: Katana, Spear, Halberd | Every hit builds Chill 12. |
+| **Static Charge** (D388) | weapon: Crossbow, Whip, Spellblade, Rune Kris | Every hit builds Shock 12. |
+| **Bounty Hunter** (D388) | weapon: Club, Longsword, Battleaxe, Harvest Sickle | +25% Shards from kills. |
+| **Backbreaker** (D439) | weapon: Greathammer, Colossal Sword, Mace, Hex Hammer | +35% damage to staggered enemies. |
+| **First Blood** (D439) | weapon: Crossbow, Twin Daggers, Bow, Rune Kris | +50% damage to enemies at full HP. |
+| **Long Shot** (D439) | weapon: Crossbow, Bow, Chakrams | Your shots lose no damage with distance and deal +20% past 250 px. |
+| **Finisher** (D439) | weapon: Twin Daggers, Rapier, Twin Axes, Cestus | The last hit of your attack chain deals +40%. |
+| **Counterstep** (D439) | weapon: Rapier, Katana, Cestus | Your first hit within 1.5 s of a dodge deals +40%. |
+| **Reaper's Due** (D439) | weapon: Greataxe, Colossal Sword, Harvest Sickle | A kill heals 4% of your max HP. |
+| **Smite** (D439) | weapon: Mace, Censer Flail, Dawn Glaive, Chakrams | +30% damage to undead. |
+| **Drillmaster** (D439) | weapon: Longsword, Spear, Halberd, Spellblade | Weapon skills come back 20% faster. |
+| **Whirlwind** (D439) | weapon: Greataxe, Battleaxe, Halberd, Twin Axes | +15% damage for each other enemy within 150 px of you (up to +45%). |
+| **Venom** (D439) | weapon: Twin Daggers, Harvest Sickle | Every hit builds Poison 12. |
 | **Moss Mantle** | armor, legs | Statuses build 40% slower. |
 | **Hollow Guard** | armor, legs | Below 30% HP: −30% damage taken. |
 | **Coward's Comfort** | armor, legs | Dodging grants 1 s of +40% move speed. |

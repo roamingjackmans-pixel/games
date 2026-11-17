@@ -914,6 +914,21 @@ export function hitEnemy(w: World, attacker: Entity | null, e: Entity, spec: Dam
     if (pl.derived.powers.has('executioner') && hp.hp < hp.max * 0.25) mult *= 1.4;
     if (pl.derived.powers.has('giant_slayer') && (en.isBoss || en.elite)) mult *= 1.25;
     if (pl.derived.powers.has('last_stand') && attacker?.hp && attacker.hp.hp < attacker.hp.max * 0.3) mult *= 1.3;
+    // D439
+    const pw = pl.derived.powers;
+    if (pw.has('backbreaker') && (hp.staggerUntil > now || hp.riposteUntil > now)) mult *= 1.35;
+    if (pw.has('first_blood') && hp.hp >= hp.max) mult *= 1.5;
+    if (pw.has('smite') && en.def.undead) mult *= 1.3;
+    if (pw.has('finisher') && o.light && pl.combo && pl.combo.idx >= pl.derived.weapon.combo.length - 1) mult *= 1.4;
+    if (pw.has('counterstep') && pl.counterUntil > now) {
+      mult *= 1.4;
+      pl.counterUntil = 0;
+    }
+    if (pw.has('whirlwind') && attacker) {
+      let near = 0;
+      for (const o2 of w.livingEnemies()) if (o2 !== e && Math.hypot(o2.x - attacker.x, o2.y - attacker.y) <= 150) near++;
+      mult *= 1 + 0.15 * Math.min(3, near);
+    }
     if (pl.derived.rings.has('ring_stillness') && now - pl.stillSince >= 1) mult *= Math.pow(1.15, pl.derived.ringCounts.ring_stillness ?? 1);
   }
   if (en.elite === 'armored') spec = { ...spec, dmg: { ...spec.dmg, physical: (spec.dmg.physical ?? 0) * 0.6 } };

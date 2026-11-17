@@ -2,7 +2,7 @@
 // elite summons, on-hit enemy effects, and player down/death routing. Scenes extend these hooks.
 import { runEffects } from './effects/run';
 import { addBestiaryKill } from '../data/bestiary';
-import { emptySpec, hitPlayer } from './combat/damage';
+import { emptySpec, heal, hitPlayer } from './combat/damage';
 import { addBuff } from './combat/state';
 import { spawnEnemy } from './enemies/spawn';
 import { attackDamage } from './enemies/spawn';
@@ -107,6 +107,7 @@ export function installRules(w: World, o: RulesOpts = {}): void {
     if (killer?.pl) {
       const d = killer.pl.derived;
       if (d.powers.has('second_wind') && killer.stam) killer.stam.cur = Math.min(killer.stam.max, killer.stam.cur + 20);
+      if (d.powers.has('reapers_due') && killer.hp) heal(w2, killer, killer.hp.max * 0.04, true, killer); // D439
       for (const b of killer.buffs ?? []) {
         if (b.stackOn !== 'kill' || b.until <= w2.time) continue;
         b.stacks = Math.min(b.maxStacks, b.stacks + 1);
