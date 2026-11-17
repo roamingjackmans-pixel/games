@@ -10,27 +10,28 @@ Written by `npm run balance:report` (tests/sim/report.sim.ts) from the live data
 4. **Build spread** (severity 5.2): NG+5 zone 8: the slowest build (Prayer caster: talisman spells) takes 919 s on the boss, 4.3× the fastest (Quality: longsword + shield, 212 s). *Suggested:* Bring the slow build's damage source up (or the fast one down).
 5. **Build spread** (severity 5.2): NG+5 zone 6: the slowest build (Prayer caster: talisman spells) takes 666 s on the boss, 4.3× the fastest (Quality: longsword + shield, 154 s). *Suggested:* Bring the slow build's damage source up (or the fast one down).
 6. **Build spread** (severity 5.2): NG+6 zone 1: the slowest build (Prayer caster: talisman spells) takes 630 s on the boss, 4.3× the fastest (Quality: longsword + shield, 146 s). *Suggested:* Bring the slow build's damage source up (or the fast one down).
-7. **Gems** (severity 4.6): Quicksilver raises sustained DPS by +3% (burst +7%) where Brutal gives +6% (0.41× Brutal). Stamina, not swing time, limits sustained damage, so speed is worth little. *Suggested:* Let it also ease stamina (e.g. Quicksilver adds stamina regen), or raise its value.
-8. **Boss length** (severity 4.5): NG+5 zone 8: the median build needs 460 s of nonstop hitting to kill The Landlord (3,981,273 HP), 7.7 minutes before any dodging (target 11 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
-9. **Weapons** (severity 4.4): Katana: 266 sustained light-attack DPS, 1.73× the median weapon (154) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
-10. **Boss length** (severity 4.3): NG+4 zone 8: the median build needs 390 s of nonstop hitting to kill The Landlord (2,769,325 HP), 6.5 minutes before any dodging (target 11 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
-11. **Spells** (severity 4.2): Comet Barrage (brain): 2.9 damage per busy second at Spell Skill 100, 0.36× the brain median (8). *Suggested:* Raise its base or shorten its cooldown (unless its utility is the point).
-12. **Boss length** (severity 4.2): NG+7 zone 1: the median build needs 360 s of nonstop hitting to kill The Caretaker (3,690,201 HP), 6 minutes before any dodging (target 8 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
-13. **Weapons** (severity 4.1): Twin Daggers: 250 sustained light-attack DPS, 1.62× the median weapon (154) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
-14. **Weapons** (severity 4.1): Crossbow: 96 sustained light-attack DPS, 0.62× the median weapon (154) at equal fitting stats. *Suggested:* Raise its base damage / combo multipliers (D40: poor scaling should mean higher base, not lower DPS).
-15. **Builds** (severity 4): First playthrough zone 1: the Brain caster: S staff (Archmagister's Rod) build at level 6 does not meet its own casting tool's requirements at item level 1 (40% damage, no skills). *Suggested:* Item-level requirements (+2 a level on the primary stat) outpace the points a focused build has; ease reqAtIlvl or the NG+ item level.
-16. **Builds** (severity 4): First playthrough zone 2: the Brain caster: S staff (Archmagister's Rod) build at level 15 does not meet its own casting tool's requirements at item level 2 (40% damage, no skills). *Suggested:* Item-level requirements (+2 a level on the primary stat) outpace the points a focused build has; ease reqAtIlvl or the NG+ item level.
-17. **Enemy curve** (severity 3.8): First playthrough: zone 8 room enemies hit for 100 on average, below zone 7's 108. *Suggested:* Make the per-zone damage table climb (zoneDmgFactor / NG_ZONE_ENEMY_DMG).
-18. **Weapons** (severity 3.7): Chakrams: 104 sustained light-attack DPS, 0.67× the median weapon (154) at equal fitting stats. *Suggested:* Raise its base damage / combo multipliers (D40: poor scaling should mean higher base, not lower DPS).
-19. **Weapons** (severity 3.5): Twin Axes: 219 sustained light-attack DPS, 1.42× the median weapon (154) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
-20. **Enemy curve** (severity 3.4): NG+4: zone 7 room enemies have 23,519 HP on average, below zone 6's 26,699. *Suggested:* Check the zone roster mix and the HP curve.
-21. **Enemy curve** (severity 3.3): NG+6: zone 7 room enemies have 35,545 HP on average, below zone 6's 39,993. *Suggested:* Check the zone roster mix and the HP curve.
-22. **Enemy curve** (severity 3.2): NG+3: zone 2 room enemies have 10,968 HP on average, below zone 1's 12,318. *Suggested:* Check the zone roster mix and the HP curve.
-23. **Boss curve** (severity 3.2): NG+1: Foreman Ignatius (zone 5) has 111,403 HP over all phases, below zone 4's boss (113,929). *Suggested:* Raise its baseHp / phase bars, or lower the previous boss.
-24. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
-25. **Boss curve** (severity 2.9): NG+1: The Bloatking (zone 3) averages 631 a hit, below zone 2's boss (705). *Suggested:* Raise its phase damage multipliers.
+7. **Weapons** (severity 4.9): Club: 321 sustained light-attack DPS, 1.94× the median weapon (165) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
+8. **Gems** (severity 4.6): Quicksilver raises sustained DPS by +3% (burst +7%) where Brutal gives +6% (0.41× Brutal). Stamina, not swing time, limits sustained damage, so speed is worth little. *Suggested:* Let it also ease stamina (e.g. Quicksilver adds stamina regen), or raise its value.
+9. **Boss length** (severity 4.5): NG+5 zone 8: the median build needs 460 s of nonstop hitting to kill The Landlord (3,981,273 HP), 7.7 minutes before any dodging (target 11 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
+10. **Weapons** (severity 4.4): Crossbow: 96 sustained light-attack DPS, 0.58× the median weapon (165) at equal fitting stats. *Suggested:* Raise its base damage / combo multipliers (D40: poor scaling should mean higher base, not lower DPS).
+11. **Boss length** (severity 4.3): NG+4 zone 8: the median build needs 390 s of nonstop hitting to kill The Landlord (2,769,325 HP), 6.5 minutes before any dodging (target 11 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
+12. **Spells** (severity 4.2): Comet Barrage (brain): 2.9 damage per busy second at Spell Skill 100, 0.36× the brain median (8). *Suggested:* Raise its base or shorten its cooldown (unless its utility is the point).
+13. **Boss length** (severity 4.2): NG+7 zone 1: the median build needs 359 s of nonstop hitting to kill The Caretaker (3,690,201 HP), 6 minutes before any dodging (target 8 min, D301). *Suggested:* Raise its NG_BOSS_HP factor (D301).
+14. **Weapon skills** (severity 4.2): Colossal Sword's skills deal 286 damage per second of cooldown, 2.13× the median weapon's (134). *Suggested:* Lower the skill multipliers or lengthen the cooldowns.
+15. **Weapons** (severity 4.1): Katana: 266 sustained light-attack DPS, 1.61× the median weapon (165) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
+16. **Builds** (severity 4): First playthrough zone 1: the Brain caster: S staff (Archmagister's Rod) build at level 6 does not meet its own casting tool's requirements at item level 1 (40% damage, no skills). *Suggested:* Item-level requirements (+2 a level on the primary stat) outpace the points a focused build has; ease reqAtIlvl or the NG+ item level.
+17. **Builds** (severity 4): First playthrough zone 2: the Brain caster: S staff (Archmagister's Rod) build at level 15 does not meet its own casting tool's requirements at item level 2 (40% damage, no skills). *Suggested:* Item-level requirements (+2 a level on the primary stat) outpace the points a focused build has; ease reqAtIlvl or the NG+ item level.
+18. **Weapons** (severity 3.8): Twin Axes: 251 sustained light-attack DPS, 1.52× the median weapon (165) at equal fitting stats. *Suggested:* Lower its base damage or combo multipliers, or raise its stamina cost.
+19. **Enemy curve** (severity 3.8): First playthrough: zone 8 room enemies hit for 100 on average, below zone 7's 108. *Suggested:* Make the per-zone damage table climb (zoneDmgFactor / NG_ZONE_ENEMY_DMG).
+20. **Weapons** (severity 3.8): Bow: 110 sustained light-attack DPS, 0.67× the median weapon (165) at equal fitting stats. *Suggested:* Raise its base damage / combo multipliers (D40: poor scaling should mean higher base, not lower DPS).
+21. **Enemy curve** (severity 3.4): NG+4: zone 7 room enemies have 23,519 HP on average, below zone 6's 26,699. *Suggested:* Check the zone roster mix and the HP curve.
+22. **Enemy curve** (severity 3.3): NG+6: zone 7 room enemies have 35,545 HP on average, below zone 6's 39,993. *Suggested:* Check the zone roster mix and the HP curve.
+23. **Enemy curve** (severity 3.2): NG+3: zone 2 room enemies have 10,968 HP on average, below zone 1's 12,318. *Suggested:* Check the zone roster mix and the HP curve.
+24. **Boss curve** (severity 3.2): NG+1: Foreman Ignatius (zone 5) has 111,403 HP over all phases, below zone 4's boss (113,929). *Suggested:* Raise its baseHp / phase bars, or lower the previous boss.
+25. **Gear power** (severity 3): Reinforcement reaches ×3.25 at +15, while the whole rarity ladder is ×1.28: a +15 common out-hits a +0 legendary 2.5×, so drops matter little once reinforcement starts. *Suggested:* Either flatten reinforcement (e.g. +10% a step) or widen rarity power, so finding better gear stays exciting in NG+.
+26. **Boss curve** (severity 2.9): NG+1: The Bloatking (zone 3) averages 631 a hit, below zone 2's boss (705). *Suggested:* Raise its phase damage multipliers.
 
-(155 more findings of the same kinds are in the tables below.)
+(154 more findings of the same kinds are in the tables below.)
 
 ## 1. Enemies and bosses by zone
 
@@ -403,26 +404,26 @@ Each build at the zone's expected level, with points split as listed, wearing th
 | Quality: longsword + shield | 44 dps · 2s / 57s · 16.8 / 3.5 hits | 69 dps · 1.8s / 81s · 22.4 / 3 hits | 103 dps · 1.6s / 73s · 19 / 3.8 hits | 158 dps · 1.4s / 67s · 17.7 / 3.2 hits | 226 dps · 1.1s / 76s · 15.5 / 2.2 hits | 330 dps · 1.1s / 57s · 16.7 / 2.8 hits | 394 dps · 0.9s / 53s · 18 / 3 hits | 462 dps · 1.1s / 122s · 18.9 / 1.4 hits |
 | Bow (Slicey) | 28 dps · 3.2s / 89s · 12.2 / 2.5 hits | 44 dps · 2.8s / 127s · 16.5 / 2.2 hits | 65 dps · 2.6s / 117s · 14.1 / 2.8 hits | 98 dps · 2.2s / 107s · 13.3 / 2.4 hits | 139 dps · 1.8s / 123s · 11.7 / 1.7 hits | 205 dps · 1.7s / 92s · 12.7 / 2.1 hits | 243 dps · 1.4s / 87s · 13.8 / 2.3 hits | 287 dps · 1.8s / 196s · 14.8 / 1.1 hits |
 | Crossbow (Bonk) | 17 dps · 5.1s / 144s · 17.7 / 3.7 hits | 27 dps · 4.5s / 205s · 23.2 / 3.1 hits | 40 dps · 4.1s / 188s · 19.4 / 3.9 hits | 61 dps · 3.6s / 172s · 17.8 / 3.2 hits | 89 dps · 2.8s / 192s · 15.4 / 2.2 hits | 129 dps · 2.7s / 146s · 16.6 / 2.8 hits | 153 dps · 2.3s / 137s · 17.6 / 3 hits | 181 dps · 2.9s / 311s · 18.2 / 1.4 hits |
-| Brain caster: staff spells | 35 dps · 2.6s / 72s · 12.2 / 2.5 hits | 45 dps · 2.7s / 125s · 16.5 / 2.2 hits | 76 dps · 2.2s / 100s · 14.1 / 2.8 hits | 110 dps · 2s / 96s · 13.3 / 2.4 hits | 150 dps · 1.7s / 114s · 11.7 / 1.7 hits | 212 dps · 1.7s / 89s · 12.7 / 2.1 hits | 252 dps · 1.4s / 84s · 13.8 / 2.3 hits | 296 dps · 1.8s / 191s · 14.8 / 1.1 hits |
-| Brain caster: S staff (Archmagister's Rod) | 53 dps · 1.7s / 48s · 12.2 / 2.5 hits ⚠req | 70 dps · 1.7s / 79s · 16.5 / 2.2 hits ⚠req | 122 dps · 1.4s / 62s · 14.1 / 2.8 hits | 179 dps · 1.2s / 59s · 13.3 / 2.4 hits | 249 dps · 1s / 69s · 11.7 / 1.7 hits | 353 dps · 1s / 53s · 12.7 / 2.1 hits | 428 dps · 0.8s / 49s · 13.8 / 2.3 hits | 509 dps · 1s / 111s · 14.8 / 1.1 hits |
+| Brain caster: staff spells | 35 dps · 2.5s / 72s · 12.2 / 2.5 hits | 45 dps · 2.7s / 124s · 16.5 / 2.2 hits | 76 dps · 2.2s / 100s · 14.1 / 2.8 hits | 110 dps · 2s / 96s · 13.3 / 2.4 hits | 151 dps · 1.7s / 113s · 11.7 / 1.7 hits | 213 dps · 1.7s / 89s · 12.7 / 2.1 hits | 253 dps · 1.4s / 83s · 13.8 / 2.3 hits | 297 dps · 1.8s / 190s · 14.8 / 1.1 hits |
+| Brain caster: S staff (Archmagister's Rod) | 53 dps · 1.7s / 47s · 12.2 / 2.5 hits ⚠req | 70 dps · 1.7s / 79s · 16.5 / 2.2 hits ⚠req | 122 dps · 1.4s / 62s · 14.1 / 2.8 hits | 179 dps · 1.2s / 59s · 13.3 / 2.4 hits | 249 dps · 1s / 69s · 11.7 / 1.7 hits | 354 dps · 1s / 53s · 12.7 / 2.1 hits | 429 dps · 0.8s / 49s · 13.8 / 2.3 hits | 511 dps · 1s / 110s · 14.8 / 1.1 hits |
 | Prayer caster: talisman spells | 33 dps · 2.7s / 75s · 13 / 2.7 hits | 31 dps · 3.9s / 178s · 17.4 / 2.4 hits | 46 dps · 3.6s / 166s · 14.8 / 3 hits | 68 dps · 3.2s / 154s · 13.8 / 2.5 hits | 95 dps · 2.7s / 180s · 12.1 / 1.7 hits | 136 dps · 2.6s / 138s · 13.2 / 2.2 hits | 163 dps · 2.2s / 129s · 14.2 / 2.4 hits | 195 dps · 2.7s / 289s · 15.2 / 1.1 hits |
 
-- Brain caster: staff spells: Z1 Void Rift, Frost Lance, Chain Lightning; spells 29 + weapon 6 · Z2 Void Rift, Frost Lance, Chain Lightning; spells 41 + weapon 3 · Z3 Meteor, Void Rift, Frost Lance; spells 70 + weapon 6 · Z4 Meteor, Void Rift, Frost Lance; spells 101 + weapon 9 · Z5 Meteor, Void Rift, Frost Lance; spells 138 + weapon 12 · Z6 Meteor, Void Rift, Frost Lance; spells 194 + weapon 17 · Z7 Meteor, Void Rift, Frost Lance; spells 232 + weapon 20 · Z8 Meteor, Void Rift, Frost Lance; spells 272 + weapon 24
-- Brain caster: S staff (Archmagister's Rod): Z1 Void Rift, Frost Lance, Chain Lightning; spells 47 + weapon 6 · Z2 Void Rift, Frost Lance, Chain Lightning; spells 67 + weapon 4 · Z3 Meteor, Void Rift, Frost Lance; spells 116 + weapon 6 · Z4 Meteor, Void Rift, Frost Lance; spells 170 + weapon 9 · Z5 Meteor, Void Rift, Frost Lance; spells 236 + weapon 13 · Z6 Meteor, Void Rift, Frost Lance; spells 335 + weapon 18 · Z7 Meteor, Void Rift, Frost Lance; spells 407 + weapon 21 · Z8 Meteor, Void Rift, Frost Lance; spells 485 + weapon 25
+- Brain caster: staff spells: Z1 Void Rift, Frost Lance, Chain Lightning; spells 29 + weapon 6 · Z2 Void Rift, Frost Lance, Chain Lightning; spells 41 + weapon 4 · Z3 Meteor, Void Rift, Frost Lance; spells 70 + weapon 6 · Z4 Meteor, Void Rift, Frost Lance; spells 101 + weapon 9 · Z5 Meteor, Void Rift, Frost Lance; spells 138 + weapon 13 · Z6 Meteor, Void Rift, Frost Lance; spells 194 + weapon 18 · Z7 Meteor, Void Rift, Frost Lance; spells 232 + weapon 21 · Z8 Meteor, Void Rift, Frost Lance; spells 272 + weapon 25
+- Brain caster: S staff (Archmagister's Rod): Z1 Void Rift, Frost Lance, Chain Lightning; spells 47 + weapon 6 · Z2 Void Rift, Frost Lance, Chain Lightning; spells 67 + weapon 4 · Z3 Meteor, Void Rift, Frost Lance; spells 116 + weapon 6 · Z4 Meteor, Void Rift, Frost Lance; spells 170 + weapon 9 · Z5 Meteor, Void Rift, Frost Lance; spells 236 + weapon 13 · Z6 Meteor, Void Rift, Frost Lance; spells 335 + weapon 19 · Z7 Meteor, Void Rift, Frost Lance; spells 407 + weapon 22 · Z8 Meteor, Void Rift, Frost Lance; spells 485 + weapon 26
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 13 + weapon 20 · Z2 Sunray, Purify; spells 19 + weapon 12 · Z3 Sunray, Purify; spells 27 + weapon 18 · Z4 Sunray, Purify; spells 40 + weapon 28 · Z5 Sunray, Purify; spells 55 + weapon 40 · Z6 Sunray, Purify; spells 78 + weapon 58 · Z7 Sunray, Purify; spells 93 + weapon 70 · Z8 Sunray, Purify; spells 111 + weapon 84
 
 Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 76 | 48 | 144 | 3 |
+| 1 | 76 | 47 | 144 | 3 |
 | 2 | 115 | 79 | 205 | 2.6 |
 | 3 | 97 | 62 | 188 | 3 |
-| 4 | 91 | 59 | 172 | 2.9 |
+| 4 | 90 | 59 | 172 | 2.9 |
 | 5 | 103 | 69 | 192 | 2.8 |
 | 6 | 79 | 53 | 146 | 2.7 |
-| 7 | 74 | 49 | 137 | 2.8 |
-| 8 | 166 | 111 | 311 | 2.8 |
+| 7 | 73 | 49 | 137 | 2.8 |
+| 8 | 166 | 110 | 311 | 2.8 |
 
 ### NG+1
 
@@ -433,12 +434,12 @@ Boss time-to-kill across the builds (seconds):
 | Quality: longsword + shield | 586 dps · 1.3s / 101s · 18.9 / 2.1 hits | 720 dps · 1.4s / 105s · 15.9 / 1.9 hits | 874 dps · 1.7s / 114s · 18.6 / 3.1 hits | 977 dps · 2s / 117s · 16.9 / 2.5 hits | 1,096 dps · 1.9s / 102s · 14.5 / 1.5 hits | 1,211 dps · 2.3s / 104s · 16.1 / 1.8 hits | 1,319 dps · 1.9s / 107s · 19.4 / 2.2 hits | 1,436 dps · 2.4s / 177s · 15.5 / 1.1 hits |
 | Bow (Slicey) | 382 dps · 2s / 156s · 15 / 1.7 hits | 481 dps · 2s / 156s · 12.7 / 1.5 hits | 590 dps · 2.6s / 169s · 14.8 / 2.5 hits | 686 dps · 2.8s / 166s · 13.4 / 2 hits | 816 dps · 2.5s / 137s · 11.5 / 1.2 hits | 934 dps · 2.9s / 135s · 12.8 / 1.5 hits | 1,045 dps · 2.4s / 135s · 15.5 / 1.8 hits | 1,154 dps · 3s / 221s · 12.2 / 0.9 hits ⚠1-shot |
 | Crossbow (Bonk) | 241 dps · 3.2s / 246s · 18.2 / 2 hits | 304 dps · 3.2s / 248s · 15.3 / 1.8 hits | 373 dps · 4.1s / 267s · 17.9 / 3 hits | 442 dps · 4.3s / 258s · 16.2 / 2.4 hits | 519 dps · 4s / 215s · 13.8 / 1.5 hits | 594 dps · 4.6s / 212s · 15.4 / 1.7 hits | 665 dps · 3.7s / 211s · 18.6 / 2.1 hits | 734 dps · 4.7s / 347s · 14.9 / 1 hits |
-| Brain caster: staff spells | 381 dps · 2s / 156s · 15 / 1.7 hits | 471 dps · 2.1s / 160s · 12.7 / 1.5 hits | 573 dps · 2.6s / 174s · 14.8 / 2.5 hits | 651 dps · 2.9s / 175s · 13.4 / 2 hits | 748 dps · 2.8s / 149s · 11.5 / 1.2 hits | 844 dps · 3.3s / 149s · 12.8 / 1.5 hits | 929 dps · 2.7s / 151s · 15.5 / 1.8 hits | 1,011 dps · 3.4s / 252s · 12.2 / 0.9 hits ⚠1-shot |
-| Brain caster: S staff (Archmagister's Rod) | 669 dps · 1.2s / 89s · 15 / 1.7 hits | 834 dps · 1.2s / 90s · 12.7 / 1.5 hits | 1,025 dps · 1.5s / 97s · 14.8 / 2.5 hits | 1,179 dps · 1.6s / 97s · 13.4 / 2 hits | 1,378 dps · 1.5s / 81s · 11.5 / 1.2 hits | 1,573 dps · 1.7s / 80s · 12.8 / 1.5 hits | 1,746 dps · 1.4s / 81s · 15.5 / 1.8 hits | 1,909 dps · 1.8s / 133s · 12.2 / 0.9 hits ⚠1-shot |
+| Brain caster: staff spells | 382 dps · 2s / 155s · 15 / 1.7 hits | 473 dps · 2.1s / 159s · 12.7 / 1.5 hits | 576 dps · 2.6s / 173s · 14.8 / 2.5 hits | 653 dps · 2.9s / 174s · 13.4 / 2 hits | 751 dps · 2.7s / 148s · 11.5 / 1.2 hits | 847 dps · 3.3s / 149s · 12.8 / 1.5 hits | 932 dps · 2.6s / 151s · 15.5 / 1.8 hits | 1,015 dps · 3.4s / 251s · 12.2 / 0.9 hits ⚠1-shot |
+| Brain caster: S staff (Archmagister's Rod) | 670 dps · 1.2s / 89s · 15 / 1.7 hits | 836 dps · 1.2s / 90s · 12.7 / 1.5 hits | 1,027 dps · 1.5s / 97s · 14.8 / 2.5 hits | 1,182 dps · 1.6s / 96s · 13.4 / 2 hits | 1,381 dps · 1.5s / 81s · 11.5 / 1.2 hits | 1,576 dps · 1.7s / 80s · 12.8 / 1.5 hits | 1,749 dps · 1.4s / 80s · 15.5 / 1.8 hits | 1,912 dps · 1.8s / 133s · 12.2 / 0.9 hits ⚠1-shot |
 | Prayer caster: talisman spells | 258 dps · 3s / 230s · 15.3 / 1.7 hits | 323 dps · 3.1s / 233s · 12.8 / 1.5 hits | 397 dps · 3.8s / 250s · 15 / 2.5 hits | 458 dps · 4.2s / 249s · 13.6 / 2 hits | 536 dps · 3.9s / 208s · 11.6 / 1.2 hits | 612 dps · 4.5s / 206s · 13 / 1.5 hits | 681 dps · 3.6s / 206s · 15.7 / 1.8 hits | 751 dps · 4.6s / 339s · 12.3 / 0.9 hits ⚠1-shot |
 
-- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 351 + weapon 30 · Z2 Meteor, Void Rift, Frost Lance; spells 435 + weapon 36 · Z3 Meteor, Void Rift, Frost Lance; spells 530 + weapon 44 · Z4 Meteor, Void Rift, Frost Lance; spells 603 + weapon 48 · Z5 Meteor, Void Rift, Frost Lance; spells 695 + weapon 54 · Z6 Meteor, Void Rift, Frost Lance; spells 785 + weapon 58 · Z7 Meteor, Void Rift, Frost Lance; spells 866 + weapon 63 · Z8 Meteor, Void Rift, Frost Lance; spells 942 + weapon 69
-- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 638 + weapon 31 · Z2 Meteor, Void Rift, Frost Lance; spells 797 + weapon 38 · Z3 Meteor, Void Rift, Frost Lance; spells 980 + weapon 45 · Z4 Meteor, Void Rift, Frost Lance; spells 1,130 + weapon 50 · Z5 Meteor, Void Rift, Frost Lance; spells 1,322 + weapon 56 · Z6 Meteor, Void Rift, Frost Lance; spells 1,513 + weapon 60 · Z7 Meteor, Void Rift, Frost Lance; spells 1,680 + weapon 65 · Z8 Meteor, Void Rift, Frost Lance; spells 1,837 + weapon 72
+- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 351 + weapon 31 · Z2 Meteor, Void Rift, Frost Lance; spells 435 + weapon 38 · Z3 Meteor, Void Rift, Frost Lance; spells 530 + weapon 46 · Z4 Meteor, Void Rift, Frost Lance; spells 603 + weapon 50 · Z5 Meteor, Void Rift, Frost Lance; spells 695 + weapon 56 · Z6 Meteor, Void Rift, Frost Lance; spells 785 + weapon 61 · Z7 Meteor, Void Rift, Frost Lance; spells 866 + weapon 66 · Z8 Meteor, Void Rift, Frost Lance; spells 942 + weapon 73
+- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 638 + weapon 32 · Z2 Meteor, Void Rift, Frost Lance; spells 797 + weapon 39 · Z3 Meteor, Void Rift, Frost Lance; spells 980 + weapon 47 · Z4 Meteor, Void Rift, Frost Lance; spells 1,130 + weapon 52 · Z5 Meteor, Void Rift, Frost Lance; spells 1,322 + weapon 58 · Z6 Meteor, Void Rift, Frost Lance; spells 1,513 + weapon 64 · Z7 Meteor, Void Rift, Frost Lance; spells 1,680 + weapon 69 · Z8 Meteor, Void Rift, Frost Lance; spells 1,837 + weapon 75
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 145 + weapon 113 · Z2 Sunray, Purify; spells 181 + weapon 142 · Z3 Sunray, Purify; spells 222 + weapon 175 · Z4 Sunray, Purify; spells 256 + weapon 202 · Z5 Sunray, Purify; spells 298 + weapon 238 · Z6 Sunray, Purify; spells 340 + weapon 272 · Z7 Sunray, Purify; spells 377 + weapon 303 · Z8 Sunray, Purify; spells 412 + weapon 339
 
 Boss time-to-kill across the builds (seconds):
@@ -463,12 +464,12 @@ Boss time-to-kill across the builds (seconds):
 | Quality: longsword + shield | 1,673 dps · 2.8s / 180s · 20.3 / 2.3 hits | 1,955 dps · 2.7s / 181s · 16.8 / 2.3 hits | 2,255 dps · 2.6s / 185s · 18.6 / 3.1 hits | 2,473 dps · 2.8s / 181s · 16 / 2.4 hits | 2,850 dps · 2.7s / 172s · 12.8 / 1.4 hits | 3,150 dps · 3.2s / 168s · 13.9 / 1.6 hits | 3,403 dps · 2.8s / 163s · 16.7 / 1.9 hits | 3,721 dps · 3.5s / 215s · 12.3 / 0.8 hits ⚠1-shot |
 | Bow (Slicey) | 1,378 dps · 3.4s / 219s · 15.9 / 1.8 hits | 1,614 dps · 3.3s / 220s · 13.2 / 1.8 hits | 1,879 dps · 3.2s / 221s · 14.6 / 2.4 hits | 2,062 dps · 3.4s / 218s · 12.6 / 1.9 hits | 2,172 dps · 3.5s / 225s · 10.4 / 1.1 hits | 2,303 dps · 4.4s / 230s · 11.2 / 1.3 hits | 2,416 dps · 3.9s / 230s · 13.3 / 1.5 hits | 2,523 dps · 5.1s / 317s · 9.9 / 0.7 hits ⚠1-shot |
 | Crossbow (Bonk) | 878 dps · 5.4s / 344s · 19.5 / 2.2 hits | 1,028 dps · 5.1s / 345s · 16.1 / 2.2 hits | 1,197 dps · 5s / 348s · 17.8 / 3 hits | 1,314 dps · 5.3s / 341s · 15.3 / 2.3 hits | 1,385 dps · 5.5s / 353s · 12.6 / 1.3 hits | 1,474 dps · 6.8s / 359s · 13.6 / 1.5 hits | 1,547 dps · 6.1s / 360s · 16.1 / 1.8 hits | 1,615 dps · 8s / 495s · 11.9 / 0.8 hits ⚠1-shot |
-| Brain caster: staff spells | 1,192 dps · 4s / 253s · 15.9 / 1.8 hits | 1,369 dps · 3.9s / 259s · 13.4 / 1.8 hits | 1,538 dps · 3.9s / 271s · 14.9 / 2.5 hits | 1,613 dps · 4.3s / 278s · 12.7 / 1.9 hits | 1,690 dps · 4.5s / 289s · 10.4 / 1.1 hits | 1,766 dps · 5.7s / 299s · 11.2 / 1.3 hits | 1,844 dps · 5.1s / 302s · 13.3 / 1.5 hits | 1,921 dps · 6.7s / 416s · 9.9 / 0.7 hits ⚠1-shot |
-| Brain caster: S staff (Archmagister's Rod) | 2,264 dps · 2.1s / 133s · 15.9 / 1.8 hits | 2,608 dps · 2s / 136s · 13.4 / 1.8 hits | 2,928 dps · 2s / 142s · 14.9 / 2.5 hits | 3,070 dps · 2.3s / 146s · 12.7 / 1.9 hits | 3,214 dps · 2.4s / 152s · 10.4 / 1.1 hits | 3,357 dps · 3s / 157s · 11.2 / 1.3 hits | 3,501 dps · 2.7s / 159s · 13.3 / 1.5 hits | 3,645 dps · 3.5s / 219s · 9.9 / 0.7 hits ⚠1-shot |
+| Brain caster: staff spells | 1,196 dps · 4s / 252s · 15.9 / 1.8 hits | 1,374 dps · 3.8s / 258s · 13.4 / 1.8 hits | 1,543 dps · 3.9s / 270s · 14.9 / 2.5 hits | 1,619 dps · 4.3s / 277s · 12.7 / 1.9 hits | 1,697 dps · 4.5s / 288s · 10.4 / 1.1 hits | 1,773 dps · 5.7s / 298s · 11.2 / 1.3 hits | 1,851 dps · 5.1s / 300s · 13.3 / 1.5 hits | 1,928 dps · 6.7s / 414s · 9.9 / 0.7 hits ⚠1-shot |
+| Brain caster: S staff (Archmagister's Rod) | 2,268 dps · 2.1s / 133s · 15.9 / 1.8 hits | 2,613 dps · 2s / 136s · 13.4 / 1.8 hits | 2,934 dps · 2s / 142s · 14.9 / 2.5 hits | 3,076 dps · 2.3s / 146s · 12.7 / 1.9 hits | 3,221 dps · 2.3s / 152s · 10.4 / 1.1 hits | 3,364 dps · 3s / 157s · 11.2 / 1.3 hits | 3,509 dps · 2.7s / 158s · 13.3 / 1.5 hits | 3,653 dps · 3.5s / 219s · 9.9 / 0.7 hits ⚠1-shot |
 | Prayer caster: talisman spells | 892 dps · 5.3s / 338s · 16.2 / 1.8 hits | 1,040 dps · 5.1s / 341s · 13.4 / 1.8 hits | 1,171 dps · 5.1s / 355s · 15.1 / 2.5 hits | 1,231 dps · 5.6s / 364s · 12.9 / 2 hits | 1,295 dps · 5.8s / 378s · 10.5 / 1.1 hits | 1,355 dps · 7.4s / 390s · 11.4 / 1.3 hits | 1,420 dps · 6.6s / 392s · 13.5 / 1.5 hits | 1,481 dps · 8.7s / 539s · 10 / 0.7 hits ⚠1-shot |
 
-- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 1,111 + weapon 81 · Z2 Meteor, Void Rift, Frost Lance; spells 1,277 + weapon 92 · Z3 Meteor, Void Rift, Frost Lance; spells 1,432 + weapon 105 · Z4 Meteor, Void Rift, Frost Lance; spells 1,501 + weapon 112 · Z5 Meteor, Void Rift, Frost Lance; spells 1,570 + weapon 120 · Z6 Meteor, Void Rift, Frost Lance; spells 1,639 + weapon 127 · Z7 Meteor, Void Rift, Frost Lance; spells 1,707 + weapon 136 · Z8 Meteor, Void Rift, Frost Lance; spells 1,776 + weapon 145
-- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 2,180 + weapon 83 · Z2 Meteor, Void Rift, Frost Lance; spells 2,513 + weapon 96 · Z3 Meteor, Void Rift, Frost Lance; spells 2,819 + weapon 109 · Z4 Meteor, Void Rift, Frost Lance; spells 2,954 + weapon 116 · Z5 Meteor, Void Rift, Frost Lance; spells 3,090 + weapon 125 · Z6 Meteor, Void Rift, Frost Lance; spells 3,225 + weapon 132 · Z7 Meteor, Void Rift, Frost Lance; spells 3,360 + weapon 141 · Z8 Meteor, Void Rift, Frost Lance; spells 3,495 + weapon 150
+- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 1,111 + weapon 85 · Z2 Meteor, Void Rift, Frost Lance; spells 1,277 + weapon 97 · Z3 Meteor, Void Rift, Frost Lance; spells 1,432 + weapon 111 · Z4 Meteor, Void Rift, Frost Lance; spells 1,501 + weapon 118 · Z5 Meteor, Void Rift, Frost Lance; spells 1,570 + weapon 127 · Z6 Meteor, Void Rift, Frost Lance; spells 1,639 + weapon 134 · Z7 Meteor, Void Rift, Frost Lance; spells 1,707 + weapon 143 · Z8 Meteor, Void Rift, Frost Lance; spells 1,776 + weapon 152
+- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 2,180 + weapon 88 · Z2 Meteor, Void Rift, Frost Lance; spells 2,513 + weapon 101 · Z3 Meteor, Void Rift, Frost Lance; spells 2,819 + weapon 115 · Z4 Meteor, Void Rift, Frost Lance; spells 2,954 + weapon 122 · Z5 Meteor, Void Rift, Frost Lance; spells 3,090 + weapon 131 · Z6 Meteor, Void Rift, Frost Lance; spells 3,225 + weapon 139 · Z7 Meteor, Void Rift, Frost Lance; spells 3,360 + weapon 149 · Z8 Meteor, Void Rift, Frost Lance; spells 3,495 + weapon 158
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 489 + weapon 404 · Z2 Sunray, Purify; spells 568 + weapon 472 · Z3 Sunray, Purify; spells 637 + weapon 533 · Z4 Sunray, Purify; spells 668 + weapon 563 · Z5 Sunray, Purify; spells 698 + weapon 596 · Z6 Sunray, Purify; spells 729 + weapon 626 · Z7 Sunray, Purify; spells 760 + weapon 660 · Z8 Sunray, Purify; spells 790 + weapon 691
 
 Boss time-to-kill across the builds (seconds):
@@ -493,12 +494,12 @@ Boss time-to-kill across the builds (seconds):
 | Quality: longsword + shield | 4,253 dps · 2.9s / 190s · 24.7 / 2.8 hits | 4,859 dps · 2.3s / 182s · 19.7 / 2.7 hits | 5,510 dps · 2.1s / 178s · 20.8 / 3.5 hits | 5,975 dps · 2.1s / 167s · 17.5 / 2.7 hits | 6,560 dps · 2s / 155s · 13.6 / 1.4 hits | 7,092 dps · 2.4s / 146s · 14.2 / 1.6 hits | 7,605 dps · 2s / 139s · 16.3 / 1.9 hits | 8,104 dps · 2.5s / 183s · 11.5 / 0.8 hits ⚠1-shot |
 | Bow (Slicey) | 2,806 dps · 4.4s / 287s · 19.7 / 2.2 hits | 3,096 dps · 3.5s / 286s · 15.7 / 2.1 hits | 3,411 dps · 3.4s / 288s · 16.6 / 2.8 hits | 3,550 dps · 3.6s / 281s · 13.9 / 2.1 hits | 3,692 dps · 3.6s / 275s · 10.8 / 1.1 hits | 3,844 dps · 4.4s / 270s · 11.4 / 1.3 hits | 3,977 dps · 3.8s / 265s · 13 / 1.5 hits | 4,121 dps · 4.9s / 359s · 9.2 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 1,797 dps · 6.9s / 449s · 23.8 / 2.7 hits | 1,984 dps · 5.5s / 446s · 18.9 / 2.6 hits | 2,186 dps · 5.3s / 449s · 19.9 / 3.3 hits | 2,277 dps · 5.6s / 439s · 16.7 / 2.6 hits | 2,368 dps · 5.7s / 429s · 13 / 1.4 hits | 2,467 dps · 6.8s / 421s · 13.6 / 1.5 hits | 2,553 dps · 6s / 414s · 15.5 / 1.8 hits | 2,647 dps · 7.6s / 559s · 11 / 0.8 hits ⚠1-shot |
-| Brain caster: staff spells | 2,124 dps · 5.8s / 380s · 20 / 2.3 hits | 2,338 dps · 4.7s / 378s · 15.7 / 2.1 hits | 2,561 dps · 4.5s / 383s · 16.6 / 2.8 hits | 2,655 dps · 4.8s / 376s · 13.9 / 2.1 hits | 2,749 dps · 4.9s / 370s · 10.8 / 1.1 hits | 2,841 dps · 5.9s / 365s · 11.5 / 1.3 hits | 2,936 dps · 5.2s / 360s · 13 / 1.5 hits | 3,029 dps · 6.6s / 488s · 9.2 / 0.6 hits ⚠1-shot |
-| Brain caster: S staff (Archmagister's Rod) | 4,030 dps · 3.1s / 200s · 20 / 2.3 hits | 4,433 dps · 2.5s / 200s · 15.7 / 2.1 hits | 4,854 dps · 2.4s / 202s · 16.6 / 2.8 hits | 5,028 dps · 2.5s / 199s · 13.9 / 2.1 hits | 5,201 dps · 2.6s / 195s · 10.8 / 1.1 hits | 5,373 dps · 3.1s / 193s · 11.5 / 1.3 hits | 5,548 dps · 2.7s / 190s · 13 / 1.5 hits | 5,720 dps · 3.5s / 259s · 9.2 / 0.6 hits ⚠1-shot |
+| Brain caster: staff spells | 2,133 dps · 5.8s / 378s · 20 / 2.3 hits | 2,347 dps · 4.7s / 377s · 15.7 / 2.1 hits | 2,572 dps · 4.5s / 382s · 16.6 / 2.8 hits | 2,666 dps · 4.7s / 375s · 13.9 / 2.1 hits | 2,760 dps · 4.9s / 368s · 10.8 / 1.1 hits | 2,853 dps · 5.9s / 364s · 11.5 / 1.3 hits | 2,949 dps · 5.2s / 358s · 13 / 1.5 hits | 3,042 dps · 6.6s / 486s · 9.2 / 0.6 hits ⚠1-shot |
+| Brain caster: S staff (Archmagister's Rod) | 4,038 dps · 3.1s / 200s · 20 / 2.3 hits | 4,442 dps · 2.5s / 199s · 15.7 / 2.1 hits | 4,865 dps · 2.4s / 202s · 16.6 / 2.8 hits | 5,039 dps · 2.5s / 198s · 13.9 / 2.1 hits | 5,213 dps · 2.6s / 195s · 10.8 / 1.1 hits | 5,385 dps · 3.1s / 193s · 11.5 / 1.3 hits | 5,561 dps · 2.7s / 190s · 13 / 1.5 hits | 5,734 dps · 3.5s / 258s · 9.2 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 1,648 dps · 7.5s / 489s · 20.2 / 2.3 hits | 1,817 dps · 6s / 487s · 15.9 / 2.2 hits | 1,994 dps · 5.8s / 492s · 16.8 / 2.8 hits | 2,074 dps · 6.1s / 482s · 14.1 / 2.2 hits | 2,155 dps · 6.2s / 472s · 11 / 1.2 hits | 2,230 dps · 7.6s / 465s · 11.6 / 1.3 hits | 2,312 dps · 6.6s / 457s · 13.1 / 1.5 hits | 2,388 dps · 8.4s / 619s · 9.3 / 0.6 hits ⚠1-shot |
 
-- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 1,963 + weapon 162 · Z2 Meteor, Void Rift, Frost Lance; spells 2,158 + weapon 180 · Z3 Meteor, Void Rift, Frost Lance; spells 2,362 + weapon 200 · Z4 Meteor, Void Rift, Frost Lance; spells 2,444 + weapon 212 · Z5 Meteor, Void Rift, Frost Lance; spells 2,525 + weapon 224 · Z6 Meteor, Void Rift, Frost Lance; spells 2,607 + weapon 234 · Z7 Meteor, Void Rift, Frost Lance; spells 2,689 + weapon 247 · Z8 Meteor, Void Rift, Frost Lance; spells 2,771 + weapon 258
-- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 3,862 + weapon 168 · Z2 Meteor, Void Rift, Frost Lance; spells 4,246 + weapon 187 · Z3 Meteor, Void Rift, Frost Lance; spells 4,647 + weapon 207 · Z4 Meteor, Void Rift, Frost Lance; spells 4,809 + weapon 219 · Z5 Meteor, Void Rift, Frost Lance; spells 4,970 + weapon 232 · Z6 Meteor, Void Rift, Frost Lance; spells 5,131 + weapon 242 · Z7 Meteor, Void Rift, Frost Lance; spells 5,292 + weapon 256 · Z8 Meteor, Void Rift, Frost Lance; spells 5,453 + weapon 267
+- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 1,963 + weapon 170 · Z2 Meteor, Void Rift, Frost Lance; spells 2,158 + weapon 189 · Z3 Meteor, Void Rift, Frost Lance; spells 2,362 + weapon 210 · Z4 Meteor, Void Rift, Frost Lance; spells 2,444 + weapon 222 · Z5 Meteor, Void Rift, Frost Lance; spells 2,525 + weapon 235 · Z6 Meteor, Void Rift, Frost Lance; spells 2,607 + weapon 246 · Z7 Meteor, Void Rift, Frost Lance; spells 2,689 + weapon 260 · Z8 Meteor, Void Rift, Frost Lance; spells 2,771 + weapon 271
+- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 3,862 + weapon 176 · Z2 Meteor, Void Rift, Frost Lance; spells 4,246 + weapon 196 · Z3 Meteor, Void Rift, Frost Lance; spells 4,647 + weapon 218 · Z4 Meteor, Void Rift, Frost Lance; spells 4,809 + weapon 230 · Z5 Meteor, Void Rift, Frost Lance; spells 4,970 + weapon 244 · Z6 Meteor, Void Rift, Frost Lance; spells 5,131 + weapon 254 · Z7 Meteor, Void Rift, Frost Lance; spells 5,292 + weapon 270 · Z8 Meteor, Void Rift, Frost Lance; spells 5,453 + weapon 281
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 873 + weapon 775 · Z2 Sunray, Purify; spells 960 + weapon 857 · Z3 Sunray, Purify; spells 1,051 + weapon 944 · Z4 Sunray, Purify; spells 1,087 + weapon 987 · Z5 Sunray, Purify; spells 1,123 + weapon 1,031 · Z6 Sunray, Purify; spells 1,160 + weapon 1,071 · Z7 Sunray, Purify; spells 1,196 + weapon 1,116 · Z8 Sunray, Purify; spells 1,233 + weapon 1,156
 
 Boss time-to-kill across the builds (seconds):
@@ -506,13 +507,13 @@ Boss time-to-kill across the builds (seconds):
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
 | 1 | 244 | 161 | 489 | 3 |
-| 2 | 243 | 161 | 487 | 3 |
+| 2 | 242 | 161 | 487 | 3 |
 | 3 | 245 | 162 | 492 | 3 |
 | 4 | 240 | 158 | 482 | 3 |
 | 5 | 235 | 154 | 472 | 3.1 |
-| 6 | 232 | 146 | 465 | 3.2 |
+| 6 | 231 | 146 | 465 | 3.2 |
 | 7 | 228 | 139 | 457 | 3.3 |
-| 8 | 309 | 183 | 619 | 3.4 |
+| 8 | 308 | 183 | 619 | 3.4 |
 
 ### NG+4
 
@@ -523,12 +524,12 @@ Boss time-to-kill across the builds (seconds):
 | Quality: longsword + shield | 9,023 dps · 2.1s / 160s · 28 / 3.2 hits | 10,111 dps · 1.7s / 158s · 21.5 / 3 hits | 11,206 dps · 1.6s / 158s · 21.9 / 3.7 hits | 12,014 dps · 1.7s / 152s · 17.6 / 2.7 hits | 12,962 dps · 1.6s / 144s · 13 / 1.4 hits | 13,836 dps · 1.9s / 138s · 13.3 / 1.5 hits | 14,580 dps · 1.6s / 135s · 14.9 / 1.7 hits | 15,134 dps · 2.1s / 183s · 10.5 / 0.7 hits ⚠1-shot |
 | Bow (Slicey) | 4,495 dps · 4.3s / 321s · 22.1 / 2.5 hits | 4,874 dps · 3.5s / 328s · 17.2 / 2.4 hits | 5,317 dps · 3.3s / 332s · 17.8 / 3 hits | 5,503 dps · 3.6s / 331s · 14.3 / 2.2 hits | 5,691 dps · 3.6s / 327s · 10.6 / 1.1 hits | 5,867 dps · 4.6s / 327s · 10.8 / 1.2 hits | 6,044 dps · 3.9s / 325s · 12.1 / 1.4 hits | 6,222 dps · 5.1s / 445s · 8.5 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 2,888 dps · 6.7s / 500s · 26.4 / 3 hits | 3,140 dps · 5.5s / 510s · 19.9 / 2.7 hits | 3,403 dps · 5.2s / 519s · 20.3 / 3.4 hits | 3,515 dps · 5.7s / 519s · 16.3 / 2.5 hits | 3,637 dps · 5.7s / 512s · 12 / 1.3 hits | 3,784 dps · 7.1s / 506s · 12.3 / 1.4 hits | 3,899 dps · 6s / 504s · 13.8 / 1.6 hits | 4,016 dps · 7.9s / 690s · 9.7 / 0.7 hits ⚠1-shot |
-| Brain caster: staff spells | 3,288 dps · 5.9s / 439s · 22.3 / 2.5 hits | 3,558 dps · 4.9s / 450s · 17.3 / 2.4 hits | 3,840 dps · 4.6s / 460s · 17.8 / 3 hits | 3,955 dps · 5.1s / 461s · 14.3 / 2.2 hits | 4,065 dps · 5.1s / 458s · 10.6 / 1.1 hits | 4,176 dps · 6.4s / 459s · 10.8 / 1.2 hits | 4,285 dps · 5.5s / 459s · 12.1 / 1.4 hits | 4,397 dps · 7.3s / 630s · 8.5 / 0.6 hits ⚠1-shot |
-| Brain caster: S staff (Archmagister's Rod) | 6,207 dps · 3.1s / 233s · 22.3 / 2.5 hits | 6,713 dps · 2.6s / 238s · 17.3 / 2.4 hits | 7,242 dps · 2.5s / 244s · 17.8 / 3 hits | 7,449 dps · 2.7s / 245s · 14.3 / 2.2 hits | 7,651 dps · 2.7s / 243s · 10.6 / 1.1 hits | 7,855 dps · 3.4s / 244s · 10.8 / 1.2 hits | 8,056 dps · 2.9s / 244s · 12.1 / 1.4 hits | 8,261 dps · 3.9s / 335s · 8.5 / 0.6 hits ⚠1-shot |
+| Brain caster: staff spells | 3,303 dps · 5.8s / 437s · 22.3 / 2.5 hits | 3,574 dps · 4.8s / 448s · 17.3 / 2.4 hits | 3,858 dps · 4.6s / 458s · 17.8 / 3 hits | 3,973 dps · 5s / 459s · 14.3 / 2.2 hits | 4,084 dps · 5.1s / 456s · 10.6 / 1.1 hits | 4,196 dps · 6.4s / 456s · 10.8 / 1.2 hits | 4,306 dps · 5.5s / 456s · 12.1 / 1.4 hits | 4,419 dps · 7.2s / 627s · 8.5 / 0.6 hits ⚠1-shot |
+| Brain caster: S staff (Archmagister's Rod) | 6,222 dps · 3.1s / 232s · 22.3 / 2.5 hits | 6,730 dps · 2.6s / 238s · 17.3 / 2.4 hits | 7,260 dps · 2.4s / 243s · 17.8 / 3 hits | 7,468 dps · 2.7s / 244s · 14.3 / 2.2 hits | 7,671 dps · 2.7s / 243s · 10.6 / 1.1 hits | 7,876 dps · 3.4s / 243s · 10.8 / 1.2 hits | 8,078 dps · 2.9s / 243s · 12.1 / 1.4 hits | 8,283 dps · 3.9s / 334s · 8.5 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 2,597 dps · 7.4s / 556s · 22.5 / 2.6 hits | 2,815 dps · 6.1s / 568s · 17.5 / 2.4 hits | 3,064 dps · 5.8s / 577s · 17.8 / 3 hits | 3,162 dps · 6.3s / 577s · 14.3 / 2.2 hits | 3,253 dps · 6.4s / 572s · 10.6 / 1.1 hits | 3,352 dps · 8s / 571s · 10.8 / 1.2 hits | 3,444 dps · 6.8s / 570s · 12.1 / 1.4 hits | 3,544 dps · 9s / 781s · 8.5 / 0.6 hits ⚠1-shot |
 
-- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 3,005 + weapon 283 · Z2 Meteor, Void Rift, Frost Lance; spells 3,249 + weapon 309 · Z3 Meteor, Void Rift, Frost Lance; spells 3,501 + weapon 339 · Z4 Meteor, Void Rift, Frost Lance; spells 3,596 + weapon 359 · Z5 Meteor, Void Rift, Frost Lance; spells 3,691 + weapon 373 · Z6 Meteor, Void Rift, Frost Lance; spells 3,786 + weapon 390 · Z7 Meteor, Void Rift, Frost Lance; spells 3,881 + weapon 404 · Z8 Meteor, Void Rift, Frost Lance; spells 3,976 + weapon 421
-- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 5,915 + weapon 293 · Z2 Meteor, Void Rift, Frost Lance; spells 6,394 + weapon 320 · Z3 Meteor, Void Rift, Frost Lance; spells 6,890 + weapon 352 · Z4 Meteor, Void Rift, Frost Lance; spells 7,077 + weapon 372 · Z5 Meteor, Void Rift, Frost Lance; spells 7,264 + weapon 387 · Z6 Meteor, Void Rift, Frost Lance; spells 7,451 + weapon 404 · Z7 Meteor, Void Rift, Frost Lance; spells 7,638 + weapon 418 · Z8 Meteor, Void Rift, Frost Lance; spells 7,825 + weapon 436
+- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 3,005 + weapon 297 · Z2 Meteor, Void Rift, Frost Lance; spells 3,249 + weapon 325 · Z3 Meteor, Void Rift, Frost Lance; spells 3,501 + weapon 357 · Z4 Meteor, Void Rift, Frost Lance; spells 3,596 + weapon 377 · Z5 Meteor, Void Rift, Frost Lance; spells 3,691 + weapon 393 · Z6 Meteor, Void Rift, Frost Lance; spells 3,786 + weapon 410 · Z7 Meteor, Void Rift, Frost Lance; spells 3,881 + weapon 425 · Z8 Meteor, Void Rift, Frost Lance; spells 3,976 + weapon 443
+- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 5,915 + weapon 308 · Z2 Meteor, Void Rift, Frost Lance; spells 6,394 + weapon 336 · Z3 Meteor, Void Rift, Frost Lance; spells 6,890 + weapon 370 · Z4 Meteor, Void Rift, Frost Lance; spells 7,077 + weapon 391 · Z5 Meteor, Void Rift, Frost Lance; spells 7,264 + weapon 407 · Z6 Meteor, Void Rift, Frost Lance; spells 7,451 + weapon 425 · Z7 Meteor, Void Rift, Frost Lance; spells 7,638 + weapon 440 · Z8 Meteor, Void Rift, Frost Lance; spells 7,825 + weapon 459
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 1,337 + weapon 1,260 · Z2 Sunray, Purify; spells 1,445 + weapon 1,369 · Z3 Sunray, Purify; spells 1,558 + weapon 1,506 · Z4 Sunray, Purify; spells 1,600 + weapon 1,562 · Z5 Sunray, Purify; spells 1,642 + weapon 1,611 · Z6 Sunray, Purify; spells 1,684 + weapon 1,668 · Z7 Sunray, Purify; spells 1,727 + weapon 1,718 · Z8 Sunray, Purify; spells 1,769 + weapon 1,775
 
 Boss time-to-kill across the builds (seconds):
@@ -541,7 +542,7 @@ Boss time-to-kill across the builds (seconds):
 | 4 | 288 | 152 | 577 | 3.8 |
 | 5 | 285 | 144 | 572 | 4 |
 | 6 | 285 | 138 | 571 | 4.1 |
-| 7 | 285 | 135 | 570 | 4.2 |
+| 7 | 284 | 135 | 570 | 4.2 |
 | 8 | 390 | 183 | 781 | 4.3 |
 
 ### NG+5
@@ -553,12 +554,12 @@ Boss time-to-kill across the builds (seconds):
 | Quality: longsword + shield | 15,538 dps · 1.5s / 130s · 29 / 3.3 hits | 15,980 dps · 1.4s / 143s · 21.2 / 2.9 hits | 16,388 dps · 1.4s / 155s · 21.1 / 3.5 hits | 16,911 dps · 1.5s / 156s · 17.3 / 2.7 hits | 17,412 dps · 1.5s / 155s · 13 / 1.4 hits | 17,944 dps · 1.8s / 154s · 13.5 / 1.5 hits | 18,324 dps · 1.6s / 154s · 15.4 / 1.8 hits | 18,784 dps · 2.1s / 212s · 10.8 / 0.7 hits ⚠1-shot |
 | Bow (Slicey) | 6,388 dps · 3.7s / 317s · 23.5 / 2.7 hits | 6,568 dps · 3.3s / 347s · 17.2 / 2.4 hits | 6,734 dps · 3.4s / 378s · 17.2 / 2.9 hits | 6,931 dps · 3.7s / 380s · 14.1 / 2.2 hits | 7,115 dps · 3.7s / 378s · 10.5 / 1.1 hits | 7,329 dps · 4.5s / 376s · 11 / 1.2 hits | 7,500 dps · 4s / 376s · 12.6 / 1.5 hits | 7,686 dps · 5.2s / 518s · 8.7 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 4,123 dps · 5.7s / 491s · 26.8 / 3.1 hits | 4,241 dps · 5.1s / 538s · 19.6 / 2.7 hits | 4,350 dps · 5.2s / 585s · 19.5 / 3.3 hits | 4,479 dps · 5.7s / 588s · 16 / 2.5 hits | 4,599 dps · 5.7s / 585s · 12 / 1.3 hits | 4,741 dps · 6.9s / 582s · 12.5 / 1.4 hits | 4,852 dps · 6.1s / 582s · 14.3 / 1.7 hits | 4,975 dps · 8s / 800s · 10 / 0.7 hits ⚠1-shot |
-| Brain caster: staff spells | 4,506 dps · 5.2s / 450s · 23.5 / 2.7 hits | 4,619 dps · 4.7s / 494s · 17.2 / 2.4 hits | 4,724 dps · 4.8s / 539s · 17.2 / 2.9 hits | 4,838 dps · 5.3s / 544s · 14.1 / 2.2 hits | 4,951 dps · 5.3s / 543s · 10.5 / 1.1 hits | 5,069 dps · 6.5s / 544s · 11 / 1.2 hits | 5,179 dps · 5.7s / 545s · 12.6 / 1.5 hits | 5,289 dps · 7.6s / 753s · 8.7 / 0.6 hits ⚠1-shot |
-| Brain caster: S staff (Archmagister's Rod) | 8,462 dps · 2.8s / 239s · 23.5 / 2.7 hits | 8,668 dps · 2.5s / 263s · 17.2 / 2.4 hits | 8,865 dps · 2.6s / 287s · 17.2 / 2.9 hits | 9,071 dps · 2.8s / 290s · 14.1 / 2.2 hits | 9,278 dps · 2.8s / 290s · 10.5 / 1.1 hits | 9,488 dps · 3.5s / 291s · 11 / 1.2 hits | 9,691 dps · 3.1s / 291s · 12.6 / 1.5 hits | 9,893 dps · 4s / 402s · 8.7 / 0.6 hits ⚠1-shot |
+| Brain caster: staff spells | 4,529 dps · 5.2s / 447s · 23.5 / 2.7 hits | 4,642 dps · 4.7s / 491s · 17.2 / 2.4 hits | 4,748 dps · 4.8s / 536s · 17.2 / 2.9 hits | 4,863 dps · 5.2s / 542s · 14.1 / 2.2 hits | 4,977 dps · 5.3s / 541s · 10.5 / 1.1 hits | 5,096 dps · 6.5s / 541s · 11 / 1.2 hits | 5,207 dps · 5.7s / 542s · 12.6 / 1.5 hits | 5,318 dps · 7.5s / 749s · 8.7 / 0.6 hits ⚠1-shot |
+| Brain caster: S staff (Archmagister's Rod) | 8,485 dps · 2.8s / 239s · 23.5 / 2.7 hits | 8,692 dps · 2.5s / 262s · 17.2 / 2.4 hits | 8,890 dps · 2.5s / 286s · 17.2 / 2.9 hits | 9,097 dps · 2.8s / 289s · 14.1 / 2.2 hits | 9,304 dps · 2.8s / 289s · 10.5 / 1.1 hits | 9,516 dps · 3.5s / 290s · 11 / 1.2 hits | 9,719 dps · 3.1s / 290s · 12.6 / 1.5 hits | 9,923 dps · 4s / 401s · 8.7 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 3,637 dps · 6.4s / 557s · 23.5 / 2.7 hits | 3,738 dps · 5.8s / 610s · 17.2 / 2.4 hits | 3,824 dps · 5.9s / 666s · 17.2 / 2.9 hits | 3,926 dps · 6.5s / 671s · 14.1 / 2.2 hits | 4,029 dps · 6.5s / 668s · 10.5 / 1.1 hits | 4,140 dps · 7.9s / 666s · 11 / 1.2 hits | 4,235 dps · 7s / 666s · 12.6 / 1.5 hits | 4,331 dps · 9.2s / 919s · 8.7 / 0.6 hits ⚠1-shot |
 
-- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 4,071 + weapon 435 · Z2 Meteor, Void Rift, Frost Lance; spells 4,166 + weapon 453 · Z3 Meteor, Void Rift, Frost Lance; spells 4,261 + weapon 463 · Z4 Meteor, Void Rift, Frost Lance; spells 4,356 + weapon 481 · Z5 Meteor, Void Rift, Frost Lance; spells 4,451 + weapon 500 · Z6 Meteor, Void Rift, Frost Lance; spells 4,546 + weapon 523 · Z7 Meteor, Void Rift, Frost Lance; spells 4,641 + weapon 538 · Z8 Meteor, Void Rift, Frost Lance; spells 4,736 + weapon 553
-- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 8,011 + weapon 451 · Z2 Meteor, Void Rift, Frost Lance; spells 8,198 + weapon 469 · Z3 Meteor, Void Rift, Frost Lance; spells 8,385 + weapon 480 · Z4 Meteor, Void Rift, Frost Lance; spells 8,572 + weapon 499 · Z5 Meteor, Void Rift, Frost Lance; spells 8,759 + weapon 518 · Z6 Meteor, Void Rift, Frost Lance; spells 8,946 + weapon 542 · Z7 Meteor, Void Rift, Frost Lance; spells 9,133 + weapon 557 · Z8 Meteor, Void Rift, Frost Lance; spells 9,320 + weapon 573
+- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 4,071 + weapon 457 · Z2 Meteor, Void Rift, Frost Lance; spells 4,166 + weapon 476 · Z3 Meteor, Void Rift, Frost Lance; spells 4,261 + weapon 487 · Z4 Meteor, Void Rift, Frost Lance; spells 4,356 + weapon 506 · Z5 Meteor, Void Rift, Frost Lance; spells 4,451 + weapon 526 · Z6 Meteor, Void Rift, Frost Lance; spells 4,546 + weapon 550 · Z7 Meteor, Void Rift, Frost Lance; spells 4,641 + weapon 566 · Z8 Meteor, Void Rift, Frost Lance; spells 4,736 + weapon 582
+- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 8,011 + weapon 474 · Z2 Meteor, Void Rift, Frost Lance; spells 8,198 + weapon 493 · Z3 Meteor, Void Rift, Frost Lance; spells 8,385 + weapon 505 · Z4 Meteor, Void Rift, Frost Lance; spells 8,572 + weapon 525 · Z5 Meteor, Void Rift, Frost Lance; spells 8,759 + weapon 545 · Z6 Meteor, Void Rift, Frost Lance; spells 8,946 + weapon 570 · Z7 Meteor, Void Rift, Frost Lance; spells 9,133 + weapon 586 · Z8 Meteor, Void Rift, Frost Lance; spells 9,320 + weapon 603
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 1,811 + weapon 1,826 · Z2 Sunray, Purify; spells 1,853 + weapon 1,885 · Z3 Sunray, Purify; spells 1,896 + weapon 1,928 · Z4 Sunray, Purify; spells 1,938 + weapon 1,988 · Z5 Sunray, Purify; spells 1,980 + weapon 2,048 · Z6 Sunray, Purify; spells 2,022 + weapon 2,117 · Z7 Sunray, Purify; spells 2,065 + weapon 2,171 · Z8 Sunray, Purify; spells 2,107 + weapon 2,224
 
 Boss time-to-kill across the builds (seconds):
@@ -567,11 +568,11 @@ Boss time-to-kill across the builds (seconds):
 | --- | --- | --- | --- | --- |
 | 1 | 278 | 130 | 557 | 4.3 |
 | 2 | 305 | 143 | 610 | 4.3 |
-| 3 | 333 | 155 | 666 | 4.3 |
+| 3 | 332 | 155 | 666 | 4.3 |
 | 4 | 335 | 156 | 671 | 4.3 |
 | 5 | 334 | 155 | 668 | 4.3 |
 | 6 | 333 | 154 | 666 | 4.3 |
-| 7 | 334 | 154 | 666 | 4.3 |
+| 7 | 333 | 154 | 666 | 4.3 |
 | 8 | 460 | 212 | 919 | 4.3 |
 
 ### NG+6
@@ -583,26 +584,26 @@ Boss time-to-kill across the builds (seconds):
 | Quality: longsword + shield | 19,166 dps · 1.5s / 146s · 30.2 / 3.4 hits | 19,547 dps · 1.4s / 159s · 22 / 3 hits | 19,929 dps · 1.4s / 174s · 21.9 / 3.7 hits | 20,311 dps · 1.5s / 176s · 17.9 / 2.8 hits | 20,692 dps · 1.5s / 177s · 13.3 / 1.4 hits | 21,074 dps · 1.9s / 179s · 13.8 / 1.6 hits | 21,455 dps · 1.7s / 179s · 15.8 / 1.8 hits | 21,837 dps · 2.2s / 248s · 10.9 / 0.8 hits ⚠1-shot |
 | Bow (Slicey) | 7,858 dps · 3.6s / 355s · 24.5 / 2.8 hits | 8,014 dps · 3.4s / 387s · 17.9 / 2.5 hits | 8,171 dps · 3.3s / 425s · 17.8 / 3 hits | 8,327 dps · 3.8s / 430s · 14.5 / 2.2 hits | 8,484 dps · 3.7s / 431s · 10.8 / 1.1 hits | 8,640 dps · 4.6s / 436s · 11.3 / 1.3 hits | 8,797 dps · 4s / 437s · 12.8 / 1.5 hits | 8,953 dps · 5.4s / 604s · 8.9 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 5,098 dps · 5.5s / 547s · 27.9 / 3.2 hits | 5,199 dps · 5.2s / 597s · 20.3 / 2.8 hits | 5,301 dps · 5.1s / 656s · 20.2 / 3.4 hits | 5,402 dps · 5.8s / 662s · 16.5 / 2.5 hits | 5,504 dps · 5.7s / 665s · 12.3 / 1.3 hits | 5,605 dps · 7.1s / 671s · 12.8 / 1.5 hits | 5,707 dps · 6.2s / 673s · 14.6 / 1.7 hits | 5,808 dps · 8.3s / 932s · 10.1 / 0.7 hits ⚠1-shot |
-| Brain caster: staff spells | 5,402 dps · 5.2s / 516s · 24.5 / 2.8 hits | 5,513 dps · 4.9s / 563s · 17.9 / 2.5 hits | 5,632 dps · 4.8s / 617s · 17.8 / 3 hits | 5,743 dps · 5.4s / 623s · 14.5 / 2.2 hits | 5,863 dps · 5.4s / 624s · 10.8 / 1.1 hits | 5,974 dps · 6.7s / 630s · 11.3 / 1.3 hits | 6,091 dps · 5.8s / 631s · 12.8 / 1.5 hits | 6,202 dps · 7.8s / 873s · 8.9 / 0.6 hits ⚠1-shot |
-| Brain caster: S staff (Archmagister's Rod) | 10,099 dps · 2.8s / 276s · 24.5 / 2.8 hits | 10,302 dps · 2.6s / 301s · 17.9 / 2.5 hits | 10,514 dps · 2.6s / 331s · 17.8 / 3 hits | 10,717 dps · 2.9s / 334s · 14.5 / 2.2 hits | 10,931 dps · 2.9s / 335s · 10.8 / 1.1 hits | 11,135 dps · 3.6s / 338s · 11.3 / 1.3 hits | 11,343 dps · 3.1s / 339s · 12.8 / 1.5 hits | 11,548 dps · 4.2s / 469s · 8.9 / 0.6 hits ⚠1-shot |
+| Brain caster: staff spells | 5,432 dps · 5.1s / 514s · 24.5 / 2.8 hits | 5,543 dps · 4.9s / 560s · 17.9 / 2.5 hits | 5,663 dps · 4.8s / 614s · 17.8 / 3 hits | 5,776 dps · 5.4s / 619s · 14.5 / 2.2 hits | 5,897 dps · 5.3s / 620s · 10.8 / 1.1 hits | 6,009 dps · 6.7s / 626s · 11.3 / 1.3 hits | 6,126 dps · 5.8s / 627s · 12.8 / 1.5 hits | 6,239 dps · 7.8s / 867s · 8.9 / 0.6 hits ⚠1-shot |
+| Brain caster: S staff (Archmagister's Rod) | 10,129 dps · 2.8s / 275s · 24.5 / 2.8 hits | 10,333 dps · 2.6s / 300s · 17.9 / 2.5 hits | 10,547 dps · 2.6s / 330s · 17.8 / 3 hits | 10,751 dps · 2.9s / 333s · 14.5 / 2.2 hits | 10,965 dps · 2.9s / 334s · 10.8 / 1.1 hits | 11,170 dps · 3.6s / 337s · 11.3 / 1.3 hits | 11,380 dps · 3.1s / 337s · 12.8 / 1.5 hits | 11,586 dps · 4.2s / 467s · 8.9 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 4,427 dps · 6.3s / 630s · 24.5 / 2.8 hits | 4,536 dps · 5.9s / 684s · 17.9 / 2.5 hits | 4,650 dps · 5.8s / 747s · 17.8 / 3 hits | 4,748 dps · 6.6s / 753s · 14.5 / 2.2 hits | 4,863 dps · 6.5s / 752s · 10.8 / 1.1 hits | 4,962 dps · 8.1s / 758s · 11.3 / 1.3 hits | 5,070 dps · 7s / 758s · 12.8 / 1.5 hits | 5,169 dps · 9.4s / 1,047s · 8.9 / 0.6 hits ⚠1-shot |
 
-- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 4,831 + weapon 571 · Z2 Meteor, Void Rift, Frost Lance; spells 4,926 + weapon 587 · Z3 Meteor, Void Rift, Frost Lance; spells 5,021 + weapon 611 · Z4 Meteor, Void Rift, Frost Lance; spells 5,116 + weapon 627 · Z5 Meteor, Void Rift, Frost Lance; spells 5,211 + weapon 652 · Z6 Meteor, Void Rift, Frost Lance; spells 5,306 + weapon 669 · Z7 Meteor, Void Rift, Frost Lance; spells 5,401 + weapon 690 · Z8 Meteor, Void Rift, Frost Lance; spells 5,496 + weapon 706
-- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 9,507 + weapon 592 · Z2 Meteor, Void Rift, Frost Lance; spells 9,694 + weapon 608 · Z3 Meteor, Void Rift, Frost Lance; spells 9,881 + weapon 633 · Z4 Meteor, Void Rift, Frost Lance; spells 10,068 + weapon 650 · Z5 Meteor, Void Rift, Frost Lance; spells 10,255 + weapon 676 · Z6 Meteor, Void Rift, Frost Lance; spells 10,442 + weapon 693 · Z7 Meteor, Void Rift, Frost Lance; spells 10,629 + weapon 715 · Z8 Meteor, Void Rift, Frost Lance; spells 10,816 + weapon 732
+- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 4,831 + weapon 600 · Z2 Meteor, Void Rift, Frost Lance; spells 4,926 + weapon 617 · Z3 Meteor, Void Rift, Frost Lance; spells 5,021 + weapon 642 · Z4 Meteor, Void Rift, Frost Lance; spells 5,116 + weapon 659 · Z5 Meteor, Void Rift, Frost Lance; spells 5,211 + weapon 686 · Z6 Meteor, Void Rift, Frost Lance; spells 5,306 + weapon 703 · Z7 Meteor, Void Rift, Frost Lance; spells 5,401 + weapon 725 · Z8 Meteor, Void Rift, Frost Lance; spells 5,496 + weapon 743
+- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 9,507 + weapon 622 · Z2 Meteor, Void Rift, Frost Lance; spells 9,694 + weapon 639 · Z3 Meteor, Void Rift, Frost Lance; spells 9,881 + weapon 666 · Z4 Meteor, Void Rift, Frost Lance; spells 10,068 + weapon 683 · Z5 Meteor, Void Rift, Frost Lance; spells 10,255 + weapon 711 · Z6 Meteor, Void Rift, Frost Lance; spells 10,442 + weapon 728 · Z7 Meteor, Void Rift, Frost Lance; spells 10,629 + weapon 752 · Z8 Meteor, Void Rift, Frost Lance; spells 10,816 + weapon 770
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 2,149 + weapon 2,278 · Z2 Sunray, Purify; spells 2,192 + weapon 2,344 · Z3 Sunray, Purify; spells 2,234 + weapon 2,416 · Z4 Sunray, Purify; spells 2,276 + weapon 2,472 · Z5 Sunray, Purify; spells 2,318 + weapon 2,545 · Z6 Sunray, Purify; spells 2,361 + weapon 2,601 · Z7 Sunray, Purify; spells 2,403 + weapon 2,667 · Z8 Sunray, Purify; spells 2,445 + weapon 2,724
 
 Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 316 | 146 | 630 | 4.3 |
+| 1 | 315 | 146 | 630 | 4.3 |
 | 2 | 344 | 159 | 684 | 4.3 |
-| 3 | 378 | 174 | 747 | 4.3 |
-| 4 | 382 | 176 | 753 | 4.3 |
-| 5 | 383 | 177 | 752 | 4.3 |
-| 6 | 387 | 179 | 758 | 4.2 |
-| 7 | 388 | 179 | 758 | 4.2 |
-| 8 | 537 | 248 | 1,047 | 4.2 |
+| 3 | 377 | 174 | 747 | 4.3 |
+| 4 | 381 | 176 | 753 | 4.3 |
+| 5 | 382 | 177 | 752 | 4.3 |
+| 6 | 386 | 179 | 758 | 4.2 |
+| 7 | 387 | 179 | 758 | 4.2 |
+| 8 | 536 | 248 | 1,047 | 4.2 |
 
 ### NG+7
 
@@ -613,26 +614,26 @@ Boss time-to-kill across the builds (seconds):
 | Quality: longsword + shield | 22,219 dps · 1.5s / 166s · 32 / 3.7 hits | 22,600 dps · 1.4s / 182s · 23.3 / 3.2 hits | 22,982 dps · 1.4s / 199s · 23.1 / 3.9 hits | 23,364 dps · 1.5s / 201s · 18.8 / 2.9 hits | 23,745 dps · 1.6s / 201s · 14 / 1.5 hits | 24,127 dps · 2s / 203s · 14.5 / 1.6 hits | 24,508 dps · 1.7s / 203s · 16.6 / 1.9 hits | 24,890 dps · 2.3s / 281s · 11.4 / 0.8 hits ⚠1-shot |
 | Bow (Slicey) | 9,110 dps · 3.7s / 405s · 26 / 3 hits | 9,266 dps · 3.4s / 444s · 18.9 / 2.6 hits | 9,423 dps · 3.4s / 485s · 18.8 / 3.1 hits | 9,579 dps · 3.8s / 490s · 15.3 / 2.4 hits | 9,735 dps · 3.8s / 491s · 11.4 / 1.2 hits | 9,892 dps · 4.8s / 494s · 11.8 / 1.3 hits | 10,048 dps · 4.2s / 495s · 13.4 / 1.6 hits | 10,205 dps · 5.5s / 684s · 9.3 / 0.6 hits ⚠1-shot |
 | Crossbow (Bonk) | 5,910 dps · 5.6s / 624s · 29.6 / 3.4 hits | 6,011 dps · 5.2s / 684s · 21.6 / 3 hits | 6,113 dps · 5.3s / 748s · 21.4 / 3.6 hits | 6,214 dps · 5.8s / 755s · 17.4 / 2.7 hits | 6,316 dps · 5.9s / 757s · 13 / 1.4 hits | 6,417 dps · 7.4s / 762s · 13.4 / 1.5 hits | 6,519 dps · 6.5s / 764s · 15.3 / 1.8 hits | 6,620 dps · 8.5s / 1,055s · 10.6 / 0.7 hits ⚠1-shot |
-| Brain caster: staff spells | 6,314 dps · 5.3s / 584s · 26 / 3 hits | 6,431 dps · 4.9s / 639s · 18.9 / 2.6 hits | 6,548 dps · 4.9s / 698s · 18.8 / 3.1 hits | 6,661 dps · 5.4s / 704s · 15.3 / 2.4 hits | 6,783 dps · 5.5s / 705s · 11.4 / 1.2 hits | 6,901 dps · 6.9s / 708s · 11.8 / 1.3 hits | 7,017 dps · 6s / 709s · 13.4 / 1.6 hits | 7,125 dps · 7.9s / 980s · 9.3 / 0.6 hits ⚠1-shot |
-| Brain caster: S staff (Archmagister's Rod) | 11,752 dps · 2.8s / 314s · 26 / 3 hits | 11,962 dps · 2.6s / 344s · 18.9 / 2.6 hits | 12,171 dps · 2.7s / 376s · 18.8 / 3.1 hits | 12,376 dps · 2.9s / 379s · 15.3 / 2.4 hits | 12,592 dps · 3s / 380s · 11.4 / 1.2 hits | 12,802 dps · 3.7s / 382s · 11.8 / 1.3 hits | 13,011 dps · 3.2s / 383s · 13.4 / 1.6 hits | 13,212 dps · 4.2s / 529s · 9.3 / 0.6 hits ⚠1-shot |
+| Brain caster: staff spells | 6,352 dps · 5.2s / 581s · 26 / 3 hits | 6,470 dps · 4.8s / 635s · 18.9 / 2.6 hits | 6,588 dps · 4.9s / 694s · 18.8 / 3.1 hits | 6,701 dps · 5.4s / 700s · 15.3 / 2.4 hits | 6,825 dps · 5.5s / 700s · 11.4 / 1.2 hits | 6,944 dps · 6.8s / 704s · 11.8 / 1.3 hits | 7,061 dps · 6s / 705s · 13.4 / 1.6 hits | 7,170 dps · 7.8s / 974s · 9.3 / 0.6 hits ⚠1-shot |
+| Brain caster: S staff (Archmagister's Rod) | 11,791 dps · 2.8s / 313s · 26 / 3 hits | 12,002 dps · 2.6s / 342s · 18.9 / 2.6 hits | 12,212 dps · 2.7s / 374s · 18.8 / 3.1 hits | 12,418 dps · 2.9s / 378s · 15.3 / 2.4 hits | 12,635 dps · 3s / 378s · 11.4 / 1.2 hits | 12,847 dps · 3.7s / 380s · 11.8 / 1.3 hits | 13,057 dps · 3.2s / 381s · 13.4 / 1.6 hits | 13,258 dps · 4.2s / 527s · 9.3 / 0.6 hits ⚠1-shot |
 | Prayer caster: talisman spells | 5,268 dps · 6.3s / 701s · 26 / 3 hits | 5,377 dps · 5.8s / 764s · 18.9 / 2.6 hits | 5,487 dps · 5.9s / 833s · 18.8 / 3.1 hits | 5,587 dps · 6.5s / 840s · 15.3 / 2.4 hits | 5,707 dps · 6.5s / 837s · 11.4 / 1.2 hits | 5,818 dps · 8.1s / 840s · 11.8 / 1.3 hits | 5,910 dps · 7.1s / 842s · 13.4 / 1.6 hits | 6,001 dps · 9.4s / 1,164s · 9.3 / 0.6 hits ⚠1-shot |
 
-- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 5,591 + weapon 723 · Z2 Meteor, Void Rift, Frost Lance; spells 5,686 + weapon 745 · Z3 Meteor, Void Rift, Frost Lance; spells 5,781 + weapon 767 · Z4 Meteor, Void Rift, Frost Lance; spells 5,876 + weapon 785 · Z5 Meteor, Void Rift, Frost Lance; spells 5,971 + weapon 812 · Z6 Meteor, Void Rift, Frost Lance; spells 6,066 + weapon 835 · Z7 Meteor, Void Rift, Frost Lance; spells 6,161 + weapon 856 · Z8 Meteor, Void Rift, Frost Lance; spells 6,256 + weapon 869
-- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 11,003 + weapon 750 · Z2 Meteor, Void Rift, Frost Lance; spells 11,189 + weapon 772 · Z3 Meteor, Void Rift, Frost Lance; spells 11,376 + weapon 795 · Z4 Meteor, Void Rift, Frost Lance; spells 11,563 + weapon 813 · Z5 Meteor, Void Rift, Frost Lance; spells 11,750 + weapon 841 · Z6 Meteor, Void Rift, Frost Lance; spells 11,937 + weapon 865 · Z7 Meteor, Void Rift, Frost Lance; spells 12,124 + weapon 887 · Z8 Meteor, Void Rift, Frost Lance; spells 12,311 + weapon 901
+- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 5,591 + weapon 761 · Z2 Meteor, Void Rift, Frost Lance; spells 5,686 + weapon 784 · Z3 Meteor, Void Rift, Frost Lance; spells 5,781 + weapon 807 · Z4 Meteor, Void Rift, Frost Lance; spells 5,876 + weapon 825 · Z5 Meteor, Void Rift, Frost Lance; spells 5,971 + weapon 854 · Z6 Meteor, Void Rift, Frost Lance; spells 6,066 + weapon 878 · Z7 Meteor, Void Rift, Frost Lance; spells 6,161 + weapon 900 · Z8 Meteor, Void Rift, Frost Lance; spells 6,256 + weapon 914
+- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 11,003 + weapon 788 · Z2 Meteor, Void Rift, Frost Lance; spells 11,189 + weapon 812 · Z3 Meteor, Void Rift, Frost Lance; spells 11,376 + weapon 836 · Z4 Meteor, Void Rift, Frost Lance; spells 11,563 + weapon 855 · Z5 Meteor, Void Rift, Frost Lance; spells 11,750 + weapon 885 · Z6 Meteor, Void Rift, Frost Lance; spells 11,937 + weapon 910 · Z7 Meteor, Void Rift, Frost Lance; spells 12,124 + weapon 933 · Z8 Meteor, Void Rift, Frost Lance; spells 12,311 + weapon 947
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 2,487 + weapon 2,781 · Z2 Sunray, Purify; spells 2,530 + weapon 2,847 · Z3 Sunray, Purify; spells 2,572 + weapon 2,915 · Z4 Sunray, Purify; spells 2,614 + weapon 2,973 · Z5 Sunray, Purify; spells 2,656 + weapon 3,051 · Z6 Sunray, Purify; spells 2,699 + weapon 3,119 · Z7 Sunray, Purify; spells 2,741 + weapon 3,169 · Z8 Sunray, Purify; spells 2,783 + weapon 3,218
 
 Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 360 | 166 | 701 | 4.2 |
-| 2 | 394 | 182 | 764 | 4.2 |
+| 1 | 359 | 166 | 701 | 4.2 |
+| 2 | 393 | 182 | 764 | 4.2 |
 | 3 | 430 | 199 | 833 | 4.2 |
 | 4 | 434 | 201 | 840 | 4.2 |
 | 5 | 435 | 201 | 837 | 4.2 |
-| 6 | 438 | 203 | 840 | 4.1 |
-| 7 | 439 | 203 | 842 | 4.1 |
-| 8 | 606 | 281 | 1,164 | 4.1 |
+| 6 | 437 | 203 | 840 | 4.1 |
+| 7 | 438 | 203 | 842 | 4.1 |
+| 8 | 605 | 281 | 1,164 | 4.1 |
 
 ### NG+10
 
@@ -643,26 +644,26 @@ Boss time-to-kill across the builds (seconds):
 | Quality: longsword + shield | 31,377 dps · 1.8s / 194s · 13 / 1.5 hits | 31,759 dps · 1.6s / 214s · 9.4 / 1.3 hits | 32,141 dps · 1.7s / 235s · 9.3 / 1.6 hits | 32,522 dps · 1.8s / 238s · 7.5 / 1.2 hits | 32,904 dps · 1.9s / 240s · 5.6 / 0.6 hits ⚠1-shot | 33,286 dps · 2.3s / 242s · 5.7 / 0.7 hits ⚠1-shot | 33,667 dps · 2.1s / 244s · 6.5 / 0.8 hits ⚠1-shot | 34,049 dps · 2.7s / 339s · 4.5 / 0.3 hits ⚠1-shot |
 | Bow (Slicey) | 12,865 dps · 4.4s / 474s · 10.5 / 1.2 hits | 13,021 dps · 4s / 521s · 7.6 / 1 hits | 13,178 dps · 4.1s / 573s · 7.5 / 1.3 hits | 13,334 dps · 4.5s / 581s · 6.1 / 0.9 hits ⚠1-shot | 13,491 dps · 4.6s / 585s · 4.5 / 0.5 hits ⚠1-shot | 13,647 dps · 5.7s / 591s · 4.7 / 0.5 hits ⚠1-shot | 13,804 dps · 5s / 595s · 5.3 / 0.6 hits ⚠1-shot | 13,960 dps · 6.6s / 826s · 3.6 / 0.2 hits ⚠1-shot |
 | Crossbow (Bonk) | 8,346 dps · 6.8s / 731s · 12 / 1.4 hits | 8,447 dps · 6.1s / 803s · 8.7 / 1.2 hits | 8,549 dps · 6.2s / 883s · 8.6 / 1.4 hits | 8,650 dps · 6.9s / 895s · 7 / 1.1 hits | 8,752 dps · 7s / 901s · 5.1 / 0.5 hits ⚠1-shot | 8,853 dps · 8.8s / 911s · 5.3 / 0.6 hits ⚠1-shot | 8,955 dps · 7.8s / 918s · 6 / 0.7 hits ⚠1-shot | 9,056 dps · 10.2s / 1,273s · 4.1 / 0.3 hits ⚠1-shot |
-| Brain caster: staff spells | 8,967 dps · 6.3s / 680s · 10.5 / 1.2 hits | 9,075 dps · 5.7s / 748s · 7.6 / 1 hits | 9,183 dps · 5.8s / 822s · 7.5 / 1.3 hits | 9,292 dps · 6.4s / 833s · 6.1 / 0.9 hits ⚠1-shot | 9,400 dps · 6.6s / 839s · 4.5 / 0.5 hits ⚠1-shot | 9,508 dps · 8.2s / 848s · 4.7 / 0.5 hits ⚠1-shot | 9,617 dps · 7.2s / 854s · 5.3 / 0.6 hits ⚠1-shot | 9,725 dps · 9.5s / 1,185s · 3.6 / 0.2 hits ⚠1-shot |
-| Brain caster: S staff (Archmagister's Rod) | 16,625 dps · 3.4s / 367s · 10.5 / 1.2 hits | 16,826 dps · 3.1s / 403s · 7.6 / 1 hits | 17,026 dps · 3.1s / 443s · 7.5 / 1.3 hits | 17,227 dps · 3.5s / 449s · 6.1 / 0.9 hits ⚠1-shot | 17,428 dps · 3.5s / 453s · 4.5 / 0.5 hits ⚠1-shot | 17,628 dps · 4.4s / 458s · 4.7 / 0.5 hits ⚠1-shot | 17,829 dps · 3.9s / 461s · 5.3 / 0.6 hits ⚠1-shot | 18,030 dps · 5.1s / 639s · 3.6 / 0.2 hits ⚠1-shot |
+| Brain caster: staff spells | 9,023 dps · 6.2s / 676s · 10.5 / 1.2 hits | 9,132 dps · 5.6s / 743s · 7.6 / 1 hits | 9,241 dps · 5.8s / 817s · 7.5 / 1.3 hits | 9,350 dps · 6.4s / 828s · 6.1 / 0.9 hits ⚠1-shot | 9,459 dps · 6.5s / 834s · 4.5 / 0.5 hits ⚠1-shot | 9,568 dps · 8.2s / 843s · 4.7 / 0.5 hits ⚠1-shot | 9,677 dps · 7.2s / 849s · 5.3 / 0.6 hits ⚠1-shot | 9,786 dps · 9.5s / 1,178s · 3.6 / 0.2 hits ⚠1-shot |
+| Brain caster: S staff (Archmagister's Rod) | 16,683 dps · 3.4s / 366s · 10.5 / 1.2 hits | 16,885 dps · 3.1s / 402s · 7.6 / 1 hits | 17,086 dps · 3.1s / 442s · 7.5 / 1.3 hits | 17,288 dps · 3.5s / 448s · 6.1 / 0.9 hits ⚠1-shot | 17,489 dps · 3.5s / 451s · 4.5 / 0.5 hits ⚠1-shot | 17,691 dps · 4.4s / 456s · 4.7 / 0.5 hits ⚠1-shot | 17,892 dps · 3.9s / 459s · 5.3 / 0.6 hits ⚠1-shot | 18,093 dps · 5.1s / 637s · 3.6 / 0.2 hits ⚠1-shot |
 | Prayer caster: talisman spells | 7,558 dps · 7.5s / 807s · 10.5 / 1.2 hits | 7,650 dps · 6.7s / 887s · 7.6 / 1 hits | 7,741 dps · 6.9s / 975s · 7.5 / 1.3 hits | 7,833 dps · 7.6s / 988s · 6.1 / 0.9 hits ⚠1-shot | 7,925 dps · 7.8s / 995s · 4.5 / 0.5 hits ⚠1-shot | 8,016 dps · 9.7s / 1,006s · 4.7 / 0.5 hits ⚠1-shot | 8,108 dps · 8.6s / 1,013s · 5.3 / 0.6 hits ⚠1-shot | 8,199 dps · 11.3s / 1,406s · 3.6 / 0.2 hits ⚠1-shot |
 
-- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 7,871 + weapon 1,096 · Z2 Meteor, Void Rift, Frost Lance; spells 7,966 + weapon 1,109 · Z3 Meteor, Void Rift, Frost Lance; spells 8,061 + weapon 1,123 · Z4 Meteor, Void Rift, Frost Lance; spells 8,156 + weapon 1,136 · Z5 Meteor, Void Rift, Frost Lance; spells 8,251 + weapon 1,149 · Z6 Meteor, Void Rift, Frost Lance; spells 8,346 + weapon 1,163 · Z7 Meteor, Void Rift, Frost Lance; spells 8,441 + weapon 1,176 · Z8 Meteor, Void Rift, Frost Lance; spells 8,536 + weapon 1,189
-- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 15,489 + weapon 1,136 · Z2 Meteor, Void Rift, Frost Lance; spells 15,676 + weapon 1,149 · Z3 Meteor, Void Rift, Frost Lance; spells 15,863 + weapon 1,163 · Z4 Meteor, Void Rift, Frost Lance; spells 16,050 + weapon 1,177 · Z5 Meteor, Void Rift, Frost Lance; spells 16,237 + weapon 1,191 · Z6 Meteor, Void Rift, Frost Lance; spells 16,424 + weapon 1,205 · Z7 Meteor, Void Rift, Frost Lance; spells 16,611 + weapon 1,218 · Z8 Meteor, Void Rift, Frost Lance; spells 16,798 + weapon 1,232
+- Brain caster: staff spells: Z1 Meteor, Void Rift, Frost Lance; spells 7,871 + weapon 1,152 · Z2 Meteor, Void Rift, Frost Lance; spells 7,966 + weapon 1,166 · Z3 Meteor, Void Rift, Frost Lance; spells 8,061 + weapon 1,180 · Z4 Meteor, Void Rift, Frost Lance; spells 8,156 + weapon 1,194 · Z5 Meteor, Void Rift, Frost Lance; spells 8,251 + weapon 1,209 · Z6 Meteor, Void Rift, Frost Lance; spells 8,346 + weapon 1,223 · Z7 Meteor, Void Rift, Frost Lance; spells 8,441 + weapon 1,237 · Z8 Meteor, Void Rift, Frost Lance; spells 8,536 + weapon 1,251
+- Brain caster: S staff (Archmagister's Rod): Z1 Meteor, Void Rift, Frost Lance; spells 15,489 + weapon 1,194 · Z2 Meteor, Void Rift, Frost Lance; spells 15,676 + weapon 1,209 · Z3 Meteor, Void Rift, Frost Lance; spells 15,863 + weapon 1,223 · Z4 Meteor, Void Rift, Frost Lance; spells 16,050 + weapon 1,238 · Z5 Meteor, Void Rift, Frost Lance; spells 16,237 + weapon 1,252 · Z6 Meteor, Void Rift, Frost Lance; spells 16,424 + weapon 1,267 · Z7 Meteor, Void Rift, Frost Lance; spells 16,611 + weapon 1,281 · Z8 Meteor, Void Rift, Frost Lance; spells 16,798 + weapon 1,296
 - Prayer caster: talisman spells: Z1 Sunray, Purify; spells 3,502 + weapon 4,057 · Z2 Sunray, Purify; spells 3,544 + weapon 4,106 · Z3 Sunray, Purify; spells 3,586 + weapon 4,155 · Z4 Sunray, Purify; spells 3,628 + weapon 4,205 · Z5 Sunray, Purify; spells 3,671 + weapon 4,254 · Z6 Sunray, Purify; spells 3,713 + weapon 4,303 · Z7 Sunray, Purify; spells 3,755 + weapon 4,353 · Z8 Sunray, Purify; spells 3,797 + weapon 4,402
 
 Boss time-to-kill across the builds (seconds):
 
 | Zone | Median | Fastest | Slowest | Slowest ÷ fastest |
 | --- | --- | --- | --- | --- |
-| 1 | 421 | 194 | 807 | 4.2 |
-| 2 | 462 | 214 | 887 | 4.2 |
-| 3 | 508 | 235 | 975 | 4.2 |
-| 4 | 515 | 238 | 988 | 4.2 |
-| 5 | 519 | 240 | 995 | 4.2 |
+| 1 | 420 | 194 | 807 | 4.2 |
+| 2 | 461 | 214 | 887 | 4.2 |
+| 3 | 507 | 235 | 975 | 4.2 |
+| 4 | 514 | 238 | 988 | 4.2 |
+| 5 | 518 | 240 | 995 | 4.2 |
 | 6 | 524 | 242 | 1,006 | 4.2 |
-| 7 | 528 | 244 | 1,013 | 4.2 |
-| 8 | 732 | 339 | 1,406 | 4.2 |
+| 7 | 527 | 244 | 1,013 | 4.2 |
+| 8 | 731 | 339 | 1,406 | 4.2 |
 
 ## 3. Gems, compared
 
@@ -698,26 +699,26 @@ Every weapon at item level 5, rare, +0, held by a knight whose points (10 in eac
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Greathammer | S/- | 2H | 567 | 184 | 633 | 48.3 | Earthshaker 136, Meteor Lunge 110, Unstoppable 0 |  |
 | Greataxe | A/- | 2H | 512 | 158 | 465 | 41.4 | Cleave Spin 83, Execute 47, Bloodlust 0 |  |
-| Colossal Sword | A/E | 2H | 526 | 173 | 541 | 43.1 | Guillotine 97, Stomp 36, Charged Swing 112 |  |
-| Crossbow | B/- | 2H | 293 | 96 | 288 | 41.4 | Piercing Bolt 51, Explosive Bolt 31, Rapid Fire 57 | ⚠ 0.62× median DPS |
-| Club | E/- | 2H | 420 | 148 | 342 | 31.1 | Bonk 79, Wild Swing 38, Tantrum 0 |  |
-| Twin Daggers | -/S | 2H | 752 | 250 | 198 | 13.8 | Shadow Step 105, Fan of Knives 28, Flurry 118 | ⚠ 1.62× median DPS |
-| Rapier | -/A | 1H | 551 | 154 | 195 | 19 | Lunge 61, Riposte Stance 0, Thousand Cuts 66 |  |
-| Katana | D/A | 2H | 694 | 266 | 318 | 15.5 | Iai Slash 82, Crescent 49, Blood Moon 0 | ⚠ 1.73× median DPS |
-| Bow | -/B | 2H | 299 | 110 | 287 | 34.5 | Volley 79, Piercing Shot 40, Rain 15 |  |
+| Colossal Sword | S/E | 2H | 613 | 201 | 629 | 43.1 | Guillotine 113, Stomp 42, Charged Swing 131 | ⚠ skills 2.13× median |
+| Crossbow | B/- | 2H | 293 | 96 | 288 | 41.4 | Piercing Bolt 51, Explosive Bolt 31, Rapid Fire 57 | ⚠ 0.58× median DPS |
+| Club | A/- | 2H | 914 | 321 | 743 | 31.1 | Bonk 173, Wild Swing 82, Tantrum 0 | ⚠ 1.94× median DPS |
+| Twin Daggers | -/S | 2H | 752 | 250 | 198 | 13.8 | Shadow Step 105, Fan of Knives 28, Flurry 118 | ⚠ 1.51× median DPS |
+| Rapier | -/S | 1H | 616 | 172 | 218 | 19 | Lunge 68, Riposte Stance 0, Thousand Cuts 74 |  |
+| Katana | D/A | 2H | 694 | 266 | 318 | 15.5 | Iai Slash 82, Crescent 49, Blood Moon 0 | ⚠ 1.61× median DPS |
+| Bow | -/B | 2H | 299 | 110 | 287 | 34.5 | Volley 79, Piercing Shot 40, Rain 15 | ⚠ 0.67× median DPS |
 | Whip | -/E | 1H | 345 | 137 | 224 | 20.7 | Lash 64, Crack 34, Serpent Coil 65 |  |
-| Longsword | B/B | 2H | 571 | 209 | 324 | 20.7 | Shield Breaker 67, Spin Slash 38, Battle Cry 0 | ⚠ 1.36× median DPS |
-| Spear | C/B | 2H | 423 | 145 | 255 | 24.2 | Impale 71, Sweep 34, Phalanx 0 |  |
+| Longsword | B/B | 2H | 571 | 209 | 324 | 20.7 | Shield Breaker 67, Spin Slash 38, Battle Cry 0 |  |
+| Spear | B/A | 2H | 505 | 173 | 304 | 24.2 | Impale 85, Sweep 41, Phalanx 0 |  |
 | Battleaxe | A/D | 2H | 503 | 171 | 388 | 31.1 | Cleave 75, Hook 33, Frenzy 0 |  |
-| Mace | B/E | 2H | 493 | 170 | 389 | 31.1 | Holy Smite 74, Consecrate 40, Judgment 27 |  |
+| Mace | A/D | 2H | 513 | 177 | 406 | 31.1 | Holy Smite 77, Consecrate 42, Judgment 28 |  |
 | Halberd | A/C | 2H | 414 | 143 | 311 | 29.3 | Moulinet 92, Hook Pull 32, Vault 40 |  |
-| Twin Axes | C/B | 2H | 542 | 219 | 361 | 20.7 | Whirlwind 106, Throw 48, Rampage 0 | ⚠ 1.42× median DPS |
+| Twin Axes | A/B | 2H | 622 | 251 | 414 | 20.7 | Whirlwind 122, Throw 55, Rampage 0 | ⚠ 1.52× median DPS |
 | Hollow Maul | B/-/Br B | 2H | 372 | 127 | 391 | 41.4 | Singularity 57, Event Horizon 86, Null Shell 0 |  |
 | Spellblade | -/B/Br B | 1H | 352 | 145 | 226 | 19 | Arc Wave 40, Blink Strike 36, Runic Edge 0 |  |
 | Censer Flail | B/-/Pr B | 2H | 453 | 155 | 351 | 31.1 | Incense 61, Brimstone 52, Sanctified Flame 0 |  |
 | Dawn Glaive | -/B/Pr B | 1H | 364 | 126 | 260 | 27.6 | Sunrise 54, Halo Throw 32, Judgement Ray 36 |  |
-| Chakrams | E/B | 2H | 317 | 104 | 178 | 24.2 | Orbit 52, Ring Storm 10, Grand Ring 18 | ⚠ 0.67× median DPS |
-| Cestus | -/A | 2H | 727 | 217 | 255 | 17.3 | Jab Rush 92, Uppercut 53, Iron Skin 0 | ⚠ 1.41× median DPS |
+| Chakrams | C/B | 2H | 362 | 118 | 204 | 24.2 | Orbit 60, Ring Storm 11, Grand Ring 21 |  |
+| Cestus | -/A | 2H | 727 | 217 | 255 | 17.3 | Jab Rush 92, Uppercut 53, Iron Skin 0 |  |
 | Rune Kris | -/B/Br B | 1H | 427 | 127 | 133 | 15.5 | Hex Cut 40, Rune Shards 14, Mirror Step 16 |  |
 | Hex Hammer | B/-/Br B | 2H | 454 | 165 | 321 | 25.9 | Null Slam 61, Gravity Hook 31, Curse of Weight 0 |  |
 | Harvest Sickle | -/B/Pr B | 1H | 390 | 147 | 233 | 20.7 | Reap 47, Harvest Hook 26, Bountiful Harvest 0 |  |

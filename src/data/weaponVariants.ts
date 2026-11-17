@@ -33,24 +33,26 @@ const balanced = (grades: G): WeaponVariantDef => ({ id: 'balanced', word: 'Bala
 const devout = (grades: G): WeaponVariantDef => ({ id: 'devout', word: 'Devout', grades });
 const deep = (grades: G): WeaponVariantDef => ({ id: 'deep', word: 'Deep', grades });
 
-/** By weapon class. The Club and Whip have none: they do not care how strong you are. */
+/** By weapon class (D436: the owner's chart, docs/balance/weapon_scaling.csv). The Whip has none. */
 export const WEAPON_VARIANTS: Record<string, WeaponVariantDef[]> = {
   greathammer: [fervent({ bonk: 'B', slicey: '-', prayer: 'C' }), hollow({ bonk: 'B', slicey: '-', brain: 'C' })],
-  greataxe: [keen({ bonk: 'B', slicey: 'D' }), fervent({ bonk: 'C', slicey: '-', prayer: 'C' })],
-  colossal_sword: [keen({ bonk: 'B', slicey: 'D' }), fervent({ bonk: 'C', slicey: 'E', prayer: 'C' }), hollow({ bonk: 'C', slicey: 'E', brain: 'C' })],
+  // D436: the owner's chart makes the Keen Greataxe (B / C) and the Keen Club (B / C) upgrades on their classes
+  club: [{ ...keen({ bonk: 'B', slicey: 'C' }), upgrade: true }],
+  greataxe: [{ ...keen({ bonk: 'B', slicey: 'C' }), upgrade: true }, fervent({ bonk: 'C', slicey: '-', prayer: 'C' })],
+  colossal_sword: [keen({ bonk: 'B', slicey: 'C' }), fervent({ bonk: 'C', slicey: 'E', prayer: 'C' }), hollow({ bonk: 'C', slicey: 'E', brain: 'C' })],
   crossbow: [fervent({ bonk: 'C', slicey: '-', prayer: 'D' }), hollow({ bonk: 'C', slicey: '-', brain: 'D' })],
   twin_daggers: [blessed({ bonk: '-', slicey: 'B', prayer: 'C' }), arcane({ bonk: '-', slicey: 'B', brain: 'C' })],
   rapier: [blessed({ bonk: '-', slicey: 'C', prayer: 'C' }), arcane({ bonk: '-', slicey: 'C', brain: 'C' })],
   katana: [balanced({ bonk: 'C', slicey: 'B' }), blessed({ bonk: '-', slicey: 'B', prayer: 'C' }), arcane({ bonk: '-', slicey: 'B', brain: 'C' })],
   bow: [blessed({ bonk: '-', slicey: 'D', prayer: 'C' }), arcane({ bonk: '-', slicey: 'D', brain: 'C' })],
   // D328: the Keen Longsword leans a little to Slicey (B / A), the owner's ask; it is an upgrade on the B / B class
-  longsword: [heavy({ bonk: 'A', slicey: 'D' }), { ...keen({ bonk: 'B', slicey: 'A' }), upgrade: true }, blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' })],
-  spear: [heavy({ bonk: 'B', slicey: 'C' }), keen({ bonk: 'E', slicey: 'A' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: '-', slicey: 'B', brain: 'C' })], // D388: Arcane
+  longsword: [heavy({ bonk: 'A', slicey: 'D' }), { ...keen({ bonk: 'C', slicey: 'A' }), upgrade: true }, blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' })],
+  spear: [heavy({ bonk: 'B', slicey: 'C' }), keen({ bonk: 'E', slicey: 'S' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: '-', slicey: 'B', brain: 'C' })], // D388: Arcane
   battleaxe: [keen({ bonk: 'C', slicey: 'B' }), fervent({ bonk: 'C', slicey: 'D', prayer: 'C' }), hollow({ bonk: 'C', slicey: 'D', brain: 'C' })],
   mace: [fervent({ bonk: 'D', slicey: 'E', prayer: 'C' }), hollow({ bonk: 'D', slicey: 'E', brain: 'C' })],
   halberd: [keen({ bonk: 'C', slicey: 'A' }), fervent({ bonk: 'C', slicey: 'D', prayer: 'C' }), hollow({ bonk: 'C', slicey: 'D', brain: 'C' })], // D388: Hollow
   // D388: Fervent and Hollow make them a fast Bonk weapon with Prayer or Brain
-  twin_axes: [heavy({ bonk: 'B', slicey: 'C' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' }), fervent({ bonk: 'B', slicey: '-', prayer: 'C' }), hollow({ bonk: 'B', slicey: '-', brain: 'C' })],
+  twin_axes: [heavy({ bonk: 'B', slicey: 'A' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' }), fervent({ bonk: 'B', slicey: '-', prayer: 'C' }), hollow({ bonk: 'B', slicey: '-', brain: 'C' })],
   chakram: [blessed({ bonk: '-', slicey: 'D', prayer: 'C' }), arcane({ bonk: '-', slicey: 'D', brain: 'C' })],
   // D388: the four new classes trade their second stat
   // D434: Slicey fists; Hollow and Fervent keep the fast Bonk hybrids their two weapons (D388), Blessed adds Slicey + Prayer (D433)

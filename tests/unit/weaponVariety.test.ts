@@ -24,13 +24,14 @@ import type { Grade, WeaponDef } from '../../src/game/types';
 const total = (g: WeaponDef['grades']): number => (Object.values(g) as (Grade | undefined)[]).reduce((s, x) => s + (x ? GRADE_MULT[x] : 0), 0);
 
 describe('scaling variants (D319)', () => {
-  it('every variant trades, never wins: its grade total is within 0.31 of its class, never more than 0.1 above', () => {
+  // D436: the owner's chart (docs/balance/weapon_scaling.csv) sets every grade; a variant may now fall well below its
+  // class (the Spear, Mace, Chakrams and Twin Axes rose past theirs), but none rises above it unless marked an upgrade
+  it('no variant beats its class (its grade total at most 0.1 above) unless it is an owner-asked upgrade', () => {
     for (const [id, list] of Object.entries(WEAPON_VARIANTS)) {
       const base = total(WEAPONS[id]!.grades);
       for (const v of list) {
         if (v.upgrade) continue; // D328: an owner-asked upgrade (the B / A Keen Longsword)
         const t = total(v.grades);
-        expect(Math.abs(t - base), `${id} ${v.id}`).toBeLessThanOrEqual(0.31);
         expect(t - base, `${id} ${v.id}`).toBeLessThanOrEqual(0.1 + 1e-9);
       }
     }
@@ -199,10 +200,10 @@ describe('D328 weapon tuning', () => {
     expect(l.bonk).not.toBe(l.slicey);
   });
 
-  it('a Keen Longsword scales B Bonk / A Slicey', () => {
+  it('a Keen Longsword scales C Bonk / A Slicey (D436; B / A in D328)', () => {
     const it0 = makeItem('longsword', 'rare', 3);
     it0.variant = 'keen';
-    expect(weaponOf(it0)!.grades).toEqual({ bonk: 'B', slicey: 'A' });
+    expect(weaponOf(it0)!.grades).toEqual({ bonk: 'C', slicey: 'A' });
   });
 });
 

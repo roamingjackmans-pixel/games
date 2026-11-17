@@ -66,7 +66,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: 'colossal_sword',
     name: 'Colossal Sword',
     weight: 16,
-    grades: { bonk: 'A', slicey: 'E' },
+    grades: { bonk: 'S', slicey: 'E' }, // D436 (was { bonk: 'A', slicey: 'E' })
     req: { bonk: 19, slicey: 8 }, // D329
     bonkFloor: 18,
     speedClass: 'slow',
@@ -104,7 +104,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: 'club',
     name: 'Club',
     weight: 3,
-    grades: { bonk: 'E', slicey: '-' },
+    grades: { bonk: 'A', slicey: '-' }, // D436 (was { bonk: 'E', slicey: '-' })
     req: { bonk: 8, slicey: 0 },
     speedClass: 'mediumslow',
     combo: [sw(380, 120, 360, 0.98, arc(110, 95), 14, 'slash'), sw(380, 120, 360, 0.98, arc(110, 95), 14, 'backslash'), sw(480, 130, 440, 1.27, slam(55, 80), 18, 'overhead')],
@@ -145,7 +145,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: 'rapier',
     name: 'Rapier',
     weight: 2.5,
-    grades: { bonk: '-', slicey: 'A' },
+    grades: { bonk: '-', slicey: 'S' }, // D436 (was { bonk: '-', slicey: 'A' })
     req: { bonk: 0, slicey: 10 },
     speedClass: 'fast',
     combo: [sw(154, 69, 154, 0.75, thrust(28, 120), 14, 'thrust'), sw(154, 69, 154, 0.75, thrust(28, 120), 14, 'thrust'), sw(162, 69, 162, 0.75, arc(90, 100), 12, 'slash'), sw(154, 69, 154, 0.75, thrust(28, 120), 14, 'thrust'), sw(231, 77, 246, 1.12, thrust(28, 150), 30, 'thrust')],
@@ -238,7 +238,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: 'spear',
     name: 'Spear',
     weight: 5,
-    grades: { bonk: 'C', slicey: 'B' },
+    grades: { bonk: 'B', slicey: 'A' }, // D436 (was { bonk: 'C', slicey: 'B' })
     req: { bonk: 8, slicey: 10 },
     speedClass: 'medium',
     combo: [sw(260, 100, 260, 0.81, thrust(30, 150), 14, 'thrust'), sw(260, 100, 260, 0.81, thrust(30, 150), 14, 'thrust'), sw(300, 110, 300, 0.81, arc(100, 140), 12, 'slash'), sw(380, 120, 360, 1.16, thrust(30, 180), 30, 'thrust')],
@@ -273,7 +273,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: 'mace',
     name: 'Mace',
     weight: 5,
-    grades: { bonk: 'B', slicey: 'E' },
+    grades: { bonk: 'A', slicey: 'D' }, // D436 (was { bonk: 'B', slicey: 'E' })
     req: { bonk: 11, slicey: 3 },
     speedClass: 'mediumslow',
     combo: [sw(360, 120, 340, 1.06, arc(100, 95), 14, 'slash'), sw(360, 120, 340, 1.06, arc(100, 95), 14, 'backslash'), sw(460, 140, 440, 1.39, slam(55, 85), 18, 'overhead')],
@@ -312,7 +312,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     paired: true, // D318: dual-wielded (two-handed) they hit 50% harder
     name: 'Twin Axes',
     weight: 6.5,
-    grades: { bonk: 'C', slicey: 'B' },
+    grades: { bonk: 'A', slicey: 'B' }, // D436 (was { bonk: 'C', slicey: 'B' })
     req: { bonk: 10, slicey: 10 },
     reqEven: true, // D328: equal Bonk and Slicey at every item level
     speedClass: 'fast',
@@ -409,7 +409,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     noSliceyBoost: true, // D348: back to its damage before D347's Slicey boost
     name: 'Chakrams',
     weight: 2.5,
-    grades: { bonk: 'E', slicey: 'B' },
+    grades: { bonk: 'C', slicey: 'B' }, // D436 (was { bonk: 'E', slicey: 'B' })
     req: { bonk: 6, slicey: 11 },
     speedClass: 'medium',
     // D320: each ring cuts everything it passes, out and back, so it hits a whole group twice; it hits softly for that

@@ -80,7 +80,7 @@ describe('D347 Slicey-based weapons', () => {
   it('Slicey above Bonk (as rolled) is ×1.2; equal or Bonk-led is not', () => {
     const led = Object.values(WEAPONS).filter((d) => sliceyLed(d)).map((d) => d.id).sort();
     // D388: the Rune Kris and Harvest Sickle lead with Slicey too (with no boost, like the other hybrids); D434: the Cestus
-    expect(led).toEqual(['bow', 'cestus', 'chakram', 'dawn_glaive', 'harvest_sickle', 'katana', 'rapier', 'rune_kris', 'spear', 'spellblade', 'twin_axes', 'twin_daggers', 'whip'].sort());
+    expect(led).toEqual(['bow', 'cestus', 'chakram', 'dawn_glaive', 'harvest_sickle', 'katana', 'rapier', 'rune_kris', 'spear', 'spellblade', 'twin_daggers', 'whip'].sort());
     expect(gradeDamageMult(WEAPONS.twin_daggers!)).toBeCloseTo(1.2, 9);
     expect(gradeDamageMult(WEAPONS.longsword!)).toBe(1);
     expect(gradeDamageMult(WEAPONS.greathammer!)).toBeCloseTo(0.9, 9);
@@ -96,7 +96,8 @@ describe('D348 no Slicey boost for five classes', () => {
     const boosted = Object.values(WEAPONS).filter((d) => gradeDamageMult(d) > 1.0001).map((d) => d.id).sort();
     expect(boosted).toEqual(['katana', 'rapier', 'spear', 'twin_daggers', 'whip']);
     for (const id of ['bow', 'twin_axes', 'spellblade', 'dawn_glaive', 'chakram']) {
-      expect(gradeDamageMult(WEAPONS[id]!), id).toBe(1);
+      // D436: the Twin Axes are A Bonk / B Slicey now, so Bonk-led: Bonk A's ×0.9 (D343), still no Slicey boost
+      expect(gradeDamageMult(WEAPONS[id]!), id).toBe(id === 'twin_axes' ? 0.9 : 1);
       for (const v of WEAPON_VARIANTS[id] ?? []) expect(gradeDamageMult(applyVariant(WEAPONS[id]!, v)), id + v.id).toBeLessThanOrEqual(1);
     }
   });

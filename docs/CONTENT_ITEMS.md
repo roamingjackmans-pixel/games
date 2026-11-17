@@ -33,28 +33,31 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
 - **Scaling variants (D319):** a dropped weapon has a 35% chance of another scaling profile of its class
   (`data/weaponVariants.ts`), its word in front of the name. Blessed (Slicey + Prayer, Holy), Fervent (Bonk + Prayer,
   Fire), Arcane (Slicey + Brain, Magic) and Hollow (Bonk + Brain, Void) follow the hybrid rule (D80); Heavy, Keen and
-  Balanced shift Bonk against Slicey; Devout and Deep push a hybrid toward its Prayer or Brain. A variant's grade total
-  stays within 0.3 of its class's and never more than 0.1 above, so it trades rather than wins. A stat the class did
-  not need asks C 10, B 12, A 13 (D 9, E 8). Variants that use the class's primary or secondary stat come up more, by
-  the same weights as class weapons (D317). The Club and Whip have none. Examples: a **Blessed Katana** scales B Slicey /
+  Balanced shift Bonk against Slicey; Devout and Deep push a hybrid toward its Prayer or Brain. Every grade, class
+  and variant, is the owner's chart, `docs/balance/weapon_scaling.csv` (D436; a test holds the data to it). A variant
+  is never more than 0.1 above its class's grade total unless it is marked an upgrade (the Keen Longsword, Keen Greataxe
+  and Keen Club); since D436 several fall well below theirs. A stat the class did not need asks C 10, B 12, A 13 (D 9,
+  E 8). Variants that use the class's primary or secondary stat come up more, by the same weights as class weapons
+  (D317). The Whip has none. Examples: a **Blessed Katana** scales B Slicey /
   C Prayer; a **Balanced Katana** C Bonk / B Slicey; a **Fervent Colossal Sword** C Bonk / E Slicey / C Prayer.
 
 | Class | Variants (grades Bonk / Slicey / Brain or Prayer) |
 |---|---|
 | Greathammer | Fervent B / - / Prayer C; Hollow B / - / Brain C |
-| Greataxe | Keen B / D; Fervent C / - / Prayer C |
-| Colossal Sword | Keen B / D; Fervent C / E / Prayer C; Hollow C / E / Brain C |
+| Club (D436) | Keen B / C (an upgrade on its class) |
+| Greataxe | Keen B / C (D436, an upgrade on its class); Fervent C / - / Prayer C |
+| Colossal Sword | Keen B / C; Fervent C / E / Prayer C; Hollow C / E / Brain C |
 | Crossbow | Fervent C / - / Prayer D; Hollow C / - / Brain D |
 | Twin Daggers | Blessed - / B / Prayer C; Arcane - / B / Brain C; Novice - / B (the Duelist's starting pair only, never dropped: D371) |
 | Rapier | Blessed - / C / Prayer C; Arcane - / C / Brain C |
 | Katana | Balanced C / B; Blessed - / B / Prayer C; Arcane - / B / Brain C |
 | Bow | Blessed - / D / Prayer C; Arcane - / D / Brain C |
-| Longsword | Heavy A / D; Keen B / A (D328, an upgrade on its class); Blessed D / C / Prayer C; Arcane D / C / Brain C |
-| Spear | Heavy B / C; Keen E / A; Blessed D / C / Prayer C; Arcane - / B / Brain C (D388) |
+| Longsword | Heavy A / D; Keen C / A (D328, D436; an upgrade on its class); Blessed D / C / Prayer C; Arcane D / C / Brain C |
+| Spear | Heavy B / C; Keen E / S; Blessed D / C / Prayer C; Arcane - / B / Brain C (D388) |
 | Battleaxe | Keen C / B; Fervent C / D / Prayer C; Hollow C / D / Brain C |
 | Mace | Fervent D / E / Prayer C; Hollow D / E / Brain C |
 | Halberd | Keen C / A; Fervent C / D / Prayer C; Hollow C / D / Brain C (D388) |
-| Twin Axes | Heavy B / C; Blessed D / C / Prayer C; Arcane D / C / Brain C; Fervent B / - / Prayer C; Hollow B / - / Brain C (D388) |
+| Twin Axes | Heavy B / A; Blessed D / C / Prayer C; Arcane D / C / Brain C; Fervent B / - / Prayer C; Hollow B / - / Brain C (D388) |
 | Chakrams | Blessed - / D / Prayer C; Arcane - / D / Brain C |
 | Hollow Maul | Heavy A / - / Brain D; Deep D / - / Brain A |
 | Spellblade | Keen - / A / Brain D; Deep - / D / Brain A |
@@ -89,25 +92,25 @@ on a Medium** weapon and **100% more on a Slow** one; Fast weapons are unchanged
 |---|---|---|---|---|---|---|---|---|---|---|
 | **Greathammer** | S / - | 20 / 0 (D329) | veryslow (**Slow**) | 520/150/480 ×0.88 slash arc(110°, 120); 520/150/480 ×0.88 backslash arc(110°, 120); 700/160/620 ×1.32 overhead slam(r 75, 100 ahead) | 62 | 28 | 60 | 4 | 14 | hyper armor (all). *"For when the problem is a wall."* |
 | **Greataxe** | A / - | 18 / 0 (D329) | slow (**Slow**) | 450/140/400 ×0.92 slash arc(130°, 115); 450/140/400 ×0.92 backslash arc(130°, 115); 450/140/400 ×0.96 slash arc(130°, 115); 520/200/520 ×1.19 spin spin(110) | 54 | 24 | 50 | 3.5 | 11 | hyper armor (last). *"Pure Bonk. The edge is mostly a formality."* |
-| **Colossal Sword** | A / E | 19 / 8 (D329) | slow (**Slow**) | 480/150/420 ×1 slash arc(150°, 130); 480/150/420 ×1.1 backslash arc(150°, 130); 640/160/560 ×1.51 overhead slam(r 85, 115 ahead) | 56 | 25 | 50 | 3.5 | 16 | hyper armor (all). *"Not so much swung as committed to."* |
+| **Colossal Sword** | S / E | 19 / 8 (D329) | slow (**Slow**) | 480/150/420 ×1 slash arc(150°, 130); 480/150/420 ×1.1 backslash arc(150°, 130); 640/160/560 ×1.51 overhead slam(r 85, 115 ahead) | 56 | 25 | 50 | 3.5 | 16 | hyper armor (all). *"Not so much swung as committed to."* |
 | **Crossbow** | B / - | 10 / 0 | slow (**Slow**) | 120/60/700 ×1.4 proj(620) | 26 (D343, was 40) | 24 | 4 | 1.5 | 6.5 | either hand; its skills on the spell keys from the off hand (D316); in the off hand the block button shoots it (D291); volley of 3, 5° apart, each target hit once (D205, D264); pierces 1 with Bonk ≥ 30. *"Reloading is a lifestyle."* |
-| **Club** | E / - | 8 / 0 | mediumslow (**Medium**) | 380/120/360 ×0.98 slash arc(110°, 95); 380/120/360 ×0.98 backslash arc(110°, 95); 480/130/440 ×1.27 overhead slam(r 55, 80 ahead) | 80 (D302) | 18 | 40 | 3 | 3 | hyper armor (all). *"Wood. It doesn't care how strong you are."* |
+| **Club** | A / - | 8 / 0 | mediumslow (**Medium**) | 380/120/360 ×0.98 slash arc(110°, 95); 380/120/360 ×0.98 backslash arc(110°, 95); 480/130/440 ×1.27 overhead slam(r 55, 80 ahead) | 80 (D302) | 18 | 40 | 3 | 3 | hyper armor (all). *"Wood. It doesn't care how strong you are."* |
 | **Twin Daggers** | - / S | 0 / 14 | veryfast (**Fast**) | 115/62/115 ×0.45 slash arc(80°, 70); 115/62/115 ×0.45 backslash arc(80°, 70); 115/62/115 ×0.45 slash arc(80°, 70); 115/62/115 ×0.45 backslash arc(80°, 70); 131/85/146 ×0.54 spin spin(75); 131/69/162 ×0.68 thrust thrust(30, 105) | 26 | 8 | 6 | 0.8 | 1.5 | scaling ×1.25 (D331); Bleed 15 per hit; backstab ×1.5; dual-wielded (two-handed) ×1.5 damage (D318). *"Two is company. Three is a backstab."* Two-handed (dual-wielded) they also regain stamina 30% faster, a hidden bonus no card shows (D345), and slow you half as much while swinging (×0.8 walking, D346). |
-| **Rapier** | - / A | 0 / 10 | fast (**Fast**) | 154/69/154 ×0.75 thrust thrust(28, 120); 154/69/154 ×0.75 thrust thrust(28, 120); 162/69/162 ×0.75 slash arc(90°, 100); 154/69/154 ×0.75 thrust thrust(28, 120); 231/77/246 ×1.12 thrust thrust(28, 150) | 30 | 11 | 8 | 1.2 | 2.5 | ×1.5 on riposte-staggered. *"Pointy. Polite. Very rude after a parry."* |
+| **Rapier** | - / S | 0 / 10 | fast (**Fast**) | 154/69/154 ×0.75 thrust thrust(28, 120); 154/69/154 ×0.75 thrust thrust(28, 120); 162/69/162 ×0.75 slash arc(90°, 100); 154/69/154 ×0.75 thrust thrust(28, 120); 231/77/246 ×1.12 thrust thrust(28, 150) | 30 | 11 | 8 | 1.2 | 2.5 | ×1.5 on riposte-staggered. *"Pointy. Polite. Very rude after a parry."* |
 | **Katana** | D / A | 7 / 12 | fast (**Fast**) | 200/87/191 ×0.84 slash arc(120°, 110); 200/87/191 ×0.84 backslash arc(120°, 110); 200/78/191 ×0.84 thrust thrust(30, 130); 226/122/226 ×0.93 spin spin(105); 296/96/296 ×1.21 slash arc(170°, 125) | 39.1 (D333) | 9 | 13 | 1.5 | 5.5 | scaling ×1.25 (D331); Bleed 20 per hit. *"Folded a thousand times. Like Joe."* |
 | **Bow** | - / B | 0 / 10 | fast (**Fast**) | 200/60/260 ×1 proj(700) | 28 | 20 | 2 | 0.6 | 3 | two hands only (D88); volley of 3, 5° apart, each target hit once (D205, D264); hold 0.6 s: ×1.8 charged, pierces 1. *"Never misses. Rarely hits."* |
 | **Whip** | - / E | 0 / 9 | medium (**Medium**) | 280/120/300 ×0.75 lash thrust(26, 220); 300/130/300 ×0.75 lashSweep arc(50°, 200); 300/130/300 ×0.75 lashSweep arc(50°, 200); 360/140/380 ×0.96 lash thrust(32, 240) | 65 (D302) | 12 | 10 | 1 | 2 | ignores front guards. *"Goes over shields. And under skin."* |
 | **Longsword** | B / B | 9 / 9 | medium (**Medium**) | 261/96/243 ×1 slash arc(110°, 105); 261/96/243 ×1 backslash arc(110°, 105); 261/96/243 ×1 thrust thrust(32, 140); 365/104/348 ×1.35 overhead slam(r 55, 90 ahead) | 38 | 12 | 21 | 2 | 6 | scaling ×1.25 (D331); . *"A sword. Long."* |
-| **Spear** | C / B | 8 / 10 | medium (**Medium**) | 260/100/260 ×0.81 thrust thrust(30, 150); 260/100/260 ×0.81 thrust thrust(30, 150); 300/110/300 ×0.81 slash arc(100°, 140); 380/120/360 ×1.16 thrust thrust(30, 180) | 38 | 14 | 20 | 2 | 5 | . *"Keeps a polite distance."* |
+| **Spear** | B / A | 8 / 10 | medium (**Medium**) | 260/100/260 ×0.81 thrust thrust(30, 150); 260/100/260 ×0.81 thrust thrust(30, 150); 300/110/300 ×0.81 slash arc(100°, 140); 380/120/360 ×1.16 thrust thrust(30, 180) | 38 | 14 | 20 | 2 | 5 | . *"Keeps a polite distance."* |
 | **Battleaxe** | A / D | 11 / 7 | mediumslow (**Medium**) | 340/120/320 ×0.99 slash arc(120°, 100); 340/120/320 ×1.09 backslash arc(120°, 100); 460/140/440 ×1.43 overhead slam(r 60, 90 ahead) | 44 | 18 | 35 | 2.5 | 8 | hyper armor (all). *"Mostly Bonk, a pinch of Slicey. Gran’s recipe."* |
-| **Mace** | B / E | 11 / 3 | mediumslow (**Medium**) | 360/120/340 ×1.06 slash arc(100°, 95); 360/120/340 ×1.06 backslash arc(100°, 95); 460/140/440 ×1.39 overhead slam(r 55, 85 ahead) | 46 | 18 | 45 | 3 | 5 | hyper armor (all); 20% Holy. *"Blessed by a priest who was in a hurry."* |
+| **Mace** | A / D | 11 / 3 | mediumslow (**Medium**) | 360/120/340 ×1.06 slash arc(100°, 95); 360/120/340 ×1.06 backslash arc(100°, 95); 460/140/440 ×1.39 overhead slam(r 55, 85 ahead) | 46 | 18 | 45 | 3 | 5 | hyper armor (all); 20% Holy. *"Blessed by a priest who was in a hurry."* |
 | **Halberd** | A / C | 10 / 10 | mediumslow (**Medium**) | 340/130/340 ×0.91 slash arc(140°, 135); 340/130/340 ×0.91 thrust thrust(30, 160); 340/130/340 ×0.91 backslash arc(140°, 135); 420/190/460 ×1.18 spin spin(130) | 44 | 17 | 30 | 2.5 | 10 | hyper armor (all). *"An axe, a spear and a hook walked into a bar."* |
-| **Twin Axes** | C / B | 10 / 10 | fast (**Fast**) | 286/130/273 ×1.01 slash arc(100°, 90); 286/130/273 ×1.01 backslash arc(100°, 90); 286/130/273 ×1.01 slash arc(100°, 90); 338/182/338 ×1.13 spin spin(95); 416/143/416 ×1.51 overhead slam(r 50, 70 ahead) | 34 | 12 | 22 | 1.5 | 6.5 | . Dual-wielded (two-handed) ×1.5 damage (D318); its Bonk and Slicey requirements rise together and stay equal (D328). *"Has two of everything except plans."* |
+| **Twin Axes** | A / B | 10 / 10 | fast (**Fast**) | 286/130/273 ×1.01 slash arc(100°, 90); 286/130/273 ×1.01 backslash arc(100°, 90); 286/130/273 ×1.01 slash arc(100°, 90); 338/182/338 ×1.13 spin spin(95); 416/143/416 ×1.51 overhead slam(r 50, 70 ahead) | 34 | 12 | 22 | 1.5 | 6.5 | . Dual-wielded (two-handed) ×1.5 damage (D318); its Bonk and Slicey requirements rise together and stay equal (D328). *"Has two of everything except plans."* |
 | **Hollow Maul** | B / - / Brain B | 18 / 0 / Brain 12 (D329) | slow (**Slow**) | 500/150/450 ×0.96 slash arc(110°, 115); 500/150/450 ×0.96 backslash arc(110°, 115); 620/160/580 ×1.35 overhead slam(r 70, 100 ahead) | 52 | 24 | 50 | 3.5 | 12 | void damage (hybrid, D80); hyper armor (last). *"There is nothing inside. It is very heavy anyway."* |
 | **Spellblade** | - / B / Brain B | 0 / 10 / Brain 12 | medium (**Medium**) | 290/110/270 ×0.9 slash arc(110°, 105); 290/110/270 ×0.9 backslash arc(110°, 105); 320/150/320 ×0.95 spin spin(100); 380/120/360 ×1.18 thrust thrust(34, 150) | 36 | 11 | 22 | 2 | 5.5 | magic damage (hybrid, D80). *"Sharp on one edge, smug on the other."* |
 | **Censer Flail** | B / - / Prayer B | 11 / 0 / Prayer 11 | mediumslow (**Medium**) | 340/130/330 ×1.02 slash arc(140°, 110); 340/130/330 ×1.02 backslash arc(140°, 110); 420/140/420 ×1.22 overhead slam(r 60, 90 ahead); 460/150/440 ×1.37 spin spin(115) | 44 | 18 | 35 | 2.5 | 7.5 | fire damage (hybrid, D80); hyper armor (last). *"Smells like church. Hits like the fire that took the church."* |
 | **Dawn Glaive** | - / B / Prayer B | 0 / 11 / Prayer 11 | mediumslow (**Medium**) | 320/120/320 ×0.89 slash arc(140°, 130); 320/120/320 ×0.89 backslash arc(140°, 130); 320/120/320 ×0.89 thrust thrust(30, 165); 460/140/440 ×1.21 spin spin(135) | 42 | 16 | 28 | 2.5 | 9 | holy damage (hybrid, D80). *"A morning person. On a stick."* |
-| **Chakrams** | E / B | 6 / 11 | medium (**Medium**) | 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 320/60/380 ×0.56 throw ring(r 16, 380 out and back) | 36 | 14 | 6 | 1 | 2.5 | D320: each ring pierces everything out and back (hits a group twice), no falloff; soft hits for that (about 0.7× the median weapon on one target, both passes counted). *"What goes around comes around. Then goes around again."* |
+| **Chakrams** | C / B | 6 / 11 | medium (**Medium**) | 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 240/60/300 ×0.4 throw ring(r 12, 300 out and back); 320/60/380 ×0.56 throw ring(r 16, 380 out and back) | 36 | 14 | 6 | 1 | 2.5 | D320: each ring pierces everything out and back (hits a group twice), no falloff; soft hits for that (about 0.7× the median weapon on one target, both passes counted). *"What goes around comes around. Then goes around again."* |
 | **Cestus** (D388; Slicey since D434) | - / A | 0 / 12 | fast (**Fast**) | 150/65/150 ×0.74 thrust thrust(32, 72); 150/65/150 ×0.74 thrust thrust(32, 72); 160/70/160 ×0.78 slash arc(80°, 70); 150/65/150 ×0.74 thrust thrust(32, 72); 230/85/250 ×1.16 overhead slam(r 48, 58 ahead) | 31 | 10 | 16 | 1.4 | 3 | A studded fighting gauntlet worn over the fist. Dual-wielded (two-handed): one on each fist, ×1.5 damage (D318, D421). *"A glove with opinions, all of them made of iron."* |
 | **Rune Kris** (D388) | - / B, Brain B | 0 / 10, Brain 12 | fast (**Fast**) | 140/62/140 ×0.62 slash arc(80°, 76) ×3 (slash, backslash, slash); 150/70/170 ×0.78 thrust thrust(28, 112); 170/82/190 ×0.96 spin spin(82) | 29 | 9 | 8 | 1 | 2 | Hybrid: deals Magic. A wavy rune-marked dagger. *"The blade wiggles so the curse has somewhere to sit."* |
 | **Hex Hammer** (D388) | B / -, Brain B | 12 / 0, Brain 12 | medium (**Medium**) | 320/110/300 ×1 slash arc(100°, 96); 320/110/300 ×1 backslash arc(100°, 96); 400/130/400 ×1.32 overhead slam(r 56, 86 ahead) | 42 | 15 | 38 | 2.6 | 7 | Hybrid: deals Void; hyper armor (last). *"Hits twice: once here, and once somewhere you cannot see."* |

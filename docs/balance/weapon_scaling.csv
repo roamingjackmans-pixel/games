@@ -1,11 +1,11 @@
 Scaling,Weapon class,Form,Weapon,Bonk,Slicey,Brain,Prayer,Damage type,Speed
-Pure Bonk,Club,Base,Club,E,,,,physical,Medium
+Pure Bonk,Club,Base,Club,A,,,,physical,Medium
 Pure Bonk,Crossbow,Base,Crossbow,B,,,,physical,Slow
 Pure Bonk,Greataxe,Base,Greataxe,A,,,,physical,Slow
 Pure Bonk,Greathammer,Base,Greathammer,S,,,,physical,Slow
 Pure Slicey,Bow,Base,Bow,,B,,,physical,Fast
 Pure Slicey,Cestus,Base,Cestus,,A,,,physical,Fast
-Pure Slicey,Rapier,Base,Rapier,,A,,,physical,Fast
+Pure Slicey,Rapier,Base,Rapier,,S,,,physical,Fast
 Pure Slicey,Twin Daggers,Base,Twin Daggers,,S,,,physical,Fast
 Pure Slicey,Whip,Base,Whip,,E,,,physical,Medium
 Slicey and Brain,Bow,Arcane,Arcane Bow,,D,C,,magic,Fast
@@ -61,21 +61,22 @@ Bonk and Prayer,Hex Hammer,Fervent,Fervent Hex Hammer,B,,,B,fire,Medium
 Bonk and Prayer,Mace,Fervent,Fervent Mace,D,E,,C,fire,Medium
 Bonk and Prayer,Twin Axes,Fervent,Fervent Twin Axes,B,,,C,fire,Fast
 Main Bonk with Slicey,Battleaxe,Base,Battleaxe,A,D,,,physical,Medium
-Main Bonk with Slicey,Colossal Sword,Base,Colossal Sword,A,E,,,physical,Slow
-Main Bonk with Slicey,Colossal Sword,Keen,Keen Colossal Sword,B,D,,,physical,Slow
-Main Bonk with Slicey,Greataxe,Keen,Keen Greataxe,B,D,,,physical,Slow
+Main Bonk with Slicey,Club,Keen,Keen Club,B,C,,,physical,Medium
+Main Bonk with Slicey,Colossal Sword,Base,Colossal Sword,S,E,,,physical,Slow
+Main Bonk with Slicey,Colossal Sword,Keen,Keen Colossal Sword,B,C,,,physical,Slow
+Main Bonk with Slicey,Greataxe,Keen,Keen Greataxe,B,C,,,physical,Slow
 Main Bonk with Slicey,Halberd,Base,Halberd,A,C,,,physical,Medium
 Main Bonk with Slicey,Longsword,Heavy,Heavy Longsword,A,D,,,physical,Medium
-Main Bonk with Slicey,Mace,Base,Mace,B,E,,,physical,Medium
+Main Bonk with Slicey,Mace,Base,Mace,A,D,,,physical,Medium
 Main Bonk with Slicey,Spear,Heavy,Heavy Spear,B,C,,,physical,Medium
-Main Bonk with Slicey,Twin Axes,Heavy,Heavy Twin Axes,B,C,,,physical,Fast
+Main Bonk with Slicey,Twin Axes,Base,Twin Axes,A,B,,,physical,Fast
 Main Slicey with Bonk,Battleaxe,Keen,Keen Battleaxe,C,B,,,physical,Medium
-Main Slicey with Bonk,Chakrams,Base,Chakrams,E,B,,,physical,Medium
+Main Slicey with Bonk,Chakrams,Base,Chakrams,C,B,,,physical,Medium
 Main Slicey with Bonk,Halberd,Keen,Keen Halberd,C,A,,,physical,Medium
 Main Slicey with Bonk,Katana,Base,Katana,D,A,,,physical,Fast
 Main Slicey with Bonk,Katana,Balanced,Balanced Katana,C,B,,,physical,Fast
-Main Slicey with Bonk,Longsword,Keen,Keen Longsword,B,A,,,physical,Medium
-Main Slicey with Bonk,Spear,Base,Spear,C,B,,,physical,Medium
-Main Slicey with Bonk,Spear,Keen,Keen Spear,E,A,,,physical,Medium
-Main Slicey with Bonk,Twin Axes,Base,Twin Axes,C,B,,,physical,Fast
+Main Slicey with Bonk,Longsword,Keen,Keen Longsword,C,A,,,physical,Medium
+Main Slicey with Bonk,Spear,Base,Spear,B,A,,,physical,Medium
+Main Slicey with Bonk,Spear,Keen,Keen Spear,E,S,,,physical,Medium
+Main Slicey with Bonk,Twin Axes,Heavy,Heavy Twin Axes,B,A,,,physical,Fast
 Even Bonk and Slicey,Longsword,Base,Longsword,B,B,,,physical,Medium
