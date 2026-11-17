@@ -1,0 +1,81 @@
+Scaling,Weapon class,Form,Weapon,Bonk,Slicey,Brain,Prayer,Damage type,Speed
+Pure Bonk,Club,Base,Club,E,,,,physical,Medium
+Pure Bonk,Crossbow,Base,Crossbow,B,,,,physical,Slow
+Pure Bonk,Greataxe,Base,Greataxe,A,,,,physical,Slow
+Pure Bonk,Greathammer,Base,Greathammer,S,,,,physical,Slow
+Pure Slicey,Bow,Base,Bow,,B,,,physical,Fast
+Pure Slicey,Cestus,Base,Cestus,,A,,,physical,Fast
+Pure Slicey,Rapier,Base,Rapier,,A,,,physical,Fast
+Pure Slicey,Twin Daggers,Base,Twin Daggers,,S,,,physical,Fast
+Pure Slicey,Whip,Base,Whip,,E,,,physical,Medium
+Slicey and Brain,Bow,Arcane,Arcane Bow,,D,C,,magic,Fast
+Slicey and Brain,Chakrams,Arcane,Arcane Chakrams,,D,C,,magic,Medium
+Slicey and Brain,Harvest Sickle,Arcane,Arcane Harvest Sickle,,B,B,,magic,Medium
+Slicey and Brain,Katana,Arcane,Arcane Katana,,B,C,,magic,Fast
+Slicey and Brain,Longsword,Arcane,Arcane Longsword,D,C,C,,magic,Medium
+Slicey and Brain,Rapier,Arcane,Arcane Rapier,,C,C,,magic,Fast
+Slicey and Brain,Rune Kris,Base,Rune Kris,,B,B,,magic,Fast
+Slicey and Brain,Spear,Arcane,Arcane Spear,,B,C,,magic,Medium
+Slicey and Brain,Spellblade,Base,Spellblade,,B,B,,magic,Medium
+Slicey and Brain,Spellblade,Deep,Deep Spellblade,,D,A,,magic,Medium
+Slicey and Brain,Spellblade,Keen,Keen Spellblade,,A,D,,magic,Medium
+Slicey and Brain,Twin Axes,Arcane,Arcane Twin Axes,D,C,C,,magic,Fast
+Slicey and Brain,Twin Daggers,Arcane,Arcane Twin Daggers,,B,C,,magic,Fast
+Slicey and Prayer,Bow,Blessed,Blessed Bow,,D,,C,holy,Fast
+Slicey and Prayer,Cestus,Blessed,Blessed Cestus,,C,,C,holy,Fast
+Slicey and Prayer,Chakrams,Blessed,Blessed Chakrams,,D,,C,holy,Medium
+Slicey and Prayer,Dawn Glaive,Base,Dawn Glaive,,B,,B,holy,Medium
+Slicey and Prayer,Dawn Glaive,Devout,Devout Dawn Glaive,,D,,A,holy,Medium
+Slicey and Prayer,Dawn Glaive,Keen,Keen Dawn Glaive,,A,,D,holy,Medium
+Slicey and Prayer,Harvest Sickle,Base,Harvest Sickle,,B,,B,holy,Medium
+Slicey and Prayer,Katana,Blessed,Blessed Katana,,B,,C,holy,Fast
+Slicey and Prayer,Longsword,Blessed,Blessed Longsword,D,C,,C,holy,Medium
+Slicey and Prayer,Rapier,Blessed,Blessed Rapier,,C,,C,holy,Fast
+Slicey and Prayer,Rune Kris,Blessed,Blessed Rune Kris,,B,,B,holy,Fast
+Slicey and Prayer,Spear,Blessed,Blessed Spear,D,C,,C,holy,Medium
+Slicey and Prayer,Twin Axes,Blessed,Blessed Twin Axes,D,C,,C,holy,Fast
+Slicey and Prayer,Twin Daggers,Blessed,Blessed Twin Daggers,,B,,C,holy,Fast
+Bonk and Brain,Battleaxe,Hollow,Hollow Battleaxe,C,D,C,,void,Medium
+Bonk and Brain,Cestus,Hollow,Hollow Cestus,C,,C,,void,Fast
+Bonk and Brain,Colossal Sword,Hollow,Hollow Colossal Sword,C,E,C,,void,Slow
+Bonk and Brain,Crossbow,Hollow,Hollow Crossbow,C,,D,,void,Slow
+Bonk and Brain,Greathammer,Hollow,Hollow Greathammer,B,,C,,void,Slow
+Bonk and Brain,Halberd,Hollow,Hollow Halberd,C,D,C,,void,Medium
+Bonk and Brain,Hex Hammer,Base,Hex Hammer,B,,B,,void,Medium
+Bonk and Brain,Hollow Maul,Base,Hollow Maul,B,,B,,void,Slow
+Bonk and Brain,Hollow Maul,Deep,Deep Hollow Maul,D,,A,,void,Slow
+Bonk and Brain,Hollow Maul,Heavy,Heavy Hollow Maul,A,,D,,void,Slow
+Bonk and Brain,Mace,Hollow,Hollow Mace,D,E,C,,void,Medium
+Bonk and Brain,Twin Axes,Hollow,Hollow Twin Axes,B,,C,,void,Fast
+Bonk and Prayer,Battleaxe,Fervent,Fervent Battleaxe,C,D,,C,fire,Medium
+Bonk and Prayer,Censer Flail,Base,Censer Flail,B,,,B,fire,Medium
+Bonk and Prayer,Censer Flail,Devout,Devout Censer Flail,D,,,A,fire,Medium
+Bonk and Prayer,Censer Flail,Heavy,Heavy Censer Flail,A,,,D,fire,Medium
+Bonk and Prayer,Cestus,Fervent,Fervent Cestus,C,,,C,fire,Fast
+Bonk and Prayer,Colossal Sword,Fervent,Fervent Colossal Sword,C,E,,C,fire,Slow
+Bonk and Prayer,Crossbow,Fervent,Fervent Crossbow,C,,,D,fire,Slow
+Bonk and Prayer,Greataxe,Fervent,Fervent Greataxe,C,,,C,fire,Slow
+Bonk and Prayer,Greathammer,Fervent,Fervent Greathammer,B,,,C,fire,Slow
+Bonk and Prayer,Halberd,Fervent,Fervent Halberd,C,D,,C,fire,Medium
+Bonk and Prayer,Hex Hammer,Fervent,Fervent Hex Hammer,B,,,B,fire,Medium
+Bonk and Prayer,Mace,Fervent,Fervent Mace,D,E,,C,fire,Medium
+Bonk and Prayer,Twin Axes,Fervent,Fervent Twin Axes,B,,,C,fire,Fast
+Main Bonk with Slicey,Battleaxe,Base,Battleaxe,A,D,,,physical,Medium
+Main Bonk with Slicey,Colossal Sword,Base,Colossal Sword,A,E,,,physical,Slow
+Main Bonk with Slicey,Colossal Sword,Keen,Keen Colossal Sword,B,D,,,physical,Slow
+Main Bonk with Slicey,Greataxe,Keen,Keen Greataxe,B,D,,,physical,Slow
+Main Bonk with Slicey,Halberd,Base,Halberd,A,C,,,physical,Medium
+Main Bonk with Slicey,Longsword,Heavy,Heavy Longsword,A,D,,,physical,Medium
+Main Bonk with Slicey,Mace,Base,Mace,B,E,,,physical,Medium
+Main Bonk with Slicey,Spear,Heavy,Heavy Spear,B,C,,,physical,Medium
+Main Bonk with Slicey,Twin Axes,Heavy,Heavy Twin Axes,B,C,,,physical,Fast
+Main Slicey with Bonk,Battleaxe,Keen,Keen Battleaxe,C,B,,,physical,Medium
+Main Slicey with Bonk,Chakrams,Base,Chakrams,E,B,,,physical,Medium
+Main Slicey with Bonk,Halberd,Keen,Keen Halberd,C,A,,,physical,Medium
+Main Slicey with Bonk,Katana,Base,Katana,D,A,,,physical,Fast
+Main Slicey with Bonk,Katana,Balanced,Balanced Katana,C,B,,,physical,Fast
+Main Slicey with Bonk,Longsword,Keen,Keen Longsword,B,A,,,physical,Medium
+Main Slicey with Bonk,Spear,Base,Spear,C,B,,,physical,Medium
+Main Slicey with Bonk,Spear,Keen,Keen Spear,E,A,,,physical,Medium
+Main Slicey with Bonk,Twin Axes,Base,Twin Axes,C,B,,,physical,Fast
+Even Bonk and Slicey,Longsword,Base,Longsword,B,B,,,physical,Medium
