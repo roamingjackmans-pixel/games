@@ -60,6 +60,7 @@ describe('the weapon scaling chart (D436)', () => {
     expect(WEAPON_VARIANTS.club!.map((v) => [v.word, v.grades])).toEqual([['Keen', { bonk: 'B', slicey: 'C' }]]);
     expect(WEAPONS.rapier!.grades).toEqual({ bonk: '-', slicey: 'S' });
     expect(WEAPONS.twin_axes!.grades).toEqual({ bonk: 'A', slicey: 'B' });
-    expect(WEAPON_VARIANTS.twin_axes!.find((v) => v.id === 'heavy')!.grades).toEqual({ bonk: 'B', slicey: 'A' });
+    // D437: no Heavy Twin Axes
+    expect(WEAPON_VARIANTS.twin_axes!.some((v) => v.id === 'heavy')).toBe(false);
   });
 });

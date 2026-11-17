@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { weaponOf } from '../../src/game/items/weaponOf';
 import { WEAPONS } from '../../src/data/weapons';
 import { WEAPON_VARIANTS } from '../../src/data/weaponVariants';
-import { unKeenCestus } from '../../src/game/save/migrations';
+import { retireVariant } from '../../src/game/save/migrations';
 
 describe('Slicey fists (D433, D434)', () => {
   it('the Cestus scales A Slicey and needs Slicey, not Bonk', () => {
@@ -37,13 +37,24 @@ describe('Slicey fists (D433, D434)', () => {
 
   it('a Keen Cestus already found becomes a plain Cestus on load', () => {
     const it0 = { baseId: 'cestus', variant: 'keen', name: 'Brutal Keen Cestus of Haste' };
-    unKeenCestus(it0);
+    retireVariant(it0);
     expect(it0).toEqual({ baseId: 'cestus', name: 'Brutal Cestus of Haste' });
     const plain = { baseId: 'cestus', variant: 'keen', name: 'Keen Cestus' };
-    unKeenCestus(plain);
+    retireVariant(plain);
     expect(plain.name).toBe('Cestus');
     const other = { baseId: 'katana', variant: 'keen', name: 'Keen Katana' };
-    unKeenCestus(other);
+    retireVariant(other);
     expect(other).toEqual({ baseId: 'katana', variant: 'keen', name: 'Keen Katana' });
+  });
+
+  it('D437: a Heavy Twin Axes already found becomes plain Twin Axes (A Bonk / B Slicey) on load', () => {
+    const axes = { baseId: 'twin_axes', variant: 'heavy', name: 'Heavy Twin Axes of Haste' };
+    retireVariant(axes);
+    expect(axes).toEqual({ baseId: 'twin_axes', name: 'Twin Axes of Haste' });
+    expect(weaponOf(axes)!.grades).toEqual({ bonk: 'A', slicey: 'B' });
+    // a Heavy Longsword is still a Heavy Longsword
+    const ls = { baseId: 'longsword', variant: 'heavy', name: 'Heavy Longsword' };
+    retireVariant(ls);
+    expect(ls.variant).toBe('heavy');
   });
 });

@@ -52,7 +52,8 @@ export const WEAPON_VARIANTS: Record<string, WeaponVariantDef[]> = {
   mace: [fervent({ bonk: 'D', slicey: 'E', prayer: 'C' }), hollow({ bonk: 'D', slicey: 'E', brain: 'C' })],
   halberd: [keen({ bonk: 'C', slicey: 'A' }), fervent({ bonk: 'C', slicey: 'D', prayer: 'C' }), hollow({ bonk: 'C', slicey: 'D', brain: 'C' })], // D388: Hollow
   // D388: Fervent and Hollow make them a fast Bonk weapon with Prayer or Brain
-  twin_axes: [heavy({ bonk: 'B', slicey: 'A' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' }), fervent({ bonk: 'B', slicey: '-', prayer: 'C' }), hollow({ bonk: 'B', slicey: '-', brain: 'C' })],
+  // D437: no Heavy Twin Axes: the class itself is A Bonk / B Slicey
+  twin_axes: [blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' }), fervent({ bonk: 'B', slicey: '-', prayer: 'C' }), hollow({ bonk: 'B', slicey: '-', brain: 'C' })],
   chakram: [blessed({ bonk: '-', slicey: 'D', prayer: 'C' }), arcane({ bonk: '-', slicey: 'D', brain: 'C' })],
   // D388: the four new classes trade their second stat
   // D434: Slicey fists; Hollow and Fervent keep the fast Bonk hybrids their two weapons (D388), Blessed adds Slicey + Prayer (D433)

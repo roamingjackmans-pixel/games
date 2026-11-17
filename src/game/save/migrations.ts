@@ -150,14 +150,22 @@ export function rescaleLeeching(it: unknown): void {
 }
 
 /**
- * D434: the Cestus itself scales A Slicey now, so the Keen Cestus (D433, - / A Slicey) is gone: one already found
- * becomes a plain Cestus, the word off its name. Runs on every load and does nothing to anything else.
+ * Scaling variants that were taken out of the game, by class: their word and the class's name. D434: the Keen Cestus
+ * (the Cestus itself is A Slicey now). D437: the Heavy Twin Axes (the class itself is A Bonk / B Slicey).
  */
-export function unKeenCestus(it: unknown): void {
+export const RETIRED_VARIANTS: Record<string, Record<string, [word: string, className: string]>> = {
+  cestus: { keen: ['Keen', 'Cestus'] },
+  twin_axes: { heavy: ['Heavy', 'Twin Axes'] },
+};
+
+/** A retired variant already found becomes a plain weapon of its class, the word off its name. Runs on every load. */
+export function retireVariant(it: unknown): void {
   const o = it as { baseId?: unknown; variant?: unknown; name?: unknown } | null;
-  if (!o || o.baseId !== 'cestus' || o.variant !== 'keen') return;
+  if (!o || typeof o.baseId !== 'string' || typeof o.variant !== 'string') return;
+  const r = RETIRED_VARIANTS[o.baseId]?.[o.variant];
+  if (!r) return;
   delete o.variant;
-  if (typeof o.name === 'string') o.name = o.name.replace(/(^| )Keen (?=Cestus)/, '$1');
+  if (typeof o.name === 'string') o.name = o.name.replace(new RegExp(`(^| )${r[0]} (?=${r[1]})`), '$1');
 }
 
 function untierAndRescale(s: Record<string, unknown>): void {
@@ -167,7 +175,7 @@ function untierAndRescale(s: Record<string, unknown>): void {
     const o = it as { sockets?: unknown[] };
     if (Array.isArray(o.sockets)) for (const g of o.sockets) untierGem(g);
     rescaleLeeching(it);
-    unKeenCestus(it);
+    retireVariant(it);
   };
   if (Array.isArray(c.gems)) for (const g of c.gems) untierGem(g);
   for (const it of Object.values((c.equipment ?? {}) as Record<string, unknown>)) fixItem(it);

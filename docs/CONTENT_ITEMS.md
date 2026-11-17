@@ -57,7 +57,7 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
 | Battleaxe | Keen C / B; Fervent C / D / Prayer C; Hollow C / D / Brain C |
 | Mace | Fervent D / E / Prayer C; Hollow D / E / Brain C |
 | Halberd | Keen C / A; Fervent C / D / Prayer C; Hollow C / D / Brain C (D388) |
-| Twin Axes | Heavy B / A; Blessed D / C / Prayer C; Arcane D / C / Brain C; Fervent B / - / Prayer C; Hollow B / - / Brain C (D388) |
+| Twin Axes | Blessed D / C / Prayer C; Arcane D / C / Brain C; Fervent B / - / Prayer C; Hollow B / - / Brain C (D388) |
 | Chakrams | Blessed - / D / Prayer C; Arcane - / D / Brain C |
 | Hollow Maul | Heavy A / - / Brain D; Deep D / - / Brain A |
 | Spellblade | Keen - / A / Brain D; Deep - / D / Brain A |
