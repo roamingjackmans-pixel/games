@@ -162,7 +162,7 @@ export const CLASSES: Record<ClassId, ClassDef> = {
     stats: S(10, 8, 12, 11, 3, 4), // D334 (was 9 / 7 / 13 / 14 / 2 / 3); Bonk 12 and Slicey 11 clear the axes' 10 / 10
     primary: 'bonk',
     secondary: 'slicey',
-    start: { main: 'twin_axes', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] },
+    start: { main: 'twin_axes', mainVariant: 'training', armor: ['sextons_mail_body', 'sextons_mail_legs'], spells: [] }, // D438: Training Twin Axes, B / C
     twoHanded: true,
     blurb: 'Was asked to calm down once. Once. Has never been asked to count.',
     look: { skin: '#e0b088', hair: '#a03a1a', shirt: '#5a2a1a', legs: '#3a2a1a', head: 'horned', trim: '#c9b98a', hairStyle: 'braids', beard: 'braided', hat: '#7a7f88', belt: '#2a1a10' },

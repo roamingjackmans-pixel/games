@@ -83,7 +83,7 @@ points (D334: the Hunter too).
 | **Battlemage** (`spearman`) | 7 | 7 | 13 | 8 | 10 | 3 | 48 | bonk / brain | Colossal Sword | Round Shield (D326) | Apprentice Staff | Crypt Rags, Rag Wraps | Arcane Bolt, Scatter Shards | — | "Read one book on magic. Hit the librarian with a sword the size of the shelf." |
 | **Hunter** (`hunter`) | 7 | 9 | 10 | 14 | 5 | 3 | 48 | slicey / bonk | Halberd (two-handed, D334) | — | — | Rag Hood, Crypt Rags, Rag Wraps | — | Bow (D380: no Whip) | "Can track anything. Mostly tracks in mud." |
 | **Zealot** (`occultist`) | 8 | 8 | 3 | 12 | 3 | 14 | 48 | prayer / slicey | Blessed Katana (B Slicey / C Prayer, Holy; D349) | Silver Talisman | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | Sunray, Bless Weapon | — | "Up at five to pray. Up at five past to stab whoever was not." |
-| **Berserker** (`berserker`) | 10 | 8 | 12 | 11 | 3 | 4 | 48 | bonk / slicey (D334) | Twin Axes (two-handed) | — | — | Sexton's Mail, Sexton's Chausses | — | — | "Was asked to calm down once. Once. Has never been asked to count." |
+| **Berserker** (`berserker`) | 10 | 8 | 12 | 11 | 3 | 4 | 48 | bonk / slicey (D334) | Training Twin Axes (two-handed; Bonk B / Slicey C, not A / B: D438) | — | — | Sexton's Mail, Sexton's Chausses | — | — | "Was asked to calm down once. Once. Has never been asked to count." |
 | **Nobody** (`nobody`) | 8 | 8 | 8 | 8 | 8 | 8 | 48 | none / all six (D334) | — (bare fists, D378) | — | — | Loincloth | — | 1 gem | "Joe." |
 
 - Every kit meets its own requirements at level 1, its 2nd weapon included, and no kit starts encumbered.

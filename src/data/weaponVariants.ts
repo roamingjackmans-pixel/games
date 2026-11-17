@@ -70,8 +70,9 @@ export const WEAPON_VARIANTS: Record<string, WeaponVariantDef[]> = {
 
 /**
  * Variants only a class's starting weapon has (D371), never rolled on a drop: the Duelist's starting Twin Daggers
- * scale B in Slicey, not the class's S.
+ * scale B in Slicey, not the class's S; the Berserker's starting Twin Axes B Bonk / C Slicey, not A / B (D438).
  */
 export const STARTER_VARIANTS: Record<string, WeaponVariantDef[]> = {
   twin_daggers: [{ id: 'novice', word: 'Novice', grades: { bonk: '-', slicey: 'B' } }],
+  twin_axes: [{ id: 'training', word: 'Training', grades: { bonk: 'B', slicey: 'C' } }],
 };

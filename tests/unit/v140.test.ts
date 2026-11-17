@@ -117,6 +117,22 @@ describe('the Duelist starts with B-scaling Novice Twin Daggers (D371)', () => {
   });
 });
 
+describe('the Berserker starts with B / C Training Twin Axes (D438)', () => {
+  it('only the starting pair: dropped axes keep A / B', async () => {
+    const { weaponOf } = await import('../../src/game/items/weaponOf');
+    const { WEAPONS } = await import('../../src/data/weapons');
+    const { WEAPON_VARIANTS } = await import('../../src/data/weaponVariants');
+    const c = newCharacter('berserker', 'B', 'b', new Rng(3));
+    expect(c.equipment.main!.baseId).toBe('twin_axes');
+    expect(c.equipment.main!.variant).toBe('training');
+    expect(weaponOf(c.equipment.main)!.grades).toEqual({ bonk: 'B', slicey: 'C' });
+    expect(weaponOf(c.equipment.main)!.paired).toBe(true);
+    expect(c.equipment.main!.name).toMatch(/Training Twin Axes/);
+    expect(WEAPONS.twin_axes!.grades).toEqual({ bonk: 'A', slicey: 'B' });
+    expect(WEAPON_VARIANTS.twin_axes!.some((v) => v.id === 'training')).toBe(false);
+  });
+});
+
 describe('balance numbers (D371)', () => {
   it('Vexthorn pays three times the shards; gems drop 30% more; raising a rarity costs half', async () => {
     const { BOSSES } = await import('../../src/data/bosses');
