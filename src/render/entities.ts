@@ -11,6 +11,7 @@ import { cacheable, drawCachedEnemy } from './spriteCache';
 import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/parts';
 import { CLASSES } from '../data/classes';
 import { parseArmorBase } from '../data/armor';
+import { lookItem } from '../game/items/inventory';
 import { SHIELDS } from '../data/shields';
 import { WEAPONS } from '../data/weapons';
 import { CASTING_TOOLS } from '../data/castingTools';
@@ -102,21 +103,25 @@ export function lookFor(c: Character): JoeLook {
     look.legL = ap.legL;
     look.legR = ap.legR;
   }
+  // what each armor slot shows: a piece worn for its look, else the equipped one (D435)
+  const wHead = lookItem(c, 'head');
+  const wBody = lookItem(c, 'body');
+  const wLegs = lookItem(c, 'legs');
   // an empty armor slot is bare, whatever the class (D176): no hat, a bare chest with a loincloth, bare legs, as the
   // Nobody wears it; the class's tunic, hood and trousers came off with the armor
-  if (!c.equipment.head) {
+  if (!wHead) {
     look.head = 'none';
     delete look.headStyle;
     delete look.eyeGlow;
   }
-  if (!c.equipment.body) {
+  if (!wBody) {
     look.body = 'loincloth';
     delete look.belt;
     delete look.emblem;
   }
-  if (!c.equipment.legs) look.legs = 'bare';
+  if (!wLegs) look.legs = 'bare';
   // armor pieces: the set's base look from armor.ts, the fantasy dressing from armorLooks.ts
-  const head = c.equipment.head && parseArmorBase(c.equipment.head.baseId);
+  const head = wHead && parseArmorBase(wHead.baseId);
   if (head?.set) {
     look.head = (HEAD_OVERRIDE[head.set.id] ?? head.set.look.head) as HeadGear;
     look.headColor = head.set.look.color;
@@ -125,7 +130,7 @@ export function lookFor(c: Character): JoeLook {
     delete look.eyeGlow;
     Object.assign(look, ARMOR_LOOKS[head.set.id]?.head);
   }
-  const body = c.equipment.body && parseArmorBase(c.equipment.body.baseId);
+  const body = wBody && parseArmorBase(wBody.baseId);
   if (body?.set) {
     look.body = body.set.look.body as BodyGear;
     look.bodyColor = body.set.look.color;
@@ -134,9 +139,9 @@ export function lookFor(c: Character): JoeLook {
     delete look.emblem;
     Object.assign(look, ARMOR_LOOKS[body.set.id]?.body);
   }
-  const legs = c.equipment.legs && parseArmorBase(c.equipment.legs.baseId);
+  const legs = wLegs && parseArmorBase(wLegs.baseId);
   if (legs && !legs.set) {
-    look.body = c.equipment.body ? look.body : 'loincloth';
+    look.body = wBody ? look.body : 'loincloth';
     look.legs = 'bare';
   } else if (legs?.set) {
     look.legsColor = shade(legs.set.look.color, 0.8);

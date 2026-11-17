@@ -10,7 +10,7 @@ import { activeClasses, profXp } from '../../game/items/proficiency';
 import { CONSUMABLES, CONSUMABLE_IDS } from '../../data/consumables';
 import { CLASSES, isPrimaryStat, isSecondaryStat } from '../../data/classes';
 import { ELEMENTS } from '../../game/elements';
-import { BAG_SIZE, allItems, equip, isEitherHandItem, placeLabel, toggleItemLock, unequip, unsocketGem, type EquipSlot, slotItem } from '../../game/items/inventory';
+import { BAG_SIZE, COSMETIC_SLOTS, allItems, cosmeticItem, equip, isEitherHandItem, placeLabel, removeCosmetic, toggleItemLock, unequip, unsocketGem, wearCosmetic, type CosmeticSlot, type EquipSlot, slotItem } from '../../game/items/inventory';
 import { STAT_CAP, levelCost } from '../../game/combat/formulas';
 import { LIGHT_LOAD_MAX, LOAD_TIERS, LOAD_TIERS_ORDER, fmtLoad, type EquipLoadInfo } from '../../game/player/equipLoad';
 import { toolForSchool, type Derived } from '../../game/player/derived';
@@ -88,9 +88,12 @@ export function openInventory(host: InventoryHost): HTMLElement {
    * 2nd off hand). `focus` is the bag slot to come back to.
    */
   let handAsk: { itemId: string; second: boolean; focus: string } | null = null;
+  /** the cosmetic slot whose bag pieces are being picked from (D435) */
+  let lookAsk: CosmeticSlot | null = null;
   const closeHandAsk = (then?: () => void): void => {
-    const back = handAsk?.focus;
+    const back = handAsk?.focus ?? (lookAsk ? `look-${lookAsk}` : undefined);
     handAsk = null;
+    lookAsk = null;
     if (then) then();
     else render();
     setTimeout(() => root.querySelector<HTMLElement>(`[data-focus="${back}"]`)?.focus(), 0);
@@ -100,7 +103,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       window.removeEventListener('keydown', onHandKey, true);
       return;
     }
-    if (e.code !== 'Escape' || !handAsk) return;
+    if (e.code !== 'Escape' || (!handAsk && !lookAsk)) return;
     // Escape or the pad's back button closes the question, not the inventory
     e.stopImmediatePropagation();
     e.preventDefault();
@@ -125,6 +128,41 @@ export function openInventory(host: InventoryHost): HTMLElement {
       h('div', { class: 'panel col', style: 'width:420px;gap:10px', 'data-testid': 'hand-dialog' }, h('h2', null, 'Which hand?'), h('div', { class: `r-${item.rarity}` }, item.name), h('div', { class: 'small dim-text' }, ask.second ? 'Into the hand’s second slot, ready to swap in.' : 'Into the hand’s first slot.'), h('div', { class: 'row', style: 'gap:8px' }, main, off, back)),
     );
   }
+  /** Cosmetic armor (D435): what it does goes through the character directly; a guest's syncs with its next change. */
+  const doLook = (fn: () => void): void => {
+    fn();
+    host.changed();
+    render();
+  };
+  const LOOK_LABEL: Record<CosmeticSlot, string> = { head: 'Head', body: 'Chest', legs: 'Legs' };
+  /** Pick a bag piece to wear for its look in a slot (D435). */
+  function lookDialog(): HTMLElement | null {
+    if (!lookAsk) return null;
+    const slot = lookAsk;
+    const pieces = host.char.bag.filter((i) => i.kind === 'armor' && i.slot === slot);
+    const list = h('div', { class: 'col', style: 'gap:4px;max-height:360px;overflow-y:auto' });
+    for (const it of pieces) {
+      const b = btn(it.name, () => closeHandAsk(() => doLook(() => wearCosmetic(host.char, it.id))));
+      b.classList.add(`r-${it.rarity}`);
+      b.setAttribute('data-testid', `look-pick-${it.id}`);
+      list.appendChild(b);
+    }
+    if (!pieces.length) list.appendChild(h('div', { class: 'small dim-text' }, `No ${LOOK_LABEL[slot].toLowerCase()} armor in your bag.`));
+    const back = btn('Back', () => closeHandAsk());
+    back.setAttribute('data-testid', 'look-back');
+    return h(
+      'div',
+      { class: 'layer dim', style: 'z-index:40' },
+      h(
+        'div',
+        { class: 'panel col', style: 'width:420px;gap:10px', 'data-testid': 'look-dialog' },
+        h('h2', null, `${LOOK_LABEL[slot]} look`),
+        h('div', { class: 'small dim-text' }, 'Worn for its look only: your equipped armor keeps its stats, gems and weight. Any gems in the piece go back to your gem bag.'),
+        list,
+        h('div', { class: 'row', style: 'gap:8px' }, back),
+      ),
+    );
+  }
   const doUnequip = (slot: EquipSlot): void => {
     if (host.unequip) host.unequip(slot);
     else unequip(host.char, slot);
@@ -134,7 +172,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
   const body = h('div', { class: 'panel', style: 'width:1180px;height:660px;display:flex;flex-direction:column;gap:10px' });
   root.appendChild(body);
 
-  function cell(item: Item | null, onClick: () => void, onAlt?: (ev: MouseEvent) => void, extra = '', onPadAlt?: () => void): HTMLButtonElement {
+  function cell(item: Item | null, onClick: () => void, onAlt?: (ev: MouseEvent) => void, extra = '', onPadAlt?: () => void, lockable = true): HTMLButtonElement {
     const b = h('button', { class: `cell ${extra}`, style: item ? `border-color:${RARITY_BORDER[item.rarity] ?? '#3a3447'}` : '' }) as HTMLButtonElement;
     if (item) {
       b.appendChild(itemIcon(item, 40));
@@ -149,13 +187,15 @@ export function openInventory(host: InventoryHost): HTMLElement {
         host.changed();
         render();
       };
-      b.appendChild(lockButton(item, lock, true));
-      b.addEventListener(PAD_LOCK_EVENT, lock);
-      b.addEventListener('keydown', (e) => {
-        if (e.code !== 'KeyL' || e.repeat) return;
-        e.preventDefault();
-        lock();
-      });
+      if (lockable) {
+        b.appendChild(lockButton(item, lock, true));
+        b.addEventListener(PAD_LOCK_EVENT, lock);
+        b.addEventListener('keydown', (e) => {
+          if (e.code !== 'KeyL' || e.repeat) return;
+          e.preventDefault();
+          lock();
+        });
+      }
       const tipFor = (): void => showTip(b, itemTooltip(item, host.char, 'auto'));
       b.addEventListener('mouseenter', tipFor);
       b.addEventListener('focus', tipFor);
@@ -277,6 +317,8 @@ export function openInventory(host: InventoryHost): HTMLElement {
     } else if (item.slot === 'main') doEquip(item.id, 'altMain');
     else if (item.slot === 'off') doEquip(item.id, 'altOff');
     else if (item.slot === 'ring') doEquip(item.id, (['ring2', 'ring3', 'ring4'] as const).find((r) => !c.equipment[r]) ?? 'ring2');
+    // head, chest or leg armor: worn for its look only (D435)
+    else if (item.kind === 'armor' && (COSMETIC_SLOTS as readonly string[]).includes(item.slot)) doLook(() => wearCosmetic(c, item.id));
     else doEquip(item.id);
   }
 
@@ -296,7 +338,31 @@ export function openInventory(host: InventoryHost): HTMLElement {
       empty[s.slot] = !item;
     }
     const doll = paperDoll(cells, { empty, dimmed: c.twoHanded ? ['off'] : [] });
-    const dollCol = h('div', { class: 'col', style: 'gap:6px;width:300px' }, h('h3', { style: 'margin:0' }, 'Equipment'), doll, loadPanel(host.derived().load));
+    // ---- cosmetic armor (D435): above the equipment, how you look and nothing else
+    const looks = h('div', { class: 'row', style: 'gap:10px;align-items:flex-start', 'data-testid': 'look-row' });
+    for (const s of COSMETIC_SLOTS) {
+      const item = cosmeticItem(c, s);
+      const b = cell(
+        item,
+        () => {
+          if (item) doLook(() => removeCosmetic(c, s));
+          else {
+            lookAsk = s;
+            render();
+          }
+        },
+        undefined,
+        'equip-slot',
+        undefined,
+        false,
+      );
+      b.setAttribute('data-testid', `look-${s}`);
+      b.setAttribute('data-focus', `look-${s}`);
+      b.setAttribute('aria-label', item ? `${LOOK_LABEL[s]} look: ${item.name} (looks only)` : `${LOOK_LABEL[s]} look (empty: your equipped armor shows)`);
+      looks.appendChild(h('div', { class: 'col', style: 'gap:2px;align-items:center' }, b, h('div', { class: 'small dim-text' }, LOOK_LABEL[s])));
+    }
+    const lookHead = h('div', { class: 'col', style: 'gap:4px' }, h('h3', { style: 'margin:0' }, 'Cosmetic'), looks, h('div', { class: 'small dim-text' }, 'Looks only: no stats, gems or weight.'));
+    const dollCol = h('div', { class: 'col', style: 'gap:6px;width:300px' }, lookHead, h('h3', { style: 'margin:0' }, 'Equipment'), doll, loadPanel(host.derived().load));
 
     // ---- bag
     // scrolls when a long gem list (D168) would run past the panel
@@ -327,7 +393,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
       if (i === 0) bagCell.setAttribute('data-autofocus', '');
     }
     bag.appendChild(bagGrid);
-    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it; right-click (${inputText(PAD_ALT, padStyle())} on a controller) puts it in the second slot: a weapon becomes your 2nd weapon (swap with ${glyphText('swapWeapon')}), a shield your 2nd off hand (hold ${glyphText('interact')} and press ${glyphText('swapWeapon')}), a ring the next ring slot. A staff, talisman or crossbow asks which hand. Click worn gear to take it off. The padlock in a corner (or ${inputText(PAD_LOCK, padStyle())} / L) locks an item so Sell all keeps it.`));
+    bag.appendChild(h('div', { class: 'small dim-text', style: 'width:476px' }, `Click a bag item to equip it; right-click (${inputText(PAD_ALT, padStyle())} on a controller) puts it in the second slot: a weapon becomes your 2nd weapon (swap with ${glyphText('swapWeapon')}), a shield your 2nd off hand (hold ${glyphText('interact')} and press ${glyphText('swapWeapon')}), a ring the next ring slot, head, chest or leg armor your cosmetic look. A staff, talisman or crossbow asks which hand. Click worn gear to take it off. The padlock in a corner (or ${inputText(PAD_LOCK, padStyle())} / L) locks an item so Sell all keeps it.`));
     const gems = h('div', { class: 'row wrap', style: 'gap:4px;max-width:476px' });
     c.gems.forEach((g) => {
       const b = h('span', { tabindex: '0', style: 'display:inline-flex' }, gemIcon(g, 28));
@@ -482,7 +548,7 @@ export function openInventory(host: InventoryHost): HTMLElement {
     body.appendChild(content);
     // the which-hand question (D228) sits over everything, the focus inside it
     root.querySelectorAll('[data-hand-modal]').forEach((x) => x.remove());
-    const ask = handDialog();
+    const ask = handDialog() ?? lookDialog();
     if (ask) {
       ask.setAttribute('data-hand-modal', '1');
       root.appendChild(ask);

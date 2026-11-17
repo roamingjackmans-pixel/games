@@ -4,7 +4,7 @@
 import { RARITIES, type Character, type Item } from '../types';
 import { baseInfo } from '../items/bases';
 import { makeItem } from '../items/make';
-import { isEitherHandItem, slotAccepts } from '../items/inventory';
+import { isEitherHandItem, lookItem, slotAccepts } from '../items/inventory';
 import { newCharacter } from '../player/character';
 import { sanitizeAppearance } from '../../data/appearance';
 import { LOBBY_GEAR_SLOTS, type LobbyGear, type LobbyGearItem, type PublicPlayer } from './protocol';
@@ -13,7 +13,8 @@ import { LOBBY_GEAR_SLOTS, type LobbyGear, type LobbyGearItem, type PublicPlayer
 export function gearOf(c: Character): LobbyGear {
   const g: LobbyGear = { two: !!c.twoHanded };
   for (const s of LOBBY_GEAR_SLOTS) {
-    const it = c.equipment[s];
+    // the armor a player shows (a piece worn for its look, D435), the hands what they hold
+    const it = s === 'head' || s === 'body' || s === 'legs' ? lookItem(c, s) : c.equipment[s];
     g[s] = it ? { b: it.baseId, r: it.rarity, ...(it.rarity === 'legendary' ? { n: it.name } : {}) } : null;
   }
   return g;

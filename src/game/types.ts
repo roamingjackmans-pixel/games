@@ -866,6 +866,11 @@ export interface Character {
   cycle: number;
   /** worn gear; four ring slots since D228 (older saves get ring3 / ring4 empty) */
   equipment: { main: Item | null; off: Item | null; head: Item | null; body: Item | null; legs: Item | null; ring1: Item | null; ring2: Item | null; ring3: Item | null; ring4: Item | null };
+  /**
+   * Armor worn for its look only (D435): drawn over what is equipped in that slot, nothing else. It gives no defense,
+   * poise, perks or set pieces, weighs nothing, and holds no gems. Absent or null: the equipped piece shows.
+   */
+  cosmetic?: { head: Item | null; body: Item | null; legs: Item | null };
   /** second main-hand slot for the quick swap (CONTENT_SPELLS_CLASSES §3) */
   altMain: Item | null;
   /** second off-hand slot, swapped in with Interact + swap weapon (D228); neither its weight nor its effects count until it is in hand */

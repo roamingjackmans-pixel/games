@@ -316,6 +316,8 @@ export function publicChar(c: Entity['pl'] extends infer P ? (P extends { char: 
     level: c.level,
     stats: c.stats,
     equipment: c.equipment,
+    // armor worn for its look (D435), so every player draws it
+    ...(c.cosmetic ? { cosmetic: c.cosmetic } : {}),
     altMain: c.altMain,
     twoHanded: c.twoHanded,
     appearance: c.appearance,

@@ -68,6 +68,7 @@ campaign's and a Wave Rush never changes it.
 | `highestZoneBeaten`, `cycle` | progress; `cycle` 0 = first playthrough, 1 = NG+1 … |
 | `equipment` | `main, off, head, body, legs, ring1–ring4` (`Item \| null`; four rings since D228) |
 | `altMain`, `altOff` | the second weapon and second off hand for the quick swap (D228) |
+| `cosmetic?` | `head, body, legs` (`Item \| null`): armor worn for its look only (D435); no stats, weight or gems; absent on older saves (all shown from `equipment`) |
 | `twoHanded` | |
 | `bag` | items, max 60 (`BAG_SIZE`) |
 | `gems` | loose gems |

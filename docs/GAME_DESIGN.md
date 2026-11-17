@@ -888,6 +888,18 @@ Caps still hold (attack speed ×1.6, cooldowns −50%, dodge 3 s, stamina cost �
   skills; staff and talisman cards show their effective Spell Skill. Cards end with the item's special perks, set perk
   and sockets.
 
+### 8.11 Cosmetic armor (D435)
+
+- Three **Cosmetic** slots, Head, Chest and Legs, sit above the Equipment in the inventory's Items tab. A head, chest or
+  leg piece put there is **how you look and nothing else**: the character is drawn wearing it over whatever is equipped
+  in that slot (or over a bare slot). Defense, poise, armor perks, set pieces, gems and equip load all come from the
+  **equipped** armor only. A cosmetic piece **weighs nothing** and **holds no gems**: any it had go back to the gem bag
+  when it is put on. An empty cosmetic slot shows the equipped piece.
+- Putting one on: click an empty cosmetic slot and pick a piece from the bag, or right-click (X / □) head, chest or leg
+  armor in the bag. Click a cosmetic slot to take its piece back to the bag. A cosmetic piece leaves the bag, so Sell
+  all, the gem bench and Reinforce never touch it.
+- Everyone sees it: other players in co-op, and the lobby's character previews.
+
 ## 9. Bonfires, the Thermos and death
 
 ### 9.1 The bonfire
@@ -1095,7 +1107,7 @@ face marks and per-limb features, with Randomize and a preview you turn with the
   is gone); the dodge ring round the player; door torches (D263); gold immune enemies (§6.7); grey
   stones round a stuck player (D252); gold sparkles on a Thermos drink (D271).
 - **Menus** are HTML overlays over the canvas: Title · Load Character · Character creation · Co-op play · Lobby · Friends (§12.1) ·
-  Pause · Inventory (Items, Spells, Proficiency tabs; stats, paper doll, bag, gems in your gear, set perks worn) ·
+  Pause · Inventory (Items, Spells, Proficiency tabs; stats, cosmetic armor (§8.11), paper doll, bag, gems in your gear, set perks worn) ·
   Bonfire (§9.1) · Map · Settings · Achievements · Statistics · Death screen · Credits. Menus keep their focus across
   redraws (D144).
 - **Cutscenes** (D87, D112): zone entry (first visit per cycle) types 2–4 lines and waits for a button; boss intros

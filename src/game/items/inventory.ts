@@ -99,13 +99,70 @@ export function allItems(c: Character): Item[] {
   return [...WORN_SLOTS.map((s) => e[s]), c.altMain, c.altOff, ...c.bag].filter((x): x is Item => !!x);
 }
 
+// ---------------------------------------------------------------- cosmetic armor (D435)
+
+/** The armor slots that take a piece worn for its look only (D435). */
+export const COSMETIC_SLOTS = ['head', 'body', 'legs'] as const;
+export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
+
+/** The piece worn for its look in a slot, if any. */
+export function cosmeticItem(c: Character, slot: CosmeticSlot): Item | null {
+  return c.cosmetic?.[slot] ?? null;
+}
+
+/** The piece a slot shows (D435): the cosmetic one, else the equipped one. Only the look reads this. */
+export function lookItem(c: Character, slot: CosmeticSlot): Item | null {
+  return cosmeticItem(c, slot) ?? c.equipment[slot] ?? null;
+}
+
+/** Items worn for looks (not in allItems: no menu may socket, sell or reinforce them by id). */
+export function cosmeticItems(c: Character): Item[] {
+  return COSMETIC_SLOTS.map((s) => cosmeticItem(c, s)).filter((x): x is Item => !!x);
+}
+
+/**
+ * Wear a bag armor piece for its look (D435): its gems go back to the gem bag (a cosmetic piece holds none), it leaves
+ * the bag, and the piece it replaces comes back to the bag in its place.
+ */
+export function wearCosmetic(c: Character, itemId: string): OpResult {
+  const i = findInBag(c, itemId);
+  if (i < 0) return no('That item is not in your bag.');
+  const item = c.bag[i]!;
+  const slot = item.slot as CosmeticSlot;
+  if (item.kind !== 'armor' || !(COSMETIC_SLOTS as readonly string[]).includes(slot)) return no('Only head, chest and leg armor can be worn for its look.');
+  let freed = 0;
+  item.sockets = item.sockets.map((g) => {
+    if (g) {
+      c.gems.push(g);
+      freed++;
+    }
+    return null;
+  });
+  const cos = (c.cosmetic ??= { head: null, body: null, legs: null });
+  c.bag.splice(i, 1);
+  const prev = cos[slot];
+  cos[slot] = item;
+  if (prev) c.bag.splice(i, 0, prev);
+  return ok(`Wearing ${item.name} for its look.${freed ? ` ${freed} gem${freed > 1 ? 's' : ''} back in your gem bag.` : ''}`);
+}
+
+/** Take a cosmetic piece off, back to the bag (D435); the equipped piece shows again. */
+export function removeCosmetic(c: Character, slot: CosmeticSlot): OpResult {
+  const item = cosmeticItem(c, slot);
+  if (!item) return no('Nothing there.');
+  if (c.bag.length >= BAG_SIZE) return no('Your bag is full.');
+  c.cosmetic![slot] = null;
+  c.bag.push(item);
+  return ok(`${item.name} back in your bag.`);
+}
+
 /**
  * Give an item coming into the character a fresh id if something it carries already has that one (D232). Drops are
  * rolled from seeded streams that repeat between visits, so two different items could be born with one id, and every
  * menu that looks an item up by id (the gem bench, reinforce, equip) then found the wrong one.
  */
 export function uniqueItemId(c: Character, item: Item): Item {
-  if (allItems(c).some((i) => i !== item && i.id === item.id)) item.id = newId();
+  if ([...allItems(c), ...cosmeticItems(c)].some((i) => i !== item && i.id === item.id)) item.id = newId();
   return item;
 }
 
@@ -113,7 +170,7 @@ export function uniqueItemId(c: Character, item: Item): Item {
 export function dedupeItemIds(c: Character): number {
   const seen = new Set<string>();
   let fixed = 0;
-  for (const it of allItems(c)) {
+  for (const it of [...allItems(c), ...cosmeticItems(c)]) {
     if (seen.has(it.id)) {
       it.id = newId();
       fixed++;
