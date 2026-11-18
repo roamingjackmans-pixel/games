@@ -3,7 +3,8 @@
 // Counter keys: kills, deaths, parries, riposteKills, level, glowen, party, encumberedS (longest unbroken
 // stretch, seconds), credits, instructor, mimicKill, mimicDeath, legendary, fullSet, gemMax, gemPerfect, plusMax, flaskless,
 // fists, revive, ffDown, ffAbandon, gary, garyGone, ng1, ng2, boss:<bossId>, class:<classId>, clean:<zone>,
-// raisedLegendary, allLegendary, bestiaryKnown, bestiaryAll, bestiaryEnemy, bestiaryBoss, bestiaryZone (D239).
+// raisedLegendary, allLegendary, bestiaryKnown, bestiaryAll, bestiaryEnemy, bestiaryBoss, bestiaryZone (D239),
+// hardcoreWin (D440).
 import type { ClassId } from '../game/types';
 import { bestiaryZones } from './bestiary';
 
@@ -99,6 +100,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   // ---- the end, and the end again
   once('beat_game', 'Fuse Box Found', 'Climb out of the Abyss and sit through the credits.', 'stairs', 'credits'),
   once('ng_plus', 'Sublet', 'Defeat The Landlord on New Game+ (Cycle 2).', 'cycle', 'ng1'),
+  once('hardcore_landlord', 'No Deposit Returned', 'Defeat The Landlord with a Hardcore character, in its own Hardcore world.', 'skull', 'hardcoreWin'),
   once('ng_plus_2', 'Month-to-Month Forever', 'Defeat The Landlord on New Game+2 (Cycle 3). Three clears. Go outside.', 'cycle', 'ng2'),
 
   // ---- every class finishes a zone

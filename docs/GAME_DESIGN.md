@@ -1085,6 +1085,12 @@ Ten classes (CONTENT_SPELLS_CLASSES §3 is the source of truth; every kit meets 
 **Character creation**: name (blank = Joe, D200), class (a fixed-layout card, D188), optional seed, and an
 **Appearance** panel (D100, D183): body (male / female), skin, hair, facial hair, eyes and eye colour, nose, brows,
 face marks and per-limb features, with Randomize and a preview you turn with the right stick or a drag (D125).
+**Hardcore** (D440), a box beside the seed, is for good: it can never be turned off. In a Hardcore character's campaign
+every enemy (bosses and Elites included) **hits 50% harder** and **has twice the HP** (`HARDCORE_DMG_MULT`,
+`HARDCORE_HP_MULT`, applied as each enemy spawns, on top of the cycle's curve). Wave Rush is never Hardcore. In co-op
+the host's character decides: a Hardcore host's world is Hardcore for every guest; a Hardcore guest in a normal host's
+world plays it normally. Hardcore characters carry a red skull beside their name wherever a character is picked (Load
+Character, the co-op and Wave Rush pickers), and "(Hardcore)" on the title's Continue.
 
 ## 16. UI and HUD
 
@@ -1169,9 +1175,9 @@ later: landlords always come back.
 
 ## 20. Achievements
 
-**60** account-wide achievements (`src/data/achievements.ts`; D91, D199, D239), stored in `dj.achievements` and shared
+**61** account-wide achievements (`src/data/achievements.ts`; D91, D199, D239, D440), stored in `dj.achievements` and shared
 by all ten slots. Kills (1 / 100 / 1,000 / 5,000), each boss and The Instructor, the credits, The Landlord on NG+ and
-NG+2, a boss win with each class, deaths, mimics, a Legendary, a full armor set from zone 2 or deeper, a gem with an
+NG+2, The Landlord with a Hardcore character in its Hardcore world ("No Deposit Returned", D440), a boss win with each class, deaths, mimics, a Legendary, a full armor set from zone 2 or deeper, a gem with an
 Orange roll, a level-50 three-perk all-Orange gem, a +15 item, parries, ripostes, a Thermos-free boss, a boss with an
 empty weapon hand, clean zones, revives, friendly-fire downs (hidden), a full party, levels 50 and 100, 10,000 Glowen,
 a minute Encumbered, Gary, Bestiary milestones, raising a weapon to Legendary, a Legendary in every slot, and **The

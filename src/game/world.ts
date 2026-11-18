@@ -737,6 +737,8 @@ export class World {
   cycle = 0;
   /** Wave Rush (GAME_DESIGN §24): enemies carry no Shards and campaign-only achievements are not earned here */
   rush = false;
+  /** a Hardcore campaign (D440): every enemy spawned hits 50% harder and has twice the HP. Never in Wave Rush. */
+  hardcore = false;
   /** number of players for HP scaling */
   playerCount = 1;
   hooks: WorldHooks = {};

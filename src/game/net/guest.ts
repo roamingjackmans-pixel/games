@@ -262,6 +262,7 @@ export class NetGuest {
     this.cw.zone = zone;
     this.cw.cycle = cycle;
     this.cw.rush = !!rush;
+    this.cw.hardcore = !rush && !!this.welcome?.hardcore;
   }
 
   private onNetEvent(e: NetEvent): void {

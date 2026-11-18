@@ -19,6 +19,7 @@ import { lookFor } from '../../render/entities';
 import { btn, clearEl, focusFirst, h, layer, toast } from '../../ui/dom';
 import { openSettings } from '../../ui/menus/settings';
 import { openAchievements } from '../../ui/achievements';
+import { charName } from '../../ui/hardcore';
 import { openStatistics } from '../../ui/statistics';
 import { openFriends } from '../../ui/friends';
 import { friends } from '../net/friends';
@@ -201,7 +202,7 @@ export class TitleScene implements Scene {
     this.view(
       'main',
       h('h2', null, 'Main menu'),
-      last ? btn(`Continue — ${last.character.name} (Lv ${last.character.level}${last.character.cycle ? `, Cycle ${last.character.cycle + 1}` : ''})`, () => titleHooks.start?.(last, 'solo'), 'primary big') : null,
+      last ? btn(`Continue — ${last.character.name}${last.character.hardcore ? ' (Hardcore)' : ''} (Lv ${last.character.level}${last.character.cycle ? `, Cycle ${last.character.cycle + 1}` : ''})`, () => titleHooks.start?.(last, 'solo'), 'primary big') : null,
       btn('Co-op play', () => this.coopMenu(), 'big'),
       testId(btn('Wave Rush', () => this.rushMenu(), 'big'), 'wave-rush-btn'),
       testId(
@@ -282,7 +283,7 @@ export class TitleScene implements Scene {
         h(
           'div',
           { class: 'card row', 'data-testid': `rush-pick-${sv.slot}` },
-          h('div', { class: 'grow' }, h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}`), h('div', { class: 'small dim-text' }, rushLine(sv))),
+          h('div', { class: 'grow' }, h('div', null, charName(c), ` — ${CLASSES[c.classId].name}, level ${c.level}`), h('div', { class: 'small dim-text' }, rushLine(sv))),
           btn('Choose', () => this.rushCycleMenu(sv, 'list'), 'tiny primary'),
         ),
       );
@@ -346,7 +347,7 @@ export class TitleScene implements Scene {
         h(
           'div',
           { class: 'card row', 'data-testid': `coop-pick-${sv.slot}` },
-          h('div', { class: 'grow' }, h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`), h('div', { class: 'small dim-text' }, mode === 'host' ? `Your world: ${ZONES[sv.world.zone - 1]?.name ?? ''}` : 'Keeps everything earned in the host’s world')),
+          h('div', { class: 'grow' }, h('div', null, charName(c), ` — ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`), h('div', { class: 'small dim-text' }, mode === 'host' ? `Your world: ${ZONES[sv.world.zone - 1]?.name ?? ''}` : 'Keeps everything earned in the host’s world')),
           btn(mode === 'host' ? 'Host' : 'Join', () => this.go(sv, mode), 'tiny primary'),
         ),
       );
@@ -388,7 +389,7 @@ export class TitleScene implements Scene {
         h(
           'div',
           { class: 'grow' },
-          h('div', null, h('b', null, c.name), ` — ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`),
+          h('div', null, charName(c), ` — ${CLASSES[c.classId].name}, level ${c.level}${c.cycle ? ` · Cycle ${c.cycle + 1}` : ''}`),
           h('div', { class: 'small dim-text' }, `${zone} · ${fmtTime(s.stats.playtimeSec)} played · ${s.stats.deaths} deaths · seed ${s.world.seed}`),
         ),
         btn('Play', () => titleHooks.start?.(s, 'solo'), 'tiny primary'),
@@ -460,6 +461,15 @@ export class TitleScene implements Scene {
     // starts empty (D200): no name carried over from the co-op name or a previous character; left blank, it is Joe
     const name = h('input', { value: '', placeholder: 'blank = Joe', maxlength: '16', 'data-testid': 'create-name', style: 'flex:1;min-width:0' });
     const seed = h('input', { placeholder: 'blank = random', maxlength: '24', 'data-testid': 'create-seed' });
+    // Hardcore (D440): chosen here, kept for good
+    const hardcore = h('input', { type: 'checkbox', 'data-testid': 'create-hardcore', id: 'create-hardcore' }) as HTMLInputElement;
+    const hardcoreRow = h(
+      'label',
+      { class: 'row', style: 'gap:6px;align-items:center;cursor:pointer', for: 'create-hardcore', title: 'The campaign’s enemies hit 50% harder and have twice the HP. It can never be turned off. Wave Rush is unchanged.' },
+      hardcore,
+      h('b', { style: 'color:#e04848' }, 'Hardcore'),
+      h('span', { class: 'small dim-text', 'data-testid': 'create-hardcore-note' }, 'enemies hit 50% harder, twice the HP; for good'),
+    );
     const canvas = h('canvas', { width: 248, height: 250, style: 'background:#14121a;border:2px solid #3a3447;border-radius:8px;display:block;cursor:grab', title: 'Drag to turn' });
     // click and drag left or right to turn the character (D125)
     canvas.addEventListener('pointerdown', (e) => {
@@ -641,6 +651,7 @@ export class TitleScene implements Scene {
       const pid = `p-${randomSeedString((Date.now() * 7) >>> 0)}-${randomSeedString((performance.now() * 997) >>> 0)}`;
       const ch = newCharacter(classId, nm, pid, new Rng(`${s}|kit`));
       ch.appearance = { ...ap };
+      if (hardcore.checked) ch.hardcore = true;
       const save = newSave(slot, ch, s);
       writeSave(getStore(), save);
       app().settings.net.name = nm;
@@ -665,7 +676,7 @@ export class TitleScene implements Scene {
         card,
         apCol,
       ),
-      h('div', { class: 'row', style: 'margin-top:4px' }, h('div', null, 'Seed'), seed, h('div', { class: 'small dim-text grow' }, 'Same seed, same dungeon.'), startBtn, btn('Back', () => this.main())),
+      h('div', { class: 'row', style: 'margin-top:4px;gap:10px' }, h('div', null, 'Seed'), seed, h('div', { class: 'small dim-text' }, 'Same seed, same dungeon.'), hardcoreRow, h('div', { class: 'grow' }), startBtn, btn('Back', () => this.main())),
     );
     const panel = this.root?.querySelector<HTMLElement>('[data-view=create]');
     if (panel) panel.style.maxWidth = 'none';

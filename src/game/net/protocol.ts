@@ -116,6 +116,8 @@ export interface Welcome {
   slot: number;
   /** a Wave Rush (D401): its stage and boss; absent in the campaign */
   rush?: RushWhere;
+  /** the host's Hardcore campaign (D440): the mirror's enemies hit harder and have more HP, as the host's do */
+  hardcore?: boolean;
 }
 
 /** Guest commands that touch the shared world (NETCODE §3 cmd). */

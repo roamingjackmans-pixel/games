@@ -889,6 +889,11 @@ export interface Character {
   /** stat points to place for free at a bonfire (from a respec before D341, which removed respeccing) */
   freePoints: number;
   tutorialDone: boolean;
+  /**
+   * Hardcore (D440), chosen in the character creator and fixed for good: the campaign's enemies (in a world this
+   * character hosts) hit 50% harder and have twice the HP. Absent: a normal character.
+   */
+  hardcore?: boolean;
   /** the creator's look; absent on old saves (the class look is used) */
   appearance?: Appearance;
   /** weapon-class proficiency experience by class (D178); absent on old saves (all zero) */

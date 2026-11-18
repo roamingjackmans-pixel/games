@@ -61,6 +61,10 @@ export function enemyFullHp(def: EnemyDef | BossDef, zone: number, cycle: number
   return hp;
 }
 
+/** Hardcore (D440): enemies hit 50% harder and have 100% more HP. */
+export const HARDCORE_DMG_MULT = 1.5;
+export const HARDCORE_HP_MULT = 2;
+
 export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: number, o: SpawnOpts = {}): Entity {
   const isBoss = def0.role === 'boss';
   const isMimic = !!def0.traits?.mimic;
@@ -73,6 +77,8 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   const elite = o.elite ?? null;
   const baseHp = isBoss ? ((def as BossDef).baseHp ?? rs.hp) : rs.hp;
   let hp = enemyFullHp(def, zone, cycle, { elite, hpMult: o.hpMult ?? 1 });
+  // Hardcore (D440): twice the HP (invincible and fixed-HP bodies keep theirs, below)
+  if (w.hardcore) hp *= HARDCORE_HP_MULT;
   // co-op: more HP for each extra player, more for bosses and Elites (D159); special NPCs and illusions keep theirs
   const coop = (def.special && !def.traits?.coopHp) || o.illusion ? 1 : coopHpMult(players, isBoss || !!elite || !!def.traits?.coopHp);
   hp *= coop;
@@ -80,7 +86,7 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   if (def.traits?.fixedHp) hp = def.traits.fixedHp;
   // New Game+ room enemies hit harder by zone (D275); bosses and special NPCs keep the plain curve
   const ngZone = isBoss || def.special ? 1 : ngZoneEnemyDmg(zone, cycle);
-  const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * zoneDmgFactor(zone) * ngZone * ngLevelComp('dmg', zone, cycle) * statCurveComp('dmg', zone, cycle) * (def.special ? 1 : levelPaceComp('dmg', zone, cycle)) * (isBoss && !def.special ? ngBossDmgMult(cycle) * ngBossDmgTrim(zone, cycle) : 1) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1);
+  const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * zoneDmgFactor(zone) * ngZone * ngLevelComp('dmg', zone, cycle) * statCurveComp('dmg', zone, cycle) * (def.special ? 1 : levelPaceComp('dmg', zone, cycle)) * (isBoss && !def.special ? ngBossDmgMult(cycle) * ngBossDmgTrim(zone, cycle) : 1) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1) * (w.hardcore ? HARDCORE_DMG_MULT : 1);
   const speed = (def.speed ?? rs.speed) * (def.mult?.speed ?? 1) * (elite === 'frenzied' ? 1.4 : 1);
   const share = Math.max(1, o.share ?? 1);
   const rawShards = (rs.shards * SHARD_SCALE * zoneShardFactor(zone) * (def.mult?.shards ?? 1) * enemyShardMult(zone, cycle) * (elite ? 3 : 1)) / share;

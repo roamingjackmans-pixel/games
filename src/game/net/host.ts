@@ -258,6 +258,7 @@ export class NetHost {
       time: s.w.time,
       slot: g.sp.slot,
       ...(s.rush ? { rush: { stage: s.rush.stage, boss: s.rush.bossId } } : {}),
+      ...(s.w.hardcore ? { hardcore: true } : {}),
     };
     this.ch.welcome.send(welcome as Welcome & Record<string, unknown>, g.peerId);
   }

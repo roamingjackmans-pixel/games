@@ -9,7 +9,7 @@ import { btn, fmt, h, layer, uiRoot } from './dom';
 
 // ------------------------------------------------------------------ icons (24×24, stroke = currentColor)
 
-const ICON_PATHS: Record<AchIcon, string> = {
+export const ICON_PATHS: Record<AchIcon, string> = {
   sword: '<path d="M19 3l2 2-11 11-3 1 1-3z"/><path d="M5 15l4 4M4 20l2-2"/>',
   skull: '<path d="M12 3c-4.4 0-8 3.1-8 7.5 0 2.6 1.3 4 3 5V19h10v-3.5c1.7-1 3-2.4 3-5C20 6.1 16.4 3 12 3z"/><circle cx="9" cy="11" r="1.6"/><circle cx="15" cy="11" r="1.6"/><path d="M10 19v2M14 19v2M12 14l-1 2h2z"/>',
   crown: '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/><path d="M5 19h14"/>',

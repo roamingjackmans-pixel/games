@@ -180,6 +180,8 @@ export class GameSession {
     this.w.zone = save.world.zone;
     this.w.cycle = this.rushStart ?? save.character.cycle;
     this.w.rush = this.rushStart !== null;
+    // Hardcore (D440): the campaign of a Hardcore character (the host's, in co-op); Wave Rush is never Hardcore
+    this.w.hardcore = this.rushStart === null && !!save.character.hardcore;
     installRules(this.w, {
       onDrops: (w, e, killer) => lootHooks.enemyDrops(this, e, killer),
       onPlayerDown: (w, p) => this.onPlayerDown(p),

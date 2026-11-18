@@ -135,6 +135,8 @@ export class AchievementTracker {
   private cycle = 0;
   /** Wave Rush (D401): its bosses count as bosses, not as the campaign's New Game+ or clean-zone milestones */
   private rushMode = false;
+  /** a Hardcore campaign (D440) */
+  private hardcore = false;
 
   constructor(
     private store: KeyValueStore | null = null,
@@ -270,6 +272,7 @@ export class AchievementTracker {
     const pid = me?.pl?.playerId ?? c.playerId;
     this.cycle = w.cycle;
     this.rushMode = w.rush;
+    this.hardcore = w.hardcore;
     this.watchZone(w.zone);
     // events first: the frame a boss dies its id is already gone from the world, the fight record is not
     for (const ev of events) this.event(ev, pid, c);
@@ -351,6 +354,8 @@ export class AchievementTracker {
     this.flag(`class:${c.classId}`);
     if (zone === 8 && this.cycle >= 1 && !this.rushMode) this.flag('ng1');
     if (zone === 8 && this.cycle >= 2 && !this.rushMode) this.flag('ng2');
+    // D440: the final boss falls in a Hardcore campaign, to a Hardcore character
+    if (zone === 8 && this.hardcore && c.hardcore && !this.rushMode) this.flag('hardcoreWin');
     const f = this.fight;
     if (f && !f.drank) this.flag('flaskless');
     if (f && !f.armed && !c.equipment.main) this.flag('fists');

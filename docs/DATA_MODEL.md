@@ -75,6 +75,7 @@ campaign's and a Wave Rush never changes it.
 | `consumables`, `quickSlot` | counts by `ConsumableId`; the quick-use pick |
 | `knownSpells`, `spellLoadout` | `{ brain: Loadout3, prayer: Loadout3 }` |
 | `tutorialDone` | |
+| `hardcore?` | Hardcore (D440): set in the creator, never cleared; its campaign's enemies hit 50% harder and have twice the HP |
 | `appearance?` | the character creator's look (sanitised on load) |
 | `proficiency?` | weapon-class experience by class (D178) |
 | `bestiary?` | `{ kills: id → n, seen: id[] }` (D229) |
