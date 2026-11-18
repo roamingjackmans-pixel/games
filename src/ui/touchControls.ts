@@ -5,6 +5,7 @@
 import { app } from '../app';
 import { ACTION_LABEL, type Action } from '../engine/input/actions';
 import { defaultGamepad, type GamepadBindings } from '../engine/input/bindings';
+import { onRealPadInput } from '../engine/input/virtualPad';
 import { setVirtualButton, setVirtualPadActive, setVirtualStick } from '../engine/input/virtualPad';
 import type { TouchMode } from '../engine/settings';
 
@@ -37,9 +38,9 @@ const BUTTONS: Btn[] = [
   { i: 4, label: 'LB', side: 'left', x: 9, y: 23, r: 6, shape: 'pill' },
   { i: 7, label: 'RT', side: 'right', x: 9, y: 9, r: 6, shape: 'pill' },
   { i: 5, label: 'RB', side: 'right', x: 9, y: 23, r: 6, shape: 'pill' },
-  // View and Menu flank the Full screen button along the top edge, clear of the menus below
-  { i: 8, label: '⧉', side: 'center', x: -20, y: 6, r: 4.6 },
-  { i: 9, label: '☰', side: 'center', x: 20, y: 6, r: 4.6 },
+  // View and Menu flank the Full screen and Hide buttons along the top edge, clear of the menus below
+  { i: 8, label: '⧉', side: 'center', x: -26, y: 6, r: 4.6 },
+  { i: 9, label: '☰', side: 'center', x: 26, y: 6, r: 4.6 },
   { i: 10, label: 'L3', side: 'left', x: 40, y: 90, r: 4.6 },
   { i: 11, label: 'R3', side: 'right', x: 40, y: 90, r: 4.6 },
   { i: 12, label: '▲', side: 'left', x: 30, y: 34, r: 5.6, shape: 'dpad' },
@@ -91,6 +92,8 @@ const CSS = `
 let root: HTMLElement | null = null;
 let shown = false;
 let touchedOnce = false;
+/** Put away (D441): by the Hide button or a real controller being used; the next touch on the screen brings it back. */
+let tucked = false;
 const capEls = new Map<number, HTMLElement>();
 
 function mode(): TouchMode {
@@ -101,7 +104,10 @@ function mode(): TouchMode {
   }
 }
 
-/** Show or hide the controls from the setting (auto: on phones and tablets, or once the screen is touched). */
+/**
+ * Show or hide the controls from the setting (auto: on phones and tablets, or once the screen is touched). Hidden
+ * as well while put away (D441): the Hide button, or a real controller used in Auto, until the screen is touched.
+ */
 export function refreshTouchControls(): void {
   if (!root) return;
   let s = { size: 1, opacity: 0.75 };
@@ -111,7 +117,7 @@ export function refreshTouchControls(): void {
     // no app yet
   }
   const m = mode();
-  shown = m === 'on' || (m === 'auto' && (isTouchDevice() || touchedOnce));
+  shown = !tucked && (m === 'on' || (m === 'auto' && (isTouchDevice() || touchedOnce)));
   root.classList.toggle('hidden', !shown);
   root.style.opacity = String(s.opacity);
   // one unit = 1 vmin × the size setting; everything is laid out in units
@@ -255,6 +261,17 @@ export function installTouchControls(): void {
         .catch(() => undefined);
   });
   tool.appendChild(fs);
+  // put the whole overlay away (D441): a controller plugged into the phone needs none of it; a touch brings it back
+  const hide = document.createElement('button');
+  hide.textContent = '✕ Hide';
+  hide.setAttribute('data-testid', 'touch-hide');
+  hide.title = 'Hide the touch controls until you touch the screen again (Settings → Controls → Touch controls: Off hides them for good)';
+  hide.addEventListener('pointerup', (e) => {
+    e.stopPropagation();
+    tucked = true;
+    refreshTouchControls();
+  });
+  tool.appendChild(hide);
   root.appendChild(tool);
   const rotate = document.createElement('div');
   rotate.className = 'tp-rotate';
@@ -276,16 +293,24 @@ export function installTouchControls(): void {
     },
     { passive: false },
   );
-  // auto mode also comes on the first time the screen is touched (a touch laptop, a tablet with a mouse)
+  // auto mode also comes on the first time the screen is touched (a touch laptop, a tablet with a mouse); a touch
+  // also brings back controls that were put away (D441)
   window.addEventListener(
     'touchstart',
     () => {
-      if (touchedOnce) return;
+      if (touchedOnce && !tucked) return;
       touchedOnce = true;
+      tucked = false;
       refreshTouchControls();
     },
     { passive: true },
   );
+  // a real controller used while Auto shows the overlay puts it away (Always keeps it; D441)
+  onRealPadInput(() => {
+    if (!shown || mode() !== 'auto') return;
+    tucked = true;
+    refreshTouchControls();
+  });
   refreshTouchControls();
   // bindings can change in Settings; keep the small labels current
   window.setInterval(() => {

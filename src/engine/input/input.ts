@@ -1,7 +1,7 @@
 // Keyboard, mouse and Gamepad API input merged into one InputFrame per simulation tick.
 import { ACTION_BIT, GAME_ACTIONS, type Action, type GameAction, type InputFrame, type LocalAction } from './actions';
 import { HOLD, PAD_BUTTON_COUNT, defaultGamepad, defaultKeyboard, type GamepadBindings, type KeyboardBindings } from './bindings';
-import { mergePads, virtualGamepad } from './virtualPad';
+import { mergePads, noteRealPad, virtualGamepad } from './virtualPad';
 import { steamGamepad } from './steamController';
 
 export type Device = 'kbm' | 'pad';
@@ -245,7 +245,10 @@ export class InputManager {
       if (!real || std(p) > std(real) || (std(p) === std(real) && p.timestamp > real.timestamp)) real = p;
     }
     // a Steam Controller read over WebHID (D206) and the on-screen touch controller (D143) count as pads too
-    const gp = mergePads(mergePads(real, steamGamepad()), virtualGamepad());
+    const hw = mergePads(real, steamGamepad());
+    // a real controller in use hides the touch overlay (D441)
+    noteRealPad(hw);
+    const gp = mergePads(hw, virtualGamepad());
     this.padPrev = new Set(this.padDown);
     this.padDown.clear();
     this.lastPoll = now;

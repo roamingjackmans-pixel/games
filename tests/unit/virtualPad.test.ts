@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergePads, setVirtualButton, setVirtualPadActive, setVirtualStick, virtualGamepad, VIRTUAL_PAD_ID } from '../../src/engine/input/virtualPad';
+import { mergePads, noteRealPad, onRealPadInput, realPadActive, setVirtualButton, setVirtualPadActive, setVirtualStick, virtualGamepad, VIRTUAL_PAD_ID } from '../../src/engine/input/virtualPad';
 import { padKindFromId } from '../../src/engine/input/input';
 import { normalizeSettings } from '../../src/engine/settings';
 
@@ -36,5 +36,34 @@ describe('virtual touch pad (D143)', () => {
   it('settings: touch controls default to auto and clamp size and opacity', () => {
     expect(normalizeSettings({}).controls.touch).toEqual({ mode: 'auto', size: 1, opacity: 0.75 });
     expect(normalizeSettings({ controls: { touch: { mode: 'nope', size: 9, opacity: 0 } } }).controls.touch).toEqual({ mode: 'auto', size: 1.4, opacity: 0.25 });
+  });
+});
+
+// D441: using a real controller puts the touch overlay away.
+describe('a real controller and the touch overlay (D441)', () => {
+  const pad = (button: number | null, axes: number[] = [0, 0, 0, 0]): Gamepad =>
+    ({ id: 'Xbox Wireless Controller', connected: true, mapping: 'standard', timestamp: 0, axes, buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: i === button, touched: i === button, value: i === button ? 1 : 0 })) }) as unknown as Gamepad;
+
+  it('counts a button or a stick pushed well past the deadzone, not stick drift or no pad', () => {
+    expect(realPadActive(null)).toBe(false);
+    expect(realPadActive(pad(null))).toBe(false);
+    expect(realPadActive(pad(null, [0.2, 0.1, 0, 0.15]))).toBe(false);
+    expect(realPadActive(pad(0))).toBe(true);
+    expect(realPadActive(pad(null, [0, 0.9, 0, 0]))).toBe(true);
+    expect(realPadActive(pad(null, [0, 0, -0.8, 0]))).toBe(true);
+  });
+
+  it('tells the overlay once when use begins, so a stuck button cannot keep it hidden', () => {
+    let told = 0;
+    onRealPadInput(() => told++);
+    noteRealPad(null);
+    noteRealPad(pad(0));
+    noteRealPad(pad(0));
+    noteRealPad(pad(0));
+    expect(told).toBe(1);
+    noteRealPad(pad(null));
+    noteRealPad(pad(3));
+    expect(told).toBe(2);
+    noteRealPad(null);
   });
 });

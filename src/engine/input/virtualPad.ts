@@ -44,6 +44,29 @@ export function virtualGamepad(): Gamepad | null {
   } as unknown as Gamepad;
 }
 
+/** A real controller (not the touch one) pressed a button or pushed a stick (D441): the overlay hides itself. */
+const realPadListeners: (() => void)[] = [];
+let realPadWasActive = false;
+export function onRealPadInput(cb: () => void): void {
+  realPadListeners.push(cb);
+}
+
+/** Whether a real pad is being used right now: any button down or a stick pushed well past the deadzone. */
+export function realPadActive(gp: Gamepad | null): boolean {
+  if (!gp) return false;
+  if (gp.buttons.some((b, i) => b.pressed || ((i === 6 || i === 7) && b.value > 0.3))) return true;
+  return Math.hypot(gp.axes[0] ?? 0, gp.axes[1] ?? 0) > 0.5 || Math.hypot(gp.axes[2] ?? 0, gp.axes[3] ?? 0) > 0.5;
+}
+
+/** Called by the input manager each poll with the real pad (and Steam Controller) before the touch pad is merged in. */
+export function noteRealPad(gp: Gamepad | null): void {
+  // only the moment use begins: a stuck button or a phantom pad (some phones list a sensor as one) cannot keep the
+  // overlay away after a touch has brought it back
+  const on = realPadActive(gp);
+  if (on && !realPadWasActive) for (const cb of realPadListeners) cb();
+  realPadWasActive = on;
+}
+
 /** True while any button or stick of the virtual pad is in use. */
 export function virtualPadInUse(): boolean {
   return active && (pressed.some(Boolean) || axes.some((a) => Math.abs(a) > 0.05));

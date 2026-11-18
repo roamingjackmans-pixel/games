@@ -510,7 +510,7 @@ export function openSettings(onClose: () => void, opts: SettingsOpts = {}): HTML
       el.appendChild(select('Show on screen', [['auto', 'Auto (phones and tablets)'], ['on', 'Always'], ['off', 'Off']] as [TouchMode, string][], () => s.controls.touch.mode, (v) => (s.controls.touch.mode = v), refreshTouchControls));
       el.appendChild(slider('Size', () => s.controls.touch.size, (v) => { s.controls.touch.size = v; refreshTouchControls(); }, 0.7, 1.4, 0.05));
       el.appendChild(slider('Opacity', () => s.controls.touch.opacity, (v) => { s.controls.touch.opacity = v; refreshTouchControls(); }, 0.25, 1, 0.05));
-      el.appendChild(h('div', { class: 'small dim-text', style: 'max-width:760px' }, 'Two sticks (move and aim) and the 16 buttons of a controller, laid out like an Xbox pad. Each button shows what it does; rebinding a button below changes it on screen too. Touch a stick anywhere in its corner.'));
+      el.appendChild(h('div', { class: 'small dim-text', style: 'max-width:760px' }, 'Two sticks (move and aim) and the 16 buttons of a controller, laid out like an Xbox pad. Each button shows what it does; rebinding a button below changes it on screen too. Touch a stick anywhere in its corner. Playing with a controller plugged into the phone? In Auto the overlay hides as soon as you use the controller, and ✕ Hide at the top puts it away too; touch the screen to bring it back, or choose Off to hide it for good.'));
     }
     const table = tableFor(pad);
     const conflicts = findConflicts(table);

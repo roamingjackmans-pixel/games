@@ -1127,7 +1127,9 @@ Character, the co-op and Wave Rush pickers), and "(Hardcore)" on the title's Con
   Xbox / PlayStation, D85; aim assist; Steam Controller; touch controls) · Co-op (name, friendly fire) · Game
   (install, the offline download).
 - **Browsers**: Chrome, Edge and Firefox on desktop (D235). **Phones and tablets** get an on-screen controller (two
-  sticks and a full pad; Auto / Always / Off, size and opacity; D143).
+  sticks and a full pad; Auto / Always / Off, size and opacity; D143). The overlay hides itself fully (D441) when a
+  real controller is used in Auto (a pad plugged into the phone), or with its **✕ Hide** button beside Full screen;
+  the next touch on the screen brings it back. Off hides it for good.
 - **Steam Controller** (D206, D208, D214): connected once through WebHID in Chrome / Edge; in Firefox, start the
   browser from Steam with the Gamepad layout.
 - **Installing** (D135–D139): install Dungeon Joe as an app from Edge or Chrome (Settings → Game → Install), then
