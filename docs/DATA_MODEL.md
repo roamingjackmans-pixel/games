@@ -133,6 +133,7 @@ interface Item {
   setPerk?: string;                        // set perk id (D243)
   locked?: boolean;                        // Sell all keeps it (D265)
   variant?: string;                        // weapons: a scaling variant of its class, e.g. 'blessed' (D319)
+  neon?: NeonColor;                        // legendary armor from a Hardcore campaign: blue, pink, green, purple, red, orange (D442)
 }
 
 interface GemPerk { family: GemFamily; level?: number /* 1–50, D197; absent = 14 */; q?: number /* −0.5 … +0.5 roll; absent = 0 */ }

@@ -1,7 +1,7 @@
 // Co-op protocol (NETCODE §3): message names and shapes, room codes, the version check and the per-frame input
 // packet. Snapshots live in snapshot.ts, character sync in charSync.ts.
 import type { InputFrame } from '../../engine/input/actions';
-import type { Appearance, Character, ClassId, Rarity } from '../types';
+import type { Appearance, Character, ClassId, NeonColor, Rarity } from '../types';
 
 export const MAX_GUESTS = 3;
 // 30 snapshots a second (D149; was 20): more samples to interpolate between, so less to guess on a jittery link
@@ -81,6 +81,8 @@ export interface LobbyGearItem {
   b: string;
   r: Rarity;
   n?: string;
+  /** neon armor's colour (D442) */
+  c?: NeonColor;
 }
 
 export const LOBBY_GEAR_SLOTS = ['main', 'off', 'head', 'body', 'legs'] as const;

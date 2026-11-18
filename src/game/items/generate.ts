@@ -5,7 +5,8 @@ import { SET_PERK_CHANCE, SET_PERK_IDS } from '../../data/setPerks';
 import { WEAPONS, WEAPON_IDS } from '../../data/weapons';
 import { SHIELDS } from '../../data/shields';
 import { CASTING_TOOLS } from '../../data/castingTools';
-import { ARMOR_SETS } from '../../data/armor';
+import { ARMOR_SETS, parseArmorBase } from '../../data/armor';
+import { NEON_ARMOR_CHANCE, NEON_COLORS, NEON_IDS } from '../../data/neon';
 import { RINGS } from '../../data/rings';
 import { AFFIXES, type AffixDef, type AffixSlotGroup } from '../../data/affixes';
 import { LEGENDARY_NAMES, LEGENDARY_WEAPON_POWERS, powersFor, type PowerSlot } from '../../data/legendaries';
@@ -208,6 +209,8 @@ export interface GenOpts {
   cycle?: number;
   /** the player it drops for (D254): weapons that suit their class come up more often */
   favor?: DropFavor | undefined;
+  /** found in a Hardcore campaign (D442): legendary armor can come up neon */
+  neon?: boolean;
 }
 
 export function generateItem(rng: Rng, o: GenOpts): Item {
@@ -244,7 +247,20 @@ export function generateItem(rng: Rng, o: GenOpts): Item {
   const named = item.rarity === 'legendary' ? LEGENDARY_WEAPON_POWERS[item.name] : undefined;
   if (named) item.legendaryPower = named;
   rollSetPerk(item);
+  if (o.neon) rollNeon(item);
   return item;
+}
+
+/**
+ * A neon colour on a legendary armor piece found in a Hardcore campaign (D442). Its own stream, seeded by the item's
+ * id, so every other roll stays where it was; the colour is named after the piece and changes nothing else.
+ */
+export function rollNeon(item: Item): void {
+  if (item.kind !== 'armor' || item.rarity !== 'legendary' || !parseArmorBase(item.baseId)?.set) return;
+  const r = new Rng(`neon|${item.id}`);
+  if (r.next() >= NEON_ARMOR_CHANCE) return;
+  item.neon = r.pick(NEON_IDS);
+  item.name = `${item.name} (${NEON_COLORS[item.neon].name})`;
 }
 
 /**

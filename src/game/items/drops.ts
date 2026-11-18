@@ -85,7 +85,7 @@ export function enemyDrops(c: DropContext, e: Entity): void {
     const ilvl = itemLevelFor(c.zone, cy);
     const chance = (en.elite ? DROP_CHANCE.elite : role === 'swarm' ? DROP_CHANCE.swarm : role === 'fodder' ? DROP_CHANCE.fodder : DROP_CHANCE.other) / divide;
     if (rng.chance(chance)) {
-      const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone, favor: favorOf(pl.char) });
+      const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone, favor: favorOf(pl.char), neon: c.w.hardcore });
       const [x, y] = scatter(rng, e.x, e.y);
       dropItem(w, pid, item, x, y);
     }
@@ -146,7 +146,7 @@ export function chestDrops(c: DropContext, chestId: string, kind: 'small' | 'tre
     const ilvl = itemLevelFor(c.zone, cy);
     const rows: LootSource[] = kind === 'treasure' ? ['chestTreasure', 'chestTreasure'] : kind === 'mimic' ? ['chestSmall', 'mimic'] : kind === 'boss' ? ['boss'] : ['chestSmall'];
     for (const row of rows) {
-      const item = generateItem(rng, { source: row, ilvl, zone: c.zone, favor: favorOf(pl.char) });
+      const item = generateItem(rng, { source: row, ilvl, zone: c.zone, favor: favorOf(pl.char), neon: c.w.hardcore });
       const [ix, iy] = scatter(rng, x, y + 20, 40);
       dropItem(w, pid, item, ix, iy);
     }
@@ -224,7 +224,7 @@ export function bossDrops(c: DropContext, bossId: string, x: number, y: number):
     const ilvl = itemLevelFor(c.zone, cy);
     const rolls = rng.int(DROP_CHANCE.bossMin, DROP_CHANCE.bossMax);
     for (let i = 0; i < rolls; i++) {
-      const item = generateItem(rng, { source: 'boss', ilvl, zone: c.zone, favor: favorOf(pl.char) });
+      const item = generateItem(rng, { source: 'boss', ilvl, zone: c.zone, favor: favorOf(pl.char), neon: c.w.hardcore });
       const [ix, iy] = scatter(rng, x, y, 60);
       dropItem(w, pid, item, ix, iy);
     }

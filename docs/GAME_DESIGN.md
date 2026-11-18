@@ -1090,7 +1090,8 @@ every enemy (bosses and Elites included) **hits 50% harder** and **has twice the
 `HARDCORE_HP_MULT`, applied as each enemy spawns, on top of the cycle's curve). Wave Rush is never Hardcore. In co-op
 the host's character decides: a Hardcore host's world is Hardcore for every guest; a Hardcore guest in a normal host's
 world plays it normally. Hardcore characters carry a red skull beside their name wherever a character is picked (Load
-Character, the co-op and Wave Rush pickers), and "(Hardcore)" on the title's Continue.
+Character, the co-op and Wave Rush pickers), and "(Hardcore)" on the title's Continue. A Hardcore campaign is the only
+place to find **neon legendary armor** (D442, CONTENT_ITEMS §5).
 
 ## 16. UI and HUD
 

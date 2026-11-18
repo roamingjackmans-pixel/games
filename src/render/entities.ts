@@ -11,6 +11,7 @@ import { cacheable, drawCachedEnemy } from './spriteCache';
 import { OUTLINE, blob, glow, poly, shade, withAlpha } from '../engine/draw/parts';
 import { CLASSES } from '../data/classes';
 import { parseArmorBase } from '../data/armor';
+import { neonOf } from '../data/neon';
 import { lookItem } from '../game/items/inventory';
 import { SHIELDS } from '../data/shields';
 import { WEAPONS } from '../data/weapons';
@@ -129,6 +130,14 @@ export function lookFor(c: Character): JoeLook {
     delete look.headStyle;
     delete look.eyeGlow;
     Object.assign(look, ARMOR_LOOKS[head.set.id]?.head);
+    const n = neonOf(wHead);
+    if (n) {
+      look.headColor = n.color;
+      look.headTrim = n.light;
+      if (look.crest) look.crestColor = n.light;
+      if (look.eyeGlow) look.eyeGlow = n.light;
+      (look.neonGlow ??= {}).head = n.color;
+    }
   }
   const body = wBody && parseArmorBase(wBody.baseId);
   if (body?.set) {
@@ -138,6 +147,19 @@ export function lookFor(c: Character): JoeLook {
     delete look.belt;
     delete look.emblem;
     Object.assign(look, ARMOR_LOOKS[body.set.id]?.body);
+    const n = neonOf(wBody);
+    if (n) {
+      look.bodyColor = n.color;
+      look.trim = n.light;
+      look.glow = n.light;
+      look.metal = n.light;
+      if (look.over) look.overColor = n.deep;
+      if (look.emblem) look.emblemColor = n.light;
+      if (look.belt) look.belt = n.deep;
+      if (look.cape) look.cape = n.color;
+      if (look.capeLining) look.capeLining = n.deep;
+      (look.neonGlow ??= {}).body = n.color;
+    }
   }
   const legs = wLegs && parseArmorBase(wLegs.baseId);
   if (legs && !legs.set) {
@@ -148,6 +170,13 @@ export function lookFor(c: Character): JoeLook {
     // worn leg armor always shows, even under a bare chest (a loincloth body would otherwise draw bare legs)
     look.legs = 'trousers';
     Object.assign(look, ARMOR_LOOKS[legs.set.id]?.legs);
+    const n = neonOf(wLegs);
+    if (n) {
+      look.legsColor = n.color;
+      look.bootColor = n.deep;
+      look.legMetal = n.light;
+      (look.neonGlow ??= {}).legs = n.color;
+    }
   }
   return look;
 }
@@ -1420,8 +1449,8 @@ export function drawPickup(ctx: CanvasRenderingContext2D, e: Entity, now: number
     drawEssence(ctx, x, y, now, essenceDef(pk.essenceTier ?? 1).color, pk.essenceTier ?? 1);
     return;
   }
-  const color = rarityColor(pk.rarity);
-  // loot beam by rarity
+  // loot beam by rarity; a neon piece shines its own colour (D442)
+  const color = neonOf(pk.item)?.color ?? rarityColor(pk.rarity);
   if (pk.rarity !== 'common') {
     ctx.save();
     const grad = ctx.createLinearGradient(x, y - 120, x, y);

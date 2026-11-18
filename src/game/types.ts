@@ -836,7 +836,12 @@ export interface Item {
   locked?: boolean;
   /** weapons: a scaling variant of its class (D319, data/weaponVariants.ts), e.g. "blessed"; absent on most */
   variant?: string;
+  /** legendary armor found in a Hardcore campaign (D442): its neon colour; absent on everything else */
+  neon?: NeonColor;
 }
+
+/** The six neon colours of Hardcore's legendary armor (D442, data/neon.ts). */
+export type NeonColor = 'blue' | 'pink' | 'green' | 'purple' | 'red' | 'orange';
 
 export type ConsumableId =
   | 'throwing_knife'

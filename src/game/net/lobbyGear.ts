@@ -7,6 +7,7 @@ import { makeItem } from '../items/make';
 import { isEitherHandItem, lookItem, slotAccepts } from '../items/inventory';
 import { newCharacter } from '../player/character';
 import { sanitizeAppearance } from '../../data/appearance';
+import { isNeonColor } from '../../data/neon';
 import { LOBBY_GEAR_SLOTS, type LobbyGear, type LobbyGearItem, type PublicPlayer } from './protocol';
 
 /** A character's worn gear for the lobby. */
@@ -15,7 +16,7 @@ export function gearOf(c: Character): LobbyGear {
   for (const s of LOBBY_GEAR_SLOTS) {
     // the armor a player shows (a piece worn for its look, D435), the hands what they hold
     const it = s === 'head' || s === 'body' || s === 'legs' ? lookItem(c, s) : c.equipment[s];
-    g[s] = it ? { b: it.baseId, r: it.rarity, ...(it.rarity === 'legendary' ? { n: it.name } : {}) } : null;
+    g[s] = it ? { b: it.baseId, r: it.rarity, ...(it.rarity === 'legendary' ? { n: it.name } : {}), ...(it.neon ? { c: it.neon } : {}) } : null;
   }
   return g;
 }
@@ -28,6 +29,7 @@ function itemFor(slot: (typeof LOBBY_GEAR_SLOTS)[number], gi: LobbyGearItem | nu
   const it = makeItem(gi.b, rarity, 1, { sockets: 0 });
   if (!slotAccepts(slot, it) && !(slot === 'off' && isEitherHandItem(it))) return null;
   if (rarity === 'legendary' && typeof gi.n === 'string') it.name = gi.n.slice(0, 60);
+  if (it.kind === 'armor' && isNeonColor(gi.c)) it.neon = gi.c;
   return it;
 }
 

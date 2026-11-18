@@ -102,6 +102,8 @@ export interface JoeLook {
   legs?: LegStyle;
   bootColor?: string;
   legMetal?: string;
+  /** neon armor (D442): the light each neon piece throws around it */
+  neonGlow?: { head?: string; body?: string; legs?: string };
 }
 
 export type HeadExtras = Pick<JoeLook, 'headStyle' | 'headTrim' | 'crest' | 'crestColor' | 'visor' | 'eyeGlow'>;
@@ -386,6 +388,13 @@ export function drawJoe(ctx: CanvasRenderingContext2D, look: JoeLook, p: JoePose
   ctx.save();
   ctx.globalAlpha *= p.alpha ?? 1;
   shadow(ctx, p.x, p.y + 3.5, 13.5 * s);
+  if (look.neonGlow && !ghost && !p.flash) {
+    const k = 0.5 + Math.sin(p.t * 3) * 0.1;
+    const n = look.neonGlow;
+    if (n.legs) glow(ctx, p.x, p.y - 2 * s, 20 * s, n.legs, k);
+    if (n.body) glow(ctx, p.x, p.y - 12 * s, 27 * s, n.body, k);
+    if (n.head) glow(ctx, p.x, p.y - 25 * s, 20 * s, n.head, k);
+  }
   ctx.translate(p.x, p.y);
   ctx.scale(s * (1 - sq * 0.12), s * (1 + sq * 0.12));
   ctx.lineCap = 'round';

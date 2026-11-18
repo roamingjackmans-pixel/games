@@ -4,6 +4,7 @@ import { SPEED_TAG_LABEL, SPEED_TAG_MULT, WEAPONS, speedTag } from '../data/weap
 import { variantOf, weaponOf } from '../game/items/weaponOf';
 import { SHIELDS, SHIELD_POISE, shieldStability, shieldValues } from '../data/shields';
 import { CASTING_TOOLS } from '../data/castingTools';
+import { neonOf } from '../data/neon';
 import { RINGS, bandAmount, bandStat } from '../data/rings';
 import { GEMS, GEM_QUALITIES, gemColor, gemLevel, gemKind, gemKindLabel, gemTitle, perkName, perkQuality, perkRollText, perkText } from '../data/gems';
 import type { GemPerk } from '../game/types';
@@ -242,6 +243,8 @@ export function itemSummary(item: Item): string {
   if (item.sockets.length) parts.push(`${item.sockets.length} socket${item.sockets.length === 1 ? '' : 's'}`);
   if (item.legendaryPower) parts.push(LEGENDARY_POWERS[item.legendaryPower]?.name ?? 'Legendary power');
   if (item.setPerk && SET_PERKS[item.setPerk]) parts.push(`Set: ${SET_PERKS[item.setPerk]!.name}`);
+  const neon = neonOf(item);
+  if (neon) parts.push(neon.name);
   return parts.join(' · ');
 }
 
@@ -464,6 +467,8 @@ export function itemTooltip(item: Item, c: Character, compare: Item | null | 'au
     const lp = LEGENDARY_POWERS[item.legendaryPower];
     if (lp) out.push(section('Legendary power', h('div', { class: 'tt-text r-legendary' }, `${lp.name}: ${lp.text}`)));
   }
+  const neon = neonOf(item);
+  if (neon) out.push(section(neon.name, h('div', { class: 'tt-text', style: `color:${neon.color}` }, 'Found only in the Hardcore campaign.')));
   // its set perk (D243): the three steps, the one reached lit, and how many you wear
   const sp = item.setPerk ? SET_PERKS[item.setPerk] : undefined;
   if (sp) out.push(setPerkSection(sp, d0.setCounts[sp.id] ?? 0));
@@ -594,7 +599,7 @@ export function itemIcon(item: Item | null, size = 40): HTMLCanvasElement {
     poly(ctx, [0, -14, 5, -8, 0, -4, -5, -8], '#9ad0ff', OUTLINE, 1.5);
   } else {
     const p = parseArmorBase(item.baseId);
-    drawArmorIcon(ctx, item.slot === 'head' || item.slot === 'body' ? item.slot : 'legs', p?.set ?? null);
+    drawArmorIcon(ctx, item.slot === 'head' || item.slot === 'body' ? item.slot : 'legs', p?.set ?? null, neonOf(item));
   }
   ctx.restore();
   return c;

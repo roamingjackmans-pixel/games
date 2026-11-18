@@ -1,7 +1,8 @@
 // Armor item icons: a helmet that looks like a helmet, a chest piece that looks like body armor and leg armor
 // that looks like a knight's legs. Drawn in a ~44 unit box centred on the origin, by slot, weight class and the
 // set's head/body type and colours (src/data/armor.ts).
-import { OUTLINE, poly, shade, spec } from '../engine/draw/parts';
+import { OUTLINE, glow, poly, shade, spec } from '../engine/draw/parts';
+import type { NeonDef } from '../data/neon';
 import type { ArmorSetDef } from '../game/types';
 
 const W = 2;
@@ -322,10 +323,12 @@ function drawLegs(ctx: CanvasRenderingContext2D, set: ArmorSetDef | null): void 
 }
 
 /** Draw an armor icon for one piece (`slot`) of `set` (null: the Loincloth or an unknown piece). */
-export function drawArmorIcon(ctx: CanvasRenderingContext2D, slot: 'head' | 'body' | 'legs', set: ArmorSetDef | null): void {
+export function drawArmorIcon(ctx: CanvasRenderingContext2D, slot: 'head' | 'body' | 'legs', set: ArmorSetDef | null, neon?: NeonDef | null): void {
   ctx.save();
   ctx.scale(1.12, 1.12);
-  drawPiece(ctx, slot, set);
+  // a neon piece (D442): its colours, and the light it throws
+  if (neon) glow(ctx, 0, 0, 25, neon.color, 0.8);
+  drawPiece(ctx, slot, neon && set ? { ...set, look: { ...set.look, color: neon.color, trim: neon.light } } : set);
   ctx.restore();
 }
 

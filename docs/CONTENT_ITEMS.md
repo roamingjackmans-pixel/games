@@ -221,6 +221,13 @@ Sets by zone and weight (24 sets; any can drop anywhere at the zone's ilvl):
 
 Armour rolls affixes and up to one socket (armor gems only).
 
+**Neon legendary armor** (D442): in a **Hardcore campaign**, half of the legendary armor found on enemies, in chests
+(mimics too) and on bosses (`NEON_ARMOR_CHANCE`) comes up in one of six colours, picked evenly: **Neon Blue, Pink,
+Green, Purple, Red or Orange** (`src/data/neon.ts`). All 24 sets, every slot. The colour is added to the name ("The Good
+Coat (Neon Pink)"), the piece glows on the character, in its icon and in its loot beam, and it changes nothing else: the
+stats are the piece's own. Nothing else gives one: not Wave Rush, a normal campaign, Gary, the shop, or raising an Epic
+at a bonfire.
+
 ## 6. Rings (four slots, D228)
 
 Rings have no ilvl scaling except the bands' stat amount. A ring's floor is the lowest rarity it can roll at.
