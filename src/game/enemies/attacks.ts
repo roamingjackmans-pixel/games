@@ -28,6 +28,7 @@ export function enemyAttackSpec(e: Entity, atk: AttackDef, mult = 1): DamageSpec
   // bosses can be parried only on attacks marked parryable (GAME_DESIGN §5.4)
   spec.parryable = atk.kind === 'normal' ? (atk.parryable ?? (!en.def.swarm && !en.isBoss)) : false;
   if (isProj && atk.kind === 'normal') spec.parryable = atk.parryable ?? true;
+  if (atk.ground) spec.ground = true;
   spec.grab = atk.grab ?? null;
   spec.pull = atk.pull ?? null;
   spec.staminaDrain = atk.stamDrain ?? 0;

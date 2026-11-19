@@ -1,7 +1,7 @@
 // Floor hazards (fire puddles, poison clouds, thorns, ice, oil, slag, roots, time bubbles…) and their ticks.
 import { shapeHit, type Shape } from '../combat/patterns';
 import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
-import { applyControl, applyStatusBuild, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer, hitSelf, rawDamage } from '../combat/damage';
+import { applyControl, applyStatusBuild, dodgingOverGround, emptySpec, ffVictims, hitAlly, hitEnemy, hitPlayer, hitSelf, rawDamage } from '../combat/damage';
 import { effectSpec, runEffects } from '../effects/run';
 import type { HazardId, Team } from '../types';
 import type { DamageSpec, Entity, World } from '../world';
@@ -72,6 +72,7 @@ export function spawnHazard(w: World, hazard: HazardId, shapes: Shape[], duratio
   if (def.dmg > 0 || def.status) {
     spec = emptySpec('normal');
     spec.parryable = false;
+    spec.ground = true;
     const base = 18 * (1 + 0.35 * (w.zone - 1)) * Math.pow(1.35, w.cycle);
     const type = hazard === 'firePuddle' || hazard === 'slag' || hazard === 'lava' || hazard === 'fireWall' ? 'fire' : 'physical';
     spec.dmg[type] = base * def.dmg;
@@ -178,6 +179,8 @@ export function updateHazards(w: World, _dt: number): void {
       // ground hazards miss flyers; a slowing field and a pulling field (Gravity Well) reach them, so the well pulls
       // Saint Aurelia's hovering ice mirrors too
       if (v.flying && !def.slow && !hz.pull) continue;
+      // D444: a dodge carries a player over enemy ground: no tick, status, slow or trap, and the tick is not used up
+      if (v.pl && hz.team !== 0 && dodgingOverGround(v.pl, now)) continue;
       if (def.trap) {
         // caught: root + one hit, then the trap is spent (it catches enemies too)
         applyControl(w, v, def.trap.control.id, def.trap.control.durationS);
@@ -192,6 +195,7 @@ export function updateHazards(w: World, _dt: number): void {
       // D397: one cast at a spot (hurtsOwner) catches its caster too
       const selfHit = !!hz.hurtsOwner && hz.team === 0 && !!v.pl && v.id === hz.ownerId;
       const ffAlly = selfHit || (!!hz.hurtsAllies && hz.team === 0 && !!v.pl && v.id !== hz.ownerId && ffVictims(w, w.get(hz.ownerId)).includes(v));
+      if (ffAlly && dodgingOverGround(v.pl!, now)) continue;
       // slows apply continuously
       if (hz.slowPct > 0) {
         if (ffAlly) v.pl!.timeSlow = Math.min(v.pl!.timeSlow, 1 - hz.slowPct);
@@ -278,7 +282,7 @@ export function updateHazards(w: World, _dt: number): void {
  */
 export function hazardSlowOn(w: World, p: Entity): number {
   let m = 1;
-  if (!p.pl || p.flying) return m;
+  if (!p.pl || p.flying || dodgingOverGround(p.pl, w.time)) return m;
   for (const h of w.entities.values()) {
     if (h.type !== 'hazard' || h.removed || !h.hz) continue;
     const hz = h.hz;

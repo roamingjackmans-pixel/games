@@ -75,7 +75,7 @@ points (D334: the Hunter too).
 
 | Class (id) | HP | End | Bonk | Slicey | Brain | Prayer | Total | Primary / secondary | Weapon hand | Off hand | 2nd weapon | Armour | Spells | Bag | Blurb |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Knight** (`knight`) | 10 | 10 | 12 | 9 | 3 | 4 | 48 | hp / endurance | Longsword | Round Shield (D326) | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | — | — | "Took the job for the armour. The job came with stairs." |
+| **Knight** (`knight`) | 10 | 10 | 12 | 9 | 3 | 4 | 48 | hp / endurance | Greatsword | Round Shield (D326) | — | Sexton's Coif, Sexton's Mail, Sexton's Chausses | — | — | "Took the job for the armour. The job came with stairs." |
 | **Brute** (`brute`) | 12 | 8 | 14 | 5 | 4 | 5 | 48 | bonk / hp | Greathammer (two-handed) | — | — | Caretaker's Plate | — | — | "Solves things." |
 | **Duelist** (`duelist`) | 8 | 11 | 5 | 14 | 5 | 5 | 48 | slicey / endurance | Novice Twin Daggers (Slicey B, not S: D371) | Buckler | — | Rag Hood, Crypt Rags, Rag Wraps | — | — | "Has never been hit. Says so." |
 | **Scholar** (`scholar`) | 7 | 7 | 3 | 10 | 15 | 6 | 48 | brain / slicey | Rapier | Apprentice Staff | — | Rag Hood, Crypt Rags, Rag Wraps | Arcane Bolt, Frost Lance | — | "Read about dungeons once." |

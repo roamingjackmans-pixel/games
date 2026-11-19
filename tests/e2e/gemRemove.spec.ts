@@ -19,7 +19,7 @@ test('remove a gem from an unequipped weapon in the inventory; the Gem bench sho
     const gen = (await import(/* @vite-ignore */ genPath)) as { randomGem(rng: unknown, cy: number, k: string): object };
     const { Rng } = (await import(/* @vite-ignore */ rngPath)) as { Rng: new (s: string) => unknown };
     const rng = new Rng('gems');
-    const mk = (id: string): Item => ({ ...structuredClone(c.equipment.main!), id, name: 'Longsword', rarity: 'rare', sockets: [gen.randomGem(rng, 0, 'weapon'), null] });
+    const mk = (id: string): Item => ({ ...structuredClone(c.equipment.main!), id, name: 'Greatsword', rarity: 'rare', sockets: [gen.randomGem(rng, 0, 'weapon'), null] });
     c.equipment.main = mk('worn-w');
     c.bag.unshift(mk('bag-w'));
     r.showInventory();

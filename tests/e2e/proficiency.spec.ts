@@ -38,7 +38,27 @@ test('Proficiency tab with pop-out help; a full bar raises a weapon a rarity (D1
   });
   await page.locator('[data-tab="weapons"]').click();
   await page.getByTestId(`raise-${id}`).click();
+  // D449: it shows what would change first; Back changes nothing
+  await expect(page.getByTestId('raise-dialog')).toContainText('Damage per hit');
+  await page.getByTestId('raise-back').click();
+  await expect(page.getByTestId('raise-dialog')).toHaveCount(0);
+  expect(await page.evaluate(() => (window as unknown as { __dj: { scenes: { current: Run } } }).__dj.scenes.current.session.save.character.equipment.main!.rarity)).toBe(before);
+  await page.getByTestId(`raise-${id}`).click();
+  await page.getByTestId('raise-confirm').click();
   const after = await page.evaluate(() => (window as unknown as { __dj: { scenes: { current: Run } } }).__dj.scenes.current.session.save.character.equipment.main!.rarity);
   expect(after).not.toBe(before);
+  // D449: Epic to Legendary says a perk comes with it, and never which one
+  await page.evaluate(() => {
+    const r = (window as unknown as { __dj: { scenes: { current: Run } } }).__dj.scenes.current;
+    const m = r.session.save.character.equipment.main!;
+    m.rarity = 'epic';
+    m.xp = 99999;
+    r.closeOverlay();
+    r.showBonfire(r.session.localPlayer, 'z1-start', false);
+  });
+  await page.locator('[data-tab="weapons"]').click();
+  await page.getByTestId(`raise-${id}`).click();
+  await expect(page.getByTestId('raise-perk')).toHaveText('Gains a legendary perk.');
+  await page.getByTestId('raise-back').click();
   expect(errors).toEqual([]);
 });

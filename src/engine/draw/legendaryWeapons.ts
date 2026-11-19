@@ -1472,7 +1472,7 @@ function snapDecision(ctx: Ctx, t: number): void {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Longsword: Employee of the Month, Plot Armor, Exactly As Long As It Needs To Be
+// Greatsword: Employee of the Month, Plot Armor, Exactly As Long As It Needs To Be
 // ---------------------------------------------------------------------------------------------
 
 function employeeOfTheMonth(ctx: Ctx, t: number): void {

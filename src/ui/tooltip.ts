@@ -228,7 +228,7 @@ export function compareTargetFor(c: Character, item: Item): { slot: WornSlot; it
 }
 
 /**
- * One line saying what an item is: "Epic Longsword · Level 6 · Medium · 2 affixes · 1 socket".
+ * One line saying what an item is: "Epic Greatsword · Level 6 · Medium · 2 affixes · 1 socket".
  */
 export function itemSummary(item: Item): string {
   const w = WEAPONS[item.baseId];

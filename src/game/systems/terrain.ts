@@ -3,7 +3,7 @@
 // are forced motion and keep their full distance). Hurt terrain: players standing in it take 3% of max HP every
 // 0.5 s (a dodge's i-frames skip a tick; enemies are at home in their dungeon and take none); out of combat it hurts nobody
 // and shows nothing (D329, D430).
-import { rawDamage } from '../combat/damage';
+import { dodgingOverGround, rawDamage } from '../combat/damage';
 import { TERRAIN, TERRAIN_SLOW_MULT, type Room } from '../room';
 import type { DamageType } from '../types';
 import type { Entity, World } from '../world';
@@ -26,7 +26,7 @@ export function updateTerrain(w: World): void {
     const pl = p.pl;
     if (!pl || !p.hp || p.hp.dead || p.removed || pl.downed || pl.deadUntilRest || pl.falling) continue;
     if (w.room.terrainAt(p.x, p.y) !== TERRAIN.Hurt || now < pl.terrainHurtAt) continue;
-    if (p.hp.invulnUntil > now || (now >= pl.iframesFrom && now < pl.iframesUntil)) continue;
+    if (p.hp.invulnUntil > now || dodgingOverGround(pl, now)) continue;
     // a steady 0.5 s beat while you stay in it (no drift from the frame step); stepping back in waits out the beat
     const due = pl.terrainHurtAt;
     pl.terrainHurtAt = (now - due < 0.05 ? due : now) + TERRAIN_HURT_TICK_S;

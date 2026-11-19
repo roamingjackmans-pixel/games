@@ -52,8 +52,8 @@ describe('Slicey fists (D433, D434)', () => {
     retireVariant(axes);
     expect(axes).toEqual({ baseId: 'twin_axes', name: 'Twin Axes of Haste' });
     expect(weaponOf(axes)!.grades).toEqual({ bonk: 'A', slicey: 'B' });
-    // a Heavy Longsword is still a Heavy Longsword
-    const ls = { baseId: 'longsword', variant: 'heavy', name: 'Heavy Longsword' };
+    // a Heavy Greatsword is still a Heavy Greatsword
+    const ls = { baseId: 'longsword', variant: 'heavy', name: 'Heavy Greatsword' };
     retireVariant(ls);
     expect(ls.variant).toBe('heavy');
   });

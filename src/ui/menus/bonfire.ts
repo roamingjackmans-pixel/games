@@ -15,7 +15,10 @@ import { spellSkill, toolSpellSkill } from '../../game/skills/use';
 import { ELEMENTS } from '../../game/elements';
 import { canSocket, findItem, socketKind, fusePreview, gemAt, itemPlace, placeLabel, itemSellValue, lockedSkipped, planLevelUps, sellAllGemsPreview, sellAllPreview, toggleItemLock, type FusePick, type GemLoc, type PendingPoints, type SellAllFilter } from '../../game/items/inventory';
 import { shopConsumables, shopGemPrice, shopItemPrice } from '../../game/bonfire/shop';
-import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type StatId } from '../../game/types';
+import { DAMAGE_TYPES, type Character, type ConsumableId, type Gem, type Item, type Rarity, type StatId } from '../../game/types';
+import { RARITY_POWER } from '../../data/proficiency';
+import { powersFor } from '../../data/legendaries';
+import { powerSlotOf } from '../../game/items/generate';
 import { hasRarityBar, upgradeInfo } from '../../game/items/proficiency';
 import { btn, chosenFocus, clearEl, fmt, focusContentStart, h, layer, markFocus, restoreFocus, toast, type FocusMark } from '../dom';
 import { tabHints } from '../glyphs';
@@ -104,6 +107,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
   let modal: HTMLElement | null = null;
   /** the item whose next reinforcement is being looked at (D216 / D220): its before → after and the cost, to confirm or back out of */
   let reinforceAsk: { itemId: string } | null = null;
+  /** the item whose next rarity is being looked at (D449): its before → after and the cost, to confirm or back out of */
+  let raiseAsk: { itemId: string } | null = null;
   /** selling a bag item with gems in it asks first (D240) */
   let sellAsk: string | null = null;
   /** level-up points planned but not yet spent (D142) */
@@ -124,8 +129,8 @@ export function openBonfire(v: BonfireView): HTMLElement {
     }
     if (e.code !== 'Escape') return;
     // leaving with planned level-up points asks first (D142); Escape on that question means keep editing
-    const askLeave = !fuse && !confirmSell && !confirmGemSell && !confirmLeave && !reinforceAsk && !sellAsk && pendingCount() > 0;
-    if (!fuse && !confirmSell && !confirmGemSell && !confirmLeave && !reinforceAsk && !sellAsk && !askLeave) return;
+    const askLeave = !fuse && !confirmSell && !confirmGemSell && !confirmLeave && !reinforceAsk && !raiseAsk && !sellAsk && pendingCount() > 0;
+    if (!fuse && !confirmSell && !confirmGemSell && !confirmLeave && !reinforceAsk && !raiseAsk && !sellAsk && !askLeave) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     if (askLeave) confirmLeave = () => v.close();
@@ -134,6 +139,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     confirmSell = null;
     confirmGemSell = false;
     reinforceAsk = null;
+    raiseAsk = null;
     sellAsk = null;
     render();
   };
@@ -397,7 +403,11 @@ export function openBonfire(v: BonfireView): HTMLElement {
         const fill = Math.min(1, u.xp / u.need);
         card.appendChild(h('div', { style: 'height:8px;border-radius:4px;background:#2a2533;overflow:hidden;margin:4px 0' }, h('div', { style: `height:100%;width:${Math.round(fill * 100)}%;background:${u.ready ? '#ffd27a' : '#8fd3ff'}` })));
         const to = `${u.to[0]!.toUpperCase()}${u.to.slice(1)}`;
-        const b = btn(['Raise to ' + to + ' · ', glowenEl(u.cost)], () => say(v.ops.raiseRarity(it.id)), 'tiny', !u.ready || c.glowen < u.cost);
+        // shows what it would do first; nothing is spent until it is confirmed there (D449)
+        const b = btn(['Raise to ' + to + ' · ', glowenEl(u.cost)], () => {
+          raiseAsk = { itemId: it.id };
+          render();
+        }, 'tiny', !u.ready || c.glowen < u.cost);
         b.setAttribute('data-focus', `raise-${it.id}`);
         b.setAttribute('data-testid', `raise-${it.id}`);
         card.appendChild(h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('span', { class: 'small' }, u.ready ? 'Bar full' : `${u.xp} / ${u.need}`), b));
@@ -569,6 +579,79 @@ export function openBonfire(v: BonfireView): HTMLElement {
       h('div', { class: 'row small', style: 'gap:6px;align-items:center' }, 'Costs ', h('span', { style: `color:${nd.color}` }, `${info.next.count} × ${nd.name}`), ' + ', glowenEl(info.next.glowen), h('span', { class: 'dim-text' }, ' (one of a higher tier pays for three)')),
       // D232: say why it cannot be done instead of only graying the button
       info.affordable ? null : h('div', { class: 'small bad', 'data-testid': 'reinforce-why' }, reinforceShortfall(c, info.next)),
+      h('div', { class: 'row' }, yes, back),
+    );
+  }
+
+  /** Before and after raising an item a rarity (D449): damage for a weapon, Spell Skill for a tool, block for a shield. */
+  function raiseRows(it: Item, to: Rarity): { label: string; before: string; after: string }[] {
+    const c = v.char;
+    const rows: { label: string; before: string; after: string }[] = [];
+    const add = (label: string, a: number, b: number, f: (x: number) => string): void => {
+      if (a !== b || a !== 0) rows.push({ label, before: f(a), after: f(b) });
+    };
+    const at = (rarity: Rarity): Item => ({ ...it, rarity });
+    const int = (x: number): string => fmt(Math.round(x));
+    const pc = (x: number): string => `${(x * 100).toFixed(1)}%`;
+    if (it.kind === 'weapon') {
+      const st = computeDerived(c).stats;
+      add('Damage per hit', itemScore(at(it.rarity), st, c.twoHanded), itemScore(at(to), st, c.twoHanded), int);
+    } else if (it.kind === 'shield' && SHIELDS[it.baseId]) {
+      const sd = SHIELDS[it.baseId]!;
+      const a = shieldValues(sd, it.ilvl, it.plus, it.rarity);
+      const b = shieldValues(sd, it.ilvl, it.plus, to);
+      add('Physical block', a.physical, b.physical, pc);
+      add('Elemental block', a.elemental, b.elemental, pc);
+      add('Holy / Void block', a.holyVoid, b.holyVoid, pc);
+      add('Stamina per 100 blocked', shieldStability(sd, it.plus, it.rarity), shieldStability(sd, it.plus, to), (x) => x.toFixed(1));
+    } else if ((it.kind === 'staff' || it.kind === 'talisman') && CASTING_TOOLS[it.baseId]) {
+      const st = computeDerived(c).stats;
+      const sch = CASTING_TOOLS[it.baseId]!.school;
+      const boost = statBoosts(c.classId);
+      add(`${sch === 'brain' ? 'Brain' : 'Prayer'} Spell Skill`, toolSpellSkill(at(it.rarity), st, boost), toolSpellSkill(at(to), st, boost), int);
+    }
+    rows.push({ label: 'Strength', before: `×${RARITY_POWER[it.rarity].toFixed(2)}`, after: `×${RARITY_POWER[to].toFixed(2)}` });
+    return rows;
+  }
+
+  /**
+   * The next rarity of one item, before it is paid for (D449): each stat before → after and the cost. Becoming Legendary
+   * says a legendary perk comes with it, never which. Raise spends and applies it; Back (or B / Escape) changes nothing.
+   */
+  function raiseDialog(): HTMLElement | null {
+    if (!raiseAsk) return null;
+    const c = v.char;
+    const it = [c.equipment.main, c.equipment.off, c.altMain, c.altOff, ...c.bag].find((x) => x?.id === raiseAsk!.itemId);
+    const u = it ? upgradeInfo(it) : null;
+    if (!it || !u) {
+      raiseAsk = null;
+      return null;
+    }
+    const to = `${u.to[0]!.toUpperCase()}${u.to.slice(1)}`;
+    const slot = powerSlotOf(it);
+    const perk = u.to === 'legendary' && !it.legendaryPower && !!slot && powersFor(slot).length > 0;
+    const yes = btn(`Raise to ${to}`, () => {
+      const msg = v.ops.raiseRarity(it.id);
+      raiseAsk = null;
+      say(msg);
+    }, 'primary', !u.ready || c.glowen < u.cost);
+    yes.setAttribute('data-testid', 'raise-confirm');
+    const back = btn('Back', () => {
+      raiseAsk = null;
+      render();
+    });
+    back.setAttribute('data-testid', 'raise-back');
+    const grid = h('div', { style: 'display:grid;grid-template-columns:auto auto auto auto;column-gap:12px;row-gap:4px;align-items:baseline' });
+    for (const row of raiseRows(it, u.to)) grid.append(h('div', { class: 'dim-text' }, row.label), h('div', { class: 'mono' }, row.before), h('div', { class: 'dim-text' }, '→'), h('div', { class: 'mono good' }, row.after));
+    return h(
+      'div',
+      { class: 'panel col', style: 'width:460px;gap:10px', 'data-testid': 'raise-dialog' },
+      h('h2', null, `Raise to ${to}?`),
+      h('div', { style: 'font-size:18px;font-weight:600' }, h('span', { class: `r-${it.rarity}` }, it.name), h('span', { class: 'dim-text' }, ' → '), h('span', { class: `r-${u.to}` }, to)),
+      grid,
+      perk ? h('div', { class: 'r-legendary', 'data-testid': 'raise-perk' }, 'Gains a legendary perk.') : null,
+      h('div', { class: 'small dim-text' }, 'Its affixes, sockets, gems and skills all stay.'),
+      h('div', { class: 'row small', style: 'gap:6px;align-items:center' }, 'Costs ', glowenEl(u.cost)),
       h('div', { class: 'row' }, yes, back),
     );
   }
@@ -993,7 +1076,7 @@ export function openBonfire(v: BonfireView): HTMLElement {
     const content = h('div', { style: 'flex:1;overflow:auto', 'data-focus-group': `tab-${tab}` });
     defs.find((d) => d.key === tab)?.fn?.(content);
     panel.appendChild(content);
-    const box = confirmLeave ? leaveDialog() : tab === 'level' ? null : tab === 'gems' ? (fuseDialog() ?? gemSellAllDialog()) : tab === 'shop' ? (sellAskDialog() ?? sellAllDialog()) : tab === 'reinforce' ? reinforceDialog() : null;
+    const box = confirmLeave ? leaveDialog() : tab === 'level' ? null : tab === 'gems' ? (fuseDialog() ?? gemSellAllDialog()) : tab === 'shop' ? (sellAskDialog() ?? sellAllDialog()) : tab === 'reinforce' ? reinforceDialog() : tab === 'weapons' ? raiseDialog() : null;
     if (box) {
       // a layer of its own so the pad's focus stays inside the dialog
       modal = h('div', { class: 'layer dim', style: 'z-index:40' }, box);

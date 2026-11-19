@@ -110,7 +110,7 @@ export function canPayEssence(have: number[], tier: number, count: number): bool
   return payEssence(have, tier, count) !== null;
 }
 
-/** "Longsword +3" (no suffix at +0). */
+/** "Greatsword +3" (no suffix at +0). */
 export function plusName(it: { name: string; plus?: number }): string {
   return it.plus ? `${it.name} +${it.plus}` : it.name;
 }

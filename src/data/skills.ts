@@ -63,7 +63,7 @@ const LIST: SkillDef[] = [
   S('whip_lash', 'whip', 0, 'Lash', 7, 14, [hit(V(thrust(30, 260), 'whip'), 1.6, { pull: true })], 'thrust(30,260) ×1.6, pulls non-boss enemies to you.', { castMs: 200 }),
   S('whip_crack', 'whip', 1, 'Crack', 10, 18, [hit(V(arc(60, 250), 'whip_crack'), 1.2, { guaranteedStagger: true, status: { id: 'shock', buildup: 30 } })], 'cone(60°,250) ×1.2, staggers, Shock 30.', { castMs: 200 }),
   S('whip_serpent_coil', 'whip', 2, 'Serpent Coil', 16, 24, [{ op: 'channel', durationS: 3, tickS: 0.4, moveSpeedPct: 0.6, tick: [hit(V(circle(180), 'spin'), 0.5)] }], '3 s spin: 360° r180 ×0.5 every 0.4 s, moving at 60%.'),
-  // Longsword
+  // Greatsword
   S('longsword_shield_breaker', 'longsword', 0, 'Shield Breaker', 8, 18, [hit(V(thrust(40, 160), 'thrust'), 1.8, { ignoreFrontGuard: true, poiseDmg: 125 })], 'thrust(40,160) ×1.8, ignores front guards, +100 poise damage.', { castMs: 250 }),
   S('longsword_spin_slash', 'longsword', 1, 'Spin Slash', 11, 22, [hit(V(circle(110), 'spin'), 1.4)], '360° ×1.4.', { castMs: 200 }),
   S('longsword_battle_cry', 'longsword', 2, 'Battle Cry', 20, 10, [{ op: 'buff', stat: 'damagePct', amount: 0.15, durationS: 8, target: 'party', r: 600, id: 'battlecry_dmg' }, { op: 'buff', stat: 'poiseThreshold', amount: 20, durationS: 8, target: 'party', r: 600, id: 'battlecry_poise' }], 'Party +15% damage and +20 poise for 8 s.'),

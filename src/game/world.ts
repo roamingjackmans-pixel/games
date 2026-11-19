@@ -348,6 +348,8 @@ export interface EnemyC {
   homeX: number;
   homeY: number;
   movedAt: number;
+  /** how its walking is going (D445): where it last got to, and the way round when something stopped it */
+  stuck?: { x: number; y: number; since: number; tried: number; bodyUntil: number; legs?: number; wp?: { x: number; y: number; until: number } };
   /** died by its own detonation: skip its on-death effects */
   quietDeath: boolean;
   stolen: number;
@@ -440,6 +442,8 @@ export interface DamageSpec {
   sourceTag?: string;
   /** the enemy attack's name (D391: the death screen names what killed you) */
   label?: string;
+  /** harmful ground (D444): a hazard's tick or a lit lane, which a dodge carries a player over from start to end */
+  ground?: boolean;
   /** one volley, one hit (D392): a player is hurt by the first of its shots that lands (they share `attackId`) */
   volleyOnce?: boolean;
   /** effects applied to the victim on hit */

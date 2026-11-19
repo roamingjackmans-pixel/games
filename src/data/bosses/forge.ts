@@ -18,7 +18,7 @@ const golemSlam: AttackDef = {
   cooldownS: 3,
   range: [0, 110],
   weight: 4,
-  parryable: false,
+  parryable: true, // D447
 };
 
 /**
@@ -91,7 +91,8 @@ const stoke: AttackDef = {
   range: [0, 1400],
   weight: 2,
   area: true,
-  parryable: false,
+  parryable: true, // D447
+  ground: true, // D444: a lit lane is dodged over
 };
 
 const moltenShockwave: AttackDef = {

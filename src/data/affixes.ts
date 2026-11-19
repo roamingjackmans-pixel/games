@@ -7,7 +7,7 @@ export type AffixSlotGroup = 'weapon' | 'armor' | 'head' | 'body' | 'legs' | 'ri
 export interface AffixDef {
   id: string;
   name: string;
-  /** shown as a prefix ("Swift Longsword") or suffix ("of the Medic") */
+  /** shown as a prefix ("Swift Greatsword") or suffix ("of the Medic") */
   pos: 'prefix' | 'suffix';
   slots: AffixSlotGroup[];
   lo: number;

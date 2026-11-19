@@ -218,7 +218,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   },
   longsword: {
     id: 'longsword',
-    name: 'Longsword',
+    name: 'Greatsword',
     weight: 6,
     grades: { bonk: 'B', slicey: 'B' },
     req: { bonk: 9, slicey: 9 },

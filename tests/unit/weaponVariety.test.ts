@@ -30,7 +30,7 @@ describe('scaling variants (D319)', () => {
     for (const [id, list] of Object.entries(WEAPON_VARIANTS)) {
       const base = total(WEAPONS[id]!.grades);
       for (const v of list) {
-        if (v.upgrade) continue; // D328: an owner-asked upgrade (the B / A Keen Longsword)
+        if (v.upgrade) continue; // D328: an owner-asked upgrade (the B / A Keen Greatsword)
         const t = total(v.grades);
         expect(t - base, `${id} ${v.id}`).toBeLessThanOrEqual(0.1 + 1e-9);
       }
@@ -200,7 +200,7 @@ describe('D328 weapon tuning', () => {
     expect(l.bonk).not.toBe(l.slicey);
   });
 
-  it('a Keen Longsword scales C Bonk / A Slicey (D436; B / A in D328)', () => {
+  it('a Keen Greatsword scales C Bonk / A Slicey (D436; B / A in D328)', () => {
     const it0 = makeItem('longsword', 'rare', 3);
     it0.variant = 'keen';
     expect(weaponOf(it0)!.grades).toEqual({ bonk: 'C', slicey: 'A' });
@@ -208,7 +208,7 @@ describe('D328 weapon tuning', () => {
 });
 
 describe('scaling boost (D331)', () => {
-  it('Longsword, Katana and Twin Daggers get 25% more from their scaling; others as their grades give', async () => {
+  it('Greatsword, Katana and Twin Daggers get 25% more from their scaling; others as their grades give', async () => {
     const { weaponScaling, scalingMult } = await import('../../src/game/combat/formulas');
     const st = { bonk: 40, slicey: 40, brain: 10, prayer: 10 };
     for (const id of ['longsword', 'katana', 'twin_daggers']) {

@@ -126,6 +126,15 @@ export function normalizeSave(s: SaveFile): SaveFile {
     if (n) it.plus = n;
     else delete it.plus;
   };
+  // D448: the weapon's new name, on the pieces already found
+  const rename = (it: unknown): void => {
+    const o = it as { name?: unknown } | null | undefined;
+    if (o && typeof o.name === 'string' && o.name.includes('Longsword')) o.name = o.name.split('Longsword').join('Greatsword');
+  };
+  for (const it of [...Object.values(c.equipment), c.altMain, c.altOff, ...c.bag, ...Object.values(c.cosmetic ?? {})]) rename(it);
+  const stock = [...Object.values((w.leftBehind ?? {}) as Record<string, { item?: unknown }[]>), ...Object.values((w.garyStock ?? {}) as Record<string, { item?: unknown }[]>)];
+  for (const list of stock) for (const e of list ?? []) rename(e?.item);
+  for (const e of Object.values((w.shopStock ?? {}) as Record<string, { item?: unknown }>)) rename(e?.item);
   // D232: items that share an id (drops rolled from a repeated stream) each get their own
   dedupeItemIds(c);
   for (const it of [...Object.values(c.equipment), c.altMain, c.altOff, ...c.bag]) clampPlus(it as { plus?: unknown } | null);

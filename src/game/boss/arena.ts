@@ -16,6 +16,7 @@ const FOREVER = 1e6;
 function bossHitSpec(boss: Entity, mult: number): DamageSpec {
   const spec = emptySpec('normal');
   spec.parryable = false;
+  spec.ground = true;
   const phase = (boss.en!.def as unknown as BossDef).phases?.[boss.en!.phase];
   spec.dmg.physical = attackDamage(boss, mult) * (phase?.dmgMult ?? 1);
   return spec;

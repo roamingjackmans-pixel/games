@@ -340,6 +340,14 @@ function guardValues(w: World, p: Entity, type: DamageType): { pct: number; stab
 }
 
 /**
+ * A dodge carries a player over harmful ground (D444), from its first frame to its last and whatever the equip load
+ * does to its i-frames; any other i-frames (Meteor Lunge, Vault) count too.
+ */
+export function dodgingOverGround(pl: { state: string; iframesFrom: number; iframesUntil: number }, now: number): boolean {
+  return pl.state === 'dodge' || (now >= pl.iframesFrom && now < pl.iframesUntil);
+}
+
+/**
  * An enemy attack (or hazard/projectile) hits a player.
  * fromX/fromY is where the hit comes from (attacker or projectile position) for block facing.
  */
@@ -368,8 +376,8 @@ export function hitPlayer(w: World, attackerId: number, p: Entity, spec: DamageS
   // D392: one volley hurts once: the rest of its shots break on you harmlessly
   if (spec.volleyOnce && spec.attackId !== undefined && pl.volleysTaken?.includes(spec.attackId)) return 'none';
 
-  // i-frames (dodge, Meteor Lunge, Vault) never work against Piercing
-  if (spec.kind !== 'pierce' && now >= pl.iframesFrom && now < pl.iframesUntil) {
+  // i-frames (dodge, Meteor Lunge, Vault) never work against Piercing; harmful ground is dodged over (D444)
+  if ((spec.ground && dodgingOverGround(pl, now)) || (spec.kind !== 'pierce' && now >= pl.iframesFrom && now < pl.iframesUntil)) {
     w.fx('dodge', p.x, p.y);
     return 'dodged';
   }

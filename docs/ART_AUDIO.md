@@ -87,7 +87,7 @@ Contents: [1 Rendering](#1-rendering) · [2 Style](#2-style) · [3 Telegraphs an
 - **Foot dot** (D262): a small dot in the player's eye colour at their feet (`PLAYER_DOT_R` 5, `PLAYER_DOT_DY` 9 below
   the body centre), drawn over every marker. Area attacks and charge bars test exactly that dot: **if the dot is
   outside the marker, you are safe.**
-- The local player's dodge recharge ring; the boss bar (with per-phase names and a second bar for the Landlord's fourth
+- The local player's dodge recharge bar, inside the silver ring at the feet (D443); the boss bar (with per-phase names and a second bar for the Landlord's fourth
   phase); damage numbers (Settings → Video); attack icons over attackers; the Red / Piercing warning sounds.
 
 ## 4. VFX

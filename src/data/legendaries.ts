@@ -111,7 +111,7 @@ export const LEGENDARY_WEAPON_POWERS: Record<string, string> = {
   'The Long Reach': 'static_charge',
   'Snap Decision': 'quickdraw',
   'Crack of Dawn': 'kindling',
-  // Longsword
+  // Greatsword
   'Employee of the Month': 'bounty_hunter',
   'Plot Armor': 'last_stand',
   'Exactly As Long As It Needs To Be': 'drillmaster',

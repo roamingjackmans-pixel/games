@@ -357,6 +357,8 @@ export interface AttackDef {
   budget?: number;
   condition?: string;
   parryable?: boolean;
+  /** burning ground that stays lit (D444): a dodge carries a player over it, as over a hazard */
+  ground?: boolean;
   knockback?: number;
   grab?: { holdS: number; mult: number; staminaDrain?: number };
   area?: boolean;
@@ -649,7 +651,7 @@ export interface WeaponDef {
   twoHandOnly?: boolean;
   /** may be held in either hand, like a staff or talisman (D291): in the off hand it shoots on the block button */
   eitherHand?: boolean;
-  /** how much more the weapon gets from its scaling than its grades alone give (D331: ×1.25 Longsword, Katana, Twin Daggers) */
+  /** how much more the weapon gets from its scaling than its grades alone give (D331: ×1.25 Greatsword, Katana, Twin Daggers) */
   scalingBoost?: number;
   /** a big Bonk weapon (D329): no scaling variant needs less Bonk than this */
   bonkFloor?: number;

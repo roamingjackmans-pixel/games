@@ -12,7 +12,7 @@ Slicey and Brain,Bow,Arcane,Arcane Bow,,D,C,,magic,Fast
 Slicey and Brain,Chakrams,Arcane,Arcane Chakrams,,D,C,,magic,Medium
 Slicey and Brain,Harvest Sickle,Arcane,Arcane Harvest Sickle,,B,B,,magic,Medium
 Slicey and Brain,Katana,Arcane,Arcane Katana,,B,C,,magic,Fast
-Slicey and Brain,Longsword,Arcane,Arcane Longsword,D,C,C,,magic,Medium
+Slicey and Brain,Greatsword,Arcane,Arcane Greatsword,D,C,C,,magic,Medium
 Slicey and Brain,Rapier,Arcane,Arcane Rapier,,C,C,,magic,Fast
 Slicey and Brain,Rune Kris,Base,Rune Kris,,B,B,,magic,Fast
 Slicey and Brain,Spear,Arcane,Arcane Spear,,B,C,,magic,Medium
@@ -29,7 +29,7 @@ Slicey and Prayer,Dawn Glaive,Devout,Devout Dawn Glaive,,D,,A,holy,Medium
 Slicey and Prayer,Dawn Glaive,Keen,Keen Dawn Glaive,,A,,D,holy,Medium
 Slicey and Prayer,Harvest Sickle,Base,Harvest Sickle,,B,,B,holy,Medium
 Slicey and Prayer,Katana,Blessed,Blessed Katana,,B,,C,holy,Fast
-Slicey and Prayer,Longsword,Blessed,Blessed Longsword,D,C,,C,holy,Medium
+Slicey and Prayer,Greatsword,Blessed,Blessed Greatsword,D,C,,C,holy,Medium
 Slicey and Prayer,Rapier,Blessed,Blessed Rapier,,C,,C,holy,Fast
 Slicey and Prayer,Rune Kris,Blessed,Blessed Rune Kris,,B,,B,holy,Fast
 Slicey and Prayer,Spear,Blessed,Blessed Spear,D,C,,C,holy,Medium
@@ -66,7 +66,7 @@ Main Bonk with Slicey,Colossal Sword,Base,Colossal Sword,S,E,,,physical,Slow
 Main Bonk with Slicey,Colossal Sword,Keen,Keen Colossal Sword,B,C,,,physical,Slow
 Main Bonk with Slicey,Greataxe,Keen,Keen Greataxe,B,C,,,physical,Slow
 Main Bonk with Slicey,Halberd,Base,Halberd,A,C,,,physical,Medium
-Main Bonk with Slicey,Longsword,Heavy,Heavy Longsword,A,D,,,physical,Medium
+Main Bonk with Slicey,Greatsword,Heavy,Heavy Greatsword,A,D,,,physical,Medium
 Main Bonk with Slicey,Mace,Base,Mace,A,D,,,physical,Medium
 Main Bonk with Slicey,Spear,Heavy,Heavy Spear,B,C,,,physical,Medium
 Main Bonk with Slicey,Twin Axes,Base,Twin Axes,A,B,,,physical,Fast
@@ -75,7 +75,7 @@ Main Slicey with Bonk,Chakrams,Base,Chakrams,C,B,,,physical,Medium
 Main Slicey with Bonk,Halberd,Keen,Keen Halberd,C,A,,,physical,Medium
 Main Slicey with Bonk,Katana,Base,Katana,D,A,,,physical,Fast
 Main Slicey with Bonk,Katana,Balanced,Balanced Katana,C,B,,,physical,Fast
-Main Slicey with Bonk,Longsword,Keen,Keen Longsword,C,A,,,physical,Medium
+Main Slicey with Bonk,Greatsword,Keen,Keen Greatsword,C,A,,,physical,Medium
 Main Slicey with Bonk,Spear,Base,Spear,B,A,,,physical,Medium
 Main Slicey with Bonk,Spear,Keen,Keen Spear,E,S,,,physical,Medium
-Even Bonk and Slicey,Longsword,Base,Longsword,B,B,,,physical,Medium
+Even Bonk and Slicey,Greatsword,Base,Greatsword,B,B,,,physical,Medium

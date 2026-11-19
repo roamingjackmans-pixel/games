@@ -532,20 +532,22 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
   const charging = pl.combo?.charging ? pl.combo.chargeT : 0;
   const ghost = pl.downed;
   const dodge = pl.state === 'dodge';
-  // dodge recharge ring (GAME_DESIGN §5.3)
+  // dodge recharge bar (GAME_DESIGN §5.3): inside the silver ring at the feet, on the same centre (D443)
   if (isLocal && !ghost) {
     const rem = pl.dodgeReadyAt - now;
     if (rem > 0) {
       const frac = 1 - rem / Math.max(0.1, pl.dodgeRechargeTotal);
+      const barY = y + PLAYER_DOT_DY;
+      const barR = PLAYER_DOT_R - 3.5;
       ctx.save();
       ctx.strokeStyle = 'rgba(255,255,255,0.15)';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(x, y + 4, 24, 0, Math.PI * 2);
+      ctx.arc(x, barY, barR, 0, Math.PI * 2);
       ctx.stroke();
       ctx.strokeStyle = '#8fd3ff';
       ctx.beginPath();
-      ctx.arc(x, y + 4, 24, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
+      ctx.arc(x, barY, barR, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }

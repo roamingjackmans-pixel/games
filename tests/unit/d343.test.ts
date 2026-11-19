@@ -26,8 +26,8 @@ describe('D343 balance', () => {
     expect(['greathammer', 'greataxe', 'colossal_sword', 'battleaxe', 'halberd'].every((id) => gradeDamageMult(WEAPONS[id]!) === 0.9)).toBe(true);
     expect(gradeDamageMult(WEAPONS.longsword!)).toBe(1);
     // a Heavy longsword scales A with Bonk: it counts
-    const heavyLongsword = applyVariant(WEAPONS.longsword!, WEAPON_VARIANTS.longsword!.find((v) => v.grades.bonk === 'A')!);
-    expect(gradeDamageMult(heavyLongsword)).toBe(0.9);
+    const heavyGreatsword = applyVariant(WEAPONS.longsword!, WEAPON_VARIANTS.longsword!.find((v) => v.grades.bonk === 'A')!);
+    expect(gradeDamageMult(heavyGreatsword)).toBe(0.9);
   });
 
   it('spells: ×1.4 to 30 Brain or Prayer, easing to ×1 at 300 and staying there', () => {
@@ -84,7 +84,7 @@ describe('D347 Slicey-based weapons', () => {
     expect(gradeDamageMult(WEAPONS.twin_daggers!)).toBeCloseTo(1.2, 9);
     expect(gradeDamageMult(WEAPONS.longsword!)).toBe(1);
     expect(gradeDamageMult(WEAPONS.greathammer!)).toBeCloseTo(0.9, 9);
-    // a Keen Longsword (B Bonk / A Slicey) counts
+    // a Keen Greatsword (B Bonk / A Slicey) counts
     const keen = applyVariant(WEAPONS.longsword!, WEAPON_VARIANTS.longsword!.find((v) => v.grades.slicey === 'A')!);
     expect(gradeDamageMult(keen)).toBeCloseTo(1.2, 9);
   });

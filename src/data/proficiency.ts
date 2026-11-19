@@ -66,7 +66,7 @@ export const PROF_CLASSES: Record<string, ProfClass> = {
   club: { id: 'club', name: 'Clubs', blurb: 'The oldest tool. Still works.', perks: [p('poise', 0.015, 'Poise damage'), p('stamina', 0.008, 'Swing stamina')] },
   mace: { id: 'mace', name: 'Maces', blurb: 'Armor is just a suggestion.', perks: [p('poise', 0.015, 'Poise damage'), p('damage', 0.008, 'Damage')] },
   censer_flail: { id: 'censer_flail', name: 'Censer Flails', blurb: 'Swing the smoke, not just the iron.', perks: [p('damage', 0.008, 'Damage'), p('reach', 0.008, 'Reach')] },
-  longsword: { id: 'longsword', name: 'Longswords', blurb: 'Nothing fancy. Nothing missing.', perks: [p('damage', 0.008, 'Damage'), p('stamina', 0.006, 'Swing stamina')] },
+  longsword: { id: 'longsword', name: 'Greatswords', blurb: 'Nothing fancy. Nothing missing.', perks: [p('damage', 0.008, 'Damage'), p('stamina', 0.006, 'Swing stamina')] },
   katana: { id: 'katana', name: 'Katanas', blurb: 'Draw, cut, done.', perks: [p('damage', 0.008, 'Damage'), p('attackSpeed', 0.005, 'Attack speed')] },
   spellblade: { id: 'spellblade', name: 'Spellblades', blurb: 'The edge hums the same tune as the spell.', perks: [p('damage', 0.008, 'Damage'), p('castSpeed', 0.006, 'Cast speed')] },
   rapier: { id: 'rapier', name: 'Rapiers', blurb: 'Light feet, lighter blade.', perks: [p('attackSpeed', 0.006, 'Attack speed'), p('dodge', 0.02, 'Dodge recharge')] },

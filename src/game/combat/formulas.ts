@@ -162,7 +162,7 @@ export function scalingMult(
 
 /**
  * A weapon's scaling, with its own boost (D331): the part scaling adds (everything over ×1) is ×`scalingBoost`, so a
- * Longsword, Katana or Twin Daggers gets more from the same stats without its grade letters changing.
+ * Greatsword, Katana or Twin Daggers gets more from the same stats without its grade letters changing.
  */
 export function weaponScaling(
   def: { grades: { bonk: Grade; slicey: Grade; brain?: Grade; prayer?: Grade }; scalingBoost?: number },

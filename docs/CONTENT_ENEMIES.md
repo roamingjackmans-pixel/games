@@ -223,6 +223,10 @@ with its own Glowen), and the host its own (D396).
 
 ## 11. Bosses
 
+**Getting unstuck** (every enemy and boss that moves, D445): one that has stood in one spot for 2 s with something between
+it and its target stops attacking, turns and walks round the obstacle (up to three straight legs, until it can see its
+target). One whose walking gets it nowhere for 2 s does the same. A body that ended up inside a pillar slides out of it.
+
 Common rules (GAME_DESIGN §7):
 - Boss base HP is 3,600 at the zone-1 curve (D187), then the zone, cycle and co-op multipliers. Some bosses set their
   own base or a first-playthrough multiplier (D211). The Landlord sets his own.
@@ -381,16 +385,16 @@ Phase 2 — **The heart-lantern flares** (50% → 0%; speed ×1.2, damage ×1.25
 HP solo (its first bar): **6418** first playthrough, 83553 at NG+1, 366965 at NG+2 (D301, D307, D325). Radius 58. Boss hit ×1.0 = 124 first playthrough. construct. Arena-bound: never a bonus boss (D278). Pays **×3 Shards** (D418).
 
 Phase 1 (100% → 0%; speed ×1, damage ×1, bar 60% of full HP, arena: hazardTiles):
-- **Golem Slam**: circle(120) at self, ×1.4 physical (174), windup 0.9 s, cd 3
+- **Golem Slam** (parryable, D447): circle(120) at self, ×1.4 physical (174), windup 0.9 s, cd 3
 - **Hammer Throw [PIERCE]**: circle(110) at target, line(40) back to the thrower ×0.8 fire, ×1.3 fire (161), tell 1 s, cd 7
 - **Forge Strike [RED]**: line(90, 200), ×1.8 fire (224), tell 0.7 s, cd 8
 - **Flame Pillars [PIERCE] [AREA]**: grid(150, 55) checkerboard, 2 sets 1 s apart, ×1.1 fire (137), tell 1 s, cd 11
-- **Stoke [AREA]**: lanes(2, 60) horizontal, lit 3 s (tick 0.25 s), ×0.5 fire (62), burn 12, windup 1 s, cd 12
+- **Stoke [AREA]** (parryable, D447; a dodge carries you over it, D444): lanes(2, 60) horizontal, lit 3 s (tick 0.25 s), ×0.5 fire (62), burn 12, windup 1 s, cd 12
 
 Phase 2 — **The Golem goes molten** (fresh bar → 0%; speed ×1.2, damage ×1.25, second body: Foreman Ignatius, arena: setTiles, hazardTiles, movingFloor, movingFloor):
-- **Golem Slam**: circle(120) at self, ×1.4 physical (217), windup 0.9 s, cd 3
+- **Golem Slam** (parryable, D447): circle(120) at self, ×1.4 physical (217), windup 0.9 s, cd 3
 - **Forge Strike [RED]**: line(90, 200), ×1.8 fire (279), tell 0.7 s, cd 8
-- **Stoke [AREA]**: lanes(2, 60) horizontal, lit 3 s (tick 0.25 s), ×0.5 fire (78), burn 12, windup 1 s, cd 12
+- **Stoke [AREA]** (parryable, D447; a dodge carries you over it, D444): lanes(2, 60) horizontal, lit 3 s (tick 0.25 s), ×0.5 fire (78), burn 12, windup 1 s, cd 12
 - **Molten Shockwave [PIERCE] [AREA]**: expandingRing(300 px/s) 3 gaps of 110 (one behind it) (one toward the centre), ×1.3 fire (202), tell 1.2 s, cd 11 *(new)*
 - **Forge Draw**: gravityWell circle(160) at self for 2.2 s; pull 650 px/s within 1500 for 1 s, windup 0.7 s, cd 14 *(new)*
 - (on-foot body) **Hammer Throw [PIERCE]**: circle(110) at target, line(40) back to the thrower ×0.8 fire, ×1.3 fire (202), tell 1 s, cd 7
@@ -438,15 +442,15 @@ Phase 2 — **The ice shatters** (75% → 0%; speed ×1.2, damage ×1.25, arena:
 HP solo (its first bar): **21043** first playthrough, 281126 at NG+1, 1112060 at NG+2 (D301, D307, D325). Radius 48. Boss hit ×1.0 = 188 first playthrough. construct. Can appear as an NG+ bonus boss (D278).
 
 Phase 1 (100% → 40%; speed ×1, damage ×1.2, summons 4 Corner Turret (max 4, every 1 s, in the corners)):
-- **Arcane Volley**: 5× proj(360) in a 72° fan, ×0.8 void (181), windup 0.7 s, cd 2.6
-- **Laser Sweep [PIERCE] [AREA]**: sweep(360°, 3 s) r room, w 60, tick 0.25 s, 2 gaps, ×1 magic (226), tell 1 s, cd 12
+- **Arcane Wave [AREA]** (parryable, D446): cone(100°, 460) at self, ×1 void (226), windup 1.1 s, cd 4
+- **Laser Sweep [PIERCE] [AREA]**: sweep(360°, 3 s) r room, w 60, tick 0.25 s, 2 gaps, ×1 magic (226), tell 1.3 s, cd 12
 - **Time Bubble [PIERCE] [AREA]**: 3× circle(140) at target, leaves timeBubble 6 s, tell 1 s, cd 13
 - **Gear Dash [RED]**: line(110, 380), charges 380 px, ×1.6 physical (362), tell 0.7 s, cd 6, hyper armor
 - **Tin Reinforcements**: summons 4 Tin Soldier (max 4), windup 1 s, cd 22
 
 Phase 2 — **The clock runs backward** (40% → 0%; speed ×1.2, damage ×1.69, summons 4 Corner Turret (max 4, every 1 s, in the corners), arena: reverseFloor):
-- **Arcane Volley**: 5× proj(360) in a 72° fan, ×0.8 void (254), windup 0.7 s, cd 2.6
-- **Laser Sweep [PIERCE] [AREA]**: 2× sweep(360°, 3 s) r room, w 60, tick 0.25 s, 2 gaps, opposite ways, ×1 magic (318), tell 1 s, cd 12
+- **Arcane Wave [AREA]** (parryable, D446): cone(100°, 460) at self, ×1 void (318), windup 1.1 s, cd 4
+- **Laser Sweep [PIERCE] [AREA]**: 2× sweep(360°, 3 s) r room, w 60, tick 0.25 s, 2 gaps, opposite ways, ×1 magic (318), tell 1.3 s, cd 12
 - **Time Bubble [PIERCE] [AREA]**: 3× circle(140) at target, leaves timeBubble 10 s, tell 1 s, cd 13
 - **Gear Dash [RED]**: line(110, 380), charges 380 px, ×1.6 physical (508), tell 0.7 s, cd 6, hyper armor
 - **Tin Reinforcements**: summons 4 Tin Soldier (max 4), windup 1 s, cd 22

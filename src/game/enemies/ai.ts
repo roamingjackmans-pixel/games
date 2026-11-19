@@ -13,7 +13,7 @@ import { patternAllowed, ringReachable, startEnemyAttack, teleportAway, updateEn
 import { updateDevour } from '../interact';
 import { phasePassive, tickBossPassive } from '../boss/passive';
 import { tickBossTransition } from '../combat/bossPhase';
-import { stepToward } from './pathing';
+import { clearLine, stepToward } from './pathing';
 import { attackDamage } from './spawn';
 import type { AttackDef, EnemyDef } from '../types';
 
@@ -175,10 +175,132 @@ function moveSpeed(w: World, e: Entity): number {
   return s;
 }
 
-function stepTo(w: World, e: Entity, gx: number, gy: number, speed: number, dt: number): void {
+/** D445: trying to walk for this long without getting anywhere means something is in the way. */
+const STUCK_AFTER_S = 2;
+/** ...of which this much was spent actually trying (attacks in between do not count as being stopped). */
+const STUCK_TRIED_S = 0.8;
+/** How long it may take to reach the spot it picked to get round the obstacle. */
+const DETOUR_S = 2.5;
+/** A boss paths with its whole body for this long after being stuck, so it does not walk straight back in. */
+const BODY_PATH_S = 8;
+
+/** The best spot it can walk straight to: one that sees its target if it can, as near where it wants to go as it can. */
+function wayRound(w: World, e: Entity, gx: number, gy: number): { x: number; y: number } | null {
   const passes = e.flying || !!e.en?.def.traits?.phasesThroughProps;
-  // room enemies path with their body size; bosses keep point pathing (their arenas and moves are tuned for it)
-  const [dx, dy] = stepToward(w.room, e.x, e.y, gx, gy, passes, w.time, e.en?.isBoss ? 0 : e.radius);
+  const target = w.get(e.en!.targetId);
+  const m = e.radius + 8;
+  for (const k of [0.76, 0.5]) {
+    const r = Math.max(4, e.radius * k);
+    let best: { x: number; y: number } | null = null;
+    let score = Infinity;
+    for (const rad of [110, 170, 240, 320])
+      for (let i = 0; i < 16; i++) {
+        const x = clamp(e.x + Math.cos((i * Math.PI) / 8) * rad, ROOM_MIN_X + m, ROOM_MAX_X - m);
+        const y = clamp(e.y + Math.sin((i * Math.PI) / 8) * rad, ROOM_MIN_Y + m, ROOM_MAX_Y - m);
+        if (dist(e.x, e.y, x, y) < 80 || !clearLine(w.room, e.x, e.y, x, y, r, passes)) continue;
+        const s = dist(x, y, gx, gy) + (target && !w.room.lineOfSight(x, y, target.x, target.y) ? 600 : 0);
+        if (s < score) {
+          score = s;
+          best = { x, y };
+        }
+      }
+    if (best) return best;
+  }
+  return null;
+}
+
+/** Where it last got to: moving well away from there starts the clock again (D445). */
+function noteProgress(e: Entity, now: number): NonNullable<NonNullable<Entity['en']>['stuck']> {
+  const s = (e.en!.stuck ??= { x: e.x, y: e.y, since: now, tried: 0, bodyUntil: 0 });
+  if (dist(e.x, e.y, s.x, s.y) > Math.max(24, e.radius * 0.75)) {
+    s.x = e.x;
+    s.y = e.y;
+    s.since = now;
+    s.tried = 0;
+  }
+  return s;
+}
+
+/** Where to walk instead of (gx, gy) while getting round an obstacle (D445); null: carry on as it was. */
+function detour(w: World, e: Entity, gx: number, gy: number, speed: number, dt: number): [number, number] | null {
+  const now = w.time;
+  const s = noteProgress(e, now);
+  if (s.wp) {
+    if (now < s.wp.until && dist(e.x, e.y, s.wp.x, s.wp.y) > 14) return [s.wp.x, s.wp.y];
+    delete s.wp;
+  }
+  if (speed < 12) return null;
+  s.tried += dt;
+  if (now - s.since < STUCK_AFTER_S || s.tried < STUCK_TRIED_S) return null;
+  s.since = now;
+  s.tried = 0;
+  s.bodyUntil = now + BODY_PATH_S;
+  const to = wayRound(w, e, gx, gy);
+  if (!to) return null;
+  s.wp = { ...to, until: now + DETOUR_S };
+  return [to.x, to.y];
+}
+
+/**
+ * A body that ended up inside a pillar or a wall (a charge or a leap can put it there) cannot move at all: every step
+ * of moveCircle is refused. It slides straight out to the nearest open spot (D445).
+ */
+function slideOut(w: World, e: Entity, speed: number, dt: number): boolean {
+  if (e.en?.def.traits?.phasesThroughProps) return false;
+  const r = Math.max(4, e.radius * 0.8);
+  if (!w.room.circleBlocked(e.x, e.y, r, true)) return false;
+  for (let rad = 8; rad <= 280; rad += 8)
+    for (let i = 0; i < 16; i++) {
+      const c = Math.cos((i * Math.PI) / 8);
+      const n = Math.sin((i * Math.PI) / 8);
+      if (w.room.circleBlocked(e.x + c * rad, e.y + n * rad, r, e.flying)) continue;
+      const step = Math.min(rad, Math.max(speed, 160) * dt);
+      e.x += c * step;
+      e.y += n * step;
+      return true;
+    }
+  return false;
+}
+
+/**
+ * Has it stood in one spot for a couple of seconds with something between it and its target (D445)? Then it picks a way
+ * round, and walks that before it attacks again. Attacks in between do not reset the clock: only getting somewhere does.
+ */
+function mustGoRound(w: World, e: Entity, target: Entity): boolean {
+  const en = e.en!;
+  const now = w.time;
+  if (en.def.moveStyle === 'stationary' || phasePassive(e)?.stationaryAt) return false;
+  const s = noteProgress(e, now);
+  // one straight leg may not clear a pillar: it takes up to three in a row until it can see its target
+  let nextLeg = false;
+  if (s.wp) {
+    if (now < s.wp.until && dist(e.x, e.y, s.wp.x, s.wp.y) > 14) return true;
+    delete s.wp;
+    nextLeg = (s.legs = (s.legs ?? 0) + 1) < 3;
+  }
+  if (w.room.lineOfSight(e.x, e.y, target.x, target.y)) {
+    delete s.legs;
+    return false;
+  }
+  if (!nextLeg && now - s.since < STUCK_AFTER_S) return false;
+  if (!nextLeg) delete s.legs;
+  s.since = now;
+  s.tried = 0;
+  s.bodyUntil = now + BODY_PATH_S;
+  const to = wayRound(w, e, target.x, target.y);
+  if (to) s.wp = { ...to, until: now + DETOUR_S };
+  return !!to;
+}
+
+function stepTo(w: World, e: Entity, gx0: number, gy0: number, speed: number, dt: number): void {
+  const passes = e.flying || !!e.en?.def.traits?.phasesThroughProps;
+  const round = e.en ? detour(w, e, gx0, gy0, speed, dt) : null;
+  const gx = round ? round[0] : gx0;
+  const gy = round ? round[1] : gy0;
+  // room enemies path with their body size; bosses keep point pathing (their arenas and moves are tuned for it) until
+  // something has stopped them (D445)
+  const pointPath = !!e.en?.isBoss && !(e.en.stuck && e.en.stuck.bodyUntil > w.time);
+  const [dx, dy] = stepToward(w.room, e.x, e.y, gx, gy, passes, w.time, pointPath ? 0 : e.radius);
   if (e.en && Math.hypot(dx, dy) > 0.1 && speed > 1) e.en.movedAt = w.time;
   w.room.moveCircle(e, dx * speed * dt, dy * speed * dt, e.flying || !!e.en?.def.traits?.phasesThroughProps);
   if (Math.hypot(dx, dy) > 0.1) {
@@ -506,6 +628,9 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
   // a fade makes it immune; it stays solid and the renderer draws a gold border instead of see-through (D108)
   if (en.fadeUntil > 0 && en.fadeUntil <= now) en.fadeUntil = 0;
 
+  // D445: nothing else can move a body stuck inside a pillar (not mid-charge or mid-leap: those carry it themselves)
+  if (def.moveStyle !== 'stationary' && !phasePassive(e)?.stationaryAt && !en.attack?.def.move) slideOut(w, e, moveSpeed(w, e), dt);
+
   if (en.attack) {
     updateEnemyAttack(w, e, dt);
     return;
@@ -551,6 +676,12 @@ export function updateEnemy(w: World, e: Entity, dt: number): void {
       startEnemyAttack(w, e, list[i]!, target);
       en.thinkAt = now + 2.6;
     }
+    return;
+  }
+  // D445: stopped behind something, it gets out from behind it before anything else
+  if (en.rootUntil <= now && mustGoRound(w, e, target)) {
+    en.state = 'approach';
+    stepTo(w, e, target.x, target.y, moveSpeed(w, e), dt);
     return;
   }
   // think: try an attack, else move

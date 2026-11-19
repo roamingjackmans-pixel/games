@@ -369,7 +369,7 @@ Touch controls on phones and tablets (D143), the Steam Controller over WebHID (D
   - **Slow** (gooey, themed per zone): −35% walking for players and walking enemies (fliers unaffected). Never
     shortens a dodge, leap or knockback; never stacks.
   - **Hurt** (the same spiked patch in every zone, coloured by zone): players take **3% of max HP every 0.5 s**,
-    ignoring defense; dodge i-frames skip a tick; enemies are never hurt.
+    ignoring defense; a dodge carries you over it (D444); enemies are never hurt.
 - **Holes** (D173, D175, D185): pits and the Abyss's void block every body's own movement — walking, dodging, dashes,
   leaps, a swing's step. Only an attack puts you in: a knockback, a pull, or floor collapsing under you. A pit costs
   30% of max HP; the void 50% and 1.5 s to climb back (untouchable while falling). Fliers path round holes too. A
@@ -405,9 +405,13 @@ phases, capped at ×1.6.
 
 - A 0.45 s dash of 220 px, i-frames from 0.05 s to 0.40 s, 10 stamina (× the multipliers above). Equip load changes
   its distance and i-frames (§8.6).
-- **One charge, 5.0 s recharge**, shown as a ring around you. Fleet affixes, the Fleet Ring, Fleetfoot gems,
+- **One charge, 5.0 s recharge**, shown as a blue bar inside the silver ring at your feet (D443). Fleet affixes, the Fleet Ring, Fleetfoot gems,
   proficiency and set perks shorten it, to a **floor of 3.0 s**. Chill adds 1.5 s; Hexed adds 2 s while active.
 - I-frames do **not** work against Piercing (Blue) attacks.
+- **A dodge carries you over harmful ground** (D444): from its first frame to its last, whatever your equip load does to
+  the i-frames, hazards (the Mycelium Weaver's purple lines, fire, lava, acid, gas, traps), lit lanes (Stoke) and the
+  spiked floor do nothing to you: no damage, status, slow or snare. Land in it and it hurts as usual. A Piercing strike
+  still lands.
 
 ### 5.4 Block, parry, two-handing, being staggered
 
@@ -1071,7 +1075,7 @@ Ten classes (CONTENT_SPELLS_CLASSES §3 is the source of truth; every kit meets 
 
 | Class | HP / End / Bonk / Slicey / Brain / Prayer | Primary / secondary | Kit |
 |---|---|---|---|
-| Knight | 10 / 10 / 12 / 9 / 3 / 4 | HP / Endurance | Longsword, Round Shield (D326) |
+| Knight | 10 / 10 / 12 / 9 / 3 / 4 | HP / Endurance | Greatsword, Round Shield (D326) |
 | Brute | 12 / 8 / 14 / 5 / 4 / 5 | Bonk / HP | Greathammer (two-handed) |
 | Duelist | 8 / 11 / 5 / 14 / 5 / 5 | Slicey / Endurance | Twin Daggers, Buckler |
 | Scholar | 7 / 7 / 3 / 10 / 15 / 6 | Brain / Slicey | Rapier, Apprentice Staff; Arcane Bolt, Frost Lance |

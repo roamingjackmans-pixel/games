@@ -12,7 +12,7 @@ export interface WeaponVariantDef {
   grades: WeaponDef['grades'];
   /** the weapon's own damage type with this variant (else the class's) */
   element?: DamageType;
-  /** a variant the owner asked for that is better than its class, not a trade (D328: the B / A Keen Longsword) */
+  /** a variant the owner asked for that is better than its class, not a trade (D328: the B / A Keen Greatsword) */
   upgrade?: true;
 }
 
@@ -45,7 +45,7 @@ export const WEAPON_VARIANTS: Record<string, WeaponVariantDef[]> = {
   rapier: [blessed({ bonk: '-', slicey: 'C', prayer: 'C' }), arcane({ bonk: '-', slicey: 'C', brain: 'C' })],
   katana: [balanced({ bonk: 'C', slicey: 'B' }), blessed({ bonk: '-', slicey: 'B', prayer: 'C' }), arcane({ bonk: '-', slicey: 'B', brain: 'C' })],
   bow: [blessed({ bonk: '-', slicey: 'D', prayer: 'C' }), arcane({ bonk: '-', slicey: 'D', brain: 'C' })],
-  // D328: the Keen Longsword leans a little to Slicey (B / A), the owner's ask; it is an upgrade on the B / B class
+  // D328: the Keen Greatsword leans a little to Slicey (B / A), the owner's ask; it is an upgrade on the B / B class
   longsword: [heavy({ bonk: 'A', slicey: 'D' }), { ...keen({ bonk: 'C', slicey: 'A' }), upgrade: true }, blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: 'D', slicey: 'C', brain: 'C' })],
   spear: [heavy({ bonk: 'B', slicey: 'C' }), keen({ bonk: 'E', slicey: 'S' }), blessed({ bonk: 'D', slicey: 'C', prayer: 'C' }), arcane({ bonk: '-', slicey: 'B', brain: 'C' })], // D388: Arcane
   battleaxe: [keen({ bonk: 'C', slicey: 'B' }), fervent({ bonk: 'C', slicey: 'D', prayer: 'C' }), hollow({ bonk: 'C', slicey: 'D', brain: 'C' })],

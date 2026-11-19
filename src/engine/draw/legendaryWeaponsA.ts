@@ -1,5 +1,5 @@
 // D388: legendary weapon designs, part A (merged into legendaryWeapons.ts DESIGNS): the fourth legendary of the
-// Greathammer, Greataxe, Colossal Sword, Crossbow, Club, Twin Daggers, Rapier, Katana, Bow, Whip and Longsword.
+// Greathammer, Greataxe, Colossal Sword, Crossbow, Club, Twin Daggers, Rapier, Katana, Bow, Whip and Greatsword.
 // Same local space as legendaryWeapons.ts (grip at the origin, pointing along +x). legendaryWeapons.ts imports
 // this file and this file imports ./weapons, so imported values are only ever used inside functions.
 import type { Design } from './legendaryWeapons';
@@ -866,7 +866,7 @@ function crackOfDawn(ctx: Ctx, t: number): void {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Longsword: Main Character
+// Greatsword: Main Character
 // ---------------------------------------------------------------------------------------------
 
 function mainCharacter(ctx: Ctx, t: number): void {

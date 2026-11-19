@@ -5,20 +5,22 @@
 import type { RoomTemplate } from '../../game/procgen/templates';
 import type { AttackDef, BossDef, EnemyDef, SummonDef } from '../../game/types';
 
-const arcaneVolley: AttackDef = {
-  id: 'tock_arcane_volley',
-  name: 'Arcane Volley',
+/** D446: his one yellow attack, a wide wave with a long tell, and the one you can parry (it replaced a fast scatter shot). */
+const arcaneWave: AttackDef = {
+  id: 'tock_arcane_wave',
+  name: 'Arcane Wave',
   kind: 'normal',
-  pattern: { kind: 'projectile', speed: 360, r: 8, count: 5, spreadDeg: 72, range: 1100 },
-  windupMs: 700,
-  recoverMs: 600,
-  dmgMult: 0.8,
+  pattern: { kind: 'cone', angleDeg: 100, r: 460, anchor: 'self' },
+  windupMs: 1100,
+  recoverMs: 800,
+  dmgMult: 1,
   type: 'void',
-  cooldownS: 2.6,
-  range: [120, 950],
+  cooldownS: 4,
+  range: [0, 440],
   weight: 4,
+  area: true,
   // boss normal attacks are parryable only where the sheet says so (D58)
-  parryable: false,
+  parryable: true,
 };
 
 const laserSweep = (turrets: number): AttackDef => ({
@@ -28,7 +30,8 @@ const laserSweep = (turrets: number): AttackDef => ({
   // a corner turret's beam starts on the target and turns a full circle in 3 s (the telegraph shows the
   // turret's start line, the arc and the direction); phase 2: two opposite corners, turning opposite ways
   pattern: { kind: 'sweep', angleDeg: 360, r: 'room', durationS: 3, anchor: 'corner', tickS: 0.25, w: 60, beamLine: true, gaps: 2, ...(turrets > 1 ? { count: turrets, opposite: true } : {}) },
-  windupMs: 1000,
+  // D446: 30% longer to charge (was 1 s)
+  windupMs: 1300,
   recoverMs: 700,
   dmgMult: 1.0,
   type: 'magic',
@@ -183,7 +186,7 @@ export const ARCHMAGISTER_TOCK: BossDef = {
   hyperArmor: false,
   phases: [
     // D233: phase 1 hits 20% harder, phase 2 starts at 40% and hits 35% harder than it did (1.25 → 1.69)
-    { untilHpPct: 40, speedMult: 1, dmgMult: 1.2, summons: [turrets], attacks: [arcaneVolley, laserSweep(1), timeBubble(6), gearDash, tinReinforcements] },
+    { untilHpPct: 40, speedMult: 1, dmgMult: 1.2, summons: [turrets], attacks: [arcaneWave, laserSweep(1), timeBubble(6), gearDash, tinReinforcements] },
     {
       untilHpPct: 0,
       name: 'The clock runs backward',
@@ -191,7 +194,7 @@ export const ARCHMAGISTER_TOCK: BossDef = {
       dmgMult: 1.6875,
       arena: [{ op: 'reverseFloor' }],
       summons: [turrets],
-      attacks: [arcaneVolley, laserSweep(2), timeBubble(10), gearDash, tinReinforcements, rewindVolley, overclock],
+      attacks: [arcaneWave, laserSweep(2), timeBubble(10), gearDash, tinReinforcements, rewindVolley, overclock],
     },
   ],
   // New Game+ third phase only (D309)

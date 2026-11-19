@@ -64,7 +64,7 @@ describe('New Game+ Overtime attacks (D309)', () => {
       expect(b.en!.phase).toBe(ng.phases.length - 1);
       const used = new Set<string>();
       const me = s.w.players[0]!;
-      for (let i = 0; i < 40 * 60; i++) {
+      for (let i = 0; i < 80 * 60; i++) {
         // wander so both near and far attacks come up
         if (i % 240 === 0) {
           me.x = 400 + ((i / 240) % 3) * 220;
