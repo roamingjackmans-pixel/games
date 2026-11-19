@@ -224,7 +224,7 @@ interface Build {
 const BUILDS: Build[] = [
   { name: 'Bonk: greathammer (2H)', cls: 'brute', main: 'greathammer', twoHanded: true, split: { bonk: 0.5, hp: 0.3, endurance: 0.2 } },
   { name: 'Slicey: twin daggers', cls: 'duelist', main: 'twin_daggers', off: 'buckler', split: { slicey: 0.5, hp: 0.3, endurance: 0.2 } },
-  { name: 'Quality: longsword + shield', cls: 'knight', main: 'longsword', off: 'kite_shield', split: { bonk: 0.25, slicey: 0.25, hp: 0.3, endurance: 0.2 } },
+  { name: 'Quality: greatsword + shield', cls: 'knight', main: 'longsword', off: 'kite_shield', split: { bonk: 0.25, slicey: 0.25, hp: 0.3, endurance: 0.2 } },
   { name: 'Bow (Slicey)', cls: 'hunter', main: 'bow', twoHanded: true, split: { slicey: 0.5, hp: 0.3, endurance: 0.2 } },
   { name: 'Crossbow (Bonk)', cls: 'brute', main: 'crossbow', split: { bonk: 0.5, hp: 0.3, endurance: 0.2 } },
   { name: 'Brain caster: staff spells', cls: 'scholar', main: 'rapier', off: 'apprentice_staff', split: { brain: 0.55, hp: 0.3, endurance: 0.15 }, caster: 'brain' },

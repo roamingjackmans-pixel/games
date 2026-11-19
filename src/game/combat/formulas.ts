@@ -24,28 +24,39 @@ export const STAT_SOFT_CAP = 150;
  * Max HP (D311): up to HP 50 as before (14 a point to 30, 8 to 60); past 50 what the points give grows with the same
  * shape as an S weapon's damage (statGrowth): about ×2 by 100, more slowly past the soft cap 150, ×3 again by 999.
  */
-export function maxHP(hpStat: number, m = 1): number {
+function hpPointsBefore(hpStat: number): number {
   const s = Math.max(0, hpStat);
-  const p = s <= 50 ? piecewise(s, [[30, 14], [60, 8]]) : piecewise(50, [[30, 14], [60, 8]]) * statGrowth(s);
-  return Math.round(100 + m * p);
+  return s <= 50 ? piecewise(s, [[30, 14], [60, 8]]) : piecewise(50, [[30, 14], [60, 8]]) * statGrowth(s);
+}
+export function maxHP(hpStat: number, m = 1): number {
+  return Math.round(100 + m * fromTable(TABLES().hp, hpStat));
 }
 
 /** Max stamina (D311): as before to 99, then +0.8 a point to 150 and +0.3 a point to 999. */
+function staminaPointsBefore(stamStat: number): number {
+  return piecewise(stamStat, [[30, 3.5], [60, 2], [99, 0.8], [STAT_SOFT_CAP, 0.8], [STAT_CAP, 0.3]]);
+}
 export function maxStamina(stamStat: number, m = 1): number {
-  return Math.round(70 + m * piecewise(stamStat, [[30, 3.5], [60, 2], [99, 0.8], [STAT_SOFT_CAP, 0.8], [STAT_CAP, 0.3]]));
+  return Math.round(70 + m * fromTable(TABLES().stamina, stamStat));
 }
 
 /** Max equip load (D82, D311): 26 + 1.5 per Endurance point to 30, 1.0 to 60, 0.5 to 150, 0.1 to 999. */
+function loadPointsBefore(endurance: number): number {
+  return piecewise(endurance, [[30, 1.5], [60, 1.0], [STAT_SOFT_CAP, 0.5], [STAT_CAP, 0.1]]);
+}
 export function maxEquipLoad(endurance: number, m = 1): number {
-  return 26 + m * piecewise(endurance, [[30, 1.5], [60, 1.0], [STAT_SOFT_CAP, 0.5], [STAT_CAP, 0.1]]);
+  return 26 + m * fromTable(TABLES().load, endurance);
 }
 
 /** Stamina regen (D314): +0.165 a point to 200, so 200 Endurance gives 55 a second, then +0.02 a point (was 0.25). */
 export const REGEN_PER_POINT = 0.165;
 export const REGEN_FULL_AT = 200;
-export function staminaRegen(stamStat: number, m = 1): number {
+function regenPointsBefore(stamStat: number): number {
   const s = Math.max(0, stamStat);
-  return 22 + (REGEN_PER_POINT * Math.min(s, REGEN_FULL_AT) + 0.02 * Math.max(0, s - REGEN_FULL_AT)) * m;
+  return REGEN_PER_POINT * Math.min(s, REGEN_FULL_AT) + 0.02 * Math.max(0, s - REGEN_FULL_AT);
+}
+export function staminaRegen(stamStat: number, m = 1): number {
+  return 22 + fromTable(TABLES().regen, stamStat) * m;
 }
 export const STAMINA_REGEN_DELAY = 0.6;
 
@@ -70,11 +81,11 @@ export const ELITE_POISE_MULT = 1.5;
 
 /** Spell cast speed from Slicey (D106): ×(1 + 0.25 f(Slicey)), ≈ +13% at 40, +21% at 99 (the old, settling curve). */
 export function slickCast(slicey: number, m = 1): number {
-  return 1 + 0.25 * softStatCurve(slicey) * m;
+  return 1 + 0.25 * fromTable(TABLES().soft, slicey) * m;
 }
 /** Walking speed while casting (D106): 50% of normal, + 0.25 f(Bonk), ≈ 63% at 40, 70% at 99 (the old curve). */
 export function castMoveMult(bonk: number, m = 1): number {
-  return 0.5 + 0.25 * softStatCurve(bonk) * m;
+  return 0.5 + 0.25 * fromTable(TABLES().soft, bonk) * m;
 }
 
 /** The old scaling curve 1 − 0.982^s: it settles near 1 by 99. Cast speed and moving while casting still use it. */
@@ -92,8 +103,13 @@ const F150 = F100 + 0.75 * SLOPE_50_100 * 50;
 const F999 = (3 * (1 + REF_GRADE * F150) - 1) / REF_GRADE;
 const TAIL_K = 2;
 
-/** The scaling curve f(s) every damage grade multiplies (D311; it was 1 − 0.982^s, which flattened by 99). */
+/** The scaling curve f(s) every damage grade multiplies, reshaped by D450 (see TABLES). */
 export function scalingCurve(s: number): number {
+  return fromTable(TABLES().curve, s);
+}
+
+/** The scaling curve as D311 set it (it was 1 − 0.982^s, which flattened by 99): what D450 reshaped. */
+export function scalingCurveBefore(s: number): number {
   const x = Math.max(0, Math.min(STAT_CAP, s));
   if (x <= 50) return softStatCurve(x);
   if (x <= 100) return F50 + SLOPE_50_100 * (x - 50);
@@ -102,9 +118,64 @@ export function scalingCurve(s: number): number {
   return F150 + ((F999 - F150) * (1 - Math.exp(-TAIL_K * t))) / (1 - Math.exp(-TAIL_K));
 }
 
-/** How much a stat's worth has grown since 50, on an S grade's shape (1 at 50 or less; ×2 at 100, ×8.25 at 999). */
+/** How much a stat's worth had grown since 50 before D450, on an S grade's shape (1 at 50 or less; ×2 at 100, ×8.25 at 999). */
 export function statGrowth(s: number): number {
-  return (1 + REF_GRADE * scalingCurve(Math.max(50, s))) / (1 + REF_GRADE * F50);
+  return (1 + REF_GRADE * scalingCurveBefore(Math.max(50, s))) / (1 + REF_GRADE * F50);
+}
+
+// ---------------------------------------------------------------- D450: every stat's gains reshaped
+/** Every point past 50 gives this share of what it gave before D450 (15% less). */
+export const LATE_GAIN = 0.85;
+/**
+ * The first 50 points, in bands of ten (D450): the owner's numbers for Bonk on an S weapon, in % of the weapon's base
+ * damage a point. They climb to 21–30, the best ten points, then ease off into point 51 and keep easing from there.
+ */
+export const EARLY_SHAPE = [3.3, 3.5, 4.05, 3.95, 3.85] as const;
+
+/**
+ * Builds a stat's new value at every point 0–999 from what each point gave before (D450). Past 50 a point gives
+ * LATE_GAIN of what it did. Up to 50 each band of ten follows EARLY_SHAPE, scaled to where that stat's point 51 now
+ * lands (so an S weapon's Bonk gets the owner's numbers exactly); a band that already gave more than that keeps what it
+ * gave, so no early point is worth less than before. Everything is cumulative, so a stat's value never drops.
+ */
+function reshape(before: (s: number) => number): Float64Array {
+  const t = new Float64Array(STAT_CAP + 1);
+  const gain = (s: number): number => before(s) - before(s - 1);
+  // the owner's 41–50 band against an S weapon's point 51 after the cut: every stat's early bands sit this high over its own
+  const lift = EARLY_SHAPE[4] / 100 / REF_GRADE / (LATE_GAIN * (scalingCurveBefore(51) - scalingCurveBefore(50)));
+  const at51 = LATE_GAIN * gain(51);
+  t[0] = before(0);
+  for (let b = 0; b < 5; b++) {
+    const rate = (EARLY_SHAPE[b]! / EARLY_SHAPE[4]) * lift * at51;
+    let was = 0;
+    for (let s = b * 10 + 1; s <= b * 10 + 10; s++) was += gain(s);
+    for (let s = b * 10 + 1; s <= b * 10 + 10; s++) t[s] = t[s - 1]! + (rate * 10 >= was ? rate : gain(s));
+  }
+  for (let s = 51; s <= STAT_CAP; s++) t[s] = t[s - 1]! + LATE_GAIN * gain(s);
+  return t;
+}
+
+/** A table's value at a stat, between whole points in a straight line (two-handed Bonk is ×1.5, so 76.5 happens). */
+function fromTable(t: Float64Array, s: number): number {
+  const x = Math.max(0, Math.min(STAT_CAP, s));
+  const i = Math.floor(x);
+  if (i >= STAT_CAP) return t[STAT_CAP]!;
+  return t[i]! + (t[i + 1]! - t[i]!) * (x - i);
+}
+
+let tables: { curve: Float64Array; soft: Float64Array; hp: Float64Array; stamina: Float64Array; regen: Float64Array; load: Float64Array; thermos: Float64Array } | null = null;
+/** Every stat's reshaped values (D450), built once on first use. */
+function TABLES(): NonNullable<typeof tables> {
+  tables ??= {
+    curve: reshape(scalingCurveBefore),
+    soft: reshape(softStatCurve),
+    hp: reshape(hpPointsBefore),
+    stamina: reshape(staminaPointsBefore),
+    regen: reshape(regenPointsBefore),
+    load: reshape(loadPointsBefore),
+    thermos: reshape((s) => 0.003 * Math.max(0, s)),
+  };
+  return tables;
 }
 
 /** Grade weights (D88: raised so stats matter more; were S 1.2, A 1.0, B 0.75, C 0.5, D 0.25, E 0.1). */
@@ -256,9 +327,9 @@ export function healPower(spellBase: number, prayer: number, tMult: number): num
   return spellBase * (1 + 1.5 * scalingCurve(prayer)) * tMult;
 }
 
-/** flaskHeal = 40% maxHP × (1 + 0.003 × Prayer) */
+/** flaskHeal = 40% maxHP × (1 + Prayer's bonus: 0.3% a point to 50, 0.255% past it, D450) */
 export function flaskHeal(maxHp: number, prayer: number, bonusPct = 0, m = 1): number {
-  return 0.4 * maxHp * (1 + 0.003 * prayer * m) * (1 + bonusPct);
+  return 0.4 * maxHp * (1 + fromTable(TABLES().thermos, prayer) * m) * (1 + bonusPct);
 }
 
 /** damageTaken = incoming × 100 / (100 + Def[type]) (negative defense is treated as 0) */

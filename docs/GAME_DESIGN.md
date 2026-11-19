@@ -234,6 +234,18 @@ them.
 
 ### 3.1 Formulas
 
+**Every stat's gains are reshaped (D450).** The formulas below are what each point gave under D311; the game builds
+each stat from them like this:
+- **Points 51–999** give **15% less** than the formula below (×0.85).
+- **Points 1–50** follow the owner's shape in bands of ten, best at **21–30**. For an S weapon's Bonk, a point is
+  worth **3.3% · 3.5% · 4.05% · 3.95% · 3.85%** of the weapon's base for points 1–10, 11–20, 21–30, 31–40 and 41–50.
+  Each stat's own bands are scaled to where its point 51 lands, so every stat eases off from 30 onward instead of
+  jumping at 51. A band that already gave more keeps what it gave, so no early point is worth less than before.
+- In practice that reshapes the scaling curve f (weapon damage, Spell Skill, hybrids) and HP's 31–50 (8 → about 10.6 a
+  point). Endurance, the Thermos, cast speed and moving while casting keep their early points and lose 15% past 50.
+- With these numbers an S weapon's multiplier is ×2.08 at 30 (was ×1.80), ×2.86 at 50 (×2.13), ×4.68 at 100 (×4.27),
+  ×6.04 at 150 (×5.87), ×9.47 at 300 (×9.91) and ×16.0 at 999 (×17.6). Max HP at 50 is 732 (680), at 999 4,306 (4,885).
+
 ```
 maxHP        = 100 + m × P(HP),  P = Σ 1–30: 14 · 31–50: 8 a point (680 at 50); past 50 P(50) × statGrowth(HP) (D311)
                (HP 50: 680 · 100: 1,260 · 150: 1,695 · 300: 2,793 · 999: 4,885, before m)

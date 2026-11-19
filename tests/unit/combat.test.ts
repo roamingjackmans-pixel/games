@@ -4,7 +4,7 @@ import {
   levelCost,
   maxHP,
   maxStamina,
-  scalingCurve,
+  scalingCurve, scalingCurveBefore,
   weaponDamage,
   dodgeRecharge,
   reviveRequirement,
@@ -47,20 +47,22 @@ describe('formulas (GAME_DESIGN §3)', () => {
     expect(maxHP(0)).toBe(100);
     expect(maxHP(10)).toBe(240);
     expect(maxHP(30)).toBe(520);
-    expect(maxHP(40)).toBe(600);
-    // D311: past 50 the points' worth grows with an S weapon's shape: about double by 100, ×3 again from 150 to 999
-    expect(maxHP(50)).toBe(680);
-    expect((maxHP(100) - 100) / (maxHP(50) - 100)).toBeCloseTo(2, 5);
-    expect((maxHP(999) - 100) / (maxHP(150) - 100)).toBeCloseTo(3, 5);
+    // D450: 31–50 now give about 10.6 a point (they gave 8), so the early points no longer dip
+    expect(maxHP(40)).toBe(627);
+    expect(maxHP(50)).toBe(732);
+    // past 50 each point gives 15% less than it did (100 HP: 680 → 1,260 before)
+    expect(maxHP(100) - maxHP(50)).toBeCloseTo(0.85 * (1260 - 680), -1);
     expect(maxStamina(10)).toBe(105);
-    expect(maxStamina(99)).toBe(Math.round(70 + 30 * 3.5 + 30 * 2 + 39 * 0.8));
+    expect(maxStamina(99)).toBe(Math.round(70 + 30 * 3.5 + 20 * 2 + 0.85 * (10 * 2 + 39 * 0.8)));
   });
   it('scaling curve values', () => {
-    expect(scalingCurve(10)).toBeCloseTo(0.166, 2);
-    expect(scalingCurve(40)).toBeCloseTo(0.517, 2);
-    // D311: unchanged to 50; an S weapon (×1.9) doubles from 50 to 100 and triples from the soft cap 150 to 999
-    expect(scalingCurve(50)).toBeCloseTo(1 - Math.pow(0.982, 50), 10);
-    const s = (x: number): number => 1 + 1.9 * scalingCurve(x);
+    // D450: an S weapon gets 3.3, 3.5, 4.05, 3.95 and 3.85% of its base a point through 1–50, then 15% less than D311 gave
+    expect(1.9 * scalingCurve(10) * 100).toBeCloseTo(33, 6);
+    expect(1.9 * scalingCurve(50) * 100).toBeCloseTo(33 + 35 + 40.5 + 39.5 + 38.5, 6);
+    expect(scalingCurve(150) - scalingCurve(50)).toBeCloseTo(0.85 * (scalingCurveBefore(150) - scalingCurveBefore(50)), 10);
+    // D311's curve, which D450 reshaped: an S weapon (×1.9) doubled from 50 to 100 and tripled from 150 to 999
+    expect(scalingCurveBefore(50)).toBeCloseTo(1 - Math.pow(0.982, 50), 10);
+    const s = (x: number): number => 1 + 1.9 * scalingCurveBefore(x);
     expect(s(100) / s(50)).toBeCloseTo(2, 6);
     expect(s(999) / s(150)).toBeCloseTo(3, 6);
     expect(scalingCurve(2000)).toBe(scalingCurve(999));
