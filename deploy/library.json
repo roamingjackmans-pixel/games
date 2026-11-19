@@ -16,6 +16,7 @@
     { "folder": "lieage", "repo": "lieage", "publish": "public", "stamp": true },
     { "folder": "roleplay20", "repo": "roleplay20", "publish": "site" },
     { "folder": "battlecards", "repo": "battlecards", "publish": "public", "stamp": true },
-    { "folder": "shoallhell", "repo": "shoallhell", "publish": "site" }
+    { "folder": "shoallhell", "repo": "shoallhell", "publish": "site" },
+    { "folder": "dontwakegerald", "repo": "dontwakegerald", "publish": "public", "fullHistory": true, "stamp": true }
   ]
 }
