@@ -20,11 +20,11 @@ describe('NG+ boss damage (D314)', () => {
 });
 
 describe('stamina regen (D314)', () => {
-  it('22 at 0, +0.165 a point to 50, 15% less a point past it (D450), slow after 200', () => {
+  it('22 at 0, 55 at 200 Endurance, slow after (unchanged by D450 / D451)', () => {
     expect(staminaRegen(0)).toBe(22);
-    expect(staminaRegen(50)).toBeCloseTo(22 + 0.165 * 50, 6);
-    expect(staminaRegen(200)).toBeCloseTo(22 + 0.165 * 50 + 0.85 * 0.165 * 150, 6);
+    expect(staminaRegen(200)).toBeCloseTo(55, 6);
     expect(staminaRegen(999)).toBeLessThan(75);
+    expect(staminaRegen(60)).toBeCloseTo(22 + 0.165 * 60, 6);
   });
 });
 

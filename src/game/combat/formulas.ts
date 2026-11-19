@@ -124,8 +124,8 @@ export function statGrowth(s: number): number {
 }
 
 // ---------------------------------------------------------------- D450: every stat's gains reshaped
-/** Every point past 50 gives this share of what it gave before D450 (15% less). */
-export const LATE_GAIN = 0.85;
+/** The early bands are pitched against 85% of what point 51 gave before D450 (the owner's S-weapon numbers). */
+export const EARLY_ANCHOR = 0.85;
 /**
  * The first 50 points, in bands of ten (D450): the owner's numbers for Bonk on an S weapon, in % of the weapon's base
  * damage a point. They climb to 21–30, the best ten points, then ease off into point 51 and keep easing from there.
@@ -133,17 +133,19 @@ export const LATE_GAIN = 0.85;
 export const EARLY_SHAPE = [3.3, 3.5, 4.05, 3.95, 3.85] as const;
 
 /**
- * Builds a stat's new value at every point 0–999 from what each point gave before (D450). Past 50 a point gives
- * LATE_GAIN of what it did. Up to 50 each band of ten follows EARLY_SHAPE, scaled to where that stat's point 51 now
- * lands (so an S weapon's Bonk gets the owner's numbers exactly); a band that already gave more than that keeps what it
- * gave, so no early point is worth less than before. Everything is cumulative, so a stat's value never drops.
+ * Builds a stat's new value at every point 0–999 from what each point gave before (D450, D451). Up to 50 each band of
+ * ten follows EARLY_SHAPE, pitched against EARLY_ANCHOR of what that stat's point 51 gave (so an S weapon's Bonk gets
+ * the owner's numbers exactly); a band that already gave more keeps what it gave, so no early point is worth less than
+ * before. Past 50 a point gives k × what it did, never more than point 50 now gives (so nothing climbs again after
+ * 21–30), with k solved for each stat so it ends at 999 exactly where it did before (D451). Everything is cumulative,
+ * so a stat's value never drops.
  */
 function reshape(before: (s: number) => number): Float64Array {
   const t = new Float64Array(STAT_CAP + 1);
   const gain = (s: number): number => before(s) - before(s - 1);
   // the owner's 41–50 band against an S weapon's point 51 after the cut: every stat's early bands sit this high over its own
-  const lift = EARLY_SHAPE[4] / 100 / REF_GRADE / (LATE_GAIN * (scalingCurveBefore(51) - scalingCurveBefore(50)));
-  const at51 = LATE_GAIN * gain(51);
+  const lift = EARLY_SHAPE[4] / 100 / REF_GRADE / (EARLY_ANCHOR * (scalingCurveBefore(51) - scalingCurveBefore(50)));
+  const at51 = EARLY_ANCHOR * gain(51);
   t[0] = before(0);
   for (let b = 0; b < 5; b++) {
     const rate = (EARLY_SHAPE[b]! / EARLY_SHAPE[4]) * lift * at51;
@@ -151,7 +153,23 @@ function reshape(before: (s: number) => number): Float64Array {
     for (let s = b * 10 + 1; s <= b * 10 + 10; s++) was += gain(s);
     for (let s = b * 10 + 1; s <= b * 10 + 10; s++) t[s] = t[s - 1]! + (rate * 10 >= was ? rate : gain(s));
   }
-  for (let s = 51; s <= STAT_CAP; s++) t[s] = t[s - 1]! + LATE_GAIN * gain(s);
+  // D451: the same value at 999 as before. The points past 50 share what is left, each at most point 50's worth
+  const cap = t[50]! - t[49]!;
+  const need = before(STAT_CAP) - t[50]!;
+  const late = (k: number): number => {
+    let sum = 0;
+    for (let s = 51; s <= STAT_CAP; s++) sum += Math.min(cap, k * gain(s));
+    return sum;
+  };
+  let lo = 0;
+  let hi = 8;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (late(mid) < need) lo = mid;
+    else hi = mid;
+  }
+  const k = (lo + hi) / 2;
+  for (let s = 51; s <= STAT_CAP; s++) t[s] = t[s - 1]! + Math.min(cap, k * gain(s));
   return t;
 }
 

@@ -234,17 +234,20 @@ them.
 
 ### 3.1 Formulas
 
-**Every stat's gains are reshaped (D450).** The formulas below are what each point gave under D311; the game builds
-each stat from them like this:
-- **Points 51–999** give **15% less** than the formula below (×0.85).
+**Every stat's gains are reshaped (D450, D451).** The formulas below are what each point gave under D311; the game
+builds each stat from them like this:
 - **Points 1–50** follow the owner's shape in bands of ten, best at **21–30**. For an S weapon's Bonk, a point is
   worth **3.3% · 3.5% · 4.05% · 3.95% · 3.85%** of the weapon's base for points 1–10, 11–20, 21–30, 31–40 and 41–50.
-  Each stat's own bands are scaled to where its point 51 lands, so every stat eases off from 30 onward instead of
+  Each stat's bands are pitched against 85% of what its point 51 gave, so every stat eases off from 30 onward instead of
   jumping at 51. A band that already gave more keeps what it gave, so no early point is worth less than before.
-- In practice that reshapes the scaling curve f (weapon damage, Spell Skill, hybrids) and HP's 31–50 (8 → about 10.6 a
-  point). Endurance, the Thermos, cast speed and moving while casting keep their early points and lose 15% past 50.
-- With these numbers an S weapon's multiplier is ×2.08 at 30 (was ×1.80), ×2.86 at 50 (×2.13), ×4.68 at 100 (×4.27),
-  ×6.04 at 150 (×5.87), ×9.47 at 300 (×9.91) and ×16.0 at 999 (×17.6). Max HP at 50 is 732 (680), at 999 4,306 (4,885).
+- **Points 51–999** give k × the formula below, never more than point 50 now gives (nothing climbs again), with k solved
+  for each stat so that **every stat ends at 999 exactly where it did** (D451).
+- In practice that reshapes the scaling curve f (weapon damage, Spell Skill, hybrids: 3.85% a point for 51–100, then
+  about 4% under D311's numbers) and HP's 31–100 (about 10.5 a point; back on D311's track by 100). Endurance, the
+  Thermos, cast speed and moving while casting are exactly as D311 set them.
+- An S weapon's multiplier is ×2.08 at 30 (was ×1.80), ×2.86 at 50 (×2.13), ×4.79 at 100 (×4.27), ×6.33 at 150
+  (×5.87), ×7.78 at 200 (×7.38), ×10.2 at 300 (×9.91) and ×17.6 at 999 (×17.6). Max HP at 50 is 732 (680), the same
+  from about 100 on.
 
 ```
 maxHP        = 100 + m × P(HP),  P = Σ 1–30: 14 · 31–50: 8 a point (680 at 50); past 50 P(50) × statGrowth(HP) (D311)

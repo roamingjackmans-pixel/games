@@ -1,7 +1,7 @@
-// D450: every stat's gains reshaped. The first 50 points climb to their best at 21–30 and ease off from there; past 50
-// every point gives 15% less than it did. No early point is worth less than before.
+// D450, D451: every stat's gains reshaped. The first 50 points climb to their best at 21–30 and ease off from there; no
+// early point is worth less than before, and every stat ends at 999 exactly where it did.
 import { describe, expect, it } from 'vitest';
-import { EARLY_SHAPE, LATE_GAIN, castMoveMult, flaskHeal, maxEquipLoad, maxHP, maxStamina, scalingCurve, scalingCurveBefore, slickCast, staminaRegen } from '../../src/game/combat/formulas';
+import { EARLY_SHAPE, castMoveMult, flaskHeal, maxEquipLoad, maxHP, maxStamina, scalingCurve, scalingCurveBefore, slickCast, staminaRegen } from '../../src/game/combat/formulas';
 
 const BANDS: [number, number][] = [[1, 10], [11, 20], [21, 30], [31, 40], [41, 50], [51, 100], [101, 150], [151, 200], [201, 300], [301, 400], [401, 500], [501, 700], [701, 999]];
 /** An S weapon's % of base damage a point, over a band. */
@@ -15,9 +15,16 @@ describe('stat gains reshaped (D450)', () => {
     for (let i = 3; i < per.length; i++) expect(per[i]!, BANDS[i]!.join('-')).toBeLessThanOrEqual(per[i - 1]! + 1e-9);
   });
 
-  it('past 50 every point gives 15% less than before', () => {
-    expect(LATE_GAIN).toBe(0.85);
-    for (const [a, b] of BANDS.slice(5)) expect(sPerPoint(scalingCurve, a, b)).toBeCloseTo(0.85 * sPerPoint(scalingCurveBefore, a, b), 6);
+  it('every stat ends at 999 where it did before (D451)', () => {
+    expect(scalingCurve(999)).toBeCloseTo(scalingCurveBefore(999), 6);
+    expect(maxHP(999)).toBe(4885);
+    expect(maxStamina(999)).toBe(562);
+    expect(maxEquipLoad(999)).toBeCloseTo(230.9, 6);
+    expect(staminaRegen(999)).toBeCloseTo(22 + 0.165 * 200 + 0.02 * 799, 6);
+    expect(flaskHeal(100, 999)).toBeCloseTo(40 * (1 + 0.003 * 999), 6);
+    // in between an S weapon is stronger than it was, most of all around 50
+    expect(scalingCurve(50) / scalingCurveBefore(50)).toBeGreaterThan(1.5);
+    for (const s of [100, 200, 500, 900]) expect(scalingCurve(s)).toBeGreaterThan(scalingCurveBefore(s));
   });
 
   it('no stat is worth less than before by 50, and every stat still grows with every point', () => {
