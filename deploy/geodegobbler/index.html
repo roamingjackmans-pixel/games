@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.1.7">
+<meta name="version" content="1.1.8">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -332,6 +332,11 @@ body.at-table #app { filter: blur(4px) brightness(.5); }
 .tb-counters { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .tb-counters > div { background: rgba(0, 0, 0, .4); border-radius: 10px; padding: 6px; text-align: center; } .tb-counters .wide { grid-column: 1 / -1; }
 .tb-counters small { display: block; font-size: 10px; text-transform: uppercase; color: var(--muted); } .tb-counters b { font-family: var(--font-display); font-size: 22px; }
 b.hands { color: var(--sparkle); } b.discards { color: var(--shine); } b.money { color: var(--money); }
+.tb-timer { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; background: rgba(0, 0, 0, .4); border-radius: 10px; padding: 6px 10px; }
+.tb-timer small { font-size: 10px; text-transform: uppercase; color: var(--muted); }
+.tb-timer b { font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; color: #ffe2a8; }
+.tb-timer.done b { color: var(--good); } .tb-timer.done small::after { content: ' · final'; }
+.v-time { font-size: 18px; } .v-time b { font-family: var(--font-display); color: var(--gold); }
 .tb-sbtns { display: flex; gap: 6px; } .tb-sbtns .btn { flex: 1; }
 .tb-cps { font-size: 11px; text-align: center; margin-top: auto; }
 .tb-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
@@ -487,7 +492,7 @@ table.levels { width: 100%; border-collapse: collapse; margin: 10px 0; font-size
   .tb-round { flex: 1 1 45%; padding: 4px; } .tb-round b { font-size: 20px; }
   .tb-hand { flex: 1 1 100%; padding: 4px; } .tb-calc .sp, .tb-calc .sh { font-size: 18px; padding: 4px; }
   .tb-counters { flex: 1 1 100%; grid-template-columns: repeat(5, 1fr); } .tb-counters .wide { grid-column: auto; } .tb-counters b { font-size: 16px; }
-  .tb-sbtns { flex: 1 1 100%; }
+  .tb-sbtns { flex: 1 1 100%; } .tb-timer { flex: 1 1 100%; padding: 4px 10px; } .tb-timer b { font-size: 16px; }
   .tb-top { padding: 6px; gap: 6px; flex-wrap: wrap; } .slots { min-height: 80px; padding: 4px; gap: 4px; }
   .critter { width: 56px; height: 72px; } .cr-emoji { font-size: 26px; } .cr-name { font-size: 8px; }
   .cons { width: 54px; height: 54px; } .cons span { font-size: 22px; }
@@ -760,7 +765,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-20">v1.1.7</div>
+<div id="ver" title="built 2026-11-20">v1.1.8</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -4146,6 +4151,7 @@ G.Table = (() => {
           <div><small>Ante</small><b id="tb-ante">1/8</b></div>
           <div><small>Round</small><b id="tb-roundn">1</b></div>
         </div>
+        <div class="tb-timer" id="tb-timerbox"><small>⏱ Run time</small><b id="tb-timer">0:00</b></div>
         <div class="tb-sbtns"><button class="btn sm" id="tb-deckbtn">🂠 Deck</button><button class="btn sm" id="tb-info">📖 Run info</button><button class="btn sm" id="tb-leave">🚪 Mosey out</button></div>
         <div class="tb-cps muted" id="tb-cps"></div>
       </div>
@@ -4173,12 +4179,26 @@ G.Table = (() => {
     document.getElementById('tb-info').onclick = () => T.runInfo();
     document.getElementById('tb-deckbtn').onclick = () => T.deckView();
     document.getElementById('tb-deck').onclick = () => T.deckView();
+    el.timer = document.getElementById('tb-timer'); el.timerbox = document.getElementById('tb-timerbox');
+    setInterval(() => { if (T.open && T.run) T.tickTimer(); }, 250);
     addEventListener('keydown', (e) => {
       if (!T.open || busy || e.target.tagName === 'INPUT') return;
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); T.play(); }
       if (e.key === 'd' || e.key === 'Delete') T.discard();
       if (e.key === 'Escape') T.hide();
     });
+  };
+  /* run timer: wall-clock time since the run started (the same clock the Speedrunner achievements use), frozen when the run ends */
+  T.fmtRunTime = (r) => {
+    const sec = Math.max(0, Math.floor(((r.finishedAt || Date.now()) - (r.startedAt || Date.now())) / 1000));
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+  };
+  T.tickTimer = () => {
+    const r = T.run; if (!r || !el.timer) return;
+    const t = T.fmtRunTime(r);
+    if (el.timer.textContent !== t) el.timer.textContent = t;
+    el.timerbox.classList.toggle('done', !!r.finishedAt);
   };
   T.show = () => {
     if (!T.run) return;
@@ -4238,7 +4258,7 @@ G.Table = (() => {
   /* ---------- render ---------- */
   T.render = () => {
     const r = T.run; if (!r) return;
-    T.renderSide(); T.renderCritters(); T.renderCons();
+    T.renderSide(); T.renderCritters(); T.renderCons(); T.tickTimer();
     el.root.dataset.phase = view ? view.kind : r.phase;
     if (view && view.kind === 'cashout') T.renderCashout();
     else if (r.phase === 'select') T.renderSelect();
@@ -4590,7 +4610,8 @@ G.Table = (() => {
     s.trophies[key] = Date.now();
     s.bloom.crystals++;
     G.Events.addBuff({ id: 'feast', name: 'Victory Feast', emoji: '🍗', cps: 3, dur: 600 });
-    const runMs = Date.now() - r.startedAt;
+    if (!r.finishedAt) r.finishedAt = Date.now();
+    const runMs = r.finishedAt - r.startedAt;
     if (runMs < 15 * 60e3) s.secrets.speedrun = 1;
     if (runMs < 10 * 60e3) s.secrets.speedrun2 = 1;
     if (runMs < 5 * 60e3) s.secrets.speedrun3 = 1;
@@ -4603,7 +4624,7 @@ G.Table = (() => {
   T.renderWon = () => {
     const r = T.run;
     el.hand.innerHTML = '';
-    el.center.innerHTML = `<div class="victory"><div class="v-geode">🏆</div><h1>YEEHAW! YOU WIN!</h1><p>Sheriff Gobbo ate all 8 antes and rode into the (cardboard) sunset with the <b>${G.POUCH_BY_ID[r.pouch].name}</b> on <b>${G.SPICES[r.spice - 1].name}</b>.</p>
+    el.center.innerHTML = `<div class="victory"><div class="v-geode">🏆</div><h1>YEEHAW! YOU WIN!</h1><p class="v-time">⏱ Run time: <b>${T.fmtRunTime(r)}</b></p><p>Sheriff Gobbo ate all 8 antes and rode into the (cardboard) sunset with the <b>${G.POUCH_BY_ID[r.pouch].name}</b> on <b>${G.SPICES[r.spice - 1].name}</b>.</p>
       <ul><li>${r.trophyNew ? '🏆 <b>New Trophy Geode!</b> +2% CpS forever' : '🏆 Trophy already owned (try another pouch or spice!)'}</li><li>🔮 +1 Bloom Crystal</li><li>🍗 Victory Feast: ×3 CpS for 10 minutes</li>${r.spice < 8 ? `<li>🌶️ Unlocked <b>${G.SPICES[r.spice].name}</b> spice for this pouch</li>` : ''}</ul>
       <div class="btn-row"><button class="btn primary big" id="v-endless">♾️ Keep eating (Endless)</button><button class="btn big" id="v-leave">Cash out & leave</button></div></div>`;
     el.center.querySelector('#v-endless').onclick = () => { E.continueEndless(r); T.render(); T.save(); };
@@ -4612,6 +4633,7 @@ G.Table = (() => {
   T.lose = () => {
     const r = T.run;
     r.phase = 'over';
+    if (!r.finishedAt) r.finishedAt = Date.now();
     S().losses++;
     G.state.secrets.lossStreak = (G.state.secrets.lossStreak || 0) + 1;
     if (G.state.secrets.lossStreak >= 5) G.state.secrets.loss5 = 1;
