@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.1.8">
+<meta name="version" content="1.1.9">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -765,7 +765,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-20">v1.1.8</div>
+<div id="ver" title="built 2026-11-20">v1.1.9</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -4614,7 +4614,7 @@ G.Table = (() => {
     const runMs = r.finishedAt - r.startedAt;
     if (runMs < 15 * 60e3) s.secrets.speedrun = 1;
     if (runMs < 10 * 60e3) s.secrets.speedrun2 = 1;
-    if (runMs < 5 * 60e3) s.secrets.speedrun3 = 1;
+    if (runMs < 4.5 * 60e3) s.secrets.speedrun3 = 1;
     if (r._vegan || !r._hadCritter) s.secrets.nocritter = 1;
     s.secrets.lossStreak = 0;
     r.trophyNew = newTrophy;
@@ -4965,7 +4965,7 @@ G.ACH = [];
   SEC('broke', 'Flat Broke', 'Leave the shop with exactly <b>$0</b>.', 'broke');
   SEC('speedrun', 'Speedrunner', 'Win a Gobble Table run in under <b>15 minutes</b>.', 'speedrun');
   SEC('speedrun2', 'Speedrunner II', 'Win a Gobble Table run in under <b>10 minutes</b>.', 'speedrun2');
-  SEC('speedrun3', 'Speedrunner III', 'Win a Gobble Table run in under <b>5 minutes</b>.', 'speedrun3');
+  SEC('speedrun3', 'Speedrunner III', 'Win a Gobble Table run in under <b>4½ minutes</b>.', 'speedrun3');
   SEC('overkill', 'Overkill', 'Score <b>10×</b> a craving\'s target in one hand.', 'overkill');
   SEC('overkill2', 'Massive Overkill', 'Score <b>1,000×</b> a craving\'s target in one hand.', 'overkill2');
   SEC('legend3', 'Legendary Belly', 'Have <b>3</b> Legendary critters at once.', 'legend3');
