@@ -21,6 +21,12 @@
         "vite.stable.config.ts"
       ],
       "port": 5174
+    },
+    {
+      "name": "games-hub",
+      "runtimeExecutable": "py",
+      "runtimeArgs": ["-m", "http.server", "5180", "--directory", "deploy"],
+      "port": 5180
     }
   ]
 }

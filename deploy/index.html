@@ -6,257 +6,393 @@
 <title>Games | josephjackman.com</title>
 <!-- The games are only for people who have this address: keep the page out of search results. -->
 <meta name="robots" content="noindex">
-<meta name="description" content="Browser games by Joseph Jackman: Smash Your Bros, Don't Wake Gerald, Alt Whisker Wars, The Infinite Hive, Horse Race, The Deck, Lieage, Roleplay20, Dungeon Joe, Geode Gobbler, Battle Cards and Shoallhell.">
+<meta name="description" content="Browser games by Joseph Jackman: Alt Whisker Wars, Battle Cards, Don't Wake Gerald, Dungeon Joe, Geode Gobbler, Horse Race, Lieage, Roleplay20, Shoallhell, Smash Your Bros, The Deck and The Infinite Hive.">
+<meta name="theme-color" content="#150e20">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;600;700&family=Rye&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #2b1d3a;
-    --bg-2: #43295c;
-    --card: #fff8ee;
-    --ink: #3a2a48;
-    --muted: #7a6a88;
-    --accent: #ff6fa3;
-    --accent-dark: #d94c82;
-    --gold: #ffcf5a;
+    --bg: #150e20;
+    --bg-glow: #3a2357;
+    --surface: rgba(255, 255, 255, .045);
+    --surface-hover: rgba(255, 255, 255, .075);
+    --line: rgba(255, 255, 255, .09);
+    --text: #f6effc;
+    --muted: #b3a3c7;
+    --faint: #85759a;
+    --radius: 16px;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; min-height: 100%; }
+  html { color-scheme: dark; }
   body {
+    margin: 0;
     min-height: 100vh;
+    font-family: 'Fredoka', system-ui, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1100px 520px at 50% -160px, var(--bg-glow), transparent 70%),
+      var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 24px 56px; }
+
+  /* header: title on the left, search on the right */
+  .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin-bottom: 28px; }
+  .site { display: inline-block; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-decoration: none; margin-bottom: 6px; }
+  .site:hover { color: var(--text); }
+  h1 { font-size: 40px; font-weight: 700; line-height: 1.05; margin: 0; letter-spacing: -.01em; }
+  .lede { margin: 6px 0 0; color: var(--muted); font-size: 16px; }
+  .search { position: relative; flex: 0 1 300px; }
+  .search svg { position: absolute; left: 14px; top: 50%; translate: 0 -50%; width: 17px; height: 17px; color: var(--faint); pointer-events: none; }
+  .search input {
+    width: 100%;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 11px 16px 11px 40px;
+    outline: none;
+    transition: border-color .2s, background .2s;
+  }
+  .search input::placeholder { color: var(--faint); }
+  .search input:focus { border-color: rgba(255, 255, 255, .28); background: var(--surface-hover); }
+
+  /* the cards: as many columns as fit, roughly 4 on a laptop, 1 on a phone */
+  .games { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+  .card {
+    --accent: #ff6fa3;
+    position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 16px;
-    font-family: 'Fredoka', system-ui, sans-serif;
-    color: var(--card);
-    background: radial-gradient(ellipse at top, var(--bg-2), var(--bg) 70%);
-  }
-  .site { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #cdb8e6; margin: 0 0 20px; }
-  .site a { color: inherit; text-decoration: none; }
-  .card {
-    width: 100%;
-    max-width: 440px;
-    background: var(--card);
-    color: var(--ink);
-    border-radius: 28px;
-    padding: 32px 28px 28px;
-    text-align: center;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
-  }
-  .hero { font-size: 72px; line-height: 1; margin-bottom: 8px; }
-  .hero span { display: inline-block; animation: bob 2.4s ease-in-out infinite; }
-  .hero span:nth-child(2) { animation-delay: .3s; }
-  .hero span:nth-child(3) { animation-delay: .6s; }
-  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-  h1 { font-size: 40px; margin: 6px 0 4px; font-weight: 700; }
-  .tag { color: var(--muted); font-size: 17px; margin: 0 0 24px; line-height: 1.4; }
-  .play {
-    display: inline-block;
-    background: var(--accent);
-    color: #fff;
+    color: inherit;
     text-decoration: none;
-    font-weight: 700;
-    font-size: 22px;
-    padding: 14px 40px;
-    border-radius: 999px;
-    box-shadow: 0 5px 0 var(--accent-dark);
-    transition: transform .1s, box-shadow .1s;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: transform .25s cubic-bezier(.2, .8, .2, 1), border-color .25s, box-shadow .25s, background .25s;
+    animation: rise .5s cubic-bezier(.2, .8, .2, 1) both;
+    animation-delay: calc(var(--i, 0) * 35ms);
   }
-  .play:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--accent-dark); }
-  .play:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-dark); }
-  ul { list-style: none; padding: 0; margin: 24px 0 0; text-align: left; font-size: 15px; color: var(--muted); }
-  li { padding: 6px 0; border-top: 1px dashed #e6d9ca; }
-  li b { color: var(--ink); font-weight: 600; }
-  footer { margin-top: 20px; font-size: 13px; color: #a893c0; }
-  /* the game cards: side by side when there's room, stacked on phones */
-  .games { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 24px; width: 100%; }
-  .games .card { flex: 1 1 340px; display: flex; flex-direction: column; align-items: center; }
-  .games .card ul { width: 100%; }
-  .games .card .tag { flex: 1 0 auto; }   /* longer taglines push nothing out of line: the buttons stay level */
-  .games .card .hero { align-self: stretch; white-space: nowrap; font-size: clamp(52px, 17vw, 72px); }   /* three emoji, one row */
-  .alt .play { background: #1fb4c4; box-shadow: 0 5px 0 #13808c; }
-  .alt .play:hover { box-shadow: 0 7px 0 #13808c; }
-  .alt .play:active { box-shadow: 0 2px 0 #13808c; }
-  .hive .play { background: #ffb120; color: #3a2405; box-shadow: 0 5px 0 #c27c0e; }
-  .hive .play:hover { box-shadow: 0 7px 0 #c27c0e; }
-  .hive .play:active { box-shadow: 0 2px 0 #c27c0e; }
-  .race .play { background: #1f9a48; box-shadow: 0 5px 0 #13652f; }
-  .race .play:hover { box-shadow: 0 7px 0 #13652f; }
-  .race .play:active { box-shadow: 0 2px 0 #13652f; }
-  .deck .play { background: #428bca; box-shadow: 0 5px 0 #2a5f93; }
-  .deck .play:hover { box-shadow: 0 7px 0 #2a5f93; }
-  .deck .play:active { box-shadow: 0 2px 0 #2a5f93; }
-  .lie .play { background: #8a4dff; box-shadow: 0 5px 0 #5e2fc0; }
-  .lie .play:hover { box-shadow: 0 7px 0 #5e2fc0; }
-  .lie .play:active { box-shadow: 0 2px 0 #5e2fc0; }
-  .rp20 .play { background: #b8322a; box-shadow: 0 5px 0 #7e1f19; }
-  .rp20 .play:hover { box-shadow: 0 7px 0 #7e1f19; }
-  .rp20 .play:active { box-shadow: 0 2px 0 #7e1f19; }
-  .dj .play { background: #2e2519; color: #f0c75e; box-shadow: 0 5px 0 #0f0c08; }
-  .dj .play:hover { box-shadow: 0 7px 0 #0f0c08; }
-  .dj .play:active { box-shadow: 0 2px 0 #0f0c08; }
-  .gg .play { background: #c9631a; box-shadow: 0 5px 0 #7a3a0a; font-family: 'Rye', 'Fredoka', serif; font-weight: 400; }
-  .gg .play:hover { box-shadow: 0 7px 0 #7a3a0a; }
-  .gg .play:active { box-shadow: 0 2px 0 #7a3a0a; }
-  .gg h1 { font-family: 'Rye', 'Fredoka', serif; font-weight: 400; font-size: 34px; }
-  .bc .play { background: #ffcf3a; color: #3a2405; box-shadow: 0 5px 0 #c49413; font-family: 'Bangers', 'Fredoka', sans-serif; font-weight: 400; letter-spacing: .05em; font-size: 26px; }
-  .bc .play:hover { box-shadow: 0 7px 0 #c49413; }
-  .bc .play:active { box-shadow: 0 2px 0 #c49413; }
-  .bc h1 { font-family: 'Bangers', 'Fredoka', sans-serif; font-weight: 400; font-size: 44px; letter-spacing: .03em; }
-  .sh .play { background: #1f6f5c; color: #d9fff0; box-shadow: 0 5px 0 #0f3d32; }
-  .sh .play:hover { box-shadow: 0 7px 0 #0f3d32; }
-  .sh .play:active { box-shadow: 0 2px 0 #0f3d32; }
-  .dwg .play { background: #ffc35a; color: #2a1a00; box-shadow: 0 5px 0 #a8701e; font-family: 'Bangers', 'Fredoka', sans-serif; font-weight: 400; letter-spacing: .05em; font-size: 26px; }
-  .dwg .play:hover { box-shadow: 0 7px 0 #a8701e; }
-  .dwg .play:active { box-shadow: 0 2px 0 #a8701e; }
-  .dwg h1 { font-family: 'Bangers', 'Fredoka', sans-serif; font-weight: 400; font-size: 42px; letter-spacing: .03em; }
-  .syb .play { background: #ff3a6e; color: #fff7ee; box-shadow: 0 5px 0 #8c1238; font-family: 'Bangers', 'Fredoka', sans-serif; font-weight: 400; letter-spacing: .05em; font-size: 26px; }
-  .syb .play:hover { box-shadow: 0 7px 0 #8c1238; }
-  .syb .play:active { box-shadow: 0 2px 0 #8c1238; }
-  .syb h1 { font-family: 'Bangers', 'Fredoka', sans-serif; font-weight: 400; font-size: 42px; letter-spacing: .03em; }
-  @media (prefers-reduced-motion: reduce) { .hero span { animation: none; } }
+  .card[hidden] { display: none; }
+  .card:hover, .card:focus-visible {
+    transform: translateY(-4px);
+    background: var(--surface-hover);
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    box-shadow: 0 14px 34px -12px color-mix(in srgb, var(--accent) 45%, transparent), 0 6px 18px rgba(0, 0, 0, .35);
+    outline: none;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+
+  /* screenshot on top; its clip fades in over it while the card is hovered (or centred on a phone) */
+  .media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #0d0814; }
+  .media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2, .8, .2, 1), opacity .3s; }
+  .media .clip { opacity: 0; }
+  .card.playing .clip { opacity: 1; }
+  .card:hover .media img, .card.playing .media img { transform: scale(1.03); }
+  .media::after { content: ''; position: absolute; inset: auto 0 0; height: 40%; background: linear-gradient(transparent, rgba(13, 8, 20, .55)); pointer-events: none; }
+  .play {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent, #fff);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+    opacity: 0;
+    transform: translateY(6px) scale(.9);
+    transition: opacity .25s, transform .25s cubic-bezier(.2, .8, .2, 1);
+  }
+  .play svg { width: 15px; height: 15px; margin-left: 2px; }
+  .card:hover .play, .card:focus-visible .play, .card.playing .play { opacity: 1; transform: none; }
+
+  .body { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; flex: 1; }
+  h2 { font-size: 19px; font-weight: 600; margin: 0; line-height: 1.2; }
+  .body p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: auto 0 0; padding: 6px 0 0; }
+  .tags li { font-size: 12px; font-weight: 500; color: var(--muted); background: rgba(255, 255, 255, .06); border-radius: 999px; padding: 3px 9px; }
+  .tags li:first-child { color: color-mix(in srgb, var(--accent) 80%, white); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  footer { margin-top: 36px; text-align: center; font-size: 13px; color: var(--faint); }
+
+  /* phones: two compact columns, so about six games fit on a screen */
+  @media (max-width: 560px) {
+    .wrap { padding: 28px 16px 40px; }
+    h1 { font-size: 32px; }
+    .search { flex-basis: 100%; }
+    .games { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .card { border-radius: 14px; }
+    .body { padding: 10px 11px 12px; gap: 4px; }
+    h2 { font-size: 15px; }
+    .body p { font-size: 12.5px; line-height: 1.35; -webkit-line-clamp: 3; }
+    .tags { padding-top: 4px; }
+    .tags li { font-size: 11px; padding: 2px 8px; }
+    .tags li + li { display: none; }
+    .play { width: 30px; height: 30px; right: 8px; bottom: 8px; }
+    .play svg { width: 12px; height: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card, .media img, .play { animation: none; transition: none; }
+    .card:hover, .card:focus-visible { transform: none; }
+    .card:hover .media img { transform: none; }
+  }
 </style>
 </head>
 <body>
-  <p class="site"><a href="/">josephjackman.com</a></p>
-  <main class="games">
-    <section class="card syb">
-      <div class="hero" aria-hidden="true"><span>🥊</span><span>📺</span><span>💥</span></div>
-      <h1>Smash Your Bros</h1>
-      <p class="tag">The galaxy's #1 game show makes best friends fight. Sixteen champions, four stages, smash attacks, ledges and teching, and a very sincere bromance.</p>
-      <a class="play" href="smashyourbros/">SMASH!</a>
-      <ul>
-        <li><b>Up to 4 bros online</b> with rollback netcode, or couch with gamepads</li>
-        <li><b>16 fighters</b> to unlock, items, ultimates and 22 modifiers</li>
-        <li><b>Story and Classic</b>, solo or co-op, same account as Shoallhell</li>
-      </ul>
-    </section>
-    <section class="card dwg">
-      <div class="hero" aria-hidden="true"><span>😴</span><span>🛏️</span><span>💰</span></div>
-      <h1>Don't Wake Gerald</h1>
-      <p class="tag">Rob a sleeping giant with your friends. Sneak over his body, steal his stuff, throw it into your bottle cap, and whatever you do, keep it down.</p>
-      <a class="play" href="dontwakegerald/">SHHH... PLAY</a>
-      <ul>
-        <li><b>1-8 players online</b>: 4-number room and friend codes, bots fill the seats</li>
-        <li><b>Proximity voice chat</b>: talk too loud and he wakes up</li>
-        <li><b>About 30 minutes</b>, five nights, controller or keyboard and mouse</li>
-      </ul>
-    </section>
-    <section class="card sh">
-      <div class="hero" aria-hidden="true"><span>🌊</span><span>🃏</span><span>💀</span></div>
-      <h1>Shoallhell</h1>
-      <p class="tag">A Dungeon Joe story told with cards. The Landlord's rent pooled into a glowing sea at the bottom of the world, and Joe's Tenants' Union is going down to stop the Executor inheriting it.</p>
-      <a class="play" href="shoallhell/">Wade in</a>
-      <ul>
-        <li><b>Card tactics on hex maps</b>: play the top of one card and the bottom of another</li>
-        <li><b>14 classes</b> to unlock, every Dungeon Joe monster, nine Depths of bosses</li>
-        <li><b>Solo or four-player co-op</b>, with an email account that keeps your union</li>
-      </ul>
-    </section>
-    <section class="card bc">
-      <div class="hero" aria-hidden="true"><span>⚔️</span><span>🃏</span><span>👾</span></div>
-      <h1>Battle Cards</h1>
-      <p class="tag">A two-player poker duel. Play hands to power up little monsters, then watch them charge across the table and chew up your rival's cards.</p>
-      <a class="play" href="battlecards/">DUEL!</a>
-      <ul>
-        <li><b>1v1 online</b>: friends list, invites, room codes or Quick Duel</li>
-        <li><b>55 monsters</b>, spells, traps and gremlins you send mid-round</li>
-        <li><b>About 15 minutes</b> a duel, then run it back</li>
-      </ul>
-    </section>
-    <section class="card alt">
-      <div class="hero" aria-hidden="true"><span>🙀</span><span>❓</span><span>⭐</span></div>
-      <h1>Alt Whisker Wars</h1>
-      <p class="tag">Real-time cat kingdom battles with hidden armies: you can't see what's inside enemy buildings, so spy, guess and keep your army's morale up.</p>
-      <a class="play" href="altwhiskerwars/">Play now</a>
-      <ul>
-        <li><b>12 cat heroes</b>, each with 4 skills you level up with fish</li>
-        <li><b>Purr Power</b> morale that makes or breaks your army</li>
-        <li><b>Interactive tutorial</b> to learn it in one battle</li>
-      </ul>
-    </section>
-    <section class="card hive">
-      <div class="hero" aria-hidden="true"><span>🐝</span><span>🍯</span><span>🌌</span></div>
-      <h1>The Infinite Hive</h1>
-      <p class="tag">An incremental game. Grow one backyard hive into a swarm that covers the Earth, then the galaxy.</p>
-      <a class="play" href="infinitehive/">Play now</a>
-      <ul>
-        <li><b>Three phases</b>: backyard, planet, galaxy</li>
-        <li><b>Real-time space battles</b>, a casino and a stock exchange</li>
-        <li><b>Saves in your browser</b>, no sign-up</li>
-      </ul>
-    </section>
-    <section class="card race">
-      <div class="hero" aria-hidden="true"><span>🏇</span><span>🪙</span><span>💥</span></div>
-      <h1>Horse Race</h1>
-      <p class="tag">A silly betting party game. Back ridiculous horses with your friends, then dish out penalties when you win.</p>
-      <a class="play" href="horserace/">Play now</a>
-      <ul>
-        <li><b>Online with friends</b>: share a 5-number code, no sign-up</li>
-        <li><b>200 silly horse names</b>, and the first to pick one can rename it</li>
-        <li><b>Boosts, setbacks</b> and penalty attacks</li>
-      </ul>
-    </section>
-    <section class="card deck">
-      <div class="hero" aria-hidden="true"><span>🃏</span><span>🍻</span><span>🎉</span></div>
-      <h1>The Deck</h1>
-      <p class="tag">A drinking card game for parties. Draw cards on your own phone, then show them, pass them on or keep them.</p>
-      <a class="play" href="thedeck/">Play now</a>
-      <ul>
-        <li><b>Online with friends</b>: share a 5-number code, no sign-up</li>
-        <li><b>Play cards any time</b>, even when it isn't your turn</li>
-        <li><b>The host picks</b> which cards are in</li>
-      </ul>
-    </section>
-    <section class="card lie">
-      <div class="hero" aria-hidden="true"><span>🤥</span><span>📺</span><span>🔍</span></div>
-      <h1>Lieage</h1>
-      <p class="tag">A bluffing trivia party game. Put it on a big screen, write believable lies on your phone, and try to spot the strange-but-true answer.</p>
-      <a class="play" href="lieage/">Play now</a>
-      <ul>
-        <li><b>The big screen is the game</b>, everyone plays on their phone</li>
-        <li><b>480 real but strange facts</b> in eight categories</li>
-        <li><b>2 to 10 players</b>: share a 5-number code, no sign-up</li>
-      </ul>
-    </section>
-    <section class="card rp20">
-      <div class="hero" aria-hidden="true"><span>🐉</span><span>🎲</span><span>📜</span></div>
-      <h1>Roleplay20</h1>
-      <p class="tag">Dungeons &amp; Dragons with Claude as your Dungeon Master. A private table for our group: password and invite only.</p>
-      <a class="play" href="roleplay20/">Enter the tavern</a>
-      <ul>
-        <li><b>An AI Dungeon Master</b> that narrates, voices every NPC and runs the monsters</li>
-        <li><b>Battle maps with fog of war</b>: you only see what your character can see</li>
-        <li><b>Character sheets that roll</b>, track your spells and level up</li>
-      </ul>
-    </section>
-    <section class="card dj">
-      <div class="hero" aria-hidden="true"><span>🗡️</span><span>🔥</span><span>💀</span></div>
-      <h1>Dungeon Joe</h1>
-      <p class="tag">A souls-like dungeon crawler with the pace of Hades. Rest at bonfires, dodge what you can't block, and take down the bosses alone or with friends.</p>
-      <a class="play" href="dungeonjoe/">Play now</a>
-      <ul>
-        <li><b>Four-player online co-op</b>: share a room code to join</li>
-        <li><b>Ten classes</b>, and weapons with three cooldown skills each</li>
-        <li><b>Eight zones, eight bosses</b>, then New Game+</li>
-      </ul>
-    </section>
-    <section class="card gg">
-      <div class="hero" aria-hidden="true"><span>🤠</span><span>🪨</span><span>🃏</span></div>
-      <h1>Geode Gobbler</h1>
-      <p class="tag">A rootin' tootin' rock-eatin' clicker. Crack geodes for crunch, build a cardboard frontier town, and play saloon poker with the critters in yer belly.</p>
-      <a class="play" href="geodegobbler/">Yeehaw!</a>
-      <ul>
-        <li><b>Click, build and molt</b>: 20 buildings, 450+ upgrades, a Tooth Tree</li>
-        <li><b>The Gobble Saloon</b>: a poker roguelike with 117 critters</li>
-        <li><b>700 bounties</b> to collect, saves in your browser</li>
-      </ul>
-    </section>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <a class="site" href="/">josephjackman.com</a>
+      <h1>Games</h1>
+      <p class="lede">12 browser games, A to Z. Nothing to install.</p>
+    </div>
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="find" type="search" placeholder="Find a game" aria-label="Find a game" autocomplete="off">
+    </label>
+  </header>
+
+  <!-- Keep the cards in A–Z order by title. Each one has a still (previews/<folder>-still.webp) and a short
+       looping clip (previews/<folder>.webp); deploy/previews/capture.mjs records both from the live game. -->
+  <main class="games" id="games">
+    <a class="card" href="altwhiskerwars/" style="--accent:#2cc5d4">
+      <div class="media">
+        <img src="previews/altwhiskerwars-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/altwhiskerwars.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Alt Whisker Wars</h2>
+        <p>Real-time cat kingdom battles with hidden armies.</p>
+        <ul class="tags"><li>Strategy</li><li>Online or vs bots</li></ul>
+      </div>
+    </a>
+    <a class="card" href="battlecards/" style="--accent:#ffcf3a; --on-accent:#3a2405">
+      <div class="media">
+        <img src="previews/battlecards-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/battlecards.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Battle Cards</h2>
+        <p>Poker hands power up monsters that eat your rival's cards.</p>
+        <ul class="tags"><li>Card duel</li><li>1v1 online</li></ul>
+      </div>
+    </a>
+    <a class="card" href="dontwakegerald/" style="--accent:#ffc35a; --on-accent:#2a1a00">
+      <div class="media">
+        <img src="previews/dontwakegerald-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/dontwakegerald.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Don't Wake Gerald</h2>
+        <p>Rob a sleeping giant with your friends. Whatever you do, keep it down.</p>
+        <ul class="tags"><li>Stealth party</li><li>1–8 online</li><li>Voice chat</li></ul>
+      </div>
+    </a>
+    <a class="card" href="dungeonjoe/" style="--accent:#f0c75e; --on-accent:#2e2519">
+      <div class="media">
+        <img src="previews/dungeonjoe-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/dungeonjoe.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Dungeon Joe</h2>
+        <p>A souls-like dungeon crawler with the pace of Hades.</p>
+        <ul class="tags"><li>Action RPG</li><li>Solo or 4-player co-op</li></ul>
+      </div>
+    </a>
+    <a class="card" href="geodegobbler/" style="--accent:#ff8a3d">
+      <div class="media">
+        <img src="previews/geodegobbler-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/geodegobbler.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Geode Gobbler</h2>
+        <p>A rootin' tootin' rock-eatin' clicker, with saloon poker on the side.</p>
+        <ul class="tags"><li>Clicker</li><li>Solo</li></ul>
+      </div>
+    </a>
+    <a class="card" href="horserace/" style="--accent:#3ccf6e; --on-accent:#0c2a16">
+      <div class="media">
+        <img src="previews/horserace-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/horserace.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Horse Race</h2>
+        <p>Bet on ridiculous horses, then dish out penalties when you win.</p>
+        <ul class="tags"><li>Party</li><li>Online with friends</li></ul>
+      </div>
+    </a>
+    <a class="card" href="lieage/" style="--accent:#a27bff">
+      <div class="media">
+        <img src="previews/lieage-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/lieage.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Lieage</h2>
+        <p>Bluffing trivia for the big screen. Spot the strange truth.</p>
+        <ul class="tags"><li>Trivia party</li><li>2–10 players</li></ul>
+      </div>
+    </a>
+    <a class="card" href="roleplay20/" style="--accent:#ff5a4f">
+      <div class="media">
+        <img src="previews/roleplay20-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/roleplay20.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Roleplay20</h2>
+        <p>Dungeons &amp; Dragons with Claude as your Dungeon Master.</p>
+        <ul class="tags"><li>Tabletop RPG</li><li>Invite only</li></ul>
+      </div>
+    </a>
+    <a class="card" href="shoallhell/" style="--accent:#3fd1a8; --on-accent:#08261f">
+      <div class="media">
+        <img src="previews/shoallhell-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/shoallhell.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Shoallhell</h2>
+        <p>A Dungeon Joe story told with cards, down to a glowing sea.</p>
+        <ul class="tags"><li>Card tactics</li><li>Solo or 4-player co-op</li></ul>
+      </div>
+    </a>
+    <a class="card" href="smashyourbros/" style="--accent:#ff3a6e">
+      <div class="media">
+        <img src="previews/smashyourbros-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/smashyourbros.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>Smash Your Bros</h2>
+        <p>The galaxy's #1 game show makes best friends fight.</p>
+        <ul class="tags"><li>Fighting</li><li>Up to 4 online or couch</li></ul>
+      </div>
+    </a>
+    <a class="card" href="thedeck/" style="--accent:#5aa6ff">
+      <div class="media">
+        <img src="previews/thedeck-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/thedeck.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>The Deck</h2>
+        <p>A party drinking game. Draw cards on your own phone.</p>
+        <ul class="tags"><li>Drinking game</li><li>Online with friends</li></ul>
+      </div>
+    </a>
+    <a class="card" href="infinitehive/" style="--accent:#ffb120; --on-accent:#3a2405">
+      <div class="media">
+        <img src="previews/infinitehive-still.webp" alt="" width="560" height="315" loading="lazy" decoding="async">
+        <img class="clip" data-src="previews/infinitehive.webp" alt="" width="560" height="315">
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9.5-5.5z"/></svg></span>
+      </div>
+      <div class="body">
+        <h2>The Infinite Hive</h2>
+        <p>Grow one backyard hive into a swarm that covers the galaxy.</p>
+        <ul class="tags"><li>Incremental</li><li>Solo</li></ul>
+      </div>
+    </a>
   </main>
+  <p class="empty" id="empty" hidden>No game matches that. Try another word.</p>
   <footer>Play in any desktop or phone browser</footer>
+</div>
+<script>
+  // Calm by default: every card shows a still. Its clip plays only while you hover or focus it, or, on a
+  // touch screen, while it's the card nearest the middle of the screen. One clip at a time, none with
+  // reduced motion.
+  const cards = [...document.querySelectorAll('.card')];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const hover = matchMedia('(hover: hover) and (pointer: fine)');
+  cards.forEach((card, i) => card.style.setProperty('--i', i));
+
+  function play(card) {
+    if (reduce.matches) return;
+    card.dataset.want = '1';
+    clearTimeout(card.stopTimer);
+    const clip = card.querySelector('.clip');
+    if (clip.getAttribute('src') && clip.complete) return card.classList.add('playing');
+    clip.onload = () => card.dataset.want && card.classList.add('playing');
+    clip.src = clip.dataset.src;
+  }
+  function stop(card) {
+    delete card.dataset.want;
+    card.classList.remove('playing');
+    clearTimeout(card.stopTimer);
+    // drop the clip once it has faded out, so it stops animating and starts from the top next time
+    card.stopTimer = setTimeout(() => card.dataset.want || card.querySelector('.clip').removeAttribute('src'), 350);
+  }
+
+  if (hover.matches) {
+    for (const card of cards) {
+      card.addEventListener('mouseenter', () => play(card));
+      card.addEventListener('mouseleave', () => stop(card));
+      card.addEventListener('focus', () => play(card));
+      card.addEventListener('blur', () => stop(card));
+    }
+  } else {
+    let current = null;
+    let timer = 0;
+    const pick = () => {
+      const middle = innerHeight / 2;
+      let best = null;
+      let bestGap = Infinity;
+      for (const card of cards) {
+        if (card.hidden) continue;
+        const r = card.querySelector('.media').getBoundingClientRect();
+        if (r.top < 0 || r.bottom > innerHeight) continue;
+        const gap = Math.abs((r.top + r.bottom) / 2 - middle);
+        if (gap < bestGap) [best, bestGap] = [card, gap];
+      }
+      if (best === current) return;
+      if (current) stop(current);
+      current = best;
+      if (best) play(best);
+    };
+    // wait for the scrolling to settle so a quick flick doesn't load every clip on the way past
+    const settle = () => { clearTimeout(timer); timer = setTimeout(pick, 180); };
+    addEventListener('scroll', settle, { passive: true });
+    addEventListener('resize', settle);
+    settle();
+  }
+
+  const find = document.getElementById('find');
+  const empty = document.getElementById('empty');
+  find.addEventListener('input', () => {
+    const q = find.value.trim().toLowerCase();
+    let shown = 0;
+    for (const card of cards) {
+      card.hidden = q !== '' && !card.textContent.toLowerCase().includes(q);
+      if (!card.hidden) shown++;
+    }
+    empty.hidden = shown > 0;
+    if (!hover.matches) dispatchEvent(new Event('scroll'));
+  });
+</script>
 </body>
 </html>

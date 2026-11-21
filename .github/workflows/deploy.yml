@@ -54,6 +54,9 @@ jobs:
           cp -r dist/. site/dungeonjoe/
           cp deploy/index.html site/index.html
           cp deploy/404.html site/404.html
+          # the card screenshots and clips (deploy/previews/capture.mjs makes them)
+          mkdir -p site/previews
+          cp deploy/previews/*.webp site/previews/
           touch site/.nojekyll
       - name: Add the other games
         run: node deploy/assemble.mjs build site
