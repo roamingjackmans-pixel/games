@@ -3,7 +3,7 @@
     py -I deploy/previews/to_webp.py [folder ...]
 
 For each game it writes <folder>.webp (a looping clip, about 4 seconds) and <folder>-still.webp (one frame
-from the middle). Needs Pillow (py -m pip install pillow).
+from the middle, or where the recipe's `still` says). Needs Pillow (py -m pip install pillow).
 """
 import glob
 import json
@@ -48,5 +48,5 @@ for game_dir in sorted(glob.glob(os.path.join(FRAMES, '*'))):
     else:
         merged[0].save(clip, quality=80, method=6)
     still = os.path.join(OUT, f'{game}-still.webp')
-    frames[len(frames) // 2].save(still, quality=80, method=6)
+    frames[min(len(frames) - 1, int(len(frames) * meta.get('still', 0.5)))].save(still, quality=80, method=6)
     print(f'{game:15} clip {os.path.getsize(clip) // 1024:4} KB  still {os.path.getsize(still) // 1024:3} KB')
