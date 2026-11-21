@@ -19,6 +19,8 @@
     { "folder": "shoallhell", "repo": "shoallhell", "publish": "site" },
     { "folder": "dontwakegerald", "repo": "dontwakegerald", "publish": "public", "fullHistory": true, "stamp": true },
     { "folder": "smashyourbros", "repo": "smashyourbros", "publish": "site" },
-    { "folder": "SmashYourBros", "local": "deploy/SmashYourBros" }
+    { "folder": "SmashYourBros", "local": "deploy/SmashYourBros" },
+    { "folder": "bakersdozen", "repo": "bakersdozen", "publish": "site" },
+    { "folder": "BakersDozen", "local": "deploy/BakersDozen" }
   ]
 }
