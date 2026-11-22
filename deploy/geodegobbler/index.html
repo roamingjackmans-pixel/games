@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.2.0">
+<meta name="version" content="1.2.1">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -780,7 +780,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-22">v1.2.0</div>
+<div id="ver" title="built 2026-11-22">v1.2.1</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -3267,8 +3267,21 @@ G.Engine = (() => {
     const recent = new Set(run.bosses.slice(-3));
     let pool;
     if (ante % 8 === 0) pool = G.FINAL_BOSSES;
-    else pool = G.BOSSES.filter((b) => (b.minAnte || 1) <= ante && !recent.has(b.id));
+    else pool = G.BOSSES.filter((b) => (b.minAnte || 1) <= ante && !recent.has(b.id) && E.bossFair(run, b));
     run.bosses[ante] = pool[Math.floor(run.rng() * pool.length)].id;
+  };
+  /* a boss that can't be beaten with this run's rules never shows up:
+     The Cramp (first hand scores nothing) is an automatic loss with only 1 hand per round, e.g. Gobbo's Lunchbox */
+  E.bossFair = (run, b) => !(b.firstZero && run.maxHands <= 1);
+  /* swap out any unfair boss already rolled for this ante or later (old saves from before the rule) */
+  E.fixUnfairBosses = (run) => {
+    for (let a = run.ante; a < run.bosses.length; a++) {
+      const b = G.BOSS_BY_ID[run.bosses[a]];
+      if (b && !E.bossFair(run, b)) {
+        if (a === run.ante && run.phase === 'play' && run.blindIdx === 2) { run.bossDisabled = true; continue; } // already mid-fight: call it off
+        run.bosses[a] = null; E.rollBossesFor(run, a);
+      }
+    }
   };
   E.rollTagOffers = (run) => { run.tagOffers = [0, 1].map(() => G.TAGS[Math.floor(run.rng() * G.TAGS.length)].id); };
   E.blindName = (i) => ['Snack', 'Meal', 'Indigestion'][i];
@@ -3613,7 +3626,7 @@ G.Engine = (() => {
 
   /* serialize (rng is re-attached on load) */
   E.save = (run) => JSON.parse(JSON.stringify(run));
-  E.load = (data) => { const run = data; E.attachRng(run); return run; };
+  E.load = (data) => { const run = data; E.attachRng(run); if (run.bosses) E.fixUnfairBosses(run); return run; };
   return E;
 })();
 
