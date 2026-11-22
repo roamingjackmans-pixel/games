@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.1.9">
+<meta name="version" content="1.2.0">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -194,7 +194,7 @@ textarea.code { width: 100%; height: 120px; background: #0c0718; color: #d9c8ff;
 .btn.danger { background: linear-gradient(180deg, #ff6f86, #c22848); border-color: #ffb3c0; color: #fff; }
 .btn.big { font-size: 18px; padding: 12px 24px; } .btn.sm { padding: 5px 10px; font-size: 12px; }
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
-.banner { position: fixed; left: 50%; top: 34%; z-index: 85; transform: translate(-50%, -50%); font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 6vw, 64px); color: #fff; text-align: center; pointer-events: none; text-shadow: 0 4px 0 rgba(0, 0, 0, .5), 0 0 30px currentColor; animation: banner 1.6s cubic-bezier(.3, 1.6, .5, 1) forwards; white-space: nowrap; -webkit-text-stroke: 2px rgba(0, 0, 0, .35); }
+.banner { position: fixed; left: 50%; top: 34%; z-index: 85; pointer-events: none; transform: translate(-50%, -50%); font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 6vw, 64px); color: #fff; text-align: center; pointer-events: none; text-shadow: 0 4px 0 rgba(0, 0, 0, .5), 0 0 30px currentColor; animation: banner 1.6s cubic-bezier(.3, 1.6, .5, 1) forwards; white-space: nowrap; -webkit-text-stroke: 2px rgba(0, 0, 0, .35); }
 .banner small { display: block; font-size: .38em; -webkit-text-stroke: 0; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .6); }
 .banner.combo { top: 26%; animation-duration: 1.1s; }
 .banner.rarepop { font-size: clamp(36px, 7vw, 80px); }
@@ -336,6 +336,14 @@ b.hands { color: var(--sparkle); } b.discards { color: var(--shine); } b.money {
 .tb-timer small { font-size: 10px; text-transform: uppercase; color: var(--muted); }
 .tb-timer b { font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; color: #ffe2a8; }
 .tb-timer.done b { color: var(--good); } .tb-timer.done small::after { content: ' · final'; }
+.v-rec { color: var(--good); font-family: var(--font-display); animation: bump .6s 3; display: inline-block; }
+.lb { margin-top: 14px; background: rgba(24, 12, 4, .88); border: 2px solid #3a1d0a; border-radius: 10px; padding: 2px 10px 10px; } .lb .panel-h.sub { margin-top: 8px; } .lb .panel-h { align-items: center; }
+.lb-filter { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.lb-filter select { font: inherit; color: #3a1d0a; background: #f6e6c0; border: 2px solid #3a1d0a; border-radius: 6px; padding: 3px 6px; }
+table.lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.lb-table th { text-align: left; font-size: 10px; text-transform: uppercase; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); }
+table.lb-table td { padding: 5px 6px; border-bottom: 1px solid rgba(255, 255, 255, .06); } table.lb-table td b { font-variant-numeric: tabular-nums; font-family: var(--font-display); }
+table.lb-table tr.gold td { background: rgba(255, 207, 90, .12); } table.lb-table tr.gold td b { color: var(--gold); }
 .v-time { font-size: 18px; } .v-time b { font-family: var(--font-display); color: var(--gold); }
 .tb-sbtns { display: flex; gap: 6px; } .tb-sbtns .btn { flex: 1; }
 .tb-cps { font-size: 11px; text-align: center; margin-top: auto; }
@@ -412,7 +420,7 @@ b.hands { color: var(--sparkle); } b.discards { color: var(--shine); } b.money {
 .card.nonscoring { opacity: .55; transform: translateY(14px) scale(.94); }
 .card.shattered { animation: shatter .3s forwards; } @keyframes shatter { to { transform: scale(1.4); opacity: 0; filter: blur(4px); } }
 /* floating score labels */
-.pop-label { position: fixed; z-index: 86; transform: translate(-50%, -50%); font-family: var(--font-display); font-weight: 700; font-size: 26px; padding: 2px 10px; border-radius: 10px; pointer-events: none; animation: poplabel .9s cubic-bezier(.3, 1.6, .5, 1) forwards; white-space: nowrap; text-align: center; box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+.pop-label { position: fixed; z-index: 86; pointer-events: none; transform: translate(-50%, -50%); font-family: var(--font-display); font-weight: 700; font-size: 26px; padding: 2px 10px; border-radius: 10px; pointer-events: none; animation: poplabel .9s cubic-bezier(.3, 1.6, .5, 1) forwards; white-space: nowrap; text-align: center; box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
 .pop-label small { display: block; font-size: 12px; }
 .pop-label.sp { background: #2f7fff; color: #fff; } .pop-label.sh { background: #ff3d60; color: #fff; } .pop-label.xsh { background: #fff; color: #ff1d48; font-size: 32px; border: 3px solid #ff1d48; } .pop-label.mo { background: var(--gold); color: #3a2400; } .pop-label.msg { background: #fff; color: #2a1450; font-size: 18px; } .pop-label.dbf { background: #333; color: #aaa; font-size: 16px; }
 @keyframes poplabel { 0% { transform: translate(-50%, -20%) scale(.2) rotate(-10deg); opacity: 0; } 25% { transform: translate(-50%, -60%) scale(1.2) rotate(4deg); opacity: 1; } 70% { opacity: 1; transform: translate(-50%, -80%) scale(1); } 100% { transform: translate(-50%, -120%) scale(.9); opacity: 0; } }
@@ -542,6 +550,8 @@ body {
 #backdrop .c1 { left: 30%; } #backdrop .c2 { left: 58%; font-size: 70px; animation-delay: -1.2s; } #backdrop .c3 { right: 18%; font-size: 110px; animation-delay: -2s; }
 @keyframes sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(5deg) scaleX(.96); } }
 #app { position: relative; z-index: 1; background: rgba(30, 14, 4, .35); }
+/* keep the cardboard scenery (sun, Props sign, cacti) BEHIND the panels instead of painted over them */
+#ticker, #season, #layout { position: relative; z-index: 1; }
 /* ---------- top bar: a saloon sign ---------- */
 #top { background: var(--nails), var(--wood); border-bottom: 5px solid #2a1405; box-shadow: 0 6px 0 rgba(0, 0, 0, .25); }
 .logo { font-family: var(--font-western); font-weight: 400; font-size: 30px; letter-spacing: 2px; }
@@ -697,6 +707,11 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 /* pop-ups sit at the bottom middle, not over the property list */
 #toasts { left: 50%; right: auto; transform: translateX(-50%); bottom: 14px; width: min(380px, calc(100vw - 28px)); align-items: stretch; }
 .toast.out { transform: translateY(24px); }
+/* in the Gobble Saloon: telegrams sit in the middle of the right edge, narrower, and clicks pass straight through them */
+body.at-table #toasts { left: auto; right: 12px; top: 50%; bottom: auto; transform: translateY(-50%); width: min(270px, calc(100vw - 24px)); flex-direction: column; pointer-events: none; }
+body.at-table .toast { pointer-events: none; font-size: 13px; padding: 8px 11px; }
+body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
+@media (max-width: 899px) { body.at-table #toasts { top: 61%; width: min(230px, 62vw); } }
 /* a smaller sheriff, standing to the left, with his speech bubble beside him (not over the combo meter) */
 #gobbo-wrap { align-self: flex-start; margin-left: 8%; margin-top: 2px; padding-top: 0; }
 #gobbo { width: 112px; }
@@ -765,7 +780,7 @@ body[data-season="gobblefest"] #top { background: var(--nails), var(--wood); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-20">v1.1.9</div>
+<div id="ver" title="built 2026-11-22">v1.2.0</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -1384,7 +1399,7 @@ G.newState = () => ({
   pops: 0, rarePops: {}, mimicsCaught: 0, mimicsEscaped: 0, thieves: 0, thievesMissed: 0, gemsCaught: 0,
   critters: {}, codexCount: 0, fossils: 0,
   achievements: {}, achCountCache: 0,
-  cards: { runs: 0, wins: 0, losses: 0, wonPouches: {}, bestHand: 0, hands: 0, types: {}, maxAnte: 0, rerolls: 0, packs: 0, destroyed: 0, money: 0, tonics: 0, runes: 0, skips: 0, endlessBest: 0, crunchWon: 0, bossesBeaten: 0, closeCalls: 0 },
+  cards: { runs: 0, wins: 0, losses: 0, wonPouches: {}, bestHand: 0, hands: 0, types: {}, maxAnte: 0, rerolls: 0, packs: 0, destroyed: 0, money: 0, tonics: 0, runes: 0, skips: 0, endlessBest: 0, crunchWon: 0, bossesBeaten: 0, closeCalls: 0, bestTimes: [] },
   run: null,
   bloom: { start: Date.now(), crystals: 0, harvested: 0 },
   daily: { last: null, streak: 0, best: 0, days: 0, first: G.dayKey() },
@@ -1829,8 +1844,10 @@ G.Geode = (() => {
     if (kind.cosmic) { document.body.classList.add('cosmic'); setTimeout(() => document.body.classList.remove('cosmic'), 10000); G.FX.confetti(200); G.Audio.fanfare(); }
     if (rare && G.chance(0.05)) G.Events.trinketChance();
     splitT = 0; splitKind = kind; splitShape = shape;
-    setTimeout(() => GE.newGeode(), 420);
-    G.emit('pop', kind);
+    // the next geode appears right away (it grows in while the old one splits), so no clicks are thrown away between geodes
+    const popped = kind;
+    GE.newGeode();
+    G.emit('pop', popped);
   }
 
   /* ---------- drawing ---------- */
@@ -1866,17 +1883,12 @@ G.Geode = (() => {
       if (Date.now() > mimic.until) { G.state.mimicsEscaped++; G.FX.text(innerWidth / 3, innerHeight / 2, 'The varmint skedaddled!', { color: '#ff3355', size: 26 }); G.Gobbo.say('Git back here, ya rock-faced varmint!', 2200); GE.newGeode(); return; }
     } else if (kind.mimic && !mimic) { mimic = { x: c, y: c, vx: 4, vy: -3, awake: false }; }
     const scale = sp * (1 - squash * 0.08) * (hover ? 1.03 : 1);
-    // glow for rare
-    cx.save();
-    cx.translate(x, y); cx.scale(scale * (1 + Math.sin(t * 0.004) * 0.015), scale * (1 - Math.sin(t * 0.004) * 0.015)); cx.rotate(Math.sin(t * 0.0013) * 0.04 + Math.sin(wob) * 0.05 * wob);
-    if (kind.id !== 'common') {
-      cx.shadowColor = kind.rainbow ? `hsl(${(t / 10) % 360},100%,65%)` : kind.gem[0]; cx.shadowBlur = 30 + Math.sin(t * 0.006) * 12;
-    }
-    // split animation of previous geode
+    // split animation of the previous geode: drawn on its own (full size, behind), while the next geode grows in on top
     if (splitT >= 0 && splitT < 1 && splitShape) {
       splitT += 0.04;
       const d = splitT * size * 0.5, rot = splitT * 0.8;
-      cx.globalAlpha = 1 - splitT;
+      cx.save(); cx.translate(c, c);
+      cx.globalAlpha = Math.max(0, 1 - splitT);
       [-1, 1].forEach((side) => {
         cx.save(); cx.translate(side * d, -d * 0.3 + splitT * splitT * size * 0.4); cx.rotate(side * rot);
         cx.beginPath(); cx.rect(side < 0 ? -R * 1.2 : 0, -R * 1.2, R * 1.2, R * 2.4); cx.clip();
@@ -1884,10 +1896,13 @@ G.Geode = (() => {
         drawInterior(splitKind, R * 0.78, 0, 0, t / 1000);
         cx.restore();
       });
-      cx.globalAlpha = 1;
       cx.restore();
-      if (spawnT < 0.05) return;
-      cx.save(); cx.translate(x, y); cx.scale(scale, scale);
+    }
+    // glow for rare
+    cx.save();
+    cx.translate(x, y); cx.scale(scale * (1 + Math.sin(t * 0.004) * 0.015), scale * (1 - Math.sin(t * 0.004) * 0.015)); cx.rotate(Math.sin(t * 0.0013) * 0.04 + Math.sin(wob) * 0.05 * wob);
+    if (kind.id !== 'common') {
+      cx.shadowColor = kind.rainbow ? `hsl(${(t / 10) % 360},100%,65%)` : kind.gem[0]; cx.shadowBlur = 30 + Math.sin(t * 0.006) * 12;
     }
     // body
     polyPath(shape, R, 0, 0);
@@ -4062,7 +4077,7 @@ G.Table = (() => {
   const T = {};
   const E = G.Engine;
   T.run = null; T.open = false;
-  let sel = [], busy = false, view = null, el = {}, lobbyPouch = 'burlap', lobbySpice = 1, consSel = null;
+  let sel = [], busy = false, view = null, el = {}, lobbyPouch = 'burlap', lobbySpice = 1, consSel = null, lbFilter = 'all';
   const wait = (ms) => new Promise((r) => setTimeout(r, ms / (G.state.settings.fastCards || 1)));
   const S = () => G.state.cards;
 
@@ -4107,7 +4122,10 @@ G.Table = (() => {
       <div class="pouches">${G.POUCHES.map((po) => { const un = G.pouchUnlocked(po.id), w = c.wonPouches[po.id] || 0; return `<div class="pouch ${un ? '' : 'locked'} ${po.id === lobbyPouch ? 'on' : ''}" data-id="${po.id}"><span>${un ? po.emoji : '🔒'}</span><b>${un ? po.name : '???'}</b><i>${un ? po.desc : po.hint}</i>${w ? `<em class="won">won up to ${G.SPICES[w - 1].emoji}</em>` : ''}</div>`; }).join('')}</div>
       <h3>Spice level</h3>
       <div class="spices">${G.SPICES.map((sp) => { const un = G.spiceUnlocked(lobbyPouch, sp.n); return `<button class="spice ${un ? '' : 'locked'} ${sp.n === lobbySpice ? 'on' : ''}" data-n="${sp.n}" ${un ? '' : 'disabled'}><span>${un ? sp.emoji : '🔒'}</span><b>${sp.name}</b><i>${un ? sp.desc : 'Win the previous spice with this pouch'}</i></button>`; }).join('')}</div>
-      <button class="btn primary big" id="tb-start">${r ? 'Start a NEW run (abandons current)' : '🤠 Mosey on in'}</button>`;
+      <button class="btn primary big" id="tb-start">${r ? 'Start a NEW run (abandons current)' : '🤠 Mosey on in'}</button>
+      ${T.leaderboardHTML()}`;
+    const lbSel = p.querySelector('#lb-filter');
+    if (lbSel) lbSel.onchange = () => { lbFilter = lbSel.value; T.renderLobby(p); };
     p.querySelectorAll('.pouch:not(.locked)').forEach((d) => (d.onclick = () => { lobbyPouch = d.dataset.id; T.renderLobby(p); }));
     p.querySelectorAll('.spice:not(.locked)').forEach((d) => (d.onclick = () => { lobbySpice = +d.dataset.n; T.renderLobby(p); }));
     p.querySelector('#tb-start').onclick = () => {
@@ -4118,6 +4136,18 @@ G.Table = (() => {
       p.querySelector('#tb-continue').onclick = () => T.show();
       p.querySelector('#tb-abandon').onclick = () => G.UI.confirm('<h2>Abandon this run?</h2>', () => { T.run = null; G.state.run = null; S().losses++; T.renderLobby(p); }, 'Abandon');
     }
+  };
+  /* 🏁 Fastest Wins: your best Gobble Saloon times, filterable by saddlebag */
+  T.leaderboardHTML = () => {
+    const all = S().bestTimes || [];
+    const used = G.POUCHES.filter((po) => all.some((x) => x.pouch === po.id));
+    if (lbFilter !== 'all' && !used.some((po) => po.id === lbFilter)) lbFilter = 'all';
+    const rows = (lbFilter === 'all' ? all : all.filter((x) => x.pouch === lbFilter)).slice(0, 10);
+    const fmt = T.fmtMs;
+    return `<div class="lb" id="lb-box"><div class="panel-h sub"><h3>🏁 Fastest Wins</h3>
+      ${used.length ? `<label class="lb-filter">Saddlebag <select id="lb-filter"><option value="all">All saddlebags</option>${used.map((po) => `<option value="${po.id}" ${po.id === lbFilter ? 'selected' : ''}>${po.emoji} ${po.name}</option>`).join('')}</select></label>` : ''}</div>
+      ${rows.length ? `<table class="lb-table"><tr><th>#</th><th>Time</th><th>Saddlebag</th><th>Spice</th><th>When</th></tr>${rows.map((x, i) => { const po = G.POUCH_BY_ID[x.pouch] || { emoji: '❔', name: x.pouch }, sp = G.SPICES[x.spice - 1] || { emoji: '', name: '' }; return `<tr class="${i === 0 ? 'gold' : ''}"><td>${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td><td><b>${fmt(x.ms)}</b></td><td>${po.emoji} ${po.name}</td><td>${sp.emoji} ${sp.name}</td><td class="muted">${new Date(x.at).toLocaleDateString()}</td></tr>`; }).join('')}</table>`
+        : '<div class="empty">No timed wins yet, partner. Win a run and yer time gets nailed up here.</div>'}</div>`;
   };
   T.newRun = (pouch, spice) => {
     G.Audio.init();
@@ -4189,8 +4219,9 @@ G.Table = (() => {
     });
   };
   /* run timer: wall-clock time since the run started (the same clock the Speedrunner achievements use), frozen when the run ends */
-  T.fmtRunTime = (r) => {
-    const sec = Math.max(0, Math.floor(((r.finishedAt || Date.now()) - (r.startedAt || Date.now())) / 1000));
+  T.fmtRunTime = (r) => T.fmtMs((r.finishedAt || Date.now()) - (r.startedAt || Date.now()));
+  T.fmtMs = (ms) => {
+    const sec = Math.max(0, Math.floor(ms / 1000));
     const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
     return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
   };
@@ -4612,9 +4643,16 @@ G.Table = (() => {
     G.Events.addBuff({ id: 'feast', name: 'Victory Feast', emoji: '🍗', cps: 3, dur: 600 });
     if (!r.finishedAt) r.finishedAt = Date.now();
     const runMs = r.finishedAt - r.startedAt;
+    // Fastest Wins leaderboard: every timed win, fastest first (capped so the save stays small)
+    const bt = c.bestTimes || (c.bestTimes = []);
+    const entry = { ms: runMs, pouch: r.pouch, spice: r.spice, at: r.finishedAt };
+    bt.push(entry); bt.sort((a, b) => a.ms - b.ms); if (bt.length > 200) bt.length = 200;
+    r.timeRank = bt.indexOf(entry) + 1;
+    r.timeRankPouch = bt.filter((x) => x.pouch === r.pouch).indexOf(entry) + 1;
     if (runMs < 15 * 60e3) s.secrets.speedrun = 1;
     if (runMs < 10 * 60e3) s.secrets.speedrun2 = 1;
-    if (runMs < 4.5 * 60e3) s.secrets.speedrun3 = 1;
+    if (runMs < 5 * 60e3) s.secrets.speedrun3 = 1;
+    if (runMs < 2 * 60e3) s.secrets.speedrun4 = 1;
     if (r._vegan || !r._hadCritter) s.secrets.nocritter = 1;
     s.secrets.lossStreak = 0;
     r.trophyNew = newTrophy;
@@ -4624,7 +4662,7 @@ G.Table = (() => {
   T.renderWon = () => {
     const r = T.run;
     el.hand.innerHTML = '';
-    el.center.innerHTML = `<div class="victory"><div class="v-geode">🏆</div><h1>YEEHAW! YOU WIN!</h1><p class="v-time">⏱ Run time: <b>${T.fmtRunTime(r)}</b></p><p>Sheriff Gobbo ate all 8 antes and rode into the (cardboard) sunset with the <b>${G.POUCH_BY_ID[r.pouch].name}</b> on <b>${G.SPICES[r.spice - 1].name}</b>.</p>
+    el.center.innerHTML = `<div class="victory"><div class="v-geode">🏆</div><h1>YEEHAW! YOU WIN!</h1><p class="v-time">⏱ Run time: <b>${T.fmtRunTime(r)}</b>${r.timeRankPouch === 1 ? ` <span class="v-rec">🏁 NEW ${G.POUCH_BY_ID[r.pouch].name.toUpperCase()} RECORD!</span>` : r.timeRank ? ` <span class="muted">(#${r.timeRank} on yer Fastest Wins board)</span>` : ''}</p><p>Sheriff Gobbo ate all 8 antes and rode into the (cardboard) sunset with the <b>${G.POUCH_BY_ID[r.pouch].name}</b> on <b>${G.SPICES[r.spice - 1].name}</b>.</p>
       <ul><li>${r.trophyNew ? '🏆 <b>New Trophy Geode!</b> +2% CpS forever' : '🏆 Trophy already owned (try another pouch or spice!)'}</li><li>🔮 +1 Bloom Crystal</li><li>🍗 Victory Feast: ×3 CpS for 10 minutes</li>${r.spice < 8 ? `<li>🌶️ Unlocked <b>${G.SPICES[r.spice].name}</b> spice for this pouch</li>` : ''}</ul>
       <div class="btn-row"><button class="btn primary big" id="v-endless">♾️ Keep eating (Endless)</button><button class="btn big" id="v-leave">Cash out & leave</button></div></div>`;
     el.center.querySelector('#v-endless').onclick = () => { E.continueEndless(r); T.render(); T.save(); };
@@ -4965,7 +5003,8 @@ G.ACH = [];
   SEC('broke', 'Flat Broke', 'Leave the shop with exactly <b>$0</b>.', 'broke');
   SEC('speedrun', 'Speedrunner', 'Win a Gobble Table run in under <b>15 minutes</b>.', 'speedrun');
   SEC('speedrun2', 'Speedrunner II', 'Win a Gobble Table run in under <b>10 minutes</b>.', 'speedrun2');
-  SEC('speedrun3', 'Speedrunner III', 'Win a Gobble Table run in under <b>4½ minutes</b>.', 'speedrun3');
+  SEC('speedrun3', 'Speedrunner III', 'Win a Gobble Table run in under <b>5 minutes</b>.', 'speedrun3');
+  SEC('speedrun4', 'Speedrunner IV', 'Win a Gobble Table run in under <b>2 minutes</b>.', 'speedrun4');
   SEC('overkill', 'Overkill', 'Score <b>10×</b> a craving\'s target in one hand.', 'overkill');
   SEC('overkill2', 'Massive Overkill', 'Score <b>1,000×</b> a craving\'s target in one hand.', 'overkill2');
   SEC('legend3', 'Legendary Belly', 'Have <b>3</b> Legendary critters at once.', 'legend3');
