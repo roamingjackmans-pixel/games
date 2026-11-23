@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.3.3">
+<meta name="version" content="1.3.4">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -790,7 +790,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-23">v1.3.3</div>
+<div id="ver" title="built 2026-11-23">v1.3.4</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -4286,7 +4286,7 @@ G.Table = (() => {
     setInterval(() => { if (T.open && T.run) T.tickTimer(); }, 250);
     addEventListener('keydown', (e) => {
       if (!T.open || busy || e.target.tagName === 'INPUT') return;
-      if (e.shiftKey && e.code === 'KeyI') { e.preventDefault(); T.playBestSingle(); return; }
+      if (e.shiftKey && e.code === 'KeyH') { e.preventDefault(); T.playBestSingle(); return; }
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); T.play(); }
       if (e.key === 'd' || e.key === 'Delete') T.discard();
       if (e.key === 'Escape') T.hide();
@@ -4648,7 +4648,7 @@ G.Table = (() => {
       T.save();
     }
   };
-  /* Shift+I: play the single highest card that isn't debuffed */
+  /* Shift+H: play the single highest card that isn't debuffed */
   T.playBestSingle = () => {
     const r = T.run;
     if (busy || !r || r.phase !== 'play' || T.run.pack) return;
