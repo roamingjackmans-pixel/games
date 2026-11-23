@@ -8,6 +8,9 @@
       (function () {
         var base = '/games/dungeonjoe/';
         var path = window.location.pathname;
+        // Cadence is at /games/Cadence/ (paths are case-sensitive): any other casing goes there
+        var c = path.match(/^\/games\/cadence(\/.*)?$/i);
+        if (c && path.indexOf('/games/Cadence/') !== 0) { window.location.replace('/games/Cadence' + (c[1] || '/') + window.location.search + window.location.hash); return; }
         if (path.indexOf(base) === 0 && path !== base) {
           window.location.replace(base + window.location.search + window.location.hash);
         }

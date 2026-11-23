@@ -22,7 +22,7 @@
     { "folder": "SmashYourBros", "local": "deploy/SmashYourBros" },
     { "folder": "bakersdozen", "repo": "bakersdozen", "publish": "site" },
     { "folder": "BakersDozen", "local": "deploy/BakersDozen" },
-    { "folder": "cadence", "local": "deploy/cadence" },
-    { "folder": "Cadence", "local": "deploy/cadence" }
+    { "folder": "Cadence", "repo": "Cadence", "publish": "_site", "stamp": true },
+    { "folder": "cadence", "local": "deploy/cadence" }
   ]
 }
