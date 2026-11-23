@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.3.2">
+<meta name="version" content="1.3.3">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -790,7 +790,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-23">v1.3.2</div>
+<div id="ver" title="built 2026-11-23">v1.3.3</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -3161,7 +3161,7 @@ G.Engine = (() => {
       if (boss.mostPlayed) { const mp = E.mostPlayed(run); if (mp && mp === ev.type) zero = true; }
       if (zero) { events.push({ kind: 'boss', msg: 'NOT ALLOWED!' }); return { type: ev.type, scoring: ev.scoring, contains: ev.contains, events, sparkle: 0, shine: 0, total: 0, money: 0, zero: true, level: base.level }; }
     }
-    const debuffed = (c) => !!(c.debuff || (boss && boss.debuff && boss.debuff(c, run)) || (boss && boss.ulcer && c.suit === run.ulcerSuit && c.enh !== 'stone' && c.enh !== 'wild'));
+    const debuffed = (c) => E.isDebuffed(run, c, boss);
     const active = run.critters.filter((c) => !c.asleep);
     const apply = (eff, src) => {
       if (!eff) return;
@@ -3637,6 +3637,17 @@ G.Engine = (() => {
   };
 
   /* serialize (rng is re-attached on load) */
+  E.isDebuffed = (run, c, boss = E.boss(run)) => !!(c.debuff || (boss && boss.debuff && boss.debuff(c, run)) || (boss && boss.ulcer && c.suit === run.ulcerSuit && c.enh !== 'stone' && c.enh !== 'wild'));
+  // highest-ranked card you can see that isn't debuffed (Pet Rocks count as lowest, leftmost wins ties)
+  E.bestSingle = (run) => {
+    let best = null;
+    for (const c of run.hand) {
+      if (c.faceDown || E.isDebuffed(run, c)) continue;
+      const v = c.enh === 'stone' ? 0 : c.rank;
+      if (!best || v > best.v) best = { c, v };
+    }
+    return best ? best.c : null;
+  };
   E.save = (run) => JSON.parse(JSON.stringify(run));
   E.load = (data) => { const run = data; E.attachRng(run); if (run.bosses) E.fixUnfairBosses(run); return run; };
   return E;
@@ -4275,6 +4286,7 @@ G.Table = (() => {
     setInterval(() => { if (T.open && T.run) T.tickTimer(); }, 250);
     addEventListener('keydown', (e) => {
       if (!T.open || busy || e.target.tagName === 'INPUT') return;
+      if (e.shiftKey && e.code === 'KeyI') { e.preventDefault(); T.playBestSingle(); return; }
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); T.play(); }
       if (e.key === 'd' || e.key === 'Delete') T.discard();
       if (e.key === 'Escape') T.hide();
@@ -4635,6 +4647,15 @@ G.Table = (() => {
       T.renderCritters();
       T.save();
     }
+  };
+  /* Shift+I: play the single highest card that isn't debuffed */
+  T.playBestSingle = () => {
+    const r = T.run;
+    if (busy || !r || r.phase !== 'play' || T.run.pack) return;
+    const c = E.bestSingle(r);
+    if (!c) { G.FX.toast('No clean card to play, partner!'); G.Audio.error(); return; }
+    sel = [c.uid];
+    T.play();
   };
   const popLabel = (x, y, text, cls, sub) => {
     const d = G.el('div', 'pop-label ' + cls, G.esc(text) + (sub ? `<small>${G.esc(sub)}</small>` : ''));
