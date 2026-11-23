@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.2.1">
+<meta name="version" content="1.2.2">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -349,6 +349,9 @@ table.lb-table tr.gold td { background: rgba(255, 207, 90, .12); } table.lb-tabl
 .tb-cps { font-size: 11px; text-align: center; margin-top: auto; }
 .tb-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
 .tb-top { display: flex; gap: 14px; padding: 10px 14px 0; justify-content: space-between; align-items: flex-start; }
+.tb-topr { display: flex; gap: 8px; align-items: flex-start; flex-shrink: 0; }
+.tb-restart { white-space: nowrap; align-self: flex-start; }
+#table[data-pack] .tb-restart { position: relative; z-index: 31; }
 .slots { display: flex; gap: 8px; padding: 8px; border-radius: 14px; background: rgba(0, 0, 0, .25); position: relative; min-height: 104px; flex-wrap: wrap; }
 .slots.cons-slots { min-height: 80px; flex-wrap: nowrap; flex-shrink: 0; } .slot-n { position: absolute; bottom: -16px; left: 8px; font-size: 11px; color: rgba(255, 255, 255, .6); }
 .critter { width: 78px; height: 96px; border-radius: 12px; background: linear-gradient(180deg, #f6eedc, #e2d2b0); color: #2a1a40; border: 3px solid #7fb6ff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; cursor: grab; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); transition: transform .12s; touch-action: none; }
@@ -780,7 +783,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-22">v1.2.1</div>
+<div id="ver" title="built 2026-11-23">v1.2.2</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -4091,7 +4094,9 @@ G.Table = (() => {
   const E = G.Engine;
   T.run = null; T.open = false;
   let sel = [], busy = false, view = null, el = {}, lobbyPouch = 'burlap', lobbySpice = 1, consSel = null, lbFilter = 'all';
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms / (G.state.settings.fastCards || 1)));
+  // gen bumps on restart: any animation still waiting from the old run just stops there
+  let gen = 0;
+  const wait = (ms) => { const g = gen; return new Promise((r) => setTimeout(() => { if (g === gen) r(); }, ms / (G.state.settings.fastCards || 1))); };
   const S = () => G.state.cards;
 
   /* ---------- bridge ---------- */
@@ -4174,6 +4179,20 @@ G.Table = (() => {
     view = null; sel = [];
     T.show();
   };
+  /* 🔄 start over with the same saddlebag and spice, no questions asked */
+  T.restart = () => {
+    const r = T.run; if (!r) return;
+    if (r.phase !== 'over' && !r._victoryDone) S().losses++; // same as abandoning
+    syncStats();
+    gen++; busy = false; sel = []; view = null; consSel = null;
+    document.querySelectorAll('.pop-label').forEach((d) => d.remove());
+    const hs = document.querySelector('.tb-hand'); if (hs) hs.classList.remove('total');
+    const rd = document.querySelector('.tb-round'); if (rd) rd.dataset.fire = 0;
+    el.sp.parentElement.classList.remove('merge');
+    el.htype.innerHTML = '&nbsp;';
+    T.run = null; G.state.run = null;
+    T.newRun(r.pouch, r.spice);
+  };
   T.resume = () => {
     if (G.state.run && !T.run) { try { T.run = T.attach(E.load(G.state.run)); } catch (e) { console.warn('run load failed', e); G.state.run = null; } }
   };
@@ -4199,7 +4218,7 @@ G.Table = (() => {
         <div class="tb-cps muted" id="tb-cps"></div>
       </div>
       <div class="tb-main">
-        <div class="tb-top"><div class="slots" id="tb-critters"></div><div class="slots cons-slots" id="tb-cons"></div></div>
+        <div class="tb-top"><div class="slots" id="tb-critters"></div><div class="tb-topr"><div class="slots cons-slots" id="tb-cons"></div><button class="btn sm tb-restart" id="tb-restart" title="Start this run over (same saddlebag and spice). No take-backs.">🔄 Restart</button></div></div>
         <div id="tb-center"></div>
         <div id="tb-handwrap">
           <div id="tb-hand"></div>
@@ -4219,6 +4238,7 @@ G.Table = (() => {
     document.getElementById('tb-srank').onclick = () => { T.run.sortBy = 'rank'; E.sortHand(T.run); T.renderHand(); };
     document.getElementById('tb-ssuit').onclick = () => { T.run.sortBy = 'suit'; E.sortHand(T.run); T.renderHand(); };
     document.getElementById('tb-leave').onclick = () => T.hide();
+    document.getElementById('tb-restart').onclick = () => T.restart();
     document.getElementById('tb-info').onclick = () => T.runInfo();
     document.getElementById('tb-deckbtn').onclick = () => T.deckView();
     document.getElementById('tb-deck').onclick = () => T.deckView();
@@ -4594,8 +4614,8 @@ G.Table = (() => {
     setTimeout(() => d.remove(), 900);
   };
   const countUp = (node, from, to, ms) => new Promise((res) => {
-    const t0 = performance.now(); ms /= G.state.settings.fastCards || 1;
-    const f = (t) => { const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3); node.textContent = G.fmt(from + (to - from) * e); if (k < 1) requestAnimationFrame(f); else res(); };
+    const t0 = performance.now(), g = gen; ms /= G.state.settings.fastCards || 1;
+    const f = (t) => { if (g !== gen) return; const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3); node.textContent = G.fmt(from + (to - from) * e); if (k < 1) requestAnimationFrame(f); else res(); };
     requestAnimationFrame(f);
   });
   T.discard = () => {
@@ -4605,6 +4625,7 @@ G.Table = (() => {
     gone.forEach((u, i) => { const d = el.hand.querySelector(`[data-uid="${u}"]`); if (d) d.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${200 + i * 30}px, 120px) rotate(40deg)`, opacity: 0 }], { duration: 260, fill: 'forwards' }); });
     G.Audio.whoosh();
     setTimeout(() => {
+      if (T.run !== r) return;
       const out = E.discard(r, gone);
       sel = [];
       if (out) for (const ev of out.events) { const t = ev.uid && el.critters.querySelector(`[data-uid="${ev.uid}"]`); if (t) { const p = G.FX.centerOf(t); popLabel(p.x, p.y - 60, ev.money ? `+$${ev.money}` : ev.msg || '!', ev.money ? 'mo' : 'msg'); } }
