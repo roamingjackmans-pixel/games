@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.3.4">
+<meta name="version" content="1.4.0">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -344,6 +344,9 @@ table.lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.lb-table th { text-align: left; font-size: 10px; text-transform: uppercase; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); }
 table.lb-table td { padding: 5px 6px; border-bottom: 1px solid rgba(255, 255, 255, .06); } table.lb-table td b { font-variant-numeric: tabular-nums; font-family: var(--font-display); }
 table.lb-table tr.gold td { background: rgba(255, 207, 90, .12); } table.lb-table tr.gold td b { color: var(--gold); }
+.lb-tabs { display: flex; gap: 4px; } .lb-tab { font: inherit; font-family: var(--font-western, inherit); font-size: 15px; color: var(--muted); background: rgba(0, 0, 0, .3); border: 2px solid #3a1d0a; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+.lb-tab.on { color: #3a1d0a; background: var(--gold); border-color: #ffe2a8; } .lb-tab:hover:not(.on) { color: #ffe2a8; }
+.lb .panel-h.sub { flex-wrap: wrap; gap: 8px; } .lb-endless { font-size: 12px; }
 .v-time { font-size: 18px; } .v-time b { font-family: var(--font-display); color: var(--gold); }
 .tb-sbtns { display: flex; gap: 6px; } .tb-sbtns .btn { flex: 1; }
 .tb-cps { font-size: 11px; text-align: center; margin-top: auto; }
@@ -790,7 +793,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-23">v1.3.4</div>
+<div id="ver" title="built 2026-11-23">v1.4.0</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -1409,7 +1412,7 @@ G.newState = () => ({
   pops: 0, rarePops: {}, mimicsCaught: 0, mimicsEscaped: 0, thieves: 0, thievesMissed: 0, gemsCaught: 0,
   critters: {}, codexCount: 0, fossils: 0,
   achievements: {}, achCountCache: 0,
-  cards: { runs: 0, wins: 0, losses: 0, wonPouches: {}, bestHand: 0, hands: 0, types: {}, maxAnte: 0, rerolls: 0, packs: 0, destroyed: 0, money: 0, tonics: 0, runes: 0, skips: 0, endlessBest: 0, crunchWon: 0, bossesBeaten: 0, closeCalls: 0, bestTimes: [] },
+  cards: { runs: 0, wins: 0, losses: 0, wonPouches: {}, bestHand: 0, hands: 0, types: {}, maxAnte: 0, rerolls: 0, packs: 0, destroyed: 0, money: 0, tonics: 0, runes: 0, skips: 0, endlessBest: 0, crunchWon: 0, bossesBeaten: 0, closeCalls: 0, bestTimes: [], topRuns: null },
   run: null,
   bloom: { start: Date.now(), crystals: 0, harvested: 0 },
   daily: { last: null, streak: 0, best: 0, days: 0, first: G.dayKey() },
@@ -3297,6 +3300,8 @@ G.Engine = (() => {
   };
   E.rollTagOffers = (run) => { run.tagOffers = [0, 1].map(() => G.TAGS[Math.floor(run.rng() * G.TAGS.length)].id); };
   E.blindName = (i) => ['Snack', 'Meal', 'Indigestion'][i];
+  // how many blinds this run has eaten so far (the current blind counts once its cash-out is done)
+  E.blindsBeaten = (run) => (run.ante - 1) * 3 + run.blindIdx + (run.phase === 'shop' || run.phase === 'won' ? 1 : 0);
   E.blindTarget = (run, i = run.blindIdx, ante = run.ante) => {
     const base = G.anteBase(ante, run.spice) * run.targetMult;
     let mult = [1, 1.5, 2][i];
@@ -4113,7 +4118,7 @@ G.Table = (() => {
   const T = {};
   const E = G.Engine;
   T.run = null; T.open = false;
-  let sel = [], busy = false, view = null, el = {}, lobbyPouch = 'burlap', lobbySpice = 1, consSel = null, lbFilter = 'all', lbPickQ = '';
+  let sel = [], busy = false, view = null, el = {}, lobbyPouch = 'burlap', lobbySpice = 1, consSel = null, lbFilter = 'all', lbPickQ = '', lbMode = 'top';
   // gen bumps on restart: any animation still waiting from the old run just stops there
   let gen = 0;
   const wait = (ms) => { const g = gen; return new Promise((r) => setTimeout(() => { if (g === gen) r(); }, ms / (G.state.settings.fastCards || 1))); };
@@ -4165,6 +4170,7 @@ G.Table = (() => {
       ${T.leaderboardHTML()}`;
     const lbSel = p.querySelector('#lb-filter');
     if (lbSel) lbSel.onchange = () => { lbFilter = lbSel.value; T.renderLobby(p); };
+    p.querySelectorAll('.lb-tab').forEach((b) => (b.onclick = () => { lbMode = b.dataset.mode; T.renderLobby(p); }));
     p.querySelectorAll('.pouch:not(.locked)').forEach((d) => (d.onclick = () => { lobbyPouch = d.dataset.id; T.renderLobby(p); }));
     p.querySelectorAll('.spice:not(.locked)').forEach((d) => (d.onclick = () => { lobbySpice = +d.dataset.n; T.renderLobby(p); }));
     p.querySelectorAll('.pd-pick').forEach((d) => {
@@ -4178,23 +4184,58 @@ G.Table = (() => {
     p.querySelector('#tb-start').onclick = () => {
       const pick = lobbyPouch === 'pardner' ? S().pardner : null;
       if (lobbyPouch === 'pardner' && !pick) { G.FX.toast('🤝 Pick yer pardner first!'); G.Audio.error(); return; }
-      const go = () => { T.newRun(lobbyPouch, lobbySpice, pick); };
+      const go = () => { if (r) T.recordTop(r, 'quit'); T.newRun(lobbyPouch, lobbySpice, pick); };
       if (r) G.UI.confirm('<h2>Abandon your current run?</h2><p>Its critters will wander off.</p>', go, 'Abandon & start'); else go();
     };
     if (r) {
       p.querySelector('#tb-continue').onclick = () => T.show();
-      p.querySelector('#tb-abandon').onclick = () => G.UI.confirm('<h2>Abandon this run?</h2>', () => { T.run = null; G.state.run = null; S().losses++; T.renderLobby(p); }, 'Abandon');
+      p.querySelector('#tb-abandon').onclick = () => G.UI.confirm('<h2>Abandon this run?</h2>', () => { T.recordTop(r, 'quit'); T.run = null; G.state.run = null; S().losses++; T.renderLobby(p); }, 'Abandon');
     }
   };
+  /* 🏆 Top Runs: how far every run got. One entry per run, updated as it goes (result: live, won, lost, quit) */
+  T.topRuns = () => {
+    const c = S();
+    if (!c.topRuns) c.topRuns = (c.bestTimes || []).map((x) => ({ id: 'w' + x.at, beaten: 24, result: 'won', pouch: x.pouch, spice: x.spice, at: x.at, ms: x.ms })); // past wins seed the board
+    return c.topRuns;
+  };
+  T.recordTop = (r, result) => {
+    if (!r || !r.startedAt) return;
+    const list = T.topRuns(), id = r.seed + '_' + r.startedAt;
+    let e = list.find((x) => x.id === id);
+    if (!e) { e = { id }; list.push(e); }
+    const won = !!(r._victoryDone || r.phase === 'won' || e.won || result === 'won');
+    Object.assign(e, { beaten: Math.max(e.beaten || 0, E.blindsBeaten(r)), pouch: r.pouch, spice: r.spice, endless: !!r.endless, won, bestHand: Math.max(e.bestHand || 0, (r.stats && r.stats.bestHand) || 0), at: Date.now(), result: result || 'live' });
+    list.sort((a, b) => b.beaten - a.beaten || (b.bestHand || 0) - (a.bestHand || 0) || a.at - b.at);
+    if (list.length > 300) list.length = 300;
+    G.dirty && G.dirty();
+  };
+  const reachedHTML = (x) => {
+    if (x.beaten >= 24 && !x.endless) return '<b>🏆 All 8 antes</b>';
+    const ante = Math.floor(x.beaten / 3) + 1, idx = x.beaten % 3;
+    return `<b>Ante ${ante}</b> <span class="muted">· ${E.blindName(idx)}</span>`;
+  };
+  const RESULT = { won: '🏆 Won', lost: '🪦 Lost', quit: '🏳️ Quit', live: "🐎 Ridin'" };
+  T.leaderboardHTML = () => lbMode === 'fast' ? T.fastestHTML() : T.topHTML();
+  const lbHead = (title, used) => `<div class="panel-h sub"><div class="lb-tabs"><button class="lb-tab ${lbMode === 'top' ? 'on' : ''}" data-mode="top">🏆 Top Runs</button><button class="lb-tab ${lbMode === 'fast' ? 'on' : ''}" data-mode="fast">🏁 Fastest Wins</button></div>
+      ${used.length ? `<label class="lb-filter">Saddlebag <select id="lb-filter"><option value="all">All saddlebags</option>${used.map((po) => `<option value="${po.id}" ${po.id === lbFilter ? 'selected' : ''}>${po.emoji} ${po.name}</option>`).join('')}</select></label>` : ''}</div>`;
+  const medal = (i) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1);
+  T.topHTML = () => {
+    const all = T.topRuns();
+    const used = G.POUCHES.filter((po) => all.some((x) => x.pouch === po.id));
+    if (lbFilter !== 'all' && !used.some((po) => po.id === lbFilter)) lbFilter = 'all';
+    const rows = (lbFilter === 'all' ? all : all.filter((x) => x.pouch === lbFilter)).slice(0, 10);
+    return `<div class="lb" id="lb-box">${lbHead('Top Runs', used)}
+      ${rows.length ? `<table class="lb-table"><tr><th>#</th><th>Made it to</th><th>Result</th><th>Saddlebag</th><th>Spice</th><th>When</th></tr>${rows.map((x, i) => { const po = G.POUCH_BY_ID[x.pouch] || { emoji: '❔', name: x.pouch }, sp = G.SPICES[x.spice - 1] || { emoji: '', name: '' }; return `<tr class="${i === 0 ? 'gold' : ''}"><td>${medal(i)}</td><td>${reachedHTML(x)}${x.endless ? ' <span class="lb-endless">♾️</span>' : ''}</td><td>${x.won || x.result === 'won' ? '🏆 Won' : RESULT[x.result] || ''}</td><td>${po.emoji} ${po.name}</td><td>${sp.emoji} ${sp.name}</td><td class="muted">${new Date(x.at).toLocaleDateString()}</td></tr>`; }).join('')}</table>`
+        : '<div class="empty">No runs on the board yet, partner. Every run you ride gets nailed up here.</div>'}</div>`;
+  };
   /* 🏁 Fastest Wins: your best Gobble Saloon times, filterable by saddlebag */
-  T.leaderboardHTML = () => {
+  T.fastestHTML = () => {
     const all = S().bestTimes || [];
     const used = G.POUCHES.filter((po) => all.some((x) => x.pouch === po.id));
     if (lbFilter !== 'all' && !used.some((po) => po.id === lbFilter)) lbFilter = 'all';
     const rows = (lbFilter === 'all' ? all : all.filter((x) => x.pouch === lbFilter)).slice(0, 10);
     const fmt = T.fmtMs;
-    return `<div class="lb" id="lb-box"><div class="panel-h sub"><h3>🏁 Fastest Wins</h3>
-      ${used.length ? `<label class="lb-filter">Saddlebag <select id="lb-filter"><option value="all">All saddlebags</option>${used.map((po) => `<option value="${po.id}" ${po.id === lbFilter ? 'selected' : ''}>${po.emoji} ${po.name}</option>`).join('')}</select></label>` : ''}</div>
+    return `<div class="lb" id="lb-box">${lbHead('Fastest Wins', used)}
       ${rows.length ? `<table class="lb-table"><tr><th>#</th><th>Time</th><th>Saddlebag</th><th>Spice</th><th>When</th></tr>${rows.map((x, i) => { const po = G.POUCH_BY_ID[x.pouch] || { emoji: '❔', name: x.pouch }, sp = G.SPICES[x.spice - 1] || { emoji: '', name: '' }; return `<tr class="${i === 0 ? 'gold' : ''}"><td>${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td><td><b>${fmt(x.ms)}</b></td><td>${po.emoji} ${po.name}</td><td>${sp.emoji} ${sp.name}</td><td class="muted">${new Date(x.at).toLocaleDateString()}</td></tr>`; }).join('')}</table>`
         : '<div class="empty">No timed wins yet, partner. Win a run and yer time gets nailed up here.</div>'}</div>`;
   };
@@ -4223,6 +4264,7 @@ G.Table = (() => {
   T.restart = () => {
     const r = T.run; if (!r) return;
     if (r.phase !== 'over' && !r._victoryDone) S().losses++; // same as abandoning
+    if (r.phase !== 'over') T.recordTop(r, r._victoryDone && !r.endless ? 'won' : 'quit');
     syncStats();
     gen++; busy = false; sel = []; view = null; consSel = null;
     document.querySelectorAll('.pop-label').forEach((d) => d.remove());
@@ -4699,6 +4741,7 @@ G.Table = (() => {
     const cash = E.cashOut(r);
     if (r.critters.length === 0 && !r._hadCritter) r._vegan = true; else r._hadCritter = true;
     view = { kind: 'cashout', cash, pay, wasIdx, ante };
+    T.recordTop(r);
     syncStats();
     T.save();
     await wait(700);
@@ -4738,6 +4781,7 @@ G.Table = (() => {
     if (runMs < 5 * 60e3) s.secrets.speedrun3 = 1;
     if (runMs < 2 * 60e3) s.secrets.speedrun4 = 1;
     if (r._vegan || !r._hadCritter) s.secrets.nocritter = 1;
+    T.recordTop(r, 'won');
     s.secrets.lossStreak = 0;
     r.trophyNew = newTrophy;
     G.dirty();
@@ -4760,6 +4804,7 @@ G.Table = (() => {
     G.state.secrets.lossStreak = (G.state.secrets.lossStreak || 0) + 1;
     if (G.state.secrets.lossStreak >= 5) G.state.secrets.loss5 = 1;
     if (r.endless) S().endlessBest = Math.max(S().endlessBest, r.ante);
+    T.recordTop(r, 'lost');
     G.Audio.sad(); G.FX.shake(12);
     G.Gobbo.say(G.pick(G.QUIPS.tableLoss), 3000);
     T.save();
