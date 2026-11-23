@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.4.0">
+<meta name="version" content="1.5.0">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -439,6 +439,7 @@ table.lb-table tr.gold td { background: rgba(255, 207, 90, .12); } table.lb-tabl
 .bc-desc { font-size: 12px; color: #ffd0d8; } .bc-tgt small { display: block; font-size: 10px; color: rgba(255, 255, 255, .7); } .bc-tgt b { font-family: var(--font-display); font-size: 28px; } .bc-rew { font-size: 12px; color: var(--gold); }
 .bc-state { font-weight: 800; color: rgba(255, 255, 255, .7); } .btn.skip { background: #2a2a3a; }
 .tags-held { margin-top: 14px; text-align: center; } .tags-held span { background: rgba(0, 0, 0, .35); padding: 3px 8px; border-radius: 8px; margin: 0 2px; }
+.back-shop { margin-top: 12px; text-align: center; }
 /* cashout, victory, game over */
 .cashout, .victory, .gameover { background: rgba(10, 6, 20, .88); border: 2px solid var(--line2); border-radius: 22px; padding: 22px 28px; min-width: min(420px, 100%); text-align: center; animation: modal-in .4s cubic-bezier(.3, 1.5, .5, 1); }
 .cashout h2, .victory h1, .gameover h1 { font-family: var(--font-display); margin: 0 0 12px; }
@@ -793,7 +794,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-23">v1.4.0</div>
+<div id="ver" title="built 2026-11-23">v1.5.0</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -3301,7 +3302,7 @@ G.Engine = (() => {
   E.rollTagOffers = (run) => { run.tagOffers = [0, 1].map(() => G.TAGS[Math.floor(run.rng() * G.TAGS.length)].id); };
   E.blindName = (i) => ['Snack', 'Meal', 'Indigestion'][i];
   // how many blinds this run has eaten so far (the current blind counts once its cash-out is done)
-  E.blindsBeaten = (run) => (run.ante - 1) * 3 + run.blindIdx + (run.phase === 'shop' || run.phase === 'won' ? 1 : 0);
+  E.blindsBeaten = (run) => (run.ante - 1) * 3 + run.blindIdx + ((run.phase === 'shop' && !(run.shop && run.shop.reopened)) || run.phase === 'won' ? 1 : 0);
   E.blindTarget = (run, i = run.blindIdx, ante = run.ante) => {
     const base = G.anteBase(ante, run.spice) * run.targetMult;
     let mult = [1, 1.5, 2][i];
@@ -3315,6 +3316,7 @@ G.Engine = (() => {
 
   E.skipBlind = (run) => {
     if (run.blindIdx >= 2) return null;
+    E.closeShop(run);
     const tagId = run.tagOffers[run.blindIdx];
     run.skipped.push(run.ante * 10 + run.blindIdx);
     E.gainTag(run, tagId);
@@ -3332,6 +3334,7 @@ G.Engine = (() => {
   };
 
   E.startBlind = (run) => {
+    E.closeShop(run);
     run.phase = 'play';
     run.round++;
     run.roundScore = 0;
@@ -3459,11 +3462,18 @@ G.Engine = (() => {
     return { lines, total, wasBoss, ante: beatAnte };
   };
   E.advance = (run) => {
-    // called when leaving the shop
-    if (run.blindIdx === 2) { run.ante++; run.blindIdx = 0; E.rollBossesFor(run, run.ante); E.rollTagOffers(run); run.gizmoOffer = null; }
+    // called when leaving the shop. A store you went back into just closes again: you already rode on from it
+    if (run.shop && run.shop.reopened) { run.shop.reopened = false; run.phase = 'select'; return; }
+    if (run.blindIdx === 2) { run.ante++; run.blindIdx = 0; E.rollBossesFor(run, run.ante); E.rollTagOffers(run); run.gizmoStale = true; }
     else run.blindIdx++;
     run.phase = 'select';
+    // the store stays open behind you until the next blind starts or is skipped
+  };
+  E.canReopenShop = (run) => run.phase === 'select' && !!run.shop;
+  E.reopenShop = (run) => { if (!E.canReopenShop(run)) return false; run.phase = 'shop'; run.shop.reopened = true; return true; };
+  E.closeShop = (run) => {
     run.shop = null;
+    if (run.gizmoStale) { run.gizmoOffer = null; run.gizmoStale = false; }
   };
   E.continueEndless = (run) => { run.endless = true; E.enterShop(run); };
 
@@ -3485,6 +3495,7 @@ G.Engine = (() => {
   };
   E.packCost = (run, type) => Math.round(G.PACKS[type].cost * run.discount);
   E.enterShop = (run) => {
+    if (run.gizmoStale) { run.gizmoOffer = null; run.gizmoStale = false; }
     run.phase = 'shop';
     run.shopSeen = run.critters.map((c) => c.id);
     const items = [];
@@ -3519,7 +3530,7 @@ G.Engine = (() => {
     else run.shop.rerolls++;
     run.stats.rerolls++;
     const n = run.shopSlots;
-    run.shop.items = [];
+    run.shop.items = run.shop.items.filter((it) => it.free && !it.sold); // free tag goodies stay put
     for (let i = 0; i < n; i++) run.shop.items.push(E.shopItem(run));
     for (const c of run.critters) { const d = G.CRITTER_BY_ID[c.id]; d.onReroll && d.onReroll(run, c); }
     return true;
@@ -4509,10 +4520,12 @@ G.Table = (() => {
         <div class="bc-rew">${E.blindReward(r, i) ? 'Reward ' + '$'.repeat(E.blindReward(r, i)) : 'No money reward'}</div>
         ${state === 'current' ? `<button class="btn primary" data-act="select">Draw, partner!</button>${tag ? `<button class="btn sm skip" data-act="skip">Skip → ${tag.emoji} ${tag.name}</button><div class="muted small">${tag.desc}</div>` : ''}` : `<div class="bc-state">${{ done: '✅ Eaten', skipped: '⏭️ Skipped', upcoming: 'Up next' }[state] || ''}</div>`}
       </div>`;
-    }).join('')}</div>${r.tags.length ? `<div class="tags-held">Tags: ${r.tags.map((t) => `<span title="${G.TAG_BY_ID[t].desc}">${G.TAG_BY_ID[t].emoji} ${G.TAG_BY_ID[t].name}</span>`).join(' ')}</div>` : ''}`;
+    }).join('')}</div>${E.canReopenShop(r) ? '<div class="back-shop"><button class="btn" data-act="shop">🦔 Back to Prickly Pete&#39;s</button></div>' : ''}${r.tags.length ? `<div class="tags-held">Tags: ${r.tags.map((t) => `<span title="${G.TAG_BY_ID[t].desc}">${G.TAG_BY_ID[t].emoji} ${G.TAG_BY_ID[t].name}</span>`).join(' ')}</div>` : ''}`;
     el.hand.innerHTML = '';
     const b = el.center.querySelector('[data-act=select]');
     if (b) b.onclick = () => T.startBlind();
+    const bs = el.center.querySelector('[data-act=shop]');
+    if (bs) bs.onclick = () => { if (E.reopenShop(r)) { G.Audio.whoosh(); T.render(); T.save(); } };
     const sk = el.center.querySelector('[data-act=skip]');
     if (sk) sk.onclick = () => { const t = E.skipBlind(r); G.Audio.whoosh(); G.FX.toast(`${G.TAG_BY_ID[t].emoji} Got the <b>${G.TAG_BY_ID[t].name}</b>`); syncStats(); T.save(); T.render(); };
     el.htype.innerHTML = '&nbsp;'; el.sp.textContent = '0'; el.sh.textContent = '0';
