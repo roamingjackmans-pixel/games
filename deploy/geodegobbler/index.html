@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.5.0">
+<meta name="version" content="1.5.1">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -385,7 +385,11 @@ table.lb-table tr.gold td { background: rgba(255, 207, 90, .12); } table.lb-tabl
 .cons.k-tonic { border-color: #4f9dff; background: #142a4a; } .cons.k-mystic { border-color: #ff6fd8; background: #3a1236; }
 .cons span { font-size: 28px; } .cons b { font-size: 9px; line-height: 1.05; padding: 0 2px; }
 .cons.empty { background: rgba(255, 255, 255, .04); border: 2px dashed rgba(255, 255, 255, .15); box-shadow: none; cursor: default; }
-#tb-center { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 10px; overflow: auto; }
+/* the whole main column scrolls; the centre grows to fit its content, so a tall critter row
+   (lots of Fossils) can never push the store/blind buttons into an unreachable spot above the fold */
+.tb-main { overflow: auto; }
+.tb-top, #tb-handwrap { flex-shrink: 0; }
+#tb-center { flex: 1 0 auto; display: flex; align-items: center; justify-content: center; padding: 10px; }
 .play-area { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .played { display: flex; gap: 10px; min-height: 130px; justify-content: center; }
 .pa-msg { font-family: var(--font-display); font-size: 28px; min-height: 36px; }
@@ -794,7 +798,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-23">v1.5.0</div>
+<div id="ver" title="built 2026-11-23">v1.5.1</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
