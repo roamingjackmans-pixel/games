@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.5.3">
+<meta name="version" content="1.5.4">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -801,7 +801,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-24">v1.5.3</div>
+<div id="ver" title="built 2026-11-24">v1.5.4</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -2845,7 +2845,6 @@ G.BOSSES = [
   { id: 'picky', name: 'The Picky Eater', emoji: '🧐', desc: 'You must play exactly <b>5 cards</b>', minAnte: 2, must5: true },
   { id: 'hiccup', name: 'The Hiccups', emoji: '😮', desc: 'After every hand, <b>2 random cards</b> in hand are discarded', minAnte: 2, hiccup: 2 },
   { id: 'coma', name: 'The Food Coma', emoji: '😴', desc: '<b>1 in 4</b> cards are drawn face down', faceDown: 0.25 },
-  { id: 'sugar', name: 'The Sugar Crash', emoji: '🍭', desc: 'All <b>face cards</b> are debuffed', minAnte: 2, debuff: (c, run) => G.Engine.isFaceRaw(run, c) },
   { id: 'toothache', name: 'The Toothache', emoji: '🦷', desc: 'Base <b>Sparkle and Shine are halved</b>', halfBase: true },
   { id: 'bloat', name: 'The Bloat', emoji: '🎈', desc: '<b>-1 hand size</b>', handSize: -1 },
   { id: 'gas', name: 'The Gas', emoji: '💨', desc: 'Only <b>1 discard</b>', discards: 1 },
@@ -3299,9 +3298,11 @@ G.Engine = (() => {
   /* swap out any unfair boss already rolled for this ante or later (old saves from before the rule) */
   E.fixUnfairBosses = (run) => {
     for (let a = run.ante; a < run.bosses.length; a++) {
-      const b = G.BOSS_BY_ID[run.bosses[a]];
-      if (b && !E.bossFair(run, b)) {
-        if (a === run.ante && run.phase === 'play' && run.blindIdx === 2) { run.bossDisabled = true; continue; } // already mid-fight: call it off
+      const id = run.bosses[a]; if (!id) continue;
+      const b = G.BOSS_BY_ID[id];
+      // unfair for this run, or removed from the game (The Sugar Crash): roll a different one
+      if (!b || !E.bossFair(run, b)) {
+        if (a === run.ante && run.phase === 'play' && run.blindIdx === 2) { run.bossDisabled = true; if (b) continue; } // already mid-fight: call it off (a removed one is swapped so it can still be named)
         run.bosses[a] = null; E.rollBossesFor(run, a);
       }
     }
