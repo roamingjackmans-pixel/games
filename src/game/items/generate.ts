@@ -263,18 +263,46 @@ export function rollNeon(item: Item): void {
   item.name = `${item.name} (${NEON_COLORS[item.neon].name})`;
 }
 
+const variantStats = (g: WeaponVariantDef['grades']): StatId[] => (Object.entries(g) as [StatId, string | undefined][]).filter(([, x]) => !!x && x !== '-').map(([k]) => k);
+
+/** The stats a class's drops reach for through a weapon's variants, on top of the usual roll (D456). */
+export const VARIANT_LEAN_STATS: readonly StatId[] = ['brain', 'prayer'];
+
+/**
+ * D456: a weapon type with a variant that brings the class's Brain or Prayer (the variant scales with it, the type
+ * does not) rolls a variant more often: VARIANT_CHANCE × FAVOR_PRIMARY when it is the class's primary stat,
+ * × FAVOR_SECONDARY when a secondary. The chance above VARIANT_CHANCE goes to those variants alone (`suits`).
+ */
+export function leanVariants(baseId: string, favor: DropFavor | undefined): { chance: number; suits: WeaponVariantDef[] } {
+  const list = WEAPON_VARIANTS[baseId];
+  if (!favor || !list?.length) return { chance: VARIANT_CHANCE, suits: [] };
+  const base = scalingStatsOf(baseId);
+  const sec = favorSecondaries(favor);
+  const wanted = VARIANT_LEAN_STATS.filter((s) => !base.includes(s) && (s === favor.primary || sec.includes(s)));
+  const suits = list.filter((v) => variantStats(v.grades).some((s) => wanted.includes(s)));
+  if (!suits.length) return { chance: VARIANT_CHANCE, suits: [] };
+  const p = favor.primary;
+  const primary = !!p && wanted.includes(p) && suits.some((v) => variantStats(v.grades).includes(p));
+  return { chance: Math.min(1, VARIANT_CHANCE * (primary ? FAVOR_PRIMARY : FAVOR_SECONDARY)), suits };
+}
+
 /**
  * A scaling variant on a fresh weapon (D319): VARIANT_CHANCE when its class has any, the variants that suit the
- * player's class weighted up as the classes themselves are (favorMult). Its own stream, seeded by the item's id, so
- * every other roll stays where it was.
+ * player's class weighted up as the classes themselves are (favorMult). A class's Brain or Prayer then gets a second
+ * chance at the variants that bring it (D456, `leanVariants`). Its own stream, seeded by the item's id, so every other
+ * roll stays where it was.
  */
 export function rollVariant(item: Item, favor?: DropFavor): void {
   const list = WEAPON_VARIANTS[item.baseId];
   if (!list?.length) return;
   const r = new Rng(`variant|${item.id}`);
-  if (r.next() >= VARIANT_CHANCE) return;
-  const stats = (g: WeaponVariantDef['grades']): StatId[] => (Object.entries(g) as [StatId, string | undefined][]).filter(([, x]) => !!x && x !== '-').map(([k]) => k);
-  item.variant = list[Math.max(0, r.weighted(list.map((v) => favorMult(stats(v.grades), favor))))]!.id;
+  const pick = (vs: readonly WeaponVariantDef[]): string => vs[Math.max(0, r.weighted(vs.map((v) => favorMult(variantStats(v.grades), favor))))]!.id;
+  if (r.next() < VARIANT_CHANCE) {
+    item.variant = pick(list);
+    return;
+  }
+  const lean = leanVariants(item.baseId, favor);
+  if (lean.suits.length && r.next() < (lean.chance - VARIANT_CHANCE) / (1 - VARIANT_CHANCE)) item.variant = pick(lean.suits);
 }
 
 /**

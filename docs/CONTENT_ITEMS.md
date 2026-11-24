@@ -38,7 +38,9 @@ truth; if this page and the data disagree, the data wins. Mechanics are in [GAME
   is never more than 0.1 above its class's grade total unless it is marked an upgrade (the Keen Greatsword, Keen Greataxe
   and Keen Club); since D436 several fall well below theirs. A stat the class did not need asks C 10, B 12, A 13 (D 9,
   E 8). Variants that use the class's primary or secondary stat come up more, by the same weights as class weapons
-  (D317). The Whip has none. Examples: a **Blessed Katana** scales B Slicey /
+  (D317). A Brain or Prayer class reaches further (D456): a weapon type with a variant that brings its Brain or Prayer
+  (the variant scales with it, the type does not) rolls a variant **77%** of the time for the primary stat (35% × 2.2)
+  or **56%** for a secondary (35% × 1.6), the extra always one of those variants. The Whip has none. Examples: a **Blessed Katana** scales B Slicey /
   C Prayer; a **Balanced Katana** C Bonk / B Slicey; a **Fervent Colossal Sword** C Bonk / E Slicey / C Prayer.
 
 | Class | Variants (grades Bonk / Slicey / Brain or Prayer) |

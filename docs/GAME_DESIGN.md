@@ -753,7 +753,9 @@ Rarity power (D178, D221) multiplies weapon and casting-tool damage and tightens
 from NG+1 every source's Legendary share is ×1.2 a cycle, the rest shrinking in proportion (D327, CONTENT_ITEMS §12).
 Loot is instanced per player. A player's
 own drops favour weapons that scale with their class's primary stat (+120%), secondary (+60%) or both (+195%, D455); staffs
-count as Brain, talismans as Prayer; HP and Endurance give nothing (D254, D317). Most kills also shed a puff of Glowen (35%, D83).
+count as Brain, talismans as Prayer; HP and Endurance give nothing (D254, D317). A Brain or Prayer class also gets a scaling
+variant that brings its stat 77% of the time (primary) or 56% (secondary) where the weapon type has one, not 35% (D456).
+Most kills also shed a puff of Glowen (35%, D83).
 
 Every item has its own id; duplicate ids are repaired on load and pickup (D232).
 
