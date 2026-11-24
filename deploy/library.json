@@ -23,6 +23,8 @@
     { "folder": "bakersdozen", "repo": "bakersdozen", "publish": "site" },
     { "folder": "BakersDozen", "local": "deploy/BakersDozen" },
     { "folder": "Cadence", "repo": "Cadence", "publish": "_site", "stamp": true },
-    { "folder": "cadence", "local": "deploy/cadence" }
+    { "folder": "cadence", "local": "deploy/cadence" },
+    { "folder": "flashgames", "repo": "flashgames", "publish": "site" },
+    { "folder": "FlashGames", "local": "deploy/FlashGames" }
   ]
 }
