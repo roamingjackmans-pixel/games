@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.5.2">
+<meta name="version" content="1.5.3">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -801,7 +801,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-24">v1.5.2</div>
+<div id="ver" title="built 2026-11-24">v1.5.3</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -3418,7 +3418,8 @@ G.Engine = (() => {
       if (boss && boss.hiccup) for (let i = 0; i < boss.hiccup && run.hand.length; i++) run.hand.splice(Math.floor(run.rng() * run.hand.length), 1);
       if (boss && boss.shrink) run.curHandSize = Math.max(1, run.curHandSize - 1);
       if (run.hands > 0) res.drawn = E.draw(run);
-      else res.lost = true;
+      if (run.hands <= 0) res.lost = true;
+      else if (E.outOfCards(run)) { res.lost = true; run.lostReason = 'cards'; }
     }
     return res;
   };
@@ -3432,8 +3433,11 @@ G.Engine = (() => {
     run.discards--;
     run.stats.discards++;
     out.drawn = E.draw(run);
+    if (E.outOfCards(run)) { out.lost = true; run.lostReason = 'cards'; }
     return out;
   };
+  // hands left but nothing in hand and nothing left to draw: the craving can't be beaten
+  E.outOfCards = (run) => run.phase === 'play' && !run.pack && run.hands > 0 && run.roundScore < run.target && !run.hand.length && !run.drawPile.length;
 
   /* after a won craving: money breakdown, then shop */
   E.cashOut = (run) => {
@@ -4427,7 +4431,11 @@ G.Table = (() => {
     el.root.dataset.phase = view ? view.kind : r.phase;
     if (view && view.kind === 'cashout') T.renderCashout();
     else if (r.phase === 'select') T.renderSelect();
-    else if (r.phase === 'play') { T.renderPlayArea(); T.renderHand(); }
+    else if (r.phase === 'play') {
+      T.renderPlayArea(); T.renderHand();
+      // a save from before this rule (or a rune that ate the last cards): hands left, but nothing to play
+      if (!busy && E.outOfCards(r)) { r.lostReason = 'cards'; setTimeout(() => { if (T.run === r && !busy && E.outOfCards(r)) T.lose(); }, 400); }
+    }
     else if (r.phase === 'shop') T.renderShop();
     else if (r.phase === 'won') T.renderWon();
     else if (r.phase === 'over') T.renderOver();
@@ -4753,6 +4761,7 @@ G.Table = (() => {
       T.renderHand(); T.renderCons(); T.renderCritters();
       if (out) T.dealAnim(out.drawn);
       T.save();
+      if (out && out.lost) T.lose();
     }, 240);
   };
 
@@ -4834,6 +4843,7 @@ G.Table = (() => {
     if (r.endless) S().endlessBest = Math.max(S().endlessBest, r.ante);
     T.recordTop(r, 'lost');
     G.Audio.sad(); G.FX.shake(12);
+    if (r.lostReason === 'cards') G.FX.toast('🂠 Out of cards! Nothing left to play.');
     G.Gobbo.say(G.pick(G.QUIPS.tableLoss), 3000);
     T.save();
     T.render();
@@ -4841,7 +4851,7 @@ G.Table = (() => {
   T.renderOver = () => {
     const r = T.run, close = r.roundScore / r.target;
     el.hand.innerHTML = '';
-    el.center.innerHTML = `<div class="gameover"><div class="go-emoji">🪦</div><h1>${r.endless ? 'The endless trail ends here' : 'Ya got outdrawn, partner'}</h1>
+    el.center.innerHTML = `<div class="gameover"><div class="go-emoji">🪦</div><h1>${r.lostReason === 'cards' ? 'Ya ran outta rocks, partner' : r.endless ? 'The endless trail ends here' : 'Ya got outdrawn, partner'}</h1>${r.lostReason === 'cards' ? '<p class="muted">No cards left in yer hand or deck, so that last hand had nothing to play.</p>' : ''}
       ${close > 0.85 ? `<p class="so-close">SO CLOSE! You were <b>${G.fmt(r.target - r.roundScore)}</b> short (${Math.floor(close * 100)}%).</p>` : `<p>You scored ${G.fmt(r.roundScore)} of ${G.fmt(r.target)}.</p>`}
       <div class="go-stats"><div><small>Ante</small><b>${r.ante}</b></div><div><small>Best hand</small><b>${G.fmt(r.stats.bestHand)}</b></div><div><small>Most played</small><b>${E.mostPlayed(r) || '—'}</b></div><div><small>Hands</small><b>${r.stats.hands}</b></div></div>
       <div class="btn-row"><button class="btn primary big" id="go-again">🤠 Saddle up again</button><button class="btn big" id="go-leave">Mosey out</button></div></div>`;
