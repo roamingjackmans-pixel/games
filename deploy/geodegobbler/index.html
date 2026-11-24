@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.6.2">
+<meta name="version" content="1.6.3">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,7 +74,7 @@ b { font-weight: 800; }
 #ticker-inner { position: absolute; white-space: nowrap; top: 5px; left: 100%; font-weight: 700; color: #e9dcff; }
 #ticker-inner.roll { animation: tick 14s linear forwards; }
 #ticker-inner .paper { background: var(--gold); color: #2a1800; padding: 1px 8px; border-radius: 6px; font-size: 11px; margin-right: 8px; letter-spacing: 1px; }
-@keyframes tick { from { transform: translateX(0); } to { transform: translateX(calc(-100vw - 100%)); } }
+@keyframes tick { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--tick-w, calc(100vw + 100%)))); } }
 #season:empty { display: none; }
 #season { text-align: center; font-size: 12px; padding: 3px; background: linear-gradient(90deg, transparent, rgba(255, 138, 61, .25), transparent); color: #ffd9b8; }
 
@@ -897,7 +897,7 @@ body.flashrun #tb-leave, body.flashrun #tb-restart, body.flashrun #tb-timerbox, 
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-24">v1.6.2</div>
+<div id="ver" title="built 2026-11-24">v1.6.3</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -2645,6 +2645,7 @@ G.Events = (() => {
   let tickerBusy = false;
   V.nextNews = () => {
     const el = document.getElementById('ticker-inner'); if (!el || tickerBusy) return;
+    if (Date.now() < (V._newsUntil || 0)) return; // let the current headline roll all the way off the left edge first
     const s = G.state;
     const pool = G.NEWS.filter((n) => { try { return !n.c || n.c(s); } catch { return false; } });
     const recent = V._recent || (V._recent = []);
@@ -2652,7 +2653,13 @@ G.Events = (() => {
     while (recent.includes(n.t) && tries++ < 10) n = G.pick(pool);
     recent.push(n.t); if (recent.length > 40) recent.shift();
     el.innerHTML = `<span class="paper">🗞️ GRAVEL GULCH GAZETTE</span> ${G.esc(n.t)}`;
+    // same speed for every headline and screen width: it travels the ticker's width plus its own, then the next one starts
+    const dist = (el.parentElement ? el.parentElement.clientWidth : innerWidth) + el.scrollWidth, secs = Math.max(6, dist / 170);
+    el.style.setProperty('--tick-w', `${dist}px`); el.style.animationDuration = `${secs}s`;
     el.classList.remove('roll'); void el.offsetWidth; el.classList.add('roll');
+    // the next headline starts when this one has rolled off (animationend); the clock is only a fallback in case the event never comes
+    el.onanimationend = () => { V._newsUntil = 0; V.nextNews(); };
+    V._newsUntil = Date.now() + secs * 1000 + 15000;
     s.stats.newsRead++;
   };
 
@@ -6585,7 +6592,7 @@ G.Rodeo = (() => {
       if (acc > 0.1) { acc = 0; G.UI.update(); G.Geode.tick(); G.Table.tick(); }
       if (sec > 1) { sec = 0; G.dirty(); G.Events.tick(); G.Events.checkAch(); }
       if (saveT > 10) { saveT = 0; G.save(); }
-      if (newsT > 9) { newsT = 0; G.Events.nextNews(); }
+      if (newsT > 1) { newsT = 0; G.Events.nextNews(); } // nextNews waits until the current headline has rolled off
       requestAnimationFrame(frame);
     };
     G.Events.nextNews();
