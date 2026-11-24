@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.5.1">
+<meta name="version" content="1.5.2">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -534,6 +534,9 @@ table.levels { width: 100%; border-collapse: collapse; margin: 10px 0; font-size
 }
 #table:not([data-phase="play"]) .tb-actions, #table:not([data-phase="play"]) #tb-deck { visibility: hidden; }
 #table:not([data-phase="play"]) .tb-hand { opacity: .5; }
+/* a critter that just got an edition from a rune */
+.critter.ed-new { animation: ed-new .5s cubic-bezier(.3, 1.6, .5, 1) 3; z-index: 4; }
+@keyframes ed-new { 50% { transform: translateY(-8px) scale(1.18) rotate(-4deg); box-shadow: 0 0 26px #fff, 0 0 0 3px #ffcf5a; } }
 
 /* ---- zz-western.css ---- */
 /* ============ FAKE WILD WEST SKIN — deliberately cheesy, obviously a cardboard movie set ============ */
@@ -798,7 +801,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-23">v1.5.1</div>
+<div id="ver" title="built 2026-11-24">v1.5.2</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -2811,7 +2814,7 @@ G.RUNES = [
   { id: 'r_twin', name: 'The Twin', emoji: '👯', n: 1, desc: 'Add a copy of 1 selected card to your deck', use: (run, cs) => { cs.forEach((c) => G.Engine.addCard(run, { ...c, uid: undefined }, true)); } },
   { id: 'r_piggy', name: 'The Piggy Bank', emoji: '🐷', n: 0, desc: 'Double your money (max +$20)', use: (run) => { const g = Math.min(20, Math.max(0, run.money)); run.money += g; return `+$${g}`; } },
   { id: 'r_hatch', name: 'The Hatchery', emoji: '🥚', n: 0, desc: 'Hatch a random Common critter (needs a free slot)', canUse: (run) => G.Engine.freeSlots(run) > 0, use: (run) => { const c = G.Engine.rollCritter(run, 1); if (c) G.Engine.addCritter(run, c.id); return c ? c.name + ' hatched!' : 'The egg was empty. Rude.'; } },
-  { id: 'r_fortune', name: 'The Fortune Rock', emoji: '🔮', n: 0, desc: '1 in 4 chance to give a random critter Glittery, Holo or Molten', canUse: (run) => run.critters.some((c) => !c.edition), use: (run) => { const pool = run.critters.filter((c) => !c.edition); if (run.rng() < 0.25 && pool.length) { const c = pool[Math.floor(run.rng() * pool.length)]; c.edition = G.pickW(run.rng, [['glittery', 5], ['holo', 3.5], ['molten', 1.5]]); return 'IT WORKED!'; } return 'Nope!'; } },
+  { id: 'r_fortune', name: 'The Fortune Rock', emoji: '🔮', n: 0, desc: '1 in 4 chance to give a random critter Glittery, Holo or Molten', canUse: (run) => run.critters.some((c) => !c.edition), use: (run) => { const pool = run.critters.filter((c) => !c.edition); if (run.rng() < 0.25 && pool.length) { const c = pool[Math.floor(run.rng() * pool.length)]; c.edition = G.pickW(run.rng, [['glittery', 5], ['holo', 3.5], ['molten', 1.5]]); return 'IT WORKED! ' + G.CRITTER_BY_ID[c.id].name + ' is now ' + G.EDITIONS[c.edition].name + '!'; } return 'Nope! The rock stayed cloudy.'; } },
   { id: 'r_copy', name: 'The Copycat', emoji: '🐈', n: 0, desc: 'Creates the last Tonic or Rune you used this run', canUse: (run) => !!run.lastConsumable && run.lastConsumable.id !== 'r_copy' && run.consumables.length < run.consumableSlots + 1, use: (run) => { G.Engine.addConsumable(run, run.lastConsumable.kind, run.lastConsumable.id, true); } },
   { id: 'r_tidal', name: 'The Tidal Wave', emoji: '🌊', n: 0, desc: 'Convert every card in hand to one random suit from your hand', needsHand: true, use: (run) => { const s = run.hand[Math.floor(run.rng() * run.hand.length)].suit; run.hand.forEach((c) => (c.suit = s)); } },
 ];
@@ -4489,16 +4492,24 @@ G.Table = (() => {
   };
   T.useCons = (x, fromPack) => {
     const r = T.run;
+    const edBefore = new Map(r.critters.map((c) => [c.uid, c.edition]));
     const res = E.useConsumable(r, x, sel, fromPack);
     if (!res.ok) { G.FX.toast(res.why || "Can't use that"); G.Audio.error(); return false; }
     const def = G.CONSUMABLE[x.id];
     G.Audio.upgrade(); G.FX.flash(def.kind === 'tonic' ? '#4f9dff44' : '#b06cff44', 200);
-    G.FX.banner(`${def.emoji} ${def.name}<small>${res.msg || ''}</small>`, { color: def.kind === 'tonic' ? '#7fb6ff' : '#d38bff', cls: 'glim', ms: 1300 });
+    G.FX.banner(`${def.emoji} ${def.name}<small>${G.esc(res.msg || '')}</small>`, { color: def.kind === 'tonic' ? '#7fb6ff' : '#d38bff', cls: 'glim', ms: res.msg && res.msg.length > 20 ? 2200 : 1300 });
     if (res.levelUp) T.flashHandLevel(res.levelUp);
     sel.forEach((u) => { const c = r.hand.find((h) => h.uid === u); if (!c) return; const d = el.hand.querySelector(`[data-uid="${u}"]`); if (d) { const p = G.FX.centerOf(d); G.FX.sparkles(p.x, p.y, 12, '#fff', 30); } });
     sel = [];
     syncStats();
-    T.render();
+    T.render(); T.save();
+    // make it obvious which critter a rune changed (Fortune Rock, Petrify)
+    for (const c of r.critters) {
+      if (edBefore.get(c.uid) === c.edition) continue;
+      const d = el.critters.querySelector(`[data-uid="${c.uid}"]`); if (!d) continue;
+      d.classList.add('ed-new'); setTimeout(() => d.classList.remove('ed-new'), 1600);
+      const p = G.FX.centerOf(d); G.FX.sparkles(p.x, p.y, 24, '#fff', 44);
+    }
     return true;
   };
   T.flashHandLevel = (hand) => {
