@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Infinite Hive</title>
 <meta name="description" content="An incremental tale of ambition, honey, and the heat death of the universe.">
-<meta name="version" content="1.0.0">
+<meta name="version" content="1.1.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,3 93,27 93,73 50,97 7,73 7,27' fill='%23ffb120'/%3E%3Ctext x='50' y='66' font-size='46' text-anchor='middle'%3E%F0%9F%90%9D%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1403,6 +1403,75 @@ body.gfx-low .card { box-shadow: none; }
 .cbt-rung.done .cbt-rung-st { color: var(--good); }
 .cbt-arena-roster { display: flex; flex-wrap: wrap; gap: 6px; }
 
+/* ---- flash.css ---- */
+/* ---------- FlashGames mode (?flash=…): 40-flash.js ---------- */
+/* FlashGames shows its own clock; a run keeps no achievements, high scores or splits */
+body.flash-mode #run-timer, body.flash-mode #btn-ach, body.flash-mode #btn-scores, body.flash-mode .card.splits { display: none !important; }
+#flash-pill {
+  margin-left: auto; display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 16px; font-weight: 700;
+  padding: 5px 12px; border-radius: 10px; background: rgba(0,0,0,.35); border: 1px solid var(--accent); color: var(--accent2); white-space: nowrap;
+}
+#flash-pill .t-label { font-family: var(--font-ui); font-size: 10px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+#flash-minimods { display: flex; gap: 4px; }
+#flash-minimods:empty { display: none; }
+.fl-mini { font-size: 17px; line-height: 1; padding: 6px 7px; border-radius: 9px; background: rgba(255,255,255,.05); border: 1px solid var(--line); cursor: help; }
+@media (max-width: 860px) { #flash-pill { margin-left: 0; order: 3; } #flash-minimods { order: 4; } }
+
+#flash-card { border-color: rgba(255, 200, 80, .45); }
+#flash-card .big-num { font-size: 30px; }
+.fl-parts { margin: 8px 0 4px; }
+.fl-parts .kv { font-size: 12px; }
+.fl-live { display: flex; flex-direction: column; gap: 2px; font-size: 12px; margin: 6px 0; color: var(--muted); }
+.fl-live:empty { display: none; }
+.fl-mods { margin-top: 4px; }
+.fl-mod { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-top: 1px solid var(--line); text-align: left; }
+.fl-mod .fl-ico { font-size: 22px; line-height: 1.15; flex: none; }
+.fl-mod b { font-size: 13px; }
+.fl-mod .hint { font-size: 12px; }
+#flash-note { text-align: center; min-height: 0; font-weight: 700; }
+#flash-note:empty { display: none; }
+
+/* cover: before the go (modifiers, get ready) and after the end (final score); blocks all input */
+#flash-cover { position: fixed; inset: 0; z-index: 200; display: none; place-items: center; padding: 16px; background: rgba(8, 6, 2, .55); }
+#flash-cover.on { display: grid; }
+#flash-cover.end, #flash-cover.won { background: rgba(8, 6, 2, .86); }
+.fl-box {
+  width: min(520px, 100%); max-height: calc(100vh - 32px); overflow: auto; box-sizing: border-box;
+  background: var(--panel); border: 1px solid var(--line2); border-radius: 16px; padding: 18px 20px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.fl-box h2 { font-family: var(--font-display); margin: 6px 0 4px; }
+.fl-box .fl-mods { margin: 12px 0 4px; }
+.fl-kicker { font-family: var(--font-display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent2); }
+.fl-final { font-family: var(--font-display); font-weight: 700; font-size: 56px; line-height: 1.1; color: var(--accent2); text-shadow: 0 0 24px var(--glow); }
+.fl-box .fl-parts { max-width: 300px; margin: 12px auto; text-align: left; }
+.fl-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0; }
+.fl-wait { animation: flWait 1s ease-in-out infinite alternate; }
+@keyframes flWait { from { opacity: .45; } to { opacity: 1; } }
+body.flash-over #royal-layer { display: none; }
+
+/* Her Royal Hugeness: a giant comb */
+body.flash-mod-queen .hex-btn { --size: 230px; }
+body.flash-mod-queen .hex-btn .hex-label { font-size: 92px; }
+@media (max-width: 400px) { body.flash-mod-queen .hex-btn { --size: 200px; } }
+/* Hands Off: the comb is locked */
+body.flash-mod-idle .hex-btn { opacity: .38; filter: grayscale(.75); cursor: not-allowed; }
+body.flash-mod-idle .hex-btn::after { display: none; }
+
+/* Bear Country */
+.flash-bear {
+  position: absolute; left: 0; top: 0; width: 76px; height: 76px; margin: -38px 0 0 -38px; font-size: 58px;
+  display: grid; place-items: center; pointer-events: auto; cursor: pointer; user-select: none; -webkit-user-select: none;
+  transition: transform .12s linear; will-change: transform; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
+}
+.flash-bear .fb-ico { display: block; animation: flBear .3s ease-in-out infinite alternate; }
+.flash-bear.hit .fb-ico { animation: flBearHit .25s ease-out; }
+.flash-bear .fb-hp { position: absolute; left: 12px; right: 12px; bottom: -4px; height: 6px; border-radius: 3px; background: rgba(0,0,0,.55); overflow: hidden; }
+.flash-bear .fb-hp > div { height: 100%; background: var(--bad); transition: width .1s; }
+@keyframes flBear { from { transform: rotate(-7deg); } to { transform: rotate(7deg) translateY(-4px); } }
+@keyframes flBearHit { 0% { transform: scale(1.3) rotate(-14deg); filter: brightness(1.8); } 100% { transform: none; } }
+
 </style>
 </head>
 <body class="phase-1">
@@ -1449,7 +1518,7 @@ body.gfx-low .card { box-shadow: none; }
     </aside>
   </main>
 </div>
-<footer id="ticker"><div class="tk-label">BUZZ&nbsp;NEWS</div><div class="tk-track"><div class="tk-text" id="tk-text"></div></div><div class="tk-ver" id="hive-version" title="The Infinite Hive v1.0.0 · built 2026-10-30">v1.0.0</div></footer>
+<footer id="ticker"><div class="tk-label">BUZZ&nbsp;NEWS</div><div class="tk-track"><div class="tk-text" id="tk-text"></div></div><div class="tk-ver" id="hive-version" title="The Infinite Hive v1.1.0 · built 2026-11-24">v1.1.0</div></footer>
 <canvas id="fx-canvas"></canvas>
 <div id="fx-layer"></div>
 <div id="flash"></div>
@@ -1459,6 +1528,229 @@ body.gfx-low .card { box-shadow: none; }
 <div id="cine"></div>
 <noscript><p style="padding:40px;text-align:center">The Infinite Hive needs JavaScript turned on.</p></noscript>
 <script>
+/* ---- 00-flash-run.js ---- */
+// FlashRun SDK v1. Lets a game run as the FlashGames daily speedrun (josephjackman.com/games/flashgames/).
+// Copy this file into a game unchanged (newest copy: roamingjackmans-pixel/flashgames, sdk/flash-run.js).
+// The rules a game follows are in that repo's docs/PROTOCOL.md.
+//
+// FlashGames opens the game in an iframe at  <game>/?flash=<base64url JSON>  where the JSON is
+//   { v: 1, date: '2026-11-24', seed: 123456789, mods: ['glass', 'turbo'], limit: 900, run: 'r_abc' }
+// and this file reads it. Load it as a classic <script>, concatenate it into a bundle, or `import './flash-run.js'`
+// from a module: it sets  window.FlashRun  either way. With no ?flash=… in the URL, FlashRun.active is false and
+// nothing else here does anything.
+(function (root) {
+  'use strict';
+
+  function decode(raw) {
+    var b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  var cfg = null;
+  try {
+    var raw = new URLSearchParams(root.location.search).get('flash');
+    if (raw) {
+      cfg = decode(raw);
+      if (!cfg || cfg.v !== 1 || !Array.isArray(cfg.mods)) cfg = null;
+      else {
+        cfg.seed = cfg.seed >>> 0;
+        cfg.limit = Math.max(10, Math.min(3600, Number(cfg.limit) || 900));
+        cfg.mods = cfg.mods.map(String);
+      }
+    }
+  } catch (e) {
+    cfg = null;
+  }
+
+  var parentWin = root.parent && root.parent !== root ? root.parent : null;
+  var phase = 'loading'; // loading -> waiting (ready sent) -> running (go) -> over
+  var goAt = 0;
+  var best = 0;
+  var bestDetail = '';
+  var lastPost = 0;
+  var pendingPost = 0;
+  var endFns = [];
+  var goFns = [];
+  var localTimer = 0;
+
+  function post(msg) {
+    msg.flash = 1;
+    if (parentWin) parentWin.postMessage(msg, '*');
+  }
+
+  function clean(n) {
+    n = Math.floor(Number(n));
+    return Number.isFinite(n) && n > 0 ? Math.min(n, 1e12) : 0;
+  }
+
+  function sendScore() {
+    pendingPost = 0;
+    lastPost = Date.now();
+    post({ type: 'score', score: best, detail: bestDetail });
+  }
+
+  function startRunning(at) {
+    if (phase === 'running' || phase === 'over') return;
+    phase = 'running';
+    goAt = at || Date.now();
+    // the parent is the clock; this is only the fallback (and the clock when testing the game on its own)
+    localTimer = setTimeout(function () {
+      timeUp();
+    }, cfg.limit * 1000 + (parentWin ? 3000 : 0));
+    var fns = goFns.slice();
+    goFns.length = 0;
+    for (var i = 0; i < fns.length; i++) fns[i]();
+  }
+
+  function timeUp() {
+    if (phase === 'over') return;
+    for (var i = 0; i < endFns.length; i++) {
+      try {
+        endFns[i]();
+      } catch (e) {
+        console.error('[FlashRun] onEnd handler failed', e);
+      }
+    }
+    if (phase !== 'over') api.over(best, bestDetail, 'time');
+  }
+
+  if (cfg) {
+    root.addEventListener('message', function (ev) {
+      if (!parentWin || ev.source !== parentWin) return;
+      var m = ev.data;
+      if (!m || m.flash !== 1) return;
+      if (m.type === 'go') startRunning(Date.now());
+      else if (m.type === 'end') timeUp();
+    });
+  }
+
+  /** a small seeded random stream (mulberry32); the same seed and salt give the same numbers for everyone */
+  function stream(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6d2b79f5) >>> 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function hashSalt(s) {
+    var h = 2166136261 >>> 0;
+    s = String(s);
+    for (var i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+    return h;
+  }
+
+  var api = {
+    /** true when this page was opened as a FlashGames run */
+    active: !!cfg,
+    /** { v, date, seed, mods, limit, run } or null */
+    config: cfg,
+    mods: cfg ? cfg.mods.slice() : [],
+    seed: cfg ? cfg.seed : 0,
+    date: cfg ? String(cfg.date || '') : '',
+    /** seconds in the run (900) */
+    limit: cfg ? cfg.limit : 0,
+    /** is this modifier on today? */
+    has: function (id) {
+      return !!cfg && cfg.mods.indexOf(id) >= 0;
+    },
+    /**
+     * Call once the run is set up and playable (assets loaded, map built). FlashGames counts in 3-2-1 and then
+     * starts the clock; the promise resolves at that moment. Keep the game paused until then.
+     * Opened on its own (no FlashGames around it), it resolves after a second so a run can be tested directly.
+     */
+    ready: function () {
+      if (!cfg) return Promise.resolve();
+      return new Promise(function (resolve) {
+        if (phase === 'running') return resolve();
+        goFns.push(resolve);
+        if (phase === 'loading') {
+          phase = 'waiting';
+          post({ type: 'ready' });
+          if (!parentWin)
+            setTimeout(function () {
+              startRunning(Date.now());
+            }, 1000);
+        }
+      });
+    },
+    /** true between the go and the end of the run */
+    running: function () {
+      return phase === 'running';
+    },
+    isOver: function () {
+      return phase === 'over';
+    },
+    /**
+     * Report the run's score so far (a whole number that never goes down) and a short line that explains it,
+     * e.g. "Zone 2 · 14 rooms · 112 kills". Call it whenever it changes; it is cheap.
+     */
+    score: function (n, detail) {
+      if (!cfg || phase === 'over') return;
+      var s = clean(n);
+      if (s < best) s = best;
+      var d = detail == null ? bestDetail : String(detail).slice(0, 120);
+      if (s === best && d === bestDetail) return;
+      best = s;
+      bestDetail = d;
+      var wait = 250 - (Date.now() - lastPost);
+      if (wait <= 0) sendScore();
+      else if (!pendingPost) pendingPost = setTimeout(sendScore, wait);
+    },
+    /** the best score reported so far */
+    best: function () {
+      return best;
+    },
+    /**
+     * The run ended inside the game: reason 'won' (finished it all), 'dead' (the game's own rules ended the
+     * run), or 'time'. Freeze the game after calling this. Only the first call counts.
+     */
+    over: function (n, detail, reason) {
+      if (!cfg || phase === 'over') return;
+      var s = Math.max(best, clean(n));
+      best = s;
+      if (detail != null) bestDetail = String(detail).slice(0, 120);
+      if (pendingPost) clearTimeout(pendingPost);
+      pendingPost = 0;
+      clearTimeout(localTimer);
+      phase = 'over';
+      post({ type: 'over', score: best, detail: bestDetail, reason: reason === 'won' || reason === 'dead' ? reason : 'time' });
+    },
+    /**
+     * Called when the 15 minutes are up. Freeze the game (stop the simulation, ignore input) and, if you like,
+     * call over() with a final score; if you don't, the best score reported counts.
+     */
+    onEnd: function (fn) {
+      endFns.push(fn);
+    },
+    /** milliseconds left on the clock (the full limit before the go, 0 after the end) */
+    timeLeft: function () {
+      if (!cfg) return 0;
+      if (phase === 'loading' || phase === 'waiting') return cfg.limit * 1000;
+      if (phase === 'over') return 0;
+      return Math.max(0, cfg.limit * 1000 - (Date.now() - goAt));
+    },
+    /** milliseconds since the go */
+    elapsed: function () {
+      return phase === 'running' || phase === 'over' ? Date.now() - goAt : 0;
+    },
+    /** a seeded random function in [0, 1); pass a salt for independent streams (e.g. 'loot', 'map') */
+    rng: function (salt) {
+      return stream((cfg ? cfg.seed : 0) ^ hashSalt(salt == null ? '' : salt));
+    },
+  };
+
+  root.FlashRun = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+;
 /* ---- 00-util.js ---- */
 /* ============================================================
    00-util.js — small helpers shared by every module
@@ -1905,7 +2197,10 @@ body.gfx-low .card { box-shadow: none; }
     activeTab: 'hive',
     modules: [],
     offline: false,
-    dev: /[?&#]dev\b/.test(location.search + location.hash),
+    // a FlashGames run (?flash=…) never gets the cheat panel
+    dev: !(window.FlashRun && window.FlashRun.active) && /[?&#]dev\b/.test(location.search + location.hash),
+    /** FlashGames run controller (40-flash.js); null in a normal game */
+    FL: null,
     version: VERSION,
     PHASE_NAMES,
     ui: {},
@@ -1992,7 +2287,8 @@ body.gfx-low .card { box-shadow: none; }
 
   function loadMeta() {
     let meta = null;
-    try { meta = JSON.parse(localStorage.getItem(META_KEY) || 'null'); } catch (e) { meta = null; }
+    // a FlashGames run starts from blank meta in memory and never reads the player's
+    if (!Game.FL) { try { meta = JSON.parse(localStorage.getItem(META_KEY) || 'null'); } catch (e) { meta = null; } }
     meta = U.fillDefaults(meta || {}, {
       achievements: {}, scores: [], bestSplits: { p2: null, p3: null, end: null }, runs: 0,
       settings: DEFAULT_SETTINGS, firstPlayed: Date.now(), lifetime: { clicks: 0, honey: 0, playMs: 0 },
@@ -2003,6 +2299,7 @@ body.gfx-low .card { box-shadow: none; }
   }
   Game.saveMeta = () => { if (Game._noSave) return; try { localStorage.setItem(META_KEY, JSON.stringify(Game.meta)); } catch (e) { /* storage blocked */ } };
   Game.wipeAll = () => {
+    if (Game.FL) return;
     Game._noSave = true;
     try { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(META_KEY); } catch (e) { /* ignore */ }
     location.reload();
@@ -2024,11 +2321,13 @@ body.gfx-low .card { box-shadow: none; }
   };
 
   Game.exportSave = () => {
+    if (Game.FL) return '';
     Game.save();
     const json = JSON.stringify(Game.S);
     return 'IHIVE1:' + btoa(unescape(encodeURIComponent(json)));
   };
   Game.importSave = (str) => {
+    if (Game.FL) return false;
     try {
       str = String(str || '').trim();
       if (str.startsWith('IHIVE1:')) str = str.slice(7);
@@ -2055,7 +2354,7 @@ body.gfx-low .card { box-shadow: none; }
     refreshTabs(true);
     if (!S.tabs[Game.activeTab]) Game.switchTab(firstVisibleTab(), true);
     else Game.switchTab(Game.activeTab, true);
-    for (const m of Game.modules) if (m.onLoad) safe(() => m.onLoad(!!isNew), m.id + '.onLoad');
+    for (const m of Game.modules) if (m.onLoad) safe(() => (Game.FL ? Game.FL.withRng('load:' + m.id, () => m.onLoad(!!isNew)) : m.onLoad(!!isNew)), m.id + '.onLoad');
     Game.emit('load', { isNew: !!isNew });
     updatePhasePill();
     renderAll(true);
@@ -2114,6 +2413,8 @@ body.gfx-low .card { box-shadow: none; }
     }
     return parts.join(' · ') || '<span class="good">Free</span>';
   };
+  /** price factor for everything you buy (buildings, research, royal buildings, edicts…); FlashGames modifiers change it */
+  Game.costMult = () => 1;
   Game.setIncome = (key, v) => { Game._income[key] = Number.isFinite(v) ? v : 0; };
   Game.income = (key) => Game._income[key] || 0;
   Game.fmt = (n, d) => U.fmt(n, d);
@@ -2152,7 +2453,7 @@ body.gfx-low .card { box-shadow: none; }
     }
   };
   Game.achieve = (id) => {
-    if (!Game.meta || Game.meta.achievements[id]) return false;
+    if (!Game.meta || Game.meta.achievements[id] || Game.FL) return false;   // FlashGames runs earn no achievements
     const def = Game._achDefs[id] || { id, name: id, desc: '', icon: '🏆' };
     Game.meta.achievements[id] = Date.now();
     if (Game.S) Game.S.stats.achievementsThisRun = (Game.S.stats.achievementsThisRun || 0) + 1;
@@ -2595,6 +2896,7 @@ body.gfx-low .card { box-shadow: none; }
     let lastPointer = 0;
     const fire = (x, y) => {
       if (!Game.S || Game.S.ended) return;
+      if (Game.FL && !Game.FL.canClick()) return;
       Game.S.stats.clicks++;
       Game.meta.lifetime.clicks++;
       const out = safe(() => clickCfg.onClick({ x, y }), 'clicker');
@@ -2606,6 +2908,7 @@ body.gfx-low .card { box-shadow: none; }
       }
       btn.classList.add('pressed');
       setTimeout(() => btn.classList.remove('pressed'), 70);
+      if (Game.FL) Game.FL.clicked();
       Game.emit('click');
     };
     btn.addEventListener('pointerdown', (e) => {
@@ -2713,7 +3016,7 @@ body.gfx-low .card { box-shadow: none; }
     document.body.classList.remove('phase-1', 'phase-2', 'phase-3');
     document.body.classList.add('phase-' + n);
     updatePhasePill();
-    for (const m of Game.modules) if (m.onPhase) safe(() => m.onPhase(n), m.id + '.onPhase');
+    for (const m of Game.modules) if (m.onPhase) safe(() => (Game.FL ? Game.FL.withRng('phase:' + m.id, () => m.onPhase(n)) : m.onPhase(n)), m.id + '.onPhase');
     Game.emit('phase', n);
     refreshTabs();
     if (!S.tabs[Game.activeTab]) Game.switchTab(firstVisibleTab());
@@ -2739,8 +3042,10 @@ body.gfx-low .card { box-shadow: none; }
         renderBuffs(true);
       }
     }
-    for (const m of Game.modules) if (m.tick) safe(() => m.tick(dt), m.id + '.tick');
+    // FlashGames: each module's simulation draws from its own seeded stream, so everyone gets the same markets & maps
+    for (const m of Game.modules) if (m.tick) safe(() => (Game.FL ? Game.FL.withRng('tick:' + m.id, () => m.tick(dt)) : m.tick(dt)), m.id + '.tick');
   }
+  Game.simTick = simTick;
   Game.advance = (secs) => {
     let left = Math.min(secs, OFFLINE_CAP);
     const step = left > 2 ? 1 : left;
@@ -2758,6 +3063,7 @@ body.gfx-low .card { box-shadow: none; }
     let dt = (now - lastTick) / 1000;
     lastTick = now;
     if (dt <= 0) return;
+    if (Game.FL) { Game.FL.step(dt); return; }   // FlashGames: fixed steps, paused until the go, frozen at the end
     if (Game.S && !Game.S.ended && !document.hidden) {
       Game.S.activeMs += Math.min(dt, 1) * 1000;
       Game.meta.lifetime.playMs += Math.min(dt, 1) * 1000;
@@ -2787,7 +3093,7 @@ body.gfx-low .card { box-shadow: none; }
     if (dt > 0.1) dt = 0.1;
     if (dt < 0) dt = 0;
     if (Game.S) {
-      for (const m of Game.modules) if (m.frame) safe(() => m.frame(dt), m.id + '.frame');
+      if (!(Game.FL && Game.FL.halted())) for (const m of Game.modules) if (m.frame) safe(() => m.frame(dt), m.id + '.frame');
       safe(() => fxFrame(dt), 'fx');
       safe(() => bgFrame(), 'bg');
       if (t - lastRender > 100) { lastRender = t; renderAll(); }
@@ -2844,13 +3150,20 @@ body.gfx-low .card { box-shadow: none; }
 
     // load or create
     let S = null;
-    try { S = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { S = null; }
-    if (S && S.res) {
-      Game.setState(hydrate(S), false);
-      applyOffline();
-    } else {
-      Game.meta.runs = (Game.meta.runs || 0) + 1;
+    if (Game.FL) {
+      // FlashGames run: a brand-new hive in memory. The real save is never read, written or exported.
+      Game.meta.runs = 1;
       Game.setState(newState(), true);
+      Game.FL.start();
+    } else {
+      try { S = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { S = null; }
+      if (S && S.res) {
+        Game.setState(hydrate(S), false);
+        applyOffline();
+      } else {
+        Game.meta.runs = (Game.meta.runs || 0) + 1;
+        Game.setState(newState(), true);
+      }
     }
 
     setInterval(intervalTick, 100);
@@ -2893,6 +3206,8 @@ body.gfx-low .card { box-shadow: none; }
     hub: [['hubSync', 2]],
   };
   const SEASON_LEN = 60;
+  /** season length in seconds (a FlashGames modifier can shorten it) */
+  const seasonLen = () => (Game.FL ? Game.FL.seasonLen(SEASON_LEN) : SEASON_LEN);
   // global pace of Phase I production (lower = slower game)
   const PACE = 0.22;
   const SEASONS = [
@@ -2921,11 +3236,13 @@ body.gfx-low .card { box-shadow: none; }
     if (Game.bought('dreaming')) m *= 1.25;
     return m * Game.mult('honey');
   }
-  function seasonIdx() { return Math.floor(P().seasonT / SEASON_LEN) % 4; }
+  function seasonIdx() { return Math.floor(P().seasonT / seasonLen()) % 4; }
   function seasonProd(s) {
-    if (s.id === 'winter') return Game.bought('greenhouse') ? 1 : Game.bought('cluster') ? 0.6 : 0.3;
-    if ((s.id === 'spring' || s.id === 'summer') && Game.bought('almanac')) return s.prod + 0.1;
-    return s.prod;
+    let v;
+    if (s.id === 'winter') v = Game.bought('greenhouse') ? 1 : Game.bought('cluster') ? 0.6 : 0.3;
+    else if ((s.id === 'spring' || s.id === 'summer') && Game.bought('almanac')) v = s.prod + 0.1;
+    else v = s.prod;
+    return Game.FL ? v * Game.FL.seasonProd(s.id) : v;
   }
   function priceMult() {
     let m = 1;
@@ -2939,8 +3256,11 @@ body.gfx-low .card { box-shadow: none; }
     if (Game.bought('combArch')) s *= 3;
     return s * Game.mult('storage');
   }
-  const frameCost = () => Math.ceil(8 * Math.pow(1.45, P().frames));
-  const scoutCost = () => Math.ceil(30 * Math.pow(1.17, P().scouts));
+  const frameCost = () => Math.ceil(8 * Math.pow(1.45, P().frames) * Game.costMult());
+  const scoutCost = () => Math.ceil(30 * Math.pow(1.17, P().scouts) * Game.costMult());
+  /** first price of a building / scout (Game.costMult is 1 outside FlashGames) */
+  const bBase = (b) => b.base * Game.costMult();
+  const scoutBase = () => 30 * Game.costMult();
   function waggleRate() {
     let m = 0.25 * PACE * P().scouts;
     if (Game.bought('academy')) m *= 2;
@@ -2963,8 +3283,8 @@ body.gfx-low .card { box-shadow: none; }
     if (Game.bought('telepathy')) pct += 0.03;
     if (Game.bought('swarmClick')) pct += 0.02;
     C.click = (click + C.honeyRate * pct) * Game.mult('click');
-    C.fair = 1.0 * priceMult() * s.price;
-    C.price = Math.max(0.01, C.fair * (1 + P().noise));
+    C.fair = 1.0 * priceMult() * s.price * (Game.FL ? Game.FL.seasonPrice(s.id) : 1);
+    C.price = Math.max(0.01, C.fair * (Game.FL ? Game.FL.priceFactor(P().noise) : 1 + P().noise));
     C.waxRate = C.honeyRate * 0.05 * s.wax * Game.mult('wax');
     C.waggleRate = waggleRate();
     C.storage = storageCap();
@@ -2989,12 +3309,12 @@ body.gfx-low .card { box-shadow: none; }
   function buyCount(b) {
     const mode = P().buyMode;
     const k = owned(b.id);
-    if (mode === 'max') return Math.max(1, U.maxAffordable(b.base, GROWTH, k, Game.S.res.coins));
+    if (mode === 'max') return Math.max(1, U.maxAffordable(bBase(b), GROWTH, k, Game.S.res.coins));
     return mode;
   }
   function buyBld(b) {
     const n = buyCount(b);
-    const cost = U.bulkCost(b.base, GROWTH, owned(b.id), n);
+    const cost = U.bulkCost(bBase(b), GROWTH, owned(b.id), n);
     if (!Game.spend({ coins: cost })) { Game.sfx('error'); return; }
     P().b[b.id] = owned(b.id) + n;
     Game.sfx('buy');
@@ -3006,8 +3326,8 @@ body.gfx-low .card { box-shadow: none; }
     dirtyList = true;
   }
   function buyScout() {
-    const n = P().buyMode === 'max' ? Math.max(1, U.maxAffordable(30, 1.17, P().scouts, Game.S.res.coins)) : P().buyMode;
-    const cost = U.bulkCost(30, 1.17, P().scouts, n);
+    const n = P().buyMode === 'max' ? Math.max(1, U.maxAffordable(scoutBase(), 1.17, P().scouts, Game.S.res.coins)) : P().buyMode;
+    const cost = U.bulkCost(scoutBase(), 1.17, P().scouts, n);
     if (!Game.spend({ coins: cost })) { Game.sfx('error'); return; }
     if (P().scouts === 0) Game.log('A scout returns and dances. The others watch, and <i>understand</i>. 💫 Waggle is the currency of ideas.', 'story');
     P().scouts += n;
@@ -3099,7 +3419,7 @@ body.gfx-low .card { box-shadow: none; }
 
   Game.p1.dev = {
     buy: (id) => { const bd = BLD.find((x) => x.id === id); const m = P().buyMode; P().buyMode = 1; buyBld(bd); P().buyMode = m; },
-    cost: (id) => { const bd = BLD.find((x) => x.id === id); return U.bulkCost(bd.base, GROWTH, owned(id), 1); },
+    cost: (id) => { const bd = BLD.find((x) => x.id === id); return U.bulkCost(bBase(bd), GROWTH, owned(id), 1); },
     perUnit: (id) => { const bd = BLD.find((x) => x.id === id); return bd.rate * bldMult(id); },
     scoutCost, buyScout: () => { const m = P().buyMode; P().buyMode = 1; buyScout(); P().buyMode = m; }, frameCost, buyFrame, sell, click: onClick,
   };
@@ -3313,7 +3633,7 @@ body.gfx-low .card { box-shadow: none; }
         const r = buyRow({ icon: '❔', name: '???', onClick: () => {} });
         r.row.classList.add('locked');
         r.desc.textContent = 'Keep earning coins to discover this.';
-        r.cost.innerHTML = `🪙 ${U.fmt(bd.base)}`;
+        r.cost.innerHTML = `🪙 ${U.fmt(bBase(bd))}`;
         listBox.appendChild(r.row);
         continue;
       }
@@ -3348,20 +3668,20 @@ body.gfx-low .card { box-shadow: none; }
       const r = rowEls[id];
       if (r.bd) {
         const n = buyCount(r.bd);
-        const cost = U.bulkCost(r.bd.base, GROWTH, owned(id), n);
+        const cost = U.bulkCost(bBase(r.bd), GROWTH, owned(id), n);
         const per = r.bd.rate * bldMult(id) * globalMult() * C.seasonProd;
         U.setHTML(r.desc, `${r.bd.desc} <span class="accent">+${U.fmt(per)}/s each</span>${bldMult(id) > 1 ? ` <span class="chip">×${U.fmt(bldMult(id))}</span>` : ''}`);
-        U.setHTML(r.cost, costLine(cost, n, U.bulkCost(r.bd.base, GROWTH, owned(id), 1), S.res.coins >= cost));
+        U.setHTML(r.cost, costLine(cost, n, U.bulkCost(bBase(r.bd), GROWTH, owned(id), 1), S.res.coins >= cost));
         r.owned.textContent = owned(id);
         r.row.classList.toggle('afford', S.res.coins >= cost);
       }
     }
     if (rowEls.scout) {
       const r = rowEls.scout;
-      const n = P().buyMode === 'max' ? Math.max(1, U.maxAffordable(30, 1.17, P().scouts, S.res.coins)) : P().buyMode;
-      const cost = U.bulkCost(30, 1.17, P().scouts, n);
+      const n = P().buyMode === 'max' ? Math.max(1, U.maxAffordable(scoutBase(), 1.17, P().scouts, S.res.coins)) : P().buyMode;
+      const cost = U.bulkCost(scoutBase(), 1.17, P().scouts, n);
       U.setHTML(r.desc, `Dances discoveries back to the hive. <span class="accent">+${U.fmt(C.waggleRate / Math.max(1, P().scouts))} 💫/s each</span>`);
-      U.setHTML(r.cost, costLine(cost, n, U.bulkCost(30, 1.17, P().scouts, 1), S.res.coins >= cost));
+      U.setHTML(r.cost, costLine(cost, n, U.bulkCost(scoutBase(), 1.17, P().scouts, 1), S.res.coins >= cost));
       r.owned.textContent = P().scouts;
       r.row.classList.toggle('afford', S.res.coins >= cost);
     }
@@ -3403,13 +3723,13 @@ body.gfx-low .card { box-shadow: none; }
     mkt.storage.firstChild.style.background = fill > 0.95 ? 'var(--bad)' : '';
     mkt.storageTxt.textContent = `${U.fmt(S.res.honey)} / ${U.fmt(C.storage)}`;
     // season
-    const s = C.season, into = P().seasonT % SEASON_LEN;
+    const s = C.season, SL = seasonLen(), into = P().seasonT % SL;
     mkt.sIco.textContent = s.icon;
     mkt.sName.textContent = `${s.name} · Year ${P().years + 1}`;
     mkt.sNote.textContent = s.note.replace('Production slows', C.seasonProd >= 1 ? 'Greenhouses keep production steady' : 'Production slows');
-    mkt.sBar.firstChild.style.width = (100 * into / SEASON_LEN) + '%';
+    mkt.sBar.firstChild.style.width = (100 * into / SL) + '%';
     const nx = SEASONS[(seasonIdx() + 1) % 4];
-    mkt.sNext.innerHTML = Game.bought('almanac') ? `Next: ${nx.icon} ${nx.name} in <b class="mono">${Math.ceil(SEASON_LEN - into)}s</b>` : '';
+    mkt.sNext.innerHTML = Game.bought('almanac') ? `Next: ${nx.icon} ${nx.name} in <b class="mono">${Math.ceil(SL - into)}s</b>` : '';
     const sk = P().hist.length + ':' + (P().hist[P().hist.length - 1] || 0) + ':' + (mkt.spark.clientWidth || 0);
     if (mkt.spark._k !== sk) { mkt.spark._k = sk; drawSpark(); }
   }
@@ -3431,8 +3751,10 @@ body.gfx-low .card { box-shadow: none; }
     ro.observe(wrap);
     wrap.addEventListener('pointerdown', (e) => {
       if (Game.S.phase !== 1) return;
+      if (Game.FL && !Game.FL.canClick()) return;
       const out = onClick();
       Game.S.stats.clicks++;
+      if (Game.FL) Game.FL.clicked();
       Game.sfx('click');
       Game.float(e.clientX, e.clientY - 10, out.text);
       const r = wrap.getBoundingClientRect();
@@ -3521,6 +3843,7 @@ body.gfx-low .card { box-shadow: none; }
     const topY = hp.y + 18 - boxes * 20;
     ctx.fillStyle = '#8d5a2b'; ctx.fillRect(hp.x - 32, topY - 6, 64, 7);
     ctx.fillStyle = '#3a2410'; ctx.fillRect(hp.x - 8, hp.y + 8, 16, 5);
+    if (Game.FL && Game.FL.drawScene) Game.safe(() => Game.FL.drawScene(ctx, hp.x, hp.y, sc.t), 'flash.scene');
     // bees
     const target = Math.min(Game.gfx() === 'high' ? 80 : Game.gfx() === 'low' ? 15 : 40, 3 + Math.floor(Math.sqrt(totalBld()) * 4));
     while (sc.bees.length < target) spawnBee(sc);
@@ -3625,7 +3948,7 @@ body.gfx-low .card { box-shadow: none; }
       if (idx !== prevIdx) {
         if (idx === 0) p.years++;
         if (idx === 3) p.seenWinter = true;
-        if (!Game.offline) Game.log(`${SEASONS[idx].icon} ${SEASONS[idx].name} arrives. ${SEASONS[idx].note}`, 'info');
+        if (!Game.offline && !(Game.FL && Game.FL.quietSeasons)) Game.log(`${SEASONS[idx].icon} ${SEASONS[idx].name} arrives. ${SEASONS[idx].note}`, 'info');
         if (idx === 0 && p.years >= 1) Game.achieve('p1_winter');
       }
       // price noise
@@ -3841,7 +4164,7 @@ body.gfx-low .card { box-shadow: none; }
     if (t.req && !Game.bought(t.req)) return false;
     return true;
   }
-  const cityCost = () => Math.ceil(K.cityInfluence * Math.pow(K.cityGrowth, P().cities) * (Game.bought('p2_urban') ? 0.5 : 1));
+  const cityCost = () => Math.ceil(K.cityInfluence * Math.pow(K.cityGrowth, P().cities) * (Game.bought('p2_urban') ? 0.5 : 1) * Game.costMult());
   // deep ocean = a water hex with no land next to it (map is static, so cache per map)
   let deepCache = { map: null, set: null };
   function isDeep(i) {
@@ -3936,9 +4259,9 @@ body.gfx-low .card { box-shadow: none; }
     },
   };
   function arkProgress() { const a = P().ark; return ARK.reduce((s, m) => s + (a[m.id] || 0), 0) / (ARK.length * ARK_LEVELS); }
-  const arkCost = (m) => { const lv = P().ark[m.id] || 0; const o = {}; for (const k in m.cost) o[k] = m.cost[k] * Math.pow(ARK_GROWTH, lv); return o; };
-  const hiveCost = () => ({ honey: K.hiveHoney * Math.pow(K.hiveGrowth, P().hives), wax: K.hiveWax * Math.pow(K.hiveGrowth, P().hives) });
-  const lobbyCost = () => K.lobbyCoins * Math.pow(K.lobbyGrowth, P().lobbies);
+  const arkCost = (m) => { const lv = P().ark[m.id] || 0; const o = {}; for (const k in m.cost) o[k] = m.cost[k] * Math.pow(ARK_GROWTH, lv) * Game.costMult(); return o; };
+  const hiveCost = () => ({ honey: K.hiveHoney * Math.pow(K.hiveGrowth, P().hives) * Game.costMult(), wax: K.hiveWax * Math.pow(K.hiveGrowth, P().hives) * Game.costMult() });
+  const lobbyCost = () => K.lobbyCoins * Math.pow(K.lobbyGrowth, P().lobbies) * Game.costMult();
 
   /* ---------------- conversion ---------------- */
   const flashes = [];
@@ -4171,7 +4494,7 @@ body.gfx-low .card { box-shadow: none; }
     { id: 'week', icon: '📣', name: 'Bee Awareness Week', cost: 70, cd: 300, secs: 30, mult: { swarm: 2 }, desc: 'Swarm growth ×2' },
     { id: 'grants', icon: '🎓', name: 'Science Grants', cost: 60, cd: 300, secs: 45, mult: { waggle: 3 }, desc: 'Waggle ×3' },
   ];
-  const polCost = (pl) => Math.ceil(pl.cost * (Game.bought('p2_press') ? 0.75 : 1));
+  const polCost = (pl) => Math.ceil(pl.cost * (Game.bought('p2_press') ? 0.75 : 1) * Game.costMult());
   const polCd = (pl) => pl.cd * (Game.bought('p2_press') ? 0.75 : 1);
   const polSecs = (pl) => pl.secs * (Game.bought('p2_unity') ? 2 : 1);
   const polLeft = (pl) => Math.max(0, ((P().pol || {})[pl.id] || 0) - Game.S.time);
@@ -4545,11 +4868,14 @@ body.gfx-low .card { box-shadow: none; }
       if (!isConv(i) && frontier.includes(i)) {
         if (!allowed(i)) { Game.sfx('error'); Game.toast(HT[typeAt(i)].city ? `Need 🤝 ${cityCost()} influence${Game.bought('p2_diplomacy') ? '' : ' (research Bee Diplomacy)'}` : `Needs research: ${Game.project(HT[typeAt(i)].req).name}`, 'bad', HT[typeAt(i)].icon); return; }
         P().target = i;
-        // clicking a targeted hex also rallies the swarm
-        const out = onClick();
-        Game.S.stats.clicks++;
-        Game.float(e.clientX, e.clientY - 8, out.text);
-        Game.sfx('click');
+        // clicking a targeted hex also rallies the swarm (not in a FlashGames run with clicking switched off, or after the end)
+        if (!Game.FL || Game.FL.canClick()) {
+          const out = onClick();
+          Game.S.stats.clicks++;
+          if (Game.FL) Game.FL.clicked();
+          Game.float(e.clientX, e.clientY - 8, out.text);
+          Game.sfx('click');
+        }
       } else if (isConv(i)) {
         Game.burst(e.clientX, e.clientY, { n: 6, emoji: '🌼', size: 12 });
       }
@@ -5132,7 +5458,7 @@ body.gfx-low .card { box-shadow: none; }
     C.coinRate = p.earthCoins * Game.mult('coins');
     C.hop = hopRange();
   }
-  const yardCost = () => K.yardBase * Math.pow(K.yardGrowth, P().yards);
+  const yardCost = () => K.yardBase * Math.pow(K.yardGrowth, P().yards) * Game.costMult();
   Game.p3 = {
     calc: C,
     K,
@@ -5510,8 +5836,11 @@ body.gfx-low .card { box-shadow: none; }
       if (!isClaimed(i) && frontier.includes(i)) {
         if (!claimable(i)) { Game.sfx('error'); Game.toast(`Needs research: ${Game.project(ST[G().t[i]].req).name}`, 'bad', '🔒'); return; }
         P().target = i;
-        const out = onClick(); Game.S.stats.clicks++;
-        Game.float(e.clientX, e.clientY - 8, out.text); Game.sfx('click');
+        if (!Game.FL || Game.FL.canClick()) {
+          const out = onClick(); Game.S.stats.clicks++;
+          if (Game.FL) Game.FL.clicked();
+          Game.float(e.clientX, e.clientY - 8, out.text); Game.sfx('click');
+        }
       }
     });
     ui.head = U.el('div', { class: 'row' });
@@ -5996,7 +6325,15 @@ body.gfx-low .card { box-shadow: none; }
   const PROJECTS = Game.PROJECTS;
   const BY_ID = Game.PROJECT_BY_ID;
 
-  const costOf = (p) => (typeof p.cost === 'function' ? p.cost() : p.cost) || {};
+  /** a cost object times Game.costMult() (1 outside FlashGames, where the same object comes back) */
+  function scaleCost(c) {
+    const m = Game.costMult();
+    if (m === 1) return c;
+    const o = {};
+    for (const k in c) o[k] = Math.ceil(c[k] * m);
+    return o;
+  }
+  const costOf = (p) => scaleCost((typeof p.cost === 'function' ? p.cost() : p.cost) || {});
   const costSum = (c) => Object.values(c).reduce((a, b) => a + Math.log10(1 + b), 0);
 
   function visible(p) {
@@ -6044,7 +6381,7 @@ body.gfx-low .card { box-shadow: none; }
   Game.jellyRateText = () => { const r = Game.income('jelly'); return r > 0 ? `+${U.fmt(r * 60)}/min` : ''; };
   function buyRoyal(b) {
     const n = royalOwned(b.id);
-    if (!Game.spend(b.cost(n))) { Game.sfx('error'); return; }
+    if (!Game.spend(scaleCost(b.cost(n)))) { Game.sfx('error'); return; }
     Game.S.research.royal[b.id] = n + 1;
     Game.sfx('royal');
     if (n === 0) Game.log(`${b.icon} The first <b>${b.name}</b> is sealed. Royal Jelly begins to flow.`, 'royal');
@@ -6066,7 +6403,7 @@ body.gfx-low .card { box-shadow: none; }
     { id: 'stars', icon: '🌠', name: 'Edict of the Stars', cost: 16, phase: 3, eff: (r) => `Seed ships ×${1 + 0.5 * r}, drone hull ×${1 + 0.25 * r}` },
     { id: 'eternity', icon: '♾️', name: 'Edict of Eternity', cost: 25, phase: 3, eff: (r) => `Honey, stardust and waggle ×${1 + 0.5 * r}` },
   ];
-  const edictCost = (e) => e.cost * RANK_MULT[Math.min(RANK_MULT.length - 1, Game.edict(e.id))];
+  const edictCost = (e) => Math.ceil(e.cost * RANK_MULT[Math.min(RANK_MULT.length - 1, Game.edict(e.id))] * Game.costMult());
   function buyEdict(e) {
     const r = Game.edict(e.id);
     if (r >= MAX_RANK) return;
@@ -6084,7 +6421,7 @@ body.gfx-low .card { box-shadow: none; }
   // used by tools/balance-bot.js
   Game.royal = {
     ROYAL, EDICTS, rate: jellyRate,
-    cost: (id) => { const b = ROYAL.find((x) => x.id === id); return b.cost(royalOwned(id)); },
+    cost: (id) => { const b = ROYAL.find((x) => x.id === id); return scaleCost(b.cost(royalOwned(id))); },
     buy: (id) => buyRoyal(ROYAL.find((x) => x.id === id)),
     edictCost: (id) => edictCost(EDICTS.find((x) => x.id === id)),
     buyEdict: (id) => buyEdict(EDICTS.find((x) => x.id === id)),
@@ -6186,7 +6523,7 @@ body.gfx-low .card { box-shadow: none; }
       row.querySelector('.b-owned').textContent = n;
       const costEl = row.querySelector('.b-cost');
       if (row._current) {
-        const c = row._b.cost(n);
+        const c = scaleCost(row._b.cost(n));
         const h = Game.costHTML(c);
         if (costEl._h !== h) { costEl.innerHTML = h; costEl._h = h; }
         row.classList.toggle('afford', Game.has(c));
@@ -12975,6 +13312,7 @@ body.gfx-low .card { box-shadow: none; }
   const royal = { el: null, t: 0, life: 14, x: 0, y: 0, dir: 1, baseY: 0, next: 0 };
   function royalInterval() {
     let lo = 70, hi = 160;
+    if (Game.FL && Game.FL.has('queen')) { lo = 10; hi = 20; }   // FlashGames: Her Royal Hugeness
     if (Game.bought('pheromones')) { lo /= 1.5; hi /= 1.5; }
     const hr = Game.edict('haste');
     if (hr) { lo /= 1 + 0.4 * hr; hi /= 1 + 0.4 * hr; }
@@ -13055,8 +13393,17 @@ body.gfx-low .card { box-shadow: none; }
   function catchRoyal(x, y) {
     removeRoyal();
     const S = Game.S;
-    const pick = U.weighted(ROYAL_REWARDS[S.phase] || ROYAL_REWARDS[1], (r) => r.w);
-    const msg = pick.fn();
+    if (Game.FL && Game.FL.frozen()) return;
+    const list = ROYAL_REWARDS[S.phase] || ROYAL_REWARDS[1];
+    const roll = () => {
+      const pick = U.weighted(list, (r) => r.w);
+      let out = pick.fn();
+      // FlashGames 'queen': every Royal Bee brings a second, different reward
+      if (Game.FL && Game.FL.has('queen')) out += ' + ' + U.weighted(list.filter((r) => r !== pick), (r) => r.w).fn();
+      return out;
+    };
+    // FlashGames: rewards come from the day's seed, so the Nth Royal Bee pays the same for everyone
+    const msg = Game.FL ? Game.FL.withRng('royal-reward', roll) : roll();
     Game.stat('royalClicks');
     Game.sfx('royal');
     Game.burst(x, y, { n: 40, speed: 320, emoji: ['✨', '👑', '🍯'], size: 16, life: 1.2 });
@@ -13093,7 +13440,7 @@ body.gfx-low .card { box-shadow: none; }
         label: c.label, kind: c.kind || '',
         onClick: () => {
           eventOpen = false;
-          const res = Game.safe(c.fn, 'event:' + ev.id);
+          const res = Game.FL ? Game.FL.withRng('event-choice', () => Game.safe(c.fn, 'event:' + ev.id)) : Game.safe(c.fn, 'event:' + ev.id);
           Game.stat('events');
           if (res) { Game.log(`${ev.icon || '❗'} ${res}`, 'story'); Game.toast(res, 'info', ev.icon || '❗'); }
           if ((Game.S.stats.events || 0) >= 10) Game.achieve('m_events10');
@@ -13274,6 +13621,7 @@ body.gfx-low .card { box-shadow: none; }
   }
   Game.on('phase', (n) => {
     const S = Game.S;
+    if (Game.FL) { if (Game.music) Game.music.setPhase(n); return; }   // a FlashGames run keeps no splits or personal bests
     if (n === 2) { const pb = updateBest('p2', S.splits.p2); Game.achieve('m_p2'); if (pb) Game.toast('New personal best split: Phase I!', 'good', '⏱️'); }
     if (n === 3) { const pb = updateBest('p3', S.splits.p3); Game.achieve('m_p3'); if (pb) Game.toast('New personal best split: Phase II!', 'good', '⏱️'); }
     if (Game.music) Game.music.setPhase(n);
@@ -13286,6 +13634,7 @@ body.gfx-low .card { box-shadow: none; }
     S.ended = true;
     S.ending = ending;
     S.splits.end = Game.runMs();
+    if (Game.FL) { Game.FL.finish('won'); return; }   // FlashGames: the run is over and scored; nothing is recorded
     const pb = updateBest('end', S.splits.end);
     Game.achieve('m_win');
     Game.achieve(ending === 'bloom' ? 'm_end_bloom' : 'm_end_hive');
@@ -13368,8 +13717,8 @@ body.gfx-low .card { box-shadow: none; }
     const kv = (arr) => arr.map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('');
     Game.modal({
       title: '📊 Statistics', wide: true,
-      body: `<div class="grid2" style="gap:18px"><div><div class="card-title" style="margin-bottom:6px">This run</div>${kv(run)}</div><div><div class="card-title" style="margin-bottom:6px">All time</div>${kv(life)}</div></div>`,
-      buttons: [
+      body: Game.FL ? `<div class="card-title" style="margin-bottom:6px">This FlashGames run</div>${kv(run)}` : `<div class="grid2" style="gap:18px"><div><div class="card-title" style="margin-bottom:6px">This run</div>${kv(run)}</div><div><div class="card-title" style="margin-bottom:6px">All time</div>${kv(life)}</div></div>`,
+      buttons: Game.FL ? [{ label: 'Close' }] : [
         { label: '🧹 Wipe stats & scores', kind: 'ghost', keepOpen: true, onClick: () => confirmWipeRecords(openStats) },
         { label: 'Close' },
       ],
@@ -13412,26 +13761,27 @@ body.gfx-low .card { box-shadow: none; }
       ...[['short', '1.23M (short)'], ['long', '1.23 million (long)'], ['sci', '1.23e6 (scientific)']].map(([v, l]) => U.el('option', { value: v, text: l, selected: s.notation === v })));
     const card = (title, ...kids) => U.el('div', { class: 'card', style: { margin: 0 } }, U.el('div', { class: 'card-title', style: { marginBottom: '8px' }, text: title }), ...kids);
     const ta = U.el('textarea', { rows: 3, style: { width: '100%', fontFamily: 'var(--font-mono)', fontSize: '11px' }, placeholder: 'Paste a save code here to import, or press Export to get yours.' });
-    body.append(
+    body.append(...[
       U.el('div', { class: 'grid2' },
         card('🔊 Audio', toggle('Sound effects', 'sfx', audio), slider('Effects volume', 'volume', audio), toggle('Music', 'music', audio), slider('Music volume', 'musicVolume', audio)),
         card('🎨 Display', U.el('div', { class: 'row', style: { justifyContent: 'space-between' } }, U.el('span', { text: 'Numbers' }), notation),
           U.el('div', { class: 'row', style: { justifyContent: 'space-between' } }, U.el('span', { text: 'Graphics' }), U.el('select', { on: { change: (e) => { s.graphics = e.target.value; Game.saveMeta(); Game.applyGfx(); } } },
             ...[['high', 'High (all effects)'], ['balanced', 'Balanced (smooth)'], ['low', 'Low (fastest)']].map(([v, l]) => U.el('option', { value: v, text: l, selected: (s.graphics || 'balanced') === v })))),
           toggle('Particles & floating text', 'particles'), toggle('Reduce motion', 'reduceMotion', () => document.body.classList.toggle('reduce-motion', s.reduceMotion)))),
-      card('💾 Save', U.el('div', { class: 'hint', style: { marginBottom: '6px' }, text: 'The game autosaves in this browser every 10 seconds. Export a save code to move your run to another browser or share it with a friend.' }),
+      Game.FL ? card('⚡ FlashGames run', U.el('div', { class: 'hint', text: 'This is a throwaway FlashGames run: nothing is saved, and your own hive in this browser is left exactly as it was. Saving, export, import and reset come back in a normal game.' })) : null,
+      Game.FL ? null : card('💾 Save', U.el('div', { class: 'hint', style: { marginBottom: '6px' }, text: 'The game autosaves in this browser every 10 seconds. Export a save code to move your run to another browser or share it with a friend.' }),
         ta,
         U.el('div', { class: 'row', style: { marginTop: '8px' } },
           U.el('button', { class: 'btn', text: '💾 Save now', on: { click: () => { if (Game.save()) Game.toast('Game saved.', 'good', '💾'); } } }),
           U.el('button', { class: 'btn', text: '📤 Export', on: { click: () => { ta.value = Game.exportSave(); ta.select(); try { navigator.clipboard.writeText(ta.value); Game.toast('Save code copied to clipboard!', 'good', '📋'); } catch (e) { /* ignore */ } } } }),
           U.el('button', { class: 'btn', text: '📥 Import', on: { click: () => { if (ta.value.trim()) { Game.confirm('Import save?', 'This replaces your current run with the imported one. Your current run is not recorded.', 'Import', () => { Game.closeAllModals(); Game.importSave(ta.value); }, 'danger'); } } } }),
           U.el('button', { class: 'btn', text: '⬇️ Save file', on: { click: () => downloadSave() } }))),
-      card('🌱 Reset', U.el('div', { class: 'hint', style: { marginBottom: '8px' }, text: 'Start over from a single hive. Your current run is recorded in the High Scores first. Achievements and personal bests are kept.' }),
+      Game.FL ? null : card('🌱 Reset', U.el('div', { class: 'hint', style: { marginBottom: '8px' }, text: 'Start over from a single hive. Your current run is recorded in the High Scores first. Achievements and personal bests are kept.' }),
         U.el('div', { class: 'row', style: { flexWrap: 'wrap' } },
           U.el('button', { class: 'btn danger', text: '🔄 Reset run', on: { click: confirmReset } }),
           U.el('button', { class: 'btn', text: '🧹 Wipe stats & scores…', title: 'Clear high scores, personal bests and all-time stats. Achievements are kept.', on: { click: () => confirmWipeRecords(openSettings) } }),
           U.el('button', { class: 'btn ghost sm', text: 'Delete ALL data…', on: { click: confirmWipe } }))),
-      U.el('div', { class: 'hint', style: { textAlign: 'center' }, html: 'The Infinite Hive · an original incremental game · v1.0 · press <b>?</b> for keyboard shortcuts' }));
+      U.el('div', { class: 'hint', style: { textAlign: 'center' }, html: 'The Infinite Hive · an original incremental game · v1.0 · press <b>?</b> for keyboard shortcuts' })].filter(Boolean));
     Game.modal({ title: '⚙️ Settings', body, wide: true, buttons: [{ label: 'Done', kind: 'primary' }] });
   }
   function downloadSave() {
@@ -13548,6 +13898,21 @@ body.gfx-low .card { box-shadow: none; }
     document.body.appendChild(p);
   }
 
+  /* FlashGames: Royal Bees and events come on game time from the day's seed, so everyone sees the same schedule */
+  function flashSchedule(dt) {
+    const S = Game.S, M = S.meta, FL = Game.FL;
+    if (FL.frozen()) return;
+    if (!royal.el && S.time > (FL.has('queen') ? 5 : 60)) {
+      M.nextRoyal -= dt;
+      if (M.nextRoyal <= 0) { M.nextRoyal = FL.withRng('royal', royalInterval); spawnRoyal(); }
+    }
+    M.nextEvent -= dt;
+    if (M.nextEvent <= 0) {
+      if (canInterrupt() && S.time > 120) { if (FL.withRng('event', runEvent)) M.nextEvent = FL.withRng('event', () => U.rand(150, 300)); else M.nextEvent = 60; }
+      else M.nextEvent = 15;
+    }
+  }
+
   /* =================== module =================== */
   let msT = 0;
   Game.register({
@@ -13582,7 +13947,7 @@ body.gfx-low .card { box-shadow: none; }
       const S = Game.S;
       if (isNew) {
         Game.log('🐝 <b>THE INFINITE HIVE</b> — a new colony awakens.', 'story');
-        if ((Game.meta.runs || 1) <= 1) setTimeout(openHelp, 600);
+        if ((Game.meta.runs || 1) <= 1 && !Game.FL) setTimeout(openHelp, 600);
       }
       if (Game.music) Game.music.setPhase(S.phase);
       if (S.ended) setTimeout(() => { if (Game.S === S && S.ended) showSummary(Game.meta.scores.find((e) => e.id === S.runId), false); }, 500);
@@ -13592,6 +13957,7 @@ body.gfx-low .card { box-shadow: none; }
     tick(dt) {
       const S = Game.S, M = S.meta;
       if (Game.offline || S.ended) return;
+      if (Game.FL) flashSchedule(dt);
       msT += dt;
       if (msT >= 1) {
         msT = 0;
@@ -13603,7 +13969,7 @@ body.gfx-low .card { box-shadow: none; }
       const S = Game.S;
       tickerFrame(dt);
       royalFrame(dt);
-      if (S.ended || document.hidden) return;
+      if (S.ended || document.hidden || Game.FL) return;   // a FlashGames run schedules these in game time (flashSchedule)
       const M = S.meta;
       // royal scheduling (in real time while visible)
       if (!royal.el && S.time > 60) {
@@ -13634,6 +14000,484 @@ body.gfx-low .card { box-shadow: none; }
     { id: 'm_reset', name: 'Fresh Start', desc: 'Reset a run.', icon: '🌱' },
     { id: 'm_night', name: 'Night Shift', desc: 'Play between midnight and 4 AM.', icon: '🦉', hidden: true },
   ]);
+})();
+
+;
+/* ---- 40-flash.js ---- */
+/* ============================================================
+   40-flash.js — FlashGames mode (index.html?flash=…)
+   A seeded 15-minute speedrun of a brand-new hive with the day's
+   modifiers. Contract: FlashGames docs/PROTOCOL.md (SDK: 00-flash-run.js).
+   Without ?flash this file does nothing and Game.FL stays null.
+   ============================================================ */
+(() => {
+  'use strict';
+  const FR = window.FlashRun;
+  if (!FR || !FR.active) return;
+
+  // a run is a throwaway: Game.save / Game.saveMeta check this, so the player's save and meta are never written
+  Game._noSave = true;
+
+  /* ---------------- the modifiers (ids, names and text match flash.json) ---------------- */
+  const MODS = {
+    warp: { icon: '🌀', name: 'Time Warp', text: 'The whole hive runs 3× fast: seasons, production, Royal Bees, events and buffs.' },
+    bighands: { icon: '🖐️', name: 'Hundred-Fold Hands', text: 'Every click on the comb is worth ×100.' },
+    idle: { icon: '🛋️', name: 'Hands Off', text: 'The comb can’t be clicked at all. You start with 3 Worker Bees and 30 coins, and the hive makes ×3 honey on its own.' },
+    sale: { icon: '🏷️', name: 'Clearance Sale', text: 'Everything costs half: bees, buildings, scouts, comb frames, research, Royal Cells and Edicts.' },
+    headstart: { icon: '🐝', name: 'Big Swarm', text: 'Start with a grown colony: 50 Worker Bees, 20 Forager Troops, 8 Hive Boxes, 6 Scouts, Auto-Sell and 2,000 coins.' },
+    storms: { icon: '🌧️', name: 'Honey Storms', text: 'Wild honey storms sweep the yard every 30–60 seconds: 12 seconds of honey ×10, clicks ×10 and storage ×10.' },
+    jiggle: { icon: '🖱️', name: 'Keep Buzzing', text: 'Bees only work while your mouse is moving (keep a finger dragging on a phone), but then they work ×3.' },
+    inflation: { icon: '💸', name: 'Runaway Inflation', text: 'Clicks are worth ×10, but every click on the comb makes every price 0.3% higher, for good.' },
+    queen: { icon: '👑', name: 'Her Royal Hugeness', text: 'The Queen is enormous: a giant comb, a Royal Bee every 10–20 seconds, and every Royal Bee brings two rewards.' },
+    volatile: { icon: '🎢', name: 'Wild Market', text: 'The honey price swings between a tenth and five times its fair value. Sell on the spikes.' },
+    whiplash: { icon: '⛅', name: 'Weather Whiplash', text: 'Seasons last 10 seconds and go to extremes: summer makes ×4, winter almost nothing, but winter honey sells for ×4.' },
+    interest: { icon: '🏦', name: 'Compound Interest', text: 'Coins in your purse earn 0.5% interest every second.' },
+    mitosis: { icon: '🧬', name: 'Bee Mitosis', text: 'Every minute the colony splits: +50% of every bee and building you own (up to +100 of each).' },
+    bear: { icon: '🐻', name: 'Bear Country', text: 'A hungry bear charges the hive every 45–90 seconds. Click it 8 times to drive it off, or it eats half your honey and a quarter of your coins.' },
+  };
+  const active = FR.mods.filter((id) => MODS[id]);   // unknown ids are ignored
+  const on = (id) => active.includes(id);
+
+  /* ---------------- tunables ---------------- */
+  const STEP = 0.1;                        // fixed simulation step in game seconds: the same game for everyone
+  const SPEED = on('warp') ? 3 : 1;
+  const T = {
+    bigClick: 100, inflClick: 10, inflRate: 1.003, idleHoney: 3,
+    jiggle: 3, jiggleGrace: 400,           // ms after the last pointer movement that bees keep working
+    stormSecs: 12, stormGap: [30, 60], stormFirst: [20, 40], stormMult: { honey: 10, click: 10, storage: 10 },
+    bearWalk: 10, bearHp: 8, bearGap: [45, 90], bearFirst: [35, 55],
+    mitosisEvery: 60, mitosisMax: 100,
+    interest: 0.005,
+    whipLen: 10,
+    whipProd: { spring: 2, summer: 4, autumn: 1, winter: 0.05 },
+    whipPrice: { spring: 0.8, summer: 0.5, autumn: 1.5, winter: 4 },
+  };
+  // production that bees do (Keep Buzzing switches these off while the pointer is still)
+  const WORK = { honey: 1, wax: 1, waggle: 1, swarm: 1, expand: 1, build: 1, stardust: 1, ships: 1, jelly: 1 };
+
+  /* ---------------- seeded randomness ---------------- */
+  const streams = {};
+  const stream = (salt) => streams[salt] || (streams[salt] = FR.rng(salt));
+  const between = (r, range) => range[0] + r() * (range[1] - range[0]);
+  function gauss(r) {
+    let u = 0, v = 0;
+    while (u === 0) u = r();
+    while (v === 0) v = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  /** run fn with Math.random swapped for the named seeded stream (so U.rand, U.chance, U.weighted… are seeded too) */
+  function withRng(salt, fn) {
+    const prev = Math.random;
+    Math.random = stream(salt);
+    try { return fn(); } finally { Math.random = prev; }
+  }
+
+  /* ---------------- run state ---------------- */
+  let state = 'wait';      // wait (until the go) → run → over
+  let acc = 0;
+  let lastMove = -1e9;
+  const F = () => Game.S.flash;
+  const moving = () => performance.now() - lastMove < T.jiggleGrace;
+  const realSecs = (gameSecs) => Math.max(0, Math.ceil(gameSecs / SPEED));
+
+  /* ---------------- score ---------------- */
+  const ROMAN = ['', 'I', 'II', 'III'];
+  const researched = () => Object.keys(Game.S.research.bought).length;
+  function kinds() {
+    const b = (Game.S.phase1 && Game.S.phase1.b) || {};
+    return Game.p1.BLD.filter((x) => (b[x.id] || 0) > 0).length;
+  }
+  function parts() {
+    const S = Game.S, f = F();
+    const p = {
+      honey: Math.floor(1000 * Math.log10(1 + Math.max(0, S.totals.honey || 0))),
+      research: 250 * researched(),
+      kinds: 400 * kinds(),
+      phase: 0,
+    };
+    if (f.reached.p2 != null) p.phase += 20000 + 20 * f.reached.p2 + Math.floor(30000 * ((Game.p2 && Game.p2.progress()) || 0));
+    if (f.reached.p3 != null) p.phase += 40000 + 20 * f.reached.p3 + Math.floor(60000 * ((Game.p3 && Game.p3.progress()) || 0));
+    if (f.won != null) p.phase += 100000 + 50 * f.won;
+    return p;
+  }
+  function computeScore() { const p = parts(); return p.honey + p.research + p.kinds + p.phase; }
+  function detail() {
+    const S = Game.S;
+    const bits = [`Phase ${ROMAN[S.phase] || S.phase}`];
+    if (S.phase === 2 && Game.p2) bits.push(`Earth ${Math.floor(Game.p2.progress() * 100)}%`);
+    if (S.phase === 3 && Game.p3) bits.push(`galaxy ${Math.floor(Game.p3.progress() * 100)}%`);
+    bits.push(`${U.fmt(S.totals.honey || 0)} honey`, `${researched()} research`);
+    if (S.phase === 1) bits.push(`${kinds()}/8 buildings`);
+    return bits.join(' · ');
+  }
+  /** score so far (never goes down) → FlashGames */
+  function report() {
+    const f = F();
+    const s = computeScore();
+    if (s > f.best) f.best = s;
+    FR.score(f.best, detail());
+  }
+
+  /* ---------------- the clock ---------------- */
+  /** called by the core every ~100 ms of real time instead of its own tick */
+  function step(dt) {
+    if (state !== 'run') return;
+    acc += Math.min(dt, 600) * SPEED;
+    const n = Math.floor(acc / STEP + 1e-6);
+    if (n <= 0) return;
+    acc = Math.max(0, acc - n * STEP);
+    Game.offline = n > 200;            // a long catch-up (hidden tab) runs quietly, as the normal game does
+    for (let i = 0; i < n && state === 'run'; i++) Game.simTick(STEP);
+    Game.offline = false;
+    if (state === 'run') report();
+  }
+
+  function start() {
+    const S = Game.S, p1 = S.phase1, f = F();
+    document.body.classList.add('flash-mode');
+    for (const id of active) document.body.classList.add('flash-mod-' + id);
+    if (on('idle')) { p1.b.worker = Math.max(p1.b.worker, 3); Game.add('coins', 30); }
+    if (on('headstart')) {
+      p1.b.worker = Math.max(p1.b.worker, 50); p1.b.forager = 20; p1.b.hivebox = 8;
+      p1.scouts = 6; p1.frames = 4; p1.autoSell = true;
+      // Roadside Stand (Auto-Sell) and The Waggle Dance (scouts) come already researched
+      S.research.bought.stand = 1; S.research.bought.waggle = 1;
+      Game.add('coins', 2000);
+      Game.unlockTab('research', true);
+    }
+    if (on('storms')) f.stormNext = between(stream('storm'), T.stormFirst);
+    if (on('bear')) f.bearNext = between(stream('bear'), T.bearFirst);
+    if (on('queen')) S.meta.nextRoyal = 8;
+    Game.p1.recalc();
+    Game.log(`⚡ <b>FlashGames run.</b> A brand-new hive and ${active.length ? 'today’s modifiers: ' + active.map((id) => `${MODS[id].icon} <b>${MODS[id].name}</b>`).join(', ') : 'no modifiers'}. Make as much progress as you can before the clock runs out.`, 'royal');
+    buildCard();
+    Game.renderAll(true);
+    FR.onEnd(timeUp);
+    showCover('ready');
+    FR.ready().then(go);
+  }
+  function go() {
+    if (state !== 'wait') return;
+    if (FR.isOver()) { timeUp(); return; }
+    state = 'run';
+    acc = 0;
+    showCover(null);
+    report();
+  }
+  function stopEverything() {
+    Game.closeAllModals();
+    Game.cineClose();
+    removeBear();
+    document.body.classList.add('flash-over');
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }
+  /** FlashGames says the time is up: freeze and show the final score */
+  function timeUp() {
+    if (state === 'over') return;
+    state = 'over';
+    const f = F();
+    f.best = Math.max(f.best, computeScore());
+    const d = detail();
+    stopEverything();
+    showCover('end', f.best, d);
+    FR.over(f.best, d, 'time');
+  }
+  /** the game itself ended the run (an ending in Phase III) */
+  function finish(reason) {
+    if (state === 'over') return;
+    const f = F();
+    f.won = Math.floor(FR.timeLeft() / 1000);
+    state = 'over';
+    f.best = Math.max(f.best, computeScore());
+    const d = detail();
+    stopEverything();
+    showCover('won', f.best, d);
+    FR.over(f.best, d, reason === 'won' ? 'won' : 'dead');
+  }
+
+  Game.on('phase', (n) => {
+    if (!Game.S || !Game.S.flash) return;
+    const f = F(), key = 'p' + n;
+    if (state === 'run' && f.reached[key] == null && (n === 2 || n === 3)) {
+      f.reached[key] = Math.floor(FR.timeLeft() / 1000);
+      Game.toast(`<b>Phase ${ROMAN[n]} reached!</b> +${U.fmtInt((n === 2 ? 20000 : 40000) + 20 * f.reached[key])} points`, 'royal', '⚡');
+      report();
+    }
+  });
+
+  /* ---------------- modifiers: honey storms ---------------- */
+  function stormTick(dt) {
+    const f = F();
+    f.stormNext -= dt;
+    if (f.stormNext > 0) return;
+    f.stormNext = T.stormSecs + between(stream('storm'), T.stormGap);
+    Game.buff({ id: 'flash_storm', label: 'Honey Storm', icon: '🌧️', secs: T.stormSecs, mult: Object.assign({}, T.stormMult) });
+    Game.log('🌧️ <b>A honey storm!</b> Honey, clicks and storage ×10 for 12 seconds.', 'royal');
+    if (!Game.offline) {
+      Game.toast('<b>Honey storm!</b> Honey, clicks and storage ×10', 'royal', '🌧️');
+      Game.sfx('whoosh');
+      Game.coinShower(1.3);
+    }
+  }
+
+  /* ---------------- modifiers: bear country ---------------- */
+  let bearEl = null;
+  const dialogOpen = () => U.$('#modal-root').children.length > 0 || U.$('#cine').classList.contains('on');
+  function bearTick(dt) {
+    const f = F();
+    if (dialogOpen()) return;              // the bear waits politely while a dialog is open
+    if (!f.bear) {
+      f.bearNext -= dt;
+      if (f.bearNext <= 0) { f.bear = { t: 0, hp: T.bearHp }; showBear(); }
+      return;
+    }
+    if (!bearEl) showBear();
+    f.bear.t += dt;
+    if (f.bear.t >= T.bearWalk) bearEats();
+  }
+  function showBear() {
+    removeBear();
+    bearEl = U.el('div', { class: 'flash-bear', title: 'Click the bear to drive it off!' },
+      U.el('span', { class: 'fb-ico', text: '🐻' }), U.el('div', { class: 'fb-hp' }, U.el('div')));
+    bearEl.addEventListener('pointerdown', hitBear);
+    U.$('#royal-layer').appendChild(bearEl);
+    bearFrame();
+    if (!Game.offline) { Game.toast('<b>A bear is charging the hive!</b> Click it to drive it off.', 'bad', '🐻'); Game.sfx('alert'); }
+  }
+  function removeBear() { if (bearEl) { bearEl.remove(); bearEl = null; } }
+  function bearDone() {
+    const f = F();
+    f.bear = null;
+    f.bearNext = between(stream('bear'), T.bearGap);
+    removeBear();
+  }
+  function bearEats() {
+    const S = Game.S;
+    const h = (S.res.honey || 0) * 0.5, c = (S.res.coins || 0) * 0.25;
+    S.res.honey -= h; S.res.coins -= c;
+    bearDone();
+    Game.stat('flashBearLost');
+    Game.log(`🐻 <b>The bear got into the hive!</b> It ate 🍯 ${U.fmt(h)} and 🪙 ${U.fmt(c)}.`, 'bad');
+    if (!Game.offline) { Game.toast(`The bear ate 🍯 ${U.fmt(h)} and 🪙 ${U.fmt(c)}!`, 'bad', '🐻'); Game.sfx('lose'); Game.shake(8); }
+  }
+  function hitBear(e) {
+    e.stopPropagation(); e.preventDefault();
+    const f = F();
+    if (state !== 'run' || !f.bear || !bearEl) return;
+    f.bear.hp--;
+    Game.sfx('hit');
+    Game.float(e.clientX, e.clientY - 24, f.bear.hp > 0 ? 'Shoo!' : 'Scram!', '#ffb3a1');
+    bearEl.classList.remove('hit'); void bearEl.offsetWidth; bearEl.classList.add('hit');
+    bearFrame();
+    if (f.bear.hp <= 0) bearFlees(e.clientX, e.clientY);
+  }
+  function bearFlees(x, y) {
+    const S = Game.S;
+    const c = Math.max(100, Game.income('coins') * 30, (S.res.coins || 0) * 0.1);
+    Game.add('coins', c);
+    bearDone();
+    Game.stat('flashBearWon');
+    Game.log(`🐻 The bear runs off and drops a picnic basket: 🪙 ${U.fmt(c)}.`, 'good');
+    Game.toast(`The bear runs off! It dropped 🪙 ${U.fmt(c)}.`, 'good', '🧺');
+    Game.sfx('coin');
+    Game.burst(x, y, { n: 18, emoji: ['🪙', '🧺', '🍯'], size: 14 });
+  }
+  function bearFrame() {
+    const f = F();
+    if (!f.bear || !bearEl) return;
+    const W = window.innerWidth, H = window.innerHeight;
+    const comb = U.$('#hex-btn');
+    const r = comb ? comb.getBoundingClientRect() : null;
+    const tx = U.clamp(r && r.width ? r.left + r.width / 2 : W * 0.15, 40, W - 40);
+    const ty = U.clamp(r && r.height ? r.top + r.height / 2 : H * 0.5, 70, H - 70);
+    const sx = W + 50, prog = Math.min(1, f.bear.t / T.bearWalk);
+    bearEl.style.transform = `translate3d(${(sx + (tx - sx) * prog).toFixed(1)}px, ${ty.toFixed(1)}px, 0)`;
+    bearEl.querySelector('.fb-hp > div').style.width = (100 * f.bear.hp / T.bearHp) + '%';
+  }
+
+  /* ---------------- modifiers: bee mitosis ---------------- */
+  function mitosis() {
+    const S = Game.S;
+    const grow = (n) => Math.min(T.mitosisMax, Math.ceil((n || 0) * 0.5));
+    let added = 0, what = 'bees & buildings';
+    if (S.phase === 1) {
+      const b = S.phase1.b;
+      for (const id in b) { const g = grow(b[id]); b[id] = (b[id] || 0) + g; added += g; }
+      const g = grow(S.phase1.scouts); S.phase1.scouts += g; added += g;
+    } else if (S.phase === 2) {
+      const cap = (Game.p2 && Game.p2.calc.cap) || S.res.swarm;
+      const before = S.res.swarm;
+      S.res.swarm = Math.max(before, Math.min(cap, before * 1.5));
+      added = S.res.swarm - before; what = 'swarm';
+    } else {
+      const g = grow(S.res.ships); Game.add('ships', g); added = g; what = 'seed ships';
+    }
+    if (added > 0) {
+      Game.log(`🧬 <b>The colony splits!</b> +${U.fmt(added)} ${what}.`, 'good');
+      if (!Game.offline) Game.toast(`<b>Mitosis!</b> +${U.fmt(added)} ${what}`, 'good', '🧬');
+    }
+  }
+
+  /* ---------------- modifiers: runaway inflation ---------------- */
+  const inflation = () => (on('inflation') && Game.S && Game.S.flash ? Math.pow(T.inflRate, Game.S.flash.clicks) : 1);
+  const inflText = () => { const v = inflation(); return v >= 100 ? U.fmt(v) : v.toFixed(2); };
+
+  /* ---------------- UI ---------------- */
+  const ui = {};
+  const modHTML = (id) => `<div class="fl-mod"><span class="fl-ico">${MODS[id].icon}</span><div><b>${U.escapeHTML(MODS[id].name)}</b><div class="hint">${U.escapeHTML(MODS[id].text)}</div></div></div>`;
+  const modsHTML = () => (active.length ? active.map(modHTML).join('') : '<div class="hint">No modifiers today: just you and the bees.</div>');
+  function buildCard() {
+    if (ui.card) return;
+    ui.card = U.el('div', { class: 'card', id: 'flash-card' },
+      U.el('div', { class: 'card-head' }, U.el('span', { class: 'card-title', text: '⚡ FlashGames' }), U.el('span', { class: 'spacer' }), U.el('span', { class: 'card-sub', text: FR.date || 'test run' })),
+      U.el('div', { class: 'row', style: { alignItems: 'baseline' } }, ui.score = U.el('div', { class: 'big-num accent', text: '0' }), U.el('span', { class: 'muted', text: 'points' })),
+      ui.detail = U.el('div', { class: 'hint' }),
+      ui.parts = U.el('div', { class: 'fl-parts' }),
+      ui.live = U.el('div', { class: 'fl-live' }),
+      U.el('div', { class: 'fl-mods', html: modsHTML() }));
+    Game.ui.right.prepend(ui.card);
+  }
+  function liveLines() {
+    const S = Game.S, f = F(), L = [];
+    if (on('warp')) L.push('🌀 Game time runs ×3');
+    if (on('idle')) L.push('🛋️ Hands off: the comb is locked today');
+    if (on('jiggle')) L.push(moving() ? '🐝 <b class="good">Buzzing ×3</b>' : '😴 <b class="bad">Bees resting</b>: keep the mouse moving!');
+    if (on('inflation')) L.push(`💸 Prices <b>×${inflText()}</b> after ${U.fmtInt(f.clicks)} clicks`);
+    if (on('sale')) L.push('🏷️ Everything half price');
+    if (on('storms')) L.push(Game.hasBuff('flash_storm') ? '🌧️ <b class="royal">Honey storm!</b>' : `🌧️ Next storm in ~${realSecs(f.stormNext)}s`);
+    if (on('bear')) L.push(f.bear ? `🐻 <b class="bad">Bear attack!</b> ${f.bear.hp} more clicks` : `🐻 Next bear in ~${realSecs(f.bearNext)}s`);
+    if (on('mitosis')) L.push(`🧬 Next split in ${realSecs(T.mitosisEvery - f.mitosisT)}s`);
+    if (on('interest')) L.push(`🏦 Interest +${U.fmt((S.res.coins || 0) * T.interest * SPEED)} coins/s`);
+    if (on('volatile') && S.phase === 1) L.push(`🎢 Honey price ×${Math.exp(f.vol).toFixed(2)} of fair`);
+    if (on('whiplash') && S.phase === 1) L.push(`⛅ ${Game.p1.calc.season.icon} ${Game.p1.calc.season.name}: output ×${Game.p1.calc.seasonProd.toFixed(2)}`);
+    if (on('queen')) L.push('👑 Royal Bees every 10–20s, two rewards each');
+    return L;
+  }
+  function render() {
+    if (!ui.card) return;
+    const f = F(), p = parts();
+    const s = U.fmtInt(f.best);
+    if (ui.score.textContent !== s) ui.score.textContent = s;
+    if (ui.pillVal && ui.pillVal.textContent !== s) ui.pillVal.textContent = s;
+    U.setHTML(ui.detail, U.escapeHTML(detail()));
+    U.setHTML(ui.parts, [['🍯 Honey made', p.honey], ['💡 Research', p.research], ['🏡 Building types', p.kinds], ['🌍 Phases', p.phase]]
+      .map(([k, v]) => `<div class="kv"><span>${k}</span><b>${U.fmtInt(v)}</b></div>`).join(''));
+    const L = liveLines();
+    U.setHTML(ui.live, L.map((l) => `<div>${l}</div>`).join(''));
+    const note = [];
+    if (on('idle')) note.push('🛋️ Hands off: no clicking today');
+    if (on('jiggle')) note.push(moving() ? '🐝 Buzzing ×3' : '😴 Keep the mouse moving!');
+    if (on('inflation')) note.push(`💸 Prices ×${inflText()}`);
+    U.setHTML(ui.note, note.join(' · '));
+  }
+  function showCover(kind, score, d) {
+    const c = ui.cover;
+    if (!c) return;
+    c.className = kind ? 'on ' + kind : '';
+    if (!kind) { c.innerHTML = ''; return; }
+    if (kind === 'ready') {
+      c.innerHTML = `<div class="fl-box"><div class="fl-kicker">⚡ FlashGames · ${U.escapeHTML(FR.date || 'test run')}</div>
+        <h2>A brand-new hive</h2><p class="muted">Grow the colony as far as you can before the clock runs out.</p>
+        <div class="fl-mods">${modsHTML()}</div><p class="hint fl-wait">Get ready…</p></div>`;
+      return;
+    }
+    const p = parts();
+    c.innerHTML = `<div class="fl-box"><div class="fl-kicker">${kind === 'won' ? '🏁 Run complete' : '⏱️ Time’s up'}</div>
+      <div class="hint">Final score</div><div class="fl-final">${U.fmtInt(score)}</div>
+      <div class="muted">${U.escapeHTML(d)}</div>
+      <div class="fl-parts">${[['🍯 Honey made', p.honey], ['💡 Research', p.research], ['🏡 Building types', p.kinds], ['🌍 Phases', p.phase]].map(([k, v]) => `<div class="kv"><span>${k}</span><b>${U.fmtInt(v)}</b></div>`).join('')}</div>
+      <div class="fl-chips">${active.map((id) => `<span class="chip">${MODS[id].icon} ${U.escapeHTML(MODS[id].name)}</span>`).join(' ')}</div>
+      <p class="hint">This was a FlashGames run: nothing was saved, and your own hive in this browser is untouched.</p></div>`;
+  }
+  function blockKeys(e) {
+    if (state === 'run') return;
+    e.stopImmediatePropagation();
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && !/^F\d+$/.test(e.key)) e.preventDefault();
+  }
+
+  /* ---------------- module ---------------- */
+  Game.register({
+    id: 'flash',
+    defaults: () => ({
+      clicks: 0, best: 0, reached: {}, won: null,
+      vol: 0, volT: 0, stormNext: 0, bear: null, bearNext: 0, mitosisT: 0,
+    }),
+    mount() {
+      ui.pill = U.el('div', { id: 'flash-pill', title: 'FlashGames score' }, U.el('span', { class: 't-label', text: '⚡ Score' }), ui.pillVal = U.el('span', { text: '0' }));
+      // today's modifiers as icons in the top bar (hover for the rules)
+      ui.mini = U.el('div', { id: 'flash-minimods' }, ...active.map((id) => U.el('span', {
+        class: 'fl-mini', 'aria-label': `${MODS[id].name}: ${MODS[id].text}`,
+        'data-tip': `<div class="tip-title">${MODS[id].icon} ${U.escapeHTML(MODS[id].name)}</div><div>${U.escapeHTML(MODS[id].text)}</div>`, text: MODS[id].icon,
+      })));
+      const timer = U.$('#run-timer');
+      if (timer) timer.after(ui.pill, ui.mini);
+      ui.note = U.el('div', { class: 'hint', id: 'flash-note' });
+      U.$('#clicker').appendChild(ui.note);
+      ui.cover = U.el('div', { id: 'flash-cover' });
+      document.body.appendChild(ui.cover);
+      window.addEventListener('keydown', blockKeys, true);
+      window.addEventListener('keyup', blockKeys, true);
+      const moved = () => { lastMove = performance.now(); };
+      for (const ev of ['pointermove', 'mousemove', 'touchmove', 'scroll']) window.addEventListener(ev, moved, { passive: true, capture: true });
+    },
+    tick(dt) {
+      if (state !== 'run') return;
+      const S = Game.S, f = F();
+      if (on('interest') && S.res.coins > 0) Game.add('coins', S.res.coins * T.interest * dt);
+      if (on('volatile')) {
+        f.volT += dt;
+        if (f.volT >= 2 - 1e-6) { f.volT -= 2; f.vol = U.clamp(f.vol + gauss(stream('volatile')) * 0.32 - f.vol * 0.06, -2.3, 1.6); }
+      }
+      if (on('storms')) stormTick(dt);
+      if (on('bear')) bearTick(dt);
+      if (on('mitosis')) {
+        f.mitosisT += dt;
+        if (f.mitosisT >= T.mitosisEvery - 1e-6) { f.mitosisT -= T.mitosisEvery; mitosis(); }
+      }
+    },
+    render,
+    frame() { if (on('bear')) bearFrame(); },
+    mult(key) {
+      let m = 1;
+      if (key === 'click') { if (on('bighands')) m *= T.bigClick; if (on('inflation')) m *= T.inflClick; }
+      if (key === 'honey' && on('idle')) m *= T.idleHoney;
+      if (key === 'droneCost' && on('sale')) m *= 0.5;
+      if (on('jiggle') && WORK[key]) m *= moving() ? T.jiggle : 1e-9;
+      return m;
+    },
+  });
+
+  Game.costMult = () => (on('sale') ? 0.5 : 1) * inflation();
+
+  Game.FL = {
+    MODS, mods: active, has: on, speed: SPEED,
+    withRng, step, start, finish,
+    state: () => state,
+    score: computeScore, parts, detail,
+    /** may the player click the comb (or rally from the map) right now? */
+    canClick: () => state === 'run' && !on('idle'),
+    clicked: () => { if (Game.S && Game.S.flash) Game.S.flash.clicks++; },
+    /** true before the go and after the end: no simulation, no input */
+    frozen: () => state !== 'run',
+    /** true after the end: canvases and minigames stop too */
+    halted: () => state === 'over',
+    seasonLen: (base) => (on('whiplash') ? T.whipLen : base),
+    seasonProd: (id) => (on('whiplash') ? T.whipProd[id] : 1),
+    seasonPrice: (id) => (on('whiplash') ? T.whipPrice[id] : 1),
+    priceFactor: (noise) => (on('volatile') ? Math.exp(Game.S.flash.vol) : 1 + noise),
+    quietSeasons: on('whiplash'),
+    // Her Royal Hugeness sits beside the hive in the backyard
+    drawScene: on('queen') ? (ctx, x, y, t) => {
+      const bob = Math.sin(t * 2.2) * 3;
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '70px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+      ctx.fillText('🐝', x + 70, y - 18 + bob);
+      ctx.font = '30px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+      ctx.fillText('👑', x + 74, y - 62 + bob);
+      ctx.restore();
+    } : null,
+  };
 })();
 
 ;

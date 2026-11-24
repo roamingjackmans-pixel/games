@@ -1,0 +1,99 @@
+{
+  "v": 1,
+  "id": "infinitehive",
+  "name": "The Infinite Hive",
+  "tagline": "An idle game: from one backyard hive to a galaxy of honey",
+  "goal": "Grow a brand-new hive as far as you can in 15 minutes.",
+  "scoring": "1,000 × log10 of all the honey you make (1 million honey = 6,000), +250 per research, +400 per kind of Phase I building you own, +20,000 for reaching Phase II (+20 per second still on the clock) and up to 30,000 more for blooming Earth; Phase III adds 40,000 (+20 per second left) and up to 60,000 more.",
+  "maxScore": 1000000,
+  "pick": [
+    2,
+    3
+  ],
+  "modifiers": [
+    {
+      "id": "warp",
+      "name": "Time Warp",
+      "text": "The whole hive runs 3× fast: seasons, production, Royal Bees, events and buffs."
+    },
+    {
+      "id": "bighands",
+      "name": "Hundred-Fold Hands",
+      "text": "Every click on the comb is worth ×100.",
+      "excludes": [
+        "idle"
+      ]
+    },
+    {
+      "id": "idle",
+      "name": "Hands Off",
+      "text": "The comb can’t be clicked at all. You start with 3 Worker Bees and 30 coins, and the hive makes ×3 honey on its own.",
+      "excludes": [
+        "bighands",
+        "inflation",
+        "headstart"
+      ]
+    },
+    {
+      "id": "sale",
+      "name": "Clearance Sale",
+      "text": "Everything costs half: bees, buildings, scouts, comb frames, research, Royal Cells and Edicts."
+    },
+    {
+      "id": "headstart",
+      "name": "Big Swarm",
+      "text": "Start with a grown colony: 50 Worker Bees, 20 Forager Troops, 8 Hive Boxes, 6 Scouts, Auto-Sell and 2,000 coins.",
+      "excludes": [
+        "idle"
+      ]
+    },
+    {
+      "id": "storms",
+      "name": "Honey Storms",
+      "text": "Wild honey storms sweep the yard every 30–60 seconds: 12 seconds of honey ×10, clicks ×10 and storage ×10."
+    },
+    {
+      "id": "jiggle",
+      "name": "Keep Buzzing",
+      "text": "Bees only work while your mouse is moving (keep a finger dragging on a phone), but then they work ×3."
+    },
+    {
+      "id": "inflation",
+      "name": "Runaway Inflation",
+      "text": "Clicks are worth ×10, but every click on the comb makes every price 0.3% higher, for good.",
+      "excludes": [
+        "idle"
+      ]
+    },
+    {
+      "id": "queen",
+      "name": "Her Royal Hugeness",
+      "text": "The Queen is enormous: a giant comb, a Royal Bee every 10–20 seconds, and every Royal Bee brings two rewards."
+    },
+    {
+      "id": "volatile",
+      "name": "Wild Market",
+      "text": "The honey price swings between a tenth and five times its fair value. Sell on the spikes."
+    },
+    {
+      "id": "whiplash",
+      "name": "Weather Whiplash",
+      "text": "Seasons last 10 seconds and go to extremes: summer makes ×4, winter almost nothing, but winter honey sells for ×4."
+    },
+    {
+      "id": "interest",
+      "name": "Compound Interest",
+      "text": "Coins in your purse earn 0.5% interest every second."
+    },
+    {
+      "id": "mitosis",
+      "name": "Bee Mitosis",
+      "text": "Every minute the colony splits: +50% of every bee and building you own (up to +100 of each)."
+    },
+    {
+      "id": "bear",
+      "name": "Bear Country",
+      "text": "A hungry bear charges the hive every 45–90 seconds. Click it 8 times to drive it off, or it eats half your honey and a quarter of your coins."
+    }
+  ]
+}
