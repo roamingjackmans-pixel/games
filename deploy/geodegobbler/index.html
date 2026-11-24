@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.6.1">
+<meta name="version" content="1.6.2">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -897,7 +897,7 @@ body.flashrun #tb-leave, body.flashrun #tb-restart, body.flashrun #tb-timerbox, 
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-24">v1.6.1</div>
+<div id="ver" title="built 2026-11-24">v1.6.2</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -5164,10 +5164,12 @@ G.Table = (() => {
     v.cash.lines.forEach((l, i) => setTimeout(() => G.Audio.coin(), i * 150));
     el.center.querySelector('#co-go').onclick = () => {
       view = null;
-      if (r.phase === 'won') { if (G.FLASH) G.Flash.endless(r); else if (r.rodeo) { G.FX.confetti(300); G.Audio.fanfare(); } else T.victory(); } // FlashGames: straight on into Endless while the clock runs
+      if (r.phase === 'won') { if (G.FLASH) G.Flash.endless(r); else if (r.rodeo) { G.FX.confetti(300); G.Audio.fanfare(); T.feast(r); } else T.victory(); } // FlashGames: straight on into Endless while the clock runs
       T.render(); T.save();
     };
   };
+  // 🍗 Victory Feast: ×3 CpS for 10 minutes, once per won run (Daily Rodeo rides get it too, but nothing else from T.victory)
+  T.feast = (r) => { if (r._feast) return; r._feast = 1; G.Events.addBuff({ id: 'feast', name: 'Victory Feast', emoji: '🍗', cps: 3, dur: 600 }); };
   T.victory = () => {
     const r = T.run, s = G.state, c = S();
     if (r._victoryDone) return; r._victoryDone = true;
@@ -5177,7 +5179,7 @@ G.Table = (() => {
     const newTrophy = !s.trophies[key];
     s.trophies[key] = Date.now();
     s.bloom.crystals++;
-    G.Events.addBuff({ id: 'feast', name: 'Victory Feast', emoji: '🍗', cps: 3, dur: 600 });
+    T.feast(r);
     if (!r.finishedAt) r.finishedAt = Date.now();
     const runMs = r.finishedAt - r.startedAt;
     // Fastest Wins leaderboard: every timed win, fastest first (capped so the save stays small)
@@ -6509,6 +6511,7 @@ G.Rodeo = (() => {
       <div class="ro-time">${R.fmtMs(run.rodeo.ms)}</div>
       <p class="v-time">${run.rodeo.newBest ? (d.wins > 1 ? '<span class="v-rec">🏁 NEW BEST TODAY!</span>' : '<span class="v-rec">🏁 FIRST TIME ON THE BOARD!</span>') : `Yer best today is still <b>${R.fmtMs(d.best)}</b>`}</p>
       <p>${po.emoji} ${po.name} on ${sp.emoji} ${sp.name} with ${plan.mods.map((id) => `${mod(id).emoji} <b>${mod(id).name}</b>`).join(' + ')} · try ${run.rodeo.try}</p>
+      <p>🍗 Victory Feast: ×3 CpS for 10 minutes</p>
       <div class="btn-row"><button class="btn primary big" id="ro-share2">📋 Copy result</button><button class="btn big" id="ro-again">🔄 Ride it again</button><button class="btn big" id="v-leave">Mosey out</button></div></div>`;
   };
   return R;
