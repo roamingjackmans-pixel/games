@@ -752,7 +752,7 @@ Rarity power (D178, D221) multiplies weapon and casting-tool damage and tightens
 / 8 / 2, treasure chests (two items) as bosses, mimics 0 / 20 / 45 / 27 / 8. First playthrough zones 1–2 never roll Epic or Legendary and zones 3–4 never Legendary;
 from NG+1 every source's Legendary share is ×1.2 a cycle, the rest shrinking in proportion (D327, CONTENT_ITEMS §12).
 Loot is instanced per player. A player's
-own drops favour weapons that scale with their class's primary stat (+80%), secondary (+40%) or both (+130%, D371); staffs
+own drops favour weapons that scale with their class's primary stat (+120%), secondary (+60%) or both (+195%, D455); staffs
 count as Brain, talismans as Prayer; HP and Endurance give nothing (D254, D317). Most kills also shed a puff of Glowen (35%, D83).
 
 Every item has its own id; duplicate ids are repaired on load and pickup (D232).

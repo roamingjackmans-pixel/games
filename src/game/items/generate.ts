@@ -70,10 +70,10 @@ export interface DropFavor {
 export function favorSecondaries(f: DropFavor): readonly StatId[] {
   return typeof f.secondary === 'string' ? [f.secondary] : f.secondary;
 }
-export const FAVOR_PRIMARY = 1.8; // D371: was 1.3
-export const FAVOR_SECONDARY = 1.4; // D371: was 1.15
-/** on top of both, for a weapon that scales with the primary and the secondary stat (D317) */
-export const FAVOR_BOTH_EXTRA = 0.1;
+export const FAVOR_PRIMARY = 2.2; // D455: was 1.8 (D371), 1.3 (D317)
+export const FAVOR_SECONDARY = 1.6; // D455: was 1.4 (D371), 1.15 (D317)
+/** on top of both, for a weapon that scales with the primary and the secondary stat (D317; D455: was 0.1) */
+export const FAVOR_BOTH_EXTRA = 0.15;
 
 /** The stats a weapon base scales with (grade other than "-"); a staff Brain, a talisman Prayer. */
 export function scalingStatsOf(baseId: string): StatId[] {
