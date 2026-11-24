@@ -1,0 +1,125 @@
+{
+  "v": 1,
+  "id": "geodegobbler",
+  "name": "Geode Gobbler's Gobble Saloon",
+  "tagline": "Crystal poker with critters in yer belly",
+  "goal": "Satisfy as many of Gobbo's cravings as you can in 15 minutes.",
+  "scoring": "Every Snack, Meal and Indigestion behind you (beaten or skipped) pays 100, 150 or 250 × its ante. Each Indigestion you beat adds 1 point per 2 seconds left on the clock. Plus 100 per power of ten in your best hand (a 10,000 hand = 400).",
+  "maxScore": 1000000,
+  "pick": [
+    2,
+    3
+  ],
+  "modifiers": [
+    {
+      "id": "highsociety",
+      "name": "High Society",
+      "text": "No cards below 10: the deck is two of every 10, J, Q, K and A (40 cards)."
+    },
+    {
+      "id": "wild",
+      "name": "Wild Wild West",
+      "text": "Every card is Wild (counts as every suit). The suit-hating Indigestions stay home.",
+      "excludes": [
+        "glass"
+      ]
+    },
+    {
+      "id": "glass",
+      "name": "Glass Saloon",
+      "text": "Every card is Brittle: ×2 Shine when it scores, with a 1 in 4 chance to shatter.",
+      "excludes": [
+        "wild"
+      ]
+    },
+    {
+      "id": "goldrush",
+      "name": "Gold Rush",
+      "text": "Start with $100.",
+      "excludes": [
+        "flatbroke"
+      ]
+    },
+    {
+      "id": "flatbroke",
+      "name": "Flat Broke",
+      "text": "Start with $0 and never earn a cent of interest.",
+      "excludes": [
+        "goldrush"
+      ]
+    },
+    {
+      "id": "tall",
+      "name": "Tall Tales",
+      "text": "Every craving is 3× bigger, but you get +3 hands every round.",
+      "excludes": [
+        "oneshot"
+      ]
+    },
+    {
+      "id": "oneshot",
+      "name": "One Shot",
+      "text": "1 hand per round. +4 discards and +3 hand size to line it up.",
+      "excludes": [
+        "tall"
+      ]
+    },
+    {
+      "id": "bigmitts",
+      "name": "Big Mitts",
+      "text": "+3 hand size: more cards to build with every hand.",
+      "excludes": [
+        "butterfingers"
+      ]
+    },
+    {
+      "id": "butterfingers",
+      "name": "Butterfingers",
+      "text": "-2 hand size, and +2 discards to dig with.",
+      "excludes": [
+        "bigmitts"
+      ]
+    },
+    {
+      "id": "giveaway",
+      "name": "Critter Giveaway",
+      "text": "Every critter in the shop is free, but the shop has only 1 slot.",
+      "excludes": [
+        "freerolls"
+      ]
+    },
+    {
+      "id": "freerolls",
+      "name": "Reroll Rodeo",
+      "text": "Shop rerolls are always free.",
+      "excludes": [
+        "giveaway"
+      ]
+    },
+    {
+      "id": "pairsonly",
+      "name": "Two's Company",
+      "text": "Only hands with a Pair in them score. Pairs start at level 3."
+    },
+    {
+      "id": "royalty",
+      "name": "Royal Treatment",
+      "text": "Face cards (J, Q, K) trigger twice when they score."
+    },
+    {
+      "id": "compost",
+      "name": "Compost Heap",
+      "text": "Discarded cards are eaten for good (your deck shrinks). +2 discards."
+    },
+    {
+      "id": "bossrush",
+      "name": "Boss Rush",
+      "text": "Every Snack and Meal is skipped for you (you keep the tags). Only Indigestions get played."
+    },
+    {
+      "id": "legend",
+      "name": "Living Legend",
+      "text": "Start with a random Legendary critter."
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.5.4">
+<meta name="version" content="1.6.0">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -755,6 +755,44 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 .tb-sbtns { flex-wrap: wrap; }
 .tb-sbtns .btn { padding: 6px 4px; font-size: 11px; flex: 1 1 30%; }
 
+/* ---- zzz-flash.css ---- */
+/* ============ FlashGames mode (?flash=…). Everything here only applies under body.flashrun or to .fl-* elements ============ */
+body.flashrun #app, body.flashrun #ver, body.flashrun .tb-logo { display: none; }
+body.flashrun #tb-leave, body.flashrun #tb-restart, body.flashrun #tb-timerbox, body.flashrun .tb-cps, body.flashrun .co-crunch, body.flashrun .gameover .btn-row, body.flashrun #v-leave { display: none !important; }
+.fl-box { background: rgba(0, 0, 0, .45); border: 2px solid rgba(255, 207, 90, .35); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.fl-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 11px; color: var(--muted); }
+.fl-h b { color: var(--gold); font-family: var(--font-display); font-size: 14px; letter-spacing: 1px; }
+.fl-score { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fl-score small { font-size: 10px; text-transform: uppercase; color: var(--muted); }
+.fl-score b { font-family: var(--font-display); font-size: 24px; color: #ffe2a8; font-variant-numeric: tabular-nums; }
+.fl-detail { font-size: 11px; color: var(--muted); line-height: 1.3; }
+.fl-mods { display: flex; flex-wrap: wrap; gap: 4px; }
+.fl-mod { font-size: 11px; background: rgba(255, 207, 90, .12); border: 1px solid rgba(255, 207, 90, .4); border-radius: 999px; padding: 2px 8px; white-space: nowrap; cursor: help; }
+.fl-btns { display: flex; gap: 6px; } .fl-btns .btn { flex: 1; padding-left: 4px; padding-right: 4px; } .fl-btns .off { opacity: .5; }
+.fl-over { position: fixed; inset: 0; z-index: 89; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(4, 2, 10, .74); backdrop-filter: blur(3px); animation: fade-in .25s; overflow: auto; }
+.fl-over.out { opacity: 0; transition: opacity .3s; pointer-events: none; }
+.fl-card { max-width: 470px; width: 100%; margin: auto; background: linear-gradient(180deg, #3a2210, #1e1006); border: 3px solid #8a5329; border-radius: 16px; padding: 16px 18px; box-shadow: 0 10px 40px rgba(0, 0, 0, .6); text-align: center; }
+.fl-card h1 { font-family: var(--font-display); margin: 4px 0 8px; font-size: clamp(22px, 5vw, 32px); color: var(--gold); }
+.fl-card p { margin: 6px 0; }
+.fl-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.fl-modlist { text-align: left; display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.fl-modrow { display: flex; gap: 10px; align-items: center; background: rgba(0, 0, 0, .3); border-radius: 10px; padding: 7px 10px; }
+.fl-modrow > span { font-size: 26px; line-height: 1; } .fl-modrow b { display: block; color: #ffe2a8; } .fl-modrow i { font-style: normal; font-size: 13px; color: #f3dfb8; }
+.fl-wait { font-size: 13px; color: var(--muted); animation: fl-pulse 1.1s infinite alternate; }
+@keyframes fl-pulse { to { opacity: .4; } }
+.fl-big { font-family: var(--font-display); font-weight: 700; font-size: clamp(40px, 11vw, 64px); color: #ffe2a8; text-shadow: 0 0 24px rgba(255, 207, 90, .55); line-height: 1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.fl-lines { margin: 12px 0 4px; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.fl-lines div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; background: rgba(0, 0, 0, .3); border-radius: 8px; padding: 5px 10px; font-size: 14px; }
+.fl-lines b { font-family: var(--font-display); color: var(--gold); font-variant-numeric: tabular-nums; }
+@media (max-width: 899px) {
+  /* one or two slim rows on a phone: the table needs the height */
+  .fl-box { flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 4px 8px; }
+  .fl-h { flex: 0 0 auto; } .fl-h span, .fl-score small, .fl-detail { display: none; }
+  .fl-score { flex: 0 0 auto; } .fl-score b { font-size: 18px; }
+  .fl-mods { flex: 1 1 0; min-width: 120px; } .fl-mod { font-size: 10px; padding: 1px 6px; }
+  .fl-btns { flex: 0 0 auto; gap: 4px; } .fl-btns .btn { padding: 2px 6px; font-size: 12px; min-height: 0; }
+}
+
 </style>
 </head>
 <body>
@@ -801,7 +839,7 @@ body.at-table .toast.out { opacity: 0; transform: translateX(30px); }
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-24">v1.5.4</div>
+<div id="ver" title="built 2026-11-24">v1.6.0</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -1404,6 +1442,229 @@ G.currentSeason = (t = new Date()) => {
   }
   return null;
 };
+
+;
+/* ---- 05-flash-run.js ---- */
+// FlashRun SDK v1. Lets a game run as the FlashGames daily speedrun (josephjackman.com/games/flashgames/).
+// Copy this file into a game unchanged (newest copy: roamingjackmans-pixel/flashgames, sdk/flash-run.js).
+// The rules a game follows are in that repo's docs/PROTOCOL.md.
+//
+// FlashGames opens the game in an iframe at  <game>/?flash=<base64url JSON>  where the JSON is
+//   { v: 1, date: '2026-11-24', seed: 123456789, mods: ['glass', 'turbo'], limit: 900, run: 'r_abc' }
+// and this file reads it. Load it as a classic <script>, concatenate it into a bundle, or `import './flash-run.js'`
+// from a module: it sets  window.FlashRun  either way. With no ?flash=… in the URL, FlashRun.active is false and
+// nothing else here does anything.
+(function (root) {
+  'use strict';
+
+  function decode(raw) {
+    var b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  var cfg = null;
+  try {
+    var raw = new URLSearchParams(root.location.search).get('flash');
+    if (raw) {
+      cfg = decode(raw);
+      if (!cfg || cfg.v !== 1 || !Array.isArray(cfg.mods)) cfg = null;
+      else {
+        cfg.seed = cfg.seed >>> 0;
+        cfg.limit = Math.max(10, Math.min(3600, Number(cfg.limit) || 900));
+        cfg.mods = cfg.mods.map(String);
+      }
+    }
+  } catch (e) {
+    cfg = null;
+  }
+
+  var parentWin = root.parent && root.parent !== root ? root.parent : null;
+  var phase = 'loading'; // loading -> waiting (ready sent) -> running (go) -> over
+  var goAt = 0;
+  var best = 0;
+  var bestDetail = '';
+  var lastPost = 0;
+  var pendingPost = 0;
+  var endFns = [];
+  var goFns = [];
+  var localTimer = 0;
+
+  function post(msg) {
+    msg.flash = 1;
+    if (parentWin) parentWin.postMessage(msg, '*');
+  }
+
+  function clean(n) {
+    n = Math.floor(Number(n));
+    return Number.isFinite(n) && n > 0 ? Math.min(n, 1e12) : 0;
+  }
+
+  function sendScore() {
+    pendingPost = 0;
+    lastPost = Date.now();
+    post({ type: 'score', score: best, detail: bestDetail });
+  }
+
+  function startRunning(at) {
+    if (phase === 'running' || phase === 'over') return;
+    phase = 'running';
+    goAt = at || Date.now();
+    // the parent is the clock; this is only the fallback (and the clock when testing the game on its own)
+    localTimer = setTimeout(function () {
+      timeUp();
+    }, cfg.limit * 1000 + (parentWin ? 3000 : 0));
+    var fns = goFns.slice();
+    goFns.length = 0;
+    for (var i = 0; i < fns.length; i++) fns[i]();
+  }
+
+  function timeUp() {
+    if (phase === 'over') return;
+    for (var i = 0; i < endFns.length; i++) {
+      try {
+        endFns[i]();
+      } catch (e) {
+        console.error('[FlashRun] onEnd handler failed', e);
+      }
+    }
+    if (phase !== 'over') api.over(best, bestDetail, 'time');
+  }
+
+  if (cfg) {
+    root.addEventListener('message', function (ev) {
+      if (!parentWin || ev.source !== parentWin) return;
+      var m = ev.data;
+      if (!m || m.flash !== 1) return;
+      if (m.type === 'go') startRunning(Date.now());
+      else if (m.type === 'end') timeUp();
+    });
+  }
+
+  /** a small seeded random stream (mulberry32); the same seed and salt give the same numbers for everyone */
+  function stream(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6d2b79f5) >>> 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function hashSalt(s) {
+    var h = 2166136261 >>> 0;
+    s = String(s);
+    for (var i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+    return h;
+  }
+
+  var api = {
+    /** true when this page was opened as a FlashGames run */
+    active: !!cfg,
+    /** { v, date, seed, mods, limit, run } or null */
+    config: cfg,
+    mods: cfg ? cfg.mods.slice() : [],
+    seed: cfg ? cfg.seed : 0,
+    date: cfg ? String(cfg.date || '') : '',
+    /** seconds in the run (900) */
+    limit: cfg ? cfg.limit : 0,
+    /** is this modifier on today? */
+    has: function (id) {
+      return !!cfg && cfg.mods.indexOf(id) >= 0;
+    },
+    /**
+     * Call once the run is set up and playable (assets loaded, map built). FlashGames counts in 3-2-1 and then
+     * starts the clock; the promise resolves at that moment. Keep the game paused until then.
+     * Opened on its own (no FlashGames around it), it resolves after a second so a run can be tested directly.
+     */
+    ready: function () {
+      if (!cfg) return Promise.resolve();
+      return new Promise(function (resolve) {
+        if (phase === 'running') return resolve();
+        goFns.push(resolve);
+        if (phase === 'loading') {
+          phase = 'waiting';
+          post({ type: 'ready' });
+          if (!parentWin)
+            setTimeout(function () {
+              startRunning(Date.now());
+            }, 1000);
+        }
+      });
+    },
+    /** true between the go and the end of the run */
+    running: function () {
+      return phase === 'running';
+    },
+    isOver: function () {
+      return phase === 'over';
+    },
+    /**
+     * Report the run's score so far (a whole number that never goes down) and a short line that explains it,
+     * e.g. "Zone 2 · 14 rooms · 112 kills". Call it whenever it changes; it is cheap.
+     */
+    score: function (n, detail) {
+      if (!cfg || phase === 'over') return;
+      var s = clean(n);
+      if (s < best) s = best;
+      var d = detail == null ? bestDetail : String(detail).slice(0, 120);
+      if (s === best && d === bestDetail) return;
+      best = s;
+      bestDetail = d;
+      var wait = 250 - (Date.now() - lastPost);
+      if (wait <= 0) sendScore();
+      else if (!pendingPost) pendingPost = setTimeout(sendScore, wait);
+    },
+    /** the best score reported so far */
+    best: function () {
+      return best;
+    },
+    /**
+     * The run ended inside the game: reason 'won' (finished it all), 'dead' (the game's own rules ended the
+     * run), or 'time'. Freeze the game after calling this. Only the first call counts.
+     */
+    over: function (n, detail, reason) {
+      if (!cfg || phase === 'over') return;
+      var s = Math.max(best, clean(n));
+      best = s;
+      if (detail != null) bestDetail = String(detail).slice(0, 120);
+      if (pendingPost) clearTimeout(pendingPost);
+      pendingPost = 0;
+      clearTimeout(localTimer);
+      phase = 'over';
+      post({ type: 'over', score: best, detail: bestDetail, reason: reason === 'won' || reason === 'dead' ? reason : 'time' });
+    },
+    /**
+     * Called when the 15 minutes are up. Freeze the game (stop the simulation, ignore input) and, if you like,
+     * call over() with a final score; if you don't, the best score reported counts.
+     */
+    onEnd: function (fn) {
+      endFns.push(fn);
+    },
+    /** milliseconds left on the clock (the full limit before the go, 0 after the end) */
+    timeLeft: function () {
+      if (!cfg) return 0;
+      if (phase === 'loading' || phase === 'waiting') return cfg.limit * 1000;
+      if (phase === 'over') return 0;
+      return Math.max(0, cfg.limit * 1000 - (Date.now() - goAt));
+    },
+    /** milliseconds since the go */
+    elapsed: function () {
+      return phase === 'running' || phase === 'over' ? Date.now() - goAt : 0;
+    },
+    /** a seeded random function in [0, 1); pass a salt for independent streams (e.g. 'loot', 'map') */
+    rng: function (salt) {
+      return stream((cfg ? cfg.seed : 0) ^ hashSalt(salt == null ? '' : salt));
+    },
+  };
+
+  root.FlashRun = api;
+})(typeof window !== 'undefined' ? window : globalThis);
 
 ;
 /* ---- 10-state.js ---- */
@@ -3024,6 +3285,7 @@ G.Engine = (() => {
   E.removeCritter = (run, c) => { run.critters = run.critters.filter((x) => x !== c); };
   E.sellValue = (run, c) => Math.max(1, Math.floor(E.critterCost(run, c.id, c.edition) / 2) + (c.state.extraValue || 0));
   E.critterCost = (run, id, edition) => {
+    if (run.flash && run.flash.freeCritters) return 0; // FlashGames: Critter Giveaway
     const d = G.CRITTER_BY_ID[id];
     let cost = d.cost + ({ glittery: 2, holo: 3, molten: 5, fossil: 5 }[edition] || 0);
     return Math.max(1, Math.round(cost * (run.discount || 1)));
@@ -3163,14 +3425,16 @@ G.Engine = (() => {
       timesPlayed: (run.handPlays[ev.type] || 0) + (opts.preview ? 1 : 0),
     };
     events.push({ kind: 'base', type: ev.type, level: base.level, sparkle, shine });
-    let zero = false;
+    let zero = false, zeroMsg = 'NOT ALLOWED!';
     if (boss) {
       if (boss.must5 && selected.length !== 5) zero = true;
       if (boss.onceEach && run.roundTypes && run.roundTypes[ev.type]) zero = true;
       if (boss.firstZero && run.hands === run.maxHandsThisRound) zero = true;
       if (boss.mostPlayed) { const mp = E.mostPlayed(run); if (mp && mp === ev.type) zero = true; }
-      if (zero) { events.push({ kind: 'boss', msg: 'NOT ALLOWED!' }); return { type: ev.type, scoring: ev.scoring, contains: ev.contains, events, sparkle: 0, shine: 0, total: 0, money: 0, zero: true, level: base.level }; }
     }
+    // FlashGames: Two's Company (only hands containing a Pair score)
+    if (!zero && run.flash && run.flash.mustContain && !ev.contains.has(run.flash.mustContain)) { zero = true; zeroMsg = run.flash.zeroMsg || zeroMsg; }
+    if (zero) { events.push({ kind: 'boss', msg: zeroMsg }); return { type: ev.type, scoring: ev.scoring, contains: ev.contains, events, sparkle: 0, shine: 0, total: 0, money: 0, zero: true, zeroMsg, level: base.level }; }
     const debuffed = (c) => E.isDebuffed(run, c, boss);
     const active = run.critters.filter((c) => !c.asleep);
     const apply = (eff, src) => {
@@ -3198,6 +3462,8 @@ G.Engine = (() => {
       if (!scoredSet.has(card.uid)) continue;
       if (debuffed(card)) { events.push({ kind: 'card', uid: card.uid, msg: 'Debuffed!', debuff: true }); continue; }
       let triggers = 1 + (card.sticker === 'red' ? 1 : 0);
+      // FlashGames: Royal Treatment (face cards trigger twice)
+      if (run.flash && run.flash.faceRetrigger && E.isFaceRaw(run, card)) { triggers += run.flash.faceRetrigger; events.push({ kind: 'card', uid: card.uid, msg: 'Royal!' }); }
       for (const c of active) { const d = critterDef(c); if (d.retrigger) { const n = d.retrigger(ctx, c, card) || 0; if (n) { triggers += n; events.push({ kind: 'critter', uid: c.uid, msg: 'Again!' }); } } }
       scoredCards.push([card, triggers]);
       for (let t = 0; t < triggers; t++) {
@@ -3294,7 +3560,7 @@ G.Engine = (() => {
   };
   /* a boss that can't be beaten with this run's rules never shows up:
      The Cramp (first hand scores nothing) is an automatic loss with only 1 hand per round, e.g. Gobbo's Lunchbox */
-  E.bossFair = (run, b) => !(b.firstZero && run.maxHands <= 1);
+  E.bossFair = (run, b) => !(b.firstZero && run.maxHands <= 1) && !(run.flash && run.flash.bossBan && run.flash.bossBan.includes(b.id));
   /* swap out any unfair boss already rolled for this ante or later (old saves from before the rule) */
   E.fixUnfairBosses = (run) => {
     for (let a = run.ante; a < run.bosses.length; a++) {
@@ -3361,6 +3627,7 @@ G.Engine = (() => {
     }
     run.maxHandsThisRound = run.hands;
     run.hand = [];
+    if (run.reseed) run.reseed('blind'); // FlashGames: every blind deals from its own seeded stream
     run.drawPile = G.shuffle(run.deck.map((c) => c.uid), run.rng);
     for (const c of run.critters) { c.asleep = false; const d = G.CRITTER_BY_ID[c.id]; d.onBlindStart && d.onBlindStart(run, c); }
     if (boss && boss.voidSleep) run.critters.forEach((c) => (c.asleep = true));
@@ -3431,6 +3698,7 @@ G.Engine = (() => {
     for (const c of run.critters) { const d = G.CRITTER_BY_ID[c.id]; if (d.onDiscard) { const e = d.onDiscard({ run, rng: run.rng }, c, cards); if (e) out.events.push({ uid: c.uid, ...e }); if (e && e.money) run.money += e.money; } }
     for (const c of cards) if (c.sticker === 'purple') { if (E.addConsumable(run, 'rune', G.RUNES[Math.floor(run.rng() * G.RUNES.length)].id)) out.events.push({ card: c.uid, msg: '+Rune' }); }
     run.hand = run.hand.filter((c) => !cards.includes(c));
+    if (run.flash && run.flash.compost) { for (const c of cards) E.destroyCard(run, c); out.eaten = cards.length; } // FlashGames: Compost Heap
     run.discards--;
     run.stats.discards++;
     out.drawn = E.draw(run);
@@ -3456,7 +3724,7 @@ G.Engine = (() => {
     }
     if (run.blindIdx === 2 && run.tags.includes('tag_invest')) { run.tags = run.tags.filter((t) => t !== 'tag_invest'); lines.push({ label: 'Investment Tag', money: 20 }); }
     const preInterest = run.money + lines.reduce((a, l) => a + l.money, 0);
-    const interest = Math.min(run.interestCap, Math.floor(Math.max(0, preInterest) / run.interestStep));
+    const interest = run.flash && run.flash.noInterest ? 0 : Math.min(run.interestCap, Math.floor(Math.max(0, preInterest) / run.interestStep));
     if (interest > 0) lines.push({ label: `Interest ($1 per $${run.interestStep}, max $${run.interestCap})`, money: interest });
     const total = lines.reduce((a, l) => a + l.money, 0);
     run.money += total;
@@ -3476,7 +3744,7 @@ G.Engine = (() => {
   E.advance = (run) => {
     // called when leaving the shop. A store you went back into just closes again: you already rode on from it
     if (run.shop && run.shop.reopened) { run.shop.reopened = false; run.phase = 'select'; return; }
-    if (run.blindIdx === 2) { run.ante++; run.blindIdx = 0; E.rollBossesFor(run, run.ante); E.rollTagOffers(run); run.gizmoStale = true; }
+    if (run.blindIdx === 2) { run.ante++; run.blindIdx = 0; if (run.reseed) run.reseed('ante'); E.rollBossesFor(run, run.ante); E.rollTagOffers(run); run.gizmoStale = true; }
     else run.blindIdx++;
     run.phase = 'select';
     // the store stays open behind you until the next blind starts or is skipped
@@ -3507,6 +3775,7 @@ G.Engine = (() => {
   };
   E.packCost = (run, type) => Math.round(G.PACKS[type].cost * run.discount);
   E.enterShop = (run) => {
+    if (run.reseed) run.reseed('shop'); // FlashGames: every shop stocks from its own seeded stream
     if (run.gizmoStale) { run.gizmoOffer = null; run.gizmoStale = false; }
     run.phase = 'shop';
     run.shopSeen = run.critters.map((c) => c.id);
@@ -3522,13 +3791,14 @@ G.Engine = (() => {
     while (take('tag_rare')) { const d = E.rollCritter(run, 3); if (d) items.unshift({ kind: 'critter', id: d.id, edition: null, cost: 0, free: true }); }
     while (take('tag_holo')) { const d = E.rollCritter(run, null); if (d) items.unshift({ kind: 'critter', id: d.id, edition: 'holo', cost: 0, free: true }); }
     if (!run.gizmoOffer && run.gizmoOffer !== false) {
-      const pool = G.GIZMOS.filter((g) => !run.gizmos.includes(g.id));
+      const pool = G.GIZMOS.filter((g) => !run.gizmos.includes(g.id) && !(run.flash && run.flash.gizmoBan && run.flash.gizmoBan.includes(g.id)));
       run.gizmoOffer = pool.length ? pool[Math.floor(run.rng() * pool.length)].id : false;
     }
     run.shop = { items, packs, rerolls: 0, freeRerollUsed: false };
     for (const c of run.critters) { const d = G.CRITTER_BY_ID[c.id]; d.onShop && d.onShop(run, c); }
   };
   E.rerollCost = (run) => {
+    if (run.flash && run.flash.freeRerolls) return 0; // FlashGames: Reroll Rodeo
     if (run.freeReroll && !run.shop.freeRerollUsed) return 0;
     if (run.shop.freeRerolls) return 0;
     return Math.max(0, 5 + run.shop.rerolls - run.rerollDiscount);
@@ -4160,6 +4430,7 @@ G.Table = (() => {
     if (res.total > c.bestHand) c.bestHand = res.total;
     if (res.total === 0) G.state.secrets.zero = 1;
     if (res.type === 'High Crunch' && res.scoring.length === 1 && res.scoring[0].rank === 2 && sel.length === 1) G.state.secrets.lone2 = 1;
+    if (G.FLASH) G.Flash.update();
   };
   const syncStats = () => {
     const r = T.run, c = S(); if (!r) return;
@@ -4222,7 +4493,7 @@ G.Table = (() => {
     return c.topRuns;
   };
   T.recordTop = (r, result) => {
-    if (!r || !r.startedAt) return;
+    if (G.FLASH || !r || !r.startedAt) return; // FlashGames runs never touch the boards
     const list = T.topRuns(), id = r.seed + '_' + r.startedAt;
     let e = list.find((x) => x.id === id);
     if (!e) { e = { id }; list.push(e); }
@@ -4301,6 +4572,9 @@ G.Table = (() => {
   T.resume = () => {
     if (G.state.run && !T.run) { try { T.run = T.attach(E.load(G.state.run)); } catch (e) { console.warn('run load failed', e); G.state.run = null; } }
   };
+  /* FlashGames mode: play a run G.Flash built (never saved), and freeze the table when it's over */
+  T.useRun = (run) => { T.run = run; view = null; sel = []; T.show(); };
+  T.freeze = () => { gen++; busy = true; T.locked = true; document.querySelectorAll('.popover').forEach((p) => p.remove()); };
 
   /* ---------- overlay ---------- */
   T.init = () => {
@@ -4350,11 +4624,11 @@ G.Table = (() => {
     el.timer = document.getElementById('tb-timer'); el.timerbox = document.getElementById('tb-timerbox');
     setInterval(() => { if (T.open && T.run) T.tickTimer(); }, 250);
     addEventListener('keydown', (e) => {
-      if (!T.open || busy || e.target.tagName === 'INPUT') return;
+      if (!T.open || busy || T.locked || e.target.tagName === 'INPUT') return;
       if (e.shiftKey && e.code === 'KeyH') { e.preventDefault(); T.playBestSingle(); return; }
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); T.play(); }
       if (e.key === 'd' || e.key === 'Delete') T.discard();
-      if (e.key === 'Escape') T.hide();
+      if (e.key === 'Escape' && !G.FLASH) T.hide();
     });
   };
   /* run timer: wall-clock time since the run started (the same clock the Speedrunner achievements use), frozen when the run ends */
@@ -4428,6 +4702,7 @@ G.Table = (() => {
   /* ---------- render ---------- */
   T.render = () => {
     const r = T.run; if (!r) return;
+    if (G.FLASH) G.Flash.beforeRender(r);
     T.renderSide(); T.renderCritters(); T.renderCons(); T.tickTimer();
     el.root.dataset.phase = view ? view.kind : r.phase;
     if (view && view.kind === 'cashout') T.renderCashout();
@@ -4443,6 +4718,7 @@ G.Table = (() => {
     el.root.toggleAttribute('data-pack', !!r.pack);
     if (r.pack) T.renderPack(); else el.pack.classList.add('hidden');
     syncStats();
+    if (G.FLASH) G.Flash.update();
   };
   T.renderSide = () => {
     const r = T.run;
@@ -4615,7 +4891,8 @@ G.Table = (() => {
     if (!cards.length) { el.htype.innerHTML = '<span class="muted">Pick up to 5 cards</span>'; el.sp.textContent = '0'; el.sh.textContent = '0'; return; }
     const ev = E.evaluate(r, cards);
     const b = E.handBase(r, ev.type);
-    el.htype.innerHTML = `<b>${ev.type}</b> <i>lvl ${b.level}</i>`;
+    const nope = G.FLASH && G.Flash.scoresZero(r, ev);
+    el.htype.innerHTML = `<b>${ev.type}</b> <i>lvl ${b.level}</i>${nope ? ` <i class="bad">${nope}</i>` : ''}`;
     el.sp.textContent = G.fmt(b.sparkle); el.sh.textContent = G.fmt(b.shine);
   };
   T.play = async () => {
@@ -4657,7 +4934,7 @@ G.Table = (() => {
     el.sp.textContent = G.fmt(base.sparkle); el.sh.textContent = G.fmt(base.shine);
     G.FX.bump(el.htype, 'bump'); G.Audio.chime(0);
     await wait(380);
-    if (res.zero) { msg.innerHTML = '<span class="bad">NOT ALLOWED!</span>'; G.FX.shake(10); G.Audio.error(); await wait(800); }
+    if (res.zero) { msg.innerHTML = `<span class="bad">${G.esc(res.zeroMsg || 'NOT ALLOWED!')}</span>`; G.FX.shake(10); G.Audio.error(); await wait(800); }
     let step = 0, delay = 420;
     for (const ev of res.events.slice(1)) {
       if (ev.kind === 'base') { el.htype.innerHTML = `<b>${res.type}</b> <i>lvl ${ev.level}</i> ⬆️`; el.sp.textContent = G.fmt(ev.sparkle); el.sh.textContent = G.fmt(ev.shine); G.FX.bump(el.htype); G.Audio.upgrade(); await wait(delay); continue; }
@@ -4758,6 +5035,7 @@ G.Table = (() => {
       const out = E.discard(r, gone);
       sel = [];
       if (out) for (const ev of out.events) { const t = ev.uid && el.critters.querySelector(`[data-uid="${ev.uid}"]`); if (t) { const p = G.FX.centerOf(t); popLabel(p.x, p.y - 60, ev.money ? `+$${ev.money}` : ev.msg || '!', ev.money ? 'mo' : 'msg'); } }
+      if (out && out.eaten) { const p = G.FX.centerOf(el.hand); popLabel(p.x, p.y - 70, `😋 -${out.eaten} card${out.eaten > 1 ? 's' : ''}`, 'msg', 'Composted for good'); }
       syncStats();
       T.renderHand(); T.renderCons(); T.renderCritters();
       if (out) T.dealAnim(out.drawn);
@@ -4792,9 +5070,13 @@ G.Table = (() => {
       <div class="co-lines">${v.cash.lines.map((l, i) => `<div class="co-line" style="animation-delay:${i * 0.15}s"><span>${l.label}</span><b class="${l.money < 0 ? 'bad' : 'money'}">${l.money < 0 ? '-' : '+'}$${Math.abs(l.money)}</b></div>`).join('')}</div>
       <div class="co-total">Total <b class="money">$${v.cash.total}</b></div>
       <div class="co-crunch">🪨 Sent to the clicker: <b>+${G.fmt(v.pay)}</b> crunch</div>
-      <button class="btn primary big" id="co-go">${r.phase === 'won' ? '🏆 Victory!' : 'To Prickly Pete\'s →'}</button></div>`;
+      <button class="btn primary big" id="co-go">${r.phase === 'won' ? (G.FLASH ? '♾️ All 8 antes! Keep eating →' : '🏆 Victory!') : 'To Prickly Pete\'s →'}</button></div>`;
     v.cash.lines.forEach((l, i) => setTimeout(() => G.Audio.coin(), i * 150));
-    el.center.querySelector('#co-go').onclick = () => { view = null; if (r.phase === 'won') T.victory(); T.render(); T.save(); };
+    el.center.querySelector('#co-go').onclick = () => {
+      view = null;
+      if (r.phase === 'won') { if (G.FLASH) G.Flash.endless(r); else T.victory(); } // FlashGames: straight on into Endless while the clock runs
+      T.render(); T.save();
+    };
   };
   T.victory = () => {
     const r = T.run, s = G.state, c = S();
@@ -4848,6 +5130,7 @@ G.Table = (() => {
     G.Gobbo.say(G.pick(G.QUIPS.tableLoss), 3000);
     T.save();
     T.render();
+    if (G.FLASH) G.Flash.lost(r);
   };
   T.renderOver = () => {
     const r = T.run, close = r.roundScore / r.target;
@@ -5717,11 +6000,231 @@ G.ACH = [];
 })();
 
 ;
+/* ---- 50-flash.js ---- */
+/* FlashGames mode (josephjackman.com/games/flashgames/). Opened with ?flash=…, the game skips the clicker and every menu
+   and boots straight into a seeded Gobble Saloon run with the day's modifiers, reports a score as it goes and freezes
+   when the clock runs out. It's a throwaway in-memory game: the real save, Top Runs, Fastest Wins, the Codex, trinkets,
+   bounties and Molting are never read or written. The contract is FlashGames' docs/PROTOCOL.md (window.FlashRun comes
+   from 05-flash-run.js); the modifier ids below must match flash.json. */
+'use strict';
+G.FLASH = !!(window.FlashRun && window.FlashRun.active);
+G.Flash = (() => {
+  const F = {};
+  const E = G.Engine;
+  const SUIT_BOSSES = ['heartburn', 'seasick', 'envy', 'bruise'];
+  const ban = (list, ...ids) => { for (const id of ids) if (!list.includes(id)) list.push(id); };
+
+  /* The modifiers, in the order they're applied (never the URL's order, so a day always builds the same run).
+     Ids are stable: old days' plans refer to them. Rules the engine has to know about live in run.flash (plain data). */
+  F.MODS = [
+    { id: 'highsociety', emoji: '🎩', name: 'High Society', text: 'No cards below 10: the deck is two of every 10, J, Q, K and A (40 cards).',
+      setup: (r) => { r.deck = []; for (const s of G.SUIT_KEYS) for (let k = 10; k <= 14; k++) for (let n = 0; n < 2; n++) r.deck.push({ uid: ++r.uidSeq, rank: k, suit: s, enh: null, edition: null, sticker: null, bonus: 0 }); } },
+    { id: 'wild', emoji: '🌈', name: 'Wild Wild West', text: 'Every card is Wild (counts as every suit). The suit-hating Indigestions stay home.', excludes: ['glass'],
+      setup: (r) => { r.deck.forEach((c) => (c.enh = 'wild')); ban(r.flash.bossBan, ...SUIT_BOSSES); } },
+    { id: 'glass', emoji: '🥂', name: 'Glass Saloon', text: 'Every card is Brittle: ×2 Shine when it scores, with a 1 in 4 chance to shatter.', excludes: ['wild'],
+      setup: (r) => { r.deck.forEach((c) => (c.enh = 'brittle')); } },
+    { id: 'goldrush', emoji: '💰', name: 'Gold Rush', text: 'Start with $100.', excludes: ['flatbroke'],
+      setup: (r) => { r.money = 100; } },
+    { id: 'flatbroke', emoji: '🕸️', name: 'Flat Broke', text: 'Start with $0 and never earn a cent of interest.', excludes: ['goldrush'],
+      setup: (r) => { r.money = 0; r.flash.noInterest = true; ban(r.flash.gizmoBan, 'g_interest', 'g_seed'); } },
+    { id: 'tall', emoji: '⛰️', name: 'Tall Tales', text: 'Every craving is 3× bigger, but you get +3 hands every round.', excludes: ['oneshot'],
+      setup: (r) => { r.targetMult *= 3; r.maxHands += 3; } },
+    { id: 'oneshot', emoji: '🔫', name: 'One Shot', text: '1 hand per round. +4 discards and +3 hand size to line it up.', excludes: ['tall'],
+      setup: (r) => { r.maxHands = 1; r.maxDiscards += 4; r.handSize += 3; } },
+    { id: 'bigmitts', emoji: '🧤', name: 'Big Mitts', text: '+3 hand size: more cards to build with every hand.', excludes: ['butterfingers'],
+      setup: (r) => { r.handSize += 3; } },
+    { id: 'butterfingers', emoji: '🧈', name: 'Butterfingers', text: '-2 hand size, and +2 discards to dig with.', excludes: ['bigmitts'],
+      setup: (r) => { r.handSize = Math.max(1, r.handSize - 2); r.maxDiscards += 2; } },
+    { id: 'giveaway', emoji: '🎁', name: 'Critter Giveaway', text: 'Every critter in the shop is free, but the shop has only 1 slot.', excludes: ['freerolls'],
+      setup: (r) => { r.flash.freeCritters = true; r.shopSlots = 1; ban(r.flash.gizmoBan, 'g_slot'); } },
+    { id: 'freerolls', emoji: '🎲', name: 'Reroll Rodeo', text: 'Shop rerolls are always free.', excludes: ['giveaway'],
+      setup: (r) => { r.flash.freeRerolls = true; ban(r.flash.gizmoBan, 'g_reroll'); } },
+    { id: 'pairsonly', emoji: '👯', name: "Two's Company", text: 'Only hands with a Pair in them score. Pairs start at level 3.',
+      setup: (r) => { r.flash.mustContain = 'Pair'; r.flash.zeroMsg = 'NEEDS A PAIR!'; r.levels.Pair = 3; } },
+    { id: 'royalty', emoji: '👑', name: 'Royal Treatment', text: 'Face cards (J, Q, K) trigger twice when they score.',
+      setup: (r) => { r.flash.faceRetrigger = 1; } },
+    { id: 'compost', emoji: '🪱', name: 'Compost Heap', text: 'Discarded cards are eaten for good (your deck shrinks). +2 discards.',
+      setup: (r) => { r.flash.compost = true; r.maxDiscards += 2; } },
+    { id: 'bossrush', emoji: '⚔️', name: 'Boss Rush', text: 'Every Snack and Meal is skipped for you (you keep the tags). Only Indigestions get played.',
+      setup: (r) => { r.flash.bossRush = true; } },
+    { id: 'legend', emoji: '🦄', name: 'Living Legend', text: 'Start with a random Legendary critter.',
+      setup: (r, rngFor) => { const pool = G.CRITTERS.filter((d) => d.rarity === 4); const d = pool[Math.floor(rngFor('legend')() * pool.length)]; if (d) E.addCritter(r, d.id); } },
+  ];
+  F.MOD_BY_ID = Object.fromEntries(F.MODS.map((m) => [m.id, m]));
+
+  /* a fresh Burlap Saddlebag run on Mild, seeded by the day; rngFor(salt) gives a seeded stream (FlashRun.rng) */
+  F.setupRun = (mods, rngFor) => {
+    const on = new Set(mods || []);
+    const seed = ((rngFor('saloon')() * 2147483647) | 0) || 1;
+    const run = E.newRun({ seed, pouch: 'burlap', spice: 1, meta: {} }); // no Tooth Tree or stakes from a save
+    run.isLocked = () => false; // the whole menagerie is open, the same for everyone (and nothing reaches the Codex)
+    run.onCollect = () => {};
+    run.flash = { mods: F.MODS.filter((m) => on.has(m.id)).map((m) => m.id), bossBan: [], gizmoBan: [] };
+    for (const m of F.MODS) if (on.has(m.id)) m.setup(run, rngFor);
+    run.maxHands = Math.max(1, run.maxHands); run.maxDiscards = Math.max(0, run.maxDiscards);
+    E.fixUnfairBosses(run); // a banned (or now unfair) first Indigestion gets swapped
+    // every blind, shop and new ante draws from its own stream of the day's seed, so two players get the same deal and
+    // the same shelves however differently they played the round before (inside a round it follows their choices)
+    run.reseed = (tag) => {
+      run.rngState = (rngFor(`saloon:${tag}:${run.ante}:${run.blindIdx}:${run.endless ? 1 : 0}`)() * 4294967296) >>> 0;
+      E.attachRng(run);
+    };
+    return run;
+  };
+
+  /* ---------- score: whole number, never goes down ---------- */
+  // every Snack / Meal / Indigestion behind you (beaten or skipped) pays this × its ante
+  const BLIND_PTS = [100, 150, 250];
+  let started = false, ended = false, speedPts = 0;
+  const speedDone = {};
+  F.cleared = (r) => E.blindsBeaten(r) + (r.phase === 'play' && r.target > 0 && r.roundScore >= r.target ? 1 : 0);
+  F.compute = (r) => {
+    const cleared = F.cleared(r);
+    let blinds = 0;
+    for (let k = 0; k < cleared; k++) blinds += BLIND_PTS[k % 3] * (Math.floor(k / 3) + 1);
+    const best = (r.stats && r.stats.bestHand) || 0;
+    const hand = best >= 1 ? Math.floor(100 * Math.log10(1 + Math.min(best, Number.MAX_VALUE))) : 0;
+    const total = blinds + speedPts + hand;
+    const detail = `${r.endless ? 'Endless · ' : ''}Ante ${r.ante} · ${cleared} craving${cleared === 1 ? '' : 's'} eaten · best hand ${G.fmt(best)}`;
+    return { cleared, blinds, speed: speedPts, hand, best, total, detail };
+  };
+  // beating an Indigestion pays 1 point per 2 seconds still on the clock, counted the moment the winning hand is played
+  const awardSpeed = (r) => {
+    if (r.phase !== 'play' || r.blindIdx !== 2 || !(r.target > 0) || r.roundScore < r.target || speedDone[r.ante]) return;
+    speedDone[r.ante] = 1;
+    const pts = Math.floor(window.FlashRun.timeLeft() / 2000);
+    speedPts += pts;
+    if (pts > 0) setTimeout(() => G.FX.toast(`⚡ Speed bonus <b>+${pts.toLocaleString('en-US')}</b> for a quick Indigestion`), 900);
+  };
+  F.update = () => {
+    const r = F.run; if (!r || ended) return;
+    if (started) awardSpeed(r);
+    const s = F.compute(r);
+    renderScore(s);
+    if (started && window.FlashRun.running()) window.FlashRun.score(s.total, s.detail);
+  };
+
+  /* ---------- hooks from the table (30-table-ui.js) ---------- */
+  F.beforeRender = (r) => {
+    // Boss Rush: ride straight past the Snack and the Meal, collecting their tags
+    if (!r.flash || !r.flash.bossRush || r.phase !== 'select' || r.pack) return;
+    const got = [];
+    while (r.phase === 'select' && r.blindIdx < 2) { const t = E.skipBlind(r); if (!t) break; got.push(t); }
+    if (got.length) G.FX.toast(`⚔️ Boss Rush! Skipped to the Indigestion. Got ${got.map((t) => `${G.TAG_BY_ID[t].emoji} <b>${G.TAG_BY_ID[t].name}</b>`).join(' + ')}`);
+  };
+  F.scoresZero = (r, ev) => (r.flash && r.flash.mustContain && !ev.contains.has(r.flash.mustContain) ? '· scores 0 (needs a Pair)' : '');
+  F.endless = (r) => {
+    E.continueEndless(r);
+    G.FX.banner('ALL 8 ANTES!<small>♾️ Endless: keep eatin\' while the clock runs</small>', { color: '#ffcf5a', cls: 'rarepop', ms: 2600 });
+    G.FX.confetti(220); G.Audio.fanfare(); G.Audio.yeehaw();
+  };
+  F.lost = () => F.finish('dead');
+  F.finish = (reason) => {
+    const r = F.run;
+    if (ended || !r) return;
+    if (started) awardSpeed(r);
+    const s = F.compute(r);
+    ended = true;
+    G.Table.freeze();
+    if (reason === 'dead') window.FlashRun.over(s.total, s.detail, 'dead');
+    else window.FlashRun.score(s.total, s.detail); // FlashRun sends 'over' (time) right after this
+    renderScore(s);
+    showFinal(reason, s);
+  };
+
+  /* ---------- the corner panel and the overlays ---------- */
+  const num = (n) => Math.floor(n).toLocaleString('en-US');
+  const activeMods = () => (F.run ? F.run.flash.mods.map((id) => F.MOD_BY_ID[id]) : []);
+  const modRows = () => {
+    const ms = activeMods();
+    return ms.length ? `<div class="fl-modlist">${ms.map((m) => `<div class="fl-modrow"><span>${m.emoji}</span><div><b>${G.esc(m.name)}</b><i>${G.esc(m.text)}</i></div></div>`).join('')}</div>` : '<p class="muted">No modifiers today. Just poker.</p>';
+  };
+  let elScore = null, elDetail = null;
+  const renderScore = (s) => {
+    if (elScore) elScore.textContent = num(s.total);
+    if (elDetail) elDetail.textContent = s.detail;
+  };
+  const buildPanel = () => {
+    const side = document.querySelector('#table .tb-side'); if (!side) return;
+    const st = G.state.settings;
+    const box = G.el('div', 'fl-box', `<div class="fl-h"><b>⚡ FlashGames</b><span>${G.esc(window.FlashRun.date || '')}</span></div>
+      <div class="fl-score"><small>Score</small><b id="fl-score">0</b></div>
+      <div class="fl-detail" id="fl-detail"></div>
+      <div class="fl-mods">${activeMods().map((m) => `<span class="fl-mod" data-id="${m.id}">${m.emoji} ${G.esc(m.name)}</span>`).join('')}</div>
+      <div class="fl-btns"><button class="btn sm" id="fl-sfx" title="Sound"></button><button class="btn sm" id="fl-music" title="Music"></button><button class="btn sm" id="fl-speed" title="Card animation speed"></button></div>`);
+    const anchor = side.querySelector('.tb-sbtns');
+    side.insertBefore(box, anchor || null);
+    elScore = box.querySelector('#fl-score'); elDetail = box.querySelector('#fl-detail');
+    box.querySelectorAll('.fl-mod').forEach((d) => { const m = F.MOD_BY_ID[d.dataset.id]; G.UI.tip(d, () => `<div class="tip-h"><span>${m.emoji}</span><b>${G.esc(m.name)}</b></div><div>${G.esc(m.text)}</div>`); });
+    const sfx = box.querySelector('#fl-sfx'), music = box.querySelector('#fl-music'), speed = box.querySelector('#fl-speed');
+    const icons = () => { sfx.textContent = st.sfx ? '🔊' : '🔇'; music.textContent = st.music ? '🎵' : '🎶'; music.classList.toggle('off', !st.music); speed.textContent = `⏩ ${st.fastCards}×`; };
+    sfx.onclick = () => { st.sfx = !st.sfx; G.Audio.init(); G.Audio.applySettings(); icons(); };
+    music.onclick = () => { st.music = !st.music; G.Audio.init(); G.Audio.applySettings(); if (st.music) G.Audio.startMusic(); icons(); };
+    speed.onclick = () => { st.fastCards = (st.fastCards % 4) + 1; icons(); };
+    icons();
+  };
+  let over = null;
+  const overlay = (html, cls) => {
+    if (over) over.remove();
+    over = G.el('div', 'fl-over ' + (cls || ''), html);
+    document.body.appendChild(over);
+    return over;
+  };
+  const showReady = () => overlay(`<div class="fl-card"><div class="fl-tag">⚡ FlashGames${window.FlashRun.date ? ' · ' + G.esc(window.FlashRun.date) : ''}</div>
+    <h1>🍺 The Gobble Saloon</h1><p>Satisfy as many of Gobbo's cravings as you can before the clock runs out. Further and faster scores more.</p>
+    ${modRows()}<div class="fl-wait">Saddle up… the cards come out when the clock starts.</div></div>`, 'ready');
+  const showFinal = (reason, s) => {
+    const r = F.run;
+    const head = reason === 'dead' ? (r.lostReason === 'cards' ? '🂠 Outta cards, partner!' : '🪦 Outdrawn, partner!') : "⏰ Time's up, partner!";
+    overlay(`<div class="fl-card fl-final"><div class="fl-tag">⚡ FlashGames · Gobble Saloon</div><h1>${head}</h1>
+      <div class="fl-big">${num(s.total)}</div><div class="muted">final score</div>
+      <div class="fl-lines">
+        <div><span>${s.cleared} craving${s.cleared === 1 ? '' : 's'} eaten <small class="muted">(${r.endless ? 'endless ' : ''}ante ${r.ante})</small></span><b>${num(s.blinds)}</b></div>
+        <div><span>Speed bonus</span><b>${num(s.speed)}</b></div>
+        <div><span>Best hand <small class="muted">${G.fmt(s.best)}</small></span><b>${num(s.hand)}</b></div>
+      </div>${modRows()}</div>`, 'final');
+  };
+
+  /* ---------- boot (instead of the clicker's boot in 99-main.js) ---------- */
+  F.boot = () => {
+    const FR = window.FlashRun;
+    // nothing in a flash run may reach localStorage: no load, no save, no autosave
+    G.save = () => false; G.load = () => false; G.wiped = true;
+    G.state = G.newState();
+    G.state.settings.fastCards = 2; // the same snappy card speed for everyone (the speed button changes only the animations)
+    document.body.classList.add('flashrun'); // (not 'flash': that's the screen-flash effect's class)
+    G.FX.init();
+    G.Table.init();
+    F.run = F.setupRun(FR.mods, FR.rng);
+    G.Table.locked = true; // until FlashGames says go
+    G.Table.useRun(F.run);
+    buildPanel();
+    showReady();
+    F.update();
+    const frame = () => { G.FX.step(); requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+    const unlock = () => { G.Audio.init(); if (G.state.settings.music) G.Audio.startMusic(); removeEventListener('pointerdown', unlock); };
+    addEventListener('pointerdown', unlock);
+    FR.onEnd(() => F.finish('time'));
+    FR.ready().then(() => {
+      if (ended) return;
+      started = true;
+      F.run.startedAt = Date.now();
+      G.Table.locked = false;
+      if (over) { const o = over; over = null; o.classList.add('out'); setTimeout(() => o.remove(), 320); }
+      F.update();
+    });
+  };
+  return F;
+})();
+
+;
 /* ---- 99-main.js ---- */
 /* Boot, main loop, welcome-back, daily snack, intro, dev panel, easter eggs */
 'use strict';
 (() => {
   const boot = () => {
+    if (G.FLASH) { G.Flash.boot(); return; } // ?flash=…: a FlashGames run of the Gobble Saloon only (src/js/50-flash.js)
     const had = G.load();
     G.FX.init();
     G.Gobbo.init();
