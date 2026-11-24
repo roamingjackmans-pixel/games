@@ -766,16 +766,9 @@ export function parryEnemy(w: World, p: Entity, attacker: Entity): void {
   const en = attacker.en!;
   const hp = attacker.hp!;
   const now = w.time;
-  if (en.isBoss) {
-    // bosses need two parries within 6 s
-    en.hitTimes = en.hitTimes.filter((t) => t > now - 6);
-    en.hitTimes.push(now);
-    if (en.hitTimes.filter((t) => t > now - 6).length < 2) {
-      cancelEnemyAttack(w, attacker);
-      return;
-    }
-    en.hitTimes = [];
-  }
+  // D454: a parried boss is riposte-staggered like anything else. It used to take two parries within 6 s, counted on
+  // the hit log that every landed hit trims to its last second, so a parry staggered a boss or not by chance, and when
+  // it did not the boss simply swung again.
   cancelEnemyAttack(w, attacker);
   hp.riposteUntil = now + PARRY_RIPOSTE_S;
   hp.staggerUntil = now + PARRY_RIPOSTE_S;

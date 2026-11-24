@@ -92,6 +92,8 @@ function tickBlink(w: World, e: Entity, b: Blink): boolean {
   const en = e.en!;
   const now = w.time;
   if (en.attack) return false;
+  // a staggered boss (a parry, a broken poise) stays where it reels (D454); a blink it was gathering lands after
+  if ((e.hp?.staggerUntil ?? 0) > now || en.stunUntil > now) return false;
   const x = en.extrasUsed;
   if ((x.__blinkAt ?? 0) > 0) {
     if (now < x.__blinkAt!) return true;

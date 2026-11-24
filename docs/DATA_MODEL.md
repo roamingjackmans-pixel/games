@@ -65,6 +65,7 @@ campaign's and a Wave Rush never changes it.
 | `shards`, `glowen` | currencies; Glowen was Stardust (D80); `tears` is gone (D341: turned into Glowen on load) |
 | `essence?` | Soul Essence held, tiers 1–5 as five counts (D198) |
 | `flaskMax`, `flaskCur`, `bossesBeaten` | the Thermos |
+| `hpCur?` | HP when the campaign was last saved (D453), restored on load capped at max HP; absent: a full bar (also saved for a full bar or a body at 0 HP); Wave Rush neither reads nor writes it; New Game+ clears it |
 | `highestZoneBeaten`, `cycle` | progress; `cycle` 0 = first playthrough, 1 = NG+1 … |
 | `equipment` | `main, off, head, body, legs, ring1–ring4` (`Item \| null`; four rings since D228) |
 | `altMain`, `altOff` | the second weapon and second off hand for the quick swap (D228) |

@@ -108,6 +108,8 @@ export function normalizeSave(s: SaveFile): SaveFile {
   if (c.equipment.ring4 === undefined) c.equipment.ring4 = null;
   if (c.freePoints === undefined) c.freePoints = 0;
   if (c.quickSlot === undefined) c.quickSlot = null;
+  // D453: the HP the campaign was saved with; anything but a positive number is a full bar
+  if (c.hpCur !== undefined && !(typeof c.hpCur === 'number' && Number.isFinite(c.hpCur) && c.hpCur > 0)) delete c.hpCur;
   if (!c.consumables) c.consumables = {};
   if (!c.gems) c.gems = [];
   // a character's own controller layout: checked when present (absent: it copies the global one when it plays)

@@ -20,7 +20,7 @@ import { modRoomPlan } from './procgen/modPlan';
 import { runMods } from './runMods';
 import { smallChest, treasureChest } from './procgen/chests';
 import { enemyFullHp, spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
-import { spawnPlayer, refreshDerived, resetSpellCooldowns } from './player/player';
+import { spawnPlayer, refreshDerived, resetSpellCooldowns, storeHp } from './player/player';
 import { installRules } from './rules';
 import { lootHooks } from './lootHooks';
 import './loot';
@@ -101,6 +101,8 @@ export function beginNextCycle(save: SaveFile): void {
   c.cycle++;
   c.tutorialDone = true;
   c.flaskCur = flaskCap(c);
+  // a new playthrough starts with a full bar (D453)
+  delete c.hpCur;
   const seed = `${save.world.seed.slice(0, 12)}+${c.cycle}`;
   save.world = newWorldState(seed);
   delete save.pending;
@@ -258,7 +260,8 @@ export class GameSession {
     this.players.push(sp);
     const host = this.localPlayer;
     const [x, y] = this.w.room.nearestFloor((host?.x ?? this.entry[0]) + 30 * (slot % 2 ? 1 : -1), (host?.y ?? this.entry[1]) + 24, 14);
-    sp.entity = spawnPlayer(this.w, char, slot, false, x, y);
+    // a guest comes in with the HP it last saved (D453); its own screen spawns it the same way
+    sp.entity = spawnPlayer(this.w, char, slot, false, x, y, { resumeHp: this.campaign });
     this.w.refreshLists();
     rescaleForPlayers(this.w, this.players.length);
     return sp;
@@ -280,13 +283,27 @@ export class GameSession {
     return this.players.find((p) => p.local)?.entity ?? null;
   }
 
+  /** The campaign, not a Wave Rush (D401): only the campaign keeps a character's HP across a save (D453). */
+  get campaign(): boolean {
+    return this.rushStart === null && !this.rush;
+  }
+
+  /**
+   * Write this screen's player's HP onto the save's character, for a save & quit (D453). Wave Rush keeps out of it: it
+   * starts every attempt with a full bar and leaves the campaign's HP as it was. A guest's screen saves its own.
+   */
+  noteHp(): void {
+    const e = this.localPlayer;
+    if (this.campaign && e) storeHp(this.save.character, e);
+  }
+
   private placePlayers(x: number, y: number): void {
     for (const sp of this.players) {
       const ox = (sp.slot % 2) * 30 - 15 * (this.players.length > 1 ? 1 : 0);
       const oy = Math.floor(sp.slot / 2) * 30 - (this.players.length > 2 ? 15 : 0);
       const [px, py] = this.w.room.nearestFloor(x + ox, y + oy, 14);
       if (!sp.entity || sp.entity.removed) {
-        sp.entity = spawnPlayer(this.w, sp.char, sp.slot, sp.local, px, py);
+        sp.entity = spawnPlayer(this.w, sp.char, sp.slot, sp.local, px, py, { resumeHp: this.campaign });
       } else {
         sp.entity.x = px;
         sp.entity.y = py;

@@ -126,6 +126,8 @@ export class GuestRunScene extends WorldScene {
 
   persist(): void {
     this.saveAt = 0;
+    // a guest's HP is its own and comes back with it (D453): into its own campaign, or the next host's world it joins
+    this.net.keepMyHp();
     try {
       writeSave(getStore(), this.save);
     } catch {

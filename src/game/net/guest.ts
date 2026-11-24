@@ -9,7 +9,7 @@ import { ENEMIES } from '../../data/enemies';
 import { dist } from '../../engine/math';
 import type { InputFrame } from '../../engine/input/actions';
 import { spawnEnemy } from '../enemies/spawn';
-import { PLAYER_DOT_DY, PLAYER_DOT_R, refreshDerived, spawnPlayer } from '../player/player';
+import { PLAYER_DOT_DY, PLAYER_DOT_R, refreshDerived, spawnPlayer, storeHp } from '../player/player';
 import { hitPlayer } from '../combat/damage';
 import { shapeHit } from '../combat/patterns';
 import { guestZoneBeaten } from '../save/coopProgress';
@@ -230,7 +230,17 @@ export class NetGuest {
     this.onWelcome();
   }
 
+  /**
+   * Write this screen's own body's HP onto the guest's character (D453), so the save, and the next body spawned for it,
+   * come back with it. Not in a Wave Rush, which starts every attempt full and leaves the campaign's HP alone.
+   */
+  keepMyHp(): void {
+    if (this.me && !this.rush) storeHp(this.save.character, this.me);
+  }
+
   private resetWorld(): void {
+    // the body of the world being left keeps its HP (a new welcome: the host went on to a new session)
+    this.keepMyHp();
     this.cw = World.mirror();
     // this world's own body sends what it does to the host (D338)
     this.cw.netGuest = { out: [] };
@@ -354,7 +364,10 @@ export class NetGuest {
   private reconcile(): void {
     for (const id of [...this.cw.entities.keys()]) {
       if (id >= LOCAL_ID_BASE || this.live.has(id)) continue;
-      if (this.cw.entities.get(id) === this.me) this.me = null;
+      if (this.cw.entities.get(id) === this.me) {
+        this.keepMyHp();
+        this.me = null;
+      }
       this.forget(id);
     }
     for (const id of [...this.meta.keys()]) if (!this.live.has(id)) this.meta.delete(id);
@@ -405,7 +418,8 @@ export class NetGuest {
     if (m.t === 'player') {
       const mine = m.pid === this.save.character.playerId;
       const char = mine ? this.save.character : (m.char as Character);
-      e = spawnPlayer(w, char, m.slot, mine, x, y);
+      // this screen's own body comes in with the HP the guest saved, as the host spawns its copy (D453)
+      e = spawnPlayer(w, char, m.slot, mine, x, y, { resumeHp: mine && !this.rush });
       e.pl!.remote = !mine;
       if (mine) {
         // this screen's own body (D338); a body the host replaced goes

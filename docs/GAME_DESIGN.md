@@ -451,7 +451,8 @@ cannot, greatshields never (D130).
 attack and every enemy projectile unless marked *unparryable*; Red attacks cannot be parried (they guard-break);
 Piercing attacks cannot be parried (blocking them works). A parried melee attacker is **riposte-staggered** for 2 s and
 your next light hit on it deals **×2** (Riposte Master ×3; D88). A parried projectile flies back with the same damage.
-Bosses can be parried only on attacks marked *parryable*, and need two parries within 6 s to stagger.
+Bosses can be parried only on attacks marked *parryable*; a parried boss is riposte-staggered like anything else, every
+time, and does not blink away while it reels (D454; it took two parries within 6 s before).
 
 **Two-handing** (Shift): the off hand is set aside, its gems too (D316) (a tool in the weapon hand still casts, D117).
 Twin daggers, twin axes and fist weapons (the Cestus, D421) two-handed are **dual-wielded**, one in each hand, and hit **50% harder** (D318). Bonk counts ×1.5
@@ -1082,7 +1083,11 @@ The title screen shows the cycle next to the character.
 10 slots in `localStorage` (`dj.save.<n>`), JSON, save version 4 (D409: each character's Wave Rush record, §24) with a migration table and a sanitiser that cleans
 every load (older gems lose their tiers, D284; repeated item ids are renewed, D232). Export to a `.dungeonjoe.json`
 file and import from one. Autosave on rest, zone change, boss kill, level up, pickup (debounced), every 30 s and on
-unload. Each character also carries its own pad layout (D266), Bestiary, proficiency and statistics. Settings
+unload. A load comes back with the HP the campaign was saved with, never past max HP (D453; it used to come back
+full): only a rest, a death or New Game+ fills the bar. A body at 0 HP (the death screen, downed, a ghost) saves a full
+bar, since the load brings it back at the bonfire as a death would. Wave Rush starts full and never touches the
+campaign's HP. A co-op guest's HP is its own: its screen saves it, and it comes into a host's world, or back into its
+own campaign, with it. Each character also carries its own pad layout (D266), Bestiary, proficiency and statistics. Settings
 (`dj.settings`), achievements (`dj.achievements`) and account-wide statistics (`dj.stats`) are shared by every slot.
 A FlashGames run (§25) reads none of them but the settings and writes none of them (D452).
 

@@ -68,6 +68,8 @@ export class RunScene extends WorldScene {
   /** where backing out of the current overlay goes (the bonfire or pause menu that opened the inventory) */
   private overlayBack: (() => void) | null = null;
   private pendingSave = false;
+  /** the run has gone on to New Game+: this session's HP must not reach the new playthrough's save (D453) */
+  private cycleEnded = false;
   private revealMap = false;
   private saveDebounce = 0;
   /** the cutscene playing (zone entry, boss intro, boss defeat, the Instructor); solo pauses the sim under it */
@@ -149,6 +151,7 @@ export class RunScene extends WorldScene {
           return;
         }
         beginNextCycle(this.save);
+        this.cycleEnded = true;
         this.persist();
         this.closeOverlay();
         if (this.net) {
@@ -200,6 +203,8 @@ export class RunScene extends WorldScene {
   persist(): void {
     // a FlashGames run is a throwaway: it never saves (D452)
     if (this.flash) return;
+    // the HP this run is at comes back on the next load (D453)
+    if (!this.cycleEnded) this.session.noteHp();
     try {
       writeSave(getStore(), this.save);
     } catch {

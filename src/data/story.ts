@@ -241,7 +241,7 @@ export const TIPS: readonly string[] = [
   'A chest that breathes is not a chest.',
   'Heavy weapons stagger big enemies. Daggers stagger rats. Choose accordingly.',
   'In co-op, hit a downed friend to revive them. It is weird. It works.',
-  'A boss staggers after two parries close together.',
+  'Parry a boss and it reels, same as anything else. Big is not the same as special.',
   'Your dodge recharges in five seconds. Don’t spend it on vibes.',
   'Resting at a fire brings the monsters back. They were only resting too.',
   'Ember fires still save, level you up and warp. They just won’t heal you.',

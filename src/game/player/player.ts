@@ -53,7 +53,26 @@ export function hitCircleOf(t: Pick<Entity, 'x' | 'y' | 'radius' | 'pl'>): { x: 
   return t.pl ? { x: t.x, y: t.y + PLAYER_DOT_DY, r: PLAYER_DOT_R } : { x: t.x, y: t.y, r: t.radius };
 }
 
-export function spawnPlayer(w: World, char: Character, slot: number, local: boolean, x: number, y: number): Entity {
+/** The HP a character comes back with (D453): what it was saved with, never past its max; a full bar when none was saved. */
+export function savedHp(char: Pick<Character, 'hpCur'>, max: number): number {
+  const h = char.hpCur;
+  return typeof h === 'number' && Number.isFinite(h) && h > 0 ? Math.min(max, h) : max;
+}
+
+/**
+ * Write a body's HP onto its character for the save (D453). A full bar, or a body at 0 HP (dead, downed, bled out),
+ * saves none: the load puts it back at the bonfire with a full bar, as a death would.
+ */
+export function storeHp(char: Character, e: Entity): void {
+  const hp = e.hp;
+  if (!hp) return;
+  const gone = hp.dead || hp.hp <= 0 || !!e.pl?.downed || !!e.pl?.deadUntilRest;
+  if (gone || hp.hp >= hp.max) delete char.hpCur;
+  else char.hpCur = hp.hp;
+}
+
+/** `resumeHp`: the body starts with the HP its character was saved with (a campaign load, D453), not a full bar. */
+export function spawnPlayer(w: World, char: Character, slot: number, local: boolean, x: number, y: number, opts: { resumeHp?: boolean } = {}): Entity {
   const derived = computeDerived(char);
   const pl: PlayerC = {
     slot,
@@ -136,7 +155,7 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     solid: true,
     drawId: 'joe',
     hp: {
-      hp: derived.maxHp,
+      hp: opts.resumeHp ? savedHp(char, derived.maxHp) : derived.maxHp,
       max: derived.maxHp,
       poise: 0,
       poiseMax: 0,

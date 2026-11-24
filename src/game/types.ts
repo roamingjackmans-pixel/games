@@ -868,6 +868,11 @@ export interface Character {
   glowen: number;
   flaskMax: number;
   flaskCur: number;
+  /**
+   * HP when the campaign was last saved (D453), so a save & quit comes back with the bar it left. Absent: a full bar
+   * (a new character, a full bar when saved, or a body at 0 HP, which comes back at the bonfire as a death would).
+   */
+  hpCur?: number;
   bossesBeaten: number;
   highestZoneBeaten: number;
   cycle: number;
