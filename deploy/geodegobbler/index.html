@@ -793,6 +793,53 @@ body.flashrun #tb-leave, body.flashrun #tb-restart, body.flashrun #tb-timerbox, 
   .fl-btns { flex: 0 0 auto; gap: 4px; } .fl-btns .btn { padding: 2px 6px; font-size: 12px; min-height: 0; }
 }
 
+/* ---- zzz-rodeo.css ---- */
+/* ============ 🐎 Daily Rodeo (55-rodeo.js): the lobby poster, the table box, the finish line ============ */
+.rodeo { position: relative; margin: 10px 0 16px; padding: 12px 14px 10px; color: var(--ink); background: var(--nails), linear-gradient(180deg, var(--parch), var(--parch2)); border: 3px solid #3a1d0a; border-radius: 6px; box-shadow: 4px 4px 0 rgba(0, 0, 0, .35); }
+.rodeo .ro-h { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+#panel .rodeo h3 { margin: 0; font-family: var(--font-western); font-weight: 400; font-size: 22px; color: #7a1f0c; text-shadow: 1px 1px 0 #fff3dc; }
+.rodeo .muted { color: #6b4422; }
+.ro-streak { margin-left: auto; font-weight: 800; color: #b3410f; }
+.ro-lead { margin: 4px 0 8px; font-size: 13px; }
+.ro-plan { display: flex; flex-wrap: wrap; gap: 5px; }
+.ro-chip { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; border: 2px solid #3a1d0a; background: #fff3dc; color: var(--ink); white-space: nowrap; cursor: help; }
+.ro-chip.bag { background: #ffd34a; } .ro-chip.spice { background: #ffb08a; } .ro-chip.mod { background: #f7e7c4; border-style: dashed; }
+.ro-mods { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; font-size: 12px; }
+.ro-mods span { margin-right: 4px; }
+.ro-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.ro-best { display: flex; flex-direction: column; } .ro-best small { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #6b4422; }
+.ro-best b { font-family: var(--font-western); font-weight: 400; font-size: 28px; line-height: 1.1; color: #7a1f0c; font-variant-numeric: tabular-nums; }
+.ro-best span { font-size: 11px; }
+.ro-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ro-btns .btn small { font-size: 11px; opacity: .85; }
+.ro-old { margin-top: 8px; font-size: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ro-hist { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+.ro-day { text-align: center; padding: 3px 2px; border-radius: 5px; border: 2px solid rgba(58, 29, 10, .35); background: rgba(255, 255, 255, .25); min-width: 0; }
+.ro-day small { display: block; font-size: 10px; color: #6b4422; } .ro-day b { display: block; font-size: 11px; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+.ro-day.won { background: rgba(63, 214, 138, .3); border-color: #2c7a4b; } .ro-day.lost b { opacity: .8; }
+.ro-day.today { border-color: #7a1f0c; border-style: solid; }
+
+/* on the table */
+.ro-box { background: rgba(0, 0, 0, .45); border: 2px solid rgba(255, 207, 90, .45); border-radius: 12px; padding: 7px 9px; display: flex; flex-direction: column; gap: 6px; }
+.ro-box.hidden { display: none; }
+.ro-sh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 11px; color: var(--muted); }
+.ro-sh b { color: var(--gold); font-family: var(--font-western); font-weight: 400; font-size: 14px; }
+.ro-box .ro-chip { font-size: 10px; padding: 1px 7px; border-width: 1px; }
+.ro-sbest { display: flex; justify-content: space-between; align-items: baseline; } .ro-sbest small { font-size: 10px; text-transform: uppercase; color: var(--muted); }
+.ro-sbest b { font-family: var(--font-display); color: #ffe2a8; font-variant-numeric: tabular-nums; }
+.tb-timer.ro-timer { border: 2px solid var(--gold); box-shadow: 0 0 14px rgba(255, 207, 90, .35); }
+.tb-timer.ro-timer small::before { content: '🐎 '; }
+.tb-timer.ro-timer b { font-size: 26px; }
+
+/* the finish line */
+.rodeo-won h1 { font-size: 44px; }
+.ro-time { font-family: var(--font-western); font-size: 64px; line-height: 1; color: #ffe2a8; text-shadow: 3px 3px 0 #2a1405; font-variant-numeric: tabular-nums; margin: 4px 0 8px; }
+.ro-share { width: 100%; font-size: 13px; padding: 8px; border-radius: 8px; user-select: text; -webkit-user-select: text; }
+@media (max-width: 899px) {
+  .ro-box { flex: 1 1 100%; }
+  .rodeo-won h1 { font-size: 32px; } .ro-time { font-size: 48px; }
+}
+
 </style>
 </head>
 <body>
@@ -1683,6 +1730,7 @@ G.newState = () => ({
   achievements: {}, achCountCache: 0,
   cards: { runs: 0, wins: 0, losses: 0, wonPouches: {}, bestHand: 0, hands: 0, types: {}, maxAnte: 0, rerolls: 0, packs: 0, destroyed: 0, money: 0, tonics: 0, runes: 0, skips: 0, endlessBest: 0, crunchWon: 0, bossesBeaten: 0, closeCalls: 0, bestTimes: [], topRuns: null },
   run: null,
+  rodeoRun: null, // 🐎 a Daily Rodeo ride in progress (55-rodeo.js); its own slot so it never touches the normal run
   bloom: { start: Date.now(), crystals: 0, harvested: 0 },
   daily: { last: null, streak: 0, best: 0, days: 0, first: G.dayKey() },
   trinkets: {}, trophies: {},
@@ -1941,7 +1989,7 @@ G.save = () => {
   if (G.wiped) return false;
   try {
     G.state.lastTick = Date.now();
-    if (G.Table && G.Table.run) G.state.run = G.Engine.save(G.Table.run);
+    if (G.Table && G.Table.run) G.Table.save(); // the normal run or the Daily Rodeo ride, each in its own slot
     localStorage.setItem(G.SAVE_KEY, G.serialize());
     G.lastSaved = Date.now();
     return true;
@@ -4448,12 +4496,14 @@ G.Table = (() => {
   /* ---------- lobby (in the mid panel) ---------- */
   T.renderLobby = (p) => {
     p.dataset.tab = 'table';
-    const s = G.state, c = S(), r = s.run || T.run;
+    // r: the normal run (a Daily Rodeo ride has its own card and its own save slot)
+    const s = G.state, c = S(), r = T.run && !T.run.rodeo ? T.run : s.run;
     if (!G.pouchUnlocked(lobbyPouch)) lobbyPouch = 'burlap';
     const maxSp = G.SPICES.filter((sp) => G.spiceUnlocked(lobbyPouch, sp.n)).length;
     lobbySpice = Math.min(lobbySpice, maxSp);
     p.innerHTML = `<div class="panel-h"><h2>🍺 The Gobble Saloon</h2><span class="muted">${c.runs} runs · ${c.wins} wins · best hand ${G.fmt(c.bestHand)}</span></div>
       <p class="lead">Play crystal poker hands to satisfy Gobbo's <b>Cravings</b>. Weird pets called <b>Critters</b> live in his belly and bend the rules. Every craving you beat pays crunch back to the clicker <span class="tbl-pay">(about <b>${G.fmt(T.payoutPreview())}</b> for the first)</span>, and winning a run earns a permanent <b>Trophy Geode</b> (+2% CpS).</p>
+      ${G.Rodeo.lobbyHTML()}
       ${r ? `<div class="run-cont"><div><b>Run in progress</b><span class="muted">${G.POUCH_BY_ID[r.pouch].emoji} ${G.POUCH_BY_ID[r.pouch].name} · ${G.SPICES[r.spice - 1].emoji} ${G.SPICES[r.spice - 1].name} · Ante ${r.ante} · $${r.money}</span></div><button class="btn primary big" id="tb-continue">▶ Continue</button><button class="btn sm danger" id="tb-abandon">Abandon</button></div>` : ''}
       <h3>Pick yer saddlebag</h3>
       <div class="pouches">${G.POUCHES.map((po) => { const un = G.pouchUnlocked(po.id), w = c.wonPouches[po.id] || 0; return `<div class="pouch ${un ? '' : 'locked'} ${po.id === lobbyPouch ? 'on' : ''}" data-id="${po.id}"><span>${un ? po.emoji : '🔒'}</span><b>${un ? po.name : '???'}</b><i>${un ? po.desc : po.hint}</i>${w ? `<em class="won">won up to ${G.SPICES[w - 1].emoji}</em>` : ''}</div>`; }).join('')}</div>
@@ -4462,6 +4512,7 @@ G.Table = (() => {
       <div class="spices">${G.SPICES.map((sp) => { const un = G.spiceUnlocked(lobbyPouch, sp.n); return `<button class="spice ${un ? '' : 'locked'} ${sp.n === lobbySpice ? 'on' : ''}" data-n="${sp.n}" ${un ? '' : 'disabled'}><span>${un ? sp.emoji : '🔒'}</span><b>${sp.name}</b><i>${un ? sp.desc : 'Win the previous spice with this pouch'}</i></button>`; }).join('')}</div>
       <button class="btn primary big" id="tb-start">${r ? 'Start a NEW run (abandons current)' : '🤠 Mosey on in'}</button>
       ${T.leaderboardHTML()}`;
+    G.Rodeo.bindLobby(p);
     const lbSel = p.querySelector('#lb-filter');
     if (lbSel) lbSel.onchange = () => { lbFilter = lbSel.value; T.renderLobby(p); };
     p.querySelectorAll('.lb-tab').forEach((b) => (b.onclick = () => { lbMode = b.dataset.mode; T.renderLobby(p); }));
@@ -4482,8 +4533,8 @@ G.Table = (() => {
       if (r) G.UI.confirm('<h2>Abandon your current run?</h2><p>Its critters will wander off.</p>', go, 'Abandon & start'); else go();
     };
     if (r) {
-      p.querySelector('#tb-continue').onclick = () => T.show();
-      p.querySelector('#tb-abandon').onclick = () => G.UI.confirm('<h2>Abandon this run?</h2>', () => { T.recordTop(r, 'quit'); T.run = null; G.state.run = null; S().losses++; T.renderLobby(p); }, 'Abandon');
+      p.querySelector('#tb-continue').onclick = () => { if (T.run === r) T.show(); else T.switchRun(T.attach(E.load(s.run))); };
+      p.querySelector('#tb-abandon').onclick = () => G.UI.confirm('<h2>Abandon this run?</h2>', () => { T.recordTop(r, 'quit'); if (T.run === r) T.run = null; G.state.run = null; S().losses++; T.renderLobby(p); }, 'Abandon');
     }
   };
   /* 🏆 Top Runs: how far every run got. One entry per run, updated as it goes (result: live, won, lost, quit) */
@@ -4493,7 +4544,7 @@ G.Table = (() => {
     return c.topRuns;
   };
   T.recordTop = (r, result) => {
-    if (G.FLASH || !r || !r.startedAt) return; // FlashGames runs never touch the boards
+    if (G.FLASH || !r || r.rodeo || !r.startedAt) return; // FlashGames runs and Daily Rodeo rides never touch the boards
     const list = T.topRuns(), id = r.seed + '_' + r.startedAt;
     let e = list.find((x) => x.id === id);
     if (!e) { e = { id }; list.push(e); }
@@ -4543,6 +4594,7 @@ G.Table = (() => {
       <div class="pd-grid">${owned.map((d) => `<button class="pd-pick r${d.rarity} ${cur && cur.id === d.id ? 'on' : ''}" data-id="${d.id}"><span>${d.emoji}</span><b>${d.name}</b></button>`).join('')}</div>`;
   };
   T.newRun = (pouch, spice, pick) => {
+    T.save(); // a Daily Rodeo ride on the table keeps its own slot
     G.Audio.init();
     const meta = G.tableMeta();
     const run = E.newRun({ pouch, spice, meta, pick: pouch === 'pardner' ? pick : null });
@@ -4557,17 +4609,30 @@ G.Table = (() => {
   /* 🔄 start over with the same saddlebag and spice, no questions asked */
   T.restart = () => {
     const r = T.run; if (!r) return;
+    syncStats();
+    if (r.rodeo) { T.switchRun(G.Rodeo.begin(r.rodeo.date === G.dayKey() ? r.rodeo.date : undefined)); return; } // a fresh try at the rodeo
     if (r.phase !== 'over' && !r._victoryDone) S().losses++; // same as abandoning
     if (r.phase !== 'over') T.recordTop(r, r._victoryDone && !r.endless ? 'won' : 'quit');
-    syncStats();
+    resetTable();
+    T.run = null; G.state.run = null;
+    T.newRun(r.pouch, r.spice, r.pick); // Ol' Pardner keeps the same critter
+  };
+  // stop whatever the old run was animating and clear its leftovers off the table
+  const resetTable = () => {
     gen++; busy = false; sel = []; view = null; consSel = null;
     document.querySelectorAll('.pop-label').forEach((d) => d.remove());
     const hs = document.querySelector('.tb-hand'); if (hs) hs.classList.remove('total');
     const rd = document.querySelector('.tb-round'); if (rd) rd.dataset.fire = 0;
     el.sp.parentElement.classList.remove('merge');
     el.htype.innerHTML = '&nbsp;';
-    T.run = null; G.state.run = null;
-    T.newRun(r.pouch, r.spice, r.pick); // Ol' Pardner keeps the same critter
+  };
+  /* put a different run on the table (normal ⇄ Daily Rodeo); the one leaving is saved in its own slot */
+  T.switchRun = (run) => {
+    if (T.run && T.run !== run) T.save();
+    resetTable();
+    T.run = run;
+    T.save();
+    if (T.open) T.render(); else T.show();
   };
   T.resume = () => {
     if (G.state.run && !T.run) { try { T.run = T.attach(E.load(G.state.run)); } catch (e) { console.warn('run load failed', e); G.state.run = null; } }
@@ -4593,6 +4658,7 @@ G.Table = (() => {
           <div><small>Round</small><b id="tb-roundn">1</b></div>
         </div>
         <div class="tb-timer" id="tb-timerbox"><small>⏱ Run time</small><b id="tb-timer">0:00</b></div>
+        <div class="ro-box hidden" id="tb-rodeo"></div>
         <div class="tb-sbtns"><button class="btn sm" id="tb-deckbtn">🂠 Deck</button><button class="btn sm" id="tb-info">📖 Run info</button><button class="btn sm" id="tb-leave">🚪 Mosey out</button></div>
         <div class="tb-cps muted" id="tb-cps"></div>
       </div>
@@ -4610,7 +4676,7 @@ G.Table = (() => {
         </div>
       </div>
       <div id="tb-pack" class="hidden"></div>`;
-    ['blind', 'rscore', 'progbar', 'htype', 'sp', 'sh', 'hands', 'discards', 'money', 'ante', 'roundn', 'critters', 'cons', 'center', 'hand', 'deckn', 'pack', 'play', 'discard', 'cps'].forEach((k) => (el[k] = document.getElementById('tb-' + k)));
+    ['blind', 'rscore', 'progbar', 'htype', 'sp', 'sh', 'hands', 'discards', 'money', 'ante', 'roundn', 'critters', 'cons', 'center', 'hand', 'deckn', 'pack', 'play', 'discard', 'cps', 'rodeo'].forEach((k) => (el[k] = document.getElementById('tb-' + k)));
     el.root = root;
     el.play.onclick = () => T.play();
     el.discard.onclick = () => T.discard();
@@ -4654,7 +4720,7 @@ G.Table = (() => {
   T.hide = () => {
     T.open = false; el.root.classList.add('hidden'); document.body.classList.remove('at-table');
     G.Audio.setMood('cave');
-    if (T.run) G.state.run = E.save(T.run);
+    T.save();
     G.save();
     G.UI.renderPanel(true);
   };
@@ -4702,8 +4768,8 @@ G.Table = (() => {
   /* ---------- render ---------- */
   T.render = () => {
     const r = T.run; if (!r) return;
-    if (G.FLASH) G.Flash.beforeRender(r);
-    T.renderSide(); T.renderCritters(); T.renderCons(); T.tickTimer();
+    if (r.flash) G.Flash.beforeRender(r); // modifiers (FlashGames or the Daily Rodeo)
+    T.renderSide(); T.renderCritters(); T.renderCons(); T.tickTimer(); T.renderRodeoBox();
     el.root.dataset.phase = view ? view.kind : r.phase;
     if (view && view.kind === 'cashout') T.renderCashout();
     else if (r.phase === 'select') T.renderSelect();
@@ -4719,6 +4785,18 @@ G.Table = (() => {
     if (r.pack) T.renderPack(); else el.pack.classList.add('hidden');
     syncStats();
     if (G.FLASH) G.Flash.update();
+  };
+  // 🐎 the Daily Rodeo box under the timer (rebuilt only when the ride or the day's best changes)
+  T.renderRodeoBox = () => {
+    const r = T.run, box = el.rodeo;
+    el.timerbox.classList.toggle('ro-timer', !!r.rodeo);
+    if (!r.rodeo) { box.classList.add('hidden'); box.dataset.key = ''; return; }
+    const key = `${r.rodeo.date}:${r.rodeo.try}:${G.Rodeo.day(r.rodeo.date).best}`;
+    box.classList.remove('hidden');
+    if (box.dataset.key === key) return;
+    box.dataset.key = key; box.dataset.date = r.rodeo.date;
+    box.innerHTML = G.Rodeo.sideHTML(r);
+    G.Rodeo.tips(box);
   };
   T.renderSide = () => {
     const r = T.run;
@@ -4891,7 +4969,7 @@ G.Table = (() => {
     if (!cards.length) { el.htype.innerHTML = '<span class="muted">Pick up to 5 cards</span>'; el.sp.textContent = '0'; el.sh.textContent = '0'; return; }
     const ev = E.evaluate(r, cards);
     const b = E.handBase(r, ev.type);
-    const nope = G.FLASH && G.Flash.scoresZero(r, ev);
+    const nope = r.flash && G.Flash.scoresZero(r, ev);
     el.htype.innerHTML = `<b>${ev.type}</b> <i>lvl ${b.level}</i>${nope ? ` <i class="bad">${nope}</i>` : ''}`;
     el.sp.textContent = G.fmt(b.sparkle); el.sh.textContent = G.fmt(b.shine);
   };
@@ -5055,6 +5133,7 @@ G.Table = (() => {
     G.earn(pay); S().crunchWon += pay;
     if (wasIdx === 2) S().bossesBeaten++;
     const cash = E.cashOut(r);
+    if (r.rodeo && r.phase === 'won') G.Rodeo.finish(r); // 🐎 the clock stops on the winning hand, not on a button
     if (r.critters.length === 0 && !r._hadCritter) r._vegan = true; else r._hadCritter = true;
     view = { kind: 'cashout', cash, pay, wasIdx, ante };
     T.recordTop(r);
@@ -5070,11 +5149,11 @@ G.Table = (() => {
       <div class="co-lines">${v.cash.lines.map((l, i) => `<div class="co-line" style="animation-delay:${i * 0.15}s"><span>${l.label}</span><b class="${l.money < 0 ? 'bad' : 'money'}">${l.money < 0 ? '-' : '+'}$${Math.abs(l.money)}</b></div>`).join('')}</div>
       <div class="co-total">Total <b class="money">$${v.cash.total}</b></div>
       <div class="co-crunch">🪨 Sent to the clicker: <b>+${G.fmt(v.pay)}</b> crunch</div>
-      <button class="btn primary big" id="co-go">${r.phase === 'won' ? (G.FLASH ? '♾️ All 8 antes! Keep eating →' : '🏆 Victory!') : 'To Prickly Pete\'s →'}</button></div>`;
+      <button class="btn primary big" id="co-go">${r.phase === 'won' ? (G.FLASH ? '♾️ All 8 antes! Keep eating →' : r.rodeo ? `🏁 See yer time` : '🏆 Victory!') : 'To Prickly Pete\'s →'}</button></div>`;
     v.cash.lines.forEach((l, i) => setTimeout(() => G.Audio.coin(), i * 150));
     el.center.querySelector('#co-go').onclick = () => {
       view = null;
-      if (r.phase === 'won') { if (G.FLASH) G.Flash.endless(r); else T.victory(); } // FlashGames: straight on into Endless while the clock runs
+      if (r.phase === 'won') { if (G.FLASH) G.Flash.endless(r); else if (r.rodeo) { G.FX.confetti(300); G.Audio.fanfare(); } else T.victory(); } // FlashGames: straight on into Endless while the clock runs
       T.render(); T.save();
     };
   };
@@ -5110,6 +5189,13 @@ G.Table = (() => {
   T.renderWon = () => {
     const r = T.run;
     el.hand.innerHTML = '';
+    if (r.rodeo) {
+      el.center.innerHTML = G.Rodeo.wonHTML(r);
+      el.center.querySelector('#ro-share2').onclick = () => G.Rodeo.share(r.rodeo.date);
+      el.center.querySelector('#ro-again').onclick = () => T.restart();
+      el.center.querySelector('#v-leave').onclick = () => T.endRun();
+      return;
+    }
     el.center.innerHTML = `<div class="victory"><div class="v-geode">🏆</div><h1>YEEHAW! YOU WIN!</h1><p class="v-time">⏱ Run time: <b>${T.fmtRunTime(r)}</b>${r.timeRankPouch === 1 ? ` <span class="v-rec">🏁 NEW ${G.POUCH_BY_ID[r.pouch].name.toUpperCase()} RECORD!</span>` : r.timeRank ? ` <span class="muted">(#${r.timeRank} on yer Fastest Wins board)</span>` : ''}</p><p>Sheriff Gobbo ate all 8 antes and rode into the (cardboard) sunset with the <b>${G.POUCH_BY_ID[r.pouch].name}</b> on <b>${G.SPICES[r.spice - 1].name}</b>.</p>
       <ul><li>${r.trophyNew ? '🏆 <b>New Trophy Geode!</b> +2% CpS forever' : '🏆 Trophy already owned (try another pouch or spice!)'}</li><li>🔮 +1 Bloom Crystal</li><li>🍗 Victory Feast: ×3 CpS for 10 minutes</li>${r.spice < 8 ? `<li>🌶️ Unlocked <b>${G.SPICES[r.spice].name}</b> spice for this pouch</li>` : ''}</ul>
       <div class="btn-row"><button class="btn primary big" id="v-endless">♾️ Keep eating (Endless)</button><button class="btn big" id="v-leave">Cash out & leave</button></div></div>`;
@@ -5120,10 +5206,12 @@ G.Table = (() => {
     const r = T.run;
     r.phase = 'over';
     if (!r.finishedAt) r.finishedAt = Date.now();
-    S().losses++;
-    G.state.secrets.lossStreak = (G.state.secrets.lossStreak || 0) + 1;
-    if (G.state.secrets.lossStreak >= 5) G.state.secrets.loss5 = 1;
-    if (r.endless) S().endlessBest = Math.max(S().endlessBest, r.ante);
+    if (!r.rodeo) { // a fallen Daily Rodeo ride is just another try, not a lost run
+      S().losses++;
+      G.state.secrets.lossStreak = (G.state.secrets.lossStreak || 0) + 1;
+      if (G.state.secrets.lossStreak >= 5) G.state.secrets.loss5 = 1;
+      if (r.endless) S().endlessBest = Math.max(S().endlessBest, r.ante);
+    }
     T.recordTop(r, 'lost');
     G.Audio.sad(); G.FX.shake(12);
     if (r.lostReason === 'cards') G.FX.toast('🂠 Out of cards! Nothing left to play.');
@@ -5138,17 +5226,21 @@ G.Table = (() => {
     el.center.innerHTML = `<div class="gameover"><div class="go-emoji">🪦</div><h1>${r.lostReason === 'cards' ? 'Ya ran outta rocks, partner' : r.endless ? 'The endless trail ends here' : 'Ya got outdrawn, partner'}</h1>${r.lostReason === 'cards' ? '<p class="muted">No cards left in yer hand or deck, so that last hand had nothing to play.</p>' : ''}
       ${close > 0.85 ? `<p class="so-close">SO CLOSE! You were <b>${G.fmt(r.target - r.roundScore)}</b> short (${Math.floor(close * 100)}%).</p>` : `<p>You scored ${G.fmt(r.roundScore)} of ${G.fmt(r.target)}.</p>`}
       <div class="go-stats"><div><small>Ante</small><b>${r.ante}</b></div><div><small>Best hand</small><b>${G.fmt(r.stats.bestHand)}</b></div><div><small>Most played</small><b>${E.mostPlayed(r) || '—'}</b></div><div><small>Hands</small><b>${r.stats.hands}</b></div></div>
-      <div class="btn-row"><button class="btn primary big" id="go-again">🤠 Saddle up again</button><button class="btn big" id="go-leave">Mosey out</button></div></div>`;
-    el.center.querySelector('#go-again').onclick = () => { const p = r.pouch, sp = r.spice; const pk = r.pick; T.endRun(true); T.newRun(p, sp, pk); };
+      <div class="btn-row"><button class="btn primary big" id="go-again">${r.rodeo ? '🔄 Try again (same deal)' : '🤠 Saddle up again'}</button><button class="btn big" id="go-leave">Mosey out</button></div></div>`;
+    el.center.querySelector('#go-again').onclick = () => { if (r.rodeo) { T.restart(); return; } const p = r.pouch, sp = r.spice; const pk = r.pick; T.endRun(true); T.newRun(p, sp, pk); };
     el.center.querySelector('#go-leave').onclick = () => T.endRun();
   };
   T.endRun = (silent) => {
+    // nothing on the table (a second click on an old Mosey out button): never wipe the other slot by accident
+    if (!T.run) { if (!silent && T.open) T.hide(); return; }
     syncStats();
-    T.run = null; G.state.run = null; view = null;
+    if (T.run.rodeo) G.state.rodeoRun = null; else G.state.run = null;
+    T.run = null; view = null;
     if (!silent) T.hide();
     G.save();
   };
-  T.save = () => { if (T.run) G.state.run = E.save(T.run); };
+  // each kind of run keeps its own slot: a Daily Rodeo ride never overwrites the normal run
+  T.save = () => { if (!T.run) return; if (T.run.rodeo) G.state.rodeoRun = E.save(T.run); else G.state.run = E.save(T.run); };
 
   /* ---------- shop ---------- */
   T.renderShop = () => {
@@ -6052,17 +6144,23 @@ G.Flash = (() => {
   ];
   F.MOD_BY_ID = Object.fromEntries(F.MODS.map((m) => [m.id, m]));
 
-  /* a fresh Burlap Saddlebag run on Mild, seeded by the day; rngFor(salt) gives a seeded stream (FlashRun.rng) */
-  F.setupRun = (mods, rngFor) => {
+  /* a fresh run seeded by the day (Burlap on Mild unless opts say otherwise; the Daily Rodeo passes its own);
+     rngFor(salt) gives a seeded stream (FlashRun.rng, or G.Rodeo.rngFor) */
+  F.setupRun = (mods, rngFor, opts = {}) => {
     const on = new Set(mods || []);
     const seed = ((rngFor('saloon')() * 2147483647) | 0) || 1;
-    const run = E.newRun({ seed, pouch: 'burlap', spice: 1, meta: {} }); // no Tooth Tree or stakes from a save
-    run.isLocked = () => false; // the whole menagerie is open, the same for everyone (and nothing reaches the Codex)
-    run.onCollect = () => {};
+    const run = E.newRun({ seed, pouch: opts.pouch || 'burlap', spice: opts.spice || 1, meta: {} }); // no Tooth Tree or stakes from a save
     run.flash = { mods: F.MODS.filter((m) => on.has(m.id)).map((m) => m.id), bossBan: [], gizmoBan: [] };
     for (const m of F.MODS) if (on.has(m.id)) m.setup(run, rngFor);
     run.maxHands = Math.max(1, run.maxHands); run.maxDiscards = Math.max(0, run.maxDiscards);
+    F.attachSeeded(run, rngFor);
     E.fixUnfairBosses(run); // a banned (or now unfair) first Indigestion gets swapped
+    return run;
+  };
+  /* the functions a seeded run needs (they don't survive a save, so a reloaded Daily Rodeo run gets them again) */
+  F.attachSeeded = (run, rngFor) => {
+    run.isLocked = () => false; // the whole menagerie is open, the same for everyone (and nothing reaches the Codex)
+    run.onCollect = () => {};
     // every blind, shop and new ante draws from its own stream of the day's seed, so two players get the same deal and
     // the same shelves however differently they played the round before (inside a round it follows their choices)
     run.reseed = (tag) => {
@@ -6216,6 +6314,193 @@ G.Flash = (() => {
     });
   };
   return F;
+})();
+
+;
+/* ---- 55-rodeo.js ---- */
+/* 🐎 The Daily Rodeo: one Gobble Saloon challenge a day, the same for everyone, played against the clock.
+   The date picks a saddlebag, a spice level and a few FlashGames modifiers (50-flash.js), and seeds every deal and every
+   shop, so all cowpokes get the same cards and shelves and only the riding differs. Beat all 8 antes as fast as you can;
+   retries are unlimited and the day's best time counts. It runs beside a normal run (its own save slot, G.state.rodeoRun),
+   and never touches Top Runs, Fastest Wins, trophies, spice unlocks or the Codex. */
+'use strict';
+G.Rodeo = (() => {
+  const R = {};
+  const E = G.Engine;
+
+  /* ---------- the day's plan (pure: the same date always gives the same plan) ---------- */
+  const hash = (s) => { let h = 2166136261 >>> 0; s = String(s); for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0; return h; };
+  const stream = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+  R.rngFor = (seed) => (salt) => stream((seed ^ hash(salt == null ? '' : salt)) >>> 0);
+
+  // modifiers that undo or waste a saddlebag's own perk never ride with it
+  R.CLASH = {
+    rainbow: ['wild', 'glass', 'highsociety'], gravel: ['highsociety', 'royalty'], lunchbox: ['oneshot', 'tall'],
+    sapphire: ['oneshot'], bottomless: ['oneshot'], miser: ['flatbroke'], chaos: ['freerolls'],
+  };
+  // pairs of modifiers too cruel together (no money and no Snacks or Meals to earn it in)
+  R.CRUEL = [['bossrush', 'flatbroke']];
+  // the saddlebags the bots found hardest stay on the two mildest spices
+  R.HARD = ['lunchbox', 'miser', 'lint', 'bottomless'];
+
+  R.plan = (date) => {
+    const seed = hash('gobble-rodeo:' + date) || 1;
+    const rng = stream(seed ^ 0x5eed);
+    const pouches = G.POUCHES.filter((p) => p.id !== 'pardner'); // Ol' Pardner needs yer own Codex, so it's not the same for everyone
+    const pouch = pouches[Math.floor(rng() * pouches.length)].id;
+    const spice = G.pickW(rng, R.HARD.includes(pouch) ? [[1, 3], [2, 4]] : [[1, 3], [2, 4], [3, 3], [4, 2]]);
+    const want = spice === 1 ? 3 : 2; // Mild days get an extra twist
+    const MODS = G.Flash.MODS, byId = G.Flash.MOD_BY_ID, clash = R.CLASH[pouch] || [];
+    const mods = [];
+    while (mods.length < want) {
+      const ok = MODS.filter((m) => !mods.includes(m.id) && !clash.includes(m.id)
+        && !mods.some((id) => (byId[id].excludes || []).includes(m.id) || (m.excludes || []).includes(id))
+        && !R.CRUEL.some(([a, b]) => (a === m.id && mods.includes(b)) || (b === m.id && mods.includes(a))));
+      if (!ok.length) break;
+      mods.push(ok[Math.floor(rng() * ok.length)].id);
+    }
+    return { date, seed, pouch, spice, mods: MODS.filter((m) => mods.includes(m.id)).map((m) => m.id) };
+  };
+  R.today = () => R.plan(G.dayKey());
+
+  /* ---------- runs ---------- */
+  R.newRun = (plan, tryN) => {
+    const run = G.Flash.setupRun(plan.mods, R.rngFor(plan.seed), { pouch: plan.pouch, spice: plan.spice });
+    run.rodeo = { date: plan.date, seed: plan.seed, try: tryN || 1 };
+    return run;
+  };
+  R.attach = (run) => G.Flash.attachSeeded(run, R.rngFor(run.rodeo.seed));
+  R.load = () => {
+    const raw = G.state.rodeoRun; if (!raw) return null;
+    try { return R.attach(E.load(raw)); } catch (e) { console.warn('rodeo load failed', e); G.state.rodeoRun = null; return null; }
+  };
+
+  /* ---------- your record: G.state.cards.rodeo = { days: { date: { tries, wins, best, bestTry } } } ---------- */
+  R.data = () => { const c = G.state.cards; if (!c.rodeo || !c.rodeo.days) c.rodeo = { days: {} }; return c.rodeo; };
+  R.day = (date) => { const d = R.data().days; return d[date] || (d[date] = { tries: 0, wins: 0, best: 0, bestTry: 0 }); };
+  R.prune = () => { const days = R.data().days, keys = Object.keys(days).sort(); while (keys.length > 60) delete days[keys.shift()]; };
+  // a new attempt at today's rodeo (any ride in progress is dropped)
+  R.begin = (date) => {
+    const plan = R.plan(date || G.dayKey());
+    const d = R.day(plan.date);
+    d.tries++;
+    R.prune();
+    const run = R.newRun(plan, d.tries);
+    G.state.rodeoRun = E.save(run);
+    G.dirty && G.dirty();
+    return run;
+  };
+  // the winning hand just landed: stop the clock and nail the time up
+  R.finish = (run) => {
+    if (!run.rodeo || run.rodeo.done) return;
+    if (!run.finishedAt) run.finishedAt = Date.now();
+    const ms = run.finishedAt - run.startedAt;
+    const d = R.day(run.rodeo.date);
+    d.wins++;
+    run.rodeo.done = true; run.rodeo.ms = ms;
+    run.rodeo.newBest = !d.best || ms < d.best;
+    if (run.rodeo.newBest) { d.best = ms; d.bestTry = run.rodeo.try; }
+    G.dirty && G.dirty();
+  };
+  // days in a row with a finished rodeo, counting back from today (or from yesterday if today isn't done yet)
+  R.streak = () => {
+    const days = R.data().days;
+    let n = 0, t = Date.now();
+    if (!(days[G.dayKey(t)] || {}).best) t -= 864e5;
+    for (;;) { const k = G.dayKey(t); if (!(days[k] || {}).best) break; n++; t -= 864e5; }
+    return n;
+  };
+
+  /* ---------- words and pictures ---------- */
+  const fmt = (ms) => G.Table.fmtMs(ms);
+  // tenths for close races (cut, never rounded up: 59.96 s is 0:59.9, not 0:60.0)
+  R.fmtMs = (ms) => { const t = Math.floor(Math.max(0, ms) / 100); return t < 36000 ? `${Math.floor(t / 600)}:${((t % 600) / 10).toFixed(1).padStart(4, '0')}` : fmt(ms); };
+  R.niceDate = (date) => { const [y, m, d] = date.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); };
+  const mod = (id) => G.Flash.MOD_BY_ID[id];
+  R.chipsHTML = (plan) => {
+    const po = G.POUCH_BY_ID[plan.pouch], sp = G.SPICES[plan.spice - 1];
+    return `<span class="ro-chip bag">${po.emoji} ${G.esc(po.name)}</span><span class="ro-chip spice" data-spice="${sp.n}">${sp.emoji} ${G.esc(sp.name)}</span>${plan.mods.map((id) => `<span class="ro-chip mod" data-id="${id}">${mod(id).emoji} ${G.esc(mod(id).name)}</span>`).join('')}`;
+  };
+  R.tips = (root) => { const plan = R.plan(root.dataset.date || G.dayKey()); root.querySelectorAll('.ro-chip').forEach((d) => {
+    if (d.classList.contains('mod')) { const m = mod(d.dataset.id); G.UI.tip(d, () => `<div class="tip-h"><span>${m.emoji}</span><b>${G.esc(m.name)}</b></div><div>${G.esc(m.text)}</div>`); }
+    else if (d.classList.contains('bag')) { const po = G.POUCH_BY_ID[plan.pouch]; G.UI.tip(d, () => `<div class="tip-h"><span>${po.emoji}</span><b>${G.esc(po.name)}</b></div><div>${G.esc(po.desc)}</div>`); }
+    else { const n = plan.spice; G.UI.tip(d, () => `<div class="tip-h"><span>${G.SPICES[n - 1].emoji}</span><b>${G.SPICES[n - 1].name}</b></div><div>${G.SPICES.slice(0, n).map((s) => G.esc(s.desc)).join('<br>')}</div>`); }
+  }); };
+  R.shareText = (date) => {
+    const plan = R.plan(date), d = R.day(date), po = G.POUCH_BY_ID[plan.pouch], sp = G.SPICES[plan.spice - 1];
+    const res = d.best ? `⏱ ${R.fmtMs(d.best)} (try ${d.bestTry} of ${d.tries})` : `🪦 Not tamed yet (${d.tries} ${d.tries === 1 ? 'try' : 'tries'})`;
+    return `🐎 Geode Gobbler Daily Rodeo · ${date}\n${po.emoji} ${po.name} · ${sp.emoji} ${sp.name}\n${plan.mods.map((id) => mod(id).emoji + ' ' + mod(id).name).join(' · ')}\n${res}\n${location.origin}${location.pathname}`;
+  };
+  R.share = (date) => {
+    const text = R.shareText(date);
+    const done = () => G.FX.toast('📋 Copied! Paste it to yer pardners.');
+    const fallback = () => { G.UI.modal(`<h2>📋 Yer rodeo result</h2><textarea class="ro-share" readonly rows="6">${G.esc(text)}</textarea><p class="muted">Copy it and paste it to yer pardners.</p>`); const t = document.querySelector('.ro-share'); if (t) t.select(); };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  };
+
+  /* ---------- the lobby card (top of the Gobble Saloon tab) ---------- */
+  R.lobbyHTML = () => {
+    const today = G.dayKey(), plan = R.plan(today), d = R.day(today), streak = R.streak();
+    const live = G.Table.run && G.Table.run.rodeo ? G.Table.run : R.peek();
+    const liveToday = live && live.rodeo.date === today && live.phase !== 'over' && !live.rodeo.done;
+    const liveOld = live && live.rodeo.date !== today && live.phase !== 'over' && !live.rodeo.done;
+    const hist = [];
+    for (let i = 6; i >= 1; i--) { const k = G.dayKey(Date.now() - i * 864e5), x = R.data().days[k]; hist.push(`<div class="ro-day ${x && x.best ? 'won' : x && x.tries ? 'lost' : ''}" title="${k}"><small>${R.niceDate(k).split(',')[0]}</small><b>${x && x.best ? R.fmtMs(x.best) : x && x.tries ? '🪦' : '·'}</b></div>`); }
+    hist.push(`<div class="ro-day today ${d.best ? 'won' : ''}"><small>Today</small><b>${d.best ? R.fmtMs(d.best) : d.tries ? '…' : '?'}</b></div>`);
+    return `<div class="rodeo" data-date="${today}">
+      <div class="ro-h"><h3>🐎 Daily Rodeo</h3><span class="muted">${R.niceDate(today)}</span>${streak ? `<span class="ro-streak">🔥 ${streak}-day streak</span>` : ''}</div>
+      <p class="ro-lead">Same deal for every cowpoke today. Beat all 8 antes <b>as fast as you can</b>. The clock starts with yer first deal and keeps running even if you mosey out. Ride as often as you like; yer best time counts.</p>
+      <div class="ro-plan">${R.chipsHTML(plan)}</div>
+      <div class="ro-mods">${plan.mods.map((id) => `<div><span>${mod(id).emoji}</span><b>${G.esc(mod(id).name)}:</b> ${G.esc(mod(id).text)}</div>`).join('')}</div>
+      <div class="ro-row">
+        <div class="ro-best"><small>Yer best today</small><b>${d.best ? R.fmtMs(d.best) : '—'}</b><span class="muted">${d.tries ? `${d.tries} ${d.tries === 1 ? 'try' : 'tries'}${d.wins ? ` · ${d.wins} tamed` : ''}` : 'not ridden yet'}</span></div>
+        <div class="ro-btns">
+          ${liveToday ? `<button class="btn primary big" id="ro-continue">▶ Continue <small>(Ante ${live.ante} · ${G.Table.fmtRunTime(live)})</small></button><button class="btn" id="ro-new">🔄 Start over</button>`
+            : `<button class="btn primary big" id="ro-go">🐎 ${d.tries ? 'Ride it again' : "Ride today's rodeo"}</button>`}
+          ${d.tries ? '<button class="btn" id="ro-share">📋 Share</button>' : ''}
+        </div>
+      </div>
+      ${liveOld ? `<div class="ro-old muted">You've still got a ride going from ${R.niceDate(live.rodeo.date)} <button class="btn sm" id="ro-old">▶ Finish it</button></div>` : ''}
+      <div class="ro-hist">${hist.join('')}</div>
+    </div>`;
+  };
+  // the saved ride, for the lobby to describe (not opened)
+  R.peek = () => (G.state.rodeoRun && G.state.rodeoRun.rodeo ? G.state.rodeoRun : null);
+  R.bindLobby = (p) => {
+    const box = p.querySelector('.rodeo'); if (!box) return;
+    R.tips(box);
+    const T = G.Table;
+    const open = () => { if (T.run && T.run.rodeo) T.show(); else { const run = R.load(); if (run) T.switchRun(run); } };
+    const start = () => T.switchRun(R.begin());
+    const b = (id, fn) => { const x = box.querySelector('#' + id); if (x) x.onclick = fn; };
+    b('ro-continue', open);
+    b('ro-old', open);
+    b('ro-go', () => {
+      const live = (T.run && T.run.rodeo) ? T.run : R.peek();
+      if (live && live.phase !== 'over' && !live.rodeo.done) G.UI.confirm(`<h2>Drop yer ride from ${R.niceDate(live.rodeo.date)}?</h2><p>It never finished, so it won't count.</p>`, start, 'Ride today'); else start();
+    });
+    b('ro-new', () => G.UI.confirm("<h2>Start today's rodeo over?</h2><p>Same deal, fresh clock. This ride won't count.</p>", start, '🔄 Start over'));
+    b('ro-share', () => R.share(G.dayKey()));
+  };
+
+  /* ---------- the box on the table's side panel ---------- */
+  R.sideHTML = (run) => {
+    const plan = R.plan(run.rodeo.date), d = R.day(run.rodeo.date);
+    return `<div class="ro-sh"><b>🐎 Daily Rodeo</b><span>${R.niceDate(run.rodeo.date)} · try ${run.rodeo.try}</span></div>
+      <div class="ro-plan">${R.chipsHTML(plan)}</div>
+      <div class="ro-sbest"><small>Best today</small><b>${d.best ? R.fmtMs(d.best) : '—'}</b></div>`;
+  };
+
+  /* ---------- the finish line (instead of the normal victory screen) ---------- */
+  R.wonHTML = (run) => {
+    const plan = R.plan(run.rodeo.date), d = R.day(run.rodeo.date), po = G.POUCH_BY_ID[plan.pouch], sp = G.SPICES[plan.spice - 1];
+    return `<div class="victory rodeo-won"><div class="v-geode">🏁</div><h1>RODEO TAMED!</h1>
+      <div class="ro-time">${R.fmtMs(run.rodeo.ms)}</div>
+      <p class="v-time">${run.rodeo.newBest ? (d.wins > 1 ? '<span class="v-rec">🏁 NEW BEST TODAY!</span>' : '<span class="v-rec">🏁 FIRST TIME ON THE BOARD!</span>') : `Yer best today is still <b>${R.fmtMs(d.best)}</b>`}</p>
+      <p>${po.emoji} ${po.name} on ${sp.emoji} ${sp.name} with ${plan.mods.map((id) => `${mod(id).emoji} <b>${mod(id).name}</b>`).join(' + ')} · try ${run.rodeo.try}</p>
+      <div class="btn-row"><button class="btn primary big" id="ro-share2">📋 Copy result</button><button class="btn big" id="ro-again">🔄 Ride it again</button><button class="btn big" id="v-leave">Mosey out</button></div></div>`;
+  };
+  return R;
 })();
 
 ;
