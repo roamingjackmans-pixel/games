@@ -64,5 +64,9 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site
+      # GitHub can take a few seconds to list a just-uploaded artifact; deploy-pages asking at once failed with
+      # "No artifacts named github-pages were found" on 4 of 5 deploys (2026-11-23)
+      - name: Let the artifact show up
+        run: sleep 20
       - id: deployment
         uses: actions/deploy-pages@v4
