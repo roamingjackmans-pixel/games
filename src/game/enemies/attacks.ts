@@ -14,6 +14,7 @@ import { ROOM_MAX_X, ROOM_MAX_Y, ROOM_MIN_X, ROOM_MIN_Y } from '../combat/patter
 import { ROOM_CX, ROOM_CY, escapeReach } from '../combat/patterns';
 import { ROOM_W, ROOM_Y0, T, TILE, tileCenter, worldToTile } from '../room';
 import { PLAYER_DOT_DY, PLAYER_DOT_R } from '../player/player';
+import { runMods } from '../runMods';
 
 export function enemyAttackSpec(e: Entity, atk: AttackDef, mult = 1): DamageSpec {
   const en = e.en!;
@@ -70,7 +71,21 @@ function actSpeed(w: World, e: Entity): number {
   return Math.min(1, speedMult(e, w) / Math.max(0.01, 1 + 0));
 }
 
-export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: Entity | null): void {
+/** Seeing Red (D452): each plain attack's Red copy, made once. */
+const RED_COPY = new WeakMap<AttackDef, AttackDef>();
+function redCopy(atk: AttackDef): AttackDef {
+  let r = RED_COPY.get(atk);
+  if (!r) {
+    r = { ...atk, kind: 'red' };
+    RED_COPY.set(atk, r);
+  }
+  return r;
+}
+
+export function startEnemyAttack(w: World, e: Entity, atk0: AttackDef, target: Entity | null): void {
+  // a FlashGames Seeing Red run (D452): every plain attack is Red; Piercing stays Piercing (no attack is both) and
+  // utilities stay utilities. The room's special budget still counts the attack as it was chosen.
+  const atk = runMods().allRed && atk0.kind === 'normal' ? redCopy(atk0) : atk0;
   const en = e.en!;
   const now = w.time;
   const tx = target ? target.x : e.x + Math.cos(e.facing) * 100;
@@ -108,7 +123,7 @@ export function startEnemyAttack(w: World, e: Entity, atk: AttackDef, target: En
     comboIdx: 0,
     moveDone: false,
     hit: new Set(),
-    usedBudget: atk.kind === 'red' || atk.kind === 'pierce',
+    usedBudget: atk0.kind === 'red' || atk0.kind === 'pierce',
   };
   en.state = 'windup';
   en.stateT = 0;

@@ -12,6 +12,7 @@ import { favorSecondaries, generateItem, randomGem, type DropFavor } from './gen
 import { CLASSES, secondaryStats } from '../../data/classes';
 import type { Character, ConsumableId, Item, Role, StatId } from '../types';
 import type { Entity, PickupC, World } from '../world';
+import { runMods } from '../runMods';
 
 export interface DropContext {
   w: World;
@@ -84,7 +85,8 @@ export function enemyDrops(c: DropContext, e: Entity): void {
     const cy = lootCycle(c, pl.char);
     const ilvl = itemLevelFor(c.zone, cy);
     const chance = (en.elite ? DROP_CHANCE.elite : role === 'swarm' ? DROP_CHANCE.swarm : role === 'fodder' ? DROP_CHANCE.fodder : DROP_CHANCE.other) / divide;
-    if (rng.chance(chance)) {
+    // Piñata Party (D452): a FlashGames run where every kill drops an item (the roll is still made, so nothing else moves)
+    if (rng.chance(chance) || runMods().dropAll) {
       const item = generateItem(rng, { source: sourceForRole(role, !!en.elite), ilvl, zone: c.zone, favor: favorOf(pl.char), neon: c.w.hardcore });
       const [x, y] = scatter(rng, e.x, e.y);
       dropItem(w, pid, item, x, y);

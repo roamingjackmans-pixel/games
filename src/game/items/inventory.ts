@@ -7,6 +7,7 @@ import { canRaise, levelFromStats } from '../player/character';
 import type { Character, ConsumableId, Gem, GemFamily, GemPerk, Item, Rarity, StatId } from '../types';
 import { newId } from './make';
 import { WEAPONS } from '../../data/weapons';
+import { runMods } from '../runMods';
 
 export const BAG_SIZE = 60;
 export type EquipSlot = keyof Character['equipment'] | 'altMain' | 'altOff';
@@ -78,6 +79,8 @@ export function equip(c: Character, itemId: string, slot?: EquipSlot): OpResult 
   const item = c.bag[i]!;
   const s = slot ?? defaultSlotFor(c, item);
   if (!s || !slotAccepts(s, item)) return no('That does not go there.');
+  // a FlashGames Spells Only run (D452)
+  if (runMods().noWeapons && item.kind === 'weapon') return no('Spells only today. Joe has forgotten which end of a sword to hold.');
   c.bag.splice(i, 1);
   const prev = slotItem(c, s);
   setSlot(c, s, item);

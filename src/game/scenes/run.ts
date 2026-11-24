@@ -49,6 +49,8 @@ import { stats } from '../stats';
 import { INSTRUCTOR } from '../../data/enemies/special';
 import { BONFIRE_LINES, DEATH_QUIPS, EMBER_LINES, TIPS, bossIntroId, zoneCutsceneId, zoneLines } from '../../data/story';
 import { ZoneCutscene, bossIntroCut, cutscenesEnabled, defeatCut, drawBossNameCard, drawZoneTitleCard, instructorCut, restLine, type Cutscene } from '../../ui/cutscene';
+import type { FlashController, FlashEnd } from '../../flash/controller';
+import { drawFlashCorner, drawGetReady, drawLantern } from '../../flash/draw';
 
 /** Scene switches the run scene asks for (wired in main.ts, avoids import cycles). */
 export const runHooks: { toTitle?: () => void; credits?: (s: GameSession) => void; toLobby?: (save: SaveFile, net: NetHost) => void; newCycle?: (save: SaveFile) => void } = {};
@@ -62,7 +64,7 @@ export class RunScene extends WorldScene {
   private bossSeeds = new Map<string, MusicSeed>();
   private signText: string | null = null;
   private overlay: HTMLElement | null = null;
-  private overlayKind: '' | 'death' | 'bonfire' | 'map' | 'inventory' | 'pause' | 'settings' = '';
+  private overlayKind: '' | 'death' | 'bonfire' | 'map' | 'inventory' | 'pause' | 'settings' | 'flash' = '';
   /** where backing out of the current overlay goes (the bonfire or pause menu that opened the inventory) */
   private overlayBack: (() => void) | null = null;
   private pendingSave = false;
@@ -74,11 +76,13 @@ export class RunScene extends WorldScene {
   /** a zone cutscene ends by itself if the party leaves the room it started in (co-op: the sim runs on) */
   private cutRoom = '';
   private pendingDefeat: { def: BossDef; zone: number; at: number } | null = null;
+  /** a FlashGames run (D452): no saving, the clock's go and end, the score, the day's modifiers */
+  readonly flash: FlashController | null;
 
   constructor(
     public save: SaveFile,
     public net: NetHost | null = null,
-    opts: { rushCycle?: number } = {},
+    opts: { rushCycle?: number; flash?: FlashController } = {},
   ) {
     super();
     this.session = new GameSession(save, {
@@ -118,6 +122,11 @@ export class RunScene extends WorldScene {
         if (cutscenesEnabled() && !this.session.rush) this.pendingDefeat = { def, zone: this.session.layout.zone, at: performance.now() / 1000 + 1.1 };
       },
       credits: () => {
+        // a FlashGames run ends here, won (D452)
+        if (this.flash) {
+          this.flash.won();
+          return;
+        }
         achievements().note({ k: 'credits' });
         // the end of the run: everyone in the party sees the credits, then the host finds the NG+ fire
         this.persist();
@@ -134,6 +143,11 @@ export class RunScene extends WorldScene {
         if (p === this.local) this.showGary();
       },
       newCycle: () => {
+        // a FlashGames run past The Landlord is won, whichever way out Joe takes (D452)
+        if (this.flash) {
+          this.flash.won();
+          return;
+        }
         beginNextCycle(this.save);
         this.persist();
         this.closeOverlay();
@@ -145,6 +159,11 @@ export class RunScene extends WorldScene {
       },
     }, opts.rushCycle !== undefined ? { rushCycle: opts.rushCycle } : {});
     this.w = this.session.w;
+    this.flash = opts.flash ?? null;
+    if (this.flash) {
+      this.flash.attach(this.session);
+      this.flash.onOver = (reason) => this.showFlashEnd(reason);
+    }
   }
 
   override enter(): void {
@@ -179,6 +198,8 @@ export class RunScene extends WorldScene {
   private onUnload = (): void => this.persist();
 
   persist(): void {
+    // a FlashGames run is a throwaway: it never saves (D452)
+    if (this.flash) return;
     try {
       writeSave(getStore(), this.save);
     } catch {
@@ -204,7 +225,19 @@ export class RunScene extends WorldScene {
     music.play('ambient', z.music);
   }
 
+  /** A FlashGames run waits for its go and stops at its end (D452). */
+  protected override simHeld(): boolean {
+    return !!this.flash && !this.flash.running;
+  }
+
+  /** Double Espresso: two sim steps an update (D452). */
+  protected override simSteps(): number {
+    return this.flash?.setup.rules.steps ?? 1;
+  }
+
   protected override beforeStep(dt: number): void {
+    // a FlashGames run before its go or after its end takes no input at all
+    if (this.flash && !this.flash.running) return;
     const a = app();
     this.tickCutscenes();
     this.local = this.session.localPlayer;
@@ -241,6 +274,7 @@ export class RunScene extends WorldScene {
     achievements().frame(this.w, this.local, this.save.character, this.w.events);
     stats().frame(this.w, this.local, this.save, this.w.events);
     this.net?.afterTick(this.w.events, dt);
+    this.flash?.frame();
   }
 
   /** Co-op: other players are in this world. */
@@ -366,6 +400,11 @@ export class RunScene extends WorldScene {
   }
 
   private showDeath(): void {
+    // a FlashGames run counts the death; under Eviction Notice it ends the run (D452)
+    if (this.flash) {
+      this.flash.died();
+      if (!this.flash.running) return;
+    }
     this.dropCut();
     this.closeOverlay();
     mixer.setDuck(0.3);
@@ -382,11 +421,13 @@ export class RunScene extends WorldScene {
     b.disabled = true;
     const coop = this.coop;
     if (coop) this.net!.broadcastEvent({ t: 'wipe' });
+    // co-op, and a FlashGames run (D452: every death costs the same 3 s), get up by themselves
+    const auto = coop || !!this.flash;
     setTimeout(() => {
       b.disabled = false;
       b.focus();
-      if (coop && this.overlayKind === 'death') respawn();
-    }, coop ? 3000 : 1500);
+      if (auto && this.overlayKind === 'death') respawn();
+    }, auto ? 3000 : 1500);
     l.appendChild(
       h(
         'div',
@@ -577,18 +618,19 @@ export class RunScene extends WorldScene {
           },
           'big',
         ),
-        btn('Achievements', () => {
+        // a FlashGames run (D452) keeps no records and has no title screen to quit to
+        this.flash ? null : btn('Achievements', () => {
           this.overlay?.remove();
           this.overlay = openAchievements(() => this.showPause());
           this.overlayKind = 'settings';
         }, 'big'),
-        btn('Statistics', () => {
+        this.flash ? null : btn('Statistics', () => {
           this.overlay?.remove();
           this.overlay = openStatistics(() => this.showPause(), { save: this.save });
           this.overlayKind = 'settings';
         }, 'big'),
         this.net ? btn('Return to lobby (invite more)', () => this.returnToLobby(), 'big') : null,
-        btn(this.net ? 'Save, end the session and quit' : 'Save and quit to title', () => this.quitToTitle(), 'big'),
+        this.flash ? h('div', { class: 'small dim-text' }, 'FlashGames: the clock keeps running while paused.') : btn(this.net ? 'Save, end the session and quit' : 'Save and quit to title', () => this.quitToTitle(), 'big'),
       ),
     );
     this.overlay = l;
@@ -615,6 +657,31 @@ export class RunScene extends WorldScene {
     net.toLobby();
     this.net = null;
     runHooks.toLobby?.(this.save, net);
+  }
+
+  /** A FlashGames run is over (D452): the game stands still under the final score. */
+  private showFlashEnd(reason: FlashEnd): void {
+    this.dropCut();
+    this.closeOverlay();
+    mixer.setDuck(0.3);
+    const f = this.flash!;
+    const l = layer('dim');
+    l.setAttribute('data-testid', 'flash-end');
+    const title = reason === 'won' ? 'THE LEASE IS VOID' : reason === 'dead' ? 'EVICTED' : "TIME'S UP";
+    const sub = reason === 'won' ? 'The Landlord fell with time on the clock.' : reason === 'dead' ? 'One life, and Joe spent it.' : 'The stairs will still be there tomorrow.';
+    l.appendChild(
+      h(
+        'div',
+        { class: 'col center', style: 'align-items:center;gap:14px' },
+        h('div', { class: 'death-title' }, title),
+        h('div', { style: 'font-size:46px;font-weight:bold;color:#e6b84a', 'data-testid': 'flash-score' }, f.score.points.toLocaleString('en-US')),
+        h('div', { style: 'font-size:18px;color:#efe6d2' }, f.score.detail()),
+        h('div', { class: 'dim-text' }, sub),
+      ),
+    );
+    this.overlay = l;
+    this.overlayKind = 'flash';
+    this.menuOpen = true;
   }
 
   private showMap(): void {
@@ -652,6 +719,8 @@ export class RunScene extends WorldScene {
   protected override renderOverlay(ctx: CanvasRenderingContext2D): void {
     const p = this.local;
     if (!p) return;
+    // Lights Out (D452): dark but for the lantern, under the HUD and the prompts
+    if (this.flash?.setup.rules.dark) drawLantern(ctx, p.x, p.y);
     const now = performance.now() / 1000;
     // D391: down in co-op: what downed you, and how hard
     if (!this.overlay && (p.pl?.downed || p.pl?.deadUntilRest)) {
@@ -709,8 +778,10 @@ export class RunScene extends WorldScene {
       if (!rush) drawMinimap(ctx, { layout: this.session.layout, ws: this.session.save.world, currentId: this.session.node.id, revealAll: this.revealMap });
       if (this.w.players.length > 1) drawPartyCards(ctx, this.w, this.local?.pl?.playerId ?? '');
     }
-    // zone title card (a zone already introduced this cycle)
-    if (this.title && now < this.title.until) {
+    // zone title card (a zone already introduced this cycle); a FlashGames run shows it after its go (D452)
+    const waiting = this.flash?.phase === 'waiting';
+    if (waiting && this.title) this.title.until = now + 3.5;
+    if (this.title && now < this.title.until && !waiting) {
       const z = ZONES[this.title.zone - 1]!;
       drawZoneTitleCard(ctx, z.name, z.palette.accent, this.title.names, this.title.sub ?? z.tagline, this.title.until - now, 3.5);
     }
@@ -729,6 +800,12 @@ export class RunScene extends WorldScene {
       this.fade = Math.max(0, this.fade - realDt / 0.3);
     }
     if (app().settings.video.showFps) drawText(ctx, `${app().loop.fps.toFixed(0)} fps`, 1270, 150, { size: 12, align: 'right', mono: true, color: '#a59c8a' });
+    // a FlashGames run (D452): the day's modifiers and the score in a corner; "get ready" until the go
+    if (this.flash) {
+      const names = this.flash.setup.active.map((m) => m.name);
+      drawFlashCorner(ctx, names, this.flash.score.points);
+      if (this.flash.phase === 'waiting') drawGetReady(ctx, names);
+    }
     if (this.session.node.kind === 'tutorial') drawText(ctx, 'TRAINING HALL — the exit is on the right. The big man waits behind it: beat him, or wake at the bonfire trying.', 660, 62, { size: 14, align: 'center', color: '#a59c8a' }); // below the buff icons by the HP bar (D373)
     else if (this.session.node.kind === 'trial') drawText(ctx, 'THE INSTRUCTOR — the way down stays shut until he falls. Beat him for a prize, or die and wake at the first bonfire.', 640, 40, { size: 14, align: 'center', color: '#e6a07a' });
   }

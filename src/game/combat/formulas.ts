@@ -1,5 +1,6 @@
 // GAME_DESIGN §2.3, §3.1, §3.3, CONTENT_ITEMS §1 formulas. Pure functions, unit-tested.
 import type { Grade, Stats } from '../types';
+import { runMods } from '../runMods';
 
 /** Sum a piecewise per-point table: [upToPoint, perPoint][] */
 function piecewise(points: number, table: [number, number][]): number {
@@ -507,6 +508,8 @@ export function flaskMaxFor(bossesBeaten: number, socks: boolean): number {
 
 /** The Thermos size right now: the character's flask max, +1 with Joe's Lucky Socks on (never above 5). */
 export function flaskCap(c: { flaskMax: number; equipment: { legs: { legendaryPower?: string } | null } }): number {
+  // Dry Spell (D452): a FlashGames run with no Thermos at all
+  if (runMods().noFlask) return 0;
   return Math.min(5, c.flaskMax + (c.equipment.legs?.legendaryPower === 'lucky_socks' ? 1 : 0));
 }
 

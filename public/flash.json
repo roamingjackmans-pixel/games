@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "id": "dungeonjoe",
+  "name": "Dungeon Joe",
+  "tagline": "A souls-like dungeon crawl: arena rooms, loot, bonfires and bosses",
+  "goal": "Get as deep as you can in 15 minutes. Dying sends you back to the bonfire.",
+  "scoring": "Everything × the zone it happens in: 10 a kill, 50 an Elite or Mimic, 100 a room cleared (each room once), 1,000 a Boss Rush Hour challenger, 3,000 the zone's boss, 2,000 for reaching a new zone. Dying costs only time.",
+  "maxScore": 1000000,
+  "pick": [2, 3],
+  "modifiers": [
+    { "id": "glass", "name": "Glass Joe", "text": "1 max HP and every stat at 999. Joe hits like a truck and breaks like a teacup.", "excludes": ["bottomless", "dry", "onelife"], "weight": 2 },
+    { "id": "turbo", "name": "Double Espresso", "text": "The whole dungeon runs at double speed. So does Joe." },
+    { "id": "mimics", "name": "Mimic Mania", "text": "Every chest is a Mimic, and every fight room has one. Hit a chest before you open it." },
+    { "id": "elites", "name": "Elite Squad", "text": "Every enemy is an Elite (swarms aside): triple HP, harder hits, a nasty affix, triple Shards.", "excludes": ["horde"] },
+    { "id": "horde", "name": "Paper Horde", "text": "Enemies have 1 HP, but three times as many of them come.", "excludes": ["elites"] },
+    { "id": "bottomless", "name": "Bottomless Thermos", "text": "The Thermos never runs dry. Drink as often as you dare.", "excludes": ["dry", "glass"] },
+    { "id": "dry", "name": "Dry Spell", "text": "No Thermos at all. Bonfires still heal.", "excludes": ["bottomless", "glass"] },
+    { "id": "crimson", "name": "Seeing Red", "text": "Every enemy attack is Red: no blocking, no parrying. Dodge or get out of the way." },
+    { "id": "pinata", "name": "Piñata Party", "text": "Every enemy drops an item when it dies." },
+    { "id": "tiny", "name": "Tiny Joe", "text": "Joe shrank in the wash: half the size, a tiny hitbox, quicker feet, short arms and 40% less HP.", "excludes": ["huge"] },
+    { "id": "huge", "name": "Huge Joe", "text": "Joe is enormous: twice the HP, long reach, 25% harder hits, slow feet and impossible to miss.", "excludes": ["tiny"] },
+    { "id": "wildcard", "name": "Wrong Bag", "text": "Joe grabbed the wrong bag: a random Legendary weapon from the whole armoury, and the stats to swing it.", "excludes": ["spells"] },
+    { "id": "spells", "name": "Spells Only", "text": "No weapons today: a staff, a talisman, six spells and half the cooldowns.", "excludes": ["wildcard"] },
+    { "id": "bossy", "name": "Boss Rush Hour", "text": "Every third fight is a boss from another zone, waiting in its second phase." },
+    { "id": "onelife", "name": "Eviction Notice", "text": "One life. Die once and the run is over.", "excludes": ["glass"] },
+    { "id": "dark", "name": "Lights Out", "text": "The fuse blew. You see only what Joe's lantern reaches." }
+  ]
+}

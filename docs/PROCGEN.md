@@ -170,6 +170,16 @@ From cycle 1 (NG+1) the same generators run with the cycle in every stream label
   if that is blocked, **straight north** to the first clear spot; failing that, the nearest clear spot, north counted
   nearer than south. A room with no plain spot left allows walkable `~` tiles, grates and terrain (never an obstacle or a pit).
 
+## 7.2 FlashGames runs (GAME_DESIGN §25)
+
+- A run's world seed is `FLASH-<day seed>`; everything below comes from it as in any playthrough (cycle 0, no Training
+  Hall). The class is `FlashRun.rng('class')`; Wrong Bag's weapon and Spells Only's spells use FlashRun streams too.
+- `modRoomPlan` (D452) takes a room's plan after `planRoom`: **Boss Rush Hour** puts a challenger in every third combat or
+  ambush room (counted by depth, then id; the boss from `rushHour:<zone>:<cycle>:<room>` out of `bonusBossPool`);
+  **Paper Horde** repeats the waves three times and triples the plan's share; **Elite Squad** gives every unit that
+  can be an Elite an affix from `allElite:<zone>:<cycle>:<room>`. **Mimic Mania** makes every chest a mimic and gives
+  every combat and ambush room a small chest (`<room>-c0`). With no modifiers the plan and chests are exactly as above.
+
 ## 8. The Training Hall
 
 A new character's first zone (cycle 0, `tutorial`) adds the **Training Hall** (`z1-tutorial`) below the start room.

@@ -15,6 +15,7 @@ import type { Entity, World } from '../game/world';
 import type { ControlId, StatusId } from '../game/types';
 import { buffSum } from '../game/combat/state';
 import { flaskCap } from '../game/combat/formulas';
+import { runMods } from '../game/runMods';
 import { toolForSchool } from '../game/player/derived';
 import { offSkillsUnlocked, spellKeysAreOffSkills } from '../game/skills/use';
 
@@ -371,7 +372,8 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
   ctx.fillRect(fx + 3, fy - 5, 12, 6);
   ctx.restore();
   const fw = drawGlyph(ctx, 'flask', fx + 23, fy + 15, 15, { align: 'left', alpha: ch.flaskCur > 0 ? 1 : 0.55 });
-  const flaskText = `${ch.flaskCur}/${flaskCap(ch)}`;
+  // Bottomless Thermos (D452): a FlashGames run's drinks are free
+  const flaskText = runMods().flaskFree ? '∞' : `${ch.flaskCur}/${flaskCap(ch)}`;
   drawText(ctx, flaskText, fx + 28 + fw, fy + 20, { size: 15, weight: 'bold', mono: true });
   // currencies (pushed right when a wide flask button, e.g. a Hold binding, needs the room)
   ctx.font = `bold 15px ${MONO}`;

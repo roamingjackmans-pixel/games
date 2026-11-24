@@ -21,6 +21,7 @@ import { RARITY_POWER } from '../../data/proficiency';
 import { reinforceDmgMult } from '../../data/essence';
 import { profBonuses } from '../items/proficiency';
 import { LIFESTEAL_MULT } from '../../data/roles';
+import { runMods } from '../runMods';
 
 export interface Derived {
   stats: Stats;
@@ -542,6 +543,7 @@ export function computeDerived(c: Character): Derived {
   for (const t of DAMAGE_TYPES) defense[t] = (defense[t] + defAll) * (1 + (defPct[t] ?? 0));
 
   const boost = statBoosts(c.classId);
+  const mods = runMods();
   const hp = maxHP(stats.hp, boost.hp) + hpFlat;
   const stam = maxStamina(stats.endurance, boost.endurance) + stamFlat;
   const shieldIlvl = off?.ilvl ?? 1;
@@ -555,7 +557,7 @@ export function computeDerived(c: Character): Derived {
   // D369: each hand's numbers: the shared ones plus that hand's own weapon gems
   const slick = slickCast(stats.slicey, boost.slicey);
   const hand = (g: GemHand, toolCast: number): HandMods => ({
-    dmgPct: dmgPct + g.dmgPct,
+    dmgPct: dmgPct + g.dmgPct + mods.playerDmgPct,
     addDmg: [...addDmg, ...g.addDmg],
     statusBuild: [...statusBuild, ...g.statusBuild],
     attackSpeed: Math.min(1.6, 1 + attackSpeedPct + g.attackSpeedPct),
@@ -568,11 +570,12 @@ export function computeDerived(c: Character): Derived {
   const offHand = hand(gemOff, offTool?.def.castSpeed ?? castTool?.def.castSpeed ?? 1);
   return {
     stats,
-    maxHp: Math.max(1, Math.round(hp * maxHpMult * (1 + hpPctGem))),
+    // a FlashGames run (D452): Glass Joe's 1 HP, Tiny and Huge Joe's share
+    maxHp: mods.playerMaxHp ?? Math.max(1, Math.round(hp * maxHpMult * (1 + hpPctGem) * mods.playerHpMult)),
     maxStam: stam,
     // D345: a pair wielded in both hands (Twin Daggers) regains stamina faster, a bonus no card shows
     regen: staminaRegen(stats.endurance, boost.endurance) * regenMult * (weapon.paired && twoHanded ? 1 + (weapon.dualRegenPct ?? 0) : 1),
-    walk: 260 * (shield?.walkMult ?? 1) * load.effects.speed,
+    walk: 260 * (shield?.walkMult ?? 1) * load.effects.speed * mods.playerWalkMult,
     twoHanded,
     weapon,
     weaponItem: main,

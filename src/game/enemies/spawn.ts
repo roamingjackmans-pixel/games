@@ -5,6 +5,7 @@ import { ELITE_POISE_MULT, coopHpMult, coopPoiseMult, enemyDmgMult, enemyHpMult,
 import type { BossDef, EliteAffix, EnemyDef, Role } from '../types';
 import { newStatus, type EnemyC, type Entity, type World } from '../world';
 import { ngBossDef } from '../boss/ngPhases';
+import { runMods } from '../runMods';
 
 export interface SpawnOpts {
   elite?: EliteAffix | null;
@@ -84,6 +85,9 @@ export function spawnEnemy(w: World, def0: EnemyDef | BossDef, x: number, y: num
   hp *= coop;
   if (def.traits?.invincible) hp = def.mult?.hp ? baseHp * def.mult.hp : 120000;
   if (def.traits?.fixedHp) hp = def.traits.fixedHp;
+  // Paper Horde (D452): a FlashGames run's room enemies have 1 HP (never a boss, a special NPC such as a mimic, or a
+  // fixed-HP body); a party rescale keeps it at 1
+  else if (runMods().enemyOneHp && !isBoss && !def.special && !def.traits?.invincible) hp = 1;
   // New Game+ room enemies hit harder by zone (D275); bosses and special NPCs keep the plain curve
   const ngZone = isBoss || def.special ? 1 : ngZoneEnemyDmg(zone, cycle);
   const dmgMult = (rs.dmg / 18) * (def.mult?.dmg ?? 1) * enemyDmgMult(zone, cycle) * zoneDmgFactor(zone) * ngZone * ngLevelComp('dmg', zone, cycle) * statCurveComp('dmg', zone, cycle) * (def.special ? 1 : levelPaceComp('dmg', zone, cycle)) * (isBoss && !def.special ? ngBossDmgMult(cycle) * ngBossDmgTrim(zone, cycle) : 1) * (elite ? 1.5 : 1) * (o.dmgMult ?? 1) * (w.hardcore ? HARDCORE_DMG_MULT : 1);

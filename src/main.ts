@@ -1,4 +1,7 @@
-// Boot: settings, audio unlock, scene manager, debug menu, the title screen.
+// Boot: settings, audio unlock, scene manager, debug menu, the title screen. Opened with ?flash=… it is a FlashGames
+// daily run instead (D452): straight into the day's seeded run, nothing saved.
+// first of all: it reads ?flash=… into window.FlashRun (the FlashGames SDK, copied unchanged)
+import './flash/flash-run.js';
 import './ui/theme.css';
 // first, so the browser's one-time install prompt is caught (D135)
 import './ui/install';
@@ -21,10 +24,14 @@ import { newSave } from './game/save/schema';
 import { newCharacter } from './game/player/character';
 import { Rng, randomSeedString } from './engine/rng';
 import type { ClassId } from './game/types';
+import { ReadThroughStore, SETTINGS_KEY, browserStore, useStore } from './engine/settings';
+import { applyFlashRun, planFlashRun } from './flash/setup';
+import { FlashController } from './flash/controller';
 
 const params = new URLSearchParams(location.search);
 
-if (params.get('net') === 'test') {
+if (window.FlashRun?.active) bootFlash();
+else if (params.get('net') === 'test') {
   // NETCODE §8: a host and a guest side by side in one tab (BroadcastChannel transport between the panes)
   const code = params.get('code') ?? '222222';
   document.body.innerHTML = '';
@@ -92,6 +99,35 @@ function boot(): void {
   a.loop.start();
   // Dev server only: expose the app for playtests and Playwright (stripped from production builds).
   if (import.meta.env.DEV) (window as unknown as { __dj: unknown }).__dj = a;
+}
+
+/**
+ * A FlashGames run (D452, GAME_DESIGN §25): no title, save picker or character creation; the day's seeded run is built
+ * and waits for FlashGames' go, and its end freezes it under the final score. Saves, achievements, statistics and
+ * friends live in a store that reads the browser's settings (keys, volume) and writes nothing back. No co-op, no
+ * friends online, no debug menu.
+ */
+function bootFlash(): void {
+  const fr = window.FlashRun;
+  useStore(new ReadThroughStore(browserStore(), (k) => k === SETTINGS_KEY));
+  const canvasEl = document.getElementById('game') as HTMLCanvasElement;
+  const overlay = document.getElementById('overlay') as HTMLElement;
+  const a = createApp(canvasEl, overlay);
+  a.canvas.applyOverlayScale(uiRoot());
+  watchSteamDisconnects();
+  void reconnectSteamControllers();
+  installTouchControls();
+  const setup = planFlashRun({ seed: fr.seed, mods: fr.mods, rng: (salt) => fr.rng(salt) });
+  if (setup.unknown.length) console.warn(`[FlashRun] unknown modifiers ignored: ${setup.unknown.join(', ')}`);
+  applyFlashRun(setup);
+  const ctl = new FlashController(setup, fr);
+  a.scenes.set(new RunScene(setup.save, null, { flash: ctl }));
+  a.loop.start();
+  fr.onEnd(() => ctl.end());
+  // the run is built and drawn; FlashGames counts down and its go starts the clock and the game
+  void fr.ready().then(() => ctl.go());
+  // Dev server only: the app and the run for Playwright (stripped from production builds)
+  if (import.meta.env.DEV) Object.assign(window as unknown as Record<string, unknown>, { __dj: a, __flash: ctl });
 }
 
 /** Friends (D339): what friends see this player doing, and where an accepted invite takes them. */

@@ -43,6 +43,8 @@ const tone = (hex: string, d: number): string => shade(hex, 1 + d);
  */
 export function cutscenesEnabled(): boolean {
   if (typeof location === 'undefined') return false;
+  // a FlashGames run (D452) is against the clock: title and name cards only
+  if ((globalThis as { FlashRun?: { active?: boolean } }).FlashRun?.active) return false;
   const q = new URLSearchParams(location.search);
   if (q.has('cutscenes')) return q.get('cutscenes') !== '0';
   return !q.has('auto') && !q.has('nocut');

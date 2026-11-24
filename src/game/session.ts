@@ -16,6 +16,8 @@ import { doorTiles, entryPoint, OPPOSITE, ROOM_W, ROOM_Y0, T, TERRAIN, TILE, wor
 import { generateZone, neighbourId, type RoomNode, type ZoneLayout } from './procgen/zone';
 import { buildRoom, type RoomMarkers } from './procgen/rooms';
 import { planRoom, roomCountMult, type RoomPlan } from './procgen/waves';
+import { modRoomPlan } from './procgen/modPlan';
+import { runMods } from './runMods';
 import { smallChest, treasureChest } from './procgen/chests';
 import { enemyFullHp, spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
 import { spawnPlayer, refreshDerived, resetSpellCooldowns } from './player/player';
@@ -68,6 +70,10 @@ export interface SessionListener {
   gary?(p: Entity): void;
   /** Wave Rush (GAME_DESIGN §24): an attempt began, a stage was reached, a room cleared, a cycle cleared, the party died */
   rush?(e: RushEvent): void;
+  /** an enemy was killed (after its drops and the session's own bookkeeping; a FlashGames run scores it, D452) */
+  enemyKilled?(e: Entity): void;
+  /** the room's fight is won: its waves (or its challenger) are all down */
+  roomCleared?(node: RoomNode): void;
 }
 
 /** What happened in a Wave Rush, for the scene (banners, the unlock, saving) and the host's guests (their own records). */
@@ -191,6 +197,7 @@ export class GameSession {
         if (e.en?.def.traits?.mimic && e.en.mimicChestId) this.mimicKilled(e);
         if (e.en?.bonusBoss) this.bonusBossKilled(e);
         else if (e.en?.isBoss) this.bossKilled(e);
+        this.listener.enemyKilled?.(e);
         if (e.en?.def.id === INSTRUCTOR.id) {
           this.save.world.instructorKilled = true;
           lootHooks.instructor(this, e.x, e.y);
@@ -386,7 +393,8 @@ export class GameSession {
     const cleared = ws.roomsCleared.includes(roomId) || this.bonusBeatenIn(roomId);
     this.roomPhase = 'peace';
     if ((node.kind === 'combat' || node.kind === 'ambush') && !cleared) {
-      this.plan = planRoom(this.layout, node, this.players.length);
+      // a FlashGames run's modifiers (D452) may change the plan; the normal game's leave it as it is
+      this.plan = modRoomPlan(planRoom(this.layout, node, this.players.length), this.layout, node);
       this.roomPhase = 'armed';
       this.lockAt = node.kind === 'ambush' ? w.time : 0;
       // a Wave Rush room has no door to walk through: its first wave comes a moment after the party arrives
@@ -682,19 +690,23 @@ export class GameSession {
       }
       w.spawn('interact', x, y, { radius: 18, drawId: 'chest', it: { kind: 'chest', key: plan.id, label: 'Open', used: false, holdS: HOLD_S, chestKind: plan.kind } });
     };
+    // Mimic Mania (D452): a FlashGames run's chests are all mimics (Mimic's Tooth still turns them off)
+    const allMimic = runMods().allMimic && !noMimics;
     if (node.kind === 'treasure' && m.chests[0]) {
       const plan = treasureChest(this.layout, node, noMimics);
+      if (allMimic) plan.mimic = true;
       chestAt(plan, m.chests[0][0], m.chests[0][1]);
       if (plan.guarded && !cleared && !ws.chestsOpened.includes(plan.id)) {
         // a guard wave: half a normal room's budget from the mix
         const p = planRoom(this.layout, { ...node, kind: 'combat', depth: Math.max(1, Math.floor(node.depth / 2)) }, this.players.length);
-        this.plan = { waves: p.waves.slice(0, 1), ambush: false };
+        this.plan = modRoomPlan({ waves: p.waves.slice(0, 1), ambush: false }, this.layout, node, false);
         this.roomPhase = 'armed';
       }
     }
     // a combat room's chest (rolled with the zone, D93) stands there from the moment you walk in, fight or not
     if (node.kind === 'combat' || node.kind === 'ambush') {
-      const plan = smallChest(this.layout, node, noMimics);
+      // ... and every combat room has one
+      const plan = allMimic && !this.layout.rush ? { id: `${node.id}-c0`, kind: 'small' as const, mimic: true, guarded: false } : smallChest(this.layout, node, noMimics);
       const at = m.chests[0] ?? w.room.nearestFloor(640, 368, 22);
       if (plan) chestAt(plan, at[0], at[1]);
     }
@@ -993,6 +1005,7 @@ export class GameSession {
     this.applyDoorLocks();
     w.sfx('doorOpen');
     w.emit({ t: 'msg', text: 'Room cleared.', color: '#a9b7a0' });
+    this.listener.roomCleared?.(this.node);
     if (this.rush) {
       this.save.rush!.roomsCleared++;
       this.listener.rush?.({ kind: 'room', cycle: this.rush.cycle, stage: this.rush.stage });

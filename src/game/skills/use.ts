@@ -12,6 +12,7 @@ import { dist } from '../../engine/math';
 import { toolForSchool, type Derived, type SpellSchool } from '../player/derived';
 import type { EffectDef, Item, SkillDef, SpellDef, Stats } from '../types';
 import type { Entity, World } from '../world';
+import { runMods } from '../runMods';
 
 export const SKILL_RECOVER_S = 0.2;
 
@@ -236,6 +237,8 @@ export function tryCastSpell(w: World, e: Entity, i: number, keys: SpellKeys = '
   let cooldown = sp.cooldownS * (1 - d.spellCdr);
   // D422: Overload halves the cooldown of every spell cast while it lasts (its own cooldown is set before it starts)
   cooldown *= Math.max(0.1, 1 + buffSum(e, 'spellCooldownPct', now));
+  // a FlashGames Spells Only run (D452)
+  cooldown *= runMods().spellCooldownMult;
   if (boost) {
     power *= 1 + boost.powerPct;
     if (boost.noCooldown) cooldown = 0.2;

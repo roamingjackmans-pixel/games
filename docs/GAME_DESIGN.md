@@ -40,6 +40,7 @@ spell and class) live in [CONTENT_ENEMIES.md](CONTENT_ENEMIES.md), [CONTENT_ITEM
 22. [Tools: debug menu, balance report, version](#22-tools-debug-menu-balance-report-version)
 23. [Not built](#23-not-built)
 24. [Wave Rush](#24-wave-rush) — the horde mode: a room per zone, a boss, the next cycle
+25. [FlashGames mode](#25-flashgames-mode) — `?flash=`: the daily 15-minute seeded speedrun, its modifiers and score
 
 ---
 
@@ -1083,6 +1084,7 @@ every load (older gems lose their tiers, D284; repeated item ids are renewed, D2
 file and import from one. Autosave on rest, zone change, boss kill, level up, pickup (debounced), every 30 s and on
 unload. Each character also carries its own pad layout (D266), Bestiary, proficiency and statistics. Settings
 (`dj.settings`), achievements (`dj.achievements`) and account-wide statistics (`dj.stats`) are shared by every slot.
+A FlashGames run (§25) reads none of them but the settings and writes none of them (D452).
 
 ## 15. Classes
 
@@ -1297,3 +1299,71 @@ HUD shows "WAVE RUSH · CYCLE n · ROOM k OF 8 · time"; there is no minimap or 
 furthest point (cycle and room, the boss, or cleared), highest cycle cleared, cycles cleared, rooms cleared, fastest
 cycle, time in Wave Rush, and the **best time for every cycle cleared**. The All characters tab names the browser's
 best cleared cycle. Co-op guests keep their own record of the host's run.
+
+## 25. FlashGames mode
+
+**FlashGames** (`josephjackman.com/games/flashgames/`) is a daily 15-minute speedrun that rotates through the owner's
+single-player games: each day (midnight US Central) its server picks one game and 2–3 modifiers, everyone plays the same
+seeded run, and friends compare scores. Its contract is the FlashGames repo's `docs/PROTOCOL.md` (v1). Dungeon Joe's
+side (D452): `public/flash.json` (served at `/games/dungeonjoe/flash.json`), `src/flash/` (the SDK `flash-run.js` and its
+types copied unchanged, the modifiers, the run's setup, the score, the controller, its drawing) and
+`src/game/runMods.ts` (the modifiers the systems read; all neutral in the normal game, which plays exactly as before).
+
+**Starting.** The game opened with `?flash=<code>` shows no title, save picker or character creation. Joe is built from
+the day's seed: a class from `FlashRun.rng('class')` (any of the ten, with its kit), a seeded look, the tutorial done (no
+Training Hall or Instructor), at zone 1's first bonfire, in the world seed `FLASH-<seed>`, so every zone, wave, chest and
+drop is the same for everyone. The room is built and drawn under **GET READY** and nothing moves until FlashGames' go
+(3-2-1 there; a second when the game is opened on its own). No co-op, friends, debug menu or cutscenes (zone title cards
+and boss name cards only).
+
+**Nothing is saved.** A run's store reads the browser's settings (`dj.settings`: keys, volume) and writes nothing back:
+its save (slot 0, none of the ten), achievements, statistics and friends live in memory and go with the tab. The pause
+menu has no Save and quit, Achievements or Statistics; the clock keeps running while paused or in a menu.
+
+**Dying** is as always (§9.3): a Shardpile, and Joe wakes at the last bonfire rested at with full HP and Thermos. The
+death screen gets up by itself after **3 s**, so every death costs the same 3 s plus the walk back. Under **Eviction
+Notice** a death ends the run (`over(…, 'dead')`). Beating The Landlord and climbing out ends it as won, with 10 points
+for every second left.
+
+**The end.** When FlashGames' 15 minutes are up the sim stops, input is ignored and the final score shows over the
+frozen game ("TIME'S UP", the score and its line). The day's modifiers and the score so far sit in a box under the
+minimap; there is no timer (FlashGames shows it). The canvas fills the frame as it fills a window (letterboxed 16:9).
+
+### 25.1 Score
+
+Every point is × the zone it is earned in (1–8), added as it is earned and never taken back:
+
+| Event | Points × zone |
+|---|---|
+| An enemy killed (respawned ones too) | 10 |
+| An Elite or a Mimic killed (instead) | 50 |
+| A room's fight won (each room once a run) | 100 |
+| A Boss Rush Hour challenger beaten (each room once; again it counts as an Elite) | 1,000 |
+| The zone's boss beaten | 3,000 |
+| Reaching a new zone (zone 2 on) | 2,000 |
+
+Deaths cost only time. Gary, the dummies and The Instructor score nothing. The line under it reads like "Zone 2 · 14
+rooms · 112 kills · 6 Elites · 1 boss · 2 deaths". `maxScore` 1,000,000 (a sanity cap the server enforces).
+
+### 25.2 Modifiers
+
+The server picks **2–3** (`pick`), never two that exclude each other. Ids are permanent once live.
+
+| Id | Name | What it does | Excludes |
+|---|---|---|---|
+| `glass` | Glass Joe (weight 2) | Max HP is 1; every stat is 999 (level 5,947). | bottomless, dry, onelife |
+| `turbo` | Double Espresso | Two sim steps every update: the whole game, Joe included, at double speed. | |
+| `mimics` | Mimic Mania | Every chest is a mimic (treasure rooms too), and every combat and ambush room has one. Mimic's Tooth still turns them off. | |
+| `elites` | Elite Squad | Every planned enemy that can be an Elite is one, with a seeded affix (swarm pieces and special enemies cannot be). | horde |
+| `horde` | Paper Horde | Room enemies have 1 HP (bosses, mimics and NPCs keep theirs); a room's waves come three times over (an ambush springs its solo waves at once, the repeats follow), and Shards and drops are divided by three so a room pays what it did. | elites |
+| `bottomless` | Bottomless Thermos | A drink uses no charge (the HUD shows ∞). | dry, glass |
+| `dry` | Dry Spell | The Thermos holds 0 and nothing refills it; bonfires still heal. | bottomless, glass |
+| `crimson` | Seeing Red | Every plain enemy attack, bosses' too, is Red (no block, no parry); Piercing ones stay Piercing and utilities stay utilities. | |
+| `pinata` | Piñata Party | Every enemy killed drops an item (on top of its normal roll, which is still made). | |
+| `tiny` | Tiny Joe | Drawn and hit circle ×0.55, body ×0.6, reach ×0.8, walk ×1.2, max HP ×0.6. | huge |
+| `huge` | Huge Joe | Drawn and hit circle ×1.6, body ×1.35, reach ×1.5, walk ×0.85, max HP ×2, +25% weapon damage. | tiny |
+| `wildcard` | Wrong Bag | The weapon hand holds a random weapon class (any of 25), Legendary at item level 1 with its first skill; Joe's stats rise to its requirements; two-handed if it must be or the off hand is empty. | spells |
+| `spells` | Spells Only | A Rare Arcane Staff in the weapon hand (Q / E / R), a Rare Silver Talisman in the off hand (1 / 2 / 3), Arcane Bolt + 2 seeded Brain spells and Sunray + Heal + 1 seeded Prayer spell; Brain and Prayer rise to what they need; no weapon in the bag, and weapons cannot be equipped; spell cooldowns ×0.5. | wildcard |
+| `bossy` | Boss Rush Hour | Every third combat or ambush room of a zone (counted nearest the start first) holds a challenger instead of waves: a boss from another zone (never `arenaBound`), in its second phase, on a bar of 30% of this zone's boss's HP, hitting like this zone's boss (the NG+ bonus fight, §7.5). | |
+| `onelife` | Eviction Notice | A death ends the run. | glass |
+| `dark` | Lights Out | Every room is dark but for a pool of lantern light round Joe (clear to 90 px, near black by 330 px). | |

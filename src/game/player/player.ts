@@ -13,6 +13,7 @@ import { computeDerived, weaponHitByType } from './derived';
 import { tryCastSpell, tryUseConsumable, spellKeysAreOffSkills, tryUseSkill, updatePlayerAction } from '../skills/use';
 import type { Character, SwingDef, WeaponDef } from '../types';
 import { netHostDriven, newStatus, type DamageSpec, type Entity, type PlayerC, type World } from '../world';
+import { onRunModsChange, runMods } from '../runMods';
 
 /** Walking speed while swinging (D88), by weapon speed class; a pair in both hands may cut the slowdown (D346). */
 export function attackMoveMult(d: { weapon: WeaponDef; twoHanded: boolean }): number {
@@ -38,9 +39,14 @@ export const PLAYER_RADIUS = 14;
  * projectiles, friendly fire) tests this circle round the feet, 17 px, drawn as the silver ring under them. The body
  * circle (PLAYER_RADIUS round the centre) is only for walking into walls and bodies.
  */
-export const PLAYER_DOT_R = 17;
+export let PLAYER_DOT_R = 17;
 /** how far below a player's centre (their belt) the circle's centre sits, on their feet (D262) */
-export const PLAYER_DOT_DY = 9;
+export let PLAYER_DOT_DY = 9;
+// a FlashGames Tiny or Huge Joe (D452) scales the circle with the body; the normal game never changes it
+onRunModsChange((m) => {
+  PLAYER_DOT_R = 17 * m.playerSize;
+  PLAYER_DOT_DY = 9 * m.playerSize;
+});
 
 /** Where an attack tests a body (D384): a player's hit circle at the feet, anything else its own body circle. */
 export function hitCircleOf(t: Pick<Entity, 'x' | 'y' | 'radius' | 'pl'>): { x: number; y: number; r: number } {
@@ -125,7 +131,7 @@ export function spawnPlayer(w: World, char: Character, slot: number, local: bool
     remote: false,
   };
   const e = w.spawn('player', x, y, {
-    radius: PLAYER_RADIUS,
+    radius: PLAYER_RADIUS * runMods().playerBody,
     team: 0,
     solid: true,
     drawId: 'joe',
@@ -434,7 +440,7 @@ function swingHits(w: World, e: Entity): void {
   const heavy = ['veryslow', 'slow'].includes(pl.derived.weapon.speedClass);
   let any = false;
   // proficiency reach (D178) lengthens every swing
-  const reach = pl.derived.reachMult;
+  const reach = pl.derived.reachMult * runMods().playerReach;
   // an overhead (D320) lands a circle in front: reach carries it further out
   const slamX = hb.shape === 'circle' ? e.x + Math.cos(e.facing) * hb.d * reach : 0;
   const slamY = hb.shape === 'circle' ? e.y + Math.sin(e.facing) * hb.d * reach : 0;
@@ -633,7 +639,8 @@ function startFlask(w: World, e: Entity): void {
     w.emit({ t: 'msg', text: 'The Thermos is empty.', forPlayer: pl.playerId });
     return;
   }
-  ch.flaskCur--;
+  // Bottomless Thermos (D452): a FlashGames run's drink uses no charge
+  if (!runMods().flaskFree) ch.flaskCur--;
   const now = w.time;
   pl.state = 'flask';
   pl.stateUntil = now + FLASK_DRINK_S;

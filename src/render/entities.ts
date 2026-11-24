@@ -26,6 +26,7 @@ import type { BossDef, Character, DamageType, SwingDef, SwingMove } from '../gam
 import { PHASE_TRANSITION_S } from '../game/combat/bossPhase';
 import { essenceDef } from '../data/essence';
 import type { Entity, World } from '../game/world';
+import { runMods } from '../game/runMods';
 import { SKILL_RECOVER_S } from '../game/skills/use';
 import { channelPose, dashPose, leapPose, skillMotion, skillWeaponPose } from './skillPose';
 
@@ -657,7 +658,8 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     tint: null,
     alpha: (ghost ? 0.55 : dodge ? 0.75 : 1) * e.anim.alpha,
     ghost,
-    scale: e.anim.scale,
+    // a FlashGames Tiny or Huge Joe (D452)
+    scale: e.anim.scale * runMods().playerSize,
     twoHanded: two && !dual,
     blocking: pl.blocking,
     ...(main ? { main } : {}),
@@ -677,7 +679,8 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     const a0 = move === 'spin' ? e.facing + 1.4 * dir : e.facing - half * dir;
     const a1 = move === 'spin' ? e.facing + (1.4 - Math.PI * 2 * k) * dir : e.facing + (-half + 2 * half * k) * dir;
     // a whip's crack reaches its full length; a blade's trail stays near the body
-    const r = move === 'lashSweep' ? hb.r * pl.derived.reachMult * 0.95 : Math.min(hb.r * pl.derived.reachMult, 130) * 0.85;
+    const reach = pl.derived.reachMult * runMods().playerReach;
+    const r = move === 'lashSweep' ? hb.r * reach * 0.95 : Math.min(hb.r * reach, 130 * runMods().playerReach) * 0.85;
     ctx.save();
     ctx.globalAlpha = 0.4 * (1 - k * 0.5);
     ctx.strokeStyle = swingGlow;
@@ -695,7 +698,7 @@ export function drawPlayerEntity(ctx: CanvasRenderingContext2D, w: World, e: Ent
     const t = sw.phase === 'active' ? Math.max(0, k * 1.4 - 0.4) : 1;
     const fade = sw.phase === 'active' ? 1 : 1 - k;
     if (t > 0 && fade > 0) {
-      const d = hb.d * pl.derived.reachMult;
+      const d = hb.d * pl.derived.reachMult * runMods().playerReach;
       const cx = x + Math.cos(e.facing) * d;
       const cy = y + Math.sin(e.facing) * d;
       ctx.save();

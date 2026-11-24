@@ -14,7 +14,8 @@ const noMathRandom = {
 };
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'playwright-report/**', 'test-results/**', 'coverage/**'] },
+  // .claude/**: other sessions' git worktrees; src/flash/flash-run.*: the FlashGames SDK, kept exactly as delivered (D452)
+  { ignores: ['dist/**', 'node_modules/**', 'playwright-report/**', 'test-results/**', 'coverage/**', '.claude/**', 'src/flash/flash-run.*'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

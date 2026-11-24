@@ -50,6 +50,15 @@ export abstract class WorldScene implements Scene {
     app().input.gameplayEnabled = true;
   }
 
+  /** The sim waits and gameplay input is off while this is true (a FlashGames run before its go and after its end). */
+  protected simHeld(): boolean {
+    return false;
+  }
+  /** Sim steps per update (a FlashGames Turbo run takes two, D452). */
+  protected simSteps(): number {
+    return 1;
+  }
+
   /** Called before each sim tick (room logic, network). */
   protected beforeStep(_dt: number): void {}
   protected afterStep(_dt: number): void {}
@@ -57,7 +66,8 @@ export abstract class WorldScene implements Scene {
   update(dt: number): void {
     const a = app();
     const w = this.w;
-    a.input.gameplayEnabled = !this.menuOpen;
+    const held = this.simHeld();
+    a.input.gameplayEnabled = !this.menuOpen && !held;
     w.hitstopEnabled = a.settings.video.hitstop;
     // the simulating side (solo or the co-op host) uses its own friendly-fire setting; a guest's mirror gets the
     // host's with each snapshot (D115)
@@ -67,7 +77,14 @@ export abstract class WorldScene implements Scene {
       this.local.pl.input = inp;
     }
     this.beforeStep(dt);
-    if (this.simulate && (!this.menuOpen || w.playerCount > 1)) stepWorld(w, dt);
+    if (this.simulate && !held && (!this.menuOpen || w.playerCount > 1)) {
+      const steps = this.simSteps();
+      for (let i = 0; i < steps; i++) {
+        // a second step of the same frame: held buttons stay held, but a press is not pressed twice
+        if (i > 0 && this.local?.pl) this.local.pl.input = { ...this.local.pl.input, pressed: 0 };
+        stepWorld(w, dt);
+      }
+    }
     this.afterStep(dt);
     this.view.consume(this.w, this.w.events);
     this.w.events.length = 0;
@@ -78,7 +95,7 @@ export abstract class WorldScene implements Scene {
     const a = app();
     this.view.localPlayerId = this.local?.pl?.playerId ?? '';
     this.view.aimArrow = a.input.lastDevice === 'pad';
-    this.view.render(ctx, w, this.menuOpen && w.playerCount <= 1 ? 1 : alpha, realDt);
+    this.view.render(ctx, w, (this.menuOpen && w.playerCount <= 1) || this.simHeld() ? 1 : alpha, realDt);
     if (this.local?.st && this.local.st.controls.blind > w.time) this.view.drawBlind(ctx, this.local.x, this.local.y, 1);
     this.renderOverlay(ctx, alpha, realDt);
     if (this.local) {

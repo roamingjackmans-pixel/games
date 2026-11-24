@@ -166,7 +166,52 @@ export class MemoryStore implements KeyValueStore {
   }
 }
 
+/**
+ * A store that reads some keys from another store and keeps every write to itself (D452): a FlashGames run reads the
+ * browser's settings (keys, volume) but never writes them, and its saves, achievements and statistics live only in
+ * memory. A key it has written or removed reads back its own value.
+ */
+export class ReadThroughStore implements KeyValueStore {
+  private m = new Map<string, string | null>();
+  constructor(
+    private base: KeyValueStore | null,
+    private readable: (k: string) => boolean,
+  ) {}
+  getItem(k: string): string | null {
+    if (this.m.has(k)) return this.m.get(k)!;
+    if (!this.base || !this.readable(k)) return null;
+    try {
+      return this.base.getItem(k);
+    } catch {
+      return null;
+    }
+  }
+  setItem(k: string, v: string): void {
+    this.m.set(k, v);
+  }
+  removeItem(k: string): void {
+    this.m.set(k, null);
+  }
+}
+
+let storeOverride: KeyValueStore | null = null;
+
+/** Every save, setting and record goes to this store instead of the browser's (a FlashGames run, D452); null: back. */
+export function useStore(s: KeyValueStore | null): void {
+  storeOverride = s;
+}
+
+/** The browser's localStorage, or null where it is blocked (a sandboxed frame, private mode). Never written here. */
+export function browserStore(): KeyValueStore | null {
+  try {
+    return typeof localStorage !== 'undefined' ? localStorage : null;
+  } catch {
+    return null;
+  }
+}
+
 export function getStore(): KeyValueStore {
+  if (storeOverride) return storeOverride;
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('dj.probe', '1');
