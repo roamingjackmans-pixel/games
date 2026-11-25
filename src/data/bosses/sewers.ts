@@ -1,5 +1,5 @@
-// CONTENT_ENEMIES §11 Boss 3 — The Bloatking (Drowned Sewers). Flooded hall with 5 raised grates (safe from
-// waves); everyone is 15% slower off the grates. Phase 2: the throne sinks and he swims.
+// CONTENT_ENEMIES §11 Boss 3 — The Bloatking (Drowned Sewers). Flooded hall with raised grates (safe from
+// waves). Phase 2: the throne sinks and he swims, and the flood swirls round the middle. No phase slows anyone (D461).
 import type { AttackDef, BossDef } from '../../game/types';
 
 const scepterSwing: AttackDef = {
@@ -163,8 +163,9 @@ export const THE_BLOATKING: BossDef = {
       speedMult: 1.2,
       dmgMult: 1.25,
       // the flood swirls into a whirlpool round the middle of the hall that carries everyone 55 px/s anticlockwise
-      // (D95); it stops short of the grates
-      arena: [{ op: 'floodAll', value: 0.3 }, { op: 'movingFloor', floor: { kind: 'ring', x: 640, y: 368, rIn: 60, rOut: 150, speed: -55, look: 'water' } }],
+      // (D95); it stops short of the grates. D461: it no longer slows anyone (was floodAll 0.3: 30% slower off the
+      // grates in phase 2 and the New Game+ third phase)
+      arena: [{ op: 'movingFloor', floor: { kind: 'ring', x: 640, y: 368, rIn: 60, rOut: 150, speed: -55, look: 'water' } }],
       attacks: [scepterSwing, wave, royalDecree, summonCourt(true), belch(true), crosswave],
     },
   ],

@@ -336,7 +336,7 @@ Phase 1 (100% → 50%; speed ×1, damage ×1):
 - **Summon Court**: summons 2 Drowned (max 3); summons 1 Green Slime (max 1), windup 1 s, cd 18
 - **Belch [AREA]**: cone(70°, 350), leaves poisonCloud 4 s, ×0.3 physical (23), poison 25, windup 0.8 s, cd 8
 
-Phase 2 — **The throne sinks** (50% → 0%; speed ×1.2, damage ×1.25, arena: floodAll, movingFloor):
+Phase 2 — **The throne sinks** (50% → 0%; speed ×1.2, damage ×1.25, arena: movingFloor; D461: no flood slow):
 - **Scepter Swing**: arc(100°, 130), ×1.2 physical (115), windup 0.7 s, cd 2.4, parryable
 - **Wave [PIERCE] [AREA]**: wave(140, 340 px/s) from random, grates safe, 2 gaps, ×1.4 physical (134), tell 1.2 s, cd 9
 - **Royal Decree [RED]**: line(110, 400), charges 400 px, ×1.6 physical (153), tell 0.7 s, cd 7
