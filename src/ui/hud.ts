@@ -448,11 +448,6 @@ export function drawHud(ctx: CanvasRenderingContext2D, w: World, p: Entity, sett
     drawPromptText(ctx, '{cycleQuick} next', QUICK_X - QUICK_R - 10, HUD_Y + SKILL_R - QUICK_R, { size: 11, align: 'right', weight: 'normal', color: '#a59c8a', alpha });
   }
 
-  // parry/riposte hint, over the circles (and over a boss bar's name)
-  if (pl.riposteBuffUntil > now) {
-    const ry = w.bossId ? 566 : 600;
-    glow(ctx, 640, ry, 60, '#ffffff', 0.25);
-    drawPromptText(ctx, 'RIPOSTE READY  {attack}', 640, ry + 1, { size: 14, color: '#ffffff' });
-  }
+  // D460: no "RIPOSTE READY" banner after a parry (the reeling enemy is the cue)
   if (pl.guardBrokenUntil > now) drawText(ctx, 'GUARD BROKEN', p.x, p.y - 40 - statusRows * SB_ROW, { size: 13, align: 'center', weight: 'bold', color: '#ff6a5a' });
 }
