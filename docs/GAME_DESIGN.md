@@ -383,9 +383,9 @@ Touch controls on phones and tablets (D143), the Steam Controller over WebHID (D
   4–8 big patches up to 30% of the floor; otherwise 1–3 patches up to 8%), never in boss arenas, start or bonfire
   rooms, always leaving a clear route joining every door, spawn and chest.
   - **Slow** (gooey, themed per zone): −35% walking for players and walking enemies (fliers unaffected). Never
-    shortens a dodge, leap or knockback; never stacks.
+    shortens a dodge, leap or knockback; never stacks. Out of combat it slows no player (D459).
   - **Hurt** (the same spiked patch in every zone, coloured by zone): players take **3% of max HP every 0.5 s**,
-    ignoring defense; a dodge carries you over it (D444); enemies are never hurt.
+    ignoring defense; a dodge carries you over it (D444); enemies are never hurt. Out of combat it hurts nobody (D329).
 - **Holes** (D173, D175, D185): pits and the Abyss's void block every body's own movement — walking, dodging, dashes,
   leaps, a swing's step. Only an attack puts you in: a knockback, a pull, or floor collapsing under you. A pit costs
   30% of max HP; the void 50% and 1.5 s to climb back (untouchable while falling). Fliers path round holes too. A

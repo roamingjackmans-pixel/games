@@ -8,7 +8,7 @@ import { DEG, angleDiff, coneHit, dist, lineHit } from '../../engine/math';
 import { attackStaminaCost, flaskHeal, MAX_PROJECTILE_RANGE, STAMINA_COST_MULT } from '../combat/formulas';
 import { addRevive, applyControl, cleanse, emptySpec, ffVictims, heal, hitAlly, hitEnemy, rawDamage, endPlayerStun, typeColor } from '../combat/damage';
 import { buffSum, hasControl, speedMult } from '../combat/state';
-import { terrainWalkMult } from '../systems/terrain';
+import { playerTerrainWalkMult } from '../systems/terrain';
 import { computeDerived, weaponHitByType } from './derived';
 import { tryCastSpell, tryUseConsumable, spellKeysAreOffSkills, tryUseSkill, updatePlayerAction } from '../skills/use';
 import type { Character, SwingDef, WeaponDef } from '../types';
@@ -953,8 +953,8 @@ export function updatePlayer(w: World, e: Entity, dt: number): void {
     mv = 1;
   } else if (canMove && e.st!.controls.root <= now) {
     let speed = walkSpeedFor(w, e);
-    // Slow terrain (PROCGEN §3.2): walking only; the dodge above is untouched
-    speed *= terrainWalkMult(w.room, e.x, e.y);
+    // Slow terrain (PROCGEN §3.2): walking only, and only in combat (D459); the dodge above is untouched
+    speed *= playerTerrainWalkMult(w, e);
     const ix = inp.moveX;
     const iy = inp.moveY;
     mv = Math.min(1, Math.hypot(ix, iy));
@@ -1062,7 +1062,7 @@ export function updatePuppet(w: World, e: Entity, dt: number): void {
   // a skill, spell or consumable the host runs: its timeline, and walking as it allows, as for any player
   updatePlayerAction(w, e, dt);
   if (e.st!.controls.root <= now && !e.forced) {
-    const speed = walkSpeedFor(w, e) * terrainWalkMult(w.room, e.x, e.y);
+    const speed = walkSpeedFor(w, e) * playerTerrainWalkMult(w, e);
     const mv = Math.min(1, Math.hypot(inp.moveX, inp.moveY));
     if (speed > 0 && mv > 0.05) w.room.moveCircle(e, inp.moveX * speed * dt, inp.moveY * speed * dt, false);
     (e.anim as { moving?: number }).moving = speed > 0 ? mv : 0;

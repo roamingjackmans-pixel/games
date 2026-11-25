@@ -1,8 +1,8 @@
 // Hazardous terrain effects (PROCGEN §3.2, GAME_DESIGN §2.4). Slow terrain: −35% walking speed for players and
 // walking enemies while their centre is on it (one multiplier, never stacked; dodges, leaps, dashes and knockbacks
-// are forced motion and keep their full distance). Hurt terrain: players standing in it take 3% of max HP every
-// 0.5 s (a dodge's i-frames skip a tick; enemies are at home in their dungeon and take none); out of combat it hurts nobody
-// and shows nothing (D329, D430).
+// are forced motion and keep their full distance); out of combat it slows no player (D459). Hurt terrain: players
+// standing in it take 3% of max HP every 0.5 s (a dodge's i-frames skip a tick; enemies are at home in their dungeon
+// and take none); out of combat it hurts nobody and shows nothing (D329, D430).
 import { dodgingOverGround, rawDamage } from '../combat/damage';
 import { TERRAIN, TERRAIN_SLOW_MULT, type Room } from '../room';
 import type { DamageType } from '../types';
@@ -15,6 +15,14 @@ export const TERRAIN_HURT_TICK_S = 0.5;
 export function terrainWalkMult(room: Room, x: number, y: number, flying = false): number {
   if (flying) return 1;
   return room.terrainAt(x, y) === TERRAIN.Slow ? TERRAIN_SLOW_MULT : 1;
+}
+
+/**
+ * A player's walking speed multiplier from the ground under them: Slow terrain slows them only in combat (D459),
+ * the way Hurt terrain only hurts in combat (D329). Out of combat is `hostilesPresent`, the same test.
+ */
+export function playerTerrainWalkMult(w: World, e: Entity): number {
+  return w.hostilesPresent() ? terrainWalkMult(w.room, e.x, e.y) : 1;
 }
 
 /** The damage number's color per zone (grave-fire, acid, sewage, thorns, embers, frost, sparks, void). */

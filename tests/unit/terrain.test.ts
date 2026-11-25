@@ -169,6 +169,7 @@ describe('hazardous terrain effects', () => {
     const plain = setup(0);
     const slow = setup(TERRAIN.Slow);
     for (const s of [plain, slow]) {
+      inCombat(s.w); // D459: it only slows in a fight
       walkRight(s.p);
       run(s.w, 1);
     }
@@ -187,6 +188,23 @@ describe('hazardous terrain effects', () => {
     }
     expect(a.p.x - 300).toBeGreaterThan(60);
     expect(b.p.x - 300).toBeCloseTo(a.p.x - 300, 5);
+  });
+
+  it('D459: out of combat Slow terrain does not slow a player; once there is something to fight, it does', () => {
+    const plain = setup(0);
+    const calm = setup(TERRAIN.Slow);
+    for (const s of [plain, calm]) {
+      walkRight(s.p);
+      run(s.w, 1);
+    }
+    expect(calm.p.x - 300).toBeGreaterThan(50);
+    expect(calm.p.x - 300).toBeCloseTo(plain.p.x - 300, 5);
+    // a fight starts in the same room: the same ground slows again
+    const fight = setup(TERRAIN.Slow);
+    inCombat(fight.w);
+    walkRight(fight.p);
+    run(fight.w, 1);
+    expect((fight.p.x - 300) / (plain.p.x - 300)).toBeCloseTo(0.65, 2);
   });
 
   it('Slow terrain slows walking enemies but not fliers', () => {
