@@ -197,8 +197,19 @@ export function collapseFloor(w: World, pattern: PatternDef, durationS: number, 
 }
 
 /**
- * The middle of the platform's third farthest from the room's door (BossPhase.passive.stationaryAt 'farThird'),
- * kept at least `r` from the platform's edge so a body of that radius stands wholly on it.
+ * A stationary form stands at least this far (its centre to the edge) inside the platform's far edge, never past
+ * the far third (D457). The Landlord's Gaze Beams start along the line he faces and sweep the half on one side of
+ * it; facing along the far edge, the half they leave clear is the floor behind him. 112 px leaves a player there
+ * 54 px of floor beyond the beam's first touch (30 half-width + 14 body + 14 to the edge = 58 used). It is no
+ * more because Collapse leaves only the floor within 220 px of the centre, and a Maw then needs 260 px from him:
+ * on the phase-3 platform (384 px deep) that is 52 px of slack at 112.
+ */
+export const FAR_EDGE_MIN = 112;
+
+/**
+ * The middle of the platform's third farthest from the room's door (BossPhase.passive.stationaryAt 'farThird'):
+ * a sixth of the way in from the far edge, but at least FAR_EDGE_MIN and never past a third (D457); kept at least
+ * `r` from the platform's edge so a body of that radius stands wholly on it.
  */
 export function farThirdSpot(w: World, r = 0): { x: number; y: number; facing: number } {
   const room = w.room;
@@ -210,12 +221,13 @@ export function farThirdSpot(w: World, r = 0): { x: number; y: number; facing: n
   const py1 = ROOM_Y0 + (b.y1 + 1) * TILE;
   const cx = (px0 + px1) / 2;
   const cy = (py0 + py1) / 2;
+  const inFrom = (len: number): number => Math.min(len / 3, Math.max(len / 6, FAR_EDGE_MIN));
   let x = cx;
   let y = cy;
-  if (door === 's') y = py0 + (py1 - py0) / 6;
-  else if (door === 'n') y = py1 - (py1 - py0) / 6;
-  else if (door === 'w') x = px1 - (px1 - px0) / 6;
-  else x = px0 + (px1 - px0) / 6;
+  if (door === 's') y = py0 + inFrom(py1 - py0);
+  else if (door === 'n') y = py1 - inFrom(py1 - py0);
+  else if (door === 'w') x = px1 - inFrom(px1 - px0);
+  else x = px0 + inFrom(px1 - px0);
   if (px1 - px0 > 2 * r) x = Math.max(px0 + r, Math.min(px1 - r, x));
   if (py1 - py0 > 2 * r) y = Math.max(py0 + r, Math.min(py1 - r, y));
   if (room.circleBlocked(x, y, 4)) [x, y] = room.nearestFloor(x, y, 14);

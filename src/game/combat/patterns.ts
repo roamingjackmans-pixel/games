@@ -22,12 +22,14 @@ export type Shape =
   | { k: 'line'; x: number; y: number; a: number; w: number; l: number }
   | { k: 'cone'; x: number; y: number; a: number; half: number; r: number }
   /** gaps: distances from (x, y) where the sweep is broken, each gapW wide (D163) */
-  | { k: 'sweep'; x: number; y: number; a0: number; arc: number; half: number; r: number; dur: number; line: boolean; w: number; gaps?: number[]; gapW?: number }
+  /** off: for one of several sweeps round its caster, its aim's angle from the attack's (kept while the windup tracks, D457) */
+  | { k: 'sweep'; x: number; y: number; a0: number; arc: number; half: number; r: number; dur: number; line: boolean; w: number; gaps?: number[]; gapW?: number; off?: number }
   | { k: 'expRing'; x: number; y: number; speed: number; thick: number; gaps: number[]; gapW: number; maxR: number }
   /** gaps: centres of breaks in the wall along its length (x for a north/south wave, y for east/west), each gapW wide */
   | { k: 'wave'; dir: 'north' | 'south' | 'east' | 'west'; w: number; speed: number; safeGrates: boolean; gaps?: number[]; gapW?: number }
   | { k: 'pockets'; pockets: { x: number; y: number; r: number }[] }
-  | { k: 'beam'; x: number; y: number; a: number; w: number; l: number; turn: number }
+  /** off: for one of several beams, its angle from the attack's aim (the Landlord's opposite pair: 0 and π), kept while the windup tracks (D457) */
+  | { k: 'beam'; x: number; y: number; a: number; w: number; l: number; turn: number; off?: number }
   /** a boulder of diameter 0.9 w rolling from (x, y) along angle a for l px at speed px/s after impact */
   | { k: 'roll'; x: number; y: number; a: number; w: number; l: number; speed: number };
 
@@ -539,11 +541,12 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
       const out: TeleSpec[] = [];
       const n = p.count ?? 1;
       for (let i = 0; i < n; i++) {
-        const a = c.facing + (i * Math.PI * 2) / n;
+        const off = (i * Math.PI * 2) / n;
+        const a = c.facing + off;
         const l = p.l === 'room' ? ROOM_DIAG : p.l;
         const turn = p.turnRateDeg * DEG * (p.opposite && i % 2 === 1 ? -1 : 1);
         out.push(
-          spec([{ k: 'beam', x, y, a, w: p.w, l, turn }], {
+          spec([{ k: 'beam', x, y, a, w: p.w, l, turn, ...(off ? { off } : {}) }], {
             mode: 'tick',
             activeS: p.durationS,
             tickS: p.tickS,
@@ -624,9 +627,10 @@ function remoteSweeps(p: Extract<PatternDef, { kind: 'sweep' }>, c: PatternCtx):
     const dir = (p.clockwise === false ? -1 : 1) * (p.opposite && i % 2 === 1 ? -1 : 1);
     const arc = p.angleDeg * DEG * dir;
     const self = p.anchor === 'self';
-    const aim = self ? c.facing + (i * Math.PI * 2) / n : Math.atan2(c.ty - y, c.tx - x);
+    const off = self ? (i * Math.PI * 2) / n : 0;
+    const aim = self ? c.facing + off : Math.atan2(c.ty - y, c.tx - x);
     const a0 = Math.abs(p.angleDeg) >= 360 ? aim : aim - arc / 2;
-    return spec([withSweepGaps({ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30 }, p, c.rng)], {
+    return spec([withSweepGaps({ k: 'sweep', x, y, a0, arc, half: (p.beamLine ? 4 : 14) * DEG, r, dur: p.durationS, line: !!p.beamLine, w: p.w ?? 30, ...(off ? { off } : {}) }, p, c.rng)], {
       mode: p.tickS ? 'tick' : 'once',
       activeS: p.durationS,
       tickS: p.tickS ?? 0,

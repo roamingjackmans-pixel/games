@@ -18,7 +18,8 @@ import { stepWorld } from '../../src/game/sim';
 import { emptySpec, hitEnemy } from '../../src/game/combat/damage';
 import { PHASE_TRANSITION_S } from '../../src/game/combat/bossPhase';
 import { startEnemyAttack } from '../../src/game/enemies/attacks';
-import { CRUMBLE_S, platformBounds } from '../../src/game/boss/platform';
+import { CRUMBLE_S, FAR_EDGE_MIN, farThirdSpot, platformBounds } from '../../src/game/boss/platform';
+import { PLAYER_RADIUS } from '../../src/game/player/player';
 import { OVERLAY, ROOM_H, ROOM_W, ROOM_Y0, T, TILE, tileCenter, type Side } from '../../src/game/room';
 import type { AttackDef } from '../../src/game/types';
 import type { Entity, World } from '../../src/game/world';
@@ -351,6 +352,94 @@ describe('The Landlord: the fight', () => {
     expect(Math.hypot(p.x - 640, p.y - 368)).toBeLessThan(220 + 32);
     run(s, 2.6);
     expect(floorCount(s.w)).toBe(before);
+  });
+
+  it('the void face stands at least FAR_EDGE_MIN in from the far edge, inside the far third, whatever the door (D457)', () => {
+    const s = session();
+    const b = enterArena(s);
+    nextPhase(s, b);
+    run(s, 1);
+    nextPhase(s, b);
+    run(s, 0.1);
+    const w = s.w;
+    const pb = platformBounds(w.room)!;
+    const [x0, y0] = [pb.x0 * TILE, ROOM_Y0 + pb.y0 * TILE];
+    const [x1, y1] = [(pb.x1 + 1) * TILE, ROOM_Y0 + (pb.y1 + 1) * TILE];
+    for (const d of ['n', 's', 'e', 'w'] as Side[]) {
+      for (const k of ['n', 's', 'e', 'w'] as Side[]) w.room.doors[k].exists = k === d;
+      const spot = farThirdSpot(w, b.radius + 4);
+      const len = d === 'n' || d === 's' ? y1 - y0 : x1 - x0;
+      const back = d === 's' ? spot.y - y0 : d === 'n' ? y1 - spot.y : d === 'w' ? x1 - spot.x : spot.x - x0;
+      expect(back, d).toBeGreaterThanOrEqual(FAR_EDGE_MIN - 0.01);
+      expect(back, d).toBeLessThanOrEqual(len / 3 + 0.01);
+      // Collapse keeps the floor within 220 px of the centre; a Maw then needs 220 + 40 from him: room to spare
+      const slack = Math.hypot(spot.x - 640, spot.y - 368) + (220 - PLAYER_RADIUS) - (220 + 40 + PLAYER_RADIUS);
+      expect(slack, d).toBeGreaterThanOrEqual(10);
+    }
+  });
+
+  it('Gaze Beams always leave room behind them, even facing along the far edge (D457)', () => {
+    // a south door puts the face under the north edge, the short way across the platform: the tight case
+    const beams = (escape: boolean): { before: number; after: number } => {
+      const s = session();
+      const b = enterArena(s);
+      nextPhase(s, b);
+      run(s, 1);
+      for (const k of ['n', 's', 'e', 'w'] as Side[]) s.w.room.doors[k].exists = k === 's';
+      nextPhase(s, b);
+      run(s, 0.1);
+      expect(b.en!.phase).toBe(2);
+      clearAdds(s.w);
+      const pb = platformBounds(s.w.room)!;
+      expect(b.y - (ROOM_Y0 + pb.y0 * TILE)).toBeGreaterThanOrEqual(FAR_EDGE_MIN - 0.01);
+      const p = s.localPlayer!;
+      const input = p.pl!.input;
+      input.moveX = 0;
+      input.moveY = 0;
+      // level with him on his right: the beams lock on that line and sweep the half below it, so the half they
+      // leave is the floor behind him. Once the aim locks (60% of the windup), walk up off the line and hold there
+      // against the pull, by the real walking controls.
+      p.x = p.px = b.x + 260;
+      p.y = p.py = b.y;
+      p.hp!.hp = p.hp!.max;
+      const before = p.hp!.hp;
+      b.facing = 0;
+      b.en!.attack = null;
+      const atk = attack(2, 'landlord_gaze_beams');
+      startEnemyAttack(s.w, b, atk, p);
+      const current = (): NonNullable<typeof b.en>['attack'] => b.en!.attack;
+      const teles = current()!.teleIds.map((id) => s.w.get(id)!);
+      let goal: [number, number] | null = null;
+      for (let i = 0; i < 60 * 6 && current() && !p.hp!.dead; i++) {
+        const a = current()!;
+        if (escape && !goal && (a.phase !== 'windup' || a.t >= a.windup * 0.6)) goal = [p.x, b.y - (30 + PLAYER_RADIUS + 20)];
+        if (goal) {
+          const [dx, dy] = [goal[0] - p.x, goal[1] - p.y];
+          const d = Math.hypot(dx, dy);
+          input.moveX = d > 3 ? dx / d : 0;
+          input.moveY = d > 3 ? dy / d : 0;
+        }
+        stepWorld(s.w);
+        for (const e of s.w.enemies) if (!e.en?.isBoss) s.w.remove(e);
+        s.w.sweep();
+        const now = current();
+        if (now && now.phase === 'windup' && now.t >= now.windup * 0.6) {
+          // the pair stays opposite while the windup aims (they used to fold onto one line, D457)
+          const [b0, b1] = teles.map((t) => t.tg!.shapes[0] as { a: number });
+          const gap = Math.abs(Math.atan2(Math.sin(b1!.a - b0!.a), Math.cos(b1!.a - b0!.a)));
+          expect(gap).toBeCloseTo(Math.PI, 3);
+        }
+      }
+      if (escape) {
+        expect(b.en!.attack).toBeNull(); // the whole 4 s of beams played out
+        expect(p.pl!.falling).toBeNull(); // on the platform throughout
+      }
+      return { before, after: p.hp!.dead ? 0 : p.hp!.hp };
+    };
+    const stay = beams(false);
+    expect(stay.after).toBeLessThan(stay.before); // the beams do sweep that line
+    const out = beams(true);
+    expect(out.after).toBe(out.before);
   });
 
   it('Hollow Joes come two at a time in phase 3, and never more', () => {
