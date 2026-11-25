@@ -303,6 +303,7 @@ HP solo (its first bar): **5580** first playthrough, 150626 at NG+1, 708756 at N
 
 Phase 1 (100% → 50%; speed ×1, damage ×1):
 - **Stalk Slam**: circle(110) at targetPast(1.0), ×1.3 physical (79), windup 0.8 s, cd 3
+- **Root Swipe**: arc(120°, 180), ×1.2 physical (73), windup 0.8 s, cd 3, parryable (D464)
 - **Spore Bloom [PIERCE] [AREA]**: grid(150, 55), 2 pulses, ×0.8 physical (49), poison 30, tell 1.2 s, cd 9
 - **Tendril Whip [RED]**: line(50, 420), ×1.5 physical (91), tell 0.6 s, cd 5
 - **Sporeling Birth**: summons 3 Sporeling (max 4), windup 0.9 s, cd 16
@@ -310,6 +311,7 @@ Phase 1 (100% → 50%; speed ×1, damage ×1):
 
 Phase 2 — **The cap splits open** (50% → 0%; speed ×1.2, damage ×1.25, arena: darken):
 - **Stalk Slam**: circle(110) at targetPast(1.0), ×1.3 physical (99), windup 0.8 s, cd 3
+- **Root Swipe**: arc(120°, 180), ×1.2 physical (91), windup 0.8 s, cd 3, parryable (D464)
 - **Spore Bloom [PIERCE] [AREA]**: grid(120, 55), 2 pulses, ×0.8 physical (61), poison 30, tell 1.2 s, cd 9
 - **Tendril Whip [RED]**: line(50, 420), ×1.5 physical (114), tell 0.6 s, cd 5
 - **Sporeling Birth**: summons 5 Sporeling (max 6), windup 0.9 s, cd 16

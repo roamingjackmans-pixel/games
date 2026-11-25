@@ -17,6 +17,25 @@ const stalkSlam: AttackDef = {
   parryable: false,
 };
 
+/**
+ * D464: a root sweeps round her base at whoever is close. Her one parryable attack, in every phase (the NG+ third
+ * phase keeps the second's attacks): a shield parry or a bare-handed one staggers her for a riposte (D454).
+ */
+const rootSwipe: AttackDef = {
+  id: 'spore_root_swipe',
+  name: 'Root Swipe',
+  kind: 'normal',
+  pattern: { kind: 'melee', shape: 'arc', angleDeg: 120, r: 180 },
+  windupMs: 800,
+  recoverMs: 800,
+  dmgMult: 1.2,
+  type: 'physical',
+  cooldownS: 3,
+  range: [0, 180],
+  weight: 4,
+  parryable: true,
+};
+
 const sporeBloom = (spacing: number): AttackDef => ({
   id: 'spore_bloom',
   name: 'Spore Bloom',
@@ -163,14 +182,14 @@ export const MOTHER_SPORE: BossDef = {
   moveStyle: 'stationary',
   preferredRange: 200,
   phases: [
-    { untilHpPct: 50, speedMult: 1, dmgMult: 1, attacks: [stalkSlam, sporeBloom(150), tendrilWhip, sporelingBirth(3), gasVent] },
+    { untilHpPct: 50, speedMult: 1, dmgMult: 1, attacks: [stalkSlam, rootSwipe, sporeBloom(150), tendrilWhip, sporelingBirth(3), gasVent] },
     {
       untilHpPct: 0,
       name: 'The cap splits open',
       speedMult: 1.2,
       dmgMult: 1.25,
       arena: [{ op: 'darken', value: 0.45 }],
-      attacks: [stalkSlam, sporeBloom(120), tendrilWhip, sporelingBirth(5), gasVent, rainOfCaps, uproot],
+      attacks: [stalkSlam, rootSwipe, sporeBloom(120), tendrilWhip, sporelingBirth(5), gasVent, rainOfCaps, uproot],
     },
   ],
   // New Game+ third phase only (D309)
