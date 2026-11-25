@@ -150,7 +150,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     speedClass: 'fast',
     combo: [sw(154, 69, 154, 0.75, thrust(28, 120), 14, 'thrust'), sw(154, 69, 154, 0.75, thrust(28, 120), 14, 'thrust'), sw(162, 69, 162, 0.75, arc(90, 100), 12, 'slash'), sw(154, 69, 154, 0.75, thrust(28, 120), 14, 'thrust'), sw(231, 77, 246, 1.12, thrust(28, 150), 30, 'thrust')],
     base1: 30,
-    stamina: 11,
+    stamina: 10, // D458: was 11
     poiseDmg: 8,
     reviveValue: 1.2,
     skills: ['rapier_lunge', 'rapier_riposte_stance', 'rapier_thousand_cuts'],
@@ -169,7 +169,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     speedClass: 'fast',
     combo: [sw(200, 87, 191, 0.84, arc(120, 110), 14, 'slash'), sw(200, 87, 191, 0.84, arc(120, 110), 14, 'backslash'), sw(200, 78, 191, 0.84, thrust(30, 130), 16, 'thrust'), sw(226, 122, 226, 0.93, spin(105), 12, 'spin'), sw(296, 96, 296, 1.21, arc(170, 125), 18, 'slash')],
     base1: 39.1, // D333: +15% (was 34)
-    stamina: 9, // D332: was 12
+    stamina: 11, // D458: was 9 (D332), 12
     poiseDmg: 13,
     reviveValue: 1.5,
     skills: ['katana_iai_slash', 'katana_crescent', 'katana_blood_moon'],
