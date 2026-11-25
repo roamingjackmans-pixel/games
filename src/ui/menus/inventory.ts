@@ -142,9 +142,15 @@ export function openInventory(host: InventoryHost): HTMLElement {
     const pieces = host.char.bag.filter((i) => i.kind === 'armor' && i.slot === slot);
     const list = h('div', { class: 'col', style: 'gap:4px;max-height:360px;overflow-y:auto' });
     for (const it of pieces) {
-      const b = btn(it.name, () => closeHandAsk(() => doLook(() => wearCosmetic(host.char, it.id))));
+      // D463: a thumbnail of the piece at the left of its line, so you can see the look before you pick it
+      const icon = itemIcon(it, 32);
+      icon.classList.add('look-thumb');
+      const label = h('span', { class: 'row', style: 'gap:10px;width:100%' }, icon, h('span', { style: 'flex:1;text-align:left' }, it.name));
+      const b = btn(label, () => closeHandAsk(() => doLook(() => wearCosmetic(host.char, it.id))));
       b.classList.add(`r-${it.rarity}`);
+      b.style.padding = '4px 10px';
       b.setAttribute('data-testid', `look-pick-${it.id}`);
+      b.setAttribute('aria-label', it.name);
       list.appendChild(b);
     }
     if (!pieces.length) list.appendChild(h('div', { class: 'small dim-text' }, `No ${LOOK_LABEL[slot].toLowerCase()} armor in your bag.`));
