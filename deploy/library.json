@@ -25,6 +25,8 @@
     { "folder": "Cadence", "repo": "Cadence", "publish": "_site", "stamp": true },
     { "folder": "cadence", "local": "deploy/cadence" },
     { "folder": "flashgames", "repo": "flashgames", "publish": "site" },
-    { "folder": "FlashGames", "local": "deploy/FlashGames" }
+    { "folder": "FlashGames", "local": "deploy/FlashGames" },
+    { "folder": "shesakeeper", "repo": "shesakeeper", "publish": "site" },
+    { "folder": "ShesAKeeper", "local": "deploy/ShesAKeeper" }
   ]
 }
