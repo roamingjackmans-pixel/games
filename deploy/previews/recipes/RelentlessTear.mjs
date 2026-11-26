@@ -9,7 +9,20 @@ import { serve, wait } from '../tools.mjs';
 const SRC = 'C:/dev/RelentlessTear';
 const PORT = 5193;
 const URL = `http://localhost:${PORT}/games/RelentlessTear/`;
-const TUTORIALS = ['move', 'battle_basics', 'defense', 'timing', 'aim', 'skills', 'waystitch', 'patches', 'classes', 'weave', 'camp', 'worldmap'];
+const TUTORIALS = [
+  'move',
+  'battle_basics',
+  'defense',
+  'timing',
+  'aim',
+  'skills',
+  'waystitch',
+  'patches',
+  'classes',
+  'weave',
+  'camp',
+  'worldmap',
+];
 
 const ROSTER = ['ash', 'corin', 'wick', 'orrin', 'maudra', 'rook'];
 const SKILLS = {
@@ -26,7 +39,25 @@ function profile() {
   const chars = {};
   for (const id of [...ROSTER, 'tess']) {
     const sk = SKILLS[id] ?? ['tess_twin_cut', 'tess_take_it', 'tess_absolution', 'tess_scissor_rite', 'tess_sever'];
-    chars[id] = { id, level: 15, xp: 0, attrs: { vit: 12, might: 16, agi: 8, def: 6, luck: 0 }, attrPts: 0, sp: 0, learned: sk, equipped: sk, weapon: id === 'tess' ? 'w_tess_1' : `w_${id}_2`, patches: [], embroideries: [], cls: null, classBattles: {}, outfit: null, hpFrac: 1, bond: 2, bondSeen: [] };
+    chars[id] = {
+      id,
+      level: 15,
+      xp: 0,
+      attrs: { vit: 12, might: 16, agi: 8, def: 6, luck: 0 },
+      attrPts: 0,
+      sp: 0,
+      learned: sk,
+      equipped: sk,
+      weapon: id === 'tess' ? 'w_tess_1' : `w_${id}_2`,
+      patches: [],
+      embroideries: [],
+      cls: null,
+      classBattles: {},
+      outfit: null,
+      hpFrac: 1,
+      bond: 2,
+      bondSeen: [],
+    };
   }
   const weapons = {};
   for (const id of ROSTER) weapons[`w_${id}_2`] = 10;
@@ -34,14 +65,56 @@ function profile() {
   const flags = { pro_done: true, ch4_start: true };
   for (let k = 0; k < 4; k++) flags[`ch${k}_done`] = flags[`ch${k}_start`] = true;
   const save = {
-    v: 1, created: 0, updated: 0, playtime: 15120000, chapter: 4, chapterName: 'The Selvage', scene: 'sv_windstair', x: 300,
-    way: { scene: 'sv_windstair', x: 300, name: 'The Windstair' }, roster: ROSTER, active: ['ash', 'corin', 'wick', 'orrin'], chars,
-    inv: { mothers_thimble: 1, honey_bun: 2 }, weapons, patchWins: {}, learnedPatches: [],
-    tinct: { tincture_heal: 3, tincture_revive: 2, tincture_spirit: 2 }, tinctMax: { tincture_heal: 3, tincture_revive: 2, tincture_spirit: 2 },
-    glim: 2400, flags, journals: [], songs: [], patterns: [], weaves: ['weave_measure'], bestiary: {}, cleared: [],
-    regions: ['hollowmere', 'thimble_fields', 'lanternmere', 'cindermill', 'selvage'], tp: 4, ng: 0, difficulty: 'story', commandAll: false,
+    v: 1,
+    created: 0,
+    updated: 0,
+    playtime: 15120000,
+    chapter: 4,
+    chapterName: 'The Selvage',
+    scene: 'sv_windstair',
+    x: 300,
+    way: { scene: 'sv_windstair', x: 300, name: 'The Windstair' },
+    roster: ROSTER,
+    active: ['ash', 'corin', 'wick', 'orrin'],
+    chars,
+    inv: { mothers_thimble: 1, honey_bun: 2 },
+    weapons,
+    patchWins: {},
+    learnedPatches: [],
+    tinct: { tincture_heal: 3, tincture_revive: 2, tincture_spirit: 2 },
+    tinctMax: { tincture_heal: 3, tincture_revive: 2, tincture_spirit: 2 },
+    glim: 2400,
+    flags,
+    journals: [],
+    songs: [],
+    patterns: [],
+    weaves: ['weave_measure'],
+    bestiary: {},
+    cleared: [],
+    regions: ['hollowmere', 'thimble_fields', 'lanternmere', 'cindermill', 'selvage'],
+    tp: 4,
+    ng: 0,
+    difficulty: 'story',
+    commandAll: false,
   };
-  return { v: 1, slots: [save, null, null], tasks: {}, classes: [], settings: { master: 0.8, music: 0.7, sfx: 0.9, timingAid: true, shake: true, textSpeed: 0, autoAdvance: false, reducedFlash: false, quality: 'high' }, lastSlot: 0 };
+  return {
+    v: 1,
+    slots: [save, null, null],
+    tasks: {},
+    classes: [],
+    settings: {
+      master: 0.8,
+      music: 0.7,
+      sfx: 0.9,
+      timingAid: true,
+      shake: true,
+      textSpeed: 0,
+      autoAdvance: false,
+      reducedFlash: false,
+      quality: 'high',
+    },
+    lastSlot: 0,
+  };
 }
 
 /** In the page: mark every cutscene seen (from the game's own list), and remember the save and the tutorials. */
@@ -55,10 +128,13 @@ function prepare([p, tuts]) {
 function player() {
   const input = window.rtInput;
   const pressAt = (action, t) =>
-    setTimeout(() => {
-      input.press(action, performance.now());
-      setTimeout(() => input.release(action), 50);
-    }, Math.max(0, t - performance.now() - 4));
+    setTimeout(
+      () => {
+        input.press(action, performance.now());
+        setTimeout(() => input.release(action), 50);
+      },
+      Math.max(0, t - performance.now() - 4),
+    );
   const planned = new WeakSet();
   setInterval(() => {
     const B = window.rt.battleScr;
