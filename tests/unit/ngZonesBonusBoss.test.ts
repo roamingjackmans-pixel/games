@@ -135,11 +135,12 @@ describe("The Caretaker's Last Rites (D277)", () => {
   });
 });
 
-function ngSession(seed: string, zone = 1, cycle = 1): GameSession {
+function ngSession(seed: string, zone = 1, cycle = 1, hardcore = false): GameSession {
   const c = newCharacter('knight', 'Joe', 'p', new Rng('bb'));
   c.cycle = cycle;
   c.tutorialDone = true;
   c.level = 120;
+  if (hardcore) c.hardcore = true;
   const save = newSave(1, c, seed);
   save.world.zone = zone;
   const s = new GameSession(save);
@@ -219,6 +220,32 @@ describe('New Game+ bonus boss rooms (D278)', () => {
     expect(s.save.stats.bossKills).toBe(killsBefore);
     // and it left loot
     expect([...s.w.entities.values()].some((e) => e.type === 'pickup' && e.pk?.kind === 'item')).toBe(true);
+  });
+
+  it("in a Hardcore campaign it is 30% of the Hardcore zone boss, not 15% (D465: Mother Spore in zone 5's NG+1 room)", () => {
+    const seed = 'HC3'; // zone 5's NG+1 bonus boss in this run is Mother Spore
+    expect(bonusBossFor(generateZone(seed, 5, { cycle: 1 }))!.bossId).toBe('mother_spore');
+    const hp = (hardcore: boolean): { bonus: number; zoneBoss: number } => {
+      const s = ngSession(seed, 5, 1, hardcore);
+      expect(s.w.hardcore).toBe(hardcore);
+      const bb = bonusBossFor(s.layout)!;
+      s.enterRoom(bb.roomId, s.layout.byId[bb.roomId]!.doors[0]!);
+      const me = s.w.players[0]!;
+      me.x = 640;
+      me.y = 368;
+      s.tick(0.016);
+      const boss = s.w.get(s.w.bossId)!;
+      expect(boss.en!.bonusBoss).toBe(true);
+      const ref = new World('ref');
+      ref.hardcore = hardcore;
+      const zb = spawnEnemy(ref, BOSSES[zoneDef(5).boss]!, 0, 0, { cycle: 1, zone: 5, players: 1 });
+      return { bonus: boss.hp!.max, zoneBoss: zb.hp!.max / (zb.en!.barMult ?? 1) };
+    };
+    const normal = hp(false);
+    const hard = hp(true);
+    expect(normal.bonus / normal.zoneBoss).toBeCloseTo(BONUS_BOSS_HP_PCT, 6);
+    expect(hard.zoneBoss / normal.zoneBoss).toBeCloseTo(2, 6);
+    expect(hard.bonus / hard.zoneBoss).toBeCloseTo(BONUS_BOSS_HP_PCT, 6);
   });
 
   it('fights in its second phase in NG+1 and its third (Overtime) from NG+2 on, held there (D360)', () => {

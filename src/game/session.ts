@@ -19,7 +19,7 @@ import { planRoom, roomCountMult, type RoomPlan } from './procgen/waves';
 import { modRoomPlan } from './procgen/modPlan';
 import { runMods } from './runMods';
 import { smallChest, treasureChest } from './procgen/chests';
-import { enemyFullHp, spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
+import { HARDCORE_HP_MULT, enemyFullHp, spawnEnemy, spawnUnit, rescaleForPlayers } from './enemies/spawn';
 import { spawnPlayer, refreshDerived, resetSpellCooldowns, storeHp } from './player/player';
 import { installRules } from './rules';
 import { lootHooks } from './lootHooks';
@@ -953,8 +953,9 @@ export class GameSession {
     });
     // D322: a full bar of 30% of this zone's own boss's full HP (this cycle; co-op on top), whoever the bonus boss is,
     // so an Archmagister met in zone 1 is sized like zone 1's boss, not like itself. A party rescale keeps it.
+    // D465: Hardcore's double HP too, as that boss has it (enemyFullHp leaves it out; it used to come out at 15%)
     const zoneBoss = BOSSES[zd.boss];
-    if (zoneBoss && !def.traits?.fixedHp && !def.traits?.invincible) en.hpScaleBase = enemyFullHp(zoneBoss, here, cyc);
+    if (zoneBoss && !def.traits?.fixedHp && !def.traits?.invincible) en.hpScaleBase = enemyFullHp(zoneBoss, here, cyc) * (w.hardcore ? HARDCORE_HP_MULT : 1);
     en.barMult = BONUS_BOSS_HP_PCT;
     e.hp!.max = Math.max(1, en.hpScaleBase * coopHpMult(w.playerCount, true) * en.barMult);
     e.hp!.hp = e.hp!.max;
