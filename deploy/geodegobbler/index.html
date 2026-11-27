@@ -6,7 +6,7 @@
 <title>Geode Gobbler</title>
 <meta name="description" content="A rootin' tootin' rock-eatin' frontier clicker. Crack geodes, eat the crunch, play saloon poker with the critters in yer belly.">
 <meta name="robots" content="noindex">
-<meta name="version" content="1.6.3">
+<meta name="version" content="1.7.0">
 <meta name="theme-color" content="#140d22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,4 92,34 78,94 22,94 8,34' fill='%23b06cff' stroke='%23fff' stroke-width='5'/%3E%3Cpolygon points='50,4 64,40 50,94 36,40' fill='%23ffffff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -851,6 +851,129 @@ body.flashrun #tb-leave, body.flashrun #tb-restart, body.flashrun #tb-timerbox, 
   .rodeo-won h1 { font-size: 32px; } .ro-time { font-size: 48px; }
 }
 
+/* ---- zzzz-mobile.css ---- */
+/* ============ 📱 Phones (loads last): fit the town and the saloon on a phone screen without fighting the layout ============ */
+
+/* taps: no double-tap zoom delay, no grey flash, no text selection or callout on things you tap a lot */
+html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+button, .btn, .tab, .card, .critter, .cons, .bld, .upg, .icon-btn, #geode, .glimmer, .pouch, .spice, .shop-slot, .blind-card { touch-action: manipulation; }
+/* cards and critters at the table are dragged to reorder: keep the browser from turning that drag into a scroll */
+#tb-hand .card, #tb-critters .critter:not(.empty) { touch-action: none; }
+#geode-wrap, #table, #mobnav, #tabs, #top, .glimmer { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* empty critter / tonic slots also matched the generic .empty box (30px padding), which kept them from ever shrinking */
+.critter.empty, .cons.empty { padding: 0; }
+
+@media (max-width: 899px) {
+  body { overscroll-behavior-y: none; } /* no pull-to-refresh while tapping the geode */
+
+  /* ---- header: logo + buttons on one row, the crunch counter on its own row underneath ---- */
+  #top { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "logo btns" "counter counter"; align-items: center; gap: 2px 8px; padding: 6px 10px 6px; }
+  #logo { grid-area: logo; font-size: 14px; min-width: 0; white-space: nowrap; overflow: hidden; }
+  .top-btns { grid-area: btns; gap: 5px; }
+  .icon-btn { width: 34px; height: 34px; font-size: 16px; border-width: 2px; box-shadow: 0 2px 0 #2a1405; }
+  #counter { grid-area: counter; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: 8px; }
+  #crunch-val { flex: 1 1 100%; font-size: 24px; }
+  .c-unit { font-size: 10px; letter-spacing: 2px; }
+  #cps-val { font-size: 12px; }
+
+  /* ---- tabs: one row you swipe sideways, instead of four rows of signs ---- */
+  #tabs { flex-shrink: 0; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 6px; padding: 6px 2px 8px; margin: 0 -2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+  #tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 0 0 auto; padding: 6px 10px; font-size: 12px; gap: 4px; scroll-snap-align: start; box-shadow: 0 3px 0 #2a1405; }
+  .tab span { font-size: 14px; }
+  .tab.on { transform: none !important; }
+
+  /* ---- the painted backdrop: the PROPS DEPT. sign sat on top of Gobbo and the Ledger; cacti only behind the geode ---- */
+  #backdrop .bd-sign { display: none; }
+  body:not([data-view="left"]) #backdrop .bd-cactus { display: none; }
+
+  /* ---- telegrams: smaller, and never a wall of them over the store ---- */
+  #toasts { gap: 5px; }
+  body.at-table #toasts { right: 6px; transform: none; width: min(250px, 66vw); }
+  body.at-table .toast { font-size: 11px; padding: 4px 8px; }
+  #table:not([data-phase="play"]) #tb-handwrap { display: none; } /* the empty hand row only wasted room in the shop */
+  body:not(.at-table) #toasts { bottom: calc(70px + env(safe-area-inset-bottom)); } /* above the Geode / Store / Property bar */
+  .toast { padding: 6px 10px; font-size: 12px; line-height: 1.25; }
+  .toast b, .toast h4 { font-size: 13px; }
+
+  /* ---- the Gobble Saloon: everything from the craving to the Play button fits on one phone screen ---- */
+  #table .tb-main { border-width: 6px; }
+  .tb-side { gap: 4px; padding: 4px; }
+  .tb-blind { padding: 4px 6px; border-width: 2px; } .bl-name { font-size: 13px; } .bl-desc { font-size: 11px; margin: 1px 0; line-height: 1.2; }
+  .bl-tgt small { font-size: 9px; } .bl-tgt b { font-size: 17px; } .bl-rew { font-size: 11px; }
+  .tb-round { padding: 3px 6px; border-width: 2px; } .tb-round small { font-size: 9px; } .tb-round b { font-size: 19px; }
+  .tb-hand { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-width: 2px; }
+  #tb-htype { flex: 0 0 40%; min-width: 0; min-height: 0; font-size: 13px; line-height: 1.1; text-align: left; overflow: hidden; }
+  .tb-calc { flex: 1; min-width: 0; margin: 0; gap: 4px; } .tb-calc > span { font-size: 15px; }
+  .tb-calc .sp, .tb-calc .sh { font-size: 16px; padding: 2px 4px; }
+  .tb-counters { gap: 3px; } .tb-counters > div { padding: 1px 2px; border-width: 2px; } .tb-counters small { font-size: 9px; } .tb-counters b { font-size: 15px; }
+  .tb-timer { flex: 0 0 auto; padding: 2px 8px; gap: 6px; align-items: center; } .tb-timer small { font-size: 9px; } .tb-timer b { font-size: 15px; }
+  .tb-timer.ro-timer b { font-size: 17px; }
+  .tb-sbtns { flex: 1 1 0; flex-wrap: nowrap; gap: 4px; min-width: 0; } .tb-sbtns .btn { flex: 1 1 0; min-width: 0; padding: 4px 2px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ro-box { padding: 4px 6px; gap: 3px; }
+
+  #table:not([data-phase="play"]) .tb-hand { display: none; } /* no hand to preview between rounds */
+
+  /* Prickly Pete's: a short header so the shelves show without scrolling past the shopkeeper */
+  .shop { padding: 8px; border-radius: 14px; }
+  .shop-head { gap: 4px 8px; flex-wrap: wrap; align-items: center; }
+  .shopkeep { font-size: 32px; } .sk-hat { font-size: 24px; top: -15px; left: 2px; }
+  .shop-head h2 { font-size: 16px; line-height: 1.1; } .shop-head .muted { display: none; }
+  .shop-btns { flex: 1 1 100%; margin: 0; flex-wrap: nowrap; gap: 4px; } .shop-btns .btn { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+  .shop-btns .btn { padding: 5px 8px; font-size: 12px; } .shop-btns .btn.big { font-size: 14px; padding: 6px 10px; }
+  .shop-row { gap: 6px; padding: 8px 0 2px; } .shop-row.items { padding-bottom: 8px; }
+  .shop-slot { width: 104px; gap: 3px; }
+  .pack-geode { width: 58px; height: 58px; } .gizmo .gz-icon { width: 54px; height: 54px; font-size: 28px; }
+
+  /* opening a pack: three choices side by side */
+  #tb-pack { padding: 8px 6px; }
+  .pack-choices { gap: 6px; margin: 8px 0; } .pack-choice { gap: 4px; }
+  .pack-choice .cons-card { width: 104px; min-height: 132px; }
+
+  .tb-top { padding: 4px 4px 0; gap: 4px 6px; }
+  #tb-critters { flex: 1 1 100%; }
+  .slots { min-height: 0; padding: 3px; gap: 4px; border-radius: 10px; }
+  #tb-critters { min-height: 78px; }
+  .slots.cons-slots { min-height: 0; }
+  .cons { width: 44px; height: 44px; } .cons span { font-size: 18px; }
+  .tb-topr { flex: 1 1 100%; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .tb-timer .tt-l { display: none; } /* just ⏱ 2:46 on a phone */
+  .tb-restart { align-self: center; padding: 4px 10px; font-size: 11px; }
+  #tb-center { padding: 2px 4px; }
+  .play-area { gap: 4px; }
+  .played { min-height: 86px; gap: 4px; }
+  #tb-handwrap { padding: 0 4px 6px; }
+  #tb-hand { min-height: 96px; padding-top: 24px; }
+  #tb-hand .card.sel { transform: translateY(-22px) rotate(0) scale(1.05); }
+  .tb-actions { margin-top: 0; gap: 10px; }
+  .btn.play, .btn.discard { font-size: 15px; padding: 8px 16px; }
+}
+
+/* the smallest phones (iPhone SE and friends) */
+@media (max-width: 380px) {
+  #logo { font-size: 12px; }
+  .icon-btn { width: 31px; height: 31px; font-size: 15px; }
+  #crunch-val { font-size: 21px; }
+  .critter { width: 52px; height: 68px; }
+  .card { width: 54px; height: 76px; margin: 0 -9px; }
+}
+
+/* phones held sideways: scores in a narrow column on the left, the cards get the whole height beside it */
+@media (max-width: 899px) and (orientation: landscape) and (max-height: 520px) {
+  #table { grid-template-columns: 196px 1fr; grid-template-rows: 1fr; overflow: hidden; }
+  .tb-side { flex-direction: column; flex-wrap: nowrap; overflow-y: auto; border-bottom: 0; border-right: 2px solid #000; }
+  .tb-side > * { flex: 0 0 auto !important; }
+  .tb-counters { grid-template-columns: repeat(3, 1fr); }
+  .tb-hand { flex-direction: column; align-items: stretch; gap: 2px; } #tb-htype { flex: 0 0 auto; text-align: center; }
+  .tb-sbtns { flex-wrap: wrap !important; } .tb-sbtns .btn { flex: 1 1 40%; }
+  .tb-main { min-height: 0; }
+  .tb-top { flex-wrap: nowrap; } #tb-critters { flex: 1 1 auto; } .tb-topr { flex: 0 0 auto; margin-top: 0; }
+  .played { min-height: 72px; }
+  #table[data-pack] #tb-pack { left: 196px; }
+  body.at-table #toasts { top: 6px !important; }
+}
+
 </style>
 </head>
 <body>
@@ -897,7 +1020,7 @@ body.flashrun #tb-leave, body.flashrun #tb-restart, body.flashrun #tb-timerbox, 
 <div id="toasts"></div>
 <div id="modal-root"></div>
 <div id="tip"></div>
-<div id="ver" title="built 2026-11-24">v1.6.3</div>
+<div id="ver" title="built 2026-11-27">v1.7.0</div>
 <script>
 /* ---- 00-util.js ---- */
 /* Geode Gobbler — shared namespace, math, formatting, DOM helpers */
@@ -1244,7 +1367,11 @@ G.FX = (() => {
     const box = document.getElementById('toasts');
     const d = G.el('div', 'toast ' + (opts.cls || ''), html);
     box.prepend(d);
-    while (box.children.length > 3) box.lastChild.remove();
+    const phone = innerWidth < 900, atTable = document.body.classList.contains('at-table');
+    while (box.children.length > (phone ? (atTable ? 1 : 2) : 3)) box.lastChild.remove(); // phones: one or two telegrams at most, so they never cover the screen
+    // phones at the table: telegrams sit over the critter row, just under the scores, not over the cards or the shop
+    const main = phone && atTable && document.querySelector('#table .tb-main');
+    box.style.top = main ? `${Math.round(main.getBoundingClientRect().top + 4)}px` : '';
     setTimeout(() => d.classList.add('out'), opts.ms || 4200);
     setTimeout(() => d.remove(), (opts.ms || 4200) + 500);
     d.onclick = () => d.remove();
@@ -1252,9 +1379,13 @@ G.FX = (() => {
   };
   F.bump = (el, cls = 'bump') => { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
   F.centerOf = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+  let fxBlank = false; // nothing on the effects layer: skip clearing a full-screen canvas every frame
   F.step = () => {
-    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cx.clearRect(0, 0, W, H);
+    if (parts.length || !fxBlank) {
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cx.clearRect(0, 0, W, H);
+      fxBlank = !parts.length;
+    }
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i];
       p.life--;
@@ -2207,6 +2338,8 @@ G.Geode = (() => {
   };
   GE.draw = (t) => {
     if (!cx) return;
+    // nobody can see the geode: the Saloon is open, or a phone is showing the Store / Property page
+    if ((G.Table && G.Table.open) || (innerWidth < 900 && document.body.dataset.view && document.body.dataset.view !== 'left')) return;
     cx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cx.clearRect(0, 0, size, size);
     const c = size / 2;
@@ -2713,6 +2846,39 @@ G.UI = (() => {
   const renderTip = () => { if (!tipTarget || !tips.get(tipTarget)) return; const el = tipEl(); el.innerHTML = tips.get(tipTarget)(); el.classList.add('show'); };
   UI.refreshTip = renderTip;
 
+  /* phones have no hover: press and hold anything with a tooltip to read it. The hold doesn't also buy / select / play it. */
+  let lp = null, lpDone = 0, lpHide = 0;
+  const hideTouchTip = () => { clearTimeout(lpHide); if (tipTarget && tipTarget._touchTip) { tipTarget._touchTip = false; tipTarget = null; tipEl().classList.remove('show'); } };
+  UI.longPressed = () => Date.now() - lpDone < 700; // true just after a hold, so tap handlers can skip it
+  document.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'touch') return;
+    hideTouchTip();
+    if (!G.state.settings.holdHint) { G.state.settings.holdHint = 1; setTimeout(() => G.FX.toast('👆 <b>Press and hold</b> anything to see what it does.', { ms: 6000 }), 2500); }
+    const t = e.target.closest('.has-tip'); if (!t || !tips.get(t)) return;
+    const sx = e.clientX, sy = e.clientY;
+    clearTimeout(lp && lp.timer);
+    lp = { t, sx, sy, timer: setTimeout(() => {
+      tipTarget = t; t._touchTip = true; renderTip();
+      const el = tipEl(), w = el.offsetWidth, h = el.offsetHeight;
+      const x = Math.min(Math.max(8, sx - w / 2), innerWidth - w - 8);
+      const y = sy - h - 28 >= 8 ? sy - h - 28 : Math.min(innerHeight - h - 8, sy + 36); // above the finger if it fits
+      el.style.transform = `translate(${x}px, ${y}px)`;
+      lpDone = Date.now() + 60000; // until the finger lifts
+      if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
+    }, 380) };
+  }, true);
+  const endPress = (e) => {
+    if (!lp) return;
+    clearTimeout(lp.timer); lp = null;
+    if (lpDone > Date.now()) { lpDone = Date.now(); lpHide = setTimeout(hideTouchTip, 2600); }
+  };
+  document.addEventListener('pointermove', (e) => { if (lp && e.pointerType === 'touch' && Math.hypot(e.clientX - lp.sx, e.clientY - lp.sy) > 10 && lpDone <= Date.now()) { clearTimeout(lp.timer); lp = null; } }, true);
+  document.addEventListener('pointerup', endPress, true);
+  document.addEventListener('pointercancel', endPress, true);
+  // the click that follows a hold must not buy the upgrade underneath it
+  document.addEventListener('click', (e) => { if (UI.longPressed()) { e.stopPropagation(); e.preventDefault(); } }, true);
+  document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest('.has-tip')) e.preventDefault(); });
+
   /* ---------- modals ---------- */
   UI.modal = (html, opts = {}) => {
     const root = document.getElementById('modal-root');
@@ -2821,6 +2987,9 @@ G.UI = (() => {
     el.innerHTML = vis.map((t) => `<button class="tab ${t.id === tab ? 'on' : ''} ${before.length && !before.includes(t.id) ? 'new' : ''}" data-tab="${t.id}"><span>${t.emoji}</span><b>${t.label}</b></button>`).join('');
     el.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => UI.setTab(b.dataset.tab)));
     if (before.length) vis.filter((t) => !before.includes(t.id)).forEach((t) => G.FX.toast(`New tab unlocked: <b>${t.emoji} ${t.label}</b>`, { cls: 'rare' }));
+    // phones: the tabs are one row you swipe, so keep the open one in view
+    const on = el.querySelector('.tab.on');
+    if (on && el.scrollWidth > el.clientWidth) { const l = on.offsetLeft - el.offsetLeft; if (l < el.scrollLeft || l + on.offsetWidth > el.scrollLeft + el.clientWidth) el.scrollLeft = l - 8; }
   };
   UI.setTab = (t) => { tab = t; tabSig = ''; upgSig = ''; UI.renderTabs(); UI.renderPanel(true); document.body.dataset.tab = t; if (innerWidth < 900) UI.setView('mid'); };
   UI.renderPanel = (force) => {
@@ -4675,7 +4844,7 @@ G.Table = (() => {
           <div><small>Ante</small><b id="tb-ante">1/8</b></div>
           <div><small>Round</small><b id="tb-roundn">1</b></div>
         </div>
-        <div class="tb-timer" id="tb-timerbox"><small>⏱ Run time</small><b id="tb-timer">0:00</b></div>
+        <div class="tb-timer" id="tb-timerbox"><small>⏱<span class="tt-l"> Run time</span></small><b id="tb-timer">0:00</b></div>
         <div class="ro-box hidden" id="tb-rodeo"></div>
         <div class="tb-sbtns"><button class="btn sm" id="tb-deckbtn">🂠 Deck</button><button class="btn sm" id="tb-info">📖 Run info</button><button class="btn sm" id="tb-leave">🚪 Mosey out</button></div>
         <div class="tb-cps muted" id="tb-cps"></div>
@@ -5425,8 +5594,12 @@ G.Table = (() => {
       if (!dragging && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 10) { dragging = true; d.classList.add('dragging'); }
       if (dragging) d.style.translate = `${ev.clientX - sx}px ${ev.clientY - sy}px`;
     };
+    const off = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', cancel); };
+    // the browser took the touch over (a scroll): forget this press, or the next tap anywhere would toggle this card too
+    const cancel = () => { off(); d.classList.remove('dragging'); d.style.translate = ''; };
     const up = (ev) => {
-      removeEventListener('pointermove', move); removeEventListener('pointerup', up);
+      off();
+      if (!dragging && G.UI.longPressed()) return; // that was a press-and-hold to read the tooltip, not a tap
       if (!dragging) {
         if (kind === 'card') toggleSel(+uid);
         else if (kind === 'critter') {
@@ -5446,7 +5619,7 @@ G.Table = (() => {
       if (kind === 'card') T.renderHand(); else T.renderCritters();
       T.save();
     };
-    addEventListener('pointermove', move); addEventListener('pointerup', up);
+    addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', cancel);
   }
   T.tick = () => { if (T.open && T.run) el.cps.innerHTML = `🪨 clicker: ${G.fmt(G.cps())}/s · ${G.fmt(G.state.crunch)}`; };
   return T;
