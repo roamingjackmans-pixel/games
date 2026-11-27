@@ -287,11 +287,11 @@ multiplied (never the base), everywhere it counts — max HP; stamina, regen and
 while moving; cast speed; Spell Skill; the Thermos's Prayer bonus. Requirements and level costs use the raw stats.
 Marked P / S in the creator, the inventory and the Level up tab.
 
-### 3.3 Requirements (D37, D72, D88, D210)
+### 3.3 Requirements (D37, D72, D88, D210, D466)
 
 Every weapon, shield and casting tool lists minimum stats; hybrid weapons also need their Brain or Prayer. Two-handing
 counts Bonk ×1.5 toward requirements. Requirements are checked against your stats including gear bonuses
-(`itemMeetsReqs`).
+(`itemMeetsReqs`): your other qualifying gear's stat affixes and bands count, never the item's own (D466).
 
 - Weapon below requirement: **40% damage**, **skills locked**, a red "!" on the slot.
 - Shield below requirement: guards at **half** its block values, cannot parry.

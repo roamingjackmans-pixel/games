@@ -235,12 +235,8 @@ function offWeaponOf(off: Item | null | undefined, twoHanded: boolean, stats: St
   return { def, item: off, power, meetsReq };
 }
 
-export function computeDerived(c: Character): Derived {
-  // gear you lack the stats for still works at reduced efficacy, but none of its buffs apply (D88): affixes,
-  // gems, bands, ring effects and legendary powers come only from items whose requirements you meet
-  // (checked against your own stats, so a stat affix cannot lift you over its own requirement)
-  const items = itemsOf(c).filter((it) => meetsRequirements(itemRequirements(it), c.stats, it.kind === 'weapon' ? c.twoHanded : false));
-  // ---- stat bonuses (affixes "of the X", bands) ----
+/** Your stats plus the stat bonuses of these items (affixes "of the X", bands). */
+function statsWith(c: Character, items: readonly Item[]): Stats {
   const stats: Stats = { ...c.stats };
   for (const it of items) {
     for (const a of it.affixes) {
@@ -252,6 +248,32 @@ export function computeDerived(c: Character): Derived {
       if (s) stats[s] += bandAmount(it.rarity);
     }
   }
+  return stats;
+}
+
+/**
+ * The gear whose buffs apply (D88): gear you lack the stats for still works at reduced efficacy, but its affixes,
+ * gems, bands, ring effects and legendary powers apply only once you meet its requirements. D466: met with your own
+ * stats plus the stat bonuses of the other gear that already counts (a Band of Slicey carries you to a Katana's
+ * Slicey, as the item card and the damage say), never with the item's own bonus, so a stat affix still cannot lift
+ * you over its own requirement. Grown until nothing more qualifies; nothing qualifies through a circle of bonuses.
+ */
+function activeItems(c: Character): Item[] {
+  const all = itemsOf(c);
+  const meets = (it: Item, stats: Stats): boolean => meetsRequirements(itemRequirements(it), stats, it.kind === 'weapon' ? c.twoHanded : false);
+  let active = all.filter((it) => meets(it, c.stats));
+  for (;;) {
+    const stats = statsWith(c, active);
+    const more = all.filter((it) => !active.includes(it) && meets(it, stats));
+    if (!more.length) return active;
+    active = all.filter((it) => active.includes(it) || more.includes(it));
+  }
+}
+
+export function computeDerived(c: Character): Derived {
+  const items = activeItems(c);
+  // ---- stat bonuses (affixes "of the X", bands) ----
+  const stats = statsWith(c, items);
   const powers = new Set<string>();
   const rings = new Set<string>();
   const ringCounts: Record<string, number> = {};

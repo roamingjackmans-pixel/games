@@ -35,6 +35,44 @@ describe('requirement-gated buffs (D88)', () => {
     c.stats.bonk = 40;
     expect(computeDerived(c).stats.hp).toBe(c.stats.hp + 3);
   });
+
+  it("D466: other gear's stat bonuses count toward a requirement: a Band of Slicey carries you to a Katana's, and its Leeching and gems work", () => {
+    const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
+    const katana = makeItem('katana', 'rare', 14);
+    katana.affixes = [{ id: 'leeching', value: 0.13 }];
+    // the owner's Katana: Rime (Magic, Chill buildup) and Ember (Fire, Burn buildup)
+    katana.sockets = [{ perks: [{ family: 'rime', level: 19, q: 0.1 }] }, { perks: [{ family: 'ember', level: 26, q: 0.3 }] }];
+    c.equipment.main = katana;
+    c.stats.bonk = 12;
+    c.stats.slicey = 26; // the Katana asks 29
+    const none = computeDerived(c);
+    expect(none.lifesteal).toBe(0);
+    expect(none.statusBuild.map((s) => s.id)).not.toContain('chill');
+    c.equipment.ring1 = makeItem('band_slicey', 'rare', 14); // +3
+    const d = computeDerived(c);
+    expect(d.stats.slicey).toBe(29);
+    expect(d.lifesteal).toBeCloseTo(0.0052, 9);
+    const builds = d.statusBuild.map((s) => s.id);
+    expect(builds).toContain('chill');
+    expect(builds).toContain('burn');
+    expect(builds).toContain('bleed'); // the Katana's own
+    expect(d.addDmg.map((a) => a.type)).toEqual(expect.arrayContaining(['magic', 'fire']));
+  });
+
+  it("D466: an item's own stat affix still cannot lift you over its own requirement", () => {
+    const c = newCharacter('knight', 'Joe', 'p', new Rng(1));
+    const katana = makeItem('katana', 'rare', 14);
+    katana.affixes = [
+      { id: 'leeching', value: 0.13 },
+      { id: 'slicer', value: 3 },
+    ];
+    c.equipment.main = katana;
+    c.stats.bonk = 12;
+    c.stats.slicey = 26;
+    const d = computeDerived(c);
+    expect(d.stats.slicey).toBe(26);
+    expect(d.lifesteal).toBe(0);
+  });
 });
 
 describe('bows and scaling (D88)', () => {
