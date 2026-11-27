@@ -111,8 +111,9 @@ const gazeBeams: AttackDef = {
   id: 'landlord_gaze_beams',
   name: 'Gaze Beams',
   kind: 'pierce',
-  // two beams from him, rotating opposite ways for 4 s (the half-plane behind both is always clear)
-  pattern: { kind: 'beam', w: 60, l: 600, turnRateDeg: 35, durationS: 4, tickS: 0.25, anchor: 'self', count: 2, opposite: true }, // D172: 600 px (was the whole room); D204: twice as wide (was 30)
+  // D467: two beams start together on the line to his target and fan apart for 4 s, 140° each way: 280° swept, the
+  // 80° wedge behind him stays clear (his phase-3 spot leaves room there, D457). D172: 600 px; D204: 60 wide.
+  pattern: { kind: 'beam', w: 60, l: 600, turnRateDeg: 35, durationS: 4, tickS: 0.25, anchor: 'self', count: 2, opposite: true, fan: true },
   windupMs: 1000,
   activeMs: 4000,
   recoverMs: 800,

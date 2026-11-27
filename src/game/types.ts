@@ -177,7 +177,8 @@ export type PatternDef = PatternCommon &
     | { kind: 'wave'; w: number; speed: number; from: 'north' | 'south' | 'east' | 'west' | 'random' | 'cross'; safeTiles?: 'G'; /** breaks in the wall to slip through (D163) */ gaps?: number; gapW?: number }
     | { kind: 'pockets'; n: number; pocketR: number; anchor?: Anchor }
     | { kind: 'trail'; durationS: number; r: number; hazard: HazardId }
-    | { kind: 'beam'; w: number; l: number | 'room'; turnRateDeg: number; durationS: number; tickS: number; anchor: Anchor; count?: number; opposite?: boolean }
+    /** fan (D467): the beams all start on the aim instead of spread round the caster (with `opposite`, a pair turning apart) */
+    | { kind: 'beam'; w: number; l: number | 'room'; turnRateDeg: number; durationS: number; tickS: number; anchor: Anchor; count?: number; opposite?: boolean; fan?: boolean }
     | { kind: 'sequence'; steps: { pattern: PatternDef; delayS: number }[] }
   );
 

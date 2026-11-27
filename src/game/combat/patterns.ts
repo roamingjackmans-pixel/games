@@ -541,7 +541,8 @@ function resolveInner(p: PatternDef, c: PatternCtx, o: ResolveOpts = {}): TeleSp
       const out: TeleSpec[] = [];
       const n = p.count ?? 1;
       for (let i = 0; i < n; i++) {
-        const off = (i * Math.PI * 2) / n;
+        // D467: a fan starts every beam on the aim (the Landlord's pair turns apart from it); else they spread round
+        const off = p.fan ? 0 : (i * Math.PI * 2) / n;
         const a = c.facing + off;
         const l = p.l === 'room' ? ROOM_DIAG : p.l;
         const turn = p.turnRateDeg * DEG * (p.opposite && i % 2 === 1 ? -1 : 1);

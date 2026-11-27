@@ -378,9 +378,10 @@ describe('The Landlord: the fight', () => {
     }
   });
 
-  it('Gaze Beams always leave room behind them, even facing along the far edge (D457)', () => {
-    // a south door puts the face under the north edge, the short way across the platform: the tight case
-    const beams = (escape: boolean): { before: number; after: number } => {
+  it('Gaze Beams start together on his target and fan 140° each way; the gap behind him is reachable and safe (D467)', () => {
+    // a south door puts the face under the north edge, the short way across the platform: the tight case, with his
+    // back to that edge (D457 keeps him FAR_EDGE_MIN in, so there is floor behind him)
+    const beams = (escape: boolean): { before: number; after: number; spread: number } => {
       const s = session();
       const b = enterArena(s);
       nextPhase(s, b);
@@ -396,26 +397,37 @@ describe('The Landlord: the fight', () => {
       const input = p.pl!.input;
       input.moveX = 0;
       input.moveY = 0;
-      // level with him on his right: the beams lock on that line and sweep the half below it, so the half they
-      // leave is the floor behind him. Once the aim locks (60% of the windup), walk up off the line and hold there
-      // against the pull, by the real walking controls.
-      p.x = p.px = b.x + 260;
-      p.y = p.py = b.y;
+      // straight below him, so he faces down and his back is to the edge. Once the aim locks (60% of the windup),
+      // run round his right side, ahead of the beam turning that way, to the gap behind him, by the real walking
+      // controls and against the pull
+      p.x = p.px = b.x;
+      p.y = p.py = b.y + 200;
       p.hp!.hp = p.hp!.max;
       const before = p.hp!.hp;
-      b.facing = 0;
+      b.facing = Math.PI / 2;
       b.en!.attack = null;
       const atk = attack(2, 'landlord_gaze_beams');
       startEnemyAttack(s.w, b, atk, p);
       const current = (): NonNullable<typeof b.en>['attack'] => b.en!.attack;
       const teles = current()!.teleIds.map((id) => s.w.get(id)!);
-      let goal: [number, number] | null = null;
+      const angles = (): [number, number] => teles.map((t) => (t.tg!.shapes[0] as { a: number }).a) as [number, number];
+      const gapOf = ([a0, a1]: [number, number]): number => Math.abs(Math.atan2(Math.sin(a1 - a0), Math.cos(a1 - a0)));
+      // the gap behind him at the end of the fan (beams 40° either side of straight behind): the hit circle (17 px,
+      // 9 px below the centre) must be 47 px off each beam's line, so the body ~82–98 px behind him (the edge at 112)
+      const route: [number, number][] = [
+        [b.x + 150, b.y + 60],
+        [b.x + 110, b.y - 40],
+        [b.x, b.y - 90],
+      ];
+      let leg = -1;
       for (let i = 0; i < 60 * 6 && current() && !p.hp!.dead; i++) {
         const a = current()!;
-        if (escape && !goal && (a.phase !== 'windup' || a.t >= a.windup * 0.6)) goal = [p.x, b.y - (30 + PLAYER_RADIUS + 20)];
-        if (goal) {
+        if (escape && leg < 0 && (a.phase !== 'windup' || a.t >= a.windup * 0.6)) leg = 0;
+        if (leg >= 0) {
+          const goal = route[leg]!;
           const [dx, dy] = [goal[0] - p.x, goal[1] - p.y];
           const d = Math.hypot(dx, dy);
+          if (d < 12 && leg < route.length - 1) leg++;
           input.moveX = d > 3 ? dx / d : 0;
           input.moveY = d > 3 ? dy / d : 0;
         }
@@ -423,23 +435,22 @@ describe('The Landlord: the fight', () => {
         for (const e of s.w.enemies) if (!e.en?.isBoss) s.w.remove(e);
         s.w.sweep();
         const now = current();
-        if (now && now.phase === 'windup' && now.t >= now.windup * 0.6) {
-          // the pair stays opposite while the windup aims (they used to fold onto one line, D457)
-          const [b0, b1] = teles.map((t) => t.tg!.shapes[0] as { a: number });
-          const gap = Math.abs(Math.atan2(Math.sin(b1!.a - b0!.a), Math.cos(b1!.a - b0!.a)));
-          expect(gap).toBeCloseTo(Math.PI, 3);
-        }
+        // the pair starts together on the aim (D467: as it was before D457)
+        if (now && now.phase === 'windup' && now.t >= now.windup * 0.6) expect(gapOf(angles())).toBeCloseTo(0, 3);
       }
       if (escape) {
         expect(b.en!.attack).toBeNull(); // the whole 4 s of beams played out
         expect(p.pl!.falling).toBeNull(); // on the platform throughout
+        expect(p.y).toBeLessThan(b.y); // and ended behind him
       }
-      return { before, after: p.hp!.dead ? 0 : p.hp!.hp };
+      return { before, after: p.hp!.dead ? 0 : p.hp!.hp, spread: gapOf(angles()) };
     };
     const stay = beams(false);
-    expect(stay.after).toBeLessThan(stay.before); // the beams do sweep that line
+    expect(stay.after).toBeLessThan(stay.before); // the beams do sweep the line they start on
     const out = beams(true);
     expect(out.after).toBe(out.before);
+    // 140° each way: 280° swept, the beams end 80° apart across his back
+    expect(out.spread).toBeCloseTo((80 * Math.PI) / 180, 1);
   });
 
   it('Hollow Joes come two at a time in phase 3, and never more', () => {

@@ -198,11 +198,11 @@ export function collapseFloor(w: World, pattern: PatternDef, durationS: number, 
 
 /**
  * A stationary form stands at least this far (its centre to the edge) inside the platform's far edge, never past
- * the far third (D457). The Landlord's Gaze Beams start along the line he faces and sweep the half on one side of
- * it; facing along the far edge, the half they leave clear is the floor behind him. 112 px leaves a player there
- * 54 px of floor beyond the beam's first touch (30 half-width + 14 body + 14 to the edge = 58 used). It is no
- * more because Collapse leaves only the floor within 220 px of the centre, and a Maw then needs 260 px from him:
- * on the phase-3 platform (384 px deep) that is 52 px of slack at 112.
+ * the far third (D457). The Landlord's Gaze Beams fan from the line to his target 140° each way (D467), leaving an
+ * 80° wedge behind him; facing straight away from the edge, that wedge is the floor between his back and the edge.
+ * At 112 px a player's body fits there 82–98 px behind him, clear of both beams (it was 64 px: no floor at all).
+ * It is no more because Collapse leaves only the floor within 220 px of the centre, and a Maw then needs 260 px from
+ * him: on the phase-3 platform (384 px deep) that leaves about 12 px to spare at 112.
  */
 export const FAR_EDGE_MIN = 112;
 

@@ -653,8 +653,8 @@ function followShapes(t: Entity, e: Entity, angle: number): void {
       void dy;
       s.x = e.x;
       s.y = e.y;
-      // one of several beams or sweeps keeps its angle from the aim: the Landlord's Gaze Beams stay opposite (D457;
-      // both used to turn onto the aim and fan 140° each way from it, leaving only a wedge behind him clear)
+      // one of several beams or sweeps keeps its angle from the aim (D457); a fan's are all on the aim (the Landlord's
+      // Gaze Beams start together and turn apart, D467)
       if (s.k === 'beam') s.a = angle + (s.off ?? 0);
       else if (s.k === 'cone' || s.k === 'line') s.a = angle;
       else s.a0 = (Math.abs(s.arc) >= Math.PI * 2 - 0.01 ? angle : angle - s.arc / 2) + (s.off ?? 0);

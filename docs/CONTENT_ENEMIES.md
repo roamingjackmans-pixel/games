@@ -485,12 +485,12 @@ Phase 2 — **The Eviction** (66% → 33%; speed ×1.2, damage ×1.25, size ×1.
 - **Audit [PIERCE] [AREA]**: room-wide, 4 safe pockets r 120, ×1.6 void (466), tell 1.6 s, cd 12
 - **Late Fee**: summons 2 Landlord's Clerk (max 2), windup 0.9 s, cd 22
 - **Four-Arm Flurry [RED]**: cone(90°, 180), ×0.81/×0.81/×0.81/×0.81 void (236), tell 0.7 s, cd 9, hyper armor *(new)*
-- **Gaze Beams [PIERCE] [AREA]**: 2× beam(60, 600) tracking 35°/s for 4 s, tick 0.25 s, opposite ways, ×0.8 void (233), tell 1 s, cd 14 *(new)*
+- **Gaze Beams [PIERCE] [AREA]**: 2× beam(60, 600) tracking 35°/s for 4 s, tick 0.25 s, start together and fan apart 140° each way (D467), ×0.8 void (233), tell 1 s, cd 14 *(new)*
 - **Supernova [PIERCE] [AREA]**: room-wide, 4 safe pockets r 110, ×2.6 void (757), tell 1.8 s, cd 16 *(new)*
 
 Phase 3 — **The Deep Lease** (33% → 0%; speed ×1.2, damage ×1.5, pull 70 px/s within 2000, stationary at farThird, size ×1.14 (D315: was ×1.9), projectiles ×1.4, summons 2 Hollow Joe (max 2, every 10 s), arena: shrinkPlatform):
 - **Eviction Notices**: 10× proj(250, homing) in a 140° fan, ×0.6 void (210), windup 0.7 s, cd 5
-- **Gaze Beams [PIERCE] [AREA]**: 2× beam(60, 600) tracking 35°/s for 4 s, tick 0.25 s, opposite ways, ×0.8 void (279), tell 1 s, cd 14
+- **Gaze Beams [PIERCE] [AREA]**: 2× beam(60, 600) tracking 35°/s for 4 s, tick 0.25 s, start together and fan apart 140° each way (D467), ×0.8 void (279), tell 1 s, cd 14
 - **Supernova [PIERCE] [AREA]**: room-wide, 3 safe pockets r 110, pulls 70 px/s, ×2.6 void (908), tell 1.8 s, cd 16
 - **Maw [PIERCE]**: circle(220) at self, pulls 70 px/s, ×2.5 void (873), tell 1.5 s, cd 6 *(new)*
 - **Foreclosure [RED] [AREA]**: a 60° slice (r 520) sweeping 120° round him over 1.5 s, from his gaze the way the arrow points to where he looks next (D315), ×2.1 void (734; D300: 30% less), tell 1.2 s, cd 9 *(new)*
