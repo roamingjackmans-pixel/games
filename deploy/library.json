@@ -28,6 +28,7 @@
     { "folder": "FlashGames", "local": "deploy/FlashGames" },
     { "folder": "shesakeeper", "repo": "shesakeeper", "publish": "site" },
     { "folder": "ShesAKeeper", "local": "deploy/ShesAKeeper" },
+    { "folder": "scaredyloafs", "repo": "scaredyloafs", "publish": "site" },
     { "folder": "RelentlessTear", "repo": "relentlesstear", "publish": "site" },
     { "folder": "relentlesstear", "local": "deploy/relentlesstear" }
   ]
